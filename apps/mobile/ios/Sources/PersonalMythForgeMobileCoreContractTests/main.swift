@@ -14,6 +14,10 @@ do {
     try await testHTTPStatusErrorSanitizesSecretsAndTruncatesBody()
     try await testUploadObjectCaptureUsesGeneratedFilenamesWithoutLocalPaths()
     try await testUploadObjectCaptureRejectsUnsafeContentTypeBeforeNetwork()
+    try testCaptureDraftBuildsSinglePhotoPayload()
+    try testCaptureDraftBuildsPhotoSetPayload()
+    try testCaptureDraftBuildsARKitScanPayload()
+    try testCaptureDraftRejectsInvalidMedia()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
     try testSwiftUIScaffoldIncludesWorldResolution()
     print("PersonalMythForgeMobileCoreContractTests passed")
@@ -270,6 +274,117 @@ private func testUploadObjectCaptureRejectsUnsafeContentTypeBeforeNetwork() asyn
     }
 }
 
+private func testCaptureDraftBuildsSinglePhotoPayload() throws {
+    let draft = CaptureDraft(
+        label: " old brass key ",
+        materialsText: " metal, brass,  ",
+        visualNotes: " worn teeth ",
+        source: "phone_capture",
+        mode: .singlePhoto,
+        media: [
+            captureMedia(filename: "/Users/zhexu/key.jpg", contentType: "image/jpeg", kind: .image)
+        ]
+    )
+
+    let payload = try draft.validatedUploadPayload()
+
+    try expectEqual(payload.metadata.label, "old brass key")
+    try expectEqual(payload.metadata.materials, ["metal", "brass"])
+    try expectEqual(payload.metadata.captureMode, "single_photo")
+    try expectEqual(payload.metadata.visualNotes, "worn teeth")
+    try expectEqual(payload.uploads.count, 1)
+    try expectEqual(payload.uploads[0].contentType, "image/jpeg")
+}
+
+private func testCaptureDraftBuildsPhotoSetPayload() throws {
+    let draft = CaptureDraft(
+        label: "moon cup",
+        materialsText: "ceramic, glaze",
+        visualNotes: "",
+        source: "phone_capture",
+        mode: .photoSet,
+        media: [
+            captureMedia(filename: "front.heic", contentType: "image/heic", kind: .image),
+            captureMedia(filename: "side.png", contentType: "image/png", kind: .image),
+        ]
+    )
+
+    let payload = try draft.validatedUploadPayload()
+
+    try expectEqual(payload.metadata.captureMode, "photo_set")
+    try expectTrue(payload.metadata.visualNotes == nil)
+    try expectEqual(payload.uploads.count, 2)
+    try expectEqual(payload.uploads.map(\.contentType), ["image/heic", "image/png"])
+}
+
+private func testCaptureDraftBuildsARKitScanPayload() throws {
+    let draft = CaptureDraft(
+        label: "small idol",
+        materialsText: "stone",
+        visualNotes: "rough LiDAR mesh with one reference photo",
+        source: "phone_capture",
+        mode: .arkitScan,
+        media: [
+            captureMedia(filename: "idol.glb", contentType: "model/gltf-binary", kind: .scanAsset),
+            captureMedia(filename: "reference.jpg", contentType: "image/jpeg", kind: .image),
+        ]
+    )
+
+    let payload = try draft.validatedUploadPayload()
+
+    try expectEqual(payload.metadata.captureMode, "arkit_scan")
+    try expectEqual(payload.uploads.count, 2)
+    try expectEqual(payload.uploads[0].contentType, "model/gltf-binary")
+    try expectEqual(payload.uploads[1].contentType, "image/jpeg")
+}
+
+private func testCaptureDraftRejectsInvalidMedia() throws {
+    try expectCaptureDraftError(
+        CaptureDraft(
+            label: " ",
+            materialsText: "",
+            visualNotes: "",
+            source: "phone_capture",
+            mode: .singlePhoto,
+            media: [captureMedia(filename: "key.jpg", contentType: "image/jpeg", kind: .image)]
+        ),
+        .missingLabel
+    )
+    try expectCaptureDraftError(
+        CaptureDraft(
+            label: "key",
+            materialsText: "",
+            visualNotes: "",
+            source: "phone_capture",
+            mode: .arkitScan,
+            media: [captureMedia(filename: "reference.jpg", contentType: "image/jpeg", kind: .image)]
+        ),
+        .missingScanAsset
+    )
+    try expectCaptureDraftError(
+        CaptureDraft(
+            label: "key",
+            materialsText: "",
+            visualNotes: "",
+            source: "phone_capture",
+            mode: .photoSet,
+            media: [captureMedia(filename: "front.jpg", contentType: "image/jpeg", kind: .image)]
+        ),
+        .invalidMediaCount(.photoSet, 1)
+    )
+    try expectCaptureDraftError(
+        CaptureDraft(
+            label: "key",
+            materialsText: "",
+            visualNotes: "",
+            source: "phone_capture",
+            mode: .singlePhoto,
+            media: [captureMedia(filename: "key.txt", contentType: "text/plain", kind: .image)]
+        ),
+        .unsupportedContentType("text/plain")
+    )
+}
+
 private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
     let metadata = sampleMetadata()
     let context = sampleContext()
@@ -333,6 +448,15 @@ private func sampleContext() -> ContextCapsule {
         currentTheme: "deadline pressure",
         desiredTone: "tender, strange",
         recentMilestone: "finished a difficult project draft"
+    )
+}
+
+private func captureMedia(filename: String, contentType: String, kind: CaptureMediaKind) -> CaptureMediaDraft {
+    CaptureMediaDraft(
+        originalFilename: filename,
+        contentType: contentType,
+        data: Data("capture-data".utf8),
+        kind: kind
     )
 }
 
@@ -401,6 +525,15 @@ private func require<T>(_ value: T?, _ message: String) throws -> T {
         throw ContractTestError.expectationFailed(message)
     }
     return value
+}
+
+private func expectCaptureDraftError(_ draft: CaptureDraft, _ expected: CaptureDraftValidationError) throws {
+    do {
+        _ = try draft.validatedUploadPayload()
+        throw ContractTestError.expectationFailed("Expected capture draft error \(expected)")
+    } catch let error as CaptureDraftValidationError {
+        try expectEqual(error, expected)
+    }
 }
 
 private func sourceFile(_ name: String, in directory: URL) throws -> String {
