@@ -175,6 +175,55 @@ def test_create_myth_session_from_capture(tmp_path, monkeypatch) -> None:
     assert created["capture_id"] in payload["object_card"]["symbolic_reading"]
 
 
+def test_create_myth_session_from_arkit_scan_capture_includes_media_refs(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client = _client_with_store(tmp_path, monkeypatch)
+    metadata = json.dumps(
+        {
+            "label": "small idol",
+            "materials": ["stone"],
+            "source": "phone_capture",
+            "capture_mode": "arkit_scan",
+            "visual_notes": "rough scan bundle",
+        }
+    )
+    created = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": metadata},
+        files=[
+            ("files", ("idol.glb", b"fake-glb", "model/gltf-binary")),
+            ("files", ("reference.jpg", b"fake-jpeg", "image/jpeg")),
+        ],
+    ).json()
+
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": created["capture_id"],
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ready_for_review"
+    assert payload["object_card"]["label"] == "small idol"
+    assert payload["object_card"]["source"] == "phone_capture"
+    assert "media_refs: 2" in payload["object_card"]["symbolic_reading"]
+    assert "capture_id:" in payload["object_card"]["symbolic_reading"]
+    assert f"local-capture://{created['capture_id']}/media_0.glb" in payload["object_card"][
+        "symbolic_reading"
+    ]
+    assert f"local-capture://{created['capture_id']}/media_1.jpg" in payload["object_card"][
+        "symbolic_reading"
+    ]
+
+
 def test_create_myth_session_from_capture_returns_404_for_missing_capture(
     tmp_path,
     monkeypatch,

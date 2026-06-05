@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.10 iOS Forge Flow</title>
+  <style>
+    :root {
+      --ink: #172125;
+      --muted: #667277;
+      --line: #d5dfdc;
+      --paper: #f7faf8;
+      --panel: #ffffff;
+      --green: #2d6f58;
+      --blue: #285f8d;
+      --gold: #b47a2b;
+      --rose: #934b58;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow-x: hidden;
+      background: #e4ebe7;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 8px 12px;
+    }
+
+    .phone {
+      width: min(100%, 390px);
+      min-height: 820px;
+      overflow: hidden;
+      border: 1px solid #c6d0cc;
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 18px 50px rgba(26, 42, 38, 0.22);
+    }
+
+    header {
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfb;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.15;
+      font-weight: 760;
+    }
+
+    main {
+      padding: 12px 14px 14px;
+    }
+
+    .section {
+      margin-bottom: 10px;
+    }
+
+    .label {
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 720;
+      text-transform: uppercase;
+    }
+
+    .draft {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .field,
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .field {
+      min-height: 42px;
+      padding: 8px 10px;
+    }
+
+    .field span {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .field strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 7px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 20px 1fr auto;
+      align-items: center;
+      min-height: 38px;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background: var(--green);
+    }
+
+    .step strong {
+      font-size: 14px;
+    }
+
+    .step span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 680;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 10px;
+    }
+
+    .artifact {
+      min-height: 182px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(145deg, rgba(45, 111, 88, 0.2), rgba(40, 95, 141, 0.12)),
+        repeating-linear-gradient(90deg, #eef4f1 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, #eef4f1 0 1px, transparent 1px 18px),
+        #fbfcfb;
+    }
+
+    .relic {
+      width: 82px;
+      height: 92px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -46%) rotate(-8deg);
+      border-radius: 10px 10px 20px 20px;
+      background: linear-gradient(150deg, #c8a05c, #705238 55%, #332d2a);
+      box-shadow: 0 16px 28px rgba(52, 43, 35, 0.28);
+    }
+
+    .relic::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 14px;
+      width: 34px;
+      height: 34px;
+      transform: translateX(-50%);
+      border: 7px solid rgba(255, 249, 224, 0.45);
+      border-radius: 999px;
+    }
+
+    .asset-tag {
+      position: absolute;
+      left: 9px;
+      bottom: 9px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 720;
+    }
+
+    .summary {
+      padding: 10px;
+    }
+
+    .summary h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .summary p {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      padding: 5px 7px;
+      border-radius: 999px;
+      background: #eaf2ef;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 720;
+    }
+
+    .pill.blue {
+      background: #e8f0f7;
+      color: var(--blue);
+    }
+
+    .pill.gold {
+      background: #f7f0e5;
+      color: var(--gold);
+    }
+
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .output {
+      min-height: 78px;
+      padding: 9px;
+    }
+
+    .output h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+    }
+
+    .output p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    .button {
+      min-height: 40px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+      font-weight: 760;
+    }
+
+    .button.primary {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+    }
+
+    @media (max-width: 360px) {
+      body {
+        padding: 6px;
+      }
+
+      .stage,
+      .draft,
+      .output-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header>
+      <div class="status">
+        <span>9:41</span>
+        <span>ForgeFlowService</span>
+      </div>
+      <h1>Personal Myth Forge</h1>
+    </header>
+
+    <main>
+      <section class="section" data-check="capture-draft">
+        <div class="label">Capture draft</div>
+        <div class="draft">
+          <div class="field"><span>mode</span><strong>arkit_scan</strong></div>
+          <div class="field"><span>media</span><strong>scan.glb + jpg</strong></div>
+        </div>
+      </section>
+
+      <section class="section" data-check="service-timeline">
+        <div class="label">Service timeline</div>
+        <div class="timeline">
+          <div class="step"><i class="dot"></i><strong>draft validated</strong><span>local</span></div>
+          <div class="step"><i class="dot"></i><strong>uploading capture</strong><span>POST /captures</span></div>
+          <div class="step"><i class="dot"></i><strong>creating myth session</strong><span>from capture</span></div>
+          <div class="step"><i class="dot"></i><strong>ready for review</strong><span>ready</span></div>
+        </div>
+      </section>
+
+      <section class="section stage">
+        <div class="artifact card" data-check="generated-asset">
+          <div class="relic"></div>
+          <div class="asset-tag">game_asset GLB</div>
+        </div>
+        <div class="summary card">
+          <h2>Generated asset</h2>
+          <p>Backend returns a myth session with generated asset metadata, NPC reactions, world arbitration, and print candidate review state.</p>
+          <div class="pill-row">
+            <span class="pill">scan_0.glb</span>
+            <span class="pill blue">NPC local/openai</span>
+            <span class="pill gold">print review</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section output-grid" data-check="npc-world-output">
+        <div class="output card">
+          <h3>NPC output</h3>
+          <p>Three NPCs interpret, plan, and argue around the relic.</p>
+        </div>
+        <div class="output card">
+          <h3>World change</h3>
+          <p>Accepted actions become visible village state changes.</p>
+        </div>
+      </section>
+
+      <section class="actions">
+        <div class="button">Choose Scan</div>
+        <div class="button primary">Forge Myth</div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

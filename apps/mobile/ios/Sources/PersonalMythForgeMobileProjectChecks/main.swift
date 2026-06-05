@@ -64,7 +64,13 @@ do {
     )
     try requireContains(captureFormView, "CaptureMode", "capture mode app shell source")
     try requireContains(captureFormView, "Scan readiness", "scan readiness app shell source")
+    try requireContains(captureFormView, "chooseCapture", "capture button closure")
+    try requireContains(captureFormView, "forgeMyth", "forge button closure")
+    try requireNotContains(captureFormView, "Future Xcode target wires", "capture button no-op comment")
+    try requireNotContains(captureFormView, "Future Xcode target triggers", "forge button no-op comment")
     try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
+    try requireContains(forgeRootView, "ForgeFlowService", "forge flow service source wiring")
+    try requireContains(forgeRootView, "forgeService.forge", "forge flow service call")
 
     try scanForMobileSecrets(in: [appRoot, coreRoot], additionalFiles: [packageFile, projectFile, plistFile])
 

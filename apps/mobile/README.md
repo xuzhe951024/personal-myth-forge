@@ -136,3 +136,30 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.9-ios-scan-capture.html
 docs/superpowers/verification/assets/p0.9-ios-scan-capture-390x844.png
 ```
+
+## P0.10 Forge Flow Orchestrator
+
+P0.10 adds `ForgeFlowService` to the SwiftPM mobile core. It turns a valid
+`CaptureDraft` and `ContextCapsule` into the real backend two-call flow:
+
+1. `uploadObjectCapture(metadata:media:)`
+2. `createMythSessionFromCapture(captureId:context:)`
+
+The service emits reducer states for editing, uploading, creating the session,
+and ready/error outcomes. `ForgeRootView` now wires the `Forge Myth` button to
+that service through source-checked SwiftUI code, while still using sample media
+until a later device iteration adds PhotosPicker, fileImporter, or ARKit input.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.10-ios-forge-flow.html
+docs/superpowers/verification/assets/p0.10-ios-forge-flow-390x844.png
+```

@@ -148,3 +148,24 @@ Then open:
 ```text
 http://127.0.0.1:8128/p0.9-ios-scan-capture.html
 ```
+
+P0.10 adds the iOS forge flow orchestration layer. `ForgeFlowService` validates a
+`CaptureDraft`, uploads it through `POST /v1/object-captures`, calls
+`POST /v1/myth-sessions/from-capture`, and drives the mobile reducer into the
+ready state with generated asset, NPC, world, and print candidate data.
+
+Run the local checks:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+View the P0.10 static storyboard evidence:
+
+```text
+http://127.0.0.1:8128/p0.10-ios-forge-flow.html
+```
+
+This is still no-simulator evidence. Real media picking, ARKit scanning, and 3D
+rendering remain device/full-Xcode work. Provider API keys stay on the backend.

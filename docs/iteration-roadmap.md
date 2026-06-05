@@ -25,6 +25,7 @@ Bridge deliverable:
 - P0.7 SwiftPM iOS client core scaffold for local capture-to-myth contract tests
 - P0.8 Xcode iOS app shell plus SwiftPM project inspector for no-global-Xcode verification
 - P0.9 iOS scan capture draft layer for photo, photo set, manual upload, and ARKit scan payloads
+- P0.10 iOS forge flow service that uploads capture drafts and creates myth sessions
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
