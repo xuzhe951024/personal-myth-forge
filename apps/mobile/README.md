@@ -66,9 +66,10 @@ The current machine's `xcodebuild` points at Command Line Tools, so simulator or
 device builds are intentionally deferred. Do not run `xcode-select` or switch the
 global developer directory as part of the local test path.
 
-The SwiftUI files under `apps/mobile/ios/App` are source-only scaffolding for a
-future Xcode iOS target. API keys and provider secrets must not be committed into
-the mobile app; use backend-side provider configuration instead.
+The SwiftUI files under `apps/mobile/ios/App` started as source scaffolding in
+P0.7 and are now referenced by the P0.8 Xcode app shell. API keys and provider
+secrets must not be committed into the mobile app; use backend-side provider
+configuration instead.
 
 ## P0.8 Xcode App Shell
 
