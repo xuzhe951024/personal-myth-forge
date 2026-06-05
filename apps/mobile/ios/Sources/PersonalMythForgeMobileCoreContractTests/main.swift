@@ -10,6 +10,7 @@ do {
     try await testCreateMythSessionFromCaptureBuildsJSONRequest()
     try await testInvalidCaptureIDFailsBeforeNetwork()
     try await testHTTPStatusErrorIncludesStatusAndBody()
+    try testForgeFlowReducerTransitionsThroughReadyAndReset()
     print("PersonalMythForgeMobileCoreContractTests passed")
 } catch {
     fputs("Contract test failed: \(error)\n", stderr)
@@ -158,6 +159,41 @@ private func testHTTPStatusErrorIncludesStatusAndBody() async throws {
     } catch ForgeFlowError.httpStatus(500, "provider failed") {
         try expectEqual(transport.requests.count, 1)
     }
+}
+
+private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
+    let metadata = sampleMetadata()
+    let context = sampleContext()
+    let capture = try FixtureLoader.decode(ObjectCapture.self, from: "object-capture-response")
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+
+    var state = ForgeFlowState()
+    state = ForgeFlowReducer.reduce(state: state, event: .setObjectMetadata(metadata))
+    try expectEqual(state.phase, .editingObject)
+    try expectEqual(state.metadata, metadata)
+
+    state = ForgeFlowReducer.reduce(state: state, event: .setContextCapsule(context))
+    try expectEqual(state.phase, .editingObject)
+    try expectEqual(state.context, context)
+
+    state = ForgeFlowReducer.reduce(state: state, event: .beginUpload)
+    try expectEqual(state.phase, .uploadingCapture)
+
+    state = ForgeFlowReducer.reduce(state: state, event: .captureUploaded(capture))
+    try expectEqual(state.phase, .creatingSession)
+    try expectEqual(state.capture, capture)
+
+    state = ForgeFlowReducer.reduce(state: state, event: .sessionCreated(session))
+    try expectEqual(state.phase, .ready(session))
+
+    state = ForgeFlowReducer.reduce(state: state, event: .requestFailed(.httpStatus(500, "redacted")))
+    try expectEqual(state.phase, .failed(.httpStatus(500, "redacted")))
+
+    state = ForgeFlowReducer.reduce(state: state, event: .reset)
+    try expectEqual(state.phase, .idle)
+    try expectTrue(state.metadata == nil)
+    try expectTrue(state.context == nil)
+    try expectTrue(state.capture == nil)
 }
 
 private func sampleMetadata() -> ObjectCaptureMetadata {
