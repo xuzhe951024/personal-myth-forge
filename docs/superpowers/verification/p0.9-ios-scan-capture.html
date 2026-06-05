@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.9 iOS Scan Capture Draft</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182023;
+      --muted: #667074;
+      --line: #d6dedb;
+      --paper: #f8faf8;
+      --panel: #ffffff;
+      --green: #2e6b57;
+      --blue: #2e5e88;
+      --gold: #af7a2e;
+      --red: #9c4a3a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow-x: hidden;
+      background: #e7ece9;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 8px 12px;
+    }
+
+    .phone {
+      width: min(100%, 390px);
+      min-height: 800px;
+      background: var(--paper);
+      border: 1px solid #c6d0cc;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 18px 50px rgba(27, 42, 38, 0.22);
+    }
+
+    header {
+      padding: 12px 16px 9px;
+      background: #fbfcfb;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.12;
+      font-weight: 760;
+    }
+
+    main {
+      padding: 12px 14px 14px;
+    }
+
+    .section {
+      margin-bottom: 10px;
+    }
+
+    .label {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 680;
+      text-transform: uppercase;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #edf2ef;
+    }
+
+    .segment {
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 680;
+    }
+
+    .segment.active {
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 1px 4px rgba(20, 64, 52, 0.25);
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      font-size: 14px;
+    }
+
+    .field span:first-child {
+      color: var(--muted);
+    }
+
+    .field strong {
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .capture-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 10px;
+    }
+
+    .preview,
+    .readiness,
+    .summary {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .preview {
+      min-height: 174px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(145deg, rgba(46, 107, 87, 0.18), rgba(46, 94, 136, 0.14)),
+        repeating-linear-gradient(90deg, #eef3f1 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, #eef3f1 0 1px, transparent 1px 18px),
+        #fbfcfb;
+    }
+
+    .object {
+      width: 74px;
+      height: 102px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -45%) rotate(-7deg);
+      border-radius: 8px 8px 18px 18px;
+      background: linear-gradient(160deg, #c9a76a, #765a38 58%, #3c3330);
+      box-shadow: 0 16px 28px rgba(52, 43, 35, 0.28);
+    }
+
+    .object::before,
+    .object::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 999px;
+    }
+
+    .object::before {
+      top: 12px;
+      width: 32px;
+      height: 32px;
+      border: 7px solid rgba(255, 250, 230, 0.42);
+    }
+
+    .object::after {
+      bottom: 16px;
+      width: 44px;
+      height: 7px;
+      background: rgba(255, 250, 230, 0.36);
+      box-shadow: 0 17px 0 rgba(255, 250, 230, 0.22);
+    }
+
+    .preview-tag {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.88);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 680;
+    }
+
+    .readiness {
+      padding: 10px;
+    }
+
+    .readiness h2,
+    .summary h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 30px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: var(--green);
+    }
+
+    .dot.warn {
+      background: var(--gold);
+    }
+
+    .asset-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .asset {
+      min-height: 50px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .asset strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .summary {
+      padding: 10px;
+    }
+
+    .payload {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .payload li {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 7px;
+      border-top: 1px solid #eef2ef;
+      font-size: 13px;
+    }
+
+    .payload li:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .payload span {
+      color: var(--muted);
+    }
+
+    .payload strong {
+      text-align: right;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .button {
+      min-height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 720;
+    }
+
+    .button.primary {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+    }
+
+    @media (max-width: 360px) {
+      body {
+        padding: 6px;
+      }
+
+      .capture-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 23px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header>
+      <div class="status">
+        <span>9:41</span>
+        <span>Local draft</span>
+      </div>
+      <h1>Personal Myth Forge</h1>
+    </header>
+
+    <main>
+      <section class="section" data-check="capture-mode">
+        <div class="label">Capture mode</div>
+        <div class="segmented" role="tablist" aria-label="Capture mode">
+          <div class="segment">Photo</div>
+          <div class="segment">Set</div>
+          <div class="segment">File</div>
+          <div class="segment active">Scan</div>
+        </div>
+      </section>
+
+      <section class="section field-grid">
+        <div class="field">
+          <span>Object</span>
+          <strong>small idol</strong>
+        </div>
+        <div class="field">
+          <span>Materials</span>
+          <strong>stone, glaze</strong>
+        </div>
+        <div class="field">
+          <span>Context</span>
+          <strong>deadline pressure</strong>
+        </div>
+      </section>
+
+      <section class="section capture-grid">
+        <div class="preview" aria-label="Scan preview">
+          <div class="object"></div>
+          <div class="preview-tag">ARKit scan draft</div>
+        </div>
+
+        <div class="readiness" data-check="scan-readiness">
+          <h2>Scan readiness</h2>
+          <div class="check"><span class="dot"></span><span>mesh captured</span></div>
+          <div class="check"><span class="dot"></span><span>reference image</span></div>
+          <div class="check"><span class="dot warn"></span><span>print repair pending</span></div>
+          <div class="check"><span class="dot"></span><span>privacy capsule only</span></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="label">Photo set</div>
+        <div class="asset-strip">
+          <div class="asset"><strong>front.jpg</strong>image/jpeg</div>
+          <div class="asset"><strong>side.heic</strong>image/heic</div>
+          <div class="asset"><strong>mesh.glb</strong>model/gltf-binary</div>
+        </div>
+      </section>
+
+      <section class="summary" data-check="upload-summary">
+        <h2>Upload payload summary</h2>
+        <ul class="payload">
+          <li><span>capture_mode</span><strong>arkit_scan</strong></li>
+          <li><span>game source</span><strong>scan_0.glb</strong></li>
+          <li><span>NPC input</span><strong>capsule summary</strong></li>
+          <li><span>print path</span><strong>repair review</strong></li>
+        </ul>
+        <div class="action-row">
+          <div class="button">Choose Scan</div>
+          <div class="button primary">Forge Myth</div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

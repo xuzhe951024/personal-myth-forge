@@ -49,11 +49,14 @@ public enum ForgeFlowError: Error, Equatable {
 
 public final class PersonalMythForgeAPIClient {
     private static let maxHTTPErrorBodyCharacters = 512
-    private static let captureContentTypeExtensions = [
-        "image/heic": "heic",
-        "image/heif": "heif",
-        "image/jpeg": "jpg",
-        "image/png": "png",
+    private static let captureMediaPartSpecs = [
+        "image/heic": CaptureMediaPartSpec(prefix: "media", fileExtension: "heic"),
+        "image/heif": CaptureMediaPartSpec(prefix: "media", fileExtension: "heif"),
+        "image/jpeg": CaptureMediaPartSpec(prefix: "media", fileExtension: "jpg"),
+        "image/png": CaptureMediaPartSpec(prefix: "media", fileExtension: "png"),
+        "application/octet-stream": CaptureMediaPartSpec(prefix: "scan", fileExtension: "bin"),
+        "model/gltf-binary": CaptureMediaPartSpec(prefix: "scan", fileExtension: "glb"),
+        "model/vnd.usdz+zip": CaptureMediaPartSpec(prefix: "scan", fileExtension: "usdz"),
     ]
 
     private let baseURL: URL
@@ -148,10 +151,10 @@ public final class PersonalMythForgeAPIClient {
         let contentType = upload.contentType
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
-        guard let fileExtension = Self.captureContentTypeExtensions[contentType] else {
+        guard let spec = Self.captureMediaPartSpecs[contentType] else {
             throw ForgeFlowError.encodingFailed("Unsupported capture content type.")
         }
-        return ("media_\(index).\(fileExtension)", contentType)
+        return ("\(spec.prefix)_\(index).\(spec.fileExtension)", contentType)
     }
 
     private func encodeJSONBody<T: Encodable>(_ body: T) throws -> Data {
@@ -221,6 +224,11 @@ public final class PersonalMythForgeAPIClient {
             withTemplate: "$1[redacted]"
         )
     }
+}
+
+private struct CaptureMediaPartSpec {
+    let prefix: String
+    let fileExtension: String
 }
 
 private struct MythSessionFromCaptureBody: Encodable {

@@ -101,3 +101,38 @@ swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTest
 `PMFBackendBaseURL` in `App/Info.plist` exposes the backend URL for the first API
 client wiring. Provider API keys stay on the backend; the mobile app should
 never commit OpenAI, Meshy, or print provider secrets.
+
+## P0.9 Scan Capture Draft
+
+P0.9 adds a SwiftPM-verifiable capture draft layer for:
+
+- `single_photo`
+- `photo_set`
+- `manual_upload`
+- `arkit_scan`
+
+The draft layer converts mobile input state into `ObjectCaptureMetadata` plus
+`[CaptureUpload]`, then the API client writes safe multipart filenames for image
+and scan assets. Supported scan upload content types are:
+
+- `model/gltf-binary` -> `scan_N.glb`
+- `model/vnd.usdz+zip` -> `scan_N.usdz`
+- `application/octet-stream` -> `scan_N.bin`
+
+This iteration does not wire the live camera, PhotosPicker, or ARKit capture
+runtime. It prepares the app source, validation rules, and backend upload
+contract so a later full-Xcode/device iteration can attach real capture inputs.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.9-ios-scan-capture.html
+docs/superpowers/verification/assets/p0.9-ios-scan-capture-390x844.png
+```

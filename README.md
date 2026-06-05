@@ -122,3 +122,29 @@ swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTest
 
 The app shell exposes `PMFBackendBaseURL` in `Info.plist` for the first API
 client wiring; provider API keys stay on the backend.
+
+P0.9 adds an iOS scan capture draft layer in the SwiftPM mobile core. It
+validates `single_photo`, `photo_set`, `manual_upload`, and `arkit_scan` inputs
+before building backend upload payloads. The API client now accepts image media
+plus GLB, USDZ, and binary scan assets while still generating safe multipart
+filenames such as `media_0.jpg` and `scan_0.glb`.
+
+Run the no-simulator acceptance checks:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+View the static mobile storyboard evidence:
+
+```bash
+cd docs/superpowers/verification
+python3 -m http.server 8128 --bind 127.0.0.1
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8128/p0.9-ios-scan-capture.html
+```
