@@ -21,3 +21,4 @@ build/
 *.usdz
 storage/
 services/backend/.local/
+apps/mobile/ios/.build/

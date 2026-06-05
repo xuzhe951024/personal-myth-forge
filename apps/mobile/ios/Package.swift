@@ -1,0 +1,18 @@
+// swift-tools-version: 6.0
+import PackageDescription
+
+let package = Package(
+    name: "PersonalMythForgeMobile",
+    platforms: [.macOS(.v13)],
+    products: [
+        .library(name: "PersonalMythForgeMobileCore", targets: ["PersonalMythForgeMobileCore"])
+    ],
+    targets: [
+        .target(name: "PersonalMythForgeMobileCore"),
+        .executableTarget(
+            name: "PersonalMythForgeMobileCoreContractTests",
+            dependencies: ["PersonalMythForgeMobileCore"],
+            resources: [.process("Fixtures")]
+        ),
+    ]
+)
