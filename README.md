@@ -1,0 +1,29 @@
+# Personal Myth Forge
+
+`Personal Myth Forge` is an early-stage mobile-first game prototype where a player's real-world object and personal context are transformed into a mythic 3D artifact, interpreted by autonomous NPCs, and optionally converted into a printable physical relic.
+
+## v0.1 Goal
+
+Build a vertical slice that proves the core loop:
+
+1. Capture or upload a real-world object from mobile.
+2. Convert the object plus a personal context capsule into a myth seed.
+3. Generate a free-form 3D game asset.
+4. Let NPCs independently interpret and react to the artifact.
+5. Produce a print-ready derivative and quote it through a print provider.
+
+## Repository Layout
+
+- `services/backend/` - FastAPI service for AI orchestration, NPC planning, 3D generation adapters, and print provider adapters.
+- `apps/mobile/` - Unity mobile project placeholder and integration notes.
+- `packages/personal-myth-skill/` - Future MCP/agent skill interface for personal context capsules.
+- `docs/` - Product design, iteration roadmap, and implementation plans.
+
+## Local Backend
+
+```bash
+cd services/backend
+uv run pytest
+uv run uvicorn myth_forge_api.main:app --reload --port 8080
+```
+

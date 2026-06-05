@@ -1,0 +1,35 @@
+[project]
+name = "personal-myth-forge-api"
+version = "0.1.0"
+description = "Backend API for the Personal Myth Forge v0.1 prototype."
+readme = "../../README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.115.0",
+  "pydantic>=2.8.0",
+  "python-dotenv>=1.0.1",
+  "uvicorn[standard]>=0.30.0",
+]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.27.0",
+  "pytest>=8.3.0",
+  "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/myth_forge_api"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
