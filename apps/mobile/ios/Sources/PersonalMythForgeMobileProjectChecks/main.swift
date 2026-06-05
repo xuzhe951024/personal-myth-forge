@@ -5,12 +5,16 @@ do {
     let iosRoot = repositoryRoot.appendingPathComponent("apps/mobile/ios")
     let appRoot = iosRoot.appendingPathComponent("App")
     let coreRoot = iosRoot.appendingPathComponent("Sources/PersonalMythForgeMobileCore")
+    let packageFile = iosRoot.appendingPathComponent("Package.swift")
     let projectFile = iosRoot.appendingPathComponent("PersonalMythForge.xcodeproj/project.pbxproj")
     let plistFile = appRoot.appendingPathComponent("Info.plist")
 
+    let packageManifest = try readText(packageFile)
     let project = try readText(projectFile)
     let plist = try readPropertyList(plistFile)
 
+    try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
+    try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
     try requireContains(project, "PersonalMythForge", "Xcode project target name")
     try requireContains(project, #"productType = "com.apple.product-type.application""#, "iOS app product type")
     try requireContains(project, "IPHONEOS_DEPLOYMENT_TARGET = 17.0", "iOS deployment target")
@@ -57,7 +61,7 @@ do {
         expected: true
     )
 
-    try scanForMobileSecrets(in: [appRoot, coreRoot], additionalFiles: [projectFile, plistFile])
+    try scanForMobileSecrets(in: [appRoot, coreRoot], additionalFiles: [packageFile, projectFile, plistFile])
 
     print("PersonalMythForgeMobileProjectChecks passed")
 } catch {
