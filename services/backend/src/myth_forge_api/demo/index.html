@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Personal Myth Forge</title>
+    <link rel="stylesheet" href="/demo/static/styles.css" />
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="forge-input" aria-labelledby="forge-title">
+        <div class="brand-row">
+          <span class="brand-mark" aria-hidden="true">PMF</span>
+          <div>
+            <h1 id="forge-title">Personal Myth Forge</h1>
+            <p>Object to omen</p>
+          </div>
+        </div>
+
+        <form id="myth-form" class="myth-form">
+          <fieldset>
+            <legend>Object</legend>
+            <label>
+              Label
+              <input name="label" value="old brass key" required />
+            </label>
+            <label>
+              Source
+              <select name="source">
+                <option value="phone_capture">phone_capture</option>
+                <option value="manual_upload">manual_upload</option>
+              </select>
+            </label>
+            <label>
+              Materials
+              <input name="materials" value="metal, brass" />
+            </label>
+            <label>
+              Visual Notes
+              <textarea name="visual_notes" rows="3">worn teeth, circular bow, warm reflections</textarea>
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Capsule</legend>
+            <label>
+              Current Theme
+              <input name="current_theme" value="deadline pressure" required />
+            </label>
+            <label>
+              Desired Tone
+              <input name="desired_tone" value="tender, strange" required />
+            </label>
+            <label>
+              Recent Milestone
+              <input name="recent_milestone" value="finished a difficult project draft" />
+            </label>
+          </fieldset>
+
+          <button class="primary-action" type="submit">Forge Myth</button>
+        </form>
+      </section>
+
+      <section class="forge-output" aria-live="polite">
+        <div class="artifact-stage">
+          <canvas id="artifact-canvas" width="640" height="420" aria-label="generated artifact preview"></canvas>
+          <div id="asset-viewer" class="asset-viewer"></div>
+        </div>
+
+        <div id="status-line" class="status-line">Awaiting object</div>
+        <div id="session-output" class="session-output">
+          <article class="empty-state">
+            <h2>The village is quiet.</h2>
+            <p>Place an object on the altar.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+    <script src="/demo/static/app.js"></script>
+  </body>
+</html>

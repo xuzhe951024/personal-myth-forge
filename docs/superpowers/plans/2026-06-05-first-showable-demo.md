@@ -417,7 +417,7 @@ git commit -m "feat: add meshy provider and asset CLI"
 - Create: `services/backend/src/myth_forge_api/demo/app.js`
 - Modify: `services/backend/tests/test_api_contract.py`
 
-- [ ] **Step 1: Write failing `/demo` route test**
+- [x] **Step 1: Write failing `/demo` route test**
 
 Add to `services/backend/tests/test_api_contract.py`:
 
@@ -432,13 +432,13 @@ def test_demo_route_serves_mobile_first_shell() -> None:
     assert "myth-form" in response.text
 ```
 
-- [ ] **Step 2: Run route test and verify it fails**
+- [x] **Step 2: Run route test and verify it fails**
 
 Run: `cd services/backend && uv run pytest tests/test_api_contract.py::test_demo_route_serves_mobile_first_shell -q`
 
 Expected: fail with 404.
 
-- [ ] **Step 3: Implement demo route and static mount**
+- [x] **Step 3: Implement demo route and static mount**
 
 In `main.py`, add:
 
@@ -457,7 +457,7 @@ def demo() -> FileResponse:
     return FileResponse(DEMO_DIR / "index.html")
 ```
 
-- [ ] **Step 4: Create HTML/CSS/JS demo files**
+- [x] **Step 4: Create HTML/CSS/JS demo files**
 
 `index.html` should include a real form, a result region, links to `/demo/static/styles.css` and `/demo/static/app.js`, and semantic sections for artifact, NPCs, and print review.
 
@@ -465,13 +465,13 @@ def demo() -> FileResponse:
 
 `styles.css` should be mobile-first, readable at 390px width, and use stable dimensions for form controls, action buttons, and the artifact stage.
 
-- [ ] **Step 5: Run demo route test**
+- [x] **Step 5: Run demo route test**
 
 Run: `cd services/backend && uv run pytest tests/test_api_contract.py::test_demo_route_serves_mobile_first_shell -q`
 
 Expected: pass.
 
-- [ ] **Step 6: Wire API route to provider factory**
+- [x] **Step 6: Wire API route to provider factory**
 
 Modify `main.py` so `create_myth_session` calls:
 
@@ -485,13 +485,13 @@ create_demo_myth_session(
 
 Keep default behavior deterministic because `THREE_D_PROVIDER` defaults to `local`.
 
-- [ ] **Step 7: Run API contract tests**
+- [x] **Step 7: Run API contract tests**
 
 Run: `cd services/backend && uv run pytest tests/test_api_contract.py -q`
 
 Expected: existing API test and demo route test pass.
 
-- [ ] **Step 8: Commit Task 3**
+- [x] **Step 8: Commit Task 3**
 
 Run:
 

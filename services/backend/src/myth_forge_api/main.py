@@ -1,15 +1,23 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from myth_forge_api.domain.models import MythSession, MythSessionRequest
 from myth_forge_api.domain.pipeline import create_demo_myth_session
+from myth_forge_api.providers.factory import build_three_d_provider
+
+DEMO_DIR = Path(__file__).parent / "demo"
 
 app = FastAPI(
     title="Personal Myth Forge API",
     version="0.1.0",
     description="Backend contract for the Personal Myth Forge v0.1 prototype.",
 )
+app.mount("/demo/static", StaticFiles(directory=DEMO_DIR), name="demo-static")
 
 
 @app.get("/health")
@@ -17,10 +25,15 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/demo", include_in_schema=False)
+def demo() -> FileResponse:
+    return FileResponse(DEMO_DIR / "index.html")
+
+
 @app.post("/v1/myth-sessions", response_model=MythSession)
 def create_myth_session(request: MythSessionRequest) -> MythSession:
     return create_demo_myth_session(
         object_observation=request.object_observation,
         context_capsule=request.context_capsule,
+        three_d_provider=build_three_d_provider(),
     )
-
