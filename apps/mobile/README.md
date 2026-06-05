@@ -1,6 +1,9 @@
-# Mobile App Placeholder
+# Mobile App
 
-The v0.1 client should be built as an iOS-first Unity project.
+The v0.1 client is iOS-first. P0.7 adds a native SwiftPM mobile core scaffold
+under `apps/mobile/ios` so the capture-to-myth API loop can be tested locally
+without changing global Xcode settings. Unity remains a later candidate for the
+full 3D village scene once Unity is available locally.
 
 ## Responsibilities
 
@@ -50,3 +53,19 @@ manifest URIs, never raw bytes.
 ## Unity Setup Notes
 
 Create the Unity project in this directory when Unity is available locally. Use AR Foundation for future AR/camera paths, but v0.1 can start with camera upload plus a regular 3D scene.
+
+## P0.7 iOS Scaffold
+
+Run the local Swift contract tests with:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+The current machine's `xcodebuild` points at Command Line Tools, so simulator or
+device builds are intentionally deferred. Do not run `xcode-select` or switch the
+global developer directory as part of the local test path.
+
+The SwiftUI files under `apps/mobile/ios/App` are source-only scaffolding for a
+future Xcode iOS target. API keys and provider secrets must not be committed into
+the mobile app; use backend-side provider configuration instead.

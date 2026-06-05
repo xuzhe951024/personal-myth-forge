@@ -22,6 +22,7 @@ Bridge deliverable:
 - world arbitration output rendered in the demo as visible world changes and accepted/rejected actions
 - P0.6 capture upload contract for iOS/Unity clients
 - local ignored capture storage for no-key development
+- P0.7 SwiftPM iOS client core scaffold for local capture-to-myth contract tests
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
