@@ -9,6 +9,8 @@ struct CaptureFormView: View {
     @Binding var desiredTone: String
     @Binding var selectedCaptureMode: CaptureMode
     let phase: ForgeFlowPhase
+    let chooseCapture: () -> Void
+    let forgeMyth: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -59,14 +61,10 @@ struct CaptureFormView: View {
             TextField("Current theme", text: $currentTheme)
             TextField("Desired tone", text: $desiredTone)
 
-            Button(captureActionTitle) {
-                // Future Xcode target wires PhotosPicker or camera capture here.
-            }
+            Button(captureActionTitle, action: chooseCapture)
             .buttonStyle(.bordered)
 
-            Button("Forge Myth") {
-                // Future Xcode target triggers upload and from-capture session calls.
-            }
+            Button("Forge Myth", action: forgeMyth)
             .buttonStyle(.borderedProminent)
 
             Text(statusText)
