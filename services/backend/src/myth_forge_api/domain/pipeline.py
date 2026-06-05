@@ -2,21 +2,19 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Mapping, Any
+from typing import Any, Mapping
 
+from myth_forge_api.domain.arbitration import LocalWorldArbitrator, WorldArbitrator
 from myth_forge_api.domain.models import (
     ContextCapsule,
     MythSeed,
     MythSession,
-    NPCReaction,
     ObjectCard,
     ObjectObservation,
-    ResolvedNPCAction,
-    WorldResolution,
 )
+from myth_forge_api.providers.npc import LocalNPCDirector, NPCDirector
 from myth_forge_api.providers.printing import LocalPrintProvider
 from myth_forge_api.providers.printing import PrintProvider
-from myth_forge_api.providers.npc import LocalNPCDirector, NPCDirector
 from myth_forge_api.providers.three_d import LocalThreeDProvider, ThreeDProvider
 
 
@@ -26,6 +24,7 @@ def create_demo_myth_session(
     three_d_provider: ThreeDProvider | None = None,
     print_provider: PrintProvider | None = None,
     npc_director: NPCDirector | None = None,
+    world_arbitrator: WorldArbitrator | None = None,
 ) -> MythSession:
     observation = _coerce_object_observation(object_observation)
     capsule = _coerce_context_capsule(context_capsule)
@@ -47,7 +46,15 @@ def create_demo_myth_session(
         generated_asset=generated_asset,
     )
     npc_reactions = npc_result.reactions
-    world_resolution = _create_world_resolution(npc_reactions)
+    selected_world_arbitrator = world_arbitrator or LocalWorldArbitrator()
+    world_resolution = selected_world_arbitrator.resolve(
+        session_id=session_id,
+        object_card=object_card,
+        myth_seed=myth_seed,
+        context_capsule=capsule,
+        generated_asset=generated_asset,
+        npc_reactions=npc_reactions,
+    )
     selected_print_provider = print_provider or LocalPrintProvider()
     print_candidate = selected_print_provider.create_print_candidate(generated_asset)
 
@@ -128,35 +135,4 @@ def _create_myth_seed(object_card: ObjectCard, capsule: ContextCapsule) -> MythS
             f"it into a strange village relic. Emotional tone: {capsule.desired_tone}. "
             "The result must be game-ready as a GLB and suitable for later print adaptation."
         ),
-    )
-
-
-def _create_world_resolution(npc_reactions: list[NPCReaction]) -> WorldResolution:
-    accepted_actions = [
-        ResolvedNPCAction(
-            npc_id=reaction.npc_id,
-            action=reaction.plan[0],
-            status="accepted",
-            reason="safe ritual action",
-        )
-        for reaction in npc_reactions
-        if reaction.plan
-    ]
-
-    return WorldResolution(
-        arbitrator="local_rules",
-        summary="The village begins interpreting the relic.",
-        accepted_actions=accepted_actions,
-        rejected_actions=[],
-        world_state_delta={
-            "faith": 1,
-            "curiosity": 1,
-            "suspicion": 1,
-            "debate_intensity": 1,
-            "artifact_renown": 1,
-        },
-        visible_changes=[
-            "The artifact gains a local name.",
-            "The village debate begins.",
-        ],
     )

@@ -1,4 +1,9 @@
-from myth_forge_api.domain.models import GeneratedAsset, NPCDirectorResult, NPCReaction
+from myth_forge_api.domain.models import (
+    GeneratedAsset,
+    NPCDirectorResult,
+    NPCReaction,
+    WorldResolution,
+)
 from myth_forge_api.domain.pipeline import create_demo_myth_session
 
 
@@ -45,6 +50,34 @@ class RecordingNPCDirector:
                     world_change="test_change",
                 )
             ],
+        )
+
+
+class RecordingWorldArbitrator:
+    arbitrator_name = "recording_rules"
+
+    def resolve(
+        self,
+        session_id,
+        object_card,
+        myth_seed,
+        context_capsule,
+        generated_asset,
+        npc_reactions,
+    ) -> WorldResolution:
+        return WorldResolution(
+            arbitrator=self.arbitrator_name,
+            summary=f"resolved {len(npc_reactions)} reactions for {object_card.label}",
+            accepted_actions=[],
+            rejected_actions=[],
+            world_state_delta={
+                "faith": 0,
+                "curiosity": 0,
+                "suspicion": 0,
+                "debate_intensity": 0,
+                "artifact_renown": 0,
+            },
+            visible_changes=["The test arbitrator marked the world quiet."],
         )
 
 
@@ -153,3 +186,16 @@ def test_pipeline_accepts_injected_npc_director() -> None:
     assert session.npc_director == "recording_npc"
     assert [reaction.npc_id for reaction in session.npc_reactions] == ["test"]
     assert director.calls == [session.session_id]
+
+
+def test_pipeline_accepts_injected_world_arbitrator() -> None:
+    session = create_demo_myth_session(
+        object_observation={"label": "coin", "materials": ["metal"], "source": "manual_upload"},
+        context_capsule={"current_theme": "choice", "desired_tone": "bright"},
+        world_arbitrator=RecordingWorldArbitrator(),
+    )
+
+    assert session.world_resolution.arbitrator == "recording_rules"
+    assert session.world_resolution.visible_changes == [
+        "The test arbitrator marked the world quiet."
+    ]
