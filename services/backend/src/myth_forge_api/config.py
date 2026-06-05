@@ -19,7 +19,7 @@ class Settings:
     openai_api_key: str | None = None
     openai_npc_model: str = "gpt-4.1-mini"
     openai_api_base_url: str | None = None
-    capture_storage_dir: str = str(Path(__file__).resolve().parents[3] / ".local" / "captures")
+    capture_storage_dir: str = str(Path(__file__).resolve().parents[2] / ".local" / "captures")
 
 
 def load_settings(env: Mapping[str, str] | None = None) -> Settings:
@@ -37,6 +37,6 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         openai_api_base_url=source.get("OPENAI_API_BASE_URL") or None,
         capture_storage_dir=source.get(
             "CAPTURE_STORAGE_DIR",
-            str(Path(__file__).resolve().parents[3] / ".local" / "captures"),
+            str(Path(__file__).resolve().parents[2] / ".local" / "captures"),
         ),
     )
