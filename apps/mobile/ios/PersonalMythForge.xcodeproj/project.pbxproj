@@ -1,0 +1,266 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		10A000000000000000000001 /* PersonalMythForgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000001 /* PersonalMythForgeApp.swift */; };
+		10A000000000000000000002 /* ForgeRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000002 /* ForgeRootView.swift */; };
+		10A000000000000000000003 /* CaptureFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000003 /* CaptureFormView.swift */; };
+		10A000000000000000000004 /* ArtifactSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000004 /* ArtifactSummaryView.swift */; };
+		10A000000000000000000005 /* WorldResolutionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000005 /* WorldResolutionView.swift */; };
+		10A000000000000000000006 /* NPCReactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000006 /* NPCReactionsView.swift */; };
+		10A000000000000000000007 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000007 /* AppConfiguration.swift */; };
+		10A000000000000000000101 /* PMFJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000101 /* PMFJSON.swift */; };
+		10A000000000000000000102 /* PMFModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000102 /* PMFModels.swift */; };
+		10A000000000000000000103 /* CaptureID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000103 /* CaptureID.swift */; };
+		10A000000000000000000104 /* MultipartFormDataBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000104 /* MultipartFormDataBuilder.swift */; };
+		10A000000000000000000105 /* PersonalMythForgeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000105 /* PersonalMythForgeAPIClient.swift */; };
+		10A000000000000000000106 /* ForgeFlowReducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000106 /* ForgeFlowReducer.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		10B000000000000000000001 /* PersonalMythForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalMythForgeApp.swift; sourceTree = "<group>"; };
+		10B000000000000000000002 /* ForgeRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeRootView.swift; sourceTree = "<group>"; };
+		10B000000000000000000003 /* CaptureFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFormView.swift; sourceTree = "<group>"; };
+		10B000000000000000000004 /* ArtifactSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtifactSummaryView.swift; sourceTree = "<group>"; };
+		10B000000000000000000005 /* WorldResolutionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldResolutionView.swift; sourceTree = "<group>"; };
+		10B000000000000000000006 /* NPCReactionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPCReactionsView.swift; sourceTree = "<group>"; };
+		10B000000000000000000007 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		10B000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		10B000000000000000000101 /* PMFJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFJSON.swift; sourceTree = "<group>"; };
+		10B000000000000000000102 /* PMFModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFModels.swift; sourceTree = "<group>"; };
+		10B000000000000000000103 /* CaptureID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureID.swift; sourceTree = "<group>"; };
+		10B000000000000000000104 /* MultipartFormDataBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipartFormDataBuilder.swift; sourceTree = "<group>"; };
+		10B000000000000000000105 /* PersonalMythForgeAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalMythForgeAPIClient.swift; sourceTree = "<group>"; };
+		10B000000000000000000106 /* ForgeFlowReducer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeFlowReducer.swift; sourceTree = "<group>"; };
+		10B000000000000000000201 /* PersonalMythForge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PersonalMythForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		10C000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		10D000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				10D000000000000000000002 /* App */,
+				10D000000000000000000003 /* PersonalMythForgeMobileCore */,
+				10D000000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		10D000000000000000000002 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				10B000000000000000000007 /* AppConfiguration.swift */,
+				10B000000000000000000001 /* PersonalMythForgeApp.swift */,
+				10B000000000000000000002 /* ForgeRootView.swift */,
+				10B000000000000000000003 /* CaptureFormView.swift */,
+				10B000000000000000000004 /* ArtifactSummaryView.swift */,
+				10B000000000000000000005 /* WorldResolutionView.swift */,
+				10B000000000000000000006 /* NPCReactionsView.swift */,
+				10B000000000000000000008 /* Info.plist */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		10D000000000000000000003 /* PersonalMythForgeMobileCore */ = {
+			isa = PBXGroup;
+			children = (
+				10B000000000000000000101 /* PMFJSON.swift */,
+				10B000000000000000000102 /* PMFModels.swift */,
+				10B000000000000000000103 /* CaptureID.swift */,
+				10B000000000000000000104 /* MultipartFormDataBuilder.swift */,
+				10B000000000000000000105 /* PersonalMythForgeAPIClient.swift */,
+				10B000000000000000000106 /* ForgeFlowReducer.swift */,
+			);
+			path = Sources/PersonalMythForgeMobileCore;
+			sourceTree = "<group>";
+		};
+		10D000000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				10B000000000000000000201 /* PersonalMythForge.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		10E000000000000000000001 /* PersonalMythForge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 10H000000000000000000001 /* Build configuration list for PBXNativeTarget "PersonalMythForge" */;
+			buildPhases = (
+				10F000000000000000000001 /* Sources */,
+				10C000000000000000000001 /* Frameworks */,
+				10F000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PersonalMythForge;
+			productName = PersonalMythForge;
+			productReference = 10B000000000000000000201 /* PersonalMythForge.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		10G000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					10E000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 10H000000000000000000002 /* Build configuration list for PBXProject "PersonalMythForge" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 10D000000000000000000001;
+			productRefGroup = 10D000000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				10E000000000000000000001 /* PersonalMythForge */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		10F000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		10F000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10A000000000000000000001 /* PersonalMythForgeApp.swift in Sources */,
+				10A000000000000000000002 /* ForgeRootView.swift in Sources */,
+				10A000000000000000000003 /* CaptureFormView.swift in Sources */,
+				10A000000000000000000004 /* ArtifactSummaryView.swift in Sources */,
+				10A000000000000000000005 /* WorldResolutionView.swift in Sources */,
+				10A000000000000000000006 /* NPCReactionsView.swift in Sources */,
+				10A000000000000000000007 /* AppConfiguration.swift in Sources */,
+				10A000000000000000000101 /* PMFJSON.swift in Sources */,
+				10A000000000000000000102 /* PMFModels.swift in Sources */,
+				10A000000000000000000103 /* CaptureID.swift in Sources */,
+				10A000000000000000000104 /* MultipartFormDataBuilder.swift in Sources */,
+				10A000000000000000000105 /* PersonalMythForgeAPIClient.swift in Sources */,
+				10A000000000000000000106 /* ForgeFlowReducer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		10I000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.personalmythforge.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		10I000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.personalmythforge.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		10I000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		10I000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		10H000000000000000000001 /* Build configuration list for PBXNativeTarget "PersonalMythForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				10I000000000000000000001 /* Debug */,
+				10I000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		10H000000000000000000002 /* Build configuration list for PBXProject "PersonalMythForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				10I000000000000000000003 /* Debug */,
+				10I000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 10G000000000000000000001 /* Project object */;
+}
