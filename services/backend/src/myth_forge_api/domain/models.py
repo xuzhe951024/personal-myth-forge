@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+CAPTURE_ID_PATTERN = r"^cap_[0-9a-f]{16}$"
+
 
 class ObjectObservation(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -20,6 +22,41 @@ class ContextCapsule(BaseModel):
     current_theme: str = Field(min_length=1)
     desired_tone: str = Field(min_length=1)
     recent_milestone: str | None = None
+
+
+class ObjectCaptureMetadata(BaseModel):
+    label: str = Field(min_length=1)
+    materials: list[str] = Field(default_factory=list)
+    source: str = Field(min_length=1)
+    capture_mode: Literal["single_photo", "photo_set", "manual_upload", "arkit_scan"]
+    visual_notes: str | None = None
+
+    def to_object_observation(self) -> ObjectObservation:
+        return ObjectObservation(
+            label=self.label,
+            materials=self.materials,
+            source=self.source,
+            visual_notes=self.visual_notes,
+        )
+
+
+class CaptureMediaItem(BaseModel):
+    media_id: str
+    role: Literal["reference_image", "scan_asset"]
+    content_type: str
+    byte_size: int = Field(ge=0)
+    uri: str
+    moderation_status: Literal["not_requested", "approved", "needs_review"]
+
+
+class ObjectCapture(BaseModel):
+    capture_id: str = Field(pattern=CAPTURE_ID_PATTERN)
+    status: Literal["ready", "blocked", "processing"]
+    source: str
+    capture_mode: Literal["single_photo", "photo_set", "manual_upload", "arkit_scan"]
+    object_observation: ObjectObservation
+    media_items: list[CaptureMediaItem]
+    created_at: str
 
 
 class ObjectCard(BaseModel):
@@ -100,4 +137,9 @@ class MythSession(BaseModel):
 
 class MythSessionRequest(BaseModel):
     object_observation: ObjectObservation
+    context_capsule: ContextCapsule
+
+
+class MythSessionFromCaptureRequest(BaseModel):
+    capture_id: str = Field(min_length=1, pattern=CAPTURE_ID_PATTERN)
     context_capsule: ContextCapsule

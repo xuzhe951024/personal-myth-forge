@@ -20,6 +20,8 @@ Bridge deliverable:
 - `evaluate-3d` CLI report for batch prompt quality, elapsed time, and failure tracking
 - optional OpenAI NPC director behind `NPC_PROVIDER=openai`, with local deterministic fallback
 - world arbitration output rendered in the demo as visible world changes and accepted/rejected actions
+- P0.6 capture upload contract for iOS/Unity clients
+- local ignored capture storage for no-key development
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

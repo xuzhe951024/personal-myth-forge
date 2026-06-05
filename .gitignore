@@ -20,3 +20,4 @@ build/
 *.fbx
 *.usdz
 storage/
+services/backend/.local/

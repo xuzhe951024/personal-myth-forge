@@ -147,3 +147,13 @@ def test_demo_route_includes_world_resolution_mount_points() -> None:
     assert response.status_code == 200
     assert "world-state-strip" in response.text
     assert "visible-changes" in response.text
+
+
+def test_demo_route_includes_capture_upload_mount_points() -> None:
+    client = TestClient(app)
+
+    response = client.get("/demo")
+
+    assert response.status_code == 200
+    assert 'type="file"' in response.text
+    assert "capture-status" in response.text

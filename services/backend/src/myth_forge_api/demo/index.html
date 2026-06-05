@@ -33,6 +33,10 @@
               </select>
             </label>
             <label>
+              Object Image
+              <input name="object_file" type="file" accept="image/jpeg,image/png,image/heic,image/heif" />
+            </label>
+            <label>
               Materials
               <input name="materials" value="metal, brass" />
             </label>
@@ -69,6 +73,7 @@
         </div>
 
         <div id="status-line" class="status-line">Awaiting object</div>
+        <div id="capture-status" class="capture-status">No capture uploaded</div>
         <div class="provider-badges" id="provider-badges">
           <span>3D local</span>
           <span>NPC local</span>
