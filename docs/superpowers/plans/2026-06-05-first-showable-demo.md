@@ -243,7 +243,7 @@ git commit -m "feat: add provider injection and settings"
 - Create: `services/backend/tests/test_meshy_provider.py`
 - Create: `services/backend/tests/test_cli.py`
 
-- [ ] **Step 1: Move `httpx` into runtime dependencies**
+- [x] **Step 1: Move `httpx` into runtime dependencies**
 
 Modify `services/backend/pyproject.toml` so `[project].dependencies` includes `httpx>=0.27.0` and `[dependency-groups].dev` keeps pytest and ruff.
 
@@ -251,7 +251,7 @@ Run: `cd services/backend && uv lock`
 
 Expected: `uv.lock` updates successfully.
 
-- [ ] **Step 2: Write failing Meshy success test**
+- [x] **Step 2: Write failing Meshy success test**
 
 Create `services/backend/tests/test_meshy_provider.py` with an `httpx.MockTransport` sequence:
 
@@ -289,13 +289,13 @@ def test_meshy_provider_creates_preview_refines_and_returns_glb() -> None:
     assert [request.method for request in requests] == ["POST", "GET", "POST", "GET"]
 ```
 
-- [ ] **Step 3: Run Meshy success test and verify it fails**
+- [x] **Step 3: Run Meshy success test and verify it fails**
 
 Run: `cd services/backend && uv run pytest tests/test_meshy_provider.py::test_meshy_provider_creates_preview_refines_and_returns_glb -q`
 
 Expected: fail because the provider is not implemented.
 
-- [ ] **Step 4: Implement Meshy provider**
+- [x] **Step 4: Implement Meshy provider**
 
 Implement in `providers/three_d.py`:
 
@@ -321,13 +321,13 @@ class MeshyTaskTimeoutError(MeshyProviderError):
 - Poll refine until `SUCCEEDED`.
 - Return `GeneratedAsset(kind="game_asset", provider="meshy", format="glb", uri=refined_task["model_urls"]["glb"], prompt=prompt, moderation_status="needs_review")`.
 
-- [ ] **Step 5: Run Meshy success test**
+- [x] **Step 5: Run Meshy success test**
 
 Run: `cd services/backend && uv run pytest tests/test_meshy_provider.py::test_meshy_provider_creates_preview_refines_and_returns_glb -q`
 
 Expected: pass.
 
-- [ ] **Step 6: Write failing Meshy error tests**
+- [x] **Step 6: Write failing Meshy error tests**
 
 Add tests for:
 
@@ -348,13 +348,13 @@ def test_meshy_provider_times_out_when_task_never_finishes() -> None:
     # Expected: MeshyTaskTimeoutError.
 ```
 
-- [ ] **Step 7: Run and implement until error tests pass**
+- [x] **Step 7: Run and implement until error tests pass**
 
 Run: `cd services/backend && uv run pytest tests/test_meshy_provider.py -q`
 
 Expected: all Meshy provider tests pass.
 
-- [ ] **Step 8: Write failing CLI local test**
+- [x] **Step 8: Write failing CLI local test**
 
 Create `services/backend/tests/test_cli.py`:
 
@@ -373,13 +373,13 @@ def test_cli_generates_local_asset_json(capsys) -> None:
     assert payload["format"] == "glb"
 ```
 
-- [ ] **Step 9: Run CLI test and verify it fails**
+- [x] **Step 9: Run CLI test and verify it fails**
 
 Run: `cd services/backend && uv run pytest tests/test_cli.py -q`
 
 Expected: fail because `cli.py` does not exist.
 
-- [ ] **Step 10: Implement CLI**
+- [x] **Step 10: Implement CLI**
 
 Create `cli.py` with `argparse` subcommands:
 
@@ -388,7 +388,7 @@ Create `cli.py` with `argparse` subcommands:
 
 The CLI builds the selected provider, emits JSON to stdout, returns `0` on success, returns `1` on provider errors, and writes provider errors to stderr.
 
-- [ ] **Step 11: Run CLI and provider tests**
+- [x] **Step 11: Run CLI and provider tests**
 
 Run:
 
@@ -399,7 +399,7 @@ uv run pytest tests/test_meshy_provider.py tests/test_cli.py -q
 
 Expected: all selected tests pass.
 
-- [ ] **Step 12: Commit Task 2**
+- [x] **Step 12: Commit Task 2**
 
 Run:
 
