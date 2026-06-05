@@ -45,6 +45,27 @@ class NPCReaction(BaseModel):
     world_change: str
 
 
+class NPCDirectorResult(BaseModel):
+    provider: str
+    reactions: list[NPCReaction]
+
+
+class ResolvedNPCAction(BaseModel):
+    npc_id: str
+    action: str
+    status: Literal["accepted", "rejected"]
+    reason: str
+
+
+class WorldResolution(BaseModel):
+    arbitrator: str
+    summary: str
+    accepted_actions: list[ResolvedNPCAction]
+    rejected_actions: list[ResolvedNPCAction]
+    world_state_delta: dict[str, int | str | bool]
+    visible_changes: list[str]
+
+
 class GeneratedAsset(BaseModel):
     kind: Literal["game_asset"]
     provider: str
@@ -71,11 +92,12 @@ class MythSession(BaseModel):
     object_card: ObjectCard
     myth_seed: MythSeed
     generated_asset: GeneratedAsset
+    npc_director: str
     npc_reactions: list[NPCReaction]
+    world_resolution: WorldResolution
     print_candidate: PrintCandidate
 
 
 class MythSessionRequest(BaseModel):
     object_observation: ObjectObservation
     context_capsule: ContextCapsule
-

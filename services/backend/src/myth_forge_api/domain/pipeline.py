@@ -11,6 +11,8 @@ from myth_forge_api.domain.models import (
     NPCReaction,
     ObjectCard,
     ObjectObservation,
+    ResolvedNPCAction,
+    WorldResolution,
 )
 from myth_forge_api.providers.printing import LocalPrintProvider
 from myth_forge_api.providers.printing import PrintProvider
@@ -35,6 +37,7 @@ def create_demo_myth_session(
         prompt=myth_seed.generation_prompt,
     )
     npc_reactions = _create_npc_reactions(object_card, myth_seed)
+    world_resolution = _create_world_resolution(npc_reactions)
     selected_print_provider = print_provider or LocalPrintProvider()
     print_candidate = selected_print_provider.create_print_candidate(generated_asset)
 
@@ -44,7 +47,9 @@ def create_demo_myth_session(
         object_card=object_card,
         myth_seed=myth_seed,
         generated_asset=generated_asset,
+        npc_director="local_stub",
         npc_reactions=npc_reactions,
+        world_resolution=world_resolution,
         print_candidate=print_candidate,
     )
 
@@ -155,3 +160,34 @@ def _create_npc_reactions(object_card: ObjectCard, myth_seed: MythSeed) -> list[
             world_change="artifact_gets_a_local_name",
         ),
     ]
+
+
+def _create_world_resolution(npc_reactions: list[NPCReaction]) -> WorldResolution:
+    accepted_actions = [
+        ResolvedNPCAction(
+            npc_id=reaction.npc_id,
+            action=reaction.plan[0],
+            status="accepted",
+            reason="safe ritual action",
+        )
+        for reaction in npc_reactions
+        if reaction.plan
+    ]
+
+    return WorldResolution(
+        arbitrator="local_rules",
+        summary="The village begins interpreting the relic.",
+        accepted_actions=accepted_actions,
+        rejected_actions=[],
+        world_state_delta={
+            "faith": 1,
+            "curiosity": 1,
+            "suspicion": 1,
+            "debate_intensity": 1,
+            "artifact_renown": 1,
+        },
+        visible_changes=[
+            "The artifact gains a local name.",
+            "The village debate begins.",
+        ],
+    )

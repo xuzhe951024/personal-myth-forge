@@ -85,3 +85,27 @@ def test_pipeline_accepts_injected_three_d_provider() -> None:
 
     assert session.generated_asset.provider == "recording"
     assert provider.calls == [(session.session_id, session.myth_seed.generation_prompt)]
+
+
+def test_session_includes_world_resolution_contract() -> None:
+    session = create_demo_myth_session(
+        object_observation={
+            "label": "old brass key",
+            "materials": ["metal"],
+            "source": "manual_upload",
+        },
+        context_capsule={
+            "current_theme": "choosing a new direction",
+            "desired_tone": "watchful and tender",
+        },
+    )
+
+    payload = session.model_dump(mode="json")
+
+    assert payload["npc_director"] == "local_stub"
+    assert payload["world_resolution"]["arbitrator"] == "local_rules"
+    assert payload["world_resolution"]["summary"]
+    assert isinstance(payload["world_resolution"]["accepted_actions"], list)
+    assert isinstance(payload["world_resolution"]["rejected_actions"], list)
+    assert "faith" in payload["world_resolution"]["world_state_delta"]
+    assert payload["world_resolution"]["visible_changes"]
