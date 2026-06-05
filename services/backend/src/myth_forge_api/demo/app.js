@@ -1,5 +1,6 @@
 const form = document.getElementById("myth-form");
 const statusLine = document.getElementById("status-line");
+const captureStatus = document.getElementById("capture-status");
 const providerBadges = document.getElementById("provider-badges");
 const worldStateStrip = document.getElementById("world-state-strip");
 const visibleChanges = document.getElementById("visible-changes");
@@ -18,15 +19,20 @@ form.addEventListener("submit", async (event) => {
   statusLine.textContent = "Forging...";
 
   try {
-    const response = await fetch("/v1/myth-sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildPayload(new FormData(form))),
-    });
-    if (!response.ok) {
-      throw new Error(`Session failed with HTTP ${response.status}`);
+    const data = new FormData(form);
+    const file = data.get("object_file");
+    let session;
+
+    if (file && file.size > 0) {
+      captureStatus.textContent = "Uploading capture...";
+      const capture = await createCapture(data, file);
+      captureStatus.textContent = `Capture ${capture.capture_id} | ${capture.media_items.length} media`;
+      session = await createSessionFromCapture(capture.capture_id, data);
+    } else {
+      captureStatus.textContent = "Direct metadata session";
+      session = await createDirectSession(data);
     }
-    const session = await response.json();
+
     renderSession(session);
   } catch (error) {
     statusLine.innerHTML = `<span class="error">${escapeHtml(error.message)}</span>`;
@@ -48,6 +54,56 @@ function buildPayload(data) {
       desired_tone: requiredText(data, "desired_tone"),
       recent_milestone: optionalText(data, "recent_milestone"),
     },
+  };
+}
+
+async function createDirectSession(data) {
+  const response = await fetch("/v1/myth-sessions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(buildPayload(data)),
+  });
+  if (!response.ok) {
+    throw new Error(`Session failed with HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+async function createCapture(data, file) {
+  const upload = new FormData();
+  upload.append("metadata_json", JSON.stringify(buildCaptureMetadata(data)));
+  upload.append("files", file);
+
+  const response = await fetch("/v1/object-captures", {
+    method: "POST",
+    body: upload,
+  });
+  if (!response.ok) {
+    throw new Error(`Capture failed with HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+async function createSessionFromCapture(captureId, data) {
+  const response = await fetch("/v1/myth-sessions/from-capture", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      capture_id: captureId,
+      context_capsule: buildPayload(data).context_capsule,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Session failed with HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+function buildCaptureMetadata(data) {
+  const payload = buildPayload(data);
+  return {
+    ...payload.object_observation,
+    capture_mode: "single_photo",
   };
 }
 

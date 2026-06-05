@@ -207,6 +207,15 @@ button:focus-visible {
   font-weight: 800;
 }
 
+.capture-status {
+  min-height: 24px;
+  margin: 10px 0;
+  color: var(--blue);
+  font-size: 0.86rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
 .provider-badges {
   display: flex;
   flex-wrap: wrap;
