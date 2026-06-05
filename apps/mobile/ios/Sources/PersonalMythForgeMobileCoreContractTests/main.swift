@@ -21,6 +21,9 @@ do {
     try testCaptureDraftRejectsInvalidMedia()
     try testCaptureDraftRejectsOversizedMedia()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
+    try await testForgeFlowServiceUploadsCaptureThenCreatesSession()
+    try await testForgeFlowServiceStopsBeforeSessionWhenUploadFails()
+    try await testForgeFlowServiceRejectsInvalidDraftBeforeNetwork()
     try testSwiftUIScaffoldIncludesWorldResolution()
     print("PersonalMythForgeMobileCoreContractTests passed")
 } catch {
@@ -485,6 +488,88 @@ private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
     try expectTrue(state.capture == nil)
 }
 
+private func testForgeFlowServiceUploadsCaptureThenCreatesSession() async throws {
+    let capture = try FixtureLoader.decode(ObjectCapture.self, from: "object-capture-response")
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let api = FakeForgeFlowAPI(uploadResult: .success(capture), sessionResult: .success(session))
+    let service = ForgeFlowService(api: api)
+    var snapshots: [ForgeFlowState] = []
+
+    let finalState = await service.forge(
+        draft: sampleCaptureDraft(),
+        context: sampleContext()
+    ) { state in
+        snapshots.append(state)
+    }
+
+    try expectEqual(finalState.phase, .ready(session))
+    try expectEqual(api.uploadedMetadata, sampleMetadata())
+    try expectEqual(api.uploadedMedia.map(\.contentType), ["image/jpeg"])
+    try expectEqual(api.sessionCaptureIds, ["cap_ba02a3816bd145b4"])
+    try expectEqual(api.sessionContexts, [sampleContext()])
+    try expectEqual(snapshots.map(\.phase), [
+        .editingObject,
+        .editingObject,
+        .uploadingCapture,
+        .creatingSession,
+        .ready(session),
+    ])
+}
+
+private func testForgeFlowServiceStopsBeforeSessionWhenUploadFails() async throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let api = FakeForgeFlowAPI(
+        uploadResult: .failure(ForgeFlowError.httpStatus(413, "too large")),
+        sessionResult: .success(session)
+    )
+    let service = ForgeFlowService(api: api)
+    var snapshots: [ForgeFlowState] = []
+
+    let finalState = await service.forge(
+        draft: sampleCaptureDraft(),
+        context: sampleContext()
+    ) { state in
+        snapshots.append(state)
+    }
+
+    try expectEqual(finalState.phase, .failed(.httpStatus(413, "too large")))
+    try expectEqual(api.uploadedMedia.count, 1)
+    try expectEqual(api.sessionCaptureIds, [])
+    try expectEqual(snapshots.map(\.phase), [
+        .editingObject,
+        .editingObject,
+        .uploadingCapture,
+        .failed(.httpStatus(413, "too large")),
+    ])
+}
+
+private func testForgeFlowServiceRejectsInvalidDraftBeforeNetwork() async throws {
+    let capture = try FixtureLoader.decode(ObjectCapture.self, from: "object-capture-response")
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let api = FakeForgeFlowAPI(uploadResult: .success(capture), sessionResult: .success(session))
+    let service = ForgeFlowService(api: api)
+
+    let finalState = await service.forge(
+        draft: CaptureDraft(
+            label: " ",
+            materialsText: "",
+            visualNotes: "",
+            source: "phone_capture",
+            mode: .singlePhoto,
+            media: [captureMedia(filename: "key.jpg", contentType: "image/jpeg", kind: .image)]
+        ),
+        context: sampleContext()
+    )
+
+    try expectEqual(api.uploadedMedia.count, 0)
+    try expectEqual(api.sessionCaptureIds, [])
+    if case let .failed(.invalidCaptureDraft(message)) = finalState.phase {
+        try expectContains(message, "missingLabel")
+    } else {
+        throw ContractTestError.expectationFailed("Expected invalid capture draft failure, got \(finalState.phase)")
+    }
+}
+
 private func testSwiftUIScaffoldIncludesWorldResolution() throws {
     let appRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         .appendingPathComponent("apps/mobile/ios/App")
@@ -496,6 +581,17 @@ private func testSwiftUIScaffoldIncludesWorldResolution() throws {
     try expectContains(worldView, "acceptedActions")
     try expectContains(worldView, "rejectedActions")
     try expectContains(worldView, "visibleChanges")
+}
+
+private func sampleCaptureDraft() -> CaptureDraft {
+    CaptureDraft(
+        label: "old brass key",
+        materialsText: "metal, brass",
+        visualNotes: "worn teeth",
+        source: "phone_capture",
+        mode: .singlePhoto,
+        media: [captureMedia(filename: "key.jpg", contentType: "image/jpeg", kind: .image)]
+    )
 }
 
 private func sampleMetadata() -> ObjectCaptureMetadata {
@@ -557,6 +653,32 @@ private final class RecordingTransport: HTTPTransport {
             throw ContractTestError.expectationFailed("No fake response queued")
         }
         return responses.removeFirst()
+    }
+}
+
+private final class FakeForgeFlowAPI: ForgeFlowAPI {
+    private let uploadResult: Result<ObjectCapture, Error>
+    private let sessionResult: Result<MythSession, Error>
+    private(set) var uploadedMetadata: ObjectCaptureMetadata?
+    private(set) var uploadedMedia: [CaptureUpload] = []
+    private(set) var sessionCaptureIds: [String] = []
+    private(set) var sessionContexts: [ContextCapsule] = []
+
+    init(uploadResult: Result<ObjectCapture, Error>, sessionResult: Result<MythSession, Error>) {
+        self.uploadResult = uploadResult
+        self.sessionResult = sessionResult
+    }
+
+    func uploadObjectCapture(metadata: ObjectCaptureMetadata, media: [CaptureUpload]) async throws -> ObjectCapture {
+        uploadedMetadata = metadata
+        uploadedMedia = media
+        return try uploadResult.get()
+    }
+
+    func createMythSessionFromCapture(captureId: String, context: ContextCapsule) async throws -> MythSession {
+        sessionCaptureIds.append(captureId)
+        sessionContexts.append(context)
+        return try sessionResult.get()
     }
 }
 

@@ -41,13 +41,14 @@ public struct CaptureUpload: Equatable {
 public enum ForgeFlowError: Error, Equatable {
     case invalidBaseURL
     case invalidCaptureID(String)
+    case invalidCaptureDraft(String)
     case encodingFailed(String)
     case httpStatus(Int, String)
     case transport(String)
     case decoding(String)
 }
 
-public final class PersonalMythForgeAPIClient {
+public final class PersonalMythForgeAPIClient: ForgeFlowAPI {
     private static let maxHTTPErrorBodyCharacters = 512
     private static let captureMediaPartSpecs = [
         "image/heic": CaptureMediaPartSpec(prefix: "media", fileExtension: "heic"),
