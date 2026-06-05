@@ -1,4 +1,4 @@
-from myth_forge_api.domain.models import GeneratedAsset
+from myth_forge_api.domain.models import GeneratedAsset, NPCDirectorResult, NPCReaction
 from myth_forge_api.domain.pipeline import create_demo_myth_session
 
 
@@ -15,6 +15,36 @@ class RecordingThreeDProvider:
             uri=f"recording://{session_id}.glb",
             prompt=prompt,
             moderation_status="needs_review",
+        )
+
+
+class RecordingNPCDirector:
+    provider_name = "recording_npc"
+
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def generate_reactions(
+        self,
+        session_id,
+        object_card,
+        myth_seed,
+        context_capsule,
+        generated_asset,
+    ) -> NPCDirectorResult:
+        self.calls.append(session_id)
+        return NPCDirectorResult(
+            provider=self.provider_name,
+            reactions=[
+                NPCReaction(
+                    npc_id="test",
+                    name="Test",
+                    emotion="focus",
+                    interpretation=f"{object_card.label} is being tested.",
+                    plan=["approach_artifact"],
+                    world_change="test_change",
+                )
+            ],
         )
 
 
@@ -109,3 +139,17 @@ def test_session_includes_world_resolution_contract() -> None:
     assert isinstance(payload["world_resolution"]["rejected_actions"], list)
     assert "faith" in payload["world_resolution"]["world_state_delta"]
     assert payload["world_resolution"]["visible_changes"]
+
+
+def test_pipeline_accepts_injected_npc_director() -> None:
+    director = RecordingNPCDirector()
+
+    session = create_demo_myth_session(
+        object_observation={"label": "coin", "materials": ["metal"], "source": "manual_upload"},
+        context_capsule={"current_theme": "choice", "desired_tone": "bright"},
+        npc_director=director,
+    )
+
+    assert session.npc_director == "recording_npc"
+    assert [reaction.npc_id for reaction in session.npc_reactions] == ["test"]
+    assert director.calls == [session.session_id]
