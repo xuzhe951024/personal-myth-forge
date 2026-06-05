@@ -1,0 +1,93 @@
+{
+  "session_id": "session_cap_ba02a3816bd145b4",
+  "status": "ready_for_review",
+  "object_card": {
+    "label": "old brass key",
+    "materials": ["metal", "brass"],
+    "source": "phone_capture",
+    "affordances": ["unlocking", "remembering", "weighing choices"],
+    "symbolic_reading": "A worn brass key suggests access, trust, and inherited obligations."
+  },
+  "myth_seed": {
+    "title": "The Keeper of the Small Door",
+    "personal_resonance": "The key mirrors the pressure of carrying access for others.",
+    "generation_prompt": "Create a small enchanted brass key with worn teeth and a soft green patina."
+  },
+  "generated_asset": {
+    "kind": "game_asset",
+    "provider": "local_stub",
+    "format": "glb",
+    "uri": "stub://assets/old-brass-key.glb",
+    "prompt": "Create a small enchanted brass key with worn teeth and a soft green patina.",
+    "moderation_status": "not_requested"
+  },
+  "npc_director": "local_stub",
+  "npc_reactions": [
+    {
+      "npc_id": "npc_archivist",
+      "name": "Archivist Mara",
+      "emotion": "curious",
+      "interpretation": "The key belongs to a door that remembers who knocked.",
+      "plan": ["catalog the key", "ask who last held it"],
+      "world_change": "A locked cabinet begins humming."
+    },
+    {
+      "npc_id": "npc_smith",
+      "name": "Tomas the Smith",
+      "emotion": "concerned",
+      "interpretation": "The worn teeth show years of urgent use.",
+      "plan": ["test the metal", "search for matching locks"],
+      "world_change": "Fresh filings appear on the workbench."
+    },
+    {
+      "npc_id": "npc_child",
+      "name": "Ilo",
+      "emotion": "hopeful",
+      "interpretation": "A small thing can still open a large story.",
+      "plan": ["carry a lantern", "listen at the door"],
+      "world_change": "A narrow hallway fills with warm light."
+    }
+  ],
+  "world_resolution": {
+    "arbitrator": "local_stub",
+    "summary": "The town accepts the key as a shared clue and opens a remembered passage.",
+    "accepted_actions": [
+      {
+        "npc_id": "npc_archivist",
+        "action": "catalog the key",
+        "status": "accepted",
+        "reason": "The archive can preserve its provenance."
+      },
+      {
+        "npc_id": "npc_child",
+        "action": "carry a lantern",
+        "status": "accepted",
+        "reason": "The passage needs a gentle witness."
+      }
+    ],
+    "rejected_actions": [
+      {
+        "npc_id": "npc_smith",
+        "action": "test the metal",
+        "status": "rejected",
+        "reason": "Damaging the key would erase useful wear marks."
+      }
+    ],
+    "world_state_delta": {
+      "archive_trust": 1,
+      "door_open": true,
+      "active_location": "remembered passage"
+    },
+    "visible_changes": ["cabinet hums", "hallway glows"]
+  },
+  "print_candidate": {
+    "kind": "print_asset",
+    "source_asset_uri": "stub://assets/old-brass-key.glb",
+    "provider": "local_stub",
+    "format": "stl",
+    "uri": "stub://prints/old-brass-key.stl",
+    "requires_user_approval": true,
+    "approval_reason": "The generated key should be reviewed before print preparation.",
+    "printability_notes": ["thin teeth need inspection", "scale before slicing"]
+  }
+}

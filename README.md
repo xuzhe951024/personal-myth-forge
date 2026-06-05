@@ -15,7 +15,7 @@ Build a vertical slice that proves the core loop:
 ## Repository Layout
 
 - `services/backend/` - FastAPI service for AI orchestration, NPC planning, 3D generation adapters, and print provider adapters.
-- `apps/mobile/` - Unity mobile project placeholder and integration notes.
+- `apps/mobile/` - iOS-first mobile client notes, SwiftPM client scaffold, and future Unity integration notes.
 - `packages/personal-myth-skill/` - Future MCP/agent skill interface for personal context capsules.
 - `docs/` - Product design, iteration roadmap, and implementation plans.
 
@@ -94,3 +94,14 @@ uv run python -m myth_forge_api.cli evaluate-3d \
   --prompts-file /tmp/p0.5-prompts.txt \
   --output /tmp/p0.5-3d-eval.json
 ```
+
+## Mobile Client Scaffold
+
+Run the P0.7 Swift mobile core contract tests:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+This validates the typed iOS-side models, multipart request builder, API client,
+and reducer without requiring a global Xcode developer directory change.

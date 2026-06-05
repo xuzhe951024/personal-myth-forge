@@ -1,0 +1,23 @@
+{
+  "capture_id": "cap_ba02a3816bd145b4",
+  "status": "ready",
+  "source": "phone_capture",
+  "capture_mode": "single_photo",
+  "object_observation": {
+    "label": "old brass key",
+    "materials": ["metal", "brass"],
+    "source": "phone_capture",
+    "visual_notes": "worn teeth"
+  },
+  "media_items": [
+    {
+      "media_id": "media_0",
+      "role": "reference_image",
+      "content_type": "image/jpeg",
+      "byte_size": 9,
+      "uri": "local-capture://cap_ba02a3816bd145b4/media_0.jpg",
+      "moderation_status": "needs_review"
+    }
+  ],
+  "created_at": "2026-06-05T00:00:00+00:00"
+}
