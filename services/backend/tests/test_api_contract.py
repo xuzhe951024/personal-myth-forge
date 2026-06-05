@@ -113,3 +113,37 @@ def test_create_myth_session_maps_provider_errors_to_502_without_secret_leak(
     assert "OPENAI_API_KEY" in response.json()["detail"]
     assert "test-secret" not in response.json()["detail"]
     assert "Authorization" not in response.json()["detail"]
+
+
+def test_create_myth_session_response_includes_world_resolution() -> None:
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/myth-sessions",
+        json={
+            "object_observation": {
+                "label": "tiny bell",
+                "materials": ["metal"],
+                "source": "manual_upload",
+            },
+            "context_capsule": {
+                "current_theme": "calling attention",
+                "desired_tone": "solemn and bright",
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["npc_director"] == "local_stub"
+    assert payload["world_resolution"]["visible_changes"]
+
+
+def test_demo_route_includes_world_resolution_mount_points() -> None:
+    client = TestClient(app)
+
+    response = client.get("/demo")
+
+    assert response.status_code == 200
+    assert "world-state-strip" in response.text
+    assert "visible-changes" in response.text
