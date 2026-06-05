@@ -14,12 +14,7 @@
 		10A000000000000000000005 /* WorldResolutionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000005 /* WorldResolutionView.swift */; };
 		10A000000000000000000006 /* NPCReactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000006 /* NPCReactionsView.swift */; };
 		10A000000000000000000007 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000007 /* AppConfiguration.swift */; };
-		10A000000000000000000101 /* PMFJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000101 /* PMFJSON.swift */; };
-		10A000000000000000000102 /* PMFModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000102 /* PMFModels.swift */; };
-		10A000000000000000000103 /* CaptureID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000103 /* CaptureID.swift */; };
-		10A000000000000000000104 /* MultipartFormDataBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000104 /* MultipartFormDataBuilder.swift */; };
-		10A000000000000000000105 /* PersonalMythForgeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000105 /* PersonalMythForgeAPIClient.swift */; };
-		10A000000000000000000106 /* ForgeFlowReducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000106 /* ForgeFlowReducer.swift */; };
+		10A000000000000000000201 /* PersonalMythForgeMobileCore in Frameworks */ = {isa = PBXBuildFile; productRef = 10K000000000000000000001 /* PersonalMythForgeMobileCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				10A000000000000000000201 /* PersonalMythForgeMobileCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +108,9 @@
 			dependencies = (
 			);
 			name = PersonalMythForge;
+			packageProductDependencies = (
+				10K000000000000000000001 /* PersonalMythForgeMobileCore */,
+			);
 			productName = PersonalMythForge;
 			productReference = 10B000000000000000000201 /* PersonalMythForge.app */;
 			productType = "com.apple.product-type.application";
@@ -140,6 +139,9 @@
 				Base,
 			);
 			mainGroup = 10D000000000000000000001;
+			packageReferences = (
+				10J000000000000000000001 /* XCLocalSwiftPackageReference "." */,
+			);
 			productRefGroup = 10D000000000000000000004 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -171,16 +173,25 @@
 				10A000000000000000000005 /* WorldResolutionView.swift in Sources */,
 				10A000000000000000000006 /* NPCReactionsView.swift in Sources */,
 				10A000000000000000000007 /* AppConfiguration.swift in Sources */,
-				10A000000000000000000101 /* PMFJSON.swift in Sources */,
-				10A000000000000000000102 /* PMFModels.swift in Sources */,
-				10A000000000000000000103 /* CaptureID.swift in Sources */,
-				10A000000000000000000104 /* MultipartFormDataBuilder.swift in Sources */,
-				10A000000000000000000105 /* PersonalMythForgeAPIClient.swift in Sources */,
-				10A000000000000000000106 /* ForgeFlowReducer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		10J000000000000000000001 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		10K000000000000000000001 /* PersonalMythForgeMobileCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10J000000000000000000001 /* XCLocalSwiftPackageReference "." */;
+			productName = PersonalMythForgeMobileCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		10I000000000000000000001 /* Debug */ = {

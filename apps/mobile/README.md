@@ -97,6 +97,6 @@ Then run the mobile core contract tests:
 swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
 ```
 
-`PMFBackendBaseURL` in `App/Info.plist` controls the backend URL for the app
-shell. Provider API keys stay on the backend; the mobile app should never commit
-OpenAI, Meshy, or print provider secrets.
+`PMFBackendBaseURL` in `App/Info.plist` exposes the backend URL for the first API
+client wiring. Provider API keys stay on the backend; the mobile app should
+never commit OpenAI, Meshy, or print provider secrets.

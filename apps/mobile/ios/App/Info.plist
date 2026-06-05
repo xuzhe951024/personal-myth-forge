@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.personalmythforge.app</string>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -26,6 +26,11 @@
 	<string>Select an object image to forge a myth artifact.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save generated relic previews when the player chooses to export them.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>PMFBackendBaseURL</key>
 	<string>http://127.0.0.1:8080</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

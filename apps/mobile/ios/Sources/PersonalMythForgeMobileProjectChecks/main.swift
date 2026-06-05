@@ -4,6 +4,7 @@ do {
     let repositoryRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     let iosRoot = repositoryRoot.appendingPathComponent("apps/mobile/ios")
     let appRoot = iosRoot.appendingPathComponent("App")
+    let coreRoot = iosRoot.appendingPathComponent("Sources/PersonalMythForgeMobileCore")
     let projectFile = iosRoot.appendingPathComponent("PersonalMythForge.xcodeproj/project.pbxproj")
     let plistFile = appRoot.appendingPathComponent("Info.plist")
 
@@ -14,6 +15,12 @@ do {
     try requireContains(project, #"productType = "com.apple.product-type.application""#, "iOS app product type")
     try requireContains(project, "IPHONEOS_DEPLOYMENT_TARGET = 17.0", "iOS deployment target")
     try requireContains(project, "INFOPLIST_FILE = App/Info.plist", "Info.plist build setting")
+    try requireContains(project, "XCLocalSwiftPackageReference", "local Swift package reference")
+    try requireContains(project, "relativePath = .", "local package relative path")
+    try requireContains(project, "XCSwiftPackageProductDependency", "Swift package product dependency")
+    try requireContains(project, "productName = PersonalMythForgeMobileCore", "core package product dependency")
+    try requireContains(project, "packageProductDependencies", "target package dependency list")
+    try requireContains(project, "PersonalMythForgeMobileCore in Frameworks", "linked core product")
 
     for file in [
         "AppConfiguration.swift",
@@ -23,6 +30,10 @@ do {
         "ArtifactSummaryView.swift",
         "WorldResolutionView.swift",
         "NPCReactionsView.swift",
+    ] {
+        try requireContains(project, file, "Xcode project file reference")
+    }
+    for file in [
         "PMFJSON.swift",
         "PMFModels.swift",
         "CaptureID.swift",
@@ -30,17 +41,23 @@ do {
         "PersonalMythForgeAPIClient.swift",
         "ForgeFlowReducer.swift",
     ] {
-        try requireContains(project, file, "Xcode project file reference")
+        try requireNotContains(project, "\(file) in Sources", "core source compiled directly into app target")
     }
 
     try requirePlistString(plist, key: "CFBundleDisplayName", expected: "Personal Myth Forge")
-    try requirePlistString(plist, key: "CFBundleIdentifier", expected: "com.personalmythforge.app")
+    try requirePlistString(plist, key: "CFBundleIdentifier", expected: "$(PRODUCT_BUNDLE_IDENTIFIER)")
     try requirePlistString(plist, key: "PMFBackendBaseURL", expected: "http://127.0.0.1:8080")
     try requirePlistText(plist, key: "NSCameraUsageDescription")
     try requirePlistText(plist, key: "NSPhotoLibraryUsageDescription")
     try requirePlistText(plist, key: "NSPhotoLibraryAddUsageDescription")
+    try requireNestedPlistBool(
+        plist,
+        dictionaryKey: "NSAppTransportSecurity",
+        key: "NSAllowsLocalNetworking",
+        expected: true
+    )
 
-    try scanForMobileSecrets(in: appRoot)
+    try scanForMobileSecrets(in: [appRoot, coreRoot], additionalFiles: [projectFile, plistFile])
 
     print("PersonalMythForgeMobileProjectChecks passed")
 } catch {
@@ -72,6 +89,12 @@ private func requireContains(_ haystack: String, _ needle: String, _ label: Stri
     }
 }
 
+private func requireNotContains(_ haystack: String, _ needle: String, _ label: String) throws {
+    if haystack.contains(needle) {
+        throw ProjectCheckError.unexpectedText(label, needle)
+    }
+}
+
 private func requirePlistString(_ plist: [String: Any], key: String, expected: String) throws {
     guard let value = plist[key] as? String else {
         throw ProjectCheckError.missingPlistKey(key)
@@ -87,7 +110,24 @@ private func requirePlistText(_ plist: [String: Any], key: String) throws {
     }
 }
 
-private func scanForMobileSecrets(in directory: URL) throws {
+private func requireNestedPlistBool(
+    _ plist: [String: Any],
+    dictionaryKey: String,
+    key: String,
+    expected: Bool
+) throws {
+    guard let dictionary = plist[dictionaryKey] as? [String: Any] else {
+        throw ProjectCheckError.missingPlistKey(dictionaryKey)
+    }
+    guard let value = dictionary[key] as? Bool else {
+        throw ProjectCheckError.missingPlistKey("\(dictionaryKey).\(key)")
+    }
+    if value != expected {
+        throw ProjectCheckError.invalidPlistValue("\(dictionaryKey).\(key)", String(value))
+    }
+}
+
+private func scanForMobileSecrets(in directories: [URL], additionalFiles: [URL]) throws {
     let secretMarkers = [
         "OPENAI_API_KEY",
         "MESHY_API_KEY",
@@ -95,13 +135,20 @@ private func scanForMobileSecrets(in directory: URL) throws {
         "api_key",
         "Bearer ",
     ]
-    guard let enumerator = FileManager.default.enumerator(
-        at: directory,
-        includingPropertiesForKeys: nil
-    ) else {
-        throw ProjectCheckError.missingFile(directory.path)
+    var files = additionalFiles
+    for directory in directories {
+        guard let enumerator = FileManager.default.enumerator(
+            at: directory,
+            includingPropertiesForKeys: nil
+        ) else {
+            throw ProjectCheckError.missingFile(directory.path)
+        }
+        for case let url as URL in enumerator where url.pathExtension == "swift" || url.pathExtension == "plist" {
+            files.append(url)
+        }
     }
-    for case let url as URL in enumerator where url.pathExtension == "swift" || url.pathExtension == "plist" {
+
+    for url in files {
         let text = try readText(url)
         for marker in secretMarkers where text.contains(marker) {
             throw ProjectCheckError.secretMarker(url.lastPathComponent, marker)
@@ -113,6 +160,7 @@ private enum ProjectCheckError: Error, CustomStringConvertible {
     case missingFile(String)
     case invalidPlist(String)
     case missingText(String, String)
+    case unexpectedText(String, String)
     case missingPlistKey(String)
     case invalidPlistValue(String, String)
     case secretMarker(String, String)
@@ -125,6 +173,8 @@ private enum ProjectCheckError: Error, CustomStringConvertible {
             return "Invalid property list: \(path)"
         case let .missingText(label, text):
             return "Missing \(label): \(text)"
+        case let .unexpectedText(label, text):
+            return "Unexpected \(label): \(text)"
         case let .missingPlistKey(key):
             return "Missing required Info.plist key: \(key)"
         case let .invalidPlistValue(key, value):

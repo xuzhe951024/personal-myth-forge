@@ -120,5 +120,5 @@ swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
 swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
 ```
 
-The app shell reads `PMFBackendBaseURL` from `Info.plist`; provider API keys stay
-on the backend.
+The app shell exposes `PMFBackendBaseURL` in `Info.plist` for the first API
+client wiring; provider API keys stay on the backend.
