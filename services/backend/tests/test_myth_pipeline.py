@@ -243,3 +243,19 @@ def test_pipeline_validates_npc_director_before_generating_3d() -> None:
         )
 
     assert provider.calls == []
+
+
+def test_pipeline_includes_capture_reference_in_object_card() -> None:
+    session = create_demo_myth_session(
+        object_observation={
+            "label": "old brass key",
+            "materials": ["metal"],
+            "source": "phone_capture",
+            "capture_id": "cap_test",
+            "media_refs": ["local-capture://cap_test/media_0.jpg"],
+        },
+        context_capsule={"current_theme": "choice", "desired_tone": "bright"},
+    )
+
+    assert "cap_test" in session.object_card.symbolic_reading
+    assert "uploaded capture media" in session.object_card.affordances

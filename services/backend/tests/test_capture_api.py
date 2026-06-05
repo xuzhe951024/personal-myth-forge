@@ -74,3 +74,49 @@ def test_upload_object_capture_rejects_unsupported_content_type(tmp_path, monkey
     )
 
     assert response.status_code == 415
+
+
+def test_create_myth_session_from_capture(tmp_path, monkeypatch) -> None:
+    client = _client_with_store(tmp_path, monkeypatch)
+    created = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _metadata_json()},
+        files={"files": ("key.jpg", b"fake-jpeg", "image/jpeg")},
+    ).json()
+
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": created["capture_id"],
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ready_for_review"
+    assert payload["object_card"]["label"] == "old brass key"
+    assert created["capture_id"] in payload["object_card"]["symbolic_reading"]
+
+
+def test_create_myth_session_from_capture_returns_404_for_missing_capture(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client = _client_with_store(tmp_path, monkeypatch)
+
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": "cap_missing",
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 404

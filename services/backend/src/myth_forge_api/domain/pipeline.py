@@ -106,15 +106,25 @@ def _create_object_card(observation: ObjectObservation) -> ObjectCard:
     if "metal" in {material.lower() for material in observation.materials}:
         affordances.append("can symbolize endurance, locks, oaths, or hidden passages")
 
+    capture_id = getattr(observation, "capture_id", None)
+    media_refs = getattr(observation, "media_refs", None)
+    if capture_id:
+        affordances.append("uploaded capture media")
+
+    symbolic_reading = (
+        f"A real-world {observation.label} made of {material_phrase} has crossed into the "
+        "village as evidence of a private omen."
+    )
+    if capture_id:
+        media_count = len(media_refs) if isinstance(media_refs, list) else 0
+        symbolic_reading += f" Capture {capture_id} contributes {media_count} media references."
+
     return ObjectCard(
         label=observation.label,
         materials=observation.materials,
         source=observation.source,
         affordances=affordances,
-        symbolic_reading=(
-            f"A real-world {observation.label} made of {material_phrase} has crossed into the "
-            "village as evidence of a private omen."
-        ),
+        symbolic_reading=symbolic_reading,
     )
 
 

@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from myth_forge_api.domain.models import (
     MythSession,
+    MythSessionFromCaptureRequest,
     MythSessionRequest,
     ObjectCapture,
     ObjectCaptureMetadata,
@@ -72,6 +73,28 @@ def get_object_capture(capture_id: str) -> ObjectCapture:
     if capture is None:
         raise HTTPException(status_code=404, detail="Object capture not found.")
     return capture
+
+
+@app.post("/v1/myth-sessions/from-capture", response_model=MythSession)
+def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> MythSession:
+    capture = build_capture_store().get_capture(request.capture_id)
+    if capture is None:
+        raise HTTPException(status_code=404, detail="Object capture not found.")
+    observation = capture.object_observation.model_copy(
+        update={
+            "capture_id": capture.capture_id,
+            "media_refs": [item.uri for item in capture.media_items],
+        }
+    )
+    try:
+        return create_demo_myth_session(
+            object_observation=observation,
+            context_capsule=request.context_capsule,
+            three_d_provider=build_three_d_provider(),
+            npc_director=build_npc_director(),
+        )
+    except (MeshyProviderError, OpenAINPCProviderError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
 
 
 @app.post("/v1/myth-sessions", response_model=MythSession)
