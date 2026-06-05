@@ -1,6 +1,7 @@
 import json
 
 from myth_forge_api.cli import main
+from myth_forge_api.providers.three_d import MeshyProviderError
 
 
 def test_cli_generates_local_asset_json(capsys) -> None:
@@ -12,3 +13,57 @@ def test_cli_generates_local_asset_json(capsys) -> None:
     payload = json.loads(capsys.readouterr().out)
     assert payload["provider"] == "local_stub"
     assert payload["format"] == "glb"
+
+
+def test_cli_evaluate_3d_writes_report(tmp_path) -> None:
+    prompts_file = tmp_path / "prompts.txt"
+    output_file = tmp_path / "report.json"
+    prompts_file.write_text("Create a moon cup.\nCreate a brass key.\n", encoding="utf-8")
+
+    exit_code = main(
+        [
+            "evaluate-3d",
+            "--provider",
+            "local",
+            "--prompts-file",
+            str(prompts_file),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 0
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert report["provider"] == "local"
+    assert report["total_prompts"] == 2
+    assert [row["status"] for row in report["rows"]] == ["succeeded", "succeeded"]
+    assert all("elapsed_seconds" in row for row in report["rows"])
+
+
+def test_cli_evaluate_3d_returns_error_without_report_when_provider_config_fails(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    prompts_file = tmp_path / "prompts.txt"
+    output_file = tmp_path / "report.json"
+    prompts_file.write_text("Create a moon cup.\n", encoding="utf-8")
+
+    def raise_provider_error(settings):
+        raise MeshyProviderError("MESHY_API_KEY is required.")
+
+    monkeypatch.setattr("myth_forge_api.cli.build_three_d_provider", raise_provider_error)
+
+    exit_code = main(
+        [
+            "evaluate-3d",
+            "--provider",
+            "meshy",
+            "--prompts-file",
+            str(prompts_file),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 1
+    assert not output_file.exists()
