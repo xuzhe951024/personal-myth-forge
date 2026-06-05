@@ -67,3 +67,42 @@ def test_cli_evaluate_3d_returns_error_without_report_when_provider_config_fails
 
     assert exit_code == 1
     assert not output_file.exists()
+
+
+class FailingThreeDProvider:
+    provider_name = "failing"
+
+    def generate_game_asset(self, session_id: str, prompt: str):
+        raise MeshyProviderError("failed Authorization=Bearer test-secret raw=test-secret")
+
+
+def test_cli_evaluate_3d_sanitizes_per_prompt_errors(tmp_path, monkeypatch) -> None:
+    prompts_file = tmp_path / "prompts.txt"
+    output_file = tmp_path / "report.json"
+    prompts_file.write_text("Create a moon cup.\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_three_d_provider",
+        lambda settings: FailingThreeDProvider(),
+    )
+
+    exit_code = main(
+        [
+            "evaluate-3d",
+            "--provider",
+            "local",
+            "--prompts-file",
+            str(prompts_file),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report_text = output_file.read_text(encoding="utf-8")
+    report = json.loads(report_text)
+
+    assert exit_code == 0
+    assert report["rows"][0]["status"] == "failed"
+    assert "test-secret" not in report_text
+    assert "Authorization" not in report_text
+    assert "raw=" not in report_text

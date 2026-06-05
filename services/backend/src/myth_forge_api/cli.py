@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 import time
 from dataclasses import replace
@@ -113,7 +114,7 @@ def _evaluate_3d(prompts_file: str, provider_name: str | None, output_path: str)
                     "status": "failed",
                     "asset_uri": None,
                     "elapsed_seconds": round(time.perf_counter() - started_at, 4),
-                    "error": str(exc),
+                    "error": _safe_provider_error(exc),
                 }
             )
 
@@ -144,6 +145,19 @@ def _read_prompts(prompts_file: str) -> list[str]:
 def _session_id_for_prompt(prompt: str) -> str:
     digest = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
     return f"cli_{digest[:12]}"
+
+
+def _safe_provider_error(exc: Exception) -> str:
+    message = str(exc)
+    replacements = [
+        r"Authorization\s*[=:]\s*Bearer\s+[A-Za-z0-9._:-]+",
+        r"Bearer\s+[A-Za-z0-9._:-]+",
+        r"raw=[^\s,;]+",
+        r"api[_-]?key\s*[=:]\s*[^\s,;]+",
+    ]
+    for pattern in replacements:
+        message = re.sub(pattern, "[redacted]", message, flags=re.IGNORECASE)
+    return message
 
 
 if __name__ == "__main__":

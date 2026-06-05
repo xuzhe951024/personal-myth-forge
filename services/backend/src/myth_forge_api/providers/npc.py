@@ -24,6 +24,9 @@ EXPECTED_NPC_ID_LIST = ["mara", "ior", "senn"]
 class NPCDirector(Protocol):
     provider_name: str
 
+    def validate_configuration(self) -> None:
+        ...
+
     def generate_reactions(
         self,
         session_id: str,
@@ -37,6 +40,9 @@ class NPCDirector(Protocol):
 
 class LocalNPCDirector:
     provider_name = "local_stub"
+
+    def validate_configuration(self) -> None:
+        return None
 
     def generate_reactions(
         self,
@@ -124,6 +130,10 @@ class OpenAINPCDirector:
             api_base_url=settings.openai_api_base_url,
         )
 
+    def validate_configuration(self) -> None:
+        if not self.api_key:
+            raise OpenAINPCConfigurationError("OPENAI_API_KEY is required for NPC generation.")
+
     def generate_reactions(
         self,
         session_id: str,
@@ -132,8 +142,7 @@ class OpenAINPCDirector:
         context_capsule: ContextCapsule,
         generated_asset: GeneratedAsset,
     ) -> NPCDirectorResult:
-        if not self.api_key:
-            raise OpenAINPCConfigurationError("OPENAI_API_KEY is required for NPC generation.")
+        self.validate_configuration()
 
         client = self.client or self._build_client()
         try:

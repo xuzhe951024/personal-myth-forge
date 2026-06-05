@@ -1,3 +1,5 @@
+import pytest
+
 from myth_forge_api.domain.models import (
     GeneratedAsset,
     NPCDirectorResult,
@@ -5,6 +7,7 @@ from myth_forge_api.domain.models import (
     WorldResolution,
 )
 from myth_forge_api.domain.pipeline import create_demo_myth_session
+from myth_forge_api.providers.npc import OpenAINPCConfigurationError
 
 
 class RecordingThreeDProvider:
@@ -28,6 +31,9 @@ class RecordingNPCDirector:
 
     def __init__(self) -> None:
         self.calls: list[str] = []
+
+    def validate_configuration(self) -> None:
+        return None
 
     def generate_reactions(
         self,
@@ -79,6 +85,23 @@ class RecordingWorldArbitrator:
             },
             visible_changes=["The test arbitrator marked the world quiet."],
         )
+
+
+class FailingConfigurationNPCDirector:
+    provider_name = "failing_npc"
+
+    def validate_configuration(self) -> None:
+        raise OpenAINPCConfigurationError("OPENAI_API_KEY is required for NPC generation.")
+
+    def generate_reactions(
+        self,
+        session_id,
+        object_card,
+        myth_seed,
+        context_capsule,
+        generated_asset,
+    ) -> NPCDirectorResult:
+        raise AssertionError("NPC generation should not run after configuration failure.")
 
 
 def test_generates_session_from_real_object_and_context() -> None:
@@ -199,3 +222,24 @@ def test_pipeline_accepts_injected_world_arbitrator() -> None:
     assert session.world_resolution.visible_changes == [
         "The test arbitrator marked the world quiet."
     ]
+
+
+def test_pipeline_validates_npc_director_before_generating_3d() -> None:
+    provider = RecordingThreeDProvider()
+
+    with pytest.raises(OpenAINPCConfigurationError):
+        create_demo_myth_session(
+            object_observation={
+                "label": "silver spoon",
+                "materials": ["metal"],
+                "source": "manual_upload",
+            },
+            context_capsule={
+                "current_theme": "making peace with change",
+                "desired_tone": "gentle and uncanny",
+            },
+            three_d_provider=provider,
+            npc_director=FailingConfigurationNPCDirector(),
+        )
+
+    assert provider.calls == []

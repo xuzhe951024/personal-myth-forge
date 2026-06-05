@@ -33,11 +33,12 @@ def create_demo_myth_session(
     object_card = _create_object_card(observation)
     myth_seed = _create_myth_seed(object_card, capsule)
     selected_three_d_provider = three_d_provider or LocalThreeDProvider()
+    selected_npc_director = npc_director or LocalNPCDirector()
+    selected_npc_director.validate_configuration()
     generated_asset = selected_three_d_provider.generate_game_asset(
         session_id=session_id,
         prompt=myth_seed.generation_prompt,
     )
-    selected_npc_director = npc_director or LocalNPCDirector()
     npc_result = selected_npc_director.generate_reactions(
         session_id=session_id,
         object_card=object_card,
