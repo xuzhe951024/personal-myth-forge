@@ -36,6 +36,14 @@ http://127.0.0.1:8080/demo
 The demo defaults to the deterministic local 3D provider, so it does not require external API
 keys.
 
+To route NPC interpretation through OpenAI structured output:
+
+```bash
+export OPENAI_API_KEY=...
+export NPC_PROVIDER=openai
+make backend-dev
+```
+
 ## 3D Provider Spike
 
 Generate local asset metadata from a prompt:
@@ -59,3 +67,14 @@ uv run python -m myth_forge_api.cli generate-asset \
 
 Use `THREE_D_PROVIDER=meshy` to route `POST /v1/myth-sessions` through Meshy. Keep
 `THREE_D_PROVIDER=local` for fast local demos and tests.
+
+Run a small 3D prompt evaluation report:
+
+```bash
+cd services/backend
+printf "Create a brass key relic.\nCreate a moon cup relic.\n" > /tmp/p0.5-prompts.txt
+uv run python -m myth_forge_api.cli evaluate-3d \
+  --provider local \
+  --prompts-file /tmp/p0.5-prompts.txt \
+  --output /tmp/p0.5-3d-eval.json
+```

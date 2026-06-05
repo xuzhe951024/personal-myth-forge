@@ -1,5 +1,8 @@
 const form = document.getElementById("myth-form");
 const statusLine = document.getElementById("status-line");
+const providerBadges = document.getElementById("provider-badges");
+const worldStateStrip = document.getElementById("world-state-strip");
+const visibleChanges = document.getElementById("visible-changes");
 const output = document.getElementById("session-output");
 const canvas = document.getElementById("artifact-canvas");
 const assetViewer = document.getElementById("asset-viewer");
@@ -52,6 +55,9 @@ function renderSession(session) {
   activeSeed = `${session.session_id}:${session.object_card.label}`;
   startArtifact(activeSeed);
   renderAssetViewer(session.generated_asset);
+  renderProviderBadges(session);
+  renderWorldState(session.world_resolution);
+  renderVisibleChanges(session.world_resolution);
   statusLine.textContent = `${session.status} | ${session.session_id}`;
   output.innerHTML = `
     <article class="result-band">
@@ -72,7 +78,9 @@ function renderSession(session) {
       </article>
     </div>
     <section class="npc-list" aria-label="NPC reactions">
-      ${session.npc_reactions.map(renderNpc).join("")}
+      ${session.npc_reactions
+        .map((reaction) => renderNpc(reaction, session.world_resolution))
+        .join("")}
     </section>
     <article class="result-band">
       <h3>Print Candidate</h3>
@@ -83,7 +91,38 @@ function renderSession(session) {
   `;
 }
 
-function renderNpc(reaction) {
+function renderProviderBadges(session) {
+  providerBadges.innerHTML = `
+    <span>3D ${escapeHtml(session.generated_asset.provider)}</span>
+    <span>NPC ${escapeHtml(session.npc_director)}</span>
+    <span>World ${escapeHtml(session.world_resolution.arbitrator)}</span>
+  `;
+}
+
+function renderWorldState(resolution) {
+  worldStateStrip.innerHTML = Object.entries(resolution.world_state_delta)
+    .map(
+      ([key, value]) => `
+        <div>
+          <strong>${escapeHtml(value)}</strong>
+          <span>${escapeHtml(labelize(key))}</span>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function renderVisibleChanges(resolution) {
+  visibleChanges.innerHTML = `
+    <h2>World Changes</h2>
+    <ul>
+      ${resolution.visible_changes.map((change) => `<li>${escapeHtml(change)}</li>`).join("")}
+    </ul>
+  `;
+}
+
+function renderNpc(reaction, resolution) {
+  const resolvedActions = actionsForNpc(resolution, reaction.npc_id);
   return `
     <article class="npc-card">
       <header>
@@ -91,12 +130,27 @@ function renderNpc(reaction) {
         <span class="emotion">${escapeHtml(reaction.emotion)}</span>
       </header>
       <p>${escapeHtml(reaction.interpretation)}</p>
-      <ul class="plans">
-        ${reaction.plan.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
+      <ul class="plans action-resolution">
+        ${resolvedActions
+          .map(
+            (action) => `
+              <li class="${escapeAttr(action.status)}">
+                <span>${escapeHtml(action.status)}</span>
+                ${escapeHtml(action.action)}
+              </li>
+            `,
+          )
+          .join("")}
       </ul>
       <p class="small">${escapeHtml(reaction.world_change)}</p>
     </article>
   `;
+}
+
+function actionsForNpc(resolution, npcId) {
+  return [...resolution.accepted_actions, ...resolution.rejected_actions].filter(
+    (action) => action.npc_id === npcId,
+  );
 }
 
 function renderAssetViewer(asset) {
@@ -218,6 +272,10 @@ function requiredText(data, key) {
 function optionalText(data, key) {
   const value = requiredText(data, key);
   return value || null;
+}
+
+function labelize(value) {
+  return String(value).replaceAll("_", " ");
 }
 
 function uriForDisplay(uri) {

@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Mapping, Any
+from typing import Any, Mapping
 
+from myth_forge_api.domain.arbitration import LocalWorldArbitrator, WorldArbitrator
 from myth_forge_api.domain.models import (
     ContextCapsule,
     MythSeed,
     MythSession,
-    NPCReaction,
     ObjectCard,
     ObjectObservation,
 )
+from myth_forge_api.providers.npc import LocalNPCDirector, NPCDirector
 from myth_forge_api.providers.printing import LocalPrintProvider
 from myth_forge_api.providers.printing import PrintProvider
 from myth_forge_api.providers.three_d import LocalThreeDProvider, ThreeDProvider
@@ -22,6 +23,8 @@ def create_demo_myth_session(
     context_capsule: ContextCapsule | Mapping[str, Any],
     three_d_provider: ThreeDProvider | None = None,
     print_provider: PrintProvider | None = None,
+    npc_director: NPCDirector | None = None,
+    world_arbitrator: WorldArbitrator | None = None,
 ) -> MythSession:
     observation = _coerce_object_observation(object_observation)
     capsule = _coerce_context_capsule(context_capsule)
@@ -30,11 +33,29 @@ def create_demo_myth_session(
     object_card = _create_object_card(observation)
     myth_seed = _create_myth_seed(object_card, capsule)
     selected_three_d_provider = three_d_provider or LocalThreeDProvider()
+    selected_npc_director = npc_director or LocalNPCDirector()
+    selected_npc_director.validate_configuration()
     generated_asset = selected_three_d_provider.generate_game_asset(
         session_id=session_id,
         prompt=myth_seed.generation_prompt,
     )
-    npc_reactions = _create_npc_reactions(object_card, myth_seed)
+    npc_result = selected_npc_director.generate_reactions(
+        session_id=session_id,
+        object_card=object_card,
+        myth_seed=myth_seed,
+        context_capsule=capsule,
+        generated_asset=generated_asset,
+    )
+    npc_reactions = npc_result.reactions
+    selected_world_arbitrator = world_arbitrator or LocalWorldArbitrator()
+    world_resolution = selected_world_arbitrator.resolve(
+        session_id=session_id,
+        object_card=object_card,
+        myth_seed=myth_seed,
+        context_capsule=capsule,
+        generated_asset=generated_asset,
+        npc_reactions=npc_reactions,
+    )
     selected_print_provider = print_provider or LocalPrintProvider()
     print_candidate = selected_print_provider.create_print_candidate(generated_asset)
 
@@ -44,7 +65,9 @@ def create_demo_myth_session(
         object_card=object_card,
         myth_seed=myth_seed,
         generated_asset=generated_asset,
+        npc_director=npc_result.provider,
         npc_reactions=npc_reactions,
+        world_resolution=world_resolution,
         print_candidate=print_candidate,
     )
 
@@ -114,44 +137,3 @@ def _create_myth_seed(object_card: ObjectCard, capsule: ContextCapsule) -> MythS
             "The result must be game-ready as a GLB and suitable for later print adaptation."
         ),
     )
-
-
-def _create_npc_reactions(object_card: ObjectCard, myth_seed: MythSeed) -> list[NPCReaction]:
-    return [
-        NPCReaction(
-            npc_id="mara",
-            name="Mara",
-            emotion="awe",
-            interpretation=f"{object_card.label} is a sign that the village has been heard.",
-            plan=[
-                "approach_artifact",
-                "kneel_near_artifact",
-                "invite_neighbors_to_witness",
-            ],
-            world_change="faith_in_player_increases",
-        ),
-        NPCReaction(
-            npc_id="ior",
-            name="Ior",
-            emotion="suspicion",
-            interpretation=f"{myth_seed.title} may be a test rather than a gift.",
-            plan=[
-                "keep_distance",
-                "question_mara",
-                "propose_guarding_the_artifact_overnight",
-            ],
-            world_change="village_debate_starts",
-        ),
-        NPCReaction(
-            npc_id="senn",
-            name="Senn",
-            emotion="curiosity",
-            interpretation="The artifact should be named before anyone tries to use it.",
-            plan=[
-                "circle_artifact",
-                "sketch_symbol_in_dirt",
-                "suggest_ritual_name",
-            ],
-            world_change="artifact_gets_a_local_name",
-        ),
-    ]

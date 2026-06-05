@@ -17,6 +17,9 @@ Bridge deliverable:
 
 - local browser demo at `/demo` for showing the core loop before Unity import
 - Meshy CLI path for prompt-by-prompt GLB quality checks
+- `evaluate-3d` CLI report for batch prompt quality, elapsed time, and failure tracking
+- optional OpenAI NPC director behind `NPC_PROVIDER=openai`, with local deterministic fallback
+- world arbitration output rendered in the demo as visible world changes and accepted/rejected actions
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
