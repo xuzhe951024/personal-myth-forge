@@ -216,6 +216,12 @@ def test_create_myth_session_from_arkit_scan_capture_includes_media_refs(
     assert payload["object_card"]["source"] == "phone_capture"
     assert "media_refs: 2" in payload["object_card"]["symbolic_reading"]
     assert "capture_id:" in payload["object_card"]["symbolic_reading"]
+    assert f"local-capture://{created['capture_id']}/media_0.glb" in payload["object_card"][
+        "symbolic_reading"
+    ]
+    assert f"local-capture://{created['capture_id']}/media_1.jpg" in payload["object_card"][
+        "symbolic_reading"
+    ]
 
 
 def test_create_myth_session_from_capture_returns_404_for_missing_capture(
