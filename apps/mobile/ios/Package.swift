@@ -14,5 +14,9 @@ let package = Package(
             dependencies: ["PersonalMythForgeMobileCore"],
             resources: [.process("Fixtures")]
         ),
+        .executableTarget(
+            name: "PersonalMythForgeMobileProjectChecks",
+            dependencies: []
+        ),
     ]
 )
