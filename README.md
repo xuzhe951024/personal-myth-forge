@@ -36,6 +36,22 @@ http://127.0.0.1:8080/demo
 The demo defaults to the deterministic local 3D provider, so it does not require external API
 keys.
 
+Upload a local object capture, then create a myth session from that capture:
+
+```bash
+curl -X POST http://127.0.0.1:8080/v1/object-captures \
+  -F 'metadata_json={"label":"old brass key","materials":["metal","brass"],"source":"phone_capture","capture_mode":"single_photo","visual_notes":"worn teeth"}' \
+  -F 'files=@/path/to/key.jpg;type=image/jpeg'
+
+curl -X POST http://127.0.0.1:8080/v1/myth-sessions/from-capture \
+  -H 'Content-Type: application/json' \
+  -d @apps/mobile/fixtures/myth-session-from-capture.json
+```
+
+Set `CAPTURE_STORAGE_DIR` to override the local ignored capture storage directory.
+The default local path is intended for development artifacts, not durable user
+storage.
+
 To route NPC interpretation through OpenAI structured output:
 
 ```bash
