@@ -22,6 +22,7 @@ struct ForgeRootView: View {
                         phase: state.phase
                     )
                     ArtifactSummaryView(session: readySession)
+                    WorldResolutionView(session: readySession)
                     NPCReactionsView(session: readySession)
                 }
                 .padding()

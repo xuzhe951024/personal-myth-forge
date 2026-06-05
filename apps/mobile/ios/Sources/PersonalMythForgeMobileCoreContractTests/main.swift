@@ -6,11 +6,16 @@ do {
     try testDecodesMythSessionFixture()
     try testCaptureIDValidation()
     try testMultipartBodyIncludesMetadataAndFileWithoutLocalPaths()
+    try testMultipartBuilderSanitizesHeaderValues()
     try await testUploadObjectCaptureBuildsMultipartRequest()
     try await testCreateMythSessionFromCaptureBuildsJSONRequest()
     try await testInvalidCaptureIDFailsBeforeNetwork()
     try await testHTTPStatusErrorIncludesStatusAndBody()
+    try await testHTTPStatusErrorSanitizesSecretsAndTruncatesBody()
+    try await testUploadObjectCaptureUsesGeneratedFilenamesWithoutLocalPaths()
+    try await testUploadObjectCaptureRejectsUnsafeContentTypeBeforeNetwork()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
+    try testSwiftUIScaffoldIncludesWorldResolution()
     print("PersonalMythForgeMobileCoreContractTests passed")
 } catch {
     fputs("Contract test failed: \(error)\n", stderr)
@@ -66,6 +71,25 @@ private func testMultipartBodyIncludesMetadataAndFileWithoutLocalPaths() throws 
     try expectContains(body, "filename=\"media_0.jpg\"")
     try expectContains(body, "Content-Type: image/jpeg")
     try expectNotContains(body, "/Users/")
+}
+
+private func testMultipartBuilderSanitizesHeaderValues() throws {
+    var builder = MultipartFormDataBuilder(boundary: "pmf-boundary")
+    builder.appendFile(
+        fieldName: "files\r\nX-Injected: 1",
+        filename: "../../secret.jpg\r\nX-Injected: 1",
+        contentType: "image/jpeg\r\nX-Injected: 1",
+        data: Data("fake-jpeg".utf8)
+    )
+
+    let body = String(decoding: builder.build(), as: UTF8.self)
+
+    try expectContains(body, "name=\"files\"")
+    try expectContains(body, "filename=\"secret.jpg\"")
+    try expectContains(body, "Content-Type: application/octet-stream")
+    try expectNotContains(body, "X-Injected")
+    try expectNotContains(body, "../")
+    try expectNotContains(body, "\r\nX-Injected")
 }
 
 private func testUploadObjectCaptureBuildsMultipartRequest() async throws {
@@ -161,6 +185,91 @@ private func testHTTPStatusErrorIncludesStatusAndBody() async throws {
     }
 }
 
+private func testHTTPStatusErrorSanitizesSecretsAndTruncatesBody() async throws {
+    let secret = "test-secret"
+    let oversized = String(repeating: "x", count: 900)
+    let body = "Authorization=Bearer \(secret) raw=\(secret) \(oversized)"
+    let transport = RecordingTransport(
+        responses: [
+            HTTPResponse(statusCode: 502, data: Data(body.utf8))
+        ]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    do {
+        _ = try await client.createMythSessionFromCapture(
+            captureId: "cap_ba02a3816bd145b4",
+            context: sampleContext()
+        )
+        throw ContractTestError.expectationFailed("Expected sanitized HTTP status error")
+    } catch ForgeFlowError.httpStatus(502, let sanitizedBody) {
+        try expectFalse(sanitizedBody.contains(secret))
+        try expectContains(sanitizedBody, "Authorization=Bearer [redacted]")
+        try expectContains(sanitizedBody, "raw=[redacted]")
+        try expectContains(sanitizedBody, "[truncated]")
+        try expectTrue(sanitizedBody.count <= 530)
+    }
+}
+
+private func testUploadObjectCaptureUsesGeneratedFilenamesWithoutLocalPaths() async throws {
+    let transport = RecordingTransport(
+        responses: [
+            try HTTPResponse(statusCode: 200, data: FixtureLoader.data(from: "object-capture-response"))
+        ]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport,
+        boundaryFactory: { "test-boundary" }
+    )
+
+    _ = try await client.uploadObjectCapture(
+        metadata: sampleMetadata(),
+        media: [
+            CaptureUpload(
+                filename: "/Users/zhexu/Desktop/../../secret.jpg",
+                contentType: "image/jpeg",
+                data: Data("fake-jpeg".utf8)
+            )
+        ]
+    )
+
+    let request = try require(transport.requests.first, "missing upload request")
+    let body = String(decoding: request.httpBody ?? Data(), as: UTF8.self)
+    try expectContains(body, "filename=\"media_0.jpg\"")
+    try expectNotContains(body, "/Users/")
+    try expectNotContains(body, "../")
+    try expectNotContains(body, "secret.jpg")
+}
+
+private func testUploadObjectCaptureRejectsUnsafeContentTypeBeforeNetwork() async throws {
+    let transport = RecordingTransport(responses: [])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    do {
+        _ = try await client.uploadObjectCapture(
+            metadata: sampleMetadata(),
+            media: [
+                CaptureUpload(
+                    filename: "media_0.jpg",
+                    contentType: "image/jpeg\r\nX-Injected: 1",
+                    data: Data("fake-jpeg".utf8)
+                )
+            ]
+        )
+        throw ContractTestError.expectationFailed("Expected unsafe content type error")
+    } catch ForgeFlowError.encodingFailed(let message) {
+        try expectContains(message, "Unsupported capture content type")
+        try expectEqual(transport.requests.count, 0)
+    }
+}
+
 private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
     let metadata = sampleMetadata()
     let context = sampleContext()
@@ -194,6 +303,19 @@ private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
     try expectTrue(state.metadata == nil)
     try expectTrue(state.context == nil)
     try expectTrue(state.capture == nil)
+}
+
+private func testSwiftUIScaffoldIncludesWorldResolution() throws {
+    let appRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        .appendingPathComponent("apps/mobile/ios/App")
+    let rootView = try sourceFile("ForgeRootView.swift", in: appRoot)
+    let worldView = try sourceFile("WorldResolutionView.swift", in: appRoot)
+
+    try expectContains(rootView, "WorldResolutionView(session: readySession)")
+    try expectContains(worldView, "session.worldResolution")
+    try expectContains(worldView, "acceptedActions")
+    try expectContains(worldView, "rejectedActions")
+    try expectContains(worldView, "visibleChanges")
 }
 
 private func sampleMetadata() -> ObjectCaptureMetadata {
@@ -279,6 +401,14 @@ private func require<T>(_ value: T?, _ message: String) throws -> T {
         throw ContractTestError.expectationFailed(message)
     }
     return value
+}
+
+private func sourceFile(_ name: String, in directory: URL) throws -> String {
+    let url = directory.appendingPathComponent(name)
+    guard FileManager.default.fileExists(atPath: url.path) else {
+        throw ContractTestError.expectationFailed("Missing source file: \(name)")
+    }
+    return try String(contentsOf: url, encoding: .utf8)
 }
 
 private enum ContractTestError: Error, CustomStringConvertible {

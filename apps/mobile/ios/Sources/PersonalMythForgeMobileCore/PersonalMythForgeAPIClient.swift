@@ -48,6 +48,14 @@ public enum ForgeFlowError: Error, Equatable {
 }
 
 public final class PersonalMythForgeAPIClient {
+    private static let maxHTTPErrorBodyCharacters = 512
+    private static let captureContentTypeExtensions = [
+        "image/heic": "heic",
+        "image/heif": "heif",
+        "image/jpeg": "jpg",
+        "image/png": "png",
+    ]
+
     private let baseURL: URL
     private let transport: any HTTPTransport
     private let boundaryFactory: () -> String
@@ -76,11 +84,12 @@ public final class PersonalMythForgeAPIClient {
         } catch {
             throw ForgeFlowError.encodingFailed(String(describing: error))
         }
-        for upload in media {
+        for (index, upload) in media.enumerated() {
+            let safeMedia = try safeCaptureMediaPart(for: upload, index: index)
             builder.appendFile(
                 fieldName: "files",
-                filename: upload.filename,
-                contentType: upload.contentType,
+                filename: safeMedia.filename,
+                contentType: safeMedia.contentType,
                 data: upload.data
             )
         }
@@ -135,6 +144,16 @@ public final class PersonalMythForgeAPIClient {
         }
     }
 
+    private func safeCaptureMediaPart(for upload: CaptureUpload, index: Int) throws -> (filename: String, contentType: String) {
+        let contentType = upload.contentType
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard let fileExtension = Self.captureContentTypeExtensions[contentType] else {
+            throw ForgeFlowError.encodingFailed("Unsupported capture content type.")
+        }
+        return ("media_\(index).\(fileExtension)", contentType)
+    }
+
     private func encodeJSONBody<T: Encodable>(_ body: T) throws -> Data {
         do {
             return try PMFJSON.encoder.encode(body)
@@ -154,7 +173,7 @@ public final class PersonalMythForgeAPIClient {
         }
 
         guard (200...299).contains(response.statusCode) else {
-            let body = String(data: response.data, encoding: .utf8) ?? ""
+            let body = sanitizedHTTPErrorBody(response.data)
             throw ForgeFlowError.httpStatus(response.statusCode, body)
         }
 
@@ -163,6 +182,44 @@ public final class PersonalMythForgeAPIClient {
         } catch {
             throw ForgeFlowError.decoding(String(describing: error))
         }
+    }
+
+    private func sanitizedHTTPErrorBody(_ data: Data) -> String {
+        var body = String(decoding: data, as: UTF8.self)
+        body = replacingMatches(
+            in: body,
+            pattern: #"(Authorization\s*[:=]\s*Bearer\s+)[^\s,;]+"#
+        )
+        body = replacingMatches(
+            in: body,
+            pattern: #"(Bearer\s+)[A-Za-z0-9._~+/\-=]+"#
+        )
+        body = replacingMatches(
+            in: body,
+            pattern: #"(raw\s*=\s*)[^\s,;]+"#
+        )
+        body = replacingMatches(
+            in: body,
+            pattern: #"((?:api[_-]?key|token|secret)\s*[:=]\s*)[^\s,;]+"#
+        )
+
+        if body.count > Self.maxHTTPErrorBodyCharacters {
+            return "\(body.prefix(Self.maxHTTPErrorBodyCharacters))...[truncated]"
+        }
+        return body
+    }
+
+    private func replacingMatches(in value: String, pattern: String) -> String {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+            return value
+        }
+        let range = NSRange(value.startIndex..<value.endIndex, in: value)
+        return regex.stringByReplacingMatches(
+            in: value,
+            options: [],
+            range: range,
+            withTemplate: "$1[redacted]"
+        )
     }
 }
 
