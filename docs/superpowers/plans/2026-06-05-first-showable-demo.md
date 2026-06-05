@@ -21,7 +21,7 @@
 - Modify: `services/backend/tests/test_myth_pipeline.py`
 - Create: `services/backend/tests/test_provider_factory.py`
 
-- [ ] **Step 1: Write failing test for injected 3D provider**
+- [x] **Step 1: Write failing test for injected 3D provider**
 
 Add this test to `services/backend/tests/test_myth_pipeline.py`:
 
@@ -65,13 +65,13 @@ def test_pipeline_accepts_injected_three_d_provider() -> None:
     assert provider.calls == [(session.session_id, session.myth_seed.generation_prompt)]
 ```
 
-- [ ] **Step 2: Run the test and verify it fails**
+- [x] **Step 2: Run the test and verify it fails**
 
 Run: `cd services/backend && uv run pytest tests/test_myth_pipeline.py::test_pipeline_accepts_injected_three_d_provider -q`
 
 Expected: fail because `create_demo_myth_session` does not accept `three_d_provider`.
 
-- [ ] **Step 3: Implement provider protocols and pipeline injection**
+- [x] **Step 3: Implement provider protocols and pipeline injection**
 
 Add `ThreeDProvider` to `providers/three_d.py`:
 
@@ -124,7 +124,7 @@ def create_demo_myth_session(
     return MythSession(...)
 ```
 
-- [ ] **Step 4: Run the injection test and full backend tests**
+- [x] **Step 4: Run the injection test and full backend tests**
 
 Run:
 
@@ -136,7 +136,7 @@ uv run pytest
 
 Expected: injection test passes, then all tests pass.
 
-- [ ] **Step 5: Write failing tests for settings and provider factory**
+- [x] **Step 5: Write failing tests for settings and provider factory**
 
 Create `services/backend/tests/test_provider_factory.py`:
 
@@ -160,13 +160,13 @@ def test_provider_factory_selects_meshy_provider() -> None:
     assert isinstance(provider, MeshyThreeDProvider)
 ```
 
-- [ ] **Step 6: Run provider factory tests and verify they fail**
+- [x] **Step 6: Run provider factory tests and verify they fail**
 
 Run: `cd services/backend && uv run pytest tests/test_provider_factory.py -q`
 
 Expected: fail because `config.py`, `factory.py`, and `MeshyThreeDProvider` do not exist.
 
-- [ ] **Step 7: Implement settings and factory skeleton**
+- [x] **Step 7: Implement settings and factory skeleton**
 
 Create `config.py`:
 
@@ -219,13 +219,13 @@ def build_three_d_provider(settings: Settings | None = None) -> ThreeDProvider:
 
 Add a temporary `MeshyThreeDProvider` class that raises `NotImplementedError` only in `generate_game_asset`, not during construction.
 
-- [ ] **Step 8: Run provider factory tests**
+- [x] **Step 8: Run provider factory tests**
 
 Run: `cd services/backend && uv run pytest tests/test_provider_factory.py -q`
 
 Expected: provider factory tests pass.
 
-- [ ] **Step 9: Commit Task 1**
+- [x] **Step 9: Commit Task 1**
 
 Run:
 
@@ -243,7 +243,7 @@ git commit -m "feat: add provider injection and settings"
 - Create: `services/backend/tests/test_meshy_provider.py`
 - Create: `services/backend/tests/test_cli.py`
 
-- [ ] **Step 1: Move `httpx` into runtime dependencies**
+- [x] **Step 1: Move `httpx` into runtime dependencies**
 
 Modify `services/backend/pyproject.toml` so `[project].dependencies` includes `httpx>=0.27.0` and `[dependency-groups].dev` keeps pytest and ruff.
 
@@ -251,7 +251,7 @@ Run: `cd services/backend && uv lock`
 
 Expected: `uv.lock` updates successfully.
 
-- [ ] **Step 2: Write failing Meshy success test**
+- [x] **Step 2: Write failing Meshy success test**
 
 Create `services/backend/tests/test_meshy_provider.py` with an `httpx.MockTransport` sequence:
 
@@ -289,13 +289,13 @@ def test_meshy_provider_creates_preview_refines_and_returns_glb() -> None:
     assert [request.method for request in requests] == ["POST", "GET", "POST", "GET"]
 ```
 
-- [ ] **Step 3: Run Meshy success test and verify it fails**
+- [x] **Step 3: Run Meshy success test and verify it fails**
 
 Run: `cd services/backend && uv run pytest tests/test_meshy_provider.py::test_meshy_provider_creates_preview_refines_and_returns_glb -q`
 
 Expected: fail because the provider is not implemented.
 
-- [ ] **Step 4: Implement Meshy provider**
+- [x] **Step 4: Implement Meshy provider**
 
 Implement in `providers/three_d.py`:
 
@@ -321,13 +321,13 @@ class MeshyTaskTimeoutError(MeshyProviderError):
 - Poll refine until `SUCCEEDED`.
 - Return `GeneratedAsset(kind="game_asset", provider="meshy", format="glb", uri=refined_task["model_urls"]["glb"], prompt=prompt, moderation_status="needs_review")`.
 
-- [ ] **Step 5: Run Meshy success test**
+- [x] **Step 5: Run Meshy success test**
 
 Run: `cd services/backend && uv run pytest tests/test_meshy_provider.py::test_meshy_provider_creates_preview_refines_and_returns_glb -q`
 
 Expected: pass.
 
-- [ ] **Step 6: Write failing Meshy error tests**
+- [x] **Step 6: Write failing Meshy error tests**
 
 Add tests for:
 
@@ -348,13 +348,13 @@ def test_meshy_provider_times_out_when_task_never_finishes() -> None:
     # Expected: MeshyTaskTimeoutError.
 ```
 
-- [ ] **Step 7: Run and implement until error tests pass**
+- [x] **Step 7: Run and implement until error tests pass**
 
 Run: `cd services/backend && uv run pytest tests/test_meshy_provider.py -q`
 
 Expected: all Meshy provider tests pass.
 
-- [ ] **Step 8: Write failing CLI local test**
+- [x] **Step 8: Write failing CLI local test**
 
 Create `services/backend/tests/test_cli.py`:
 
@@ -373,13 +373,13 @@ def test_cli_generates_local_asset_json(capsys) -> None:
     assert payload["format"] == "glb"
 ```
 
-- [ ] **Step 9: Run CLI test and verify it fails**
+- [x] **Step 9: Run CLI test and verify it fails**
 
 Run: `cd services/backend && uv run pytest tests/test_cli.py -q`
 
 Expected: fail because `cli.py` does not exist.
 
-- [ ] **Step 10: Implement CLI**
+- [x] **Step 10: Implement CLI**
 
 Create `cli.py` with `argparse` subcommands:
 
@@ -388,7 +388,7 @@ Create `cli.py` with `argparse` subcommands:
 
 The CLI builds the selected provider, emits JSON to stdout, returns `0` on success, returns `1` on provider errors, and writes provider errors to stderr.
 
-- [ ] **Step 11: Run CLI and provider tests**
+- [x] **Step 11: Run CLI and provider tests**
 
 Run:
 
@@ -399,7 +399,7 @@ uv run pytest tests/test_meshy_provider.py tests/test_cli.py -q
 
 Expected: all selected tests pass.
 
-- [ ] **Step 12: Commit Task 2**
+- [x] **Step 12: Commit Task 2**
 
 Run:
 
@@ -417,7 +417,7 @@ git commit -m "feat: add meshy provider and asset CLI"
 - Create: `services/backend/src/myth_forge_api/demo/app.js`
 - Modify: `services/backend/tests/test_api_contract.py`
 
-- [ ] **Step 1: Write failing `/demo` route test**
+- [x] **Step 1: Write failing `/demo` route test**
 
 Add to `services/backend/tests/test_api_contract.py`:
 
@@ -432,13 +432,13 @@ def test_demo_route_serves_mobile_first_shell() -> None:
     assert "myth-form" in response.text
 ```
 
-- [ ] **Step 2: Run route test and verify it fails**
+- [x] **Step 2: Run route test and verify it fails**
 
 Run: `cd services/backend && uv run pytest tests/test_api_contract.py::test_demo_route_serves_mobile_first_shell -q`
 
 Expected: fail with 404.
 
-- [ ] **Step 3: Implement demo route and static mount**
+- [x] **Step 3: Implement demo route and static mount**
 
 In `main.py`, add:
 
@@ -457,7 +457,7 @@ def demo() -> FileResponse:
     return FileResponse(DEMO_DIR / "index.html")
 ```
 
-- [ ] **Step 4: Create HTML/CSS/JS demo files**
+- [x] **Step 4: Create HTML/CSS/JS demo files**
 
 `index.html` should include a real form, a result region, links to `/demo/static/styles.css` and `/demo/static/app.js`, and semantic sections for artifact, NPCs, and print review.
 
@@ -465,13 +465,13 @@ def demo() -> FileResponse:
 
 `styles.css` should be mobile-first, readable at 390px width, and use stable dimensions for form controls, action buttons, and the artifact stage.
 
-- [ ] **Step 5: Run demo route test**
+- [x] **Step 5: Run demo route test**
 
 Run: `cd services/backend && uv run pytest tests/test_api_contract.py::test_demo_route_serves_mobile_first_shell -q`
 
 Expected: pass.
 
-- [ ] **Step 6: Wire API route to provider factory**
+- [x] **Step 6: Wire API route to provider factory**
 
 Modify `main.py` so `create_myth_session` calls:
 
@@ -485,13 +485,13 @@ create_demo_myth_session(
 
 Keep default behavior deterministic because `THREE_D_PROVIDER` defaults to `local`.
 
-- [ ] **Step 7: Run API contract tests**
+- [x] **Step 7: Run API contract tests**
 
 Run: `cd services/backend && uv run pytest tests/test_api_contract.py -q`
 
 Expected: existing API test and demo route test pass.
 
-- [ ] **Step 8: Commit Task 3**
+- [x] **Step 8: Commit Task 3**
 
 Run:
 
@@ -508,7 +508,7 @@ git commit -m "feat: add local web demo"
 - Modify: `Makefile`
 - Modify: `docs/iteration-roadmap.md`
 
-- [ ] **Step 1: Update commands and env docs**
+- [x] **Step 1: Update commands and env docs**
 
 Document:
 
@@ -528,7 +528,7 @@ cd services/backend
 uv run python -m myth_forge_api.cli generate-asset --provider meshy --prompt "Create a weathered key worshiped by a tiny village."
 ```
 
-- [ ] **Step 2: Add Makefile CLI helper**
+- [x] **Step 2: Add Makefile CLI helper**
 
 Add:
 
@@ -540,11 +540,11 @@ backend-generate-local:
 	cd services/backend && uv run python -m myth_forge_api.cli generate-asset --provider local --prompt "Create a brass key relic worshiped by a tiny village."
 ```
 
-- [ ] **Step 3: Update roadmap**
+- [x] **Step 3: Update roadmap**
 
 Mark the first showable local web demo as the bridge between P0 and P1. Keep Unity import as the next milestone after Meshy prompt quality validation.
 
-- [ ] **Step 4: Run full verification**
+- [x] **Step 4: Run full verification**
 
 Run:
 
@@ -556,7 +556,7 @@ cd services/backend && uv run python -m myth_forge_api.cli generate-asset --prov
 
 Expected: lint passes, tests pass, CLI prints JSON with `provider` equal to `local_stub`.
 
-- [ ] **Step 5: Start server and verify demo HTML**
+- [x] **Step 5: Start server and verify demo HTML**
 
 Run:
 
@@ -574,7 +574,7 @@ curl -s http://127.0.0.1:8080/health
 
 Expected: `/demo` returns the shell and `/health` returns `{"status":"ok"}`.
 
-- [ ] **Step 6: Commit Task 4**
+- [x] **Step 6: Commit Task 4**
 
 Run:
 

@@ -22,8 +22,40 @@ Build a vertical slice that proves the core loop:
 ## Local Backend
 
 ```bash
-cd services/backend
-uv run pytest
-uv run uvicorn myth_forge_api.main:app --reload --port 8080
+make backend-test
+make backend-lint
+make backend-dev
 ```
 
+Open the first local demo at:
+
+```text
+http://127.0.0.1:8080/demo
+```
+
+The demo defaults to the deterministic local 3D provider, so it does not require external API
+keys.
+
+## 3D Provider Spike
+
+Generate local asset metadata from a prompt:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli generate-asset \
+  --provider local \
+  --prompt "Create a brass key relic worshiped by a tiny village."
+```
+
+Generate a real Meshy GLB when `MESHY_API_KEY` is available:
+
+```bash
+export MESHY_API_KEY=...
+cd services/backend
+uv run python -m myth_forge_api.cli generate-asset \
+  --provider meshy \
+  --prompt "Create a weathered key worshiped by a tiny village."
+```
+
+Use `THREE_D_PROVIDER=meshy` to route `POST /v1/myth-sessions` through Meshy. Keep
+`THREE_D_PROVIDER=local` for fast local demos and tests.

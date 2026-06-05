@@ -13,6 +13,12 @@ Validate 3D provider quality and Unity import with at least 20 inputs:
 - GLB import into Unity
 - STL or 3MF printability analysis
 
+Bridge deliverable:
+
+- local browser demo at `/demo` for showing the core loop before Unity import
+- Meshy CLI path for prompt-by-prompt GLB quality checks
+- default local provider path that needs no external secrets
+
 ## P1: Mobile Vertical Slice
 
 Duration: 2-3 weeks.
@@ -43,4 +49,3 @@ Add print provider quote adapters, printable asset repair, user approval, and an
 Duration: 2-4 weeks.
 
 Expose a personal context skill through an MCP-compatible interface. The skill returns compact, user-approved context capsules and never returns raw email, calendar, chat, or document bodies.
-
