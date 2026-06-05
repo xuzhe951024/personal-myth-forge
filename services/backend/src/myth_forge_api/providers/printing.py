@@ -1,6 +1,15 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 from myth_forge_api.domain.models import GeneratedAsset, PrintCandidate
+
+
+class PrintProvider(Protocol):
+    provider_name: str
+
+    def create_print_candidate(self, generated_asset: GeneratedAsset) -> PrintCandidate:
+        ...
 
 
 class LocalPrintProvider:
@@ -28,4 +37,3 @@ class LocalPrintProvider:
                 "scale to a small physical relic unless the user approves a larger print",
             ],
         )
-

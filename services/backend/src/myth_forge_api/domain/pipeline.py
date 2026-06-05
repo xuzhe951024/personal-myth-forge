@@ -13,12 +13,15 @@ from myth_forge_api.domain.models import (
     ObjectObservation,
 )
 from myth_forge_api.providers.printing import LocalPrintProvider
-from myth_forge_api.providers.three_d import LocalThreeDProvider
+from myth_forge_api.providers.printing import PrintProvider
+from myth_forge_api.providers.three_d import LocalThreeDProvider, ThreeDProvider
 
 
 def create_demo_myth_session(
     object_observation: ObjectObservation | Mapping[str, Any],
     context_capsule: ContextCapsule | Mapping[str, Any],
+    three_d_provider: ThreeDProvider | None = None,
+    print_provider: PrintProvider | None = None,
 ) -> MythSession:
     observation = _coerce_object_observation(object_observation)
     capsule = _coerce_context_capsule(context_capsule)
@@ -26,12 +29,14 @@ def create_demo_myth_session(
 
     object_card = _create_object_card(observation)
     myth_seed = _create_myth_seed(object_card, capsule)
-    generated_asset = LocalThreeDProvider().generate_game_asset(
+    selected_three_d_provider = three_d_provider or LocalThreeDProvider()
+    generated_asset = selected_three_d_provider.generate_game_asset(
         session_id=session_id,
         prompt=myth_seed.generation_prompt,
     )
     npc_reactions = _create_npc_reactions(object_card, myth_seed)
-    print_candidate = LocalPrintProvider().create_print_candidate(generated_asset)
+    selected_print_provider = print_provider or LocalPrintProvider()
+    print_candidate = selected_print_provider.create_print_candidate(generated_asset)
 
     return MythSession(
         session_id=session_id,

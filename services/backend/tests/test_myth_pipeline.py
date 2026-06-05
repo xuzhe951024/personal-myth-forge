@@ -1,4 +1,21 @@
+from myth_forge_api.domain.models import GeneratedAsset
 from myth_forge_api.domain.pipeline import create_demo_myth_session
+
+
+class RecordingThreeDProvider:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, str]] = []
+
+    def generate_game_asset(self, session_id: str, prompt: str) -> GeneratedAsset:
+        self.calls.append((session_id, prompt))
+        return GeneratedAsset(
+            kind="game_asset",
+            provider="recording",
+            format="glb",
+            uri=f"recording://{session_id}.glb",
+            prompt=prompt,
+            moderation_status="needs_review",
+        )
 
 
 def test_generates_session_from_real_object_and_context() -> None:
@@ -49,3 +66,22 @@ def test_session_serializes_to_json_safe_payload() -> None:
     assert payload["generated_asset"]["uri"].startswith("local://")
     assert payload["print_candidate"]["approval_reason"]
 
+
+def test_pipeline_accepts_injected_three_d_provider() -> None:
+    provider = RecordingThreeDProvider()
+
+    session = create_demo_myth_session(
+        object_observation={
+            "label": "silver spoon",
+            "materials": ["metal"],
+            "source": "manual_upload",
+        },
+        context_capsule={
+            "current_theme": "making peace with change",
+            "desired_tone": "gentle and uncanny",
+        },
+        three_d_provider=provider,
+    )
+
+    assert session.generated_asset.provider == "recording"
+    assert provider.calls == [(session.session_id, session.myth_seed.generation_prompt)]

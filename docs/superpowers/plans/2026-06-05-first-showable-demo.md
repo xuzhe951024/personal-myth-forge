@@ -21,7 +21,7 @@
 - Modify: `services/backend/tests/test_myth_pipeline.py`
 - Create: `services/backend/tests/test_provider_factory.py`
 
-- [ ] **Step 1: Write failing test for injected 3D provider**
+- [x] **Step 1: Write failing test for injected 3D provider**
 
 Add this test to `services/backend/tests/test_myth_pipeline.py`:
 
@@ -65,13 +65,13 @@ def test_pipeline_accepts_injected_three_d_provider() -> None:
     assert provider.calls == [(session.session_id, session.myth_seed.generation_prompt)]
 ```
 
-- [ ] **Step 2: Run the test and verify it fails**
+- [x] **Step 2: Run the test and verify it fails**
 
 Run: `cd services/backend && uv run pytest tests/test_myth_pipeline.py::test_pipeline_accepts_injected_three_d_provider -q`
 
 Expected: fail because `create_demo_myth_session` does not accept `three_d_provider`.
 
-- [ ] **Step 3: Implement provider protocols and pipeline injection**
+- [x] **Step 3: Implement provider protocols and pipeline injection**
 
 Add `ThreeDProvider` to `providers/three_d.py`:
 
@@ -124,7 +124,7 @@ def create_demo_myth_session(
     return MythSession(...)
 ```
 
-- [ ] **Step 4: Run the injection test and full backend tests**
+- [x] **Step 4: Run the injection test and full backend tests**
 
 Run:
 
@@ -136,7 +136,7 @@ uv run pytest
 
 Expected: injection test passes, then all tests pass.
 
-- [ ] **Step 5: Write failing tests for settings and provider factory**
+- [x] **Step 5: Write failing tests for settings and provider factory**
 
 Create `services/backend/tests/test_provider_factory.py`:
 
@@ -160,13 +160,13 @@ def test_provider_factory_selects_meshy_provider() -> None:
     assert isinstance(provider, MeshyThreeDProvider)
 ```
 
-- [ ] **Step 6: Run provider factory tests and verify they fail**
+- [x] **Step 6: Run provider factory tests and verify they fail**
 
 Run: `cd services/backend && uv run pytest tests/test_provider_factory.py -q`
 
 Expected: fail because `config.py`, `factory.py`, and `MeshyThreeDProvider` do not exist.
 
-- [ ] **Step 7: Implement settings and factory skeleton**
+- [x] **Step 7: Implement settings and factory skeleton**
 
 Create `config.py`:
 
@@ -219,13 +219,13 @@ def build_three_d_provider(settings: Settings | None = None) -> ThreeDProvider:
 
 Add a temporary `MeshyThreeDProvider` class that raises `NotImplementedError` only in `generate_game_asset`, not during construction.
 
-- [ ] **Step 8: Run provider factory tests**
+- [x] **Step 8: Run provider factory tests**
 
 Run: `cd services/backend && uv run pytest tests/test_provider_factory.py -q`
 
 Expected: provider factory tests pass.
 
-- [ ] **Step 9: Commit Task 1**
+- [x] **Step 9: Commit Task 1**
 
 Run:
 
