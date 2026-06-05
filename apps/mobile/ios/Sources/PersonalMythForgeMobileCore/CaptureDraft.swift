@@ -40,10 +40,13 @@ public enum CaptureDraftValidationError: Error, Equatable, Sendable {
     case missingLabel
     case unsupportedContentType(String)
     case invalidMediaCount(CaptureMode, Int)
+    case mediaTooLarge(Int, Int)
     case missingScanAsset
 }
 
 public struct CaptureDraft: Equatable, Sendable {
+    public static let maxFileBytes = 10 * 1024 * 1024
+
     private static let imageContentTypes: Set<String> = [
         "image/heic",
         "image/heif",
@@ -130,6 +133,9 @@ public struct CaptureDraft: Equatable, Sendable {
             guard Self.scanContentTypes.contains(contentType) else {
                 throw CaptureDraftValidationError.unsupportedContentType(contentType)
             }
+        }
+        guard media.data.count <= Self.maxFileBytes else {
+            throw CaptureDraftValidationError.mediaTooLarge(media.data.count, Self.maxFileBytes)
         }
         return CaptureMediaDraft(
             originalFilename: media.originalFilename,

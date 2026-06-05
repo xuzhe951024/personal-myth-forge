@@ -19,6 +19,7 @@ do {
     try testCaptureDraftBuildsPhotoSetPayload()
     try testCaptureDraftBuildsARKitScanPayload()
     try testCaptureDraftRejectsInvalidMedia()
+    try testCaptureDraftRejectsOversizedMedia()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
     try testSwiftUIScaffoldIncludesWorldResolution()
     print("PersonalMythForgeMobileCoreContractTests passed")
@@ -427,6 +428,28 @@ private func testCaptureDraftRejectsInvalidMedia() throws {
     )
 }
 
+private func testCaptureDraftRejectsOversizedMedia() throws {
+    let limit = CaptureDraft.maxFileBytes
+    try expectCaptureDraftError(
+        CaptureDraft(
+            label: "small idol",
+            materialsText: "stone",
+            visualNotes: "",
+            source: "phone_capture",
+            mode: .arkitScan,
+            media: [
+                captureMedia(
+                    filename: "oversized.glb",
+                    contentType: "model/gltf-binary",
+                    kind: .scanAsset,
+                    data: Data(repeating: 0, count: limit + 1)
+                )
+            ]
+        ),
+        .mediaTooLarge(limit + 1, limit)
+    )
+}
+
 private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
     let metadata = sampleMetadata()
     let context = sampleContext()
@@ -493,11 +516,16 @@ private func sampleContext() -> ContextCapsule {
     )
 }
 
-private func captureMedia(filename: String, contentType: String, kind: CaptureMediaKind) -> CaptureMediaDraft {
+private func captureMedia(
+    filename: String,
+    contentType: String,
+    kind: CaptureMediaKind,
+    data: Data = Data("capture-data".utf8)
+) -> CaptureMediaDraft {
     CaptureMediaDraft(
         originalFilename: filename,
         contentType: contentType,
-        data: Data("capture-data".utf8),
+        data: data,
         kind: kind
     )
 }
