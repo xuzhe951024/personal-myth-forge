@@ -12,6 +12,8 @@ do {
     let packageManifest = try readText(packageFile)
     let project = try readText(projectFile)
     let plist = try readPropertyList(plistFile)
+    let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
+    let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
     try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
@@ -60,6 +62,9 @@ do {
         key: "NSAllowsLocalNetworking",
         expected: true
     )
+    try requireContains(captureFormView, "CaptureMode", "capture mode app shell source")
+    try requireContains(captureFormView, "Scan readiness", "scan readiness app shell source")
+    try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
 
     try scanForMobileSecrets(in: [appRoot, coreRoot], additionalFiles: [packageFile, projectFile, plistFile])
 

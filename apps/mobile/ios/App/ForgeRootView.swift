@@ -8,6 +8,7 @@ struct ForgeRootView: View {
     @State private var visualNotes = "worn teeth, circular bow, warm reflections"
     @State private var currentTheme = "deadline pressure"
     @State private var desiredTone = "tender, strange"
+    @State private var selectedCaptureMode = CaptureMode.singlePhoto
 
     var body: some View {
         NavigationStack {
@@ -19,6 +20,7 @@ struct ForgeRootView: View {
                         visualNotes: $visualNotes,
                         currentTheme: $currentTheme,
                         desiredTone: $desiredTone,
+                        selectedCaptureMode: $selectedCaptureMode,
                         phase: state.phase
                     )
                     ArtifactSummaryView(session: readySession)

@@ -1,6 +1,6 @@
 import Foundation
 
-public enum CaptureMode: String, Codable, Equatable, CaseIterable, Sendable {
+public enum CaptureMode: String, Codable, Equatable, Hashable, CaseIterable, Sendable {
     case singlePhoto = "single_photo"
     case photoSet = "photo_set"
     case manualUpload = "manual_upload"
