@@ -14,6 +14,7 @@ do {
     try await testHTTPStatusErrorSanitizesSecretsAndTruncatesBody()
     try await testUploadObjectCaptureUsesGeneratedFilenamesWithoutLocalPaths()
     try await testUploadObjectCaptureRejectsUnsafeContentTypeBeforeNetwork()
+    try await testUploadObjectCaptureBuildsARKitScanMultipartRequest()
     try testCaptureDraftBuildsSinglePhotoPayload()
     try testCaptureDraftBuildsPhotoSetPayload()
     try testCaptureDraftBuildsARKitScanPayload()
@@ -272,6 +273,47 @@ private func testUploadObjectCaptureRejectsUnsafeContentTypeBeforeNetwork() asyn
         try expectContains(message, "Unsupported capture content type")
         try expectEqual(transport.requests.count, 0)
     }
+}
+
+private func testUploadObjectCaptureBuildsARKitScanMultipartRequest() async throws {
+    let transport = RecordingTransport(
+        responses: [
+            try HTTPResponse(statusCode: 200, data: FixtureLoader.data(from: "object-capture-response"))
+        ]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport,
+        boundaryFactory: { "test-boundary" }
+    )
+    let draft = CaptureDraft(
+        label: "small idol",
+        materialsText: "stone",
+        visualNotes: "rough LiDAR mesh",
+        source: "phone_capture",
+        mode: .arkitScan,
+        media: [
+            captureMedia(
+                filename: "/Users/zhexu/Desktop/idol mesh.glb",
+                contentType: "model/gltf-binary",
+                kind: .scanAsset
+            )
+        ]
+    )
+    let payload = try draft.validatedUploadPayload()
+
+    _ = try await client.uploadObjectCapture(
+        metadata: payload.metadata,
+        media: payload.uploads
+    )
+
+    let request = try require(transport.requests.first, "missing upload request")
+    let body = String(decoding: request.httpBody ?? Data(), as: UTF8.self)
+    try expectContains(body, "\"capture_mode\":\"arkit_scan\"")
+    try expectContains(body, "filename=\"scan_0.glb\"")
+    try expectContains(body, "Content-Type: model/gltf-binary")
+    try expectNotContains(body, "/Users/")
+    try expectNotContains(body, "idol mesh.glb")
 }
 
 private func testCaptureDraftBuildsSinglePhotoPayload() throws {

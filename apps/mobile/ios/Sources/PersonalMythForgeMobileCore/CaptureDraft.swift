@@ -1,18 +1,18 @@
 import Foundation
 
-public enum CaptureMode: String, Codable, Equatable, CaseIterable {
+public enum CaptureMode: String, Codable, Equatable, CaseIterable, Sendable {
     case singlePhoto = "single_photo"
     case photoSet = "photo_set"
     case manualUpload = "manual_upload"
     case arkitScan = "arkit_scan"
 }
 
-public enum CaptureMediaKind: String, Codable, Equatable {
+public enum CaptureMediaKind: String, Codable, Equatable, Sendable {
     case image
     case scanAsset
 }
 
-public struct CaptureMediaDraft: Equatable {
+public struct CaptureMediaDraft: Equatable, Sendable {
     public let originalFilename: String
     public let contentType: String
     public let data: Data
@@ -36,14 +36,14 @@ public struct CaptureUploadPayload: Equatable {
     }
 }
 
-public enum CaptureDraftValidationError: Error, Equatable {
+public enum CaptureDraftValidationError: Error, Equatable, Sendable {
     case missingLabel
     case unsupportedContentType(String)
     case invalidMediaCount(CaptureMode, Int)
     case missingScanAsset
 }
 
-public struct CaptureDraft: Equatable {
+public struct CaptureDraft: Equatable, Sendable {
     private static let imageContentTypes: Set<String> = [
         "image/heic",
         "image/heif",
