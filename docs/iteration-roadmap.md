@@ -23,6 +23,7 @@ Bridge deliverable:
 - P0.6 capture upload contract for iOS/Unity clients
 - local ignored capture storage for no-key development
 - P0.7 SwiftPM iOS client core scaffold for local capture-to-myth contract tests
+- P0.8 Xcode iOS app shell plus SwiftPM project inspector for no-global-Xcode verification
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

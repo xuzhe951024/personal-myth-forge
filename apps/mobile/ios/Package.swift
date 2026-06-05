@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "PersonalMythForgeMobile",
-    platforms: [.macOS(.v13)],
+    platforms: [.iOS(.v17), .macOS(.v13)],
     products: [
         .library(name: "PersonalMythForgeMobileCore", targets: ["PersonalMythForgeMobileCore"])
     ],
@@ -13,6 +13,10 @@ let package = Package(
             name: "PersonalMythForgeMobileCoreContractTests",
             dependencies: ["PersonalMythForgeMobileCore"],
             resources: [.process("Fixtures")]
+        ),
+        .executableTarget(
+            name: "PersonalMythForgeMobileProjectChecks",
+            dependencies: []
         ),
     ]
 )
