@@ -69,3 +69,34 @@ global developer directory as part of the local test path.
 The SwiftUI files under `apps/mobile/ios/App` are source-only scaffolding for a
 future Xcode iOS target. API keys and provider secrets must not be committed into
 the mobile app; use backend-side provider configuration instead.
+
+## P0.8 Xcode App Shell
+
+P0.8 adds:
+
+```text
+apps/mobile/ios/PersonalMythForge.xcodeproj
+apps/mobile/ios/App/Info.plist
+apps/mobile/ios/App/AppConfiguration.swift
+```
+
+Open `PersonalMythForge.xcodeproj` in full Xcode to continue simulator or device
+deployment work. The current local environment only has Command Line Tools
+selected, so do not run `xcode-select` as part of the repository verification
+path.
+
+Run the project-shell inspector with:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+```
+
+Then run the mobile core contract tests:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+`PMFBackendBaseURL` in `App/Info.plist` controls the backend URL for the app
+shell. Provider API keys stay on the backend; the mobile app should never commit
+OpenAI, Meshy, or print provider secrets.

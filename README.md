@@ -105,3 +105,20 @@ swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTest
 
 This validates the typed iOS-side models, multipart request builder, API client,
 and reducer without requiring a global Xcode developer directory change.
+
+P0.8 also includes an Xcode app shell at:
+
+```text
+apps/mobile/ios/PersonalMythForge.xcodeproj
+```
+
+Open that project in full Xcode for simulator or device deployment work. On this
+machine, local verification stays SwiftPM-only:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+The app shell reads `PMFBackendBaseURL` from `Info.plist`; provider API keys stay
+on the backend.
