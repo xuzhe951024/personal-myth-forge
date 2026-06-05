@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+CAPTURE_ID_PATTERN = r"^cap_[0-9a-f]{16}$"
+
 
 class ObjectObservation(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -48,7 +50,7 @@ class CaptureMediaItem(BaseModel):
 
 
 class ObjectCapture(BaseModel):
-    capture_id: str
+    capture_id: str = Field(pattern=CAPTURE_ID_PATTERN)
     status: Literal["ready", "blocked", "processing"]
     source: str
     capture_mode: Literal["single_photo", "photo_set", "manual_upload", "arkit_scan"]
@@ -139,5 +141,5 @@ class MythSessionRequest(BaseModel):
 
 
 class MythSessionFromCaptureRequest(BaseModel):
-    capture_id: str = Field(min_length=1)
+    capture_id: str = Field(min_length=1, pattern=CAPTURE_ID_PATTERN)
     context_capsule: ContextCapsule

@@ -7,6 +7,8 @@ from typing import Mapping
 
 from dotenv import load_dotenv
 
+DEFAULT_CAPTURE_STORAGE_DIR = str(Path(__file__).resolve().parents[2] / ".local" / "captures")
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -19,7 +21,7 @@ class Settings:
     openai_api_key: str | None = None
     openai_npc_model: str = "gpt-4.1-mini"
     openai_api_base_url: str | None = None
-    capture_storage_dir: str = str(Path(__file__).resolve().parents[2] / ".local" / "captures")
+    capture_storage_dir: str = DEFAULT_CAPTURE_STORAGE_DIR
 
 
 def load_settings(env: Mapping[str, str] | None = None) -> Settings:
@@ -35,8 +37,5 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         openai_api_key=source.get("OPENAI_API_KEY") or None,
         openai_npc_model=source.get("OPENAI_NPC_MODEL", "gpt-4.1-mini"),
         openai_api_base_url=source.get("OPENAI_API_BASE_URL") or None,
-        capture_storage_dir=source.get(
-            "CAPTURE_STORAGE_DIR",
-            str(Path(__file__).resolve().parents[2] / ".local" / "captures"),
-        ),
+        capture_storage_dir=source.get("CAPTURE_STORAGE_DIR") or DEFAULT_CAPTURE_STORAGE_DIR,
     )

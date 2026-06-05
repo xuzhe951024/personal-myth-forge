@@ -4,11 +4,13 @@ import json
 import re
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Path as PathParam, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import ValidationError
 
 from myth_forge_api.domain.models import (
+    CAPTURE_ID_PATTERN,
     MythSession,
     MythSessionFromCaptureRequest,
     MythSessionRequest,
@@ -63,12 +65,16 @@ async def create_object_capture(
         return build_capture_store().save_capture(metadata=metadata, files=uploads)
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=422, detail="metadata_json must be valid JSON.") from exc
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail="metadata_json failed validation.") from exc
     except CaptureStoreError as exc:
         raise HTTPException(status_code=exc.status_code, detail=_safe_provider_error(exc)) from exc
 
 
 @app.get("/v1/object-captures/{capture_id}", response_model=ObjectCapture)
-def get_object_capture(capture_id: str) -> ObjectCapture:
+def get_object_capture(
+    capture_id: str = PathParam(..., pattern=CAPTURE_ID_PATTERN),
+) -> ObjectCapture:
     capture = build_capture_store().get_capture(capture_id)
     if capture is None:
         raise HTTPException(status_code=404, detail="Object capture not found.")

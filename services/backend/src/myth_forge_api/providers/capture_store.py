@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Protocol
 from uuid import uuid4
 
-from myth_forge_api.domain.models import CaptureMediaItem, ObjectCapture, ObjectCaptureMetadata
+from myth_forge_api.domain.models import (
+    CAPTURE_ID_PATTERN,
+    CaptureMediaItem,
+    ObjectCapture,
+    ObjectCaptureMetadata,
+)
 
 ACCEPTED_CONTENT_TYPES = {
     "image/jpeg": ".jpg",
@@ -21,6 +27,7 @@ ACCEPTED_CONTENT_TYPES = {
 IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
 DEFAULT_MAX_FILES = 12
 DEFAULT_MAX_FILE_BYTES = 10 * 1024 * 1024
+CAPTURE_ID_RE = re.compile(CAPTURE_ID_PATTERN)
 
 
 @dataclass(frozen=True)
@@ -118,7 +125,14 @@ class LocalCaptureStore:
         return capture
 
     def get_capture(self, capture_id: str) -> ObjectCapture | None:
-        manifest_path = self.root_dir / capture_id / "manifest.json"
+        if CAPTURE_ID_RE.fullmatch(capture_id) is None:
+            return None
+        root_dir = self.root_dir.resolve()
+        manifest_path = (self.root_dir / capture_id / "manifest.json").resolve()
+        try:
+            manifest_path.relative_to(root_dir)
+        except ValueError:
+            return None
         if not manifest_path.exists():
             return None
         data = json.loads(manifest_path.read_text(encoding="utf-8"))

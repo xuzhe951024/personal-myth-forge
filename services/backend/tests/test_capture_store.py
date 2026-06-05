@@ -78,3 +78,29 @@ def test_local_capture_store_rejects_unsupported_content_type(tmp_path) -> None:
             metadata=_metadata(),
             files=[CaptureUpload(filename="a.txt", content_type="text/plain", data=b"abc")],
         )
+
+
+def test_local_capture_store_rejects_path_traversal_capture_id(tmp_path) -> None:
+    store = LocalCaptureStore(root_dir=tmp_path / "captures")
+    store.root_dir.mkdir()
+    escaped_manifest = tmp_path / "manifest.json"
+    escaped_manifest.write_text(
+        json.dumps(
+            {
+                "capture_id": "cap_0000000000000000",
+                "status": "ready",
+                "source": "phone_capture",
+                "capture_mode": "single_photo",
+                "object_observation": {
+                    "label": "escaped manifest",
+                    "materials": [],
+                    "source": "phone_capture",
+                },
+                "media_items": [],
+                "created_at": "2026-06-05T00:00:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert store.get_capture("..") is None

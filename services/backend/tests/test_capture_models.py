@@ -8,7 +8,7 @@ from myth_forge_api.domain.models import (
 
 def test_object_capture_manifest_serializes_without_bytes_or_local_paths() -> None:
     capture = ObjectCapture(
-        capture_id="cap_test",
+        capture_id="cap_0000000000000001",
         status="ready",
         source="phone_capture",
         capture_mode="single_photo",
@@ -24,7 +24,7 @@ def test_object_capture_manifest_serializes_without_bytes_or_local_paths() -> No
                 role="reference_image",
                 content_type="image/jpeg",
                 byte_size=4,
-                uri="local-capture://cap_test/media_0.jpg",
+                uri="local-capture://cap_0000000000000001/media_0.jpg",
                 moderation_status="needs_review",
             )
         ],
@@ -33,8 +33,10 @@ def test_object_capture_manifest_serializes_without_bytes_or_local_paths() -> No
 
     payload = capture.model_dump(mode="json")
 
-    assert payload["capture_id"] == "cap_test"
-    assert payload["media_items"][0]["uri"] == "local-capture://cap_test/media_0.jpg"
+    assert payload["capture_id"] == "cap_0000000000000001"
+    assert payload["media_items"][0]["uri"] == (
+        "local-capture://cap_0000000000000001/media_0.jpg"
+    )
     assert "bytes" not in str(payload).lower()
     assert "/Users/" not in str(payload)
 

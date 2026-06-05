@@ -251,11 +251,11 @@ def test_pipeline_includes_capture_reference_in_object_card() -> None:
             "label": "old brass key",
             "materials": ["metal"],
             "source": "phone_capture",
-            "capture_id": "cap_test",
-            "media_refs": ["local-capture://cap_test/media_0.jpg"],
+            "capture_id": "cap_0123456789abcdef",
+            "media_refs": ["local-capture://cap_0123456789abcdef/media_0.jpg"],
         },
         context_capsule={"current_theme": "choice", "desired_tone": "bright"},
     )
 
-    assert "cap_test" in session.object_card.symbolic_reading
+    assert "cap_0123456789abcdef" in session.object_card.symbolic_reading
     assert "uploaded capture media" in session.object_card.affordances
