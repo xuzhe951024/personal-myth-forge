@@ -508,7 +508,7 @@ git commit -m "feat: add local web demo"
 - Modify: `Makefile`
 - Modify: `docs/iteration-roadmap.md`
 
-- [ ] **Step 1: Update commands and env docs**
+- [x] **Step 1: Update commands and env docs**
 
 Document:
 
@@ -528,7 +528,7 @@ cd services/backend
 uv run python -m myth_forge_api.cli generate-asset --provider meshy --prompt "Create a weathered key worshiped by a tiny village."
 ```
 
-- [ ] **Step 2: Add Makefile CLI helper**
+- [x] **Step 2: Add Makefile CLI helper**
 
 Add:
 
@@ -540,11 +540,11 @@ backend-generate-local:
 	cd services/backend && uv run python -m myth_forge_api.cli generate-asset --provider local --prompt "Create a brass key relic worshiped by a tiny village."
 ```
 
-- [ ] **Step 3: Update roadmap**
+- [x] **Step 3: Update roadmap**
 
 Mark the first showable local web demo as the bridge between P0 and P1. Keep Unity import as the next milestone after Meshy prompt quality validation.
 
-- [ ] **Step 4: Run full verification**
+- [x] **Step 4: Run full verification**
 
 Run:
 
@@ -556,7 +556,7 @@ cd services/backend && uv run python -m myth_forge_api.cli generate-asset --prov
 
 Expected: lint passes, tests pass, CLI prints JSON with `provider` equal to `local_stub`.
 
-- [ ] **Step 5: Start server and verify demo HTML**
+- [x] **Step 5: Start server and verify demo HTML**
 
 Run:
 
@@ -574,7 +574,7 @@ curl -s http://127.0.0.1:8080/health
 
 Expected: `/demo` returns the shell and `/health` returns `{"status":"ok"}`.
 
-- [ ] **Step 6: Commit Task 4**
+- [x] **Step 6: Commit Task 4**
 
 Run:
 
