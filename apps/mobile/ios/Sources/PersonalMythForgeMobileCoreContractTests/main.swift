@@ -39,6 +39,10 @@ do {
     try testDevicePreflightMarksReadyFinalResourcesPreflight()
     try testDevicePreflightBlocksAndRedactsFinalResourcesPreflight()
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
+    try testFinalLaunchMobileSummaryWaitsForMissingReport()
+    try testFinalLaunchMobileSummaryBuildsPartialOperatorStatus()
+    try testFinalLaunchMobileSummaryMarksReadyReport()
+    try testFinalLaunchMobileSummaryRedactsUnsafeReportText()
     try testDevicePreflightMarksLocalDemoReady()
     try testDevicePreflightMarksSavedNPCHistoryReady()
     try testDemoScriptStartsWithCapture()
@@ -884,6 +888,72 @@ private func testDevicePreflightBlocksAndRedactsFinalLaunchError() throws {
 
     try expectEqual(summary.overallStatus, .blocked)
     try expectEqual(summary.item(id: "final_launch")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
+private func testFinalLaunchMobileSummaryWaitsForMissingReport() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: nil, error: nil)
+
+    try expectEqual(summary.overallStatus, .waiting)
+    try expectContains(summary.title, "Final launch report")
+    try expectContains(summary.subtitle, "not loaded")
+    try expectEqual(summary.phaseRows.count, 0)
+    try expectEqual(summary.commandRows.count, 0)
+}
+
+private func testFinalLaunchMobileSummaryBuildsPartialOperatorStatus() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "partial",
+            finalResourcesStatus: "missing",
+            finalResourcesAction: "copy services/backend/final-resources.env.example"
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.overallStatus, .waiting)
+    try expectContains(summary.title, "Final launch partial")
+    try expectContains(summary.subtitle, "ready 4")
+    try expectEqual(summary.phaseRows.first?.id, "backend_device_server")
+    try expectEqual(summary.phaseRows.first?.status, .ready)
+    try expectContains(summary.phaseRows.first?.detail ?? "", "make backend-device-demo")
+    try expectContains(summary.phaseRows.last?.detail ?? "", "Launch report partial")
+    try expectContains(summary.resourceActions.first ?? "", "copy services/backend/final-resources.env.example")
+    try expectContains(summary.commandRows.first ?? "", "make backend-device-demo")
+    try expectContains(summary.notes.joined(separator: " "), "read-only")
+}
+
+private func testFinalLaunchMobileSummaryMarksReadyReport() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready"
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.overallStatus, .ready)
+    try expectContains(summary.title, "Final launch ready")
+    try expectEqual(summary.resourceActions.first, "Final resources file ready to apply.")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeReportText() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        unsafeDetail: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
+        finalResourcesStatus: "blocked",
+        finalResourcesAction: "remove sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.overallStatus, .blocked)
     try expectContains(text, "[withheld]")
     try expectNotContains(text, "sk-test")
     try expectNotContains(text, "/Users/")
@@ -3015,6 +3085,7 @@ private func devicePreflightSummary(
 
 private func finalDemoLaunchReport(
     overallStatus: String = "partial",
+    unsafeDetail: String = "Launch report partial; review operator checklist.",
     finalResourcesStatus: String = "ready",
     finalResourcesAction: String = "copy services/backend/final-resources.env.example"
 ) -> FinalDemoLaunchReport {
@@ -3022,6 +3093,7 @@ private func finalDemoLaunchReport(
         FinalDemoLaunchReport.self,
         from: finalDemoLaunchPayload(
             overallStatus: overallStatus,
+            unsafeDetail: unsafeDetail,
             finalResourcesStatus: finalResourcesStatus,
             finalResourcesAction: finalResourcesAction
         )

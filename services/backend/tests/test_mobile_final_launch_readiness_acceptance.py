@@ -93,6 +93,7 @@ def test_mobile_final_launch_readiness_acceptance_fails_unsafe_endpoint_payload(
 
     assert result.exit_code == 1
     checks = {check["id"]: check for check in result.report["checks"]}
+    assert checks["mobile_source"]["status"] == "passed"
     assert checks["safety"]["status"] == "failed"
     assert "sk-mobile-secret" not in json.dumps(result.report)
     assert "Authorization" not in json.dumps(result.report)
@@ -126,6 +127,22 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "loadFinalDemoLaunch",
                 "getFinalDemoLaunch(mode: \"local\")",
                 "DevicePreflightSummaryBuilder.build",
+                "FinalLaunchStatusView(",
+                "FinalLaunchMobileSummaryBuilder.build",
+            ]
+        ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": "\n".join(
+            [
+                "FinalLaunchMobileSummaryBuilder",
+                "FinalLaunchMobileStatus",
+                "sanitize",
+            ]
+        ),
+        "apps/mobile/ios/App/FinalLaunchStatusView.swift": "\n".join(
+            [
+                "Final Launch Status",
+                "resourceActions",
+                "commandRows",
             ]
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DevicePreflight.swift": "\n".join(
@@ -149,6 +166,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightMarksReadyFinalResourcesPreflight",
                 "testDevicePreflightBlocksAndRedactsFinalResourcesPreflight",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
+                "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
+                "testFinalLaunchMobileSummaryRedactsUnsafeReportText",
             ]
         ),
     }

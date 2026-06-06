@@ -1988,3 +1988,27 @@ Static evidence lives at:
 docs/superpowers/verification/p0.71-mobile-final-resources-preflight.html
 docs/superpowers/verification/assets/p0.71-mobile-final-resources-preflight-390x844.png
 ```
+
+P0.72 adds a read-only `Final Launch Status` panel to the iPhone app. The app
+already fetches `/v1/final-demo-launch`; it now maps that sanitized backend
+report into mobile phase rows, final resource actions, and command rows so the
+operator can see the next Mac-side launch step without leaving the device demo.
+
+The panel does not run commands, read resource files, or expose provider keys.
+All report strings pass through mobile redaction before display.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+cd services/backend
+uv run pytest tests/test_mobile_final_launch_readiness_acceptance.py -q
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.72-mobile-final-launch-status.html
+docs/superpowers/verification/assets/p0.72-mobile-final-launch-status-390x844.png
+```

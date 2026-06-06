@@ -1,0 +1,168 @@
+import Foundation
+
+public enum FinalLaunchMobileStatus: String, Codable, Equatable, Sendable {
+    case blocked
+    case waiting
+    case ready
+}
+
+public struct FinalLaunchMobilePhaseRow: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: FinalLaunchMobileStatus
+    public var detail: String
+
+    public init(id: String, label: String, status: FinalLaunchMobileStatus, detail: String) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.detail = detail
+    }
+}
+
+public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
+    public var overallStatus: FinalLaunchMobileStatus
+    public var title: String
+    public var subtitle: String
+    public var phaseRows: [FinalLaunchMobilePhaseRow]
+    public var resourceActions: [String]
+    public var commandRows: [String]
+    public var notes: [String]
+
+    public init(
+        overallStatus: FinalLaunchMobileStatus,
+        title: String,
+        subtitle: String,
+        phaseRows: [FinalLaunchMobilePhaseRow],
+        resourceActions: [String],
+        commandRows: [String],
+        notes: [String]
+    ) {
+        self.overallStatus = overallStatus
+        self.title = title
+        self.subtitle = subtitle
+        self.phaseRows = phaseRows
+        self.resourceActions = resourceActions
+        self.commandRows = commandRows
+        self.notes = notes
+    }
+}
+
+public enum FinalLaunchMobileSummaryBuilder {
+    public static func build(
+        report: FinalDemoLaunchReport?,
+        error: String? = nil
+    ) -> FinalLaunchMobileSummary {
+        if let error {
+            return FinalLaunchMobileSummary(
+                overallStatus: .blocked,
+                title: "Final launch report blocked",
+                subtitle: sanitize(error),
+                phaseRows: [],
+                resourceActions: [],
+                commandRows: [],
+                notes: baseNotes()
+            )
+        }
+        guard let report else {
+            return FinalLaunchMobileSummary(
+                overallStatus: .waiting,
+                title: "Final launch report waiting",
+                subtitle: "Final launch report has not loaded.",
+                phaseRows: [],
+                resourceActions: [],
+                commandRows: [],
+                notes: baseNotes()
+            )
+        }
+
+        let phaseRows = report.launchPhases.map { phase in
+            FinalLaunchMobilePhaseRow(
+                id: sanitize(phase.id),
+                label: sanitize(phase.label),
+                status: status(from: phase.status),
+                detail: phaseDetail(phase)
+            )
+        }
+
+        return FinalLaunchMobileSummary(
+            overallStatus: status(from: report.overallStatus),
+            title: "Final launch \(sanitize(report.overallStatus))",
+            subtitle: summaryText(report.summary, mode: report.mode),
+            phaseRows: Array(phaseRows.prefix(4)),
+            resourceActions: resourceActions(from: report.finalResourcesPreflight),
+            commandRows: report.commands.prefix(4).map(sanitize),
+            notes: baseNotes()
+        )
+    }
+
+    private static func status(from raw: String) -> FinalLaunchMobileStatus {
+        switch raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready", "passed":
+            return .ready
+        case "blocked", "failed":
+            return .blocked
+        default:
+            return .waiting
+        }
+    }
+
+    private static func summaryText(_ summary: FinalDemoLaunchSummary, mode: String) -> String {
+        sanitize(
+            "mode \(mode); ready \(summary.ready), missing \(summary.missing), blocked \(summary.blocked), manual \(summary.manual)"
+        )
+    }
+
+    private static func phaseDetail(_ phase: FinalDemoLaunchPhase) -> String {
+        var parts = [phase.command]
+        if let note = phase.notes.first {
+            parts.append(note)
+        }
+        return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func resourceActions(from preflight: FinalResourcesPreflightReport?) -> [String] {
+        guard let preflight else {
+            return ["Final resources preflight has not loaded."]
+        }
+        if preflight.status == "ready" {
+            return ["Final resources file ready to apply."]
+        }
+        if !preflight.operatorActions.isEmpty {
+            return preflight.operatorActions.prefix(3).map(sanitize)
+        }
+        return ["Final resources preflight \(sanitize(preflight.status))."]
+    }
+
+    private static func baseNotes() -> [String] {
+        [
+            "read-only iPhone launch status.",
+            "Provider keys and resource files stay backend-only.",
+            "Commands are for the Mac operator; the app does not run them.",
+        ]
+    }
+
+    private static func sanitize(_ text: String) -> String {
+        var sanitized = text
+        let patterns = [
+            #"sk-[A-Za-z0-9._-]+"#,
+            #"Bearer\s+[A-Za-z0-9._~+/\-=:-]+"#,
+            #"api[_-]?key\s*[=:]\s*[^\s,;"']+"#,
+            #"local-capture://[^\s,;"']+"#,
+            #"file://[^\s,;"']+"#,
+            #"/Users/[^\s,;"']+"#,
+            #"/tmp/[^\s,;"']+"#,
+            #"checkout_url"#,
+            #"https?://checkout\.[^\s,;"']+"#,
+            #"https?://pay\.[^\s,;"']+"#,
+        ]
+        for pattern in patterns {
+            sanitized = sanitized.replacingOccurrences(
+                of: pattern,
+                with: "[withheld]",
+                options: .regularExpression
+            )
+        }
+        return sanitized
+    }
+}
