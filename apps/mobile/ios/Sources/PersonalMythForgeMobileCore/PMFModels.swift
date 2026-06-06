@@ -376,6 +376,53 @@ public struct PrintCandidate: Codable, Equatable, Sendable {
     }
 }
 
+public struct ProviderReadinessItem: Codable, Equatable, Sendable {
+    public var kind: String
+    public var selectedProvider: String
+    public var status: String
+    public var isDemoReady: Bool
+    public var isRealProviderReady: Bool
+    public var missingEnv: [String]
+    public var capabilities: [String]
+    public var notes: [String]
+
+    public init(
+        kind: String,
+        selectedProvider: String,
+        status: String,
+        isDemoReady: Bool,
+        isRealProviderReady: Bool,
+        missingEnv: [String] = [],
+        capabilities: [String] = [],
+        notes: [String] = []
+    ) {
+        self.kind = kind
+        self.selectedProvider = selectedProvider
+        self.status = status
+        self.isDemoReady = isDemoReady
+        self.isRealProviderReady = isRealProviderReady
+        self.missingEnv = missingEnv
+        self.capabilities = capabilities
+        self.notes = notes
+    }
+}
+
+public struct ProviderReadinessResponse: Codable, Equatable, Sendable {
+    public var overallDemoReady: Bool
+    public var overallRealReady: Bool
+    public var providers: [ProviderReadinessItem]
+
+    public init(
+        overallDemoReady: Bool,
+        overallRealReady: Bool,
+        providers: [ProviderReadinessItem]
+    ) {
+        self.overallDemoReady = overallDemoReady
+        self.overallRealReady = overallRealReady
+        self.providers = providers
+    }
+}
+
 public struct MythSession: Codable, Equatable, Sendable {
     public var sessionId: String
     public var status: String
