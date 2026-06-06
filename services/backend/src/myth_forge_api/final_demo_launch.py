@@ -245,12 +245,12 @@ def _commands(mode: LaunchMode) -> list[str]:
             (
                 "cd services/backend && uv run python -m myth_forge_api.cli "
                 "final-demo-launch --mode local --repo-root ../.. "
-                "--output /tmp/personal-myth-forge-final-demo-launch-local.json"
+                "--output .local/final-demo-launch-local.json"
             ),
             (
                 "cd services/backend && uv run python -m myth_forge_api.cli "
                 "final-acceptance --profile quick --provider-mode local --repo-root ../.. "
-                "--output /tmp/personal-myth-forge-final-acceptance-local.json"
+                "--output .local/final-acceptance-local.json"
             ),
         ]
     return [
@@ -265,18 +265,18 @@ def _commands(mode: LaunchMode) -> list[str]:
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "
             "provider-handoff --require-core-real "
-            "--output /tmp/personal-myth-forge-provider-handoff.json"
+            "--output .local/provider-handoff.json"
         ),
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "
             "final-demo-launch --mode configured --repo-root ../.. "
-            "--output /tmp/personal-myth-forge-final-demo-launch-configured.json"
+            "--output .local/final-demo-launch-configured.json"
         ),
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "
             "final-acceptance --profile quick --provider-mode configured "
             "--require-real-core --allow-live-provider-calls --repo-root ../.. "
-            "--output /tmp/personal-myth-forge-final-acceptance-configured.json"
+            "--output .local/final-acceptance-configured.json"
         ),
         "make mobile-deploy-preflight",
         "make mobile-xcode-build",

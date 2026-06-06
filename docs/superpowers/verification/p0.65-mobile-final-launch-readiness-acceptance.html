@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.65 Mobile Final Launch Readiness Acceptance</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #162027;
+      --muted: #60717b;
+      --line: #d7e0e4;
+      --panel: #f7f9f8;
+      --green: #218756;
+      --red: #c43a3a;
+      --amber: #a86712;
+      --blue: #2c6383;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #fff; color: var(--ink); }
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      padding: 18px 16px 16px;
+    }
+    h1 {
+      margin: 0 0 7px;
+      font-size: 24px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    .lede {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .top {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .top h2 {
+      margin: 0 0 2px;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+    .top p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    .badge {
+      margin-left: auto;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      padding-top: 2px;
+    }
+    .badge.block { color: var(--red); }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin: 10px 0 4px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px 7px;
+      min-width: 0;
+    }
+    .metric strong {
+      display: block;
+      font-size: 19px;
+      line-height: 1;
+    }
+    .metric span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.1;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 14px minmax(82px, 102px) minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .row:last-child { border-bottom: 0; }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: var(--green);
+    }
+    .dot.block { background: var(--red); }
+    .label {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .detail {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.28;
+      overflow-wrap: anywhere;
+    }
+    .callout {
+      border-left: 3px solid var(--blue);
+      padding-left: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.34;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Final Launch Acceptance Gate</h1>
+    <p class="lede">P0.65 turns the mobile Final Launch readiness handoff into a formal final acceptance gate.</p>
+
+    <section class="panel" aria-label="Mobile final launch readiness gate">
+      <div class="top">
+        <div>
+          <h2>mobile_final_launch_readiness</h2>
+          <p>endpoint, source handoff, safety</p>
+        </div>
+        <div class="badge">PASSED</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Endpoint</div>
+        <div class="detail"><code>/v1/final-demo-launch?mode=local</code> returned a sanitized local report.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Invalid Mode</div>
+        <div class="detail"><code>mode=live</code> is rejected before it can become an unsupported launch path.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">iOS Source</div>
+        <div class="detail">Models, API client, root view loader, preflight item, and contract tests are wired.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Safety</div>
+        <div class="detail">No secrets, raw media, payment links, absolute paths, global mutation, or live calls by default.</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Quick final acceptance summary">
+      <div class="top">
+        <div>
+          <h2>Quick Final Acceptance</h2>
+          <p>local provider mode</p>
+        </div>
+        <div class="badge block">BLOCKED</div>
+      </div>
+      <div class="summary">
+        <div class="metric"><strong>11</strong><span>passed</span></div>
+        <div class="metric"><strong>2</strong><span>blocked</span></div>
+        <div class="metric"><strong>0</strong><span>failed</span></div>
+      </div>
+      <div class="row">
+        <div class="dot block"></div>
+        <div class="label">Deploy Config</div>
+        <div class="detail">Blocked by local iOS deploy config, outside repository source.</div>
+      </div>
+      <div class="row">
+        <div class="dot block"></div>
+        <div class="label">Xcode Gate</div>
+        <div class="detail">Blocked by Apple SDK license state on this machine.</div>
+      </div>
+    </section>
+
+    <p class="callout">The new gate is green; the remaining blockers are local device and Xcode environment setup, not product code acceptance.</p>
+  </main>
+</body>
+</html>
