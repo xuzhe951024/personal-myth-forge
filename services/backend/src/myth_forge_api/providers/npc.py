@@ -3,12 +3,13 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any, Protocol
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from myth_forge_api.domain.models import (
     ContextCapsule,
     GeneratedAsset,
     MythSeed,
+    NPCAgentTrace,
     NPCDirectorResult,
     NPCReaction,
     ObjectCard,
@@ -52,46 +53,12 @@ class LocalNPCDirector:
         context_capsule: ContextCapsule,
         generated_asset: GeneratedAsset,
     ) -> NPCDirectorResult:
+        agent_traces = _local_agent_traces(object_card=object_card, myth_seed=myth_seed)
         return NPCDirectorResult(
             provider=self.provider_name,
-            reactions=[
-                NPCReaction(
-                    npc_id="mara",
-                    name="Mara",
-                    emotion="awe",
-                    interpretation=f"{object_card.label} is a sign that the village has been heard.",
-                    plan=[
-                        "approach_artifact",
-                        "kneel_near_artifact",
-                        "invite_neighbors_to_witness",
-                    ],
-                    world_change="faith_in_player_increases",
-                ),
-                NPCReaction(
-                    npc_id="ior",
-                    name="Ior",
-                    emotion="suspicion",
-                    interpretation=f"{myth_seed.title} may be a test rather than a gift.",
-                    plan=[
-                        "keep_distance",
-                        "question_mara",
-                        "propose_guarding_the_artifact_overnight",
-                    ],
-                    world_change="village_debate_starts",
-                ),
-                NPCReaction(
-                    npc_id="senn",
-                    name="Senn",
-                    emotion="curiosity",
-                    interpretation="The artifact should be named before anyone tries to use it.",
-                    plan=[
-                        "circle_artifact",
-                        "sketch_symbol_in_dirt",
-                        "suggest_ritual_name",
-                    ],
-                    world_change="artifact_gets_a_local_name",
-                ),
-            ],
+            agent_runtime="local_agent_runtime",
+            agent_traces=agent_traces,
+            reactions=_local_reactions_from_traces(agent_traces, myth_seed=myth_seed),
         )
 
 
@@ -105,6 +72,7 @@ class OpenAINPCConfigurationError(OpenAINPCProviderError):
 
 class OpenAINPCOutput(BaseModel):
     reactions: list[NPCReaction]
+    agent_traces: list[NPCAgentTrace] = Field(default_factory=list)
 
 
 class OpenAINPCDirector:
@@ -181,8 +149,18 @@ class OpenAINPCDirector:
         if len(output.reactions) != 3 or npc_ids != EXPECTED_NPC_IDS:
             expected = ", ".join(EXPECTED_NPC_ID_LIST)
             raise OpenAINPCProviderError(f"OpenAI NPC response must include exactly: {expected}.")
+        agent_traces = output.agent_traces or _agent_traces_from_reactions(output.reactions)
+        trace_ids = {trace.npc_id for trace in agent_traces}
+        if len(agent_traces) != 3 or trace_ids != EXPECTED_NPC_IDS:
+            expected = ", ".join(EXPECTED_NPC_ID_LIST)
+            raise OpenAINPCProviderError(f"OpenAI NPC traces must include exactly: {expected}.")
 
-        return NPCDirectorResult(provider=self.provider_name, reactions=output.reactions)
+        return NPCDirectorResult(
+            provider=self.provider_name,
+            reactions=output.reactions,
+            agent_runtime="openai_structured_runtime",
+            agent_traces=agent_traces,
+        )
 
     def _build_client(self) -> Any:
         from openai import OpenAI
@@ -211,9 +189,104 @@ def _npc_director_prompt(
         f"Approved desired tone capsule: {context_capsule.desired_tone}\n"
         f"Generated asset URI: {generated_asset.uri}\n"
         "Return exactly three reactions for NPC ids mara, ior, and senn. "
+        "Also return one agent trace per NPC with belief, intention, proposed_action, "
+        "rationale, and confidence. Each agent trace should explain the NPC's "
+        "private reasoning summary without revealing raw personal data. "
         "Each plan item must be a safe visible action, not a purchase, print order, "
         "private-data request, or destructive act."
     )
+
+
+def _local_agent_traces(object_card: ObjectCard, myth_seed: MythSeed) -> list[NPCAgentTrace]:
+    return [
+        NPCAgentTrace(
+            npc_id="mara",
+            name="Mara",
+            belief=f"{object_card.label} is a sign that the village has been heard.",
+            intention="welcome the relic into public witness",
+            proposed_action="approach_artifact",
+            rationale="Mara interprets awe as a safe invitation to gather and witness.",
+            confidence=0.84,
+        ),
+        NPCAgentTrace(
+            npc_id="ior",
+            name="Ior",
+            belief=f"{myth_seed.title} may be a test rather than a gift.",
+            intention="protect the village until the relic proves safe",
+            proposed_action="keep_distance",
+            rationale="Ior starts with caution because unverified artifacts can shift village trust.",
+            confidence=0.72,
+        ),
+        NPCAgentTrace(
+            npc_id="senn",
+            name="Senn",
+            belief="The artifact should be named before anyone tries to use it.",
+            intention="turn curiosity into a shared ritual language",
+            proposed_action="suggest_ritual_name",
+            rationale="Senn believes naming a strange object makes it easier to debate safely.",
+            confidence=0.78,
+        ),
+    ]
+
+
+def _local_reactions_from_traces(
+    agent_traces: list[NPCAgentTrace],
+    myth_seed: MythSeed,
+) -> list[NPCReaction]:
+    trace_by_id = {trace.npc_id: trace for trace in agent_traces}
+    return [
+        NPCReaction(
+            npc_id="mara",
+            name="Mara",
+            emotion="awe",
+            interpretation=trace_by_id["mara"].belief,
+            plan=[
+                trace_by_id["mara"].proposed_action,
+                "kneel_near_artifact",
+                "invite_neighbors_to_witness",
+            ],
+            world_change="faith_in_player_increases",
+        ),
+        NPCReaction(
+            npc_id="ior",
+            name="Ior",
+            emotion="suspicion",
+            interpretation=trace_by_id["ior"].belief,
+            plan=[
+                trace_by_id["ior"].proposed_action,
+                "question_mara",
+                "propose_guarding_the_artifact_overnight",
+            ],
+            world_change="village_debate_starts",
+        ),
+        NPCReaction(
+            npc_id="senn",
+            name="Senn",
+            emotion="curiosity",
+            interpretation=trace_by_id["senn"].belief,
+            plan=[
+                trace_by_id["senn"].proposed_action,
+                "circle_artifact",
+                "sketch_symbol_in_dirt",
+            ],
+            world_change="artifact_gets_a_local_name",
+        ),
+    ]
+
+
+def _agent_traces_from_reactions(reactions: list[NPCReaction]) -> list[NPCAgentTrace]:
+    return [
+        NPCAgentTrace(
+            npc_id=reaction.npc_id,
+            name=reaction.name,
+            belief=reaction.interpretation,
+            intention=reaction.world_change.replace("_", " "),
+            proposed_action=reaction.plan[0] if reaction.plan else "observe_artifact",
+            rationale="Synthesized from a structured NPC reaction that did not include an explicit agent trace.",
+            confidence=0.5,
+        )
+        for reaction in reactions
+    ]
 
 
 def _sanitize_provider_error(exc: Exception, secret: str | None = None) -> str:

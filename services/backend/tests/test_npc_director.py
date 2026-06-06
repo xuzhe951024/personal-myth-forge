@@ -52,8 +52,18 @@ def test_local_npc_director_returns_stable_three_npc_reactions() -> None:
     )
 
     assert result.provider == "local_stub"
+    assert result.agent_runtime == "local_agent_runtime"
     assert {reaction.npc_id for reaction in result.reactions} == {"mara", "ior", "senn"}
+    assert {trace.npc_id for trace in result.agent_traces} == {"mara", "ior", "senn"}
     assert all(reaction.plan for reaction in result.reactions)
+    assert all(trace.belief for trace in result.agent_traces)
+    assert all(trace.intention for trace in result.agent_traces)
+    assert all(trace.proposed_action for trace in result.agent_traces)
+    assert all(trace.rationale for trace in result.agent_traces)
+    assert all(0 <= trace.confidence <= 1 for trace in result.agent_traces)
+    proposed_actions = {trace.proposed_action for trace in result.agent_traces}
+    reaction_actions = {reaction.plan[0] for reaction in result.reactions}
+    assert proposed_actions <= reaction_actions
 
 
 def test_openai_npc_director_requires_api_key_before_network_call() -> None:
@@ -116,7 +126,36 @@ def test_openai_npc_director_parses_structured_response() -> None:
                 "plan": ["suggest_ritual_name"],
                 "world_change": "artifact_gets_a_local_name",
             },
-        ]
+        ],
+        "agent_traces": [
+            {
+                "npc_id": "mara",
+                "name": "Mara",
+                "belief": "The key is a promise.",
+                "intention": "welcome the artifact",
+                "proposed_action": "approach_artifact",
+                "rationale": "Mara treats awe as an invitation to witness.",
+                "confidence": 0.82,
+            },
+            {
+                "npc_id": "ior",
+                "name": "Ior",
+                "belief": "The key is a test.",
+                "intention": "protect the village",
+                "proposed_action": "keep_distance",
+                "rationale": "Ior distrusts gifts that arrive without provenance.",
+                "confidence": 0.69,
+            },
+            {
+                "npc_id": "senn",
+                "name": "Senn",
+                "belief": "The key needs a name.",
+                "intention": "turn curiosity into ritual language",
+                "proposed_action": "suggest_ritual_name",
+                "rationale": "Senn believes naming makes strange objects safer.",
+                "confidence": 0.74,
+            },
+        ],
     }
     client = FakeOpenAIClient(parsed)
     director = OpenAINPCDirector(api_key="test-key", model="gpt-4.1-mini", client=client)
@@ -130,9 +169,58 @@ def test_openai_npc_director_parses_structured_response() -> None:
     )
 
     assert result.provider == "openai"
+    assert result.agent_runtime == "openai_structured_runtime"
     assert [reaction.npc_id for reaction in result.reactions] == ["mara", "ior", "senn"]
+    assert [trace.npc_id for trace in result.agent_traces] == ["mara", "ior", "senn"]
+    assert result.agent_traces[0].proposed_action == "approach_artifact"
     assert client.responses.calls[0]["model"] == "gpt-4.1-mini"
     assert "raw private data" in client.responses.calls[0]["input"][0]["content"].lower()
+    assert "agent trace" in client.responses.calls[0]["input"][1]["content"].lower()
+
+
+def test_openai_npc_director_synthesizes_agent_traces_when_missing() -> None:
+    parsed = {
+        "reactions": [
+            {
+                "npc_id": "mara",
+                "name": "Mara",
+                "emotion": "awe",
+                "interpretation": "The key is a promise.",
+                "plan": ["approach_artifact"],
+                "world_change": "faith_in_player_increases",
+            },
+            {
+                "npc_id": "ior",
+                "name": "Ior",
+                "emotion": "suspicion",
+                "interpretation": "The key is a test.",
+                "plan": ["keep_distance"],
+                "world_change": "village_debate_starts",
+            },
+            {
+                "npc_id": "senn",
+                "name": "Senn",
+                "emotion": "curiosity",
+                "interpretation": "The key needs a name.",
+                "plan": ["suggest_ritual_name"],
+                "world_change": "artifact_gets_a_local_name",
+            },
+        ]
+    }
+    director = OpenAINPCDirector(api_key="test-key", model="gpt-4.1-mini", client=FakeOpenAIClient(parsed))
+
+    result = director.generate_reactions(
+        session_id="myth_test",
+        object_card=_object_card(),
+        myth_seed=_myth_seed(),
+        context_capsule=_capsule(),
+        generated_asset=_asset(),
+    )
+
+    assert [trace.npc_id for trace in result.agent_traces] == ["mara", "ior", "senn"]
+    assert result.agent_traces[0].belief == "The key is a promise."
+    assert result.agent_traces[0].proposed_action == "approach_artifact"
+    assert result.agent_traces[0].confidence == 0.5
 
 
 def test_openai_npc_director_rejects_wrong_npc_ids() -> None:

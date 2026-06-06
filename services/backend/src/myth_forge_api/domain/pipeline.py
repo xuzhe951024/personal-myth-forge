@@ -79,6 +79,8 @@ def create_demo_myth_session(
         myth_seed=myth_seed,
         generated_asset=generated_asset,
         npc_director=npc_result.provider,
+        npc_agent_runtime=npc_result.agent_runtime,
+        npc_agent_traces=npc_result.agent_traces,
         npc_reactions=npc_reactions,
         world_resolution=world_resolution,
         print_candidate=print_candidate,

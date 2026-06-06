@@ -29,6 +29,9 @@ def test_create_myth_session_endpoint_returns_reviewable_session() -> None:
     assert payload["status"] == "ready_for_review"
     assert payload["object_card"]["label"] == "tiny desk plant"
     assert len(payload["npc_reactions"]) == 3
+    assert payload["npc_agent_runtime"] == "local_agent_runtime"
+    assert len(payload["npc_agent_traces"]) == 3
+    assert payload["npc_agent_traces"][0]["proposed_action"]
     assert payload["generated_asset"]["kind"] == "game_asset"
     assert payload["generated_asset"]["variants"][1]["role"] == "ios_scene_asset"
     assert payload["generated_asset"]["variants"][1]["format"] == "usdz"
