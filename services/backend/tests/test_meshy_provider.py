@@ -195,25 +195,16 @@ def test_meshy_provider_uses_supported_image_when_guided_scan_includes_heic() ->
     assert image_payload["image_url"] == "data:image/png;base64,cG5n"
 
 
-def test_meshy_provider_falls_back_to_text_to_3d_when_only_heic_images_exist() -> None:
+def test_meshy_provider_uses_image_to_3d_for_prepared_heic_source_image() -> None:
     requests: list[httpx.Request] = []
     responses = [
-        httpx.Response(200, json={"result": "preview-123"}),
+        httpx.Response(200, json={"result": "image-task-789"}),
         httpx.Response(
             200,
             json={
-                "id": "preview-123",
+                "id": "image-task-789",
                 "status": "SUCCEEDED",
-                "model_urls": {"glb": "https://assets.example/preview.glb"},
-            },
-        ),
-        httpx.Response(200, json={"result": "refine-456"}),
-        httpx.Response(
-            200,
-            json={
-                "id": "refine-456",
-                "status": "SUCCEEDED",
-                "model_urls": {"glb": "https://assets.example/refined.glb"},
+                "model_urls": {"glb": "https://assets.example/image.glb"},
             },
         ),
     ]
@@ -238,24 +229,22 @@ def test_meshy_provider_falls_back_to_text_to_3d_when_only_heic_images_exist() -
             source_images=(
                 ThreeDSourceImage(
                     uri="local-capture://cap_0123456789abcdef/media_0.heic",
-                    content_type="image/heic",
-                    data_uri="data:image/heic;base64,ZmFrZQ==",
+                    content_type="image/jpeg",
+                    data_uri="data:image/jpeg;base64,dHJhbnNjb2RlZA==",
                 ),
             )
         )
     )
 
-    preview_payload = json.loads(requests[0].content)
-    assert asset.uri == "https://assets.example/refined.glb"
-    assert [request.method for request in requests] == ["POST", "GET", "POST", "GET"]
+    image_payload = json.loads(requests[0].content)
+    assert asset.uri == "https://assets.example/image.glb"
+    assert [request.method for request in requests] == ["POST", "GET"]
     assert [request.url.path for request in requests] == [
-        "/openapi/v2/text-to-3d",
-        "/openapi/v2/text-to-3d/preview-123",
-        "/openapi/v2/text-to-3d",
-        "/openapi/v2/text-to-3d/refine-456",
+        "/openapi/v1/image-to-3d",
+        "/openapi/v1/image-to-3d/image-task-789",
     ]
-    assert preview_payload["mode"] == "preview"
-    assert "image_url" not in preview_payload
+    assert image_payload["image_url"] == "data:image/jpeg;base64,dHJhbnNjb2RlZA=="
+    assert image_payload["target_formats"] == ["glb", "usdz"]
 
 
 def test_meshy_provider_keeps_glb_only_asset_when_usdz_is_missing() -> None:

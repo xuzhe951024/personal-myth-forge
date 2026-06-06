@@ -94,10 +94,13 @@ RealityKit `ObjectCaptureSession`, but P0.19 uploads the captured images rather
 than a local reconstructed mesh or USDZ. The backend passes guided scan images to
 the 3D provider contract as `source_images`.
 
-JPEG, PNG, HEIC, and HEIF are accepted by the upload API. The Meshy adapter only
-uses JPEG/PNG as Image-to-3D input today; mixed captures choose the first
-JPEG/PNG source image, while HEIC/HEIF-only captures safely fall back to
-text-to-3D until a transcoding step exists.
+JPEG, PNG, HEIC, and HEIF are accepted by the upload API. Capture manifests keep
+the original media content type and `local-capture://` URI. During
+`POST /v1/myth-sessions/from-capture`, the backend prepares provider-facing
+source images: JPEG/PNG pass through, while decodable HEIC/HEIF media is
+converted into JPEG bytes before the `ThreeDSourceImage` data URI is built.
+The data URI and raw media bytes are only used backend-side and are not returned
+in API responses.
 
 ## Lookup Object Capture
 
