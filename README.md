@@ -1580,3 +1580,29 @@ Static evidence lives at:
 docs/superpowers/verification/p0.57-arkit-scan-package.html
 docs/superpowers/verification/assets/p0.57-arkit-scan-package-390x844.png
 ```
+
+P0.58 adds the ARKit scan package bridge to the source-only iOS showcase
+acceptance gate. `final-acceptance --profile quick` now includes nested
+`ios_showcase_acceptance` evidence for `arkit_scan_package`, which checks the
+mobile core builder, the `ForgeRootView` bridge, and the Swift contract test
+coverage. This remains source-only; it does not run Xcode, device capture, or
+provider calls.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py tests/test_final_acceptance.py -q
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --repo-root ../.. \
+  --output /tmp/personal-myth-forge-final-acceptance-p0.58.json
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.58-arkit-showcase-acceptance.html
+docs/superpowers/verification/assets/p0.58-arkit-showcase-acceptance-390x844.png
+```

@@ -12,10 +12,11 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_showcase_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 14, "failed": 0}
+    assert result.report["summary"] == {"passed": 15, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "camera_capture",
         "guided_scan",
+        "arkit_scan_package",
         "capture_upload",
         "three_d_preview",
         "npc_ritual_scene",
@@ -50,12 +51,39 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 13, "failed": 1}
+    assert result.report["summary"] == {"passed": 14, "failed": 1}
     assert features["camera_capture"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/CameraCaptureView.swift",
         "contains": "UIImagePickerController",
     } in features["camera_capture"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+    assert "data:image" not in report_text
+
+
+def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolute_paths(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    (
+        tmp_path
+        / "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift"
+    ).unlink()
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 14, "failed": 1}
+    assert features["arkit_scan_package"]["status"] == "failed"
+    assert {
+        "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
+        "contains": "ARKitScanPackageBuilder",
+    } in features["arkit_scan_package"]["missing"]
     assert str(tmp_path) not in report_text
     assert "/Users/" not in report_text
     assert "sk-" not in report_text
@@ -75,7 +103,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "DevicePreflightSummaryBuilder.build DevicePreflightView(summary: "
             "getBackendHealth() checkBackendHealth backendHealthProbe "
             "DemoScriptBuilder.build ArtifactSummaryView(session: readySession, latestTick: latestNPCTick) "
-            "ShowcaseAutopilotPlanner.plan runShowcaseAutopilot"
+            "ShowcaseAutopilotPlanner.plan runShowcaseAutopilot "
+            "arkitScanPackageSelection ARKitScanPackageBuilder.selection"
         ),
         "apps/mobile/ios/App/GuidedScanCaptureView.swift": (
             "ObjectCaptureSession ObjectCaptureView(session:"
@@ -101,6 +130,13 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/Config/Deployment.local.xcconfig.example": "PMF_BACKEND_BASE_URL",
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CameraCaptureMediaBuilder.swift": (
             "camera-capture.jpg"
+        ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift": (
+            "ARKitScanPackageBuilder maximumReferenceImages = 11 "
+            "CaptureMediaSelection(mode: .arkitScan"
+        ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
+            "testARKitScanPackageBuilderBuildsReadySelection"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeFlowService.swift": (
             "uploadObjectCapture createMythSessionFromCapture"
