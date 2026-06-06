@@ -625,3 +625,33 @@ docs/superpowers/verification/assets/p0.23-openai-npc-tick-provider-390x844.png
 Remaining gaps after P0.23 are live provider-key acceptance testing, persistent
 server-side tick history, Unity movement execution, real device validation,
 signing, and Apple SDK license acceptance on this machine.
+
+## P0.24 Provider Handoff Smoke
+
+P0.24 adds a backend CLI handoff report for the moment when Meshy and OpenAI
+keys are supplied. The mobile app still does not receive provider secrets. It
+continues to read readiness metadata and call the same backend APIs.
+
+Backend handoff command:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli provider-handoff \
+  --require-core-real \
+  --output /tmp/personal-myth-forge-provider-handoff.json
+```
+
+`core_real_ready` checks the providers needed for the first iOS/AI/3D demo:
+`three_d`, `npc`, and `capture_storage`. Print fulfillment remains visible in
+the report but does not block the minimum mobile demo.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.24-provider-handoff-smoke.html
+docs/superpowers/verification/assets/p0.24-provider-handoff-smoke-390x844.png
+```
+
+Remaining gaps after P0.24 are live provider-key runs, real device validation,
+signing, Unity movement execution, persistent tick history, print fulfillment,
+and Apple SDK license acceptance on this machine.

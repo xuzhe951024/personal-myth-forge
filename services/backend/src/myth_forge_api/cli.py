@@ -12,11 +12,28 @@ from typing import Sequence
 
 from myth_forge_api.config import load_settings
 from myth_forge_api.providers.factory import build_three_d_provider
+from myth_forge_api.providers.readiness import build_provider_readiness
 from myth_forge_api.providers.three_d import (
     MeshyConfigurationError,
     MeshyProviderError,
     ThreeDGenerationRequest,
 )
+
+CORE_PROVIDER_KINDS = ["three_d", "npc", "capture_storage"]
+BACKEND_ONLY_ENV = [
+    "MESHY_API_KEY",
+    "OPENAI_API_KEY",
+    "TREATSTOCK_API_KEY",
+    "SCULPTEO_API_KEY",
+]
+NEXT_HANDOFF_COMMANDS = [
+    "make backend-dev",
+    "curl http://127.0.0.1:8080/v1/provider-readiness",
+    (
+        "cd services/backend && uv run python -m myth_forge_api.cli provider-handoff "
+        "--require-core-real --output /tmp/personal-myth-forge-provider-handoff.json"
+    ),
+]
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -40,6 +57,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 prompts_file=args.prompts_file,
                 provider_name=args.provider,
                 output_path=args.output,
+            )
+        if args.command == "provider-handoff":
+            return _provider_handoff(
+                output_path=args.output,
+                require_core_real=args.require_core_real,
             )
     except (MeshyProviderError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
@@ -65,6 +87,10 @@ def _build_parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--prompts-file", required=True)
     evaluate_parser.add_argument("--provider", choices=["local", "meshy"], default=None)
     evaluate_parser.add_argument("--output", required=True)
+
+    handoff_parser = subcommands.add_parser("provider-handoff")
+    handoff_parser.add_argument("--output", default=None)
+    handoff_parser.add_argument("--require-core-real", action="store_true")
 
     return parser
 
@@ -130,6 +156,53 @@ def _evaluate_3d(prompts_file: str, provider_name: str | None, output_path: str)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(report, indent=2), encoding="utf-8")
     return 0
+
+
+def _provider_handoff(output_path: str | None, require_core_real: bool) -> int:
+    report = _provider_handoff_report()
+    payload = json.dumps(report, indent=2)
+    if output_path:
+        destination = Path(output_path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(payload, encoding="utf-8")
+    else:
+        print(payload)
+    if require_core_real and not report["core_real_ready"]:
+        return 2
+    return 0
+
+
+def _provider_handoff_report() -> dict[str, object]:
+    readiness = build_provider_readiness(load_settings())
+    provider_items = [item.model_dump(mode="json") for item in readiness.providers]
+    provider_by_kind = {item["kind"]: item for item in provider_items}
+    core_items = [
+        provider_by_kind[kind]
+        for kind in CORE_PROVIDER_KINDS
+        if kind in provider_by_kind
+    ]
+    missing_env = sorted(
+        {
+            env_name
+            for provider in provider_items
+            for env_name in provider.get("missing_env", [])
+        }
+    )
+    return {
+        "kind": "provider_handoff_report",
+        "mode": "configuration",
+        "overall_demo_ready": readiness.overall_demo_ready,
+        "overall_real_ready": readiness.overall_real_ready,
+        "core_real_ready": all(provider["is_real_provider_ready"] for provider in core_items),
+        "core_provider_kinds": CORE_PROVIDER_KINDS,
+        "missing_env": missing_env,
+        "backend_only_env": BACKEND_ONLY_ENV,
+        "mobile_secret_policy": (
+            "Provider secrets stay on the backend; mobile clients only see readiness metadata."
+        ),
+        "providers": provider_items,
+        "next_commands": NEXT_HANDOFF_COMMANDS,
+    }
 
 
 def _read_prompts(prompts_file: str) -> list[str]:
