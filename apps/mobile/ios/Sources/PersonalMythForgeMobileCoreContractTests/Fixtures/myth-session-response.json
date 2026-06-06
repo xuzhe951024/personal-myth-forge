@@ -33,7 +33,17 @@
         "uri": "stub://assets/old-brass-key.usdz",
         "is_scene_loadable": true
       }
-    ]
+    ],
+    "generation_provenance": {
+      "input_mode": "multi_image",
+      "provider_route": "/openapi/v1/multi-image-to-3d",
+      "source_image_count": 3,
+      "selected_source_image_count": 3,
+      "source_asset_count": 0,
+      "max_source_images": 4,
+      "selection_reason": "Guided scan sent three prepared source images.",
+      "raw_sources_included": false
+    }
   },
   "npc_director": "local_stub",
   "npc_agent_runtime": "local_agent_runtime",

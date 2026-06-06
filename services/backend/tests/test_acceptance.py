@@ -21,6 +21,9 @@ def test_demo_acceptance_local_report_runs_bounded_ticks(tmp_path) -> None:
     assert result.report["session"]["session_id"].startswith("myth_")
     assert result.report["session"]["generated_asset_provider"] == "local_stub"
     assert result.report["session"]["generated_asset_format"] == "glb"
+    assert result.report["session"]["generation_provenance"]["input_mode"] == "text_prompt"
+    assert result.report["session"]["generation_provenance"]["provider_route"] == "local_stub"
+    assert result.report["session"]["generation_provenance"]["raw_sources_included"] is False
     assert result.report["session"]["scene_variant_uri"].endswith(".usdz")
     assert result.report["session"]["print_candidate_format"] == "3mf"
     assert result.report["npc"]["initial_runtime"] == "local_agent_runtime"

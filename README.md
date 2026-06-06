@@ -861,3 +861,25 @@ Static evidence lives at:
 docs/superpowers/verification/p0.33-meshy-multi-image-guided-scan.html
 docs/superpowers/verification/assets/p0.33-meshy-multi-image-guided-scan-390x844.png
 ```
+
+P0.34 adds a safe generated asset provenance contract. Backend-generated
+`GeneratedAsset` responses can now include optional `generation_provenance`
+with:
+
+- `input_mode`: `text_prompt`, `single_image`, or `multi_image`
+- provider route used by the 3D adapter
+- total and selected source image counts
+- source asset count
+- `raw_sources_included`, which remains `false` for current providers
+
+The field is included in demo acceptance reports and decoded by the iOS app.
+The mobile artifact summary renders the generation mode and selected/source
+image count when available. The contract intentionally does not return raw
+capture media, provider-only data URIs, local file paths, or provider secrets.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.34-generation-provenance-contract.html
+docs/superpowers/verification/assets/p0.34-generation-provenance-contract-390x844.png
+```

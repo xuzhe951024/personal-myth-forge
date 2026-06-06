@@ -193,6 +193,37 @@ public struct GeneratedAssetVariant: Codable, Equatable, Sendable {
     }
 }
 
+public struct GeneratedAssetProvenance: Codable, Equatable, Sendable {
+    public var inputMode: String
+    public var providerRoute: String?
+    public var sourceImageCount: Int
+    public var selectedSourceImageCount: Int
+    public var sourceAssetCount: Int
+    public var maxSourceImages: Int?
+    public var selectionReason: String
+    public var rawSourcesIncluded: Bool
+
+    public init(
+        inputMode: String,
+        providerRoute: String?,
+        sourceImageCount: Int,
+        selectedSourceImageCount: Int,
+        sourceAssetCount: Int,
+        maxSourceImages: Int?,
+        selectionReason: String,
+        rawSourcesIncluded: Bool
+    ) {
+        self.inputMode = inputMode
+        self.providerRoute = providerRoute
+        self.sourceImageCount = sourceImageCount
+        self.selectedSourceImageCount = selectedSourceImageCount
+        self.sourceAssetCount = sourceAssetCount
+        self.maxSourceImages = maxSourceImages
+        self.selectionReason = selectionReason
+        self.rawSourcesIncluded = rawSourcesIncluded
+    }
+}
+
 public struct GeneratedAsset: Codable, Equatable, Sendable {
     public var kind: String
     public var provider: String
@@ -201,6 +232,7 @@ public struct GeneratedAsset: Codable, Equatable, Sendable {
     public var prompt: String
     public var moderationStatus: String
     public var variants: [GeneratedAssetVariant]
+    public var generationProvenance: GeneratedAssetProvenance?
 
     private enum CodingKeys: String, CodingKey {
         case kind
@@ -210,6 +242,7 @@ public struct GeneratedAsset: Codable, Equatable, Sendable {
         case prompt
         case moderationStatus
         case variants
+        case generationProvenance
     }
 
     public init(
@@ -219,7 +252,8 @@ public struct GeneratedAsset: Codable, Equatable, Sendable {
         uri: String,
         prompt: String,
         moderationStatus: String,
-        variants: [GeneratedAssetVariant] = []
+        variants: [GeneratedAssetVariant] = [],
+        generationProvenance: GeneratedAssetProvenance? = nil
     ) {
         self.kind = kind
         self.provider = provider
@@ -228,6 +262,7 @@ public struct GeneratedAsset: Codable, Equatable, Sendable {
         self.prompt = prompt
         self.moderationStatus = moderationStatus
         self.variants = variants
+        self.generationProvenance = generationProvenance
     }
 
     public init(from decoder: Decoder) throws {
@@ -239,6 +274,10 @@ public struct GeneratedAsset: Codable, Equatable, Sendable {
         self.prompt = try container.decode(String.self, forKey: .prompt)
         self.moderationStatus = try container.decode(String.self, forKey: .moderationStatus)
         self.variants = try container.decodeIfPresent([GeneratedAssetVariant].self, forKey: .variants) ?? []
+        self.generationProvenance = try container.decodeIfPresent(
+            GeneratedAssetProvenance.self,
+            forKey: .generationProvenance
+        )
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -250,6 +289,7 @@ public struct GeneratedAsset: Codable, Equatable, Sendable {
         try container.encode(prompt, forKey: .prompt)
         try container.encode(moderationStatus, forKey: .moderationStatus)
         try container.encode(variants, forKey: .variants)
+        try container.encodeIfPresent(generationProvenance, forKey: .generationProvenance)
     }
 }
 

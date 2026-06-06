@@ -411,6 +411,16 @@ do {
         "Artifact3DPreviewView(session: session)",
         "artifact summary 3D preview wiring"
     )
+    try requireContains(
+        artifactSummaryView,
+        "generationProvenance",
+        "artifact summary provenance display"
+    )
+    try requireContains(
+        artifactSummaryView,
+        "selectedSourceImageCount",
+        "artifact summary selected source image count"
+    )
     try requireContains(artifact3DPreviewView, "import SceneKit", "SceneKit preview source")
     try requireContains(artifact3DPreviewView, "SceneView(scene:", "SwiftUI SceneKit scene view")
     try requireContains(artifact3DPreviewView, "ArtifactPreviewState", "artifact preview state usage")
@@ -433,6 +443,12 @@ do {
     try requireContains(artifact3DPreviewView, "ArtifactAssetPreparer.live()", "live asset preparer wiring")
     try requireContains(pmfModels, "GeneratedAssetVariant", "generated asset variant model")
     try requireContains(pmfModels, "variants: [GeneratedAssetVariant]", "generated asset variants")
+    try requireContains(pmfModels, "GeneratedAssetProvenance", "generated asset provenance model")
+    try requireContains(
+        pmfModels,
+        "generationProvenance: GeneratedAssetProvenance?",
+        "optional generated asset provenance"
+    )
     try requireContains(pmfModels, "NPCAgentTrace", "npc agent trace model")
     try requireContains(pmfModels, "npcAgentTraces: [NPCAgentTrace]", "npc agent traces model")
     try requireContains(mythSessionID, "MythSessionID", "myth session id validator")

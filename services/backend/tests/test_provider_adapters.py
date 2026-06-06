@@ -37,6 +37,61 @@ def test_local_three_d_provider_returns_reviewable_game_asset() -> None:
     assert "source_images=1" in asset.prompt
     assert "source_assets=1" in asset.prompt
     assert asset.moderation_status == "needs_review"
+    assert asset.generation_provenance is not None
+    assert asset.generation_provenance.input_mode == "single_image"
+    assert asset.generation_provenance.provider_route == "local_stub"
+    assert asset.generation_provenance.source_image_count == 1
+    assert asset.generation_provenance.selected_source_image_count == 1
+    assert asset.generation_provenance.source_asset_count == 1
+    assert asset.generation_provenance.raw_sources_included is False
+
+
+def test_local_three_d_provider_records_text_prompt_provenance() -> None:
+    provider = LocalThreeDProvider()
+
+    asset = provider.generate_game_asset(
+        ThreeDGenerationRequest(
+            session_id="myth_text",
+            prompt="Create a text-only relic.",
+        )
+    )
+
+    assert asset.generation_provenance is not None
+    assert asset.generation_provenance.input_mode == "text_prompt"
+    assert asset.generation_provenance.source_image_count == 0
+    assert asset.generation_provenance.selected_source_image_count == 0
+    assert asset.generation_provenance.source_asset_count == 0
+    assert asset.generation_provenance.raw_sources_included is False
+
+
+def test_local_three_d_provider_records_multi_image_provenance() -> None:
+    provider = LocalThreeDProvider()
+
+    asset = provider.generate_game_asset(
+        ThreeDGenerationRequest(
+            session_id="myth_multi",
+            prompt="Create a multi-image relic.",
+            source_images=(
+                ThreeDSourceImage(
+                    uri="local-capture://cap_0123456789abcdef/media_0.jpg",
+                    content_type="image/jpeg",
+                    data_uri="data:image/jpeg;base64,ZmFrZTE=",
+                ),
+                ThreeDSourceImage(
+                    uri="local-capture://cap_0123456789abcdef/media_1.png",
+                    content_type="image/png",
+                    data_uri="data:image/png;base64,ZmFrZTI=",
+                ),
+            ),
+        )
+    )
+
+    assert asset.generation_provenance is not None
+    assert asset.generation_provenance.input_mode == "multi_image"
+    assert asset.generation_provenance.source_image_count == 2
+    assert asset.generation_provenance.selected_source_image_count == 2
+    assert asset.generation_provenance.source_asset_count == 0
+    assert asset.generation_provenance.raw_sources_included is False
 
 
 def test_local_print_provider_derives_candidate_from_generated_asset() -> None:
