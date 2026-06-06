@@ -42,6 +42,7 @@ Bridge deliverable:
 - P0.24 provider handoff smoke report for backend-only Meshy/OpenAI key provisioning
 - P0.25 project-local iOS deploy config and preflight for Team ID, bundle id, and device backend URL
 - P0.26 local mobile demo snapshot for restored myth sessions and NPC tick history
+- P0.27 backend local session history with session/tick JSON recovery and mobile GET contract
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

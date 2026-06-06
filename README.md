@@ -654,3 +654,30 @@ docs/superpowers/verification/assets/p0.26-mobile-demo-snapshot-390x844.png
 
 P0.26 does not add server-side NPC memory, background autonomous loops, print
 fulfillment, live provider-key runs, or real device installation.
+
+P0.27 adds backend-owned local myth session history. `POST /v1/myth-sessions`
+and `POST /v1/myth-sessions/from-capture` now save the generated session to an
+ignored JSON store, and `POST /v1/npc-ticks` appends generated ticks to that
+session history. Readback endpoints are:
+
+```http
+GET /v1/myth-sessions/{session_id}
+GET /v1/myth-sessions/{session_id}/history
+```
+
+Set `MYTH_SESSION_STORAGE_DIR` to override the default local store at
+`services/backend/.local/myth-sessions`. The demo history keeps at most 24 NPC
+ticks per session, sanitizes raw media data URIs and obvious provider secrets
+before writing JSON, and persists no raw capture files or provider keys.
+
+The iOS core now decodes `MythSessionHistory` and has GET client methods for
+session/history recovery. This is a local demo recovery layer, not production
+account memory, autonomous background NPC memory, print fulfillment, or a raw
+personal-source archive.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.27-backend-session-history.html
+docs/superpowers/verification/assets/p0.27-backend-session-history-390x844.png
+```

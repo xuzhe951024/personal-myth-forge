@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.27 Backend Session History</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202422;
+      --muted: #5f6964;
+      --line: #d8ded6;
+      --paper: #fbfcf8;
+      --panel: #ffffff;
+      --green: #4e7458;
+      --blue: #2f6e99;
+      --rust: #a05d35;
+      --violet: #665b91;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e8ece8;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 14px 16px 16px;
+      background: var(--paper);
+      border-left: 1px solid #d2dad1;
+      border-right: 1px solid #d2dad1;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      padding: 6px 0 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.08;
+      font-weight: 780;
+    }
+
+    .tag {
+      color: var(--rust);
+      font-size: 12px;
+      font-weight: 780;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .panel,
+    .metric,
+    .command {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+    }
+
+    .panel {
+      margin-bottom: 7px;
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+      margin-bottom: 5px;
+      font-size: 14px;
+      font-weight: 760;
+    }
+
+    .pill {
+      border-radius: 6px;
+      padding: 4px 7px;
+      background: #e5efe7;
+      color: #315c3b;
+      font-size: 10px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .detail {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.34;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 730;
+      margin-bottom: 5px;
+    }
+
+    .value {
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.12;
+    }
+
+    .ok {
+      color: var(--green);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .violet {
+      color: var(--violet);
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.32;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    code {
+      color: var(--blue);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10.5px;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Backend Session History</h1>
+      <div class="tag">P0.27</div>
+    </header>
+
+    <section>
+      <h2>Saved Session</h2>
+      <div class="panel">
+        <div class="panel-title">
+          <span>myth_0123456789abcdef</span>
+          <span class="pill">recoverable</span>
+        </div>
+        <div class="detail">Created myth sessions are written to the backend JSON store before they are returned to clients.</div>
+      </div>
+      <div class="grid">
+        <div class="metric">
+          <div class="label">history endpoint</div>
+          <div class="value ok">GET ready</div>
+        </div>
+        <div class="metric">
+          <div class="label">tick cap</div>
+          <div class="value violet">24 max</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Backend Store</h2>
+      <ul>
+        <li><code>MYTH_SESSION_STORAGE_DIR</code> overrides the local path.</li>
+        <li>Default store: <code>services/backend/.local/myth-sessions</code>.</li>
+        <li><code>POST /v1/npc-ticks</code> appends sorted bounded ticks.</li>
+        <li><code>GET /v1/myth-sessions/{session_id}/history</code> returns session plus ticks.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Mobile Contract</h2>
+      <div class="panel">
+        <div class="panel-title">
+          <span>Swift Core</span>
+          <span class="pill">typed</span>
+        </div>
+        <div class="detail">The iOS client decodes <code>MythSessionHistory</code> and validates <code>myth_</code> ids before GET calls.</div>
+      </div>
+      <div class="command">
+        <code>getMythSession(sessionId:)</code><br>
+        <code>getMythSessionHistory(sessionId:)</code>
+      </div>
+    </section>
+
+    <section>
+      <h2>Safety Boundary</h2>
+      <ul>
+        <li>No raw photos, scan binaries, or provider data URIs in history JSON.</li>
+        <li>No Meshy/OpenAI keys, bearer tokens, or raw provider payload markers.</li>
+        <li>No raw personal email, chat, calendar, or document bodies.</li>
+        <li>Not production account memory or autonomous background NPC memory.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Verification</h2>
+      <div class="grid">
+        <div class="metric">
+          <div class="label">backend tests</div>
+          <div class="value ok">pass</div>
+        </div>
+        <div class="metric">
+          <div class="label">mobile tests</div>
+          <div class="value blue">pass</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
