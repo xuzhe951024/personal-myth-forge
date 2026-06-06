@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from dataclasses import dataclass
 from typing import Protocol
 
 import httpx
@@ -8,10 +9,31 @@ import httpx
 from myth_forge_api.domain.models import GeneratedAsset
 
 
+@dataclass(frozen=True)
+class ThreeDSourceImage:
+    uri: str
+    content_type: str
+    data_uri: str
+
+
+@dataclass(frozen=True)
+class ThreeDSourceAsset:
+    uri: str
+    content_type: str
+
+
+@dataclass(frozen=True)
+class ThreeDGenerationRequest:
+    session_id: str
+    prompt: str
+    source_images: tuple[ThreeDSourceImage, ...] = ()
+    source_assets: tuple[ThreeDSourceAsset, ...] = ()
+
+
 class ThreeDProvider(Protocol):
     provider_name: str
 
-    def generate_game_asset(self, session_id: str, prompt: str) -> GeneratedAsset:
+    def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
         ...
 
 
@@ -20,13 +42,13 @@ class LocalThreeDProvider:
 
     provider_name = "local_stub"
 
-    def generate_game_asset(self, session_id: str, prompt: str) -> GeneratedAsset:
+    def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
         return GeneratedAsset(
             kind="game_asset",
             provider=self.provider_name,
             format="glb",
-            uri=f"local://generated-assets/{session_id}.glb",
-            prompt=prompt,
+            uri=f"local://generated-assets/{request.session_id}.glb",
+            prompt=_prompt_with_source_summary(request),
             moderation_status="needs_review",
         )
 
@@ -58,11 +80,11 @@ class MeshyThreeDProvider:
             max_wait_seconds=getattr(settings, "meshy_max_wait_seconds"),
         )
 
-    def generate_game_asset(self, session_id: str, prompt: str) -> GeneratedAsset:
+    def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
         preview_task_id = self._create_task(
             {
                 "mode": "preview",
-                "prompt": prompt[:600],
+                "prompt": request.prompt[:600],
                 "target_formats": ["glb"],
                 "moderation": True,
             }
@@ -86,7 +108,7 @@ class MeshyThreeDProvider:
             provider=self.provider_name,
             format="glb",
             uri=glb_uri,
-            prompt=prompt,
+            prompt=request.prompt,
             moderation_status="needs_review",
         )
 
@@ -159,6 +181,16 @@ def _provider_error_message(data: dict[str, object]) -> str | None:
         if isinstance(value, str) and value:
             return value
     return None
+
+
+def _prompt_with_source_summary(request: ThreeDGenerationRequest) -> str:
+    if not request.source_images and not request.source_assets:
+        return request.prompt
+    return (
+        f"{request.prompt}\n\n"
+        f"Provider input summary: source_images={len(request.source_images)}; "
+        f"source_assets={len(request.source_assets)}."
+    )
 
 
 def _task_error_message(data: dict[str, object]) -> str:

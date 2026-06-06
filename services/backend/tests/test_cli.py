@@ -1,7 +1,7 @@
 import json
 
 from myth_forge_api.cli import main
-from myth_forge_api.providers.three_d import MeshyProviderError
+from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDGenerationRequest
 
 
 def test_cli_generates_local_asset_json(capsys) -> None:
@@ -72,7 +72,7 @@ def test_cli_evaluate_3d_returns_error_without_report_when_provider_config_fails
 class FailingThreeDProvider:
     provider_name = "failing"
 
-    def generate_game_asset(self, session_id: str, prompt: str):
+    def generate_game_asset(self, request: ThreeDGenerationRequest):
         raise MeshyProviderError("failed Authorization=Bearer test-secret raw=test-secret")
 
 
