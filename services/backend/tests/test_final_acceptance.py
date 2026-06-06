@@ -19,7 +19,7 @@ def passing_ios_showcase_result() -> IOSShowcaseAcceptanceResult:
         report={
             "kind": "ios_showcase_acceptance_report",
             "status": "succeeded",
-            "summary": {"passed": 15, "failed": 0},
+            "summary": {"passed": 16, "failed": 0},
         },
     )
 
@@ -171,7 +171,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert checks["print_quote_acceptance"]["report"]["quote_status"] == "draft_quote"
     assert checks["ios_showcase_acceptance"]["status"] == "passed"
     assert checks["ios_showcase_acceptance"]["report"]["summary"] == {
-        "passed": 15,
+        "passed": 16,
         "failed": 0,
     }
     assert checks["ios_backend_handoff_acceptance"]["status"] == "passed"

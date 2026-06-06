@@ -1741,3 +1741,35 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.59-capture-generation-readiness.html
 docs/superpowers/verification/assets/p0.59-capture-generation-readiness-390x844.png
 ```
+
+## P0.60 Capture Readiness Showcase Acceptance
+
+P0.60 adds `capture_generation_readiness` to the source-only
+`ios_showcase_acceptance` gate that is nested inside quick final acceptance.
+The new feature checks that:
+
+- `CaptureGenerationReadiness.swift` exists and defines the builder, route
+  model, route display label, and Meshy four-image source cap.
+- `ForgeRootView` builds readiness from current media/provider state and passes
+  the route display label into the form.
+- `CaptureFormView` renders readiness title, route label, and detail.
+- Swift contract tests include guided-scan multi-image and ARKit scan asset
+  readiness coverage.
+
+The gate now reports 16 iOS showcase source features when complete. This is
+still not a device install, live ARKit capture run, Xcode build, or provider-key
+run; those remain final handoff steps.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py tests/test_final_acceptance.py -q
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.60-capture-readiness-showcase-acceptance.html
+docs/superpowers/verification/assets/p0.60-capture-readiness-showcase-acceptance-390x844.png
+```

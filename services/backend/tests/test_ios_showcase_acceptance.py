@@ -12,11 +12,12 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_showcase_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 15, "failed": 0}
+    assert result.report["summary"] == {"passed": 16, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "camera_capture",
         "guided_scan",
         "arkit_scan_package",
+        "capture_generation_readiness",
         "capture_upload",
         "three_d_preview",
         "npc_ritual_scene",
@@ -51,7 +52,7 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 14, "failed": 1}
+    assert result.report["summary"] == {"passed": 15, "failed": 1}
     assert features["camera_capture"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/CameraCaptureView.swift",
@@ -78,7 +79,7 @@ def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolu
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 14, "failed": 1}
+    assert result.report["summary"] == {"passed": 15, "failed": 1}
     assert features["arkit_scan_package"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
@@ -90,12 +91,42 @@ def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolu
     assert "data:image" not in report_text
 
 
+def test_ios_showcase_acceptance_fails_missing_capture_generation_readiness_without_absolute_paths(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    (
+        tmp_path
+        / "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift"
+    ).unlink()
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 15, "failed": 1}
+    assert features["capture_generation_readiness"]["status"] == "failed"
+    assert {
+        "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
+        "contains": "CaptureGenerationReadinessBuilder",
+    } in features["capture_generation_readiness"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+    assert "data:image" not in report_text
+
+
 def write_complete_ios_showcase_fixture(root: Path) -> None:
     files = {
         "apps/mobile/ios/App/CameraCaptureView.swift": (
             "UIImagePickerController jpegData(compressionQuality:"
         ),
-        "apps/mobile/ios/App/CaptureFormView.swift": "Take Photo",
+        "apps/mobile/ios/App/CaptureFormView.swift": (
+            "Take Photo generationReadinessTitle generationReadinessRouteLabel "
+            "generationReadinessDetail"
+        ),
         "apps/mobile/ios/App/ForgeRootView.swift": (
             "CameraCaptureMediaBuilder.singlePhotoSelection "
             "GuidedScanPhotoSetBuilder.mediaDrafts getProviderReadiness "
@@ -104,7 +135,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "getBackendHealth() checkBackendHealth backendHealthProbe "
             "DemoScriptBuilder.build ArtifactSummaryView(session: readySession, latestTick: latestNPCTick) "
             "ShowcaseAutopilotPlanner.plan runShowcaseAutopilot "
-            "arkitScanPackageSelection ARKitScanPackageBuilder.selection"
+            "arkitScanPackageSelection ARKitScanPackageBuilder.selection "
+            "CaptureGenerationReadinessBuilder.build captureGenerationReadiness.route.displayLabel"
         ),
         "apps/mobile/ios/App/GuidedScanCaptureView.swift": (
             "ObjectCaptureSession ObjectCaptureView(session:"
@@ -135,8 +167,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "ARKitScanPackageBuilder maximumReferenceImages = 11 "
             "CaptureMediaSelection(mode: .arkitScan"
         ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift": (
+            "CaptureGenerationReadinessBuilder maximumProviderSourceImages = 4 "
+            "CaptureGenerationRoute displayLabel"
+        ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
-            "testARKitScanPackageBuilderBuildsReadySelection"
+            "testARKitScanPackageBuilderBuildsReadySelection "
+            "testCaptureGenerationReadinessMarksGuidedScanMultiImageRoute "
+            "testCaptureGenerationReadinessMarksARKitScanAssetRoute"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeFlowService.swift": (
             "uploadObjectCapture createMythSessionFromCapture"

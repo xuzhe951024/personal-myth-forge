@@ -1633,3 +1633,33 @@ Static evidence lives at:
 docs/superpowers/verification/p0.59-capture-generation-readiness.html
 docs/superpowers/verification/assets/p0.59-capture-generation-readiness-390x844.png
 ```
+
+P0.60 adds the capture generation readiness layer to the source-only iOS
+showcase acceptance gate nested inside quick final acceptance. The new
+`capture_generation_readiness` feature checks the mobile core builder, the
+`ForgeRootView` route-label wiring, the `CaptureFormView` title/route/detail
+display inputs, and the Swift contract tests for guided scan and ARKit scan
+readiness.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py tests/test_final_acceptance.py -q
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --repo-root ../.. \
+  --output /tmp/personal-myth-forge-final-acceptance-p0.60.json
+```
+
+The nested iOS showcase source summary now reports `passed=16`, `failed=0`
+when all checked-in source evidence is present. This remains source-only and
+does not run Xcode, device capture, or provider calls.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.60-capture-readiness-showcase-acceptance.html
+docs/superpowers/verification/assets/p0.60-capture-readiness-showcase-acceptance-390x844.png
+```
