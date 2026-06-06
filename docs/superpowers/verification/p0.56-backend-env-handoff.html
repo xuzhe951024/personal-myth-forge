@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.56 Backend Env Handoff</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172033;
+        --muted: #5d6677;
+        --line: #d3d9e3;
+        --paper: #f6f8fb;
+        --panel: #ffffff;
+        --green: #047857;
+        --blue: #1d4ed8;
+        --amber: #a15c07;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        background: var(--paper);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(358px, calc(100vw - 32px));
+        margin: 0 0 0 16px;
+        padding: 18px 0 22px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 22px;
+        line-height: 1.16;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 16px;
+        letter-spacing: 0;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.34;
+        overflow-wrap: anywhere;
+      }
+
+      header {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 11px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+
+      .tile,
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .tile {
+        min-height: 80px;
+        padding: 10px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 7px;
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .ok {
+        color: var(--green);
+      }
+
+      .blue {
+        color: var(--blue);
+      }
+
+      .warn {
+        color: var(--amber);
+      }
+
+      .panel {
+        padding: 12px;
+        margin-top: 10px;
+      }
+
+      .code {
+        margin-top: 9px;
+        padding: 9px;
+        border-radius: 8px;
+        background: #111827;
+        color: #e5e7eb;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+
+      .flow {
+        display: grid;
+        gap: 7px;
+        margin-top: 10px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 24px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+      }
+
+      .mark {
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        color: #ffffff;
+        background: var(--blue);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .mark.ok {
+        background: var(--green);
+      }
+
+      .mark.warn {
+        background: var(--amber);
+      }
+
+      .small {
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P0.56 Backend Env Handoff</h1>
+        <p>Project-local writer for final Meshy/OpenAI resources.</p>
+      </header>
+
+      <section class="grid" aria-label="Backend handoff summary">
+        <div class="tile">
+          <div class="label">Input</div>
+          <div class="value blue">Meshy + OpenAI keys</div>
+          <p class="small">Supplied by operator.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Output</div>
+          <div class="value ok">Ignored backend .env</div>
+          <p class="small">Never committed.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Command Path</h2>
+        <div class="code">
+          make backend-write-provider-env<br />
+          MESHY_API_KEY: configured (redacted)<br />
+          OPENAI_API_KEY: configured (redacted)
+        </div>
+        <div class="flow">
+          <div class="step">
+            <div class="mark">1</div>
+            <p>Writer selects `THREE_D_PROVIDER=meshy` and `NPC_PROVIDER=openai`.</p>
+          </div>
+          <div class="step">
+            <div class="mark ok">2</div>
+            <p>Tracked `.env`, missing keys, and multiline values are blocked before writing.</p>
+          </div>
+          <div class="step">
+            <div class="mark ok">3</div>
+            <p>Provider validation remains explicit through `provider-handoff --require-core-real`.</p>
+          </div>
+          <div class="step">
+            <div class="mark warn">4</div>
+            <p>No live provider, Xcode, keychain, signing, or global mutation runs here.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Acceptance</h2>
+        <div class="flow">
+          <div class="step">
+            <div class="mark ok">OK</div>
+            <p>Subprocess tests cover redaction, env/flag input, tracked file refusal, and settings load.</p>
+          </div>
+          <div class="step">
+            <div class="mark ok">OK</div>
+            <p>Resource template acceptance and SwiftPM source gate include the writer.</p>
+          </div>
+          <div class="step">
+            <div class="mark warn">WAIT</div>
+            <p>Real provider calls still require final operator-provided keys and explicit consent.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

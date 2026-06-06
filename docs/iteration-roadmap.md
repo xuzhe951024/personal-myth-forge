@@ -71,6 +71,7 @@ Bridge deliverable:
 - P0.53 operator-triggered backend health probe inside the iPhone device preflight panel
 - P0.54 command-line iOS deploy preflight backend health check
 - P0.55 project-local writer for ignored iOS deploy config handoff
+- P0.56 project-local writer for ignored backend Meshy/OpenAI env handoff
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

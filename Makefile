@@ -18,6 +18,11 @@ backend-demo:
 backend-generate-local:
 	cd services/backend && uv run python -m myth_forge_api.cli generate-asset --provider local --prompt "Create a brass key relic worshiped by a tiny village."
 
+.PHONY: backend-write-provider-env
+
+backend-write-provider-env:
+	@services/backend/scripts/write_backend_env.sh
+
 .PHONY: mobile-xcode-build
 
 mobile-xcode-build:

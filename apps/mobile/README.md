@@ -663,6 +663,10 @@ continues to read readiness metadata and call the same backend APIs.
 Backend handoff command:
 
 ```bash
+MESHY_API_KEY=... \
+OPENAI_API_KEY=... \
+make backend-write-provider-env
+
 cd services/backend
 uv run python -m myth_forge_api.cli provider-handoff \
   --require-core-real \
@@ -1311,6 +1315,9 @@ metadata. Meshy, OpenAI, Treatstock, and Sculpteo key values stay in backend
 configuration, not iOS source, `Info.plist`, screenshots, or error text. The
 default report exits `2` until a local `Deployment.local.xcconfig` supplies an
 Apple Team ID and a non-loopback backend URL reachable from iPhone.
+Use `make backend-write-provider-env` to create the ignored backend
+`services/backend/.env` before running this report. The writer redacts command
+output and does not make provider network calls.
 
 Visual evidence lives at:
 

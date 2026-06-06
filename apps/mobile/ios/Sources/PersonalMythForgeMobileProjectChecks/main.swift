@@ -11,6 +11,9 @@ do {
     let xcodeBuildGateScriptFile = iosRoot.appendingPathComponent("scripts/xcode_build_gate.sh")
     let deployPreflightScriptFile = iosRoot.appendingPathComponent("scripts/deploy_preflight.sh")
     let deployConfigWriterScriptFile = iosRoot.appendingPathComponent("scripts/write_deploy_local_config.sh")
+    let backendEnvWriterScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_backend_env.sh"
+    )
     let deployConfigFile = iosRoot.appendingPathComponent("Config/Deployment.xcconfig")
     let deployLocalExampleFile = iosRoot.appendingPathComponent("Config/Deployment.local.xcconfig.example")
     let sharedSchemeFile = iosRoot.appendingPathComponent(
@@ -25,6 +28,7 @@ do {
     let xcodeBuildGateScript = try readText(xcodeBuildGateScriptFile)
     let deployPreflightScript = try readText(deployPreflightScriptFile)
     let deployConfigWriterScript = try readText(deployConfigWriterScriptFile)
+    let backendEnvWriterScript = try readText(backendEnvWriterScriptFile)
     let deployConfig = try readText(deployConfigFile)
     let deployLocalExample = try readText(deployLocalExampleFile)
     let sharedScheme = try readText(sharedSchemeFile)
@@ -164,6 +168,13 @@ do {
         "apps/mobile/ios/scripts/write_deploy_local_config.sh",
         "mobile deploy config writer script"
     )
+    try requireContains(makefile, ".PHONY: backend-write-provider-env", "backend provider env writer phony target")
+    try requireContains(makefile, "backend-write-provider-env:", "backend provider env writer target")
+    try requireContains(
+        makefile,
+        "services/backend/scripts/write_backend_env.sh",
+        "backend provider env writer script"
+    )
     try requireContains(deployConfigWriterScript, "DEVELOPMENT_TEAM", "deploy config writer team key")
     try requireContains(deployConfigWriterScript, "PRODUCT_BUNDLE_IDENTIFIER", "deploy config writer bundle key")
     try requireContains(deployConfigWriterScript, "PMF_BACKEND_BASE_URL", "deploy config writer backend key")
@@ -180,6 +191,28 @@ do {
     try requireNotContains(deployConfigWriterScript, "codesign", "deploy config writer no signing")
     try requireNotContains(deployConfigWriterScript, "api.openai.com", "deploy config writer no OpenAI call")
     try requireNotContains(deployConfigWriterScript, "api.meshy.ai", "deploy config writer no Meshy call")
+    try requireContains(backendEnvWriterScript, "MESHY_API_KEY", "backend env writer Meshy key")
+    try requireContains(backendEnvWriterScript, "OPENAI_API_KEY", "backend env writer OpenAI key")
+    try requireContains(backendEnvWriterScript, "THREE_D_PROVIDER=meshy", "backend env writer Meshy provider selection")
+    try requireContains(backendEnvWriterScript, "NPC_PROVIDER=openai", "backend env writer OpenAI NPC selection")
+    try requireContains(backendEnvWriterScript, "configured (redacted)", "backend env writer redaction")
+    try requireContains(
+        backendEnvWriterScript,
+        "services/backend/.env must stay untracked",
+        "backend env writer tracked env guard"
+    )
+    try requireContains(backendEnvWriterScript, "chmod 600", "backend env writer local file mode")
+    try requireNotContains(backendEnvWriterScript, "curl ", "backend env writer no provider network call")
+    try requireNotContains(
+        backendEnvWriterScript,
+        "urllib.request",
+        "backend env writer no Python provider network call"
+    )
+    try requireNotContains(backendEnvWriterScript, "sudo", "backend env writer no sudo")
+    try requireNotContains(backendEnvWriterScript, "xcode-select", "backend env writer no global developer mutation")
+    try requireNotContains(backendEnvWriterScript, "xcodebuild -license", "backend env writer no license mutation")
+    try requireNotContains(backendEnvWriterScript, "security ", "backend env writer no keychain mutation")
+    try requireNotContains(backendEnvWriterScript, "codesign", "backend env writer no signing")
 
     for file in [
         "AppConfiguration.swift",
