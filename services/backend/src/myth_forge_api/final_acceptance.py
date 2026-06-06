@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any, Callable, Literal
 
 from myth_forge_api.acceptance import DemoAcceptanceResult, ProviderMode, run_demo_acceptance
+from myth_forge_api.capture_acceptance import (
+    Capture3DAcceptanceResult,
+    run_capture_3d_acceptance,
+)
 from myth_forge_api.config import load_settings
 from myth_forge_api.providers.readiness import build_provider_readiness
 
@@ -53,6 +57,7 @@ class CommandCheckDefinition:
 CommandRunner = Callable[[list[str], Path], CommandExecutionResult]
 ProviderHandoffRunner = Callable[[bool], InlineCheckResult]
 DemoAcceptanceRunner = Callable[..., DemoAcceptanceResult]
+Capture3DAcceptanceRunner = Callable[[], Capture3DAcceptanceResult | InlineCheckResult]
 
 
 FULL_REGRESSION_COMMANDS = [
@@ -126,6 +131,7 @@ def run_final_acceptance(
     command_runner: CommandRunner | None = None,
     provider_handoff_runner: ProviderHandoffRunner | None = None,
     demo_acceptance_runner: DemoAcceptanceRunner | None = None,
+    capture_3d_acceptance_runner: Capture3DAcceptanceRunner | None = None,
 ) -> FinalAcceptanceResult:
     if profile not in ("quick", "full"):
         raise ValueError(f"Unsupported final acceptance profile: {profile}")
@@ -137,6 +143,9 @@ def run_final_acceptance(
     selected_command_runner = command_runner or _subprocess_command_runner
     selected_provider_handoff_runner = provider_handoff_runner or _run_provider_handoff
     selected_demo_acceptance_runner = demo_acceptance_runner or run_demo_acceptance
+    selected_capture_3d_acceptance_runner = (
+        capture_3d_acceptance_runner or run_capture_3d_acceptance
+    )
 
     checks: list[dict[str, Any]] = []
     checks.append(
@@ -157,6 +166,14 @@ def run_final_acceptance(
                 require_real_core=require_real_core,
             ),
             require_real_core=require_real_core,
+        )
+    )
+    checks.append(
+        _run_inline_check(
+            check_id="capture_3d_acceptance",
+            label="Capture-to-3D acceptance",
+            runner=selected_capture_3d_acceptance_runner,
+            require_real_core=False,
         )
     )
 
@@ -205,7 +222,7 @@ def _run_inline_check(
     *,
     check_id: str,
     label: str,
-    runner: Callable[[], InlineCheckResult | DemoAcceptanceResult],
+    runner: Callable[[], InlineCheckResult | DemoAcceptanceResult | Capture3DAcceptanceResult],
     require_real_core: bool,
 ) -> dict[str, Any]:
     started_at = time.perf_counter()
@@ -432,6 +449,7 @@ def _safe_text(message: str, repo_root: Path) -> str:
         r"raw=[^\s,;\"']+",
         r"api[_-]?key\s*[=:]\s*[^\s,;\"']+",
         r"data:[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=_-]+",
+        r"local-capture://[^\s,;\"']+",
         r"file://[^\s,;\"']+",
     ]
     for pattern in replacements:

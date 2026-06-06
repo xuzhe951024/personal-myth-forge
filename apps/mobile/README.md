@@ -1130,3 +1130,34 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.36-media-backed-3d-evaluation.html
 docs/superpowers/verification/assets/p0.36-media-backed-3d-evaluation-390x844.png
 ```
+
+## P0.37 Capture 3D Acceptance Gate
+
+P0.37 brings the guided scan source-image route into the final acceptance
+report. The backend quick acceptance profile now runs a local no-key
+`capture_3d_acceptance` check that creates a synthetic `guided_scan` capture,
+reads three stored source images through the same preparation helper used by
+`POST /v1/myth-sessions/from-capture`, and verifies that the 3D provider
+receives a multi-image request.
+
+Run:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+Expected local summary after P0.37 is `passed=3`, `blocked=2`, `failed=0`.
+The blocked checks remain local iOS deploy config and the Apple SDK license on
+this machine. The report does not include raw `data:image` payloads,
+`local-capture://` URIs, local paths, or provider secrets.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.37-capture-3d-acceptance-gate.html
+docs/superpowers/verification/assets/p0.37-capture-3d-acceptance-gate-390x844.png
+```

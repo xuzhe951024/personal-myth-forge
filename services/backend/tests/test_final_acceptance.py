@@ -48,6 +48,16 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
                 "status": "succeeded",
             },
         ),
+        capture_3d_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={
+                "kind": "capture_3d_acceptance_report",
+                "status": "succeeded",
+                "source_image_count": 3,
+                "provider_request_source_image_count": 3,
+                "generation_provenance": {"input_mode": "multi_image"},
+            },
+        ),
     )
 
     assert result.exit_code == 2
@@ -55,7 +65,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.report["profile"] == "quick"
     assert result.report["overall_status"] == "blocked"
     assert result.report["summary"] == {
-        "passed": 2,
+        "passed": 3,
         "blocked": 2,
         "failed": 0,
         "skipped": 0,
@@ -64,11 +74,14 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert list(checks) == [
         "provider_handoff",
         "demo_acceptance",
+        "capture_3d_acceptance",
         "mobile_deploy_preflight",
         "mobile_xcode_build",
     ]
     assert checks["provider_handoff"]["status"] == "passed"
     assert checks["demo_acceptance"]["status"] == "passed"
+    assert checks["capture_3d_acceptance"]["status"] == "passed"
+    assert checks["capture_3d_acceptance"]["report"]["source_image_count"] == 3
     assert checks["mobile_deploy_preflight"]["status"] == "blocked"
     assert checks["mobile_deploy_preflight"]["classification"] == (
         "blocked_by_local_ios_deploy_config"
@@ -117,6 +130,19 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
                 ),
             },
         ),
+        capture_3d_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={
+                "kind": "capture_3d_acceptance_report",
+                "status": "succeeded",
+                "error": (
+                    "data:image/png;base64,AAAA "
+                    "local-capture://cap_0123456789abcdef/media_0.png "
+                    "/tmp/personal-myth-forge/capture.png "
+                    "Authorization=Bearer capture-secret"
+                ),
+            },
+        ),
     )
 
     report_text = json.dumps(result.report)
@@ -132,6 +158,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
     assert checks["demo_acceptance"]["classification"] == (
         "blocked_by_provider_configuration"
     )
+    assert checks["capture_3d_acceptance"]["status"] == "passed"
     assert command_calls == 2
     assert "sk-meshy-secret" not in report_text
     assert "sk-openai-secret" not in report_text
@@ -140,6 +167,8 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
     assert "data:image" not in report_text
     assert "/tmp/private" not in report_text
     assert "/Users/zhexu/Codex/personal-myth-forge" not in report_text
+    assert "capture-secret" not in report_text
+    assert "local-capture://" not in report_text
 
 
 def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_path) -> None:
@@ -163,6 +192,14 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
             exit_code=0,
             report={"kind": "demo_acceptance_report", "status": "succeeded"},
         ),
+        capture_3d_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={
+                "kind": "capture_3d_acceptance_report",
+                "status": "succeeded",
+                "source_image_count": 3,
+            },
+        ),
     )
 
     check_ids = [check["id"] for check in result.report["checks"]]
@@ -170,7 +207,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
     assert result.exit_code == 0
     assert result.report["overall_status"] == "passed"
     assert result.report["summary"] == {
-        "passed": 9,
+        "passed": 10,
         "blocked": 0,
         "failed": 0,
         "skipped": 0,
@@ -178,6 +215,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
     assert check_ids == [
         "provider_handoff",
         "demo_acceptance",
+        "capture_3d_acceptance",
         "backend_lint",
         "backend_test",
         "swift_project_checks",

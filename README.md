@@ -935,3 +935,33 @@ Static evidence lives at:
 docs/superpowers/verification/p0.36-media-backed-3d-evaluation.html
 docs/superpowers/verification/assets/p0.36-media-backed-3d-evaluation-390x844.png
 ```
+
+P0.37 adds the capture-to-3D acceptance gate to final acceptance. The quick
+profile now creates a synthetic local `guided_scan` capture, reads three stored
+source images through the same backend preparation helper used by
+`POST /v1/myth-sessions/from-capture`, and proves those images reached the 3D
+provider request.
+
+Run:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+Expected local summary is `passed=3`, `blocked=2`, `failed=0`: provider
+handoff, demo acceptance, and `capture_3d_acceptance` pass; iOS deploy
+preflight and Xcode build remain blocked until local signing/LAN URL and Apple
+SDK license are handled. The capture acceptance report must not include raw
+`data:image` payloads, `local-capture://` URIs, local filesystem paths, or
+provider secrets.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.37-capture-3d-acceptance-gate.html
+docs/superpowers/verification/assets/p0.37-capture-3d-acceptance-gate-390x844.png
+```
