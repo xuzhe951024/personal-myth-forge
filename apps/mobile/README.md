@@ -2099,3 +2099,31 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.78-mobile-final-launch-mode.html
 docs/superpowers/verification/assets/p0.78-mobile-final-launch-mode-390x844.png
 ```
+
+## P0.79 Deploy Preflight Launch Mode Gate
+
+The physical-device deploy preflight now validates `PMF_FINAL_LAUNCH_MODE`
+before checking backend health. The value is read from the same merged
+`Deployment.xcconfig` plus ignored `Deployment.local.xcconfig` stack that the
+app uses.
+
+Allowed values are `local` and `configured`. Invalid hand-edited values exit 2
+with `PMF_FINAL_LAUNCH_MODE must be local or configured.` Valid runs print the
+selected mode alongside bundle id, backend URL, and backend health. The gate
+does not run Xcode, mutate signing state, or call live providers.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_ios_deploy_preflight_script.py tests/test_ios_deploy_config_writer_script.py -q
+cd ../..
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.79-deploy-preflight-launch-mode.html
+docs/superpowers/verification/assets/p0.79-deploy-preflight-launch-mode-390x844.png
+```

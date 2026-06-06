@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.79 Deploy Preflight Launch Mode</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e8edf0;
+      color: #172026;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: 100vw;
+      max-width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 18px 14px 24px;
+      background: #fbfcfd;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      border: 1px solid #98a4ad;
+      border-radius: 8px;
+      padding: 4px 7px;
+      color: #42515c;
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .stage {
+      height: 128px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(48, 122, 160, .24), transparent 46%),
+        linear-gradient(145deg, #24343c, #15262d);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #2d4653;
+    }
+
+    .phone {
+      position: absolute;
+      left: 24px;
+      top: 17px;
+      width: 64px;
+      height: 78px;
+      border-radius: 14px;
+      background: #e6edf1;
+      border: 4px solid #8195a1;
+    }
+
+    .phone::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 8px;
+      height: 4px;
+      border-radius: 4px;
+      background: #9cadb7;
+    }
+
+    .terminal {
+      position: absolute;
+      right: 18px;
+      top: 16px;
+      width: 220px;
+      border-radius: 8px;
+      background: #101c22;
+      color: #d5f4ee;
+      border: 1px solid #3e5964;
+      padding: 10px;
+      font: 10px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .ok {
+      color: #7ee2cf;
+    }
+
+    .panel {
+      border: 1px solid #d8e0e5;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(20, 31, 40, 0.04);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.25;
+      font-weight: 730;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 2px 0 0;
+      color: #5d6d78;
+      font-size: 11px;
+      line-height: 1.34;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border-radius: 7px;
+      padding: 4px 7px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #117d69;
+      background: #e8f5f2;
+    }
+
+    .badge.blocked {
+      color: #b33232;
+      background: #ffe8e8;
+    }
+
+    .line {
+      padding-top: 7px;
+      border-top: 1px solid #edf1f3;
+      color: #344551;
+      font-size: 11px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .line + .line {
+      margin-top: 6px;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #596b77;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <h1>Deploy Mode Gate</h1>
+      <div class="chip">P0.79</div>
+    </div>
+
+    <section class="stage" aria-label="iPhone deploy preflight mode gate">
+      <div class="phone"></div>
+      <div class="terminal">
+        $ make mobile-deploy-preflight<br>
+        Bundle: com.example.personalmythforge<br>
+        Backend: http://192.168.1.10:8080<br>
+        <span class="ok">Final launch mode: configured</span><br>
+        Backend health: ok
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Mode Allowlist</h2>
+          <p>Manual local config edits are checked before deployment.</p>
+        </div>
+        <div class="badge">READY</div>
+      </div>
+      <div class="line mono">PMF_FINAL_LAUNCH_MODE = local | configured</div>
+      <div class="line">Invalid values exit 2 with a specific operator message.</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Preflight Order</h2>
+          <p>Bad mode values stop before the backend health probe.</p>
+        </div>
+        <div class="badge blocked">BLOCKS</div>
+      </div>
+      <div class="line">1 read Deployment.xcconfig and ignored Deployment.local.xcconfig</div>
+      <div class="line">2 validate Team ID, bundle id, backend URL, and final launch mode</div>
+      <div class="line">3 call /health only after config checks pass</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Safety</h2>
+          <p>This is still a project-local preflight gate.</p>
+        </div>
+        <div class="badge">SAFE</div>
+      </div>
+      <div class="line">xcode_commands=false signing_mutation=false provider_calls=false global_mutation=false</div>
+    </section>
+  </main>
+</body>
+</html>

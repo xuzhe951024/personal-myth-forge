@@ -2179,3 +2179,28 @@ Static evidence lives at:
 docs/superpowers/verification/p0.78-mobile-final-launch-mode.html
 docs/superpowers/verification/assets/p0.78-mobile-final-launch-mode-390x844.png
 ```
+
+P0.79 extends the physical-device deploy preflight to validate the final launch
+mode before the iPhone demo. `mobile-deploy-preflight` now reads
+`PMF_FINAL_LAUNCH_MODE` from the merged deployment config, accepts only `local`
+or `configured`, and prints the selected mode on success.
+
+This catches hand-edited local config mistakes before backend health checks and
+before any Xcode build gate. It still does not run Xcode, mutate signing state,
+accept licenses, or call live providers.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_ios_deploy_preflight_script.py tests/test_ios_deploy_config_writer_script.py -q
+cd ../..
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.79-deploy-preflight-launch-mode.html
+docs/superpowers/verification/assets/p0.79-deploy-preflight-launch-mode-390x844.png
+```

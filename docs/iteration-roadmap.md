@@ -94,6 +94,7 @@ Bridge deliverable:
 - P0.76 iPhone Final Acceptance readiness rows for missing, blocked, and ready reports
 - P0.77 iPhone Final Operator Handoff next-action rows for the final Mac-side demo sequence
 - P0.78 iPhone Final Launch mode switch for local/configured readiness views
+- P0.79 iOS deploy preflight gate for local/configured final launch mode
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

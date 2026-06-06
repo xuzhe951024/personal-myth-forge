@@ -82,6 +82,8 @@ fi
 team=$(get_value DEVELOPMENT_TEAM)
 bundle_id=$(get_value PRODUCT_BUNDLE_IDENTIFIER)
 backend_url=$(get_value PMF_BACKEND_BASE_URL)
+final_launch_mode=$(get_value PMF_FINAL_LAUNCH_MODE)
+final_launch_mode=$(printf '%s' "$final_launch_mode" | tr '[:upper:]' '[:lower:]')
 
 missing=0
 if [ -z "$team" ]; then
@@ -102,6 +104,13 @@ case "$backend_url" in
     missing=1
     ;;
 esac
+case "$final_launch_mode" in
+  local|configured) ;;
+  *)
+    printf '%s\n' "PMF_FINAL_LAUNCH_MODE must be local or configured." >&2
+    missing=1
+    ;;
+esac
 
 if [ "$missing" -ne 0 ]; then
   exit 2
@@ -114,4 +123,5 @@ fi
 printf '%s\n' "iOS deploy preflight passed."
 printf '%s\n' "Bundle: $bundle_id"
 printf '%s\n' "Backend: $backend_url"
+printf '%s\n' "Final launch mode: $final_launch_mode"
 printf '%s\n' "Backend health: ok"
