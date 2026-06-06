@@ -1327,3 +1327,38 @@ Static evidence lives at:
 docs/superpowers/verification/p0.48-capture-scene-handoff-acceptance.html
 docs/superpowers/verification/assets/p0.48-capture-scene-handoff-acceptance-390x844.png
 ```
+
+P0.49 adds an in-app mobile `Demo Script` panel for the final iPhone showcase.
+The panel derives a short ordered script from existing typed app state and
+highlights the next action:
+
+1. Capture Object
+2. Forge Myth
+3. Load 3D Scene
+4. Run NPC Autonomy
+5. Request Print Quote
+6. Check Resources
+
+The source-only `ios_showcase_acceptance` gate now verifies this script panel,
+its Swift core builder, the `ForgeRootView` wiring, and the Xcode project file
+reference. Its internal summary moves to `passed=10`, `failed=0`.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py tests/test_final_acceptance.py -q
+```
+
+Expected quick final acceptance on this local checkout remains
+`passed=9`, `blocked=2`, `failed=0`; the two blockers remain local iOS signing
+config and the Apple SDK/Xcode license gate.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.49-mobile-demo-script.html
+docs/superpowers/verification/assets/p0.49-mobile-demo-script-390x844.png
+```

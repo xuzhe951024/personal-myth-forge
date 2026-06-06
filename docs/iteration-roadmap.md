@@ -64,6 +64,7 @@ Bridge deliverable:
 - P0.46 source-only final resource template acceptance
 - P0.47 backend-served local GLB and DAE scene asset handoff
 - P0.48 integrated guided-scan capture to downloadable iOS scene acceptance
+- P0.49 in-app mobile demo script for the final iPhone showcase loop
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

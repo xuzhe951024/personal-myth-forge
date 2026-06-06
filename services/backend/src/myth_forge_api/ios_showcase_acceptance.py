@@ -114,6 +114,22 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="demo_script",
+        label="Demo script",
+        requirements=(
+            SourceRequirement("apps/mobile/ios/App/DemoScriptView.swift", "Demo Script"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "DemoScriptBuilder.build"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift",
+                "DemoScriptBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
+                "DemoScriptView.swift",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="deploy_config",
         label="Deploy config",
         requirements=(

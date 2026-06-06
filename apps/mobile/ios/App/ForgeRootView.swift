@@ -71,6 +71,16 @@ struct ForgeRootView: View {
                             providerReadinessError: providerReadinessError
                         )
                     )
+                    DemoScriptView(
+                        script: DemoScriptBuilder.build(
+                            captureSelection: mediaSelection,
+                            session: readySession,
+                            npcTickHistoryCount: npcTickHistory.count,
+                            printQuote: printQuote,
+                            providerReadiness: providerReadiness,
+                            providerReadinessError: providerReadinessError
+                        )
+                    )
                     ProviderReadinessView(readiness: providerReadiness, errorMessage: providerReadinessError)
                     CaptureFormView(
                         objectLabel: $objectLabel,

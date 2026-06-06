@@ -20,6 +20,11 @@ do {
     try testFinalShowcaseSummaryMarksPrintQuoteReady()
     try testFinalShowcaseSummaryMarksProviderErrorNeedsAttention()
     try testFinalShowcaseSummaryRedactsUnsafeSourceText()
+    try testDemoScriptStartsWithCapture()
+    try testDemoScriptMovesToForgeWhenMediaReady()
+    try testDemoScriptMarksLocalDemoLoopReady()
+    try testDemoScriptBlocksOnProviderReadinessError()
+    try testDemoScriptRedactsUnsafeDetail()
     try testEncodesPrintQuoteRequestAsSnakeCase()
     try testCaptureIDValidation()
     try testMythSessionIDValidation()
@@ -571,6 +576,99 @@ private func testFinalShowcaseSummaryRedactsUnsafeSourceText() throws {
     )
     let text = ([summary.title] + summary.stages.map(\.detail) + summary.privacyNotes).joined(separator: " ")
 
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "checkout")
+}
+
+private func testDemoScriptStartsWithCapture() throws {
+    let script = DemoScriptBuilder.build(
+        captureSelection: CaptureMediaSelection(mode: .singlePhoto),
+        session: nil,
+        npcTickHistoryCount: 0,
+        printQuote: nil,
+        providerReadiness: nil,
+        providerReadinessError: nil
+    )
+
+    try expectEqual(script.title, "Live Demo Script")
+    try expectEqual(script.nextAction, "Capture or import an object.")
+    try expectEqual(
+        script.steps.map(\.id),
+        ["capture", "forge", "three_d_scene", "npc_autonomy", "print_quote", "resources"]
+    )
+    try expectEqual(script.step(id: "capture")?.status, .current)
+    try expectEqual(script.step(id: "forge")?.status, .waiting)
+    try expectEqual(script.step(id: "three_d_scene")?.status, .waiting)
+}
+
+private func testDemoScriptMovesToForgeWhenMediaReady() throws {
+    let script = DemoScriptBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: nil,
+        npcTickHistoryCount: 0,
+        printQuote: nil,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(script.nextAction, "Forge the myth session.")
+    try expectEqual(script.step(id: "capture")?.status, .complete)
+    try expectEqual(script.step(id: "forge")?.status, .current)
+    try expectEqual(script.step(id: "resources")?.status, .complete)
+}
+
+private func testDemoScriptMarksLocalDemoLoopReady() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let script = DemoScriptBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(script.nextAction, "Local demo loop is ready.")
+    try expectEqual(script.step(id: "capture")?.status, .complete)
+    try expectEqual(script.step(id: "forge")?.status, .complete)
+    try expectEqual(script.step(id: "three_d_scene")?.status, .complete)
+    try expectContains(script.step(id: "three_d_scene")?.detail ?? "", "DAE")
+    try expectEqual(script.step(id: "npc_autonomy")?.status, .complete)
+    try expectContains(script.step(id: "npc_autonomy")?.detail ?? "", "3 ticks")
+    try expectEqual(script.step(id: "print_quote")?.status, .complete)
+    try expectEqual(script.step(id: "resources")?.status, .complete)
+}
+
+private func testDemoScriptBlocksOnProviderReadinessError() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let script = DemoScriptBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 1,
+        printQuote: nil,
+        providerReadiness: nil,
+        providerReadinessError: "Backend preflight is not reachable yet."
+    )
+
+    try expectEqual(script.step(id: "resources")?.status, .blocked)
+    try expectContains(script.step(id: "resources")?.detail ?? "", "not reachable")
+}
+
+private func testDemoScriptRedactsUnsafeDetail() throws {
+    let script = DemoScriptBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: nil,
+        npcTickHistoryCount: 0,
+        printQuote: nil,
+        providerReadiness: nil,
+        providerReadinessError: "sk-test /Users/zhexu/private file:///tmp/private checkout_url=https://pay.example"
+    )
+    let data = try PMFJSON.encoder.encode(script)
+    let text = try require(String(data: data, encoding: .utf8), "expected encoded demo script text")
+
+    try expectContains(text, "[withheld]")
     try expectNotContains(text, "sk-test")
     try expectNotContains(text, "/Users/")
     try expectNotContains(text, "file:///")
@@ -1974,6 +2072,24 @@ private func samplePrintCandidate() -> PrintCandidate {
         requiresUserApproval: true,
         approvalReason: "review before fulfillment",
         printabilityNotes: ["stable base", "repair thin parts"]
+    )
+}
+
+private func localPrintQuote() -> PrintQuote {
+    PrintQuote(
+        kind: "print_quote",
+        provider: "local_stub",
+        status: "draft_quote",
+        sourceAssetUri: "local://generated-assets/myth_test.glb",
+        printCandidateUri: "local://print-candidates/myth_test.3mf",
+        currency: "USD",
+        estimatedPriceCents: 1600,
+        estimatedProductionDays: 5,
+        estimatedShippingDays: 6,
+        checkoutUrl: nil,
+        requiresUserApproval: true,
+        approvalReason: "review before fulfillment",
+        quoteNotes: ["local quote stub"]
     )
 }
 

@@ -12,7 +12,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_showcase_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 9, "failed": 0}
+    assert result.report["summary"] == {"passed": 10, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "camera_capture",
         "guided_scan",
@@ -22,6 +22,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
         "print_quote",
         "provider_readiness",
         "final_showcase",
+        "demo_script",
         "deploy_config",
     ]
     assert all(item["status"] == "passed" for item in result.report["required_features"])
@@ -45,7 +46,7 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 8, "failed": 1}
+    assert result.report["summary"] == {"passed": 9, "failed": 1}
     assert features["camera_capture"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/CameraCaptureView.swift",
@@ -66,7 +67,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/ForgeRootView.swift": (
             "CameraCaptureMediaBuilder.singlePhotoSelection "
             "GuidedScanPhotoSetBuilder.mediaDrafts getProviderReadiness "
-            "runMythSessionAutonomy createPrintQuote FinalShowcaseSummaryBuilder"
+            "runMythSessionAutonomy createPrintQuote FinalShowcaseSummaryBuilder "
+            "DemoScriptBuilder.build"
         ),
         "apps/mobile/ios/App/GuidedScanCaptureView.swift": (
             "ObjectCaptureSession ObjectCaptureView(session:"
@@ -76,6 +78,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/PrintQuoteReviewView.swift": "Get Quote",
         "apps/mobile/ios/App/ProviderReadinessView.swift": "missingEnv",
         "apps/mobile/ios/App/FinalShowcaseSummaryView.swift": "Final Showcase",
+        "apps/mobile/ios/App/DemoScriptView.swift": "Demo Script",
         "apps/mobile/ios/App/Info.plist": "NSCameraUsageDescription $(PMF_BACKEND_BASE_URL)",
         "apps/mobile/ios/Config/Deployment.xcconfig": "PMF_BACKEND_BASE_URL",
         "apps/mobile/ios/Config/Deployment.local.xcconfig.example": "PMF_BACKEND_BASE_URL",
@@ -88,10 +91,13 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactAssetPreparation.swift": (
             "ArtifactAssetPreparer ios_scene_asset"
         ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift": (
+            "DemoScriptBuilder"
+        ),
         "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj": (
             "CameraCaptureView.swift GuidedScanCaptureView.swift Artifact3DPreviewView.swift "
             "NPCTickView.swift PrintQuoteReviewView.swift ProviderReadinessView.swift "
-            "FinalShowcaseSummaryView.swift"
+            "FinalShowcaseSummaryView.swift DemoScriptView.swift"
         ),
     }
     for relative_path, contents in files.items():

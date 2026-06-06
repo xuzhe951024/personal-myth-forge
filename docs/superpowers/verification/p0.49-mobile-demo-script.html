@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.49 Mobile Demo Script</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1f2937;
+        --muted: #667085;
+        --line: #d0d5dd;
+        --ok: #047857;
+        --current: #2563eb;
+        --warn: #b45309;
+        --paper: #f8fafc;
+        --panel: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        background: var(--paper);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: calc(100% - 32px);
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 28px 0 36px;
+      }
+
+      header {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 25px;
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 17px;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+
+      .panel,
+      .tile {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .tile {
+        padding: 14px;
+        min-height: 88px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 10px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .ok {
+        color: var(--ok);
+      }
+
+      .warn {
+        color: var(--warn);
+      }
+
+      .panel {
+        padding: 16px;
+        margin-top: 12px;
+      }
+
+      .script {
+        display: grid;
+        gap: 8px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 18px 116px 1fr;
+        gap: 8px;
+        align-items: baseline;
+        border-top: 1px solid #eaecf0;
+        padding-top: 8px;
+      }
+
+      .step:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .mark {
+        font-weight: 800;
+      }
+
+      .complete {
+        color: var(--ok);
+      }
+
+      .current {
+        color: var(--current);
+      }
+
+      .optional {
+        color: #0891b2;
+      }
+
+      .copy {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      @media (max-width: 760px) {
+        main {
+          width: calc(100% - 24px);
+          padding-top: 22px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P0.49 Mobile Demo Script</h1>
+        <p>iOS now shows the next demo action.</p>
+      </header>
+
+      <section class="grid" aria-label="Acceptance summary">
+        <div class="tile">
+          <div class="label">iOS Source Gate</div>
+          <div class="value ok">10 / 10</div>
+          <p>Demo script is checked in.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Final Acceptance</div>
+          <div class="value warn">9 pass, 2 blocked</div>
+          <p>Only local iOS blockers remain.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Demo Script</h2>
+        <p>Next: Local demo loop is ready.</p>
+        <div class="script" aria-label="Demo script steps">
+          <div class="step">
+            <div class="mark complete">*</div>
+            <div class="label">Capture</div>
+            <div class="copy">Guided scan ready.</div>
+          </div>
+          <div class="step">
+            <div class="mark complete">*</div>
+            <div class="label">Forge</div>
+            <div class="copy">Myth session ready.</div>
+          </div>
+          <div class="step">
+            <div class="mark complete">*</div>
+            <div class="label">3D Scene</div>
+            <div class="copy">DAE scene ready.</div>
+          </div>
+          <div class="step">
+            <div class="mark complete">*</div>
+            <div class="label">NPCs</div>
+            <div class="copy">3 ticks saved.</div>
+          </div>
+          <div class="step">
+            <div class="mark optional">+</div>
+            <div class="label">Print</div>
+            <div class="copy">Quote optional.</div>
+          </div>
+          <div class="step">
+            <div class="mark complete">*</div>
+            <div class="label">Resources</div>
+            <div class="copy">Local providers ready.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Safety</h2>
+        <p>No raw media, paths, keys, or payment links.</p>
+      </section>
+    </main>
+  </body>
+</html>
