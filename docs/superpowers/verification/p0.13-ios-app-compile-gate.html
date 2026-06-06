@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.13 iOS App Compile Gate</title>
+  <style>
+    :root {
+      --ink: #172125;
+      --muted: #5c6870;
+      --line: #cbd7d4;
+      --paper: #f5f8f6;
+      --panel: #ffffff;
+      --green: #286b54;
+      --blue: #2d5f83;
+      --gold: #946a25;
+      --rose: #8a4758;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow-x: hidden;
+      background: #dce7e3;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .phone {
+      width: min(100%, 390px);
+      min-height: 834px;
+      overflow: hidden;
+      border: 1px solid #bcc9c5;
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 18px 44px rgba(23, 33, 37, 0.18);
+    }
+
+    header {
+      padding: 7px 14px 6px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfb;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.15;
+      font-weight: 760;
+    }
+
+    .subhead {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    main {
+      padding: 6px 12px 7px;
+    }
+
+    .label {
+      margin: 0 0 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 720;
+      text-transform: uppercase;
+    }
+
+    .command {
+      margin-bottom: 5px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #162125;
+      color: #eef6f2;
+      font-family: "SF Mono", ui-monospace, Menlo, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .panel {
+      margin-bottom: 5px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .panel h2 {
+      margin: 0 0 5px;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 5px;
+      border: 1px solid #d8e2df;
+      border-radius: 8px;
+      background: #f7faf8;
+    }
+
+    .num {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      background: #e4f0eb;
+      color: var(--green);
+      font-weight: 820;
+    }
+
+    .step strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .step span {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .tag {
+      padding: 3px 5px;
+      border-radius: 999px;
+      background: #e8f0f7;
+      color: var(--blue);
+      font-size: 10px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      background: #e4f0eb;
+      color: var(--green);
+    }
+
+    .tag.gold {
+      background: #f4ecd9;
+      color: var(--gold);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
+
+    .file {
+      min-height: 38px;
+      padding: 5px;
+      border: 1px solid #d8e2df;
+      border-radius: 8px;
+      background: #fbfcfb;
+    }
+
+    .file strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .file span {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .notice {
+      padding: 5px;
+      border: 1px solid #d8c79b;
+      border-radius: 8px;
+      background: #fbf5e7;
+      color: #4c3a1c;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .chips {
+      display: grid;
+      gap: 5px;
+    }
+
+    .chip {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 5px;
+      border: 1px solid #d8e2df;
+      border-radius: 8px;
+      background: #f7faf8;
+    }
+
+    .chip strong {
+      display: block;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .chip span {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header>
+      <div class="status">
+        <span>iOS app shell</span>
+        <span>P0.13</span>
+      </div>
+      <h1>App Compile Gate</h1>
+      <p class="subhead">SwiftUI app source now has a local SwiftPM compile gate before simulator or device deployment is available.</p>
+    </header>
+
+    <main>
+      <p class="label">Verification Command</p>
+      <div class="command">swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck</div>
+
+      <section class="panel">
+        <h2>Gate Coverage</h2>
+        <div class="flow">
+          <div class="step">
+            <div class="num">1</div>
+            <div>
+              <strong>Package target compiles App source</strong>
+              <span>path: App, exclude: Info.plist, depends on MobileCore</span>
+            </div>
+            <div class="tag green">compile</div>
+          </div>
+          <div class="step">
+            <div class="num">2</div>
+            <div>
+              <strong>SwiftUI API availability is checked</strong>
+              <span>portable text input helper and macOS 13-compatible onChange</span>
+            </div>
+            <div class="tag">SwiftUI</div>
+          </div>
+          <div class="step">
+            <div class="num">3</div>
+            <div>
+              <strong>Swift 6 concurrency is checked</strong>
+              <span>Sendable forge flow boundary and MainActor UI state updates</span>
+            </div>
+            <div class="tag gold">Sendable</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>App Source Files</h2>
+        <div class="grid">
+          <div class="file">
+            <strong>ForgeRootView.swift</strong>
+            <span>capture mode, media loading, forge flow</span>
+          </div>
+          <div class="file">
+            <strong>CaptureFormView.swift</strong>
+            <span>PhotosPicker and fileImporter controls</span>
+          </div>
+          <div class="file">
+            <strong>ArtifactSummaryView.swift</strong>
+            <span>generated asset result summary</span>
+          </div>
+          <div class="file">
+            <strong>NPCReactionsView.swift</strong>
+            <span>NPC interpretation and print review</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Issues This Gate Caught</h2>
+        <div class="chips">
+          <div class="chip">
+            <div>
+              <strong>iOS-only text modifier</strong>
+              <span>guarded behind a platform helper</span>
+            </div>
+            <div class="tag">fixed</div>
+          </div>
+          <div class="chip">
+            <div>
+              <strong>macOS 14-only onChange overload</strong>
+              <span>replaced with package-baseline compatible closures</span>
+            </div>
+            <div class="tag">fixed</div>
+          </div>
+          <div class="chip">
+            <div>
+              <strong>Sendable callback state mutation</strong>
+              <span>state updates now hop to MainActor</span>
+            </div>
+            <div class="tag">fixed</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="notice">Evidence type: source compile gate and static mobile storyboard. This is not a live simulator run, device install, ARKit mesh capture, signing pass, or iOS 3D renderer screenshot.</div>
+    </main>
+  </div>
+</body>
+</html>

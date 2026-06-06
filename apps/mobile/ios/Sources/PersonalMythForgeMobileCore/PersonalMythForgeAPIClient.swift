@@ -1,6 +1,6 @@
 import Foundation
 
-public struct HTTPResponse: Equatable {
+public struct HTTPResponse: Equatable, Sendable {
     public let statusCode: Int
     public let data: Data
 
@@ -10,11 +10,11 @@ public struct HTTPResponse: Equatable {
     }
 }
 
-public protocol HTTPTransport {
+public protocol HTTPTransport: Sendable {
     func send(_ request: URLRequest) async throws -> HTTPResponse
 }
 
-public struct URLSessionHTTPTransport: HTTPTransport {
+public struct URLSessionHTTPTransport: HTTPTransport, Sendable {
     public init() {}
 
     public func send(_ request: URLRequest) async throws -> HTTPResponse {
@@ -26,7 +26,7 @@ public struct URLSessionHTTPTransport: HTTPTransport {
     }
 }
 
-public struct CaptureUpload: Equatable {
+public struct CaptureUpload: Equatable, Sendable {
     public let filename: String
     public let contentType: String
     public let data: Data
@@ -38,7 +38,7 @@ public struct CaptureUpload: Equatable {
     }
 }
 
-public enum ForgeFlowError: Error, Equatable {
+public enum ForgeFlowError: Error, Equatable, Sendable {
     case invalidBaseURL
     case invalidCaptureID(String)
     case invalidCaptureDraft(String)
@@ -48,7 +48,7 @@ public enum ForgeFlowError: Error, Equatable {
     case decoding(String)
 }
 
-public final class PersonalMythForgeAPIClient: ForgeFlowAPI {
+public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable {
     private static let maxHTTPErrorBodyCharacters = 512
     private static let captureMediaPartSpecs = [
         "image/heic": CaptureMediaPartSpec(prefix: "media", fileExtension: "heic"),
@@ -62,12 +62,12 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI {
 
     private let baseURL: URL
     private let transport: any HTTPTransport
-    private let boundaryFactory: () -> String
+    private let boundaryFactory: @Sendable () -> String
 
     public init(
         baseURL: URL,
         transport: any HTTPTransport = URLSessionHTTPTransport(),
-        boundaryFactory: @escaping () -> String = { "pmf-\(UUID().uuidString)" }
+        boundaryFactory: @escaping @Sendable () -> String = { "pmf-\(UUID().uuidString)" }
     ) {
         self.baseURL = baseURL
         self.transport = transport

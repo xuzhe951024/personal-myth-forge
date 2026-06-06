@@ -221,3 +221,37 @@ docs/superpowers/verification/assets/p0.12-ios-device-media-input-390x844.png
 
 Remaining gaps after P0.12 are live camera capture, ARKit mesh capture runtime,
 full simulator/device deployment, iOS 3D rendering, and real provider-key runs.
+
+## P0.13 App Compile Gate
+
+P0.13 adds a SwiftPM executable target that compiles the SwiftUI app source
+under the local Command Line Tools environment:
+
+```bash
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+The gate covers `apps/mobile/ios/App` with `Info.plist` excluded and links the
+app shell against `PersonalMythForgeMobileCore`. It caught and fixed:
+
+- iOS-only text input capitalization used directly in `CaptureFormView`.
+- macOS 14-only two-argument `onChange` overloads in `ForgeRootView`.
+- Swift 6 Sendable/MainActor issues in the forge flow callback path.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.13-ios-app-compile-gate.html
+docs/superpowers/verification/assets/p0.13-ios-app-compile-gate-390x844.png
+```
+
+Remaining gaps after P0.13 are full Xcode simulator/device deployment, live
+ARKit mesh capture, iOS 3D rendering, and real provider-key runs.

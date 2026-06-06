@@ -18,5 +18,11 @@ let package = Package(
             name: "PersonalMythForgeMobileProjectChecks",
             dependencies: []
         ),
+        .executableTarget(
+            name: "PersonalMythForgeMobileAppCompileCheck",
+            dependencies: ["PersonalMythForgeMobileCore"],
+            path: "App",
+            exclude: ["Info.plist"]
+        ),
     ]
 )

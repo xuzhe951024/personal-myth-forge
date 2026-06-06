@@ -1,6 +1,6 @@
 import Foundation
 
-public enum JSONValue: Codable, Equatable {
+public enum JSONValue: Codable, Equatable, Sendable {
     case string(String)
     case int(Int)
     case double(Double)
@@ -39,7 +39,7 @@ public enum JSONValue: Codable, Equatable {
     }
 }
 
-public struct ObjectObservation: Codable, Equatable {
+public struct ObjectObservation: Codable, Equatable, Sendable {
     public var label: String
     public var materials: [String]
     public var source: String
@@ -53,7 +53,7 @@ public struct ObjectObservation: Codable, Equatable {
     }
 }
 
-public struct ContextCapsule: Codable, Equatable {
+public struct ContextCapsule: Codable, Equatable, Sendable {
     public var currentTheme: String
     public var desiredTone: String
     public var recentMilestone: String?
@@ -65,7 +65,7 @@ public struct ContextCapsule: Codable, Equatable {
     }
 }
 
-public struct ObjectCaptureMetadata: Codable, Equatable {
+public struct ObjectCaptureMetadata: Codable, Equatable, Sendable {
     public var label: String
     public var materials: [String]
     public var source: String
@@ -87,7 +87,7 @@ public struct ObjectCaptureMetadata: Codable, Equatable {
     }
 }
 
-public struct CaptureMediaItem: Codable, Equatable {
+public struct CaptureMediaItem: Codable, Equatable, Sendable {
     public var mediaId: String
     public var role: String
     public var contentType: String
@@ -112,7 +112,7 @@ public struct CaptureMediaItem: Codable, Equatable {
     }
 }
 
-public struct ObjectCapture: Codable, Equatable {
+public struct ObjectCapture: Codable, Equatable, Sendable {
     public var captureId: String
     public var status: String
     public var source: String
@@ -140,7 +140,7 @@ public struct ObjectCapture: Codable, Equatable {
     }
 }
 
-public struct ObjectCard: Codable, Equatable {
+public struct ObjectCard: Codable, Equatable, Sendable {
     public var label: String
     public var materials: [String]
     public var source: String
@@ -162,7 +162,7 @@ public struct ObjectCard: Codable, Equatable {
     }
 }
 
-public struct MythSeed: Codable, Equatable {
+public struct MythSeed: Codable, Equatable, Sendable {
     public var title: String
     public var personalResonance: String
     public var generationPrompt: String
@@ -174,7 +174,7 @@ public struct MythSeed: Codable, Equatable {
     }
 }
 
-public struct GeneratedAsset: Codable, Equatable {
+public struct GeneratedAsset: Codable, Equatable, Sendable {
     public var kind: String
     public var provider: String
     public var format: String
@@ -199,7 +199,7 @@ public struct GeneratedAsset: Codable, Equatable {
     }
 }
 
-public struct NPCReaction: Codable, Equatable {
+public struct NPCReaction: Codable, Equatable, Sendable {
     public var npcId: String
     public var name: String
     public var emotion: String
@@ -224,7 +224,7 @@ public struct NPCReaction: Codable, Equatable {
     }
 }
 
-public struct ResolvedNPCAction: Codable, Equatable {
+public struct ResolvedNPCAction: Codable, Equatable, Sendable {
     public var npcId: String
     public var action: String
     public var status: String
@@ -238,7 +238,7 @@ public struct ResolvedNPCAction: Codable, Equatable {
     }
 }
 
-public struct WorldResolution: Codable, Equatable {
+public struct WorldResolution: Codable, Equatable, Sendable {
     public var arbitrator: String
     public var summary: String
     public var acceptedActions: [ResolvedNPCAction]
@@ -263,7 +263,7 @@ public struct WorldResolution: Codable, Equatable {
     }
 }
 
-public struct PrintCandidate: Codable, Equatable {
+public struct PrintCandidate: Codable, Equatable, Sendable {
     public var kind: String
     public var sourceAssetUri: String
     public var provider: String
@@ -294,7 +294,7 @@ public struct PrintCandidate: Codable, Equatable {
     }
 }
 
-public struct MythSession: Codable, Equatable {
+public struct MythSession: Codable, Equatable, Sendable {
     public var sessionId: String
     public var status: String
     public var objectCard: ObjectCard

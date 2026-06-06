@@ -1,4 +1,4 @@
-public struct ForgeFlowState: Equatable {
+public struct ForgeFlowState: Equatable, Sendable {
     public var phase: ForgeFlowPhase
     public var metadata: ObjectCaptureMetadata?
     public var context: ContextCapsule?
@@ -17,7 +17,7 @@ public struct ForgeFlowState: Equatable {
     }
 }
 
-public enum ForgeFlowPhase: Equatable {
+public enum ForgeFlowPhase: Equatable, Sendable {
     case idle
     case editingObject
     case uploadingCapture
@@ -26,7 +26,7 @@ public enum ForgeFlowPhase: Equatable {
     case failed(ForgeFlowError)
 }
 
-public enum ForgeFlowEvent: Equatable {
+public enum ForgeFlowEvent: Equatable, Sendable {
     case setObjectMetadata(ObjectCaptureMetadata)
     case setContextCapsule(ContextCapsule)
     case beginUpload

@@ -565,7 +565,7 @@ private func testForgeFlowServiceUploadsCaptureThenCreatesSession() async throws
     let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
     let api = FakeForgeFlowAPI(uploadResult: .success(capture), sessionResult: .success(session))
     let service = ForgeFlowService(api: api)
-    var snapshots: [ForgeFlowState] = []
+    let snapshots = SnapshotRecorder()
 
     let finalState = await service.forge(
         draft: sampleCaptureDraft(),
@@ -579,7 +579,7 @@ private func testForgeFlowServiceUploadsCaptureThenCreatesSession() async throws
     try expectEqual(api.uploadedMedia.map(\.contentType), ["image/jpeg"])
     try expectEqual(api.sessionCaptureIds, ["cap_ba02a3816bd145b4"])
     try expectEqual(api.sessionContexts, [sampleContext()])
-    try expectEqual(snapshots.map(\.phase), [
+    try expectEqual(snapshots.values.map(\.phase), [
         .editingObject,
         .editingObject,
         .uploadingCapture,
@@ -595,7 +595,7 @@ private func testForgeFlowServiceStopsBeforeSessionWhenUploadFails() async throw
         sessionResult: .success(session)
     )
     let service = ForgeFlowService(api: api)
-    var snapshots: [ForgeFlowState] = []
+    let snapshots = SnapshotRecorder()
 
     let finalState = await service.forge(
         draft: sampleCaptureDraft(),
@@ -607,7 +607,7 @@ private func testForgeFlowServiceStopsBeforeSessionWhenUploadFails() async throw
     try expectEqual(finalState.phase, .failed(.httpStatus(413, "too large")))
     try expectEqual(api.uploadedMedia.count, 1)
     try expectEqual(api.sessionCaptureIds, [])
-    try expectEqual(snapshots.map(\.phase), [
+    try expectEqual(snapshots.values.map(\.phase), [
         .editingObject,
         .editingObject,
         .uploadingCapture,
@@ -711,7 +711,7 @@ private enum FixtureLoader {
     }
 }
 
-private final class RecordingTransport: HTTPTransport {
+private final class RecordingTransport: HTTPTransport, @unchecked Sendable {
     private(set) var requests: [URLRequest] = []
     private var responses: [HTTPResponse]
 
@@ -728,7 +728,7 @@ private final class RecordingTransport: HTTPTransport {
     }
 }
 
-private final class FakeForgeFlowAPI: ForgeFlowAPI {
+private final class FakeForgeFlowAPI: ForgeFlowAPI, @unchecked Sendable {
     private let uploadResult: Result<ObjectCapture, Error>
     private let sessionResult: Result<MythSession, Error>
     private(set) var uploadedMetadata: ObjectCaptureMetadata?
@@ -751,6 +751,14 @@ private final class FakeForgeFlowAPI: ForgeFlowAPI {
         sessionCaptureIds.append(captureId)
         sessionContexts.append(context)
         return try sessionResult.get()
+    }
+}
+
+private final class SnapshotRecorder: @unchecked Sendable {
+    private(set) var values: [ForgeFlowState] = []
+
+    func append(_ state: ForgeFlowState) {
+        values.append(state)
     }
 }
 

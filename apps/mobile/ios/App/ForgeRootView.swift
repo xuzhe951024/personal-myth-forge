@@ -50,13 +50,13 @@ struct ForgeRootView: View {
                 .padding()
             }
             .navigationTitle("Personal Myth Forge")
-            .onChange(of: selectedCaptureMode) { _, mode in
+            .onChange(of: selectedCaptureMode) { mode in
                 mediaSelection = mediaSelection.changingMode(to: mode)
                 selectedSinglePhotoItem = nil
                 selectedPhotoItems = []
                 captureInputError = nil
             }
-            .onChange(of: selectedSinglePhotoItem?.itemIdentifier) { _, _ in
+            .onChange(of: selectedSinglePhotoItem?.itemIdentifier) { _ in
                 guard let selectedSinglePhotoItem else {
                     return
                 }
@@ -64,7 +64,7 @@ struct ForgeRootView: View {
                     await loadPhotoItems([selectedSinglePhotoItem], mode: .singlePhoto)
                 }
             }
-            .onChange(of: selectedPhotoItems.map(\.itemIdentifier)) { _, _ in
+            .onChange(of: selectedPhotoItems.map(\.itemIdentifier)) { _ in
                 let items = selectedPhotoItems
                 guard !items.isEmpty else {
                     return
@@ -106,7 +106,9 @@ struct ForgeRootView: View {
                 draft: draft,
                 context: context
             ) { nextState in
-                state = nextState
+                Task { @MainActor in
+                    state = nextState
+                }
             }
             state = finalState
         }
