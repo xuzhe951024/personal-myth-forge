@@ -39,6 +39,32 @@ public enum JSONValue: Codable, Equatable, Sendable {
     }
 }
 
+public enum FinalLaunchMode: String, Codable, CaseIterable, Identifiable, Sendable {
+    case local
+    case configured
+
+    public var id: String {
+        rawValue
+    }
+
+    public var displayLabel: String {
+        switch self {
+        case .local:
+            return "Local"
+        case .configured:
+            return "Configured"
+        }
+    }
+
+    public static func safe(rawValue: String?) -> FinalLaunchMode {
+        guard let rawValue else {
+            return .local
+        }
+        let normalized = rawValue.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return FinalLaunchMode(rawValue: normalized) ?? .local
+    }
+}
+
 public struct ObjectObservation: Codable, Equatable, Sendable {
     public var label: String
     public var materials: [String]

@@ -8,9 +8,10 @@ LOCAL_CONFIG="$CONFIG_DIR/Deployment.local.xcconfig"
 
 usage() {
   cat <<'EOF'
-Usage: write_deploy_local_config.sh [--team TEAM_ID] [--bundle-id BUNDLE_ID] [--backend-url URL]
+Usage: write_deploy_local_config.sh [--team TEAM_ID] [--bundle-id BUNDLE_ID] [--backend-url URL] [--final-launch-mode MODE]
 
-Values default to DEVELOPMENT_TEAM, PRODUCT_BUNDLE_IDENTIFIER, and PMF_BACKEND_BASE_URL.
+Values default to DEVELOPMENT_TEAM, PRODUCT_BUNDLE_IDENTIFIER, PMF_BACKEND_BASE_URL,
+and PMF_FINAL_LAUNCH_MODE.
 EOF
 }
 
@@ -26,6 +27,7 @@ has_line_break() {
 team="${DEVELOPMENT_TEAM:-}"
 bundle_id="${PRODUCT_BUNDLE_IDENTIFIER:-}"
 backend_url="${PMF_BACKEND_BASE_URL:-}"
+final_launch_mode="${PMF_FINAL_LAUNCH_MODE:-local}"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -53,6 +55,14 @@ while [ "$#" -gt 0 ]; do
       backend_url="$2"
       shift 2
       ;;
+    --final-launch-mode)
+      if [ "$#" -lt 2 ]; then
+        printf '%s\n' "Missing value for --final-launch-mode." >&2
+        exit 2
+      fi
+      final_launch_mode="$2"
+      shift 2
+      ;;
     --help)
       usage
       exit 0
@@ -78,7 +88,7 @@ if [ -z "$backend_url" ]; then
   missing=1
 fi
 
-for value in "$team" "$bundle_id" "$backend_url"; do
+for value in "$team" "$bundle_id" "$backend_url" "$final_launch_mode"; do
   if has_line_break "$value"; then
     printf '%s\n' "Deployment values must be single-line strings." >&2
     missing=1
@@ -88,6 +98,15 @@ done
 case "$backend_url" in
   http://127.0.0.1*|http://localhost*|https://127.0.0.1*|https://localhost*)
     printf '%s\n' "PMF_BACKEND_BASE_URL must be reachable from iPhone, not loopback." >&2
+    missing=1
+    ;;
+esac
+
+final_launch_mode=$(printf '%s' "$final_launch_mode" | tr '[:upper:]' '[:lower:]')
+case "$final_launch_mode" in
+  local|configured) ;;
+  *)
+    printf '%s\n' "PMF_FINAL_LAUNCH_MODE must be local or configured." >&2
     missing=1
     ;;
 esac
@@ -111,6 +130,7 @@ trap 'rm -f "$tmp_file"' EXIT HUP INT TERM
   printf '%s\n' "DEVELOPMENT_TEAM = $team"
   printf '%s\n' "PRODUCT_BUNDLE_IDENTIFIER = $bundle_id"
   printf '%s\n' "PMF_BACKEND_BASE_URL = $backend_url"
+  printf '%s\n' "PMF_FINAL_LAUNCH_MODE = $final_launch_mode"
 } >"$tmp_file"
 mv "$tmp_file" "$LOCAL_CONFIG"
 if command -v chmod >/dev/null 2>&1; then

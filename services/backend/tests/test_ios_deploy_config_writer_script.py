@@ -97,7 +97,24 @@ def test_writer_uses_environment_values(script_repo: Path) -> None:
         "DEVELOPMENT_TEAM = ABCDE12345\n"
         "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge\n"
         "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"
+        "PMF_FINAL_LAUNCH_MODE = local\n"
     )
+
+
+def test_writer_blocks_invalid_final_launch_mode(script_repo: Path) -> None:
+    result = run_writer(
+        script_repo,
+        env={
+            "DEVELOPMENT_TEAM": "ABCDE12345",
+            "PRODUCT_BUNDLE_IDENTIFIER": "com.example.personalmythforge",
+            "PMF_BACKEND_BASE_URL": "http://192.168.1.10:8080",
+            "PMF_FINAL_LAUNCH_MODE": "live",
+        },
+    )
+
+    assert result.returncode == 2
+    assert "PMF_FINAL_LAUNCH_MODE must be local or configured." in result.stderr
+    assert not local_config_path(script_repo).exists()
 
 
 def test_writer_flags_override_environment(script_repo: Path) -> None:
@@ -109,10 +126,13 @@ def test_writer_flags_override_environment(script_repo: Path) -> None:
         "com.example.flags",
         "--backend-url",
         "http://192.168.1.11:8080",
+        "--final-launch-mode",
+        "configured",
         env={
             "DEVELOPMENT_TEAM": "ABCDE12345",
             "PRODUCT_BUNDLE_IDENTIFIER": "com.example.env",
             "PMF_BACKEND_BASE_URL": "http://192.168.1.10:8080",
+            "PMF_FINAL_LAUNCH_MODE": "local",
         },
     )
 
@@ -123,6 +143,7 @@ def test_writer_flags_override_environment(script_repo: Path) -> None:
     assert "FGHIJ67890" in written
     assert "com.example.flags" in written
     assert "192.168.1.11" in written
+    assert "PMF_FINAL_LAUNCH_MODE = configured" in written
 
 
 def test_writer_output_passes_existing_deploy_preflight(script_repo: Path) -> None:

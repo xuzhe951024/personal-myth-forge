@@ -32,6 +32,15 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert result.report["endpoint"]["live_calls_by_default"] is False
     assert result.report["endpoint"]["invalid_mode_status_code"] == 422
     assert result.report["mobile_source"]["failed_requirements"] == []
+    requirement_ids = {
+        requirement["id"]
+        for requirement in result.report["mobile_source"]["requirements"]
+    }
+    assert "model_final_launch_mode" in requirement_ids
+    assert "app_configuration_final_launch_mode" in requirement_ids
+    assert "root_view_mode_picker" in requirement_ids
+    assert "root_view_configured_mode" in requirement_ids
+    assert "root_view_mode_reload" in requirement_ids
     assert result.report["safety"] == {
         "global_mutation": False,
         "live_provider_calls_by_default": False,
@@ -111,6 +120,14 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "FinalResourcesPreflightReport",
                 "FinalResourcesFileStatus",
                 "FinalResourcesPreflightSummary",
+                "FinalLaunchMode",
+                "displayLabel",
+            ]
+        ),
+        "apps/mobile/ios/App/AppConfiguration.swift": "\n".join(
+            [
+                "PMFFinalLaunchMode",
+                "FinalLaunchMode.safe",
             ]
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift": "\n".join(
@@ -124,8 +141,14 @@ def _write_minimal_mobile_source(root: Path) -> None:
         "apps/mobile/ios/App/ForgeRootView.swift": "\n".join(
             [
                 "finalDemoLaunch",
+                "finalLaunchMode",
                 "loadFinalDemoLaunch",
                 "getFinalDemoLaunch(mode: \"local\")",
+                "loadFinalDemoLaunch(mode: finalLaunchMode)",
+                "getFinalDemoLaunch(mode: mode.rawValue)",
+                "Picker(\"Final launch mode\"",
+                "FinalLaunchMode.allCases",
+                ".onChange(of: finalLaunchMode)",
                 "DevicePreflightSummaryBuilder.build",
                 "FinalLaunchStatusView(",
                 "FinalLaunchMobileSummaryBuilder.build",

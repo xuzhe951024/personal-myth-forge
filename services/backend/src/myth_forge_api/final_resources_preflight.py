@@ -17,6 +17,7 @@ ACCEPTED_KEYS = [
     "DEVELOPMENT_TEAM",
     "PRODUCT_BUNDLE_IDENTIFIER",
     "PMF_BACKEND_BASE_URL",
+    "PMF_FINAL_LAUNCH_MODE",
     "CAPTURE_STORAGE_DIR",
     "MYTH_SESSION_STORAGE_DIR",
 ]
@@ -37,6 +38,7 @@ SECRET_KEYS = {
 }
 
 SUPPORTED_PRINT_PROVIDERS = {"local", "treatstock"}
+SUPPORTED_FINAL_LAUNCH_MODES = {"local", "configured"}
 
 
 @dataclass(frozen=True)
@@ -87,8 +89,13 @@ def build_final_resources_preflight_report(
     unknown_keys = sorted(key for key in values if key not in ACCEPTED_KEYS)
     malformed_lines = parsed["malformed_lines"]
     print_provider = (values.get("PRINT_PROVIDER") or "local").strip().lower()
+    final_launch_mode = (values.get("PMF_FINAL_LAUNCH_MODE") or "local").strip().lower()
     treatstock_required = print_provider == "treatstock"
-    items = _items(values=values, print_provider=print_provider)
+    items = _items(
+        values=values,
+        print_provider=print_provider,
+        final_launch_mode=final_launch_mode,
+    )
     item_statuses = [item["status"] for item in items]
     blocked_count = item_statuses.count("blocked") + len(unknown_keys) + len(malformed_lines)
     missing_count = sum(
@@ -125,7 +132,12 @@ def build_final_resources_preflight_report(
     )
 
 
-def _items(*, values: dict[str, str], print_provider: str) -> list[dict[str, Any]]:
+def _items(
+    *,
+    values: dict[str, str],
+    print_provider: str,
+    final_launch_mode: str,
+) -> list[dict[str, Any]]:
     return [
         _key_item("MESHY_API_KEY", values, required=True),
         _key_item("OPENAI_API_KEY", values, required=True),
@@ -141,6 +153,7 @@ def _items(*, values: dict[str, str], print_provider: str) -> list[dict[str, Any
         _key_item("DEVELOPMENT_TEAM", values, required=True),
         _key_item("PRODUCT_BUNDLE_IDENTIFIER", values, required=True),
         _backend_url_item(values),
+        _final_launch_mode_item(values=values, normalized_value=final_launch_mode),
         _key_item("CAPTURE_STORAGE_DIR", values, required=False),
         _key_item("MYTH_SESSION_STORAGE_DIR", values, required=False),
     ]
@@ -178,6 +191,26 @@ def _print_provider_item(
     status = "ready" if normalized_value in SUPPORTED_PRINT_PROVIDERS else "blocked"
     item = {
         "id": "PRINT_PROVIDER",
+        "status": status,
+        "required": False,
+        "configured": configured,
+        "normalized_value": normalized_value,
+        "redacted": False,
+    }
+    if status == "blocked":
+        item["classification"] = "unsupported_value"
+    return item
+
+
+def _final_launch_mode_item(
+    *,
+    values: dict[str, str],
+    normalized_value: str,
+) -> dict[str, Any]:
+    configured = bool(values.get("PMF_FINAL_LAUNCH_MODE"))
+    status = "ready" if normalized_value in SUPPORTED_FINAL_LAUNCH_MODES else "blocked"
+    item = {
+        "id": "PMF_FINAL_LAUNCH_MODE",
         "status": status,
         "required": False,
         "configured": configured,
@@ -250,6 +283,8 @@ def _operator_actions(
             actions.append("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
         if item["status"] == "blocked" and item["id"] == "PRINT_PROVIDER":
             actions.append("set PRINT_PROVIDER to local or treatstock")
+        if item["status"] == "blocked" and item["id"] == "PMF_FINAL_LAUNCH_MODE":
+            actions.append("set PMF_FINAL_LAUNCH_MODE to local or configured")
     if treatstock_required:
         actions.append("provide TREATSTOCK_API_KEY or set PRINT_PROVIDER=local")
     return _dedupe(actions)

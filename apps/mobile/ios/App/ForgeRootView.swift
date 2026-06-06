@@ -14,6 +14,7 @@ struct ForgeRootView: View {
     @State private var providerReadinessError: String?
     @State private var finalDemoLaunch: FinalDemoLaunchReport?
     @State private var finalDemoLaunchError: String?
+    @State private var finalLaunchMode = AppConfiguration.finalLaunchMode
     @State private var backendHealthProbe: BackendHealthProbe?
     @State private var restoredSnapshot: DemoRunSnapshot?
     @State private var npcTickHistory: [NPCAgentTick] = []
@@ -73,6 +74,12 @@ struct ForgeRootView: View {
                         isCheckingBackend: isCheckingBackendHealth,
                         checkBackend: checkBackendHealth
                     )
+                    Picker("Final launch mode", selection: $finalLaunchMode) {
+                        ForEach(FinalLaunchMode.allCases) { mode in
+                            Text(mode.displayLabel).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                     FinalLaunchStatusView(summary: finalLaunchMobileSummary)
                     DemoScriptView(
                         script: demoScript,
@@ -135,7 +142,12 @@ struct ForgeRootView: View {
                     await syncBackendHistory(for: restoredSessionId)
                 }
                 await loadProviderReadiness()
-                await loadFinalDemoLaunch()
+                await loadFinalDemoLaunch(mode: finalLaunchMode)
+            }
+            .onChange(of: finalLaunchMode) { mode in
+                Task {
+                    await loadFinalDemoLaunch(mode: mode)
+                }
             }
             .onChange(of: selectedCaptureMode) { mode in
                 mediaSelection = mediaSelection.changingMode(to: mode)
@@ -220,9 +232,9 @@ struct ForgeRootView: View {
         }
     }
 
-    private func loadFinalDemoLaunch() async {
+    private func loadFinalDemoLaunch(mode: FinalLaunchMode) async {
         do {
-            let report = try await apiClient.getFinalDemoLaunch(mode: "local")
+            let report = try await apiClient.getFinalDemoLaunch(mode: mode.rawValue)
             await MainActor.run {
                 finalDemoLaunch = report
                 finalDemoLaunchError = nil

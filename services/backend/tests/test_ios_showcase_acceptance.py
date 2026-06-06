@@ -12,7 +12,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_showcase_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 21, "failed": 0}
+    assert result.report["summary"] == {"passed": 22, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "camera_capture",
         "guided_scan",
@@ -30,6 +30,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
         "final_showcase",
         "mobile_final_acceptance_readiness",
         "mobile_final_operator_handoff",
+        "mobile_final_launch_mode",
         "device_preflight",
         "backend_health_probe",
         "demo_script",
@@ -57,7 +58,7 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 20, "failed": 1}
+    assert result.report["summary"] == {"passed": 21, "failed": 1}
     assert features["camera_capture"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/CameraCaptureView.swift",
@@ -84,7 +85,7 @@ def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolu
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 20, "failed": 1}
+    assert result.report["summary"] == {"passed": 21, "failed": 1}
     assert features["arkit_scan_package"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
@@ -111,7 +112,7 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_readiness_with
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 20, "failed": 1}
+    assert result.report["summary"] == {"passed": 21, "failed": 1}
     assert features["capture_generation_readiness"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
@@ -128,7 +129,11 @@ def test_ios_showcase_acceptance_fails_missing_local_network_usage_without_absol
 ) -> None:
     write_complete_ios_showcase_fixture(tmp_path)
     plist_path = tmp_path / "apps/mobile/ios/App/Info.plist"
-    plist_path.write_text("NSCameraUsageDescription $(PMF_BACKEND_BASE_URL)", encoding="utf-8")
+    plist_path.write_text(
+        "NSCameraUsageDescription $(PMF_BACKEND_BASE_URL) "
+        "PMFFinalLaunchMode $(PMF_FINAL_LAUNCH_MODE)",
+        encoding="utf-8",
+    )
 
     result = run_ios_showcase_acceptance(repo_root=tmp_path)
     report_text = json.dumps(result.report)
@@ -136,7 +141,7 @@ def test_ios_showcase_acceptance_fails_missing_local_network_usage_without_absol
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 20, "failed": 1}
+    assert result.report["summary"] == {"passed": 21, "failed": 1}
     assert features["deploy_config"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/Info.plist",
@@ -165,6 +170,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "getBackendHealth() checkBackendHealth backendHealthProbe "
             "DemoScriptBuilder.build ArtifactSummaryView(session: readySession, latestTick: latestNPCTick) "
             "ShowcaseAutopilotPlanner.plan runShowcaseAutopilot "
+            "finalLaunchMode Picker(\"Final launch mode\" FinalLaunchMode.allCases "
+            "loadFinalDemoLaunch(mode: finalLaunchMode) getFinalDemoLaunch(mode: mode.rawValue) "
+            ".onChange(of: finalLaunchMode) "
             "arkitScanPackageSelection ARKitScanPackageBuilder.selection "
             "CaptureGenerationReadinessBuilder.build captureGenerationReadiness.route.displayLabel "
             "ContextCapsuleReviewBuilder.build guard isContextCapsuleApproved else "
@@ -202,10 +210,17 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/App/Info.plist": (
             "NSCameraUsageDescription NSLocalNetworkUsageDescription "
-            "$(PMF_BACKEND_BASE_URL)"
+            "$(PMF_BACKEND_BASE_URL) PMFFinalLaunchMode $(PMF_FINAL_LAUNCH_MODE)"
         ),
-        "apps/mobile/ios/Config/Deployment.xcconfig": "PMF_BACKEND_BASE_URL",
-        "apps/mobile/ios/Config/Deployment.local.xcconfig.example": "PMF_BACKEND_BASE_URL",
+        "apps/mobile/ios/Config/Deployment.xcconfig": (
+            "PMF_BACKEND_BASE_URL PMF_FINAL_LAUNCH_MODE"
+        ),
+        "apps/mobile/ios/Config/Deployment.local.xcconfig.example": (
+            "PMF_BACKEND_BASE_URL PMF_FINAL_LAUNCH_MODE"
+        ),
+        "apps/mobile/ios/App/AppConfiguration.swift": (
+            "PMFFinalLaunchMode FinalLaunchMode.safe"
+        ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CameraCaptureMediaBuilder.swift": (
             "camera-capture.jpg"
         ),
@@ -228,7 +243,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testArtifactHandoffActionsOpenAndShareSceneAsset "
             "testNPCAgentModeShowsOpenAIReadyRuntime "
             "testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance "
-            "testFinalLaunchMobileSummaryShowsHandoffNextActions"
+            "testFinalLaunchMobileSummaryShowsHandoffNextActions "
+            "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
+            "testGetConfiguredFinalDemoLaunchBuildsGETRequest"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeFlowService.swift": (
             "uploadObjectCapture createMythSessionFromCapture"
@@ -255,7 +272,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "DevicePreflightSummaryBuilder BackendHealthProbe"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift": (
-            "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff"
+            "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff "
+            "FinalLaunchMode displayLabel"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
             "acceptanceRows handoffRows"
@@ -270,7 +288,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final_acceptance_readiness final_operator_handoff"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift": (
-            "getBackendHealth"
+            "getBackendHealth getFinalDemoLaunch"
         ),
         "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj": (
             "CameraCaptureView.swift GuidedScanCaptureView.swift Artifact3DPreviewView.swift "

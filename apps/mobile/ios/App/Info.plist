@@ -35,6 +35,8 @@
 	</dict>
 	<key>PMFBackendBaseURL</key>
 	<string>$(PMF_BACKEND_BASE_URL)</string>
+	<key>PMFFinalLaunchMode</key>
+	<string>$(PMF_FINAL_LAUNCH_MODE)</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchScreen</key>

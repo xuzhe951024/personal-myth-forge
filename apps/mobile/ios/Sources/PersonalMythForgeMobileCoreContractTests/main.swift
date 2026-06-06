@@ -62,6 +62,7 @@ do {
     try testFinalLaunchMobileSummaryRedactsUnsafeReportText()
     try testFinalLaunchMobileSummaryRedactsUnsafeAcceptanceText()
     try testFinalLaunchMobileSummaryRedactsUnsafeHandoffText()
+    try testFinalLaunchModeDefaultsToLocalForUnsafeValues()
     try testDevicePreflightMarksLocalDemoReady()
     try testDevicePreflightMarksSavedNPCHistoryReady()
     try testDemoScriptStartsWithCapture()
@@ -93,6 +94,7 @@ do {
     try await testGetProviderReadinessSanitizesHTTPErrorBody()
     try testDecodesFinalDemoLaunchPayload()
     try await testGetFinalDemoLaunchBuildsGETRequest()
+    try await testGetConfiguredFinalDemoLaunchBuildsGETRequest()
     try await testGetFinalDemoLaunchRejectsInvalidModeBeforeNetwork()
     try await testCreatePrintQuoteBuildsJSONRequest()
     try await testCreatePrintQuoteSanitizesCheckoutHTTPErrorBody()
@@ -1912,6 +1914,24 @@ private func testGetFinalDemoLaunchBuildsGETRequest() async throws {
     try expectEqual(request.httpBody, nil)
 }
 
+private func testGetConfiguredFinalDemoLaunchBuildsGETRequest() async throws {
+    let transport = RecordingTransport(
+        responses: [HTTPResponse(statusCode: 200, data: finalDemoLaunchPayload(mode: "configured"))]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://192.168.1.10:8080")!,
+        transport: transport
+    )
+
+    let report = try await client.getFinalDemoLaunch(mode: FinalLaunchMode.configured.rawValue)
+
+    try expectEqual(report.mode, "configured")
+    let request = try require(transport.requests.first, "missing final launch request")
+    try expectEqual(request.httpMethod, "GET")
+    try expectEqual(request.url?.path, "/v1/final-demo-launch")
+    try expectEqual(request.url?.query, "mode=configured")
+}
+
 private func testGetFinalDemoLaunchRejectsInvalidModeBeforeNetwork() async throws {
     let transport = RecordingTransport(responses: [])
     let client = PersonalMythForgeAPIClient(
@@ -1926,6 +1946,14 @@ private func testGetFinalDemoLaunchRejectsInvalidModeBeforeNetwork() async throw
         try expectContains(message, "Unsupported final demo launch mode")
         try expectEqual(transport.requests.count, 0)
     }
+}
+
+private func testFinalLaunchModeDefaultsToLocalForUnsafeValues() throws {
+    try expectEqual(FinalLaunchMode.safe(rawValue: nil), .local)
+    try expectEqual(FinalLaunchMode.safe(rawValue: ""), .local)
+    try expectEqual(FinalLaunchMode.safe(rawValue: "live"), .local)
+    try expectEqual(FinalLaunchMode.safe(rawValue: "configured"), .configured)
+    try expectEqual(FinalLaunchMode.configured.displayLabel, "Configured")
 }
 
 private func testCreatePrintQuoteBuildsJSONRequest() async throws {
@@ -1976,6 +2004,7 @@ private func testCreatePrintQuoteBuildsJSONRequest() async throws {
 }
 
 private func finalDemoLaunchPayload(
+    mode: String = "local",
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     finalResourcesStatus: String = "missing",
@@ -1989,7 +2018,7 @@ private func finalDemoLaunchPayload(
         """
         {
           "kind": "final_demo_launch_report",
-          "mode": "local",
+          "mode": "\(mode)",
           "overall_status": "\(overallStatus)",
           "summary": {
             "ready": 4,
