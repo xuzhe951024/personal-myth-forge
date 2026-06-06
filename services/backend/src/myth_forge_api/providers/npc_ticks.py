@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+from pydantic import BaseModel, Field
 
 from myth_forge_api.domain.arbitration import LocalWorldArbitrator, WorldArbitrator
 from myth_forge_api.domain.models import (
@@ -10,6 +12,17 @@ from myth_forge_api.domain.models import (
     NPCAgentTrace,
     NPCReaction,
 )
+from myth_forge_api.providers.npc import (
+    EXPECTED_NPC_ID_LIST,
+    EXPECTED_NPC_IDS,
+    OpenAINPCConfigurationError,
+    OpenAINPCProviderError,
+    _sanitize_provider_error,
+    _validated_agent_traces,
+)
+
+if TYPE_CHECKING:
+    from myth_forge_api.config import Settings
 
 
 class NPCTickRuntime(Protocol):
@@ -46,6 +59,133 @@ class LocalNPCTickRuntime:
             npc_reactions=reactions,
             world_resolution=world_resolution,
         )
+
+
+class OpenAINPCTickOutput(BaseModel):
+    reactions: list[NPCReaction]
+    agent_traces: list[NPCAgentTrace] = Field(default_factory=list)
+
+
+class OpenAINPCTickRuntime:
+    runtime_name = "openai_tick_structured_runtime"
+
+    def __init__(
+        self,
+        api_key: str | None,
+        model: str,
+        api_base_url: str | None = None,
+        client: Any | None = None,
+        world_arbitrator: WorldArbitrator | None = None,
+    ) -> None:
+        self.api_key = api_key
+        self.model = model
+        self.api_base_url = api_base_url
+        self.client = client
+        self.world_arbitrator = world_arbitrator or LocalWorldArbitrator()
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> OpenAINPCTickRuntime:
+        return cls(
+            api_key=settings.openai_api_key,
+            model=settings.openai_npc_model,
+            api_base_url=settings.openai_api_base_url,
+        )
+
+    def validate_configuration(self) -> None:
+        if not self.api_key:
+            raise OpenAINPCConfigurationError("OPENAI_API_KEY is required for NPC tick generation.")
+
+    def generate_tick(self, request: NPCAgentTickRequest) -> NPCAgentTick:
+        self.validate_configuration()
+        client = self.client or self._build_client()
+        try:
+            response = client.responses.parse(
+                model=self.model,
+                input=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You advance three text-only NPC agents for Personal Myth Forge. "
+                            "Use only the approved myth session summary. Raw private data, "
+                            "messages, calendar text, provider keys, and media payloads are "
+                            "not available."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": _openai_tick_prompt(request),
+                    },
+                ],
+                text_format=OpenAINPCTickOutput,
+            )
+            output = OpenAINPCTickOutput.model_validate(response.output_parsed)
+        except OpenAINPCProviderError:
+            raise
+        except Exception as exc:
+            message = _sanitize_provider_error(exc, secret=self.api_key)
+            raise OpenAINPCProviderError(f"OpenAI NPC tick generation failed: {message}") from exc
+
+        npc_ids = {reaction.npc_id for reaction in output.reactions}
+        if len(output.reactions) != 3 or npc_ids != EXPECTED_NPC_IDS:
+            expected = ", ".join(EXPECTED_NPC_ID_LIST)
+            raise OpenAINPCProviderError(
+                f"OpenAI NPC tick response must include exactly: {expected}."
+            )
+
+        agent_traces = _validated_agent_traces(output.agent_traces, output.reactions)
+        trace_ids = {trace.npc_id for trace in agent_traces}
+        if len(agent_traces) != 3 or trace_ids != EXPECTED_NPC_IDS:
+            expected = ", ".join(EXPECTED_NPC_ID_LIST)
+            raise OpenAINPCProviderError(
+                f"OpenAI NPC tick traces must include exactly: {expected}."
+            )
+
+        session = request.session
+        world_resolution = self.world_arbitrator.resolve(
+            session_id=session.session_id,
+            object_card=session.object_card,
+            myth_seed=session.myth_seed,
+            context_capsule=_tick_context_capsule(request),
+            generated_asset=session.generated_asset,
+            npc_reactions=output.reactions,
+        )
+        return NPCAgentTick(
+            session_id=session.session_id,
+            tick_index=request.tick_index,
+            agent_runtime=self.runtime_name,
+            npc_agent_traces=agent_traces,
+            npc_reactions=output.reactions,
+            world_resolution=world_resolution,
+        )
+
+    def _build_client(self) -> Any:
+        from openai import OpenAI
+
+        kwargs: dict[str, str] = {"api_key": self.api_key or ""}
+        if self.api_base_url:
+            kwargs["base_url"] = self.api_base_url
+        return OpenAI(**kwargs)
+
+
+def _openai_tick_prompt(request: NPCAgentTickRequest) -> str:
+    session = request.session
+    return (
+        f"Session: {session.session_id}\n"
+        f"Tick index: {request.tick_index}\n"
+        f"Object label: {session.object_card.label}\n"
+        f"Materials: {', '.join(session.object_card.materials) or 'unknown'}\n"
+        f"Symbolic reading: {session.object_card.symbolic_reading}\n"
+        f"Myth title: {session.myth_seed.title}\n"
+        f"Personal resonance summary: {session.myth_seed.personal_resonance}\n"
+        f"Asset provider: {session.generated_asset.provider}\n"
+        f"Asset format: {session.generated_asset.format}\n"
+        f"Recent village event summary: {_recent_event_summary(request.recent_events)}\n"
+        "Return exactly three reactions for NPC ids mara, ior, and senn. "
+        "Also return one agent trace per NPC with belief, intention, proposed_action, "
+        "rationale, and confidence. Each proposed_action must also appear in that NPC's plan. "
+        "Each plan item must be a safe visible action, not a purchase, print order, "
+        "private-data request, media payload request, or destructive act."
+    )
 
 
 def _tick_traces(
