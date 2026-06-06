@@ -739,7 +739,18 @@ struct ForgeRootView: View {
         }
         if mode == .arkitScan {
             let scanAssets = mediaSelection.media.filter { $0.kind == .scanAsset }
-            mediaSelection = CaptureMediaSelection(mode: mode, media: scanAssets + media)
+            guard let scanAsset = scanAssets.first else {
+                mediaSelection = CaptureMediaSelection(mode: mode, media: media)
+                return
+            }
+            do {
+                mediaSelection = try arkitScanPackageSelection(
+                    scanExport: arkitScanExportFile(from: scanAsset),
+                    referenceImages: media.map(arkitScanReferenceImageFile)
+                )
+            } catch {
+                captureInputError = "Could not attach references to scan."
+            }
         } else {
             mediaSelection = CaptureMediaSelection(mode: mode, media: media)
         }
@@ -750,13 +761,48 @@ struct ForgeRootView: View {
         if selectedCaptureMode == .arkitScan {
             let referenceImages = mediaSelection.media.filter { $0.kind == .image }
             let scanAssets = media.filter { $0.kind == .scanAsset }
-            mediaSelection = CaptureMediaSelection(
-                mode: selectedCaptureMode,
-                media: scanAssets + referenceImages
-            )
+            guard let scanAsset = scanAssets.first else {
+                mediaSelection = CaptureMediaSelection(mode: selectedCaptureMode, media: referenceImages)
+                captureInputError = "Could not import scan asset."
+                return
+            }
+            do {
+                mediaSelection = try arkitScanPackageSelection(
+                    scanExport: arkitScanExportFile(from: scanAsset),
+                    referenceImages: referenceImages.map(arkitScanReferenceImageFile)
+                )
+            } catch {
+                captureInputError = "Could not import selected scan file."
+            }
         } else {
             mediaSelection = CaptureMediaSelection(mode: selectedCaptureMode, media: media)
         }
+    }
+
+    private func arkitScanPackageSelection(
+        scanExport: ARKitScanExportFile,
+        referenceImages: [ARKitScanReferenceImageFile]
+    ) throws -> CaptureMediaSelection {
+        try ARKitScanPackageBuilder.selection(
+            scanExport: scanExport,
+            referenceImages: referenceImages
+        )
+    }
+
+    private func arkitScanExportFile(from media: CaptureMediaDraft) -> ARKitScanExportFile {
+        ARKitScanExportFile(
+            filename: media.originalFilename,
+            contentType: media.contentType,
+            data: media.data
+        )
+    }
+
+    private func arkitScanReferenceImageFile(from media: CaptureMediaDraft) -> ARKitScanReferenceImageFile {
+        ARKitScanReferenceImageFile(
+            filename: media.originalFilename,
+            contentType: media.contentType,
+            data: media.data
+        )
     }
 
     private func imageContentType(for types: [UTType]) -> String {

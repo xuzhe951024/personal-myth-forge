@@ -1646,3 +1646,35 @@ are classified separately in final acceptance as
 
 The script stays project-local: no `sudo`, no `xcode-select`, no license
 mutation, no provider calls, and no simulator/device execution.
+
+## P0.57 ARKit Scan Package Bridge
+
+P0.57 adds a pure SwiftPM mobile-core bridge for the post-device-scan handoff.
+`ARKitScanPackageBuilder` packages one ARKit/Object Capture scan export with up
+to 11 reference images into a `CaptureMediaSelection(mode: .arkitScan)`.
+
+The builder validates:
+
+- scan assets: `model/gltf-binary`, `model/vnd.usdz+zip`,
+  `application/octet-stream`
+- reference images: `image/heic`, `image/heif`, `image/jpeg`, `image/png`
+- per-file size against `CaptureDraft.maxFileBytes`
+
+`ForgeRootView` uses the bridge when imported ARKit scan assets and selected
+reference photos are combined, while the UI and backend upload contract stay on
+the existing capture-to-myth path.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.57-arkit-scan-package.html
+docs/superpowers/verification/assets/p0.57-arkit-scan-package-390x844.png
+```

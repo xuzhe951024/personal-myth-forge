@@ -56,7 +56,11 @@ do {
     let showcaseAutopilot = try readText(coreRoot.appendingPathComponent("ShowcaseAutopilot.swift"))
     let devicePreflight = try readText(coreRoot.appendingPathComponent("DevicePreflight.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
+    let arkitScanPackageBuilder = try readText(coreRoot.appendingPathComponent("ARKitScanPackageBuilder.swift"))
     let apiClient = try readText(coreRoot.appendingPathComponent("PersonalMythForgeAPIClient.swift"))
+    let contractTests = try readText(
+        iosRoot.appendingPathComponent("Sources/PersonalMythForgeMobileCoreContractTests/main.swift")
+    )
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
     try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
@@ -458,6 +462,22 @@ do {
         "GuidedScanPhotoSetBuilder.mediaDrafts",
         "guided scan photo importer wiring"
     )
+    try requireContains(forgeRootView, "arkitScanPackageSelection", "ARKit scan package bridge helper")
+    try requireContains(
+        forgeRootView,
+        "ARKitScanPackageBuilder.selection",
+        "app source references ARKit scan package builder"
+    )
+    try requireContains(
+        forgeRootView,
+        "ARKitScanExportFile(",
+        "app source converts imported scan export"
+    )
+    try requireContains(
+        forgeRootView,
+        "ARKitScanReferenceImageFile(",
+        "app source converts ARKit reference images"
+    )
     try requireContains(forgeRootView, "loadTransferable(type: Data.self)", "photo data loading source")
     try requireContains(forgeRootView, "UTType", "file content type source")
     try requireContains(forgeRootView, "CaptureMediaSelection", "capture media selection source")
@@ -591,6 +611,23 @@ do {
         guidedScanPhotoSetBuilder,
         "maximumImportedImages = 12",
         "guided scan importer upload cap"
+    )
+    try requireContains(arkitScanPackageBuilder, "ARKitScanPackageBuilder", "ARKit scan package builder")
+    try requireContains(arkitScanPackageBuilder, "ARKitScanExportFile", "ARKit scan export file")
+    try requireContains(
+        arkitScanPackageBuilder,
+        "maximumReferenceImages = 11",
+        "ARKit scan reference cap"
+    )
+    try requireContains(
+        arkitScanPackageBuilder,
+        "CaptureMediaSelection(mode: .arkitScan",
+        "ARKit scan selection output"
+    )
+    try requireContains(
+        contractTests,
+        "testARKitScanPackageBuilderBuildsReadySelection",
+        "ARKit scan package contract test"
     )
     try requireContains(artifactAssetPreparation, "FileSystemArtifactAssetCache", "asset cache implementation")
     try requireContains(

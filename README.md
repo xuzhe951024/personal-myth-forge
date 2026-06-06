@@ -1557,3 +1557,26 @@ Static evidence lives at:
 docs/superpowers/verification/p0.54-deploy-health-preflight.html
 docs/superpowers/verification/assets/p0.54-deploy-health-preflight-390x844.png
 ```
+
+P0.57 adds an ARKit/Object Capture scan package bridge in the SwiftPM mobile
+core. `ARKitScanPackageBuilder` takes one exported scan model plus optional
+reference images, validates GLB/USDZ/binary and HEIC/HEIF/JPEG/PNG media,
+normalizes content types, caps references at 11, and returns a ready
+`CaptureMediaSelection(mode: .arkitScan)` for the existing upload and
+capture-to-3D path. `ForgeRootView` now uses that bridge when attaching ARKit
+scan imports and reference images.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.57-arkit-scan-package.html
+docs/superpowers/verification/assets/p0.57-arkit-scan-package-390x844.png
+```

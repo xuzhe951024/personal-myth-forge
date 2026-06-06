@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.57 ARKit Scan Package</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172033;
+        --muted: #5b6473;
+        --line: #d5dce6;
+        --paper: #f6f8fb;
+        --panel: #ffffff;
+        --blue: #1d4ed8;
+        --green: #047857;
+        --amber: #a15c07;
+        --rose: #be123c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        background: var(--paper);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(358px, calc(100vw - 32px));
+        margin: 0 0 0 16px;
+        padding: 14px 0 16px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 21px;
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 15px;
+        line-height: 1.18;
+        letter-spacing: 0;
+      }
+
+      h3 {
+        font-size: 13px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.26;
+        overflow-wrap: anywhere;
+      }
+
+      header {
+        display: grid;
+        gap: 5px;
+        margin-bottom: 8px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+
+      .tile,
+      .panel,
+      .asset {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .tile {
+        min-height: 74px;
+        padding: 9px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 6px;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .blue {
+        color: var(--blue);
+      }
+
+      .green {
+        color: var(--green);
+      }
+
+      .amber {
+        color: var(--amber);
+      }
+
+      .rose {
+        color: var(--rose);
+      }
+
+      .panel {
+        padding: 10px;
+        margin-top: 8px;
+      }
+
+      .assets {
+        display: grid;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .asset {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr);
+        gap: 8px;
+        align-items: center;
+        padding: 7px;
+      }
+
+      .icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .icon.scan {
+        background: var(--blue);
+      }
+
+      .icon.ref {
+        background: var(--green);
+      }
+
+      .icon.check {
+        background: var(--amber);
+      }
+
+      .code {
+        margin-top: 8px;
+        padding: 8px;
+        border-radius: 8px;
+        background: #111827;
+        color: #e5e7eb;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+
+      .flow {
+        display: grid;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 24px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+      }
+
+      .mark {
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        color: #ffffff;
+        background: var(--blue);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .mark.green {
+        background: var(--green);
+      }
+
+      .mark.amber {
+        background: var(--amber);
+      }
+
+      .mark.rose {
+        background: var(--rose);
+      }
+
+      .small {
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P0.57 ARKit Scan Package</h1>
+        <p>Post-device-scan bridge from Object Capture exports into `arkit_scan` upload state.</p>
+      </header>
+
+      <section class="grid" aria-label="ARKit scan package summary">
+        <div class="tile">
+          <div class="label">Input</div>
+          <div class="value blue">1 scan export</div>
+          <p class="small">GLB, USDZ, or binary.</p>
+        </div>
+        <div class="tile">
+          <div class="label">References</div>
+          <div class="value green">0-11 images</div>
+          <p class="small">HEIC, HEIF, JPEG, PNG.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Package Builder</h2>
+        <div class="assets">
+          <div class="asset">
+            <div class="icon scan">3D</div>
+            <div>
+              <h3>scan.usdz</h3>
+              <p>Validated as `model/vnd.usdz+zip`; placed first.</p>
+            </div>
+          </div>
+          <div class="asset">
+            <div class="icon ref">IMG</div>
+            <div>
+              <h3>reference_02.jpg, reference_10.heic</h3>
+              <p>Sorted, normalized, and capped at 11 images.</p>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+          ARKitScanPackageBuilder.selection<br />
+          -> CaptureMediaSelection(mode: .arkitScan)
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Flow</h2>
+        <div class="flow">
+          <div class="step">
+            <div class="mark">1</div>
+            <p>ARKit/Object Capture produces a scan export outside the SwiftPM core.</p>
+          </div>
+          <div class="step">
+            <div class="mark green">2</div>
+            <p>Mobile core validates type, size, sort order, and the 12-item cap.</p>
+          </div>
+          <div class="step">
+            <div class="mark green">3</div>
+            <p>`ForgeRootView` combines scan imports and reference photos through the bridge.</p>
+          </div>
+          <div class="step">
+            <div class="mark amber">4</div>
+            <p>The existing capture upload, myth session, Meshy route, and SceneKit handoff stay unchanged.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Acceptance</h2>
+        <div class="flow">
+          <div class="step">
+            <div class="mark green">OK</div>
+            <p>Contract tests cover package output, normalization, caps, types, and oversize files.</p>
+          </div>
+          <div class="step">
+            <div class="mark green">OK</div>
+            <p>Project checks read the builder, tests, and app bridge references.</p>
+          </div>
+          <div class="step">
+            <div class="mark rose">!</div>
+            <p>Live ARKit capture, device signing, and real provider-key runs remain final handoff work.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
