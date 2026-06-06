@@ -39,12 +39,14 @@ do {
     let demoSnapshotStatusView = try readText(appRoot.appendingPathComponent("DemoSnapshotStatusView.swift"))
     let printQuoteReviewView = try readText(appRoot.appendingPathComponent("PrintQuoteReviewView.swift"))
     let finalShowcaseSummaryView = try readText(appRoot.appendingPathComponent("FinalShowcaseSummaryView.swift"))
+    let demoScriptView = try readText(appRoot.appendingPathComponent("DemoScriptView.swift"))
     let cameraCaptureView = try readText(appRoot.appendingPathComponent("CameraCaptureView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
     let mythSessionID = try readText(coreRoot.appendingPathComponent("MythSessionID.swift"))
     let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
     let npcRitualScene = try readText(coreRoot.appendingPathComponent("NPCRitualScene.swift"))
+    let showcaseAutopilot = try readText(coreRoot.appendingPathComponent("ShowcaseAutopilot.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
     let apiClient = try readText(coreRoot.appendingPathComponent("PersonalMythForgeAPIClient.swift"))
 
@@ -321,6 +323,13 @@ do {
         "applyBackendHistory(run.history)",
         "autonomy run history application"
     )
+    try requireContains(forgeRootView, "ShowcaseAutopilotPlanner.plan", "showcase autopilot planner wiring")
+    try requireContains(forgeRootView, "runShowcaseAutopilot", "showcase autopilot root action")
+    try requireContains(
+        forgeRootView,
+        "switch showcaseAutopilotPlan.action",
+        "showcase autopilot action dispatch"
+    )
     try requireContains(
         forgeRootView,
         "MythSessionID.isValid(session.sessionId)",
@@ -542,6 +551,9 @@ do {
     try requireContains(npcTickView, "rejectedActions", "npc tick rejected actions")
     try requireContains(npcTickView, "visibleChanges", "npc tick visible changes")
     try requireNotContains(npcTickView, "sk-", "npc tick secret sample")
+    try requireContains(demoScriptView, "ShowcaseAutopilotPlan", "demo script autopilot input")
+    try requireContains(demoScriptView, "Button(action: runAutopilot)", "demo script autopilot button")
+    try requireContains(showcaseAutopilot, "ShowcaseAutopilotPlanner", "showcase autopilot core planner")
     try requireContains(demoSnapshotStatusView, "Restored Demo Run", "demo snapshot restored label")
     try requireContains(demoSnapshotStatusView, "Clear", "demo snapshot clear action")
     try requireContains(

@@ -1506,3 +1506,31 @@ swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppC
 `ios_showcase_acceptance` now checks `npc_ritual_scene` as the eleventh source
 feature. This is still the native iOS demo surface; richer Unity village
 rendering remains a later step.
+
+## P0.51 Showcase Autopilot
+
+P0.51 adds an operator-controlled autopilot button to the `Demo Script` panel.
+The new `ShowcaseAutopilotPlanner` lives in the Swift mobile core and chooses
+one next safe action from current typed app state:
+
+- run forge when capture media is ready and no session exists
+- run backend NPC autonomy for backend-owned myth sessions
+- advance one NPC tick for legacy/local sessions
+- request a print quote after three NPC ticks
+- wait, block, or mark the demo ready when no action should run
+
+The button is disabled while forge, autonomy, NPC advance, or quote loading is
+already in progress. It does not auto-run on launch and it does not call any
+new API path; `ForgeRootView` dispatches to the existing `forgeMyth`,
+`runAutonomy`, `advanceNPCTick`, and `requestPrintQuote` actions.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+`ios_showcase_acceptance` now checks `showcase_autopilot` as the twelfth source
+feature.

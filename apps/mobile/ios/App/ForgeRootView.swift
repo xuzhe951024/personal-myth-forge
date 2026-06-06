@@ -72,14 +72,9 @@ struct ForgeRootView: View {
                         )
                     )
                     DemoScriptView(
-                        script: DemoScriptBuilder.build(
-                            captureSelection: mediaSelection,
-                            session: readySession,
-                            npcTickHistoryCount: npcTickHistory.count,
-                            printQuote: printQuote,
-                            providerReadiness: providerReadiness,
-                            providerReadinessError: providerReadinessError
-                        )
+                        script: demoScript,
+                        autopilotPlan: showcaseAutopilotPlan,
+                        runAutopilot: runShowcaseAutopilot
                     )
                     ProviderReadinessView(readiness: providerReadiness, errorMessage: providerReadinessError)
                     CaptureFormView(
@@ -442,6 +437,21 @@ struct ForgeRootView: View {
         }
     }
 
+    private func runShowcaseAutopilot() {
+        switch showcaseAutopilotPlan.action {
+        case .forge:
+            forgeMyth()
+        case .runAutonomy:
+            runAutonomy()
+        case .advanceNPC:
+            advanceNPCTick()
+        case .requestQuote:
+            requestPrintQuote()
+        case .blocked, .waiting, .complete:
+            break
+        }
+    }
+
     private func clearPrintQuoteState() {
         printQuote = nil
         printQuoteError = nil
@@ -457,6 +467,32 @@ struct ForgeRootView: View {
 
     private var latestNPCTick: NPCAgentTick? {
         npcTickHistory.last
+    }
+
+    private var demoScript: DemoScript {
+        DemoScriptBuilder.build(
+            captureSelection: mediaSelection,
+            session: readySession,
+            npcTickHistoryCount: npcTickHistory.count,
+            printQuote: printQuote,
+            providerReadiness: providerReadiness,
+            providerReadinessError: providerReadinessError
+        )
+    }
+
+    private var showcaseAutopilotPlan: ShowcaseAutopilotPlan {
+        ShowcaseAutopilotPlanner.plan(
+            script: demoScript,
+            phase: state.phase,
+            session: readySession,
+            npcTickHistoryCount: npcTickHistory.count,
+            printQuote: printQuote,
+            providerReadiness: providerReadiness,
+            providerReadinessError: providerReadinessError,
+            isAdvancingNPCTick: isAdvancingNPCTick,
+            isRunningAutonomy: isRunningAutonomy,
+            isLoadingPrintQuote: isLoadingPrintQuote
+        )
     }
 
     private func syncBackendHistory(for sessionId: String) async {

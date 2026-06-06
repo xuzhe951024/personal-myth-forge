@@ -1393,3 +1393,39 @@ Static evidence lives at:
 docs/superpowers/verification/p0.50-npc-ritual-scene.html
 docs/superpowers/verification/assets/p0.50-npc-ritual-scene-390x844.png
 ```
+
+P0.51 adds a safe `Showcase Autopilot` control to the mobile `Demo Script`
+panel. The Swift core planner reads the current demo script, forge phase, ready
+session, NPC tick count, print quote, provider readiness, and loading flags,
+then selects exactly one next action:
+
+- forge the myth session
+- run backend NPC autonomy
+- advance one legacy NPC tick
+- request a print quote
+- wait, block, or mark the loop ready
+
+The button never auto-starts on app launch and does not create a background
+retry loop. It only dispatches one existing app action when tapped, keeping the
+final iPhone demo operator-controlled while reducing step-order risk.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py tests/test_final_acceptance.py -q
+```
+
+The source-only `ios_showcase_acceptance` gate now includes
+`showcase_autopilot` and reports `passed=12`, `failed=0` when the mobile
+showcase source is complete.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.51-showcase-autopilot.html
+docs/superpowers/verification/assets/p0.51-showcase-autopilot-390x844.png
+```

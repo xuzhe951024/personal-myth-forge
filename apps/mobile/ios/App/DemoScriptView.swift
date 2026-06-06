@@ -3,10 +3,12 @@ import SwiftUI
 
 struct DemoScriptView: View {
     let script: DemoScript
+    let autopilotPlan: ShowcaseAutopilotPlan
+    let runAutopilot: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Demo Script")
                         .font(.headline)
@@ -19,7 +21,19 @@ struct DemoScriptView: View {
                 Text(currentBadge)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.secondary)
+                Button(action: runAutopilot) {
+                    Text(autopilotPlan.buttonTitle)
+                        .lineLimit(1)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(!autopilotPlan.isExecutable)
             }
+
+            Text(autopilotPlan.detail)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(script.steps, id: \.id) { step in
