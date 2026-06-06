@@ -28,6 +28,10 @@ do {
     try testArtifactPreviewStateMarksLocalUSDZAsSceneLoadable()
     try testArtifactPreviewStateHandlesMissingURI()
     try testArtifactPreviewStateHandlesMissingFormat()
+    try await testArtifactAssetPreparerUsesLocalSceneURL()
+    try await testArtifactAssetPreparerDownloadsRemoteUSDZForSceneKit()
+    try await testArtifactAssetPreparerCachesRemoteGLBButRequiresConversion()
+    try await testArtifactAssetPreparerRejectsInvalidRemoteURI()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
     try await testForgeFlowServiceUploadsCaptureThenCreatesSession()
     try await testForgeFlowServiceStopsBeforeSessionWhenUploadFails()
@@ -711,6 +715,71 @@ private func testArtifactPreviewStateHandlesMissingFormat() throws {
     try expectContains(state.statusDetail, "format")
 }
 
+private func testArtifactAssetPreparerUsesLocalSceneURL() async throws {
+    let downloader = RecordingArtifactAssetDownloader()
+    let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
+    let session = mythSession(
+        asset: generatedAsset(format: "usdz", uri: "file:///tmp/relic.usdz")
+    )
+    let prepared = await ArtifactAssetPreparer(downloader: downloader, cache: cache)
+        .prepare(session: session)
+
+    try expectEqual(prepared.status, .localSceneReady)
+    try expectEqual(prepared.sceneURL, URL(string: "file:///tmp/relic.usdz"))
+    try expectEqual(prepared.cachedURL, URL(string: "file:///tmp/relic.usdz"))
+    try expectEqual(await downloader.requestedURLs(), [])
+    try expectEqual(await cache.storedFilenames(), [])
+}
+
+private func testArtifactAssetPreparerDownloadsRemoteUSDZForSceneKit() async throws {
+    let downloader = RecordingArtifactAssetDownloader(data: Data("usdz-bytes".utf8))
+    let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
+    let session = mythSession(
+        asset: generatedAsset(format: "usdz", uri: "https://cdn.example.com/relic.usdz")
+    )
+    let prepared = await ArtifactAssetPreparer(downloader: downloader, cache: cache)
+        .prepare(session: session)
+
+    try expectEqual(prepared.status, .cachedSceneReady)
+    try expectEqual(prepared.cachedURL, URL(fileURLWithPath: "/tmp/pmf-assets/myth_test-meshy.usdz"))
+    try expectEqual(prepared.sceneURL, prepared.cachedURL)
+    try expectEqual(await downloader.requestedURLs(), [URL(string: "https://cdn.example.com/relic.usdz")!])
+    try expectEqual(await cache.storedFilenames(), ["myth_test-meshy.usdz"])
+    try expectEqual(await cache.storedData(), [Data("usdz-bytes".utf8)])
+}
+
+private func testArtifactAssetPreparerCachesRemoteGLBButRequiresConversion() async throws {
+    let downloader = RecordingArtifactAssetDownloader(data: Data("glb-bytes".utf8))
+    let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
+    let session = mythSession(
+        asset: generatedAsset(format: "glb", uri: "https://cdn.example.com/relic.glb")
+    )
+    let prepared = await ArtifactAssetPreparer(downloader: downloader, cache: cache)
+        .prepare(session: session)
+
+    try expectEqual(prepared.status, .cachedRequiresConversion)
+    try expectEqual(prepared.cachedURL, URL(fileURLWithPath: "/tmp/pmf-assets/myth_test-meshy.glb"))
+    try expectEqual(prepared.sceneURL, nil)
+    try expectContains(prepared.statusDetail, "conversion")
+    try expectEqual(await cache.storedFilenames(), ["myth_test-meshy.glb"])
+}
+
+private func testArtifactAssetPreparerRejectsInvalidRemoteURI() async throws {
+    let downloader = RecordingArtifactAssetDownloader()
+    let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
+    let session = mythSession(
+        asset: generatedAsset(format: "usdz", uri: "not-a-remote-uri")
+    )
+    let prepared = await ArtifactAssetPreparer(downloader: downloader, cache: cache)
+        .prepare(session: session)
+
+    try expectEqual(prepared.status, .unsupportedURI)
+    try expectEqual(prepared.cachedURL, nil)
+    try expectEqual(prepared.sceneURL, nil)
+    try expectEqual(await downloader.requestedURLs(), [])
+    try expectEqual(await cache.storedFilenames(), [])
+}
+
 private func sampleCaptureDraft() -> CaptureDraft {
     CaptureDraft(
         label: "old brass key",
@@ -858,6 +927,48 @@ private final class FakeForgeFlowAPI: ForgeFlowAPI, @unchecked Sendable {
         sessionCaptureIds.append(captureId)
         sessionContexts.append(context)
         return try sessionResult.get()
+    }
+}
+
+private actor RecordingArtifactAssetDownloader: ArtifactAssetDownloader {
+    private let data: Data
+    private var urls: [URL] = []
+
+    init(data: Data = Data("asset-bytes".utf8)) {
+        self.data = data
+    }
+
+    func download(from url: URL) async throws -> Data {
+        urls.append(url)
+        return data
+    }
+
+    func requestedURLs() -> [URL] {
+        urls
+    }
+}
+
+private actor RecordingArtifactAssetCache: ArtifactAssetCache {
+    private let rootURL: URL
+    private var filenames: [String] = []
+    private var dataValues: [Data] = []
+
+    init(rootURL: URL) {
+        self.rootURL = rootURL
+    }
+
+    func store(data: Data, filename: String) async throws -> URL {
+        filenames.append(filename)
+        dataValues.append(data)
+        return rootURL.appendingPathComponent(filename)
+    }
+
+    func storedFilenames() -> [String] {
+        filenames
+    }
+
+    func storedData() -> [Data] {
+        dataValues
     }
 }
 
