@@ -11,6 +11,9 @@ struct ForgeRootView: View {
     @State private var state = ForgeFlowState()
     @State private var providerReadiness: ProviderReadinessResponse?
     @State private var providerReadinessError: String?
+    @State private var latestNPCTick: NPCAgentTick?
+    @State private var npcTickError: String?
+    @State private var isAdvancingNPCTick = false
     @State private var objectLabel = "old brass key"
     @State private var materials = "metal, brass"
     @State private var visualNotes = "worn teeth, circular bow, warm reflections"
@@ -59,6 +62,13 @@ struct ForgeRootView: View {
                     ArtifactSummaryView(session: readySession)
                     WorldResolutionView(session: readySession)
                     NPCReactionsView(session: readySession)
+                    NPCTickView(
+                        session: readySession,
+                        tick: latestNPCTick,
+                        isLoading: isAdvancingNPCTick,
+                        errorMessage: npcTickError,
+                        advanceVillage: advanceNPCTick
+                    )
                 }
                 .padding()
             }
@@ -139,6 +149,8 @@ struct ForgeRootView: View {
     }
 
     private func forgeMyth() {
+        latestNPCTick = nil
+        npcTickError = nil
         let draft = mediaSelection.captureDraft(
             label: objectLabel,
             materialsText: materials,
@@ -160,6 +172,37 @@ struct ForgeRootView: View {
                 }
             }
             state = finalState
+        }
+    }
+
+    private func advanceNPCTick() {
+        guard let session = readySession else {
+            return
+        }
+        isAdvancingNPCTick = true
+        npcTickError = nil
+        let nextTickIndex = (latestNPCTick?.tickIndex ?? 0) + 1
+        let recentEvents = latestNPCTick?.worldResolution.visibleChanges
+            ?? session.worldResolution.visibleChanges
+
+        Task {
+            do {
+                let tick = try await apiClient.createNPCAgentTick(
+                    session: session,
+                    tickIndex: nextTickIndex,
+                    recentEvents: recentEvents
+                )
+                await MainActor.run {
+                    latestNPCTick = tick
+                    isAdvancingNPCTick = false
+                    npcTickError = nil
+                }
+            } catch {
+                await MainActor.run {
+                    isAdvancingNPCTick = false
+                    npcTickError = "NPC tick is not reachable yet."
+                }
+            }
         }
     }
 
