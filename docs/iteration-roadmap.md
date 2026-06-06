@@ -43,6 +43,7 @@ Bridge deliverable:
 - P0.25 project-local iOS deploy config and preflight for Team ID, bundle id, and device backend URL
 - P0.26 local mobile demo snapshot for restored myth sessions and NPC tick history
 - P0.27 backend local session history with session/tick JSON recovery and mobile GET contract
+- P0.28 mobile backend history sync that refreshes restored demo runs from backend history
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
