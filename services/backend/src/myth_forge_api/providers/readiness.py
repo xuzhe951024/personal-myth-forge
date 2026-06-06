@@ -77,7 +77,11 @@ def _npc_readiness(settings: Settings) -> ProviderReadinessItem:
             status="local_stub",
             is_demo_ready=True,
             is_real_provider_ready=False,
-            capabilities=["deterministic_agent_traces", "world_arbitration_handoff"],
+            capabilities=[
+                "deterministic_agent_traces",
+                "deterministic_agent_ticks",
+                "world_arbitration_handoff",
+            ],
             notes=[
                 "Local NPC runtime is deterministic and demo-ready.",
                 "Select NPC_PROVIDER=openai and provide an OpenAI key for AI-driven NPC traces.",
@@ -91,8 +95,15 @@ def _npc_readiness(settings: Settings) -> ProviderReadinessItem:
                 status="ready",
                 is_demo_ready=True,
                 is_real_provider_ready=True,
-                capabilities=["structured_agent_traces", "npc_reactions", "world_handoff"],
-                notes=["OpenAI NPC provider is configured for AI-driven NPC traces."],
+                capabilities=[
+                    "structured_agent_traces",
+                    "structured_agent_ticks",
+                    "npc_reactions",
+                    "world_handoff",
+                ],
+                notes=[
+                    "OpenAI NPC provider is configured for AI-driven NPC traces and stateless ticks."
+                ],
             )
         return ProviderReadinessItem(
             kind="npc",
@@ -101,8 +112,13 @@ def _npc_readiness(settings: Settings) -> ProviderReadinessItem:
             is_demo_ready=False,
             is_real_provider_ready=False,
             missing_env=["OPENAI_API_KEY"],
-            capabilities=["structured_agent_traces", "npc_reactions", "world_handoff"],
-            notes=["OPENAI_API_KEY is required when NPC_PROVIDER=openai."],
+            capabilities=[
+                "structured_agent_traces",
+                "structured_agent_ticks",
+                "npc_reactions",
+                "world_handoff",
+            ],
+            notes=["OPENAI_API_KEY is required when NPC_PROVIDER=openai for traces and ticks."],
         )
     return ProviderReadinessItem(
         kind="npc",
