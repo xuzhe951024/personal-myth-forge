@@ -82,6 +82,26 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="npc_ritual_scene",
+        label="NPC ritual scene",
+        requirements=(
+            SourceRequirement("apps/mobile/ios/App/Artifact3DPreviewView.swift", "NPCRitualSceneBuilder.build"),
+            SourceRequirement("apps/mobile/ios/App/Artifact3DPreviewView.swift", "addNPCRitualOverlay"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ArtifactSummaryView.swift",
+                "Artifact3DPreviewView(session: session, latestTick: latestTick)",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "ArtifactSummaryView(session: readySession, latestTick: latestNPCTick)",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCRitualScene.swift",
+                "NPCRitualSceneBuilder",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="npc_agent",
         label="NPC agent",
         requirements=(

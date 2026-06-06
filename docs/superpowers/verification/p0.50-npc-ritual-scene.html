@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.50 NPC Ritual Scene</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1f2937;
+        --muted: #667085;
+        --line: #d0d5dd;
+        --paper: #f8fafc;
+        --panel: #ffffff;
+        --scene: #101820;
+        --teal: #0f766e;
+        --gold: #b7791f;
+        --blue: #2563eb;
+        --green: #15803d;
+        --red: #b42318;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        background: var(--paper);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: calc(100vw - 28px);
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 22px 0 32px;
+      }
+
+      header {
+        display: grid;
+        gap: 7px;
+        margin-bottom: 14px;
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        font-size: 23px;
+        line-height: 1.15;
+      }
+
+      h2 {
+        font-size: 16px;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.42;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .tile,
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .tile {
+        min-height: 84px;
+        padding: 12px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 9px;
+        font-size: 23px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .ok {
+        color: var(--green);
+      }
+
+      .blocked {
+        color: var(--red);
+      }
+
+      .panel {
+        padding: 14px;
+        margin-top: 12px;
+      }
+
+      .scene {
+        position: relative;
+        height: 300px;
+        margin-top: 12px;
+        overflow: hidden;
+        border-radius: 8px;
+        background:
+          linear-gradient(180deg, #17212b 0%, var(--scene) 56%, #0d1117 100%);
+        border: 1px solid #253241;
+      }
+
+      .floor {
+        position: absolute;
+        left: 8%;
+        right: 8%;
+        bottom: 40px;
+        height: 94px;
+        border: 1px solid #344256;
+        border-radius: 50%;
+        background: rgba(148, 163, 184, 0.12);
+        transform: perspective(420px) rotateX(62deg);
+      }
+
+      .pedestal {
+        position: absolute;
+        left: 50%;
+        bottom: 92px;
+        width: 132px;
+        height: 28px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        transform: translateX(-50%);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+      }
+
+      .relic {
+        position: absolute;
+        left: 50%;
+        bottom: 124px;
+        width: 96px;
+        height: 72px;
+        border: 12px solid #12b3a8;
+        border-radius: 50%;
+        transform: translateX(-50%) rotate(-17deg);
+        box-shadow:
+          0 0 0 3px rgba(18, 179, 168, 0.16),
+          0 0 26px rgba(18, 179, 168, 0.38);
+      }
+
+      .actor {
+        position: absolute;
+        width: 44px;
+        min-height: 70px;
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+
+      .actor::before {
+        content: "";
+        display: block;
+        width: 20px;
+        height: var(--height);
+        margin: 0 auto 6px;
+        border-radius: 11px 11px 5px 5px;
+        background: var(--color);
+        box-shadow: 0 0 18px var(--glow);
+      }
+
+      .actor::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: 18px;
+        width: 42px;
+        height: 16px;
+        border: 3px solid var(--color);
+        border-radius: 50%;
+        opacity: 0.58;
+        transform: translateX(-50%) rotateX(62deg);
+      }
+
+      .actor span {
+        display: inline-block;
+        max-width: 58px;
+        color: #e5e7eb;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.1;
+        text-shadow: 0 1px 2px #000;
+      }
+
+      .mara {
+        --color: var(--gold);
+        --glow: rgba(183, 121, 31, 0.55);
+        --height: 48px;
+        left: 27%;
+        top: 63%;
+      }
+
+      .ior {
+        --color: var(--blue);
+        --glow: rgba(37, 99, 235, 0.5);
+        --height: 40px;
+        left: 70%;
+        top: 63%;
+      }
+
+      .senn {
+        --color: var(--green);
+        --glow: rgba(21, 128, 61, 0.5);
+        --height: 32px;
+        left: 50%;
+        top: 34%;
+      }
+
+      .legend {
+        display: grid;
+        gap: 7px;
+        margin-top: 12px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 76px 1fr;
+        gap: 10px;
+        align-items: baseline;
+        padding-top: 8px;
+        border-top: 1px solid #eaecf0;
+      }
+
+      .row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .copy {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      @media (max-width: 760px) {
+        main {
+          width: calc(100vw - 24px);
+          padding-top: 20px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .scene {
+          height: 252px;
+        }
+
+        .row {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P0.50 NPC Ritual Scene</h1>
+        <p>SceneKit now shows NPC action around the artifact.</p>
+      </header>
+
+      <section class="grid" aria-label="Acceptance summary">
+        <div class="tile">
+          <div class="label">iOS Source Gate</div>
+          <div class="value ok">11 / 11</div>
+          <p>Ritual scene is checked in.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Final Acceptance</div>
+          <div class="value blocked">9 pass, 2 blocked</div>
+          <p>Only local iOS blockers remain.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Artifact Scene</h2>
+        <p>Tick stance; session fills gaps.</p>
+        <div class="scene" aria-label="Artifact with three NPC ritual actors">
+          <div class="floor"></div>
+          <div class="actor senn"><span>Senn watching</span></div>
+          <div class="pedestal"></div>
+          <div class="relic"></div>
+          <div class="actor mara"><span>Mara acting</span></div>
+          <div class="actor ior"><span>Ior debating</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Source Gates</h2>
+        <div class="legend" aria-label="Source checks">
+          <div class="row">
+            <div class="label">Core</div>
+            <div class="copy">NPCRitualSceneBuilder builds three sanitized actors.</div>
+          </div>
+          <div class="row">
+            <div class="label">SceneKit</div>
+            <div class="copy">addNPCRitualOverlay adds marker and ring nodes.</div>
+          </div>
+          <div class="row">
+            <div class="label">Wiring</div>
+            <div class="copy">latestNPCTick reaches the artifact preview.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

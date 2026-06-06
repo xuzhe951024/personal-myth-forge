@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ArtifactSummaryView: View {
     let session: MythSession?
+    let latestTick: NPCAgentTick?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -16,7 +17,7 @@ struct ArtifactSummaryView: View {
                 Text(session.mythSeed.personalResonance)
             }
 
-            Artifact3DPreviewView(session: session)
+            Artifact3DPreviewView(session: session, latestTick: latestTick)
 
             if let generationProvenance = session?.generatedAsset.generationProvenance {
                 ProvenanceSummaryView(provenance: generationProvenance)

@@ -101,7 +101,7 @@ struct ForgeRootView: View {
                         startGuidedScan: startGuidedScan,
                         forgeMyth: forgeMyth
                     )
-                    ArtifactSummaryView(session: readySession)
+                    ArtifactSummaryView(session: readySession, latestTick: latestNPCTick)
                     WorldResolutionView(session: readySession)
                     NPCReactionsView(session: readySession)
                     NPCTickView(

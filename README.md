@@ -1362,3 +1362,34 @@ Static evidence lives at:
 docs/superpowers/verification/p0.49-mobile-demo-script.html
 docs/superpowers/verification/assets/p0.49-mobile-demo-script-390x844.png
 ```
+
+P0.50 upgrades the iOS 3D artifact preview into a small NPC ritual scene. The
+Swift core now builds a deterministic `NPCRitualScene` from the myth session and
+the latest NPC agent tick. The SceneKit preview overlays three NPC markers
+around the artifact with stable positions and stance colors for acting,
+debating, and watching.
+
+The latest tick wins when available, but sparse tick data is backfilled from the
+session so the final iPhone demo keeps three visible NPCs around the relic. This
+is still the native SwiftUI/SceneKit showcase layer, not Unity.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py tests/test_final_acceptance.py -q
+```
+
+The source-only `ios_showcase_acceptance` gate now includes
+`npc_ritual_scene` and reports `passed=11`, `failed=0` when the mobile showcase
+source is complete.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.50-npc-ritual-scene.html
+docs/superpowers/verification/assets/p0.50-npc-ritual-scene-390x844.png
+```

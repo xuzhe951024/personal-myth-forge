@@ -10,6 +10,10 @@ do {
     try testDecodesNPCAgentTickPayload()
     try testDecodesMythSessionHistoryPayload()
     try testDecodesNPCAutonomyRunPayload()
+    try testNPCRitualSceneBuildsThreeActorsFromSession()
+    try testNPCRitualSceneUsesLatestTickActions()
+    try testNPCRitualSceneBackfillsSparseLatestTick()
+    try testNPCRitualSceneRedactsUnsafeText()
     try testDemoRunSnapshotKeepsMatchingTicksSortedAndBounded()
     try testDemoRunSnapshotEncodesSnakeCaseJSONWithoutRawMediaOrSecrets()
     try testDemoRunSnapshotFileStoreSavesLoadsOverwritesAndClears()
@@ -301,6 +305,74 @@ private func testDecodesNPCAutonomyRunPayload() throws {
     try expectContains(body, #""requested_steps":"#)
     try expectContains(body, #""completed_tick_index":"#)
     try expectEqual(decoded, run)
+}
+
+private func testNPCRitualSceneBuildsThreeActorsFromSession() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+
+    let scene = NPCRitualSceneBuilder.build(session: session, latestTick: nil)
+
+    try expectEqual(scene.title, session.mythSeed.title)
+    try expectEqual(scene.runtime, session.npcAgentRuntime)
+    try expectEqual(scene.actors.count, 3)
+    try expectEqual(scene.actors.map(\.npcId), ["npc_archivist", "npc_smith", "npc_child"])
+    try expectEqual(scene.actors[0].positionX, -1.1)
+    try expectEqual(scene.actors[0].positionZ, 0.7)
+    try expectEqual(scene.actors[1].positionX, 1.1)
+    try expectEqual(scene.actors[2].positionZ, -1.05)
+    try expectEqual(scene.actors[0].stance, .acting)
+    try expectEqual(scene.actors[1].stance, .debating)
+    try expectContains(scene.actors[0].action, "catalog")
+    try expectEqual(scene.visibleChanges, session.worldResolution.visibleChanges)
+}
+
+private func testNPCRitualSceneUsesLatestTickActions() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let tick = ritualTick(sessionId: session.sessionId, tickIndex: 2)
+
+    let scene = NPCRitualSceneBuilder.build(session: session, latestTick: tick)
+
+    try expectEqual(scene.runtime, "local_tick_runtime")
+    try expectEqual(scene.visibleChanges, tick.worldResolution.visibleChanges)
+    try expectEqual(scene.actors.map(\.npcId), ["mara", "ior", "senn"])
+    try expectEqual(scene.actors[0].stance, .acting)
+    try expectEqual(scene.actors[1].stance, .debating)
+    try expectEqual(scene.actors[2].stance, .watching)
+    try expectContains(scene.actors[0].action, "invite neighbors")
+    try expectContains(scene.actors[1].action, "argue about")
+}
+
+private func testNPCRitualSceneBackfillsSparseLatestTick() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let tick = npcTick(sessionId: session.sessionId, tickIndex: 4)
+
+    let scene = NPCRitualSceneBuilder.build(session: session, latestTick: tick)
+
+    try expectEqual(scene.actors.count, 3)
+    try expectEqual(scene.actors.map(\.npcId), ["mara", "npc_archivist", "npc_smith"])
+    try expectEqual(scene.actors[0].stance, .acting)
+    try expectContains(scene.actors[0].action, "move closer")
+    try expectContains(scene.actors[1].action, "catalog")
+}
+
+private func testNPCRitualSceneRedactsUnsafeText() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let tick = ritualTick(
+        sessionId: session.sessionId,
+        tickIndex: 3,
+        unsafeSuffix: " sk-test /Users/zhexu/private file:///tmp/private local-capture://cap/media checkout_url"
+    )
+
+    let scene = NPCRitualSceneBuilder.build(session: session, latestTick: tick)
+    let data = try PMFJSON.encoder.encode(scene)
+    let text = try require(String(data: data, encoding: .utf8), "expected encoded ritual scene text")
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
 }
 
 private func testDemoRunSnapshotKeepsMatchingTicksSortedAndBounded() throws {
@@ -2240,6 +2312,95 @@ private func npcTick(sessionId: String, tickIndex: Int) -> NPCAgentTick {
             rejectedActions: [],
             worldStateDelta: ["tick_index": .int(tickIndex)],
             visibleChanges: ["Mara marks restored tick \(tickIndex)."]
+        )
+    )
+}
+
+private func ritualTick(
+    sessionId: String,
+    tickIndex: Int,
+    unsafeSuffix: String = ""
+) -> NPCAgentTick {
+    NPCAgentTick(
+        sessionId: sessionId,
+        tickIndex: tickIndex,
+        agentRuntime: "local_tick_runtime",
+        npcAgentTraces: [
+            NPCAgentTrace(
+                npcId: "mara",
+                name: "Mara",
+                belief: "The relic is becoming public\(unsafeSuffix)",
+                intention: "invite neighbors",
+                proposedAction: "invite neighbors to witness\(unsafeSuffix)",
+                rationale: "A public relic needs witnesses.",
+                confidence: 0.82
+            ),
+            NPCAgentTrace(
+                npcId: "ior",
+                name: "Ior",
+                belief: "The relic needs doubt.",
+                intention: "slow the ritual",
+                proposedAction: "argue about the relic",
+                rationale: "A useful village needs friction.",
+                confidence: 0.72
+            ),
+            NPCAgentTrace(
+                npcId: "senn",
+                name: "Senn",
+                belief: "The relic can be named later.",
+                intention: "watch the others",
+                proposedAction: "watch the ritual",
+                rationale: "Observation can become play.",
+                confidence: 0.66
+            ),
+        ],
+        npcReactions: [
+            NPCReaction(
+                npcId: "mara",
+                name: "Mara",
+                emotion: "awe",
+                interpretation: "The relic asks to be witnessed.",
+                plan: ["invite neighbors to witness\(unsafeSuffix)"],
+                worldChange: "neighbors gather"
+            ),
+            NPCReaction(
+                npcId: "ior",
+                name: "Ior",
+                emotion: "doubt",
+                interpretation: "The relic asks too much.",
+                plan: ["argue about the relic"],
+                worldChange: "debate rises"
+            ),
+            NPCReaction(
+                npcId: "senn",
+                name: "Senn",
+                emotion: "wonder",
+                interpretation: "The relic feels like a game.",
+                plan: ["watch the ritual"],
+                worldChange: "children wait"
+            ),
+        ],
+        worldResolution: WorldResolution(
+            arbitrator: "local_world_arbitrator",
+            summary: "The ritual shifts around the relic.",
+            acceptedActions: [
+                ResolvedNPCAction(
+                    npcId: "mara",
+                    action: "invite neighbors to witness\(unsafeSuffix)",
+                    status: "accepted",
+                    reason: "Safe visible action"
+                )
+            ],
+            rejectedActions: [
+                ResolvedNPCAction(
+                    npcId: "ior",
+                    action: "argue about the relic",
+                    status: "rejected",
+                    reason: "Too much doubt for this tick"
+                )
+            ],
+            worldStateDelta: ["tick_index": .int(tickIndex)],
+            visibleChanges: ["Mara steps forward\(unsafeSuffix).", "Ior circles wide."]
         )
     )
 }
