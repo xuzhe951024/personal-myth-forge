@@ -17,6 +17,22 @@ do {
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
     try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
+    try requireContains(
+        packageManifest,
+        "PersonalMythForgeMobileAppCompileCheck",
+        "SwiftPM app compile product"
+    )
+    try requireContains(packageManifest, #"path: "App""#, "SwiftPM app compile target path")
+    try requireContains(
+        packageManifest,
+        #"exclude: ["Info.plist"]"#,
+        "SwiftPM app compile target plist exclusion"
+    )
+    try requireContains(
+        packageManifest,
+        #"dependencies: ["PersonalMythForgeMobileCore"]"#,
+        "SwiftPM app compile target core dependency"
+    )
     try requireContains(project, "PersonalMythForge", "Xcode project target name")
     try requireContains(project, #"productType = "com.apple.product-type.application""#, "iOS app product type")
     try requireContains(project, "IPHONEOS_DEPLOYMENT_TARGET = 17.0", "iOS deployment target")
