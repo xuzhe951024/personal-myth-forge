@@ -271,6 +271,7 @@ def _operator_actions(
 def _commands() -> list[str]:
     return [
         "make backend-dev",
+        "make backend-device-demo",
         "curl http://127.0.0.1:8080/v1/provider-readiness",
         (
             "cd services/backend && uv run python -m myth_forge_api.cli resource-handoff "

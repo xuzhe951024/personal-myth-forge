@@ -1,4 +1,4 @@
-.PHONY: backend-test backend-lint backend-dev backend-demo backend-generate-local
+.PHONY: backend-test backend-lint backend-dev backend-device-demo backend-demo backend-generate-local
 
 backend-test:
 	cd services/backend && uv run pytest
@@ -8,6 +8,9 @@ backend-lint:
 
 backend-dev:
 	cd services/backend && uv run uvicorn myth_forge_api.main:app --reload --port 8080
+
+backend-device-demo:
+	cd services/backend && uv run uvicorn myth_forge_api.main:app --host 0.0.0.0 --port 8080
 
 backend-demo:
 	cd services/backend && uv run uvicorn myth_forge_api.main:app --reload --port 8080

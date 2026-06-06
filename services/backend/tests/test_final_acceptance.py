@@ -7,6 +7,9 @@ from myth_forge_api.final_acceptance import (
     InlineCheckResult,
     run_final_acceptance,
 )
+from myth_forge_api.ios_backend_handoff_acceptance import (
+    IOSBackendHandoffAcceptanceResult,
+)
 from myth_forge_api.ios_showcase_acceptance import IOSShowcaseAcceptanceResult
 
 
@@ -17,6 +20,17 @@ def passing_ios_showcase_result() -> IOSShowcaseAcceptanceResult:
             "kind": "ios_showcase_acceptance_report",
             "status": "succeeded",
             "summary": {"passed": 9, "failed": 0},
+        },
+    )
+
+
+def passing_ios_backend_handoff_result() -> IOSBackendHandoffAcceptanceResult:
+    return IOSBackendHandoffAcceptanceResult(
+        exit_code=0,
+        report={
+            "kind": "ios_backend_handoff_acceptance_report",
+            "status": "succeeded",
+            "summary": {"passed": 7, "failed": 0},
         },
     )
 
@@ -85,6 +99,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
             },
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
+        ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
     )
 
     assert result.exit_code == 2
@@ -93,7 +108,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.report["allow_live_provider_calls"] is False
     assert result.report["overall_status"] == "blocked"
     assert result.report["summary"] == {
-        "passed": 5,
+        "passed": 6,
         "blocked": 2,
         "failed": 0,
         "skipped": 0,
@@ -105,6 +120,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
         "capture_3d_acceptance",
         "print_quote_acceptance",
         "ios_showcase_acceptance",
+        "ios_backend_handoff_acceptance",
         "mobile_deploy_preflight",
         "mobile_xcode_build",
     ]
@@ -117,6 +133,11 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert checks["ios_showcase_acceptance"]["status"] == "passed"
     assert checks["ios_showcase_acceptance"]["report"]["summary"] == {
         "passed": 9,
+        "failed": 0,
+    }
+    assert checks["ios_backend_handoff_acceptance"]["status"] == "passed"
+    assert checks["ios_backend_handoff_acceptance"]["report"]["summary"] == {
+        "passed": 7,
         "failed": 0,
     }
     assert checks["mobile_deploy_preflight"]["status"] == "blocked"
@@ -201,6 +222,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
             },
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
+        ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
     )
 
     report_text = json.dumps(result.report)
@@ -270,6 +292,7 @@ def test_final_acceptance_passes_explicit_live_provider_consent_to_demo_runner(
             report={"kind": "print_quote_acceptance_report", "status": "succeeded"},
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
+        ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
     )
 
     assert result.exit_code == 0
@@ -318,6 +341,7 @@ def test_final_acceptance_classifies_demo_consent_gate_as_blocked(tmp_path) -> N
             report={"kind": "print_quote_acceptance_report", "status": "succeeded"},
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
+        ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
     )
 
     checks = {check["id"]: check for check in result.report["checks"]}
@@ -370,6 +394,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
             },
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
+        ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
     )
 
     check_ids = [check["id"] for check in result.report["checks"]]
@@ -377,7 +402,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
     assert result.exit_code == 0
     assert result.report["overall_status"] == "passed"
     assert result.report["summary"] == {
-        "passed": 12,
+        "passed": 13,
         "blocked": 0,
         "failed": 0,
         "skipped": 0,
@@ -388,6 +413,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
         "capture_3d_acceptance",
         "print_quote_acceptance",
         "ios_showcase_acceptance",
+        "ios_backend_handoff_acceptance",
         "backend_lint",
         "backend_test",
         "swift_project_checks",

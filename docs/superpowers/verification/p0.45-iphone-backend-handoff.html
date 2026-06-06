@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.45 iPhone Backend Handoff</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #222821;
+      --muted: #606a62;
+      --line: #d4ddd2;
+      --paper: #f3f6ef;
+      --panel: #ffffff;
+      --green: #2e704a;
+      --blue: #2b7284;
+      --amber: #9a642a;
+      --red: #963d38;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #dfe6dc;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      padding: 12px 14px;
+      background: var(--paper);
+      border-right: 1px solid #c6cec3;
+    }
+
+    header,
+    .row,
+    .check {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    header {
+      align-items: baseline;
+      padding-bottom: 9px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 840;
+    }
+
+    .tag {
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 860;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 7px;
+      font-size: 13px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .panel,
+    .check,
+    .command,
+    .note {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .panel {
+      display: grid;
+      gap: 8px;
+      padding: 9px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .metric {
+      background: #ebf1eb;
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .metric b {
+      display: block;
+      font-size: 18px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .metric span,
+    .sub,
+    .small {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .check {
+      align-items: center;
+      min-height: 34px;
+      padding: 8px;
+      font-size: 11px;
+      line-height: 1.1;
+      font-weight: 820;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 3px 7px;
+      color: #ffffff;
+      font-size: 9px;
+      line-height: 1;
+      font-weight: 860;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .pass {
+      background: var(--green);
+    }
+
+    .blocked {
+      background: var(--amber);
+    }
+
+    .commands {
+      display: grid;
+      gap: 7px;
+    }
+
+    .command {
+      padding: 8px;
+    }
+
+    code {
+      color: #24352d;
+      font-size: 10.2px;
+      line-height: 1.2;
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+    }
+
+    .note {
+      min-height: 58px;
+      padding: 8px;
+    }
+
+    .note b {
+      display: block;
+      font-size: 10.5px;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .notice {
+      color: var(--muted);
+      font-size: 9.5px;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>iPhone Backend Handoff</h1>
+      <div class="tag">P0.45</div>
+    </header>
+
+    <section>
+      <div class="row">
+        <h2>Quick Final Acceptance</h2>
+        <span class="sub">source gate added</span>
+      </div>
+      <div class="panel">
+        <div class="summary">
+          <div class="metric"><b>6</b><span>passed</span></div>
+          <div class="metric"><b>2</b><span>blocked</span></div>
+          <div class="metric"><b>0</b><span>failed</span></div>
+        </div>
+        <div class="check">ios_backend_handoff_acceptance <span class="pill pass">pass</span></div>
+        <div class="check">mobile_deploy_preflight <span class="pill blocked">blocked</span></div>
+        <div class="check">mobile_xcode_build <span class="pill blocked">blocked</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Operator Commands</h2>
+      <div class="commands">
+        <div class="command"><code>make backend-dev</code><div class="small">Mac browser and localhost demo</div></div>
+        <div class="command"><code>make backend-device-demo</code><div class="small">FastAPI on 0.0.0.0:8080 for iPhone LAN access</div></div>
+        <div class="command"><code>PMF_BACKEND_BASE_URL = http://&lt;mac-lan-ip&gt;:8080</code><div class="small">Ignored local Xcode config only</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Acceptance Evidence</h2>
+      <div class="grid">
+        <div class="note"><b>Make target</b><span class="small">backend-device-demo exists</span></div>
+        <div class="note"><b>LAN bind</b><span class="small">--host 0.0.0.0</span></div>
+        <div class="note"><b>Port</b><span class="small">--port 8080</span></div>
+        <div class="note"><b>Loopback guard</b><span class="small">preflight rejects localhost</span></div>
+        <div class="note"><b>Info.plist</b><span class="small">PMF_BACKEND_BASE_URL</span></div>
+        <div class="note"><b>Runtime config</b><span class="small">PMFBackendBaseURL lookup</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Safety Boundary</h2>
+      <p class="notice">This is source-level handoff evidence. It does not run Xcode, install to a device, accept Apple licenses, start a persistent backend during tests, write a LAN IP into git, or call Meshy/OpenAI.</p>
+    </section>
+  </main>
+</body>
+</html>

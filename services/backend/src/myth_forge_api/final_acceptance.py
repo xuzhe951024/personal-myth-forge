@@ -14,6 +14,10 @@ from myth_forge_api.capture_acceptance import (
     run_capture_3d_acceptance,
 )
 from myth_forge_api.config import load_settings
+from myth_forge_api.ios_backend_handoff_acceptance import (
+    IOSBackendHandoffAcceptanceResult,
+    run_ios_backend_handoff_acceptance,
+)
 from myth_forge_api.ios_showcase_acceptance import (
     IOSShowcaseAcceptanceResult,
     run_ios_showcase_acceptance,
@@ -68,6 +72,10 @@ DemoAcceptanceRunner = Callable[..., DemoAcceptanceResult]
 Capture3DAcceptanceRunner = Callable[[], Capture3DAcceptanceResult | InlineCheckResult]
 PrintQuoteAcceptanceRunner = Callable[[], PrintQuoteAcceptanceResult | InlineCheckResult]
 IOSShowcaseAcceptanceRunner = Callable[[], IOSShowcaseAcceptanceResult | InlineCheckResult]
+IOSBackendHandoffAcceptanceRunner = Callable[
+    [],
+    IOSBackendHandoffAcceptanceResult | InlineCheckResult,
+]
 
 
 FULL_REGRESSION_COMMANDS = [
@@ -145,6 +153,7 @@ def run_final_acceptance(
     capture_3d_acceptance_runner: Capture3DAcceptanceRunner | None = None,
     print_quote_acceptance_runner: PrintQuoteAcceptanceRunner | None = None,
     ios_showcase_acceptance_runner: IOSShowcaseAcceptanceRunner | None = None,
+    ios_backend_handoff_acceptance_runner: IOSBackendHandoffAcceptanceRunner | None = None,
 ) -> FinalAcceptanceResult:
     if profile not in ("quick", "full"):
         raise ValueError(f"Unsupported final acceptance profile: {profile}")
@@ -165,6 +174,10 @@ def run_final_acceptance(
     selected_ios_showcase_acceptance_runner = (
         ios_showcase_acceptance_runner
         or (lambda: run_ios_showcase_acceptance(repo_root=selected_repo_root))
+    )
+    selected_ios_backend_handoff_acceptance_runner = (
+        ios_backend_handoff_acceptance_runner
+        or (lambda: run_ios_backend_handoff_acceptance(repo_root=selected_repo_root))
     )
 
     checks: list[dict[str, Any]] = []
@@ -210,6 +223,14 @@ def run_final_acceptance(
             check_id="ios_showcase_acceptance",
             label="iOS showcase source acceptance",
             runner=selected_ios_showcase_acceptance_runner,
+            require_real_core=False,
+        )
+    )
+    checks.append(
+        _run_inline_check(
+            check_id="ios_backend_handoff_acceptance",
+            label="iPhone backend handoff source acceptance",
+            runner=selected_ios_backend_handoff_acceptance_runner,
             require_real_core=False,
         )
     )
@@ -266,7 +287,8 @@ def _run_inline_check(
         | DemoAcceptanceResult
         | Capture3DAcceptanceResult
         | PrintQuoteAcceptanceResult
-        | IOSShowcaseAcceptanceResult,
+        | IOSShowcaseAcceptanceResult
+        | IOSBackendHandoffAcceptanceResult
     ],
     require_real_core: bool,
 ) -> dict[str, Any]:
