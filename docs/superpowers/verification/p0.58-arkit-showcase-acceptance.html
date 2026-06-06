@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.58 ARKit Showcase Acceptance</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172033;
+        --muted: #5b6473;
+        --line: #d5dce6;
+        --paper: #f6f8fb;
+        --panel: #ffffff;
+        --blue: #1d4ed8;
+        --green: #047857;
+        --amber: #a15c07;
+        --rose: #be123c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        background: var(--paper);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(358px, calc(100vw - 32px));
+        margin: 0 0 0 16px;
+        padding: 14px 0 16px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 21px;
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 15px;
+        line-height: 1.18;
+        letter-spacing: 0;
+      }
+
+      h3 {
+        font-size: 13px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.26;
+        overflow-wrap: anywhere;
+      }
+
+      header {
+        display: grid;
+        gap: 5px;
+        margin-bottom: 8px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+
+      .tile,
+      .panel,
+      .row {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .tile {
+        min-height: 74px;
+        padding: 9px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 6px;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .blue {
+        color: var(--blue);
+      }
+
+      .green {
+        color: var(--green);
+      }
+
+      .amber {
+        color: var(--amber);
+      }
+
+      .panel {
+        padding: 10px;
+        margin-top: 8px;
+      }
+
+      .rows {
+        display: grid;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr);
+        gap: 8px;
+        align-items: center;
+        padding: 7px;
+      }
+
+      .mark {
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        color: #ffffff;
+        background: var(--blue);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .mark.green {
+        background: var(--green);
+      }
+
+      .mark.amber {
+        background: var(--amber);
+      }
+
+      .mark.rose {
+        background: var(--rose);
+      }
+
+      .code {
+        margin-top: 8px;
+        padding: 8px;
+        border-radius: 8px;
+        background: #111827;
+        color: #e5e7eb;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+
+      .small {
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P0.58 ARKit Showcase Acceptance</h1>
+        <p>Final acceptance now names the ARKit scan package source path.</p>
+      </header>
+
+      <section class="grid" aria-label="Acceptance summary">
+        <div class="tile">
+          <div class="label">iOS features</div>
+          <div class="value green">15 / 15</div>
+          <p class="small">Nested in quick final acceptance.</p>
+        </div>
+        <div class="tile">
+          <div class="label">New gate</div>
+          <div class="value blue">arkit scan package</div>
+          <p class="small">Source-only proof.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Required Evidence</h2>
+        <div class="rows">
+          <div class="row">
+            <div class="mark green">1</div>
+            <div>
+              <h3>Mobile core builder</h3>
+              <p>`ARKitScanPackageBuilder` returns `.arkitScan` selection.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="mark green">2</div>
+            <div>
+              <h3>App bridge</h3>
+              <p>`ForgeRootView` calls `ARKitScanPackageBuilder.selection`.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="mark green">3</div>
+            <div>
+              <h3>Contract test</h3>
+              <p>`testARKitScanPackageBuilderBuildsReadySelection` is present.</p>
+            </div>
+          </div>
+        </div>
+        <div class="code">
+          ios_showcase_acceptance<br />
+          required_features += arkit_scan_package
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Final Acceptance</h2>
+        <div class="rows">
+          <div class="row">
+            <div class="mark green">OK</div>
+            <div>
+              <h3>Focused pytest</h3>
+              <p>Missing builder now fails the report without leaking paths.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="mark green">OK</div>
+            <div>
+              <h3>Quick report</h3>
+              <p>Nested iOS showcase summary is `passed=15`, `failed=0`.</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="mark amber">!</div>
+            <div>
+              <h3>External blockers</h3>
+              <p>Device signing, Apple SDK license, live ARKit run, and provider keys remain handoff items.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

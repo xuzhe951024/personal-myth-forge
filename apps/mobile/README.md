@@ -1678,3 +1678,33 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.57-arkit-scan-package.html
 docs/superpowers/verification/assets/p0.57-arkit-scan-package-390x844.png
 ```
+
+## P0.58 ARKit Showcase Acceptance
+
+P0.58 adds `arkit_scan_package` to the source-only
+`ios_showcase_acceptance` gate that is nested inside quick final acceptance.
+The new feature checks that:
+
+- `ARKitScanPackageBuilder.swift` exists and returns
+  `CaptureMediaSelection(mode: .arkitScan)`
+- `ForgeRootView` references `ARKitScanPackageBuilder.selection`
+- the Swift contract tests include
+  `testARKitScanPackageBuilderBuildsReadySelection`
+
+The gate now reports 15 iOS showcase source features when complete. This is
+still not a device install, live ARKit capture run, Xcode build, or provider-key
+run; those remain final handoff steps.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py tests/test_final_acceptance.py -q
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.58-arkit-showcase-acceptance.html
+docs/superpowers/verification/assets/p0.58-arkit-showcase-acceptance-390x844.png
+```

@@ -53,6 +53,33 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="arkit_scan_package",
+        label="ARKit scan package",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
+                "ARKitScanPackageBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
+                "maximumReferenceImages = 11",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
+                "CaptureMediaSelection(mode: .arkitScan",
+            ),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "arkitScanPackageSelection"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "ARKitScanPackageBuilder.selection",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testARKitScanPackageBuilderBuildsReadySelection",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="capture_upload",
         label="Capture upload",
         requirements=(
