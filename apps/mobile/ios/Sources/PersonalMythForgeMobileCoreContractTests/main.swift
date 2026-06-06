@@ -144,6 +144,10 @@ do {
     try testCaptureGenerationReadinessMarksMissingThreeDProvider()
     try testCaptureGenerationReadinessRedactsProviderErrors()
     try testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset()
+    try testArtifactGenerationProvenanceSummaryShowsMultiImageRoute()
+    try testArtifactGenerationProvenanceSummaryShowsScanAssets()
+    try testArtifactGenerationProvenanceSummaryWaitsForMissingProvenance()
+    try testArtifactGenerationProvenanceSummaryRedactsUnsafeText()
     try testArtifactPreviewStateMarksLocalUSDZAsSceneLoadable()
     try testArtifactPreviewStateHandlesMissingURI()
     try testArtifactPreviewStateHandlesMissingFormat()
@@ -3293,6 +3297,80 @@ private func testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset() throws {
     try expectFalse(state.isSceneLoadable)
     try expectEqual(state.statusTitle, "Generated 3D asset ready")
     try expectContains(state.statusDetail, "download/import step")
+}
+
+private func testArtifactGenerationProvenanceSummaryShowsMultiImageRoute() throws {
+    let summary = ArtifactGenerationProvenanceSummaryBuilder.build(
+        provenance: GeneratedAssetProvenance(
+            inputMode: "multi_image",
+            providerRoute: "/openapi/v1/multi-image-to-3d",
+            sourceImageCount: 4,
+            selectedSourceImageCount: 3,
+            sourceAssetCount: 0,
+            maxSourceImages: 4,
+            selectionReason: "Provider selected prepared guided-scan references.",
+            rawSourcesIncluded: false
+        )
+    )
+
+    try expectTrue(summary.isAvailable)
+    try expectEqual(summary.title, "3D generation route")
+    try expectEqual(summary.routeLabel, "Multi Image")
+    try expectEqual(summary.sourceSummary, "3/4 images selected, max 4")
+    try expectEqual(summary.providerRoute, "/openapi/v1/multi-image-to-3d")
+    try expectEqual(summary.selectionReason, "Provider selected prepared guided-scan references.")
+    try expectEqual(summary.privacySummary, "Raw source media withheld")
+}
+
+private func testArtifactGenerationProvenanceSummaryShowsScanAssets() throws {
+    let summary = ArtifactGenerationProvenanceSummaryBuilder.build(
+        provenance: GeneratedAssetProvenance(
+            inputMode: "multi_image",
+            providerRoute: "local_stub",
+            sourceImageCount: 2,
+            selectedSourceImageCount: 2,
+            sourceAssetCount: 1,
+            maxSourceImages: nil,
+            selectionReason: "ARKit scan asset plus references.",
+            rawSourcesIncluded: false
+        )
+    )
+
+    try expectEqual(summary.sourceSummary, "2/2 images selected, 1 scan asset")
+    try expectEqual(summary.providerRoute, "local_stub")
+}
+
+private func testArtifactGenerationProvenanceSummaryWaitsForMissingProvenance() throws {
+    let summary = ArtifactGenerationProvenanceSummaryBuilder.build(provenance: nil)
+
+    try expectFalse(summary.isAvailable)
+    try expectEqual(summary.routeLabel, "Waiting")
+    try expectContains(summary.sourceSummary, "generation provenance has not loaded")
+}
+
+private func testArtifactGenerationProvenanceSummaryRedactsUnsafeText() throws {
+    let summary = ArtifactGenerationProvenanceSummaryBuilder.build(
+        provenance: GeneratedAssetProvenance(
+            inputMode: "single_image",
+            providerRoute: "Bearer sk-test /Users/zhexu/private file:///tmp/private local-capture://cap",
+            sourceImageCount: 1,
+            selectedSourceImageCount: 1,
+            sourceAssetCount: 0,
+            maxSourceImages: nil,
+            selectionReason: "api_key=secret checkout_url=https://pay.example/private",
+            rawSourcesIncluded: true
+        )
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectEqual(summary.privacySummary, "Raw source media retained")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "api_key")
+    try expectNotContains(text, "checkout_url")
 }
 
 private func testArtifactPreviewStateMarksLocalUSDZAsSceneLoadable() throws {

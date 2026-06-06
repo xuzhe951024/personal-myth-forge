@@ -190,6 +190,26 @@ FEATURES = (
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactAssetPreparation.swift",
                 "ios_scene_asset",
             ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactGenerationProvenanceSummary.swift",
+                "ArtifactGenerationProvenanceSummaryBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactGenerationProvenanceSummary.swift",
+                "sourceAssetCount",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactGenerationProvenanceSummary.swift",
+                "privacySummary",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ArtifactSummaryView.swift",
+                "ArtifactGenerationProvenanceSummaryBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testArtifactGenerationProvenanceSummaryShowsScanAssets",
+            ),
         ),
     ),
     FeatureRequirement(
