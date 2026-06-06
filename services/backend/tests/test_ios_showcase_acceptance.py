@@ -163,7 +163,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/CaptureFormView.swift": (
             "Take Photo generationReadinessTitle generationReadinessRouteLabel "
             "generationReadinessDetail ContextCapsuleReviewView( isContextCapsuleApproved "
-            "Forge Readiness forgeReadinessSummary.routeLabel forgeReadinessSummary.privacyNotes"
+            "Forge Readiness forgeReadinessSummary.routeLabel forgeReadinessSummary.privacyNotes "
+            "forgeActionGate.isEnabled forgeActionGate.detail"
         ),
         "apps/mobile/ios/App/ForgeRootView.swift": (
             "CameraCaptureMediaBuilder.singlePhotoSelection "
@@ -180,6 +181,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "CaptureGenerationReadinessBuilder.build captureGenerationReadiness.route.displayLabel "
             "ContextCapsuleReviewBuilder.build guard isContextCapsuleApproved else "
             "ForgeReadinessSummaryBuilder.build forgeReadinessSummary: forgeReadinessSummary "
+            "ForgeActionGateBuilder.build forgeActionGate: forgeActionGate "
             "NPCAgentModeSummaryBuilder.build NPCAgentModeView(summary: "
             "NPCAgentTickSummaryBuilder.build summary: npcAgentTickSummary"
         ),
@@ -244,7 +246,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "ContextCapsuleReviewBuilder"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeReadinessSummary.swift": (
-            "ForgeReadinessSummaryBuilder routeLabel canForge"
+            "ForgeReadinessSummaryBuilder routeLabel canForge ForgeActionGateBuilder disabledReason"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
             "testARKitScanPackageBuilderBuildsReadySelection "
@@ -252,6 +254,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testCaptureGenerationReadinessMarksARKitScanAssetRoute "
             "testContextCapsuleReviewMarksApprovedSummaryReady "
             "testForgeReadinessMarksLocalDemoReady "
+            "testForgeActionGateEnablesLocalDemoForge "
             "testArtifactHandoffActionsOpenAndShareSceneAsset "
             "testArtifactGenerationProvenanceSummaryShowsScanAssets "
             "testNPCAgentModeShowsOpenAIReadyRuntime "

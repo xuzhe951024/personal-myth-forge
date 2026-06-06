@@ -372,10 +372,12 @@ do {
         "forgeReadinessSummary.privacyNotes",
         "capture form forge readiness privacy notes"
     )
+    try requireContains(captureFormView, "forgeActionGate.detail", "capture form forge action detail")
+    try requireContains(captureFormView, "forgeActionGate.isEnabled", "capture form forge action gate")
     try requireContains(
         captureFormView,
-        "contextCapsuleReview.status == .ready",
-        "capture form forge approval gate"
+        "let forgeActionGate: ForgeActionGate",
+        "capture form forge action gate input"
     )
     try requireContains(captureFormView, "chooseCapture", "capture button closure")
     try requireContains(captureFormView, "let takePhoto: () -> Void", "camera action form input")
@@ -388,7 +390,7 @@ do {
     try requireContains(captureFormView, "let isMediaReadyForUpload", "media readiness form input")
     try requireContains(
         captureFormView,
-        ".disabled(!(isMediaReadyForUpload && contextCapsuleReview.status == .ready))",
+        ".disabled(!forgeActionGate.isEnabled)",
         "disabled forge button source"
     )
     try requireContains(
@@ -423,6 +425,17 @@ do {
         forgeRootView,
         "forgeReadinessSummary: forgeReadinessSummary",
         "forge readiness capture form handoff"
+    )
+    try requireContains(forgeRootView, "forgeActionGate", "forge action gate root property")
+    try requireContains(
+        forgeRootView,
+        "ForgeActionGateBuilder.build",
+        "forge action gate root builder wiring"
+    )
+    try requireContains(
+        forgeRootView,
+        "forgeActionGate: forgeActionGate",
+        "forge action gate capture form handoff"
     )
     try requireContains(forgeRootView, "isContextCapsuleApproved = false", "context approval reset")
     try requireContains(forgeRootView, "guard isContextCapsuleApproved else", "forge context approval guard")
@@ -686,6 +699,9 @@ do {
     try requireContains(contextCapsuleReview, "sanitize", "context capsule review redaction")
     try requireContains(forgeReadinessSummary, "ForgeReadinessSummaryBuilder", "forge readiness builder")
     try requireContains(forgeReadinessSummary, "ForgeReadinessSummaryStatus", "forge readiness status")
+    try requireContains(forgeReadinessSummary, "ForgeActionGate", "forge action gate model")
+    try requireContains(forgeReadinessSummary, "ForgeActionGateBuilder", "forge action gate builder")
+    try requireContains(forgeReadinessSummary, "disabledReason", "forge action disabled reason")
     try requireContains(forgeReadinessSummary, "routeLabel", "forge readiness route label")
     try requireContains(forgeReadinessSummary, "canForge", "forge readiness forge gate")
     try requireContains(forgeReadinessSummary, "sanitize", "forge readiness redaction")
@@ -959,6 +975,11 @@ do {
         contractTests,
         "testForgeReadinessMarksLocalDemoReady",
         "forge readiness local demo contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testForgeActionGateEnablesLocalDemoForge",
+        "forge action gate local demo contract test"
     )
     try requireContains(project, "NPCAgentModeView.swift", "npc agent mode Xcode file reference")
     try requireContains(demoScriptView, "ShowcaseAutopilotPlan", "demo script autopilot input")

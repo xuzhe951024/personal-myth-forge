@@ -99,6 +99,7 @@ Bridge deliverable:
 - P0.81 iPhone 3D generation provenance summary for scan/photo-to-3D handoff
 - P0.82 iPhone NPC Agent tick summary for latest autonomous world-resolution handoff
 - P0.83 iPhone Forge readiness summary before capture/context/provider handoff
+- P0.84 iPhone Forge action gate that disables primary forging until readiness is actionable
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

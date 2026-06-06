@@ -34,6 +34,89 @@ public struct ForgeReadinessSummary: Codable, Equatable, Sendable {
     }
 }
 
+public struct ForgeActionGate: Codable, Equatable, Sendable {
+    public let isEnabled: Bool
+    public let title: String
+    public let detail: String
+    public let disabledReason: String?
+}
+
+public enum ForgeActionGateBuilder {
+    public static func build(
+        isMediaReadyForUpload: Bool,
+        contextCapsuleReview: ContextCapsuleReview,
+        forgeReadinessSummary: ForgeReadinessSummary
+    ) -> ForgeActionGate {
+        if !isMediaReadyForUpload {
+            return gate(
+                isEnabled: false,
+                detail: "Capture an object before forging.",
+                disabledReason: "capture_required"
+            )
+        }
+
+        if contextCapsuleReview.status != .ready {
+            return gate(
+                isEnabled: false,
+                detail: contextCapsuleReview.detail,
+                disabledReason: "context_approval_required"
+            )
+        }
+
+        if !forgeReadinessSummary.canForge {
+            return gate(
+                isEnabled: false,
+                detail: forgeReadinessSummary.detail,
+                disabledReason: "forge_readiness_required"
+            )
+        }
+
+        return gate(
+            isEnabled: true,
+            detail: "Forge route \(forgeReadinessSummary.routeLabel) is ready.",
+            disabledReason: nil
+        )
+    }
+
+    private static func gate(
+        isEnabled: Bool,
+        detail: String,
+        disabledReason: String?
+    ) -> ForgeActionGate {
+        ForgeActionGate(
+            isEnabled: isEnabled,
+            title: "Forge Myth",
+            detail: sanitize(detail),
+            disabledReason: disabledReason
+        )
+    }
+
+    private static func sanitize(_ text: String) -> String {
+        var sanitized = text
+        let patterns = [
+            #"sk-[A-Za-z0-9._-]+"#,
+            #"Bearer\s+[A-Za-z0-9._~+/\-=:-]+"#,
+            #"Authorization"#,
+            #"api[_-]?key\s*[=:]\s*[^\s,;"']+"#,
+            #"local-capture://[^\s,;"']+"#,
+            #"file://[^\s,;"']+"#,
+            #"/Users/[^\s,;"']+"#,
+            #"/tmp/[^\s,;"']+"#,
+            #"checkout_url"#,
+            #"https?://checkout\.[^\s,;"']+"#,
+            #"https?://pay\.[^\s,;"']+"#,
+        ]
+        for pattern in patterns {
+            sanitized = sanitized.replacingOccurrences(
+                of: pattern,
+                with: "[withheld]",
+                options: .regularExpression
+            )
+        }
+        return sanitized
+    }
+}
+
 public enum ForgeReadinessSummaryBuilder {
     public static func build(
         captureGenerationReadiness: CaptureGenerationReadiness,
