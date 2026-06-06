@@ -90,6 +90,7 @@ Bridge deliverable:
 - P0.72 iPhone Final Launch Status panel for launch phases, resource actions, and command rows
 - P0.73 iPhone Context Capsule Review approval gate before forging
 - P0.74 iPhone Artifact Handoff actions for SceneKit, share, conversion, and retry states
+- P0.75 iPhone NPC Agent Mode panel for local, OpenAI-ready, and missing-setup states
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

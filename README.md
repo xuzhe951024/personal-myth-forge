@@ -2064,3 +2064,30 @@ Static evidence lives at:
 docs/superpowers/verification/p0.74-mobile-artifact-actions.html
 docs/superpowers/verification/assets/p0.74-mobile-artifact-actions-390x844.png
 ```
+
+P0.75 adds a mobile `NPC Agent Mode` panel above the NPC autonomy controls.
+The iPhone app now makes the NPC runtime state explicit: local deterministic
+demo mode, OpenAI-backed AI Agent readiness, or missing backend setup such as
+`OPENAI_API_KEY`.
+
+The mode summary is pure Swift mobile core code. It combines session runtime,
+latest tick runtime, tick history, and backend NPC provider readiness, then
+redacts unsafe strings before the SwiftUI layer renders provider/runtime
+labels, trace counts, missing env names, and privacy notes.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py -q
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.75-mobile-npc-agent-mode.html
+docs/superpowers/verification/assets/p0.75-mobile-npc-agent-mode-390x844.png
+```

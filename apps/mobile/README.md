@@ -1979,3 +1979,31 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.74-mobile-artifact-actions.html
 docs/superpowers/verification/assets/p0.74-mobile-artifact-actions-390x844.png
 ```
+
+## P0.75 Mobile NPC Agent Mode
+
+The app now renders an `NPC Agent Mode` panel above the autonomy controls. It
+shows whether the current myth session is using the local deterministic NPC
+runtime, is ready for OpenAI-backed AI Agent ticks, or needs backend setup such
+as `OPENAI_API_KEY`.
+
+The iPhone app still stores no OpenAI key. It displays only sanitized backend
+readiness metadata, session runtime names, latest tick runtime names, trace
+counts, tick history count, missing env names, and privacy notes.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py -q
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.75-mobile-npc-agent-mode.html
+docs/superpowers/verification/assets/p0.75-mobile-npc-agent-mode-390x844.png
+```

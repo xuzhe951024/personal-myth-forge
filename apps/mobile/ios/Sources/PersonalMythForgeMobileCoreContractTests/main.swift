@@ -18,6 +18,12 @@ do {
     try testDemoRunSnapshotEncodesSnakeCaseJSONWithoutRawMediaOrSecrets()
     try testDemoRunSnapshotFileStoreSavesLoadsOverwritesAndClears()
     try testDecodesProviderReadinessPayload()
+    try testNPCAgentModeWaitsForSession()
+    try testNPCAgentModeShowsLocalDemoRuntime()
+    try testNPCAgentModeShowsOpenAIReadyRuntime()
+    try testNPCAgentModeShowsMissingOpenAIKey()
+    try testNPCAgentModeUsesLatestTickRuntime()
+    try testNPCAgentModeRedactsUnsafeText()
     try testDecodesPrintQuotePayload()
     try testFinalShowcaseSummaryWaitsBeforeSession()
     try testFinalShowcaseSummaryReadyForLocalDemo()
@@ -557,6 +563,163 @@ private func testDecodesProviderReadinessPayload() throws {
     try expectTrue(readiness.providers[0].isDemoReady)
     try expectFalse(readiness.providers[0].isRealProviderReady)
     try expectEqual(readiness.providers[1].missingEnv, ["OPENAI_API_KEY"])
+}
+
+private func testNPCAgentModeWaitsForSession() throws {
+    let summary = NPCAgentModeSummaryBuilder.build(
+        session: nil,
+        latestTick: nil,
+        tickHistoryCount: 0,
+        providerReadiness: nil,
+        providerReadinessError: nil
+    )
+
+    try expectEqual(summary.status, .waiting)
+    try expectEqual(summary.title, "NPC agents waiting")
+    try expectEqual(summary.providerLabel, "unknown")
+    try expectEqual(summary.runtimeLabel, "not started")
+    try expectEqual(summary.traceCount, 0)
+    try expectEqual(summary.tickHistoryCount, 0)
+}
+
+private func testNPCAgentModeShowsLocalDemoRuntime() throws {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcAgentRuntime = "local_agent_runtime"
+    session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+
+    let summary = NPCAgentModeSummaryBuilder.build(
+        session: session,
+        latestTick: nil,
+        tickHistoryCount: 0,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(summary.status, .localDemo)
+    try expectEqual(summary.title, "Local NPC agent mode")
+    try expectEqual(summary.providerLabel, "local")
+    try expectEqual(summary.runtimeLabel, "local_agent_runtime")
+    try expectEqual(summary.traceCount, 1)
+    try expectContains(summary.detail, "deterministic")
+}
+
+private func testNPCAgentModeShowsOpenAIReadyRuntime() throws {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcDirector = "openai"
+    session.npcAgentRuntime = "openai_structured_runtime"
+    session.npcAgentTraces = [
+        sampleNPCAgentTrace(npcId: "mara"),
+        sampleNPCAgentTrace(npcId: "ior"),
+        sampleNPCAgentTrace(npcId: "senn"),
+    ]
+
+    let summary = NPCAgentModeSummaryBuilder.build(
+        session: session,
+        latestTick: nil,
+        tickHistoryCount: 2,
+        providerReadiness: openAINPCProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(summary.status, .aiReady)
+    try expectEqual(summary.title, "OpenAI NPC Agent ready")
+    try expectEqual(summary.providerLabel, "openai")
+    try expectEqual(summary.runtimeLabel, "openai_structured_runtime")
+    try expectEqual(summary.traceCount, 3)
+    try expectEqual(summary.tickHistoryCount, 2)
+    try expectEqual(summary.missingEnv, [])
+}
+
+private func testNPCAgentModeShowsMissingOpenAIKey() throws {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcDirector = "openai"
+    session.npcAgentRuntime = "local_agent_runtime"
+    session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+
+    let summary = NPCAgentModeSummaryBuilder.build(
+        session: session,
+        latestTick: nil,
+        tickHistoryCount: 0,
+        providerReadiness: missingOpenAINPCProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(summary.status, .needsSetup)
+    try expectEqual(summary.title, "NPC Agent setup needed")
+    try expectEqual(summary.providerLabel, "openai")
+    try expectEqual(summary.missingEnv, ["OPENAI_API_KEY"])
+    try expectContains(summary.detail, "OPENAI_API_KEY")
+}
+
+private func testNPCAgentModeUsesLatestTickRuntime() throws {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcAgentRuntime = "local_agent_runtime"
+    session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+    var tick = npcTick(sessionId: session.sessionId, tickIndex: 3)
+    tick.agentRuntime = "openai_tick_structured_runtime"
+    tick.npcAgentTraces = [
+        sampleNPCAgentTrace(npcId: "mara"),
+        sampleNPCAgentTrace(npcId: "ior"),
+    ]
+
+    let summary = NPCAgentModeSummaryBuilder.build(
+        session: session,
+        latestTick: tick,
+        tickHistoryCount: 3,
+        providerReadiness: openAINPCProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(summary.status, .aiReady)
+    try expectEqual(summary.runtimeLabel, "openai_tick_structured_runtime")
+    try expectEqual(summary.traceCount, 2)
+    try expectEqual(summary.tickHistoryCount, 3)
+}
+
+private func testNPCAgentModeRedactsUnsafeText() throws {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcDirector = "openai sk-test /Users/zhexu checkout_url"
+    session.npcAgentRuntime = "Bearer token file:///tmp/private"
+    session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+
+    let summary = NPCAgentModeSummaryBuilder.build(
+        session: session,
+        latestTick: nil,
+        tickHistoryCount: 0,
+        providerReadiness: ProviderReadinessResponse(
+            overallDemoReady: false,
+            overallRealReady: false,
+            providers: [
+                ProviderReadinessItem(
+                    kind: "npc",
+                    selectedProvider: "openai sk-test",
+                    status: "Authorization Bearer token /Users/zhexu",
+                    isDemoReady: false,
+                    isRealProviderReady: false,
+                    missingEnv: ["OPENAI_API_KEY", "sk-test"],
+                    notes: ["checkout_url file:///tmp/private"]
+                ),
+            ]
+        ),
+        providerReadinessError: "Authorization Bearer token sk-test /Users/zhexu checkout_url file:///tmp/private"
+    )
+    let text = (
+        [
+            summary.title,
+            summary.detail,
+            summary.providerLabel,
+            summary.runtimeLabel,
+        ]
+        + summary.missingEnv
+        + summary.privacyNotes
+    ).joined(separator: " ")
+
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "Authorization")
+    try expectNotContains(text, "checkout_url")
+    try expectNotContains(text, "file:///")
 }
 
 private func testDecodesPrintQuotePayload() throws {
@@ -3364,6 +3527,23 @@ private func realThreeDProviderReadiness() -> ProviderReadinessResponse {
     )
 }
 
+private func openAINPCProviderReadiness() -> ProviderReadinessResponse {
+    ProviderReadinessResponse(
+        overallDemoReady: true,
+        overallRealReady: true,
+        providers: [
+            ProviderReadinessItem(
+                kind: "npc",
+                selectedProvider: "openai",
+                status: "ready",
+                isDemoReady: true,
+                isRealProviderReady: true,
+                capabilities: ["structured_agent_traces", "structured_agent_ticks"]
+            ),
+        ]
+    )
+}
+
 private func missingThreeDProviderReadiness() -> ProviderReadinessResponse {
     ProviderReadinessResponse(
         overallDemoReady: false,
@@ -3376,6 +3556,23 @@ private func missingThreeDProviderReadiness() -> ProviderReadinessResponse {
                 isDemoReady: false,
                 isRealProviderReady: false,
                 missingEnv: ["MESHY_API_KEY"]
+            ),
+        ]
+    )
+}
+
+private func missingOpenAINPCProviderReadiness() -> ProviderReadinessResponse {
+    ProviderReadinessResponse(
+        overallDemoReady: false,
+        overallRealReady: false,
+        providers: [
+            ProviderReadinessItem(
+                kind: "npc",
+                selectedProvider: "openai",
+                status: "missing_configuration",
+                isDemoReady: false,
+                isRealProviderReady: false,
+                missingEnv: ["OPENAI_API_KEY"]
             ),
         ]
     )
@@ -3439,6 +3636,18 @@ private func preparedArtifactAsset(
         status: status,
         statusTitle: statusTitle,
         statusDetail: statusDetail
+    )
+}
+
+private func sampleNPCAgentTrace(npcId: String) -> NPCAgentTrace {
+    NPCAgentTrace(
+        npcId: npcId,
+        name: npcId.capitalized,
+        belief: "The relic changes the village.",
+        intention: "interpret the relic",
+        proposedAction: "circle the artifact",
+        rationale: "It is newly sacred.",
+        confidence: 0.82
     )
 }
 

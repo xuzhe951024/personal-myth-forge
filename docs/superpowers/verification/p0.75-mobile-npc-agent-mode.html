@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.75 Mobile NPC Agent Mode</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #edf2f4;
+      color: #172026;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: 100vw;
+      max-width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 18px 14px 24px;
+      background: #fbfcfd;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 23px;
+      line-height: 1.14;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      border: 1px solid #98a4ad;
+      border-radius: 8px;
+      padding: 4px 7px;
+      color: #42515c;
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .stage {
+      position: relative;
+      height: 142px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #14212b;
+      border: 1px solid #263946;
+    }
+
+    .artifact {
+      position: absolute;
+      left: 50%;
+      top: 28px;
+      width: 70px;
+      height: 70px;
+      transform: translateX(-50%) rotate(9deg);
+      border: 12px solid #2db8aa;
+      border-radius: 18px;
+      box-shadow: 0 0 20px rgba(45, 184, 170, 0.42);
+    }
+
+    .ground {
+      position: absolute;
+      left: 58px;
+      right: 58px;
+      bottom: 26px;
+      height: 22px;
+      border-radius: 50%;
+      background: #b7c4cb;
+    }
+
+    .npc {
+      position: absolute;
+      width: 17px;
+      border-radius: 9px;
+      bottom: 39px;
+    }
+
+    .npc.one {
+      height: 43px;
+      left: 76px;
+      background: #d89b32;
+    }
+
+    .npc.two {
+      height: 38px;
+      right: 75px;
+      background: #739ee6;
+    }
+
+    .npc.three {
+      height: 31px;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      background: #75b96d;
+    }
+
+    .panel {
+      border: 1px solid #d8e0e5;
+      border-radius: 8px;
+      padding: 10px;
+      background: #ffffff;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(20, 31, 40, 0.04);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.24;
+      font-weight: 730;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 2px 0 0;
+      color: #576773;
+      font-size: 11px;
+      line-height: 1.34;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border-radius: 7px;
+      padding: 4px 7px;
+      background: #e8f5f2;
+      color: #117d69;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .badge.local {
+      background: #eef3f8;
+      color: #365f9a;
+    }
+
+    .badge.setup {
+      background: #fff1dc;
+      color: #a05b16;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .metric {
+      min-width: 0;
+      border-radius: 8px;
+      background: #f5f8fa;
+      padding: 7px;
+    }
+
+    .label {
+      color: #647480;
+      font-size: 10px;
+      font-weight: 760;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .value {
+      margin-top: 3px;
+      color: #172026;
+      font-size: 12px;
+      line-height: 1.24;
+      font-weight: 720;
+      overflow-wrap: anywhere;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 7px;
+      border-top: 1px solid #edf1f3;
+      color: #52636f;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .row + .row {
+      margin-top: 6px;
+    }
+
+    .row strong {
+      color: #172026;
+      font-weight: 760;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <h1>NPC Agent Mode</h1>
+      <div class="chip">P0.75</div>
+    </div>
+
+    <section class="stage" aria-label="NPCs interpreting a generated artifact">
+      <div class="artifact"></div>
+      <div class="ground"></div>
+      <div class="npc one"></div>
+      <div class="npc two"></div>
+      <div class="npc three"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Local NPC agent mode</h2>
+          <p>Autonomy is running through the deterministic local demo runtime.</p>
+        </div>
+        <div class="badge local">LOCAL</div>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Provider</div>
+          <div class="value">local</div>
+        </div>
+        <div class="metric">
+          <div class="label">Runtime</div>
+          <div class="value">local_agent_runtime</div>
+        </div>
+      </div>
+      <div class="row"><span>Agent traces</span><strong>3</strong></div>
+      <div class="row"><span>Saved ticks</span><strong>4</strong></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>OpenAI NPC Agent ready</h2>
+          <p>Backend readiness and latest tick both indicate AI Agent mode.</p>
+        </div>
+        <div class="badge">AI</div>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Provider</div>
+          <div class="value">openai</div>
+        </div>
+        <div class="metric">
+          <div class="label">Runtime</div>
+          <div class="value">openai_tick_structured_runtime</div>
+        </div>
+      </div>
+      <div class="row"><span>Agent traces</span><strong>5</strong></div>
+      <div class="row"><span>Saved ticks</span><strong>7</strong></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>NPC Agent setup needed</h2>
+          <p>Configure backend resources before running OpenAI-backed ticks.</p>
+        </div>
+        <div class="badge setup">SETUP</div>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Provider</div>
+          <div class="value">openai</div>
+        </div>
+        <div class="metric">
+          <div class="label">Runtime</div>
+          <div class="value">not started</div>
+        </div>
+      </div>
+      <div class="row"><span>Missing env</span><strong>OPENAI_API_KEY</strong></div>
+      <div class="row"><span>Privacy</span><strong>Backend-only keys</strong></div>
+    </section>
+  </main>
+</body>
+</html>

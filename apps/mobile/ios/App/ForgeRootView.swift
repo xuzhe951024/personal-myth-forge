@@ -107,6 +107,7 @@ struct ForgeRootView: View {
                     ArtifactSummaryView(session: readySession, latestTick: latestNPCTick)
                     WorldResolutionView(session: readySession)
                     NPCReactionsView(session: readySession)
+                    NPCAgentModeView(summary: npcAgentModeSummary)
                     NPCTickView(
                         session: readySession,
                         tick: latestNPCTick,
@@ -525,6 +526,16 @@ struct ForgeRootView: View {
 
     private var latestNPCTick: NPCAgentTick? {
         npcTickHistory.last
+    }
+
+    private var npcAgentModeSummary: NPCAgentModeSummary {
+        NPCAgentModeSummaryBuilder.build(
+            session: readySession,
+            latestTick: latestNPCTick,
+            tickHistoryCount: npcTickHistory.count,
+            providerReadiness: providerReadiness,
+            providerReadinessError: providerReadinessError
+        )
     }
 
     private var finalShowcaseSummary: FinalShowcaseSummary {

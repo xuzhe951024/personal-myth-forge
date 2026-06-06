@@ -247,6 +247,25 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_npc_agent_mode",
+        label="Mobile NPC agent mode",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentModeSummary.swift",
+                "NPCAgentModeSummaryBuilder",
+            ),
+            SourceRequirement("apps/mobile/ios/App/NPCAgentModeView.swift", "NPC Agent Mode"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "NPCAgentModeSummaryBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testNPCAgentModeShowsOpenAIReadyRuntime",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="print_quote",
         label="Print quote",
         requirements=(
