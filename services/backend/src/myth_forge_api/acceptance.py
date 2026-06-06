@@ -39,6 +39,7 @@ def run_demo_acceptance(
     provider_mode: ProviderMode = "local",
     npc_steps: int = 3,
     require_real_core: bool = False,
+    allow_live_provider_calls: bool = False,
 ) -> DemoAcceptanceResult:
     if npc_steps < 0 or npc_steps > 3:
         raise ValueError("npc_steps must be between 0 and 3.")
@@ -48,12 +49,15 @@ def run_demo_acceptance(
     readiness_payload = readiness.model_dump(mode="json")
     provider_by_kind = {item["kind"]: item for item in readiness_payload["providers"]}
     core_real_ready = _core_real_ready(provider_by_kind)
+    live_provider_kinds = _live_provider_kinds(provider_by_kind)
     base_report = _base_report(
         provider_mode=provider_mode,
         require_real_core=require_real_core,
+        allow_live_provider_calls=allow_live_provider_calls,
         readiness_payload=readiness_payload,
         provider_by_kind=provider_by_kind,
         core_real_ready=core_real_ready,
+        live_provider_kinds=live_provider_kinds,
         started_at=started_at,
     )
 
@@ -63,6 +67,16 @@ def run_demo_acceptance(
             "status": "not_ready",
             "missing_env": _missing_env(readiness_payload),
             "error": "Core providers are not real-provider-ready.",
+        }
+        return DemoAcceptanceResult(exit_code=2, report=_sanitize_report(report))
+
+    if live_provider_kinds and not allow_live_provider_calls:
+        report = {
+            **base_report,
+            "status": "not_ready",
+            "missing_env": _missing_env(readiness_payload),
+            "live_provider_consent_required": True,
+            "error": "Live provider calls require --allow-live-provider-calls.",
         }
         return DemoAcceptanceResult(exit_code=2, report=_sanitize_report(report))
 
@@ -91,6 +105,7 @@ def run_demo_acceptance(
             **base_report,
             "status": "succeeded",
             "missing_env": _missing_env(readiness_payload),
+            "live_provider_consent_required": False,
             "session": _session_summary(session),
             "npc": _npc_summary(session, ticks, npc_steps),
             "timings": _timings(started_at),
@@ -103,6 +118,7 @@ def run_demo_acceptance(
             **base_report,
             "status": "failed",
             "missing_env": _missing_env(readiness_payload),
+            "live_provider_consent_required": False,
             "session": None,
             "npc": {
                 "requested_steps": npc_steps,
@@ -145,17 +161,24 @@ def _base_report(
     *,
     provider_mode: str,
     require_real_core: bool,
+    allow_live_provider_calls: bool,
     readiness_payload: dict[str, Any],
     provider_by_kind: dict[str, dict[str, Any]],
     core_real_ready: bool,
+    live_provider_kinds: list[str],
     started_at: float,
 ) -> dict[str, Any]:
     return {
         "kind": "demo_acceptance_report",
         "mode": provider_mode,
         "require_real_core": require_real_core,
+        "allow_live_provider_calls": allow_live_provider_calls,
         "core_provider_kinds": CORE_PROVIDER_KINDS,
         "core_real_ready": core_real_ready,
+        "live_provider_kinds": live_provider_kinds,
+        "live_provider_consent_required": bool(
+            live_provider_kinds and not allow_live_provider_calls
+        ),
         "provider_readiness": readiness_payload,
         "selected_providers": {
             kind: provider_by_kind.get(kind, {}).get("selected_provider")
@@ -171,6 +194,15 @@ def _core_real_ready(provider_by_kind: dict[str, dict[str, Any]]) -> bool:
         provider_by_kind.get(kind, {}).get("is_real_provider_ready") is True
         for kind in CORE_PROVIDER_KINDS
     )
+
+
+def _live_provider_kinds(provider_by_kind: dict[str, dict[str, Any]]) -> list[str]:
+    return [
+        kind
+        for kind in ("three_d", "npc")
+        if provider_by_kind.get(kind, {}).get("selected_provider") != "local"
+        and provider_by_kind.get(kind, {}).get("is_real_provider_ready") is True
+    ]
 
 
 def _missing_env(readiness_payload: dict[str, Any]) -> list[str]:

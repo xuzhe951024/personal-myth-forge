@@ -279,6 +279,7 @@ def _commands() -> list[str]:
         (
             "cd services/backend && uv run python -m myth_forge_api.cli final-acceptance "
             "--profile quick --provider-mode configured --require-real-core "
+            "--allow-live-provider-calls "
             "--output /tmp/personal-myth-forge-final-acceptance.json"
         ),
         "make mobile-deploy-preflight",

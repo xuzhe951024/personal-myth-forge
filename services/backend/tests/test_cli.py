@@ -480,11 +480,55 @@ def test_cli_demo_acceptance_writes_report(tmp_path, monkeypatch) -> None:
             "provider_mode": "local",
             "npc_steps": 3,
             "require_real_core": False,
+            "allow_live_provider_calls": False,
         }
     ]
     assert json.loads(output_file.read_text(encoding="utf-8"))["kind"] == (
         "demo_acceptance_report"
     )
+
+
+def test_cli_demo_acceptance_passes_live_provider_consent_flag(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "acceptance.json"
+    calls = []
+
+    def fake_run_demo_acceptance(**kwargs):
+        calls.append(kwargs)
+        return DemoAcceptanceResult(
+            exit_code=0,
+            report={
+                "kind": "demo_acceptance_report",
+                "mode": kwargs["provider_mode"],
+                "status": "succeeded",
+            },
+        )
+
+    monkeypatch.setattr("myth_forge_api.cli.run_demo_acceptance", fake_run_demo_acceptance)
+
+    exit_code = main(
+        [
+            "demo-acceptance",
+            "--provider-mode",
+            "configured",
+            "--require-real-core",
+            "--allow-live-provider-calls",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 0
+    assert calls == [
+        {
+            "provider_mode": "configured",
+            "npc_steps": 3,
+            "require_real_core": True,
+            "allow_live_provider_calls": True,
+        }
+    ]
 
 
 def test_cli_demo_acceptance_prints_stdout_and_returns_result_code(capsys, monkeypatch) -> None:
@@ -560,6 +604,7 @@ def test_cli_final_acceptance_writes_report_and_returns_result_code(
             "require_real_core": True,
             "npc_steps": 2,
             "repo_root": str(tmp_path),
+            "allow_live_provider_calls": False,
         }
     ]
     report = json.loads(output_file.read_text(encoding="utf-8"))
@@ -594,7 +639,52 @@ def test_cli_final_acceptance_prints_stdout_with_defaults(capsys, monkeypatch) -
             "require_real_core": False,
             "npc_steps": 3,
             "repo_root": None,
+            "allow_live_provider_calls": False,
         }
     ]
     assert payload["kind"] == "final_acceptance_report"
     assert payload["overall_status"] == "passed"
+
+
+def test_cli_final_acceptance_passes_live_provider_consent_flag(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    calls = []
+
+    def fake_run_final_acceptance(**kwargs):
+        calls.append(kwargs)
+        return FinalAcceptanceResult(
+            exit_code=0,
+            report={
+                "kind": "final_acceptance_report",
+                "profile": kwargs["profile"],
+                "overall_status": "passed",
+            },
+        )
+
+    monkeypatch.setattr("myth_forge_api.cli.run_final_acceptance", fake_run_final_acceptance)
+
+    exit_code = main(
+        [
+            "final-acceptance",
+            "--provider-mode",
+            "configured",
+            "--require-real-core",
+            "--allow-live-provider-calls",
+            "--repo-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert calls == [
+        {
+            "profile": "quick",
+            "provider_mode": "configured",
+            "require_real_core": True,
+            "npc_steps": 3,
+            "repo_root": str(tmp_path),
+            "allow_live_provider_calls": True,
+        }
+    ]
