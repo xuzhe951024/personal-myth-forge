@@ -541,3 +541,53 @@ docs/superpowers/verification/2026-06-06-p0.21-heic-meshy-inputs-regression.md
 Remaining gaps after P0.21 are Apple SDK license acceptance on this machine,
 real device Object Capture validation, live Meshy/OpenAI key runs, print
 fulfillment adapters, signing, and Unity movement/action execution.
+
+## P0.22 NPC Agent Ticks
+
+P0.22 adds a stateless backend tick loop so the mobile demo can advance NPCs
+after the first myth session. The backend endpoint:
+
+```http
+POST /v1/npc-ticks
+```
+
+accepts the current `MythSession`, a `tick_index`, and short `recent_events`.
+It returns `NPCAgentTick` with the same mobile-readable trace and arbitration
+shapes used by the initial session:
+
+- `npc_agent_traces`
+- `npc_reactions`
+- `world_resolution`
+
+The local tick runtime generates deterministic next actions for Mara, Ior, and
+Senn, then runs those actions through the existing world arbitrator. It uses
+recent event counts without echoing event text, so secrets, data URIs, and raw
+personal payloads do not come back to the app.
+
+The Swift mobile core adds `NPCAgentTick` and
+`PersonalMythForgeAPIClient.createNPCAgentTick(...)`. `ForgeRootView` renders
+`NPCTickView` below the village response with an explicit `Advance Village`
+button, runtime label, NPC intentions, accepted/rejected actions, and visible
+changes.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+make mobile-xcode-build
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.22-npc-agent-ticks.html
+docs/superpowers/verification/assets/p0.22-npc-agent-ticks-390x844.png
+```
+
+Remaining gaps after P0.22 are persistent server-side tick history, live OpenAI
+tick generation, Unity movement execution, real device validation, signing, and
+Apple SDK license acceptance on this machine.

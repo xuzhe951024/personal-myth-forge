@@ -462,3 +462,42 @@ docs/superpowers/verification/2026-06-06-p0.21-heic-meshy-inputs-regression.md
 P0.21 does not run live Meshy/OpenAI calls, create provider keys, validate on a
 real iPhone, implement local photogrammetry reconstruction, add print
 fulfillment, configure signing, or bypass the Apple SDK license gate.
+
+P0.22 adds the first explicit NPC continuation loop. The backend exposes:
+
+```http
+POST /v1/npc-ticks
+```
+
+The request carries the current `MythSession`, a `tick_index`, and short
+`recent_events`. The local tick runtime returns `NPCAgentTick` with three new
+agent traces, three reactions, and a `WorldResolution` from the existing world
+arbitrator. Recent events influence the local runtime without being echoed
+verbatim, so data URIs, secrets, and raw personal payloads are not returned.
+
+The iOS app adds an `Advance Village` action below the initial NPC response.
+`NPCTickView` renders the latest runtime, NPC intentions, accepted/rejected
+actions, and visible world changes. This is still stateless and user-triggered;
+it does not add background autonomous loops or persistent tick history.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+make mobile-xcode-build
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.22-npc-agent-ticks.html
+docs/superpowers/verification/assets/p0.22-npc-agent-ticks-390x844.png
+```
+
+P0.22 does not persist server-side sessions, add live OpenAI tick generation,
+execute Unity character movement, configure signing, or bypass the Apple SDK
+license gate.

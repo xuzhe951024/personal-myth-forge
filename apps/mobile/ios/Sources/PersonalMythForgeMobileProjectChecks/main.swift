@@ -27,6 +27,7 @@ do {
     let guidedScanCaptureView = try readText(appRoot.appendingPathComponent("GuidedScanCaptureView.swift"))
     let providerReadinessView = try readText(appRoot.appendingPathComponent("ProviderReadinessView.swift"))
     let npcReactionsView = try readText(appRoot.appendingPathComponent("NPCReactionsView.swift"))
+    let npcTickView = try readText(appRoot.appendingPathComponent("NPCTickView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
@@ -112,6 +113,7 @@ do {
         "ProviderReadinessView.swift",
         "WorldResolutionView.swift",
         "NPCReactionsView.swift",
+        "NPCTickView.swift",
     ] {
         try requireContains(project, file, "Xcode project file reference")
     }
@@ -132,6 +134,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000010 /* ProviderReadinessView.swift in Sources */,",
         "provider readiness Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000011 /* NPCTickView.swift in Sources */,",
+        "npc tick Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -188,6 +196,9 @@ do {
     try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
     try requireContains(forgeRootView, "isGuidedScanPresented", "guided scan sheet state")
     try requireContains(forgeRootView, "providerReadiness", "provider readiness root state")
+    try requireContains(forgeRootView, "latestNPCTick", "npc tick root state")
+    try requireContains(forgeRootView, "createNPCAgentTick", "npc tick API call")
+    try requireContains(forgeRootView, "NPCTickView(", "npc tick view wiring")
     try requireContains(forgeRootView, "ForgeFlowService", "forge flow service source wiring")
     try requireContains(forgeRootView, "forgeService.forge", "forge flow service call")
     try requireContains(forgeRootView, "getProviderReadiness()", "provider readiness API load")
@@ -328,6 +339,13 @@ do {
     try requireContains(npcReactionsView, "npcAgentRuntime", "npc agent runtime display")
     try requireContains(npcReactionsView, "npcAgentTraces", "npc agent trace display")
     try requireContains(npcReactionsView, "proposedAction", "npc proposed action display")
+    try requireContains(npcTickView, "NPCAgentTick", "npc tick model usage")
+    try requireContains(npcTickView, "Advance Village", "npc tick action label")
+    try requireContains(npcTickView, "agentRuntime", "npc tick runtime display")
+    try requireContains(npcTickView, "acceptedActions", "npc tick accepted actions")
+    try requireContains(npcTickView, "rejectedActions", "npc tick rejected actions")
+    try requireContains(npcTickView, "visibleChanges", "npc tick visible changes")
+    try requireNotContains(npcTickView, "sk-", "npc tick secret sample")
     try requireContains(
         artifactAssetPreparation,
         "preferredSceneVariant",

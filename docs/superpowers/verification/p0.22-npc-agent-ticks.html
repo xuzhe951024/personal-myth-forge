@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.22 NPC Agent Ticks</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f2;
+      --ink: #20231f;
+      --muted: #686d64;
+      --line: #d8dccf;
+      --panel: #ffffff;
+      --accent: #2e6f5c;
+      --warn: #8a4d23;
+      --soft: #e9efe8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 14px 16px 20px;
+    }
+
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.08;
+      font-weight: 760;
+    }
+
+    .status {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    section {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 9px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .runtime {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .trace {
+      padding: 8px;
+      border-radius: 8px;
+      background: var(--soft);
+      margin-top: 6px;
+    }
+
+    .trace .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 3px;
+    }
+
+    .confidence {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .action {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .list {
+      display: grid;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px;
+      font-size: 12px;
+      line-height: 1.25;
+      background: #fbfcf8;
+    }
+
+    .rejected {
+      color: var(--warn);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Personal Myth Forge</h1>
+      <div class="status">P0.22</div>
+    </header>
+
+    <section>
+      <div class="row">
+        <h2>Next Village Tick</h2>
+        <span class="runtime">local_tick_runtime</span>
+      </div>
+      <div class="button">Advance Village</div>
+      <p style="margin-top: 8px;">Tick 1</p>
+
+      <div class="trace">
+        <div class="meta"><h3>Mara</h3><span class="confidence">82%</span></div>
+        <p>turn first awe into shared witness</p>
+        <p class="action">invite_neighbors_to_witness</p>
+        <p>Rationale uses 1 recent village event without echoing it.</p>
+      </div>
+
+      <div class="trace">
+        <div class="meta"><h3>Ior</h3><span class="confidence">74%</span></div>
+        <p>keep the artifact guarded without stopping debate</p>
+        <p class="action">guard_artifact</p>
+        <p>Ior weighs accepted actions against the recent event count.</p>
+      </div>
+
+      <div class="trace">
+        <div class="meta"><h3>Senn</h3><span class="confidence">79%</span></div>
+        <p>make the relic legible through ritual language</p>
+        <p class="action">suggest_ritual_name</p>
+        <p>Senn turns the latest village mood into a safer name.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Visible Changes</h2>
+      <div class="list">
+        <div class="pill">Mara prepares to invite neighbors to witness.</div>
+        <div class="pill">Ior prepares to guard artifact.</div>
+        <div class="pill">The artifact gains a local name.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>World Arbitration</h2>
+      <div class="list">
+        <div class="pill">Accepted: invite_neighbors_to_witness</div>
+        <div class="pill">Accepted: guard_artifact</div>
+        <div class="pill">Accepted: suggest_ritual_name</div>
+        <div class="pill rejected">Rejected: order_print_without_approval - blocked by safety and privacy rules</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

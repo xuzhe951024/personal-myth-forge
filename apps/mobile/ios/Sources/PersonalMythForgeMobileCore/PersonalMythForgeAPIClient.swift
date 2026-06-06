@@ -143,6 +143,23 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
         return try await send(request, decoding: ProviderReadinessResponse.self)
     }
 
+    public func createNPCAgentTick(
+        session: MythSession,
+        tickIndex: Int,
+        recentEvents: [String]
+    ) async throws -> NPCAgentTick {
+        let body = NPCAgentTickBody(
+            session: session,
+            tickIndex: tickIndex,
+            recentEvents: recentEvents
+        )
+        var request = URLRequest(url: endpoint("/v1/npc-ticks"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try encodeJSONBody(body)
+        return try await send(request, decoding: NPCAgentTick.self)
+    }
+
     private func endpoint(_ path: String) -> URL {
         let trimmed = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         return baseURL.appendingPathComponent(trimmed)
@@ -246,4 +263,10 @@ private struct MythSessionFromCaptureBody: Encodable {
 private struct DirectMythSessionBody: Encodable {
     let objectObservation: ObjectObservation
     let contextCapsule: ContextCapsule
+}
+
+private struct NPCAgentTickBody: Encodable {
+    let session: MythSession
+    let tickIndex: Int
+    let recentEvents: [String]
 }
