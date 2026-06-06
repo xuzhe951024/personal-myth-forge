@@ -16,6 +16,7 @@ do {
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
+    let npcReactionsView = try readText(appRoot.appendingPathComponent("NPCReactionsView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
 
@@ -175,6 +176,11 @@ do {
     try requireContains(artifact3DPreviewView, "ArtifactAssetPreparer.live()", "live asset preparer wiring")
     try requireContains(pmfModels, "GeneratedAssetVariant", "generated asset variant model")
     try requireContains(pmfModels, "variants: [GeneratedAssetVariant]", "generated asset variants")
+    try requireContains(pmfModels, "NPCAgentTrace", "npc agent trace model")
+    try requireContains(pmfModels, "npcAgentTraces: [NPCAgentTrace]", "npc agent traces model")
+    try requireContains(npcReactionsView, "npcAgentRuntime", "npc agent runtime display")
+    try requireContains(npcReactionsView, "npcAgentTraces", "npc agent trace display")
+    try requireContains(npcReactionsView, "proposedAction", "npc proposed action display")
     try requireContains(
         artifactAssetPreparation,
         "preferredSceneVariant",

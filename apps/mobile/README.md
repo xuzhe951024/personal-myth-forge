@@ -349,3 +349,37 @@ docs/superpowers/verification/assets/p0.16-asset-variant-contract-390x844.png
 Remaining gaps after P0.16 are runtime GLB import, conversion retry when USDZ is
 missing, full Xcode simulator/device deployment, live ARKit mesh capture, richer
 3D village rendering, and print asset repair.
+
+## P0.17 NPC Agent Runtime Trace
+
+P0.17 adds mobile-readable NPC agent traces to the myth session contract. The
+existing `npc_reactions` still drive the visible village response, while new
+fields expose the runtime layer:
+
+- `npc_agent_runtime`
+- `npc_agent_traces`
+- per-NPC `belief`, `intention`, `proposed_action`, `rationale`, and
+  `confidence`
+
+`MythSession` in the Swift core decodes missing trace fields as empty defaults,
+so older backend responses still load. `NPCReactionsView` renders compact trace
+rows when traces are present.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.17-npc-agent-runtime.html
+docs/superpowers/verification/assets/p0.17-npc-agent-runtime-390x844.png
+```
+
+Remaining gaps after P0.17 are long-term NPC memory, multi-turn runtime ticks,
+Unity movement/action execution, voice NPCs, full Xcode simulator/device
+deployment, and live ARKit mesh capture.

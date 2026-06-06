@@ -130,6 +130,9 @@ def test_generates_session_from_real_object_and_context() -> None:
     assert session.myth_seed.title
     assert "deadline pressure" in session.myth_seed.personal_resonance
     assert {reaction.npc_id for reaction in session.npc_reactions} == {"mara", "ior", "senn"}
+    assert session.npc_agent_runtime == "local_agent_runtime"
+    assert {trace.npc_id for trace in session.npc_agent_traces} == {"mara", "ior", "senn"}
+    assert all(trace.proposed_action for trace in session.npc_agent_traces)
     assert all(reaction.plan for reaction in session.npc_reactions)
     assert session.generated_asset.kind == "game_asset"
     assert session.generated_asset.provider == "local_stub"
@@ -164,6 +167,9 @@ def test_session_serializes_to_json_safe_payload() -> None:
     assert payload["generated_asset"]["variants"][1]["format"] == "usdz"
     assert payload["generated_asset"]["variants"][1]["role"] == "ios_scene_asset"
     assert payload["generated_asset"]["variants"][1]["is_scene_loadable"] is True
+    assert payload["npc_agent_runtime"] == "local_agent_runtime"
+    assert payload["npc_agent_traces"][0]["belief"]
+    assert payload["npc_agent_traces"][0]["proposed_action"]
     assert payload["print_candidate"]["approval_reason"]
 
 

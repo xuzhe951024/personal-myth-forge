@@ -303,3 +303,35 @@ docs/superpowers/verification/assets/p0.16-asset-variant-contract-390x844.png
 This still does not solve runtime GLB import, provider conversion retries when
 USDZ is absent, simulator/device deployment, live ARKit mesh capture, print
 asset repair, or Unity village import.
+
+P0.17 adds the first explicit NPC agent runtime trace contract. The backend now
+returns `npc_agent_runtime` plus `npc_agent_traces` alongside the existing
+player-facing `npc_reactions`. The deterministic local runtime forms one trace
+per NPC with belief, intention, proposed action, rationale, and confidence, then
+derives visible reactions that the world arbitrator can resolve.
+
+The OpenAI NPC path can parse structured traces when present and synthesizes
+conservative trace rows from valid reactions when a provider/mock omits them.
+Provider secrets still stay backend-only, and raw personal data is not included;
+the runtime only sees approved context capsule summaries.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.17-npc-agent-runtime.html
+docs/superpowers/verification/assets/p0.17-npc-agent-runtime-390x844.png
+```
+
+This still does not solve long-term NPC memory, multi-turn agent ticking, Unity
+movement execution, voice NPCs, simulator/device deployment, or live ARKit mesh
+capture.

@@ -82,9 +82,21 @@ class NPCReaction(BaseModel):
     world_change: str
 
 
+class NPCAgentTrace(BaseModel):
+    npc_id: str
+    name: str
+    belief: str
+    intention: str
+    proposed_action: str
+    rationale: str
+    confidence: float = Field(ge=0, le=1)
+
+
 class NPCDirectorResult(BaseModel):
     provider: str
     reactions: list[NPCReaction]
+    agent_runtime: str = "director_batch"
+    agent_traces: list[NPCAgentTrace] = Field(default_factory=list)
 
 
 class ResolvedNPCAction(BaseModel):
@@ -138,6 +150,8 @@ class MythSession(BaseModel):
     myth_seed: MythSeed
     generated_asset: GeneratedAsset
     npc_director: str
+    npc_agent_runtime: str = "director_batch"
+    npc_agent_traces: list[NPCAgentTrace] = Field(default_factory=list)
     npc_reactions: list[NPCReaction]
     world_resolution: WorldResolution
     print_candidate: PrintCandidate

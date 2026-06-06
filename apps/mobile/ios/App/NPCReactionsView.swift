@@ -30,6 +30,45 @@ struct NPCReactionsView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
 
+                if !session.npcAgentTraces.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("NPC agent runtime")
+                                .font(.headline)
+                            Spacer()
+                            Text(session.npcAgentRuntime)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        ForEach(session.npcAgentTraces, id: \.npcId) { trace in
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(trace.name)
+                                        .font(.subheadline.weight(.semibold))
+                                    Spacer()
+                                    Text(confidenceLabel(trace.confidence))
+                                        .font(.caption2.weight(.semibold))
+                                        .foregroundStyle(.secondary)
+                                }
+                                Text(trace.belief)
+                                    .font(.caption)
+                                Text(trace.intention)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text(trace.proposedAction)
+                                    .font(.caption.weight(.semibold))
+                                Text(trace.rationale)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(10)
+                            .background(.tertiary.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                    }
+                }
+
                 Text("Print Review")
                     .font(.headline)
                 Text(session.printCandidate.approvalReason)
@@ -41,5 +80,9 @@ struct NPCReactionsView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func confidenceLabel(_ confidence: Double) -> String {
+        "\(Int((confidence * 100).rounded()))%"
     }
 }
