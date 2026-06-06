@@ -56,6 +56,7 @@ class LocalThreeDProvider:
 class MeshyThreeDProvider:
     provider_name = "meshy"
     _text_to_3d_path = "/openapi/v2/text-to-3d"
+    _image_to_3d_path = "/openapi/v1/image-to-3d"
 
     def __init__(
         self,
@@ -81,7 +82,13 @@ class MeshyThreeDProvider:
         )
 
     def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
+        if request.source_images:
+            return self._generate_image_asset(request)
+        return self._generate_text_asset(request)
+
+    def _generate_text_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
         preview_task_id = self._create_task(
+            self._text_to_3d_path,
             {
                 "mode": "preview",
                 "prompt": request.prompt[:600],
@@ -89,8 +96,9 @@ class MeshyThreeDProvider:
                 "moderation": True,
             }
         )
-        self._poll_task(preview_task_id)
+        self._poll_task(self._text_to_3d_path, preview_task_id)
         refine_task_id = self._create_task(
+            self._text_to_3d_path,
             {
                 "mode": "refine",
                 "preview_task_id": preview_task_id,
@@ -98,11 +106,32 @@ class MeshyThreeDProvider:
                 "moderation": True,
             }
         )
-        refined_task = self._poll_task(refine_task_id)
-        glb_uri = refined_task.get("model_urls", {}).get("glb")
+        refined_task = self._poll_task(self._text_to_3d_path, refine_task_id)
+        return self._asset_from_task(request=request, task=refined_task)
+
+    def _generate_image_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
+        source_image = request.source_images[0]
+        task_id = self._create_task(
+            self._image_to_3d_path,
+            {
+                "image_url": source_image.data_uri,
+                "enable_pbr": True,
+                "should_remesh": True,
+                "target_formats": ["glb"],
+                "should_texture": True,
+            },
+        )
+        task = self._poll_task(self._image_to_3d_path, task_id)
+        return self._asset_from_task(request=request, task=task)
+
+    def _asset_from_task(
+        self,
+        request: ThreeDGenerationRequest,
+        task: dict[str, object],
+    ) -> GeneratedAsset:
+        glb_uri = task.get("model_urls", {}).get("glb")
         if not glb_uri:
             raise MeshyProviderError("Meshy task succeeded but did not return a GLB URL.")
-
         return GeneratedAsset(
             kind="game_asset",
             provider=self.provider_name,
@@ -112,9 +141,9 @@ class MeshyThreeDProvider:
             moderation_status="needs_review",
         )
 
-    def _create_task(self, payload: dict[str, object]) -> str:
+    def _create_task(self, path: str, payload: dict[str, object]) -> str:
         response = self.client.post(
-            self._text_to_3d_path,
+            path,
             headers=self._headers(),
             json=payload,
         )
@@ -124,12 +153,12 @@ class MeshyThreeDProvider:
             raise MeshyProviderError("Meshy create task response did not include a task id.")
         return task_id
 
-    def _poll_task(self, task_id: str) -> dict[str, object]:
+    def _poll_task(self, path: str, task_id: str) -> dict[str, object]:
         deadline = time.monotonic() + self.max_wait_seconds
 
         while True:
             response = self.client.get(
-                f"{self._text_to_3d_path}/{task_id}",
+                f"{path}/{task_id}",
                 headers=self._headers(),
             )
             data = self._response_json(response)
