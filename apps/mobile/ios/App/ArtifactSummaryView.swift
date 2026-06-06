@@ -14,18 +14,9 @@ struct ArtifactSummaryView: View {
                     .font(.title3)
                     .fontWeight(.semibold)
                 Text(session.mythSeed.personalResonance)
-                Text("3D: \(session.generatedAsset.provider) \(session.generatedAsset.format)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(session.generatedAsset.uri)
-                    .font(.caption2)
-                    .textSelection(.enabled)
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(.secondary.opacity(0.12))
-                    .frame(height: 160)
-                    .overlay(Text("Generated artifact preview"))
             }
+
+            Artifact3DPreviewView(session: session)
         }
     }
 }

@@ -14,6 +14,8 @@ do {
     let plist = try readPropertyList(plistFile)
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
+    let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
+    let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
     try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
@@ -50,11 +52,17 @@ do {
         "ForgeRootView.swift",
         "CaptureFormView.swift",
         "ArtifactSummaryView.swift",
+        "Artifact3DPreviewView.swift",
         "WorldResolutionView.swift",
         "NPCReactionsView.swift",
     ] {
         try requireContains(project, file, "Xcode project file reference")
     }
+    try requireContains(
+        project,
+        "Artifact3DPreviewView.swift in Sources",
+        "3D preview Xcode source membership"
+    )
     for file in [
         "PMFJSON.swift",
         "PMFModels.swift",
@@ -143,6 +151,17 @@ do {
     try requireNotContains(forgeRootView, "sampleMedia", "sample media fallback")
     try requireNotContains(forgeRootView, "sample-image", "sample image bytes")
     try requireNotContains(forgeRootView, "scan-glb", "sample scan bytes")
+    try requireContains(
+        artifactSummaryView,
+        "Artifact3DPreviewView(session: session)",
+        "artifact summary 3D preview wiring"
+    )
+    try requireContains(artifact3DPreviewView, "import SceneKit", "SceneKit preview source")
+    try requireContains(artifact3DPreviewView, "SceneView(scene:", "SwiftUI SceneKit scene view")
+    try requireContains(artifact3DPreviewView, "ArtifactPreviewState", "artifact preview state usage")
+    try requireContains(artifact3DPreviewView, "SCNScene", "SceneKit scene construction")
+    try requireContains(artifact3DPreviewView, "SCNCylinder", "artifact pedestal geometry")
+    try requireContains(artifact3DPreviewView, "SCNTorus", "myth artifact proxy geometry")
 
     try scanForMobileSecrets(in: [appRoot, coreRoot], additionalFiles: [packageFile, projectFile, plistFile])
 
