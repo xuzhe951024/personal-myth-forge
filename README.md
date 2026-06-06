@@ -84,6 +84,13 @@ uv run python -m myth_forge_api.cli generate-asset \
 Use `THREE_D_PROVIDER=meshy` to route `POST /v1/myth-sessions` through Meshy. Keep
 `THREE_D_PROVIDER=local` for fast local demos and tests.
 
+P0.11 adds capture-aware 3D generation for the from-capture flow. When
+`POST /v1/myth-sessions/from-capture` is called, the backend safely reads local
+JPEG/PNG reference media, converts it into a provider-only data URI source image,
+passes scan assets as local capture references, and routes Meshy requests through
+Image-to-3D when an image source is present. Prompt-only CLI and direct session
+generation still use the text-to-3D path.
+
 Run a small 3D prompt evaluation report:
 
 ```bash
@@ -167,5 +174,16 @@ View the P0.10 static storyboard evidence:
 http://127.0.0.1:8128/p0.10-ios-forge-flow.html
 ```
 
-This is still no-simulator evidence. Real media picking, ARKit scanning, and 3D
-rendering remain device/full-Xcode work. Provider API keys stay on the backend.
+P0.11 completes the backend half of capture-aware 3D generation. Uploaded
+reference images and scan asset refs now reach the 3D provider contract, and the
+Meshy adapter chooses Image-to-3D when an image source exists. View the static
+provider-contract evidence:
+
+```text
+http://127.0.0.1:8128/p0.11-capture-aware-3d.html
+```
+
+This is still no-simulator evidence. Real media picking, ARKit scanning, public
+or storage-backed media delivery, multi-image/scan remesh, real provider-key
+runs, and iOS 3D rendering remain later work. Provider API keys stay on the
+backend.
