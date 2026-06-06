@@ -1429,3 +1429,35 @@ Static evidence lives at:
 docs/superpowers/verification/p0.51-showcase-autopilot.html
 docs/superpowers/verification/assets/p0.51-showcase-autopilot-390x844.png
 ```
+
+P0.52 adds a compact `Device Preflight` panel to the iOS app source. It appears
+after the final showcase summary and before the demo script, then summarizes the
+state that matters before a physical iPhone demo:
+
+- whether `PMF_BACKEND_BASE_URL` is still loopback or uses a LAN-reachable URL
+- whether backend provider readiness has loaded and is demo-ready
+- whether the local final showcase state is ready
+- whether saved NPC history exists for restore/resume
+
+The panel is derived from typed Swift core state through
+`DevicePreflightSummaryBuilder`; provider keys, checkout links, raw media, and
+local paths remain redacted or backend-only. The source-only
+`ios_showcase_acceptance` gate now includes `device_preflight` and reports
+`passed=13`, `failed=0` when the mobile showcase source is complete.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py tests/test_final_acceptance.py -q
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.52-device-preflight.html
+docs/superpowers/verification/assets/p0.52-device-preflight-390x844.png
+```

@@ -39,6 +39,7 @@ do {
     let demoSnapshotStatusView = try readText(appRoot.appendingPathComponent("DemoSnapshotStatusView.swift"))
     let printQuoteReviewView = try readText(appRoot.appendingPathComponent("PrintQuoteReviewView.swift"))
     let finalShowcaseSummaryView = try readText(appRoot.appendingPathComponent("FinalShowcaseSummaryView.swift"))
+    let devicePreflightView = try readText(appRoot.appendingPathComponent("DevicePreflightView.swift"))
     let demoScriptView = try readText(appRoot.appendingPathComponent("DemoScriptView.swift"))
     let cameraCaptureView = try readText(appRoot.appendingPathComponent("CameraCaptureView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
@@ -47,6 +48,7 @@ do {
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
     let npcRitualScene = try readText(coreRoot.appendingPathComponent("NPCRitualScene.swift"))
     let showcaseAutopilot = try readText(coreRoot.appendingPathComponent("ShowcaseAutopilot.swift"))
+    let devicePreflight = try readText(coreRoot.appendingPathComponent("DevicePreflight.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
     let apiClient = try readText(coreRoot.appendingPathComponent("PersonalMythForgeAPIClient.swift"))
 
@@ -163,6 +165,7 @@ do {
         "DemoSnapshotStatusView.swift",
         "PrintQuoteReviewView.swift",
         "FinalShowcaseSummaryView.swift",
+        "DevicePreflightView.swift",
         "CameraCaptureView.swift",
     ] {
         try requireContains(project, file, "Xcode project file reference")
@@ -214,6 +217,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000015 /* CameraCaptureView.swift in Sources */,",
         "camera capture Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000017 /* DevicePreflightView.swift in Sources */,",
+        "device preflight Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -285,6 +294,8 @@ do {
     try requireContains(forgeRootView, "printQuoteError", "print quote error state")
     try requireContains(forgeRootView, "FinalShowcaseSummaryView(", "final showcase summary view wiring")
     try requireContains(forgeRootView, "FinalShowcaseSummaryBuilder.build", "final showcase summary builder wiring")
+    try requireContains(forgeRootView, "DevicePreflightSummaryBuilder.build", "device preflight summary wiring")
+    try requireContains(forgeRootView, "DevicePreflightView(summary:", "device preflight view wiring")
     try requireBefore(
         forgeRootView,
         "FinalShowcaseSummaryView(",
@@ -389,6 +400,9 @@ do {
     try requireContains(npcTickView, "runAutonomy", "autonomy run button action")
     try requireContains(finalShowcaseSummaryView, "Final Showcase", "final showcase summary title")
     try requireContains(finalShowcaseSummaryView, "privacyNotes", "final showcase privacy note rendering")
+    try requireContains(devicePreflightView, "Device Preflight", "device preflight title")
+    try requireContains(devicePreflightView, "backendBaseURL", "device preflight backend URL")
+    try requireContains(devicePreflight, "DevicePreflightSummaryBuilder", "device preflight core builder")
     try requireContains(
         forgeRootView,
         ".onChange(of: selectedCaptureMode) { mode in",

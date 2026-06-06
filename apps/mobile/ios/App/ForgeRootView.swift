@@ -62,15 +62,9 @@ struct ForgeRootView: View {
                         clearSnapshot: clearDemoRunSnapshot
                     )
                     FinalShowcaseSummaryView(
-                        summary: FinalShowcaseSummaryBuilder.build(
-                            captureSelection: mediaSelection,
-                            session: readySession,
-                            npcTickHistoryCount: npcTickHistory.count,
-                            printQuote: printQuote,
-                            providerReadiness: providerReadiness,
-                            providerReadinessError: providerReadinessError
-                        )
+                        summary: finalShowcaseSummary
                     )
+                    DevicePreflightView(summary: devicePreflightSummary)
                     DemoScriptView(
                         script: demoScript,
                         autopilotPlan: showcaseAutopilotPlan,
@@ -467,6 +461,27 @@ struct ForgeRootView: View {
 
     private var latestNPCTick: NPCAgentTick? {
         npcTickHistory.last
+    }
+
+    private var finalShowcaseSummary: FinalShowcaseSummary {
+        FinalShowcaseSummaryBuilder.build(
+            captureSelection: mediaSelection,
+            session: readySession,
+            npcTickHistoryCount: npcTickHistory.count,
+            printQuote: printQuote,
+            providerReadiness: providerReadiness,
+            providerReadinessError: providerReadinessError
+        )
+    }
+
+    private var devicePreflightSummary: DevicePreflightSummary {
+        DevicePreflightSummaryBuilder.build(
+            backendBaseURL: AppConfiguration.backendBaseURL,
+            providerReadiness: providerReadiness,
+            providerReadinessError: providerReadinessError,
+            finalShowcaseSummary: finalShowcaseSummary,
+            savedNPCTickCount: npcTickHistory.count
+        )
     }
 
     private var demoScript: DemoScript {
