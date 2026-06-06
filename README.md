@@ -2012,3 +2012,28 @@ Static evidence lives at:
 docs/superpowers/verification/p0.72-mobile-final-launch-status.html
 docs/superpowers/verification/assets/p0.72-mobile-final-launch-status-390x844.png
 ```
+
+P0.73 adds an explicit mobile `Context Capsule Review` step. The iPhone app now
+requires the operator to approve the manually entered summary capsule before
+`Forge Myth` can run. Editing the theme or tone clears approval, and
+`forgeMyth` has a source-level guard in addition to the disabled button state.
+
+This keeps the first demo privacy boundary concrete: no raw email, chat,
+calendar, document, or file bodies are read by the app; only the approved
+summary capsule is sent to the backend.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py -q
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.73-mobile-context-capsule-review.html
+docs/superpowers/verification/assets/p0.73-mobile-context-capsule-review-390x844.png
+```

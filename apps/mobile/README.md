@@ -1925,3 +1925,29 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.72-mobile-final-launch-status.html
 docs/superpowers/verification/assets/p0.72-mobile-final-launch-status-390x844.png
 ```
+
+## P0.73 Mobile Context Capsule Review
+
+The capture form now includes a `Context Capsule Review` panel with an
+`Approve Capsule` toggle. `Forge Myth` is enabled only when object media is
+ready and the displayed context capsule has been approved. Editing the theme or
+tone clears approval.
+
+The app still does not read raw personal data sources. It sends only the
+approved `currentTheme` and `desiredTone` summary fields to the backend.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py -q
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.73-mobile-context-capsule-review.html
+docs/superpowers/verification/assets/p0.73-mobile-context-capsule-review-390x844.png
+```

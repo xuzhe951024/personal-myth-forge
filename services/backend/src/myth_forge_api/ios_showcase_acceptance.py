@@ -144,6 +144,40 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="context_capsule_review",
+        label="Context capsule review",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ContextCapsuleReview.swift",
+                "ContextCapsuleReviewBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ContextCapsuleReviewView.swift",
+                "Context Capsule Review",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "ContextCapsuleReviewView(",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "isContextCapsuleApproved",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "ContextCapsuleReviewBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "guard isContextCapsuleApproved else",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testContextCapsuleReviewMarksApprovedSummaryReady",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="three_d_preview",
         label="3D preview",
         requirements=(

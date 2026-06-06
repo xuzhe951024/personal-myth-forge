@@ -47,6 +47,7 @@ do {
     let finalShowcaseSummaryView = try readText(appRoot.appendingPathComponent("FinalShowcaseSummaryView.swift"))
     let devicePreflightView = try readText(appRoot.appendingPathComponent("DevicePreflightView.swift"))
     let finalLaunchStatusView = try readText(appRoot.appendingPathComponent("FinalLaunchStatusView.swift"))
+    let contextCapsuleReviewView = try readText(appRoot.appendingPathComponent("ContextCapsuleReviewView.swift"))
     let demoScriptView = try readText(appRoot.appendingPathComponent("DemoScriptView.swift"))
     let cameraCaptureView = try readText(appRoot.appendingPathComponent("CameraCaptureView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
@@ -59,6 +60,7 @@ do {
     let finalLaunchMobileSummary = try readText(
         coreRoot.appendingPathComponent("FinalLaunchMobileSummary.swift")
     )
+    let contextCapsuleReview = try readText(coreRoot.appendingPathComponent("ContextCapsuleReview.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
     let arkitScanPackageBuilder = try readText(coreRoot.appendingPathComponent("ARKitScanPackageBuilder.swift"))
     let captureGenerationReadiness = try readText(
@@ -242,6 +244,7 @@ do {
         "FinalShowcaseSummaryView.swift",
         "DevicePreflightView.swift",
         "FinalLaunchStatusView.swift",
+        "ContextCapsuleReviewView.swift",
         "CameraCaptureView.swift",
     ] {
         try requireContains(project, file, "Xcode project file reference")
@@ -306,6 +309,12 @@ do {
         "10A000000000000000000018 /* FinalLaunchStatusView.swift in Sources */,",
         "final launch status Xcode source membership"
     )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000019 /* ContextCapsuleReviewView.swift in Sources */,",
+        "context capsule review Xcode source membership"
+    )
     for file in [
         "PMFJSON.swift",
         "PMFModels.swift",
@@ -334,6 +343,13 @@ do {
     try requireContains(captureFormView, "generationReadinessTitle", "capture generation readiness title")
     try requireContains(captureFormView, "generationReadinessRouteLabel", "capture generation readiness route label")
     try requireContains(captureFormView, "generationReadinessDetail", "capture generation readiness detail")
+    try requireContains(captureFormView, "isContextCapsuleApproved", "capture form context approval binding")
+    try requireContains(captureFormView, "ContextCapsuleReviewView(", "capture form context review wiring")
+    try requireContains(
+        captureFormView,
+        "contextCapsuleReview.status == .ready",
+        "capture form forge approval gate"
+    )
     try requireContains(captureFormView, "chooseCapture", "capture button closure")
     try requireContains(captureFormView, "let takePhoto: () -> Void", "camera action form input")
     try requireContains(captureFormView, "Take Photo", "single photo camera action")
@@ -343,7 +359,11 @@ do {
     try requireContains(captureFormView, "Start Guided Scan", "guided scan primary action")
     try requireContains(captureFormView, "Guided scan", "guided scan mode label")
     try requireContains(captureFormView, "let isMediaReadyForUpload", "media readiness form input")
-    try requireContains(captureFormView, ".disabled(!isMediaReadyForUpload)", "disabled forge button source")
+    try requireContains(
+        captureFormView,
+        ".disabled(!(isMediaReadyForUpload && contextCapsuleReview.status == .ready))",
+        "disabled forge button source"
+    )
     try requireContains(
         captureFormView,
         "mobileTextInputAutocapitalizationDisabled()",
@@ -364,6 +384,10 @@ do {
     try requireNotContains(captureFormView, "Future Xcode target triggers", "forge button no-op comment")
     try requireNotContains(captureFormView, "captureActionTitle", "unused sample-era capture title")
     try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
+    try requireContains(forgeRootView, "isContextCapsuleApproved", "context capsule approval state")
+    try requireContains(forgeRootView, "ContextCapsuleReviewBuilder.build", "context capsule review builder wiring")
+    try requireContains(forgeRootView, "isContextCapsuleApproved = false", "context approval reset")
+    try requireContains(forgeRootView, "guard isContextCapsuleApproved else", "forge context approval guard")
     try requireContains(forgeRootView, "isCameraCapturePresented", "camera sheet root state")
     try requireContains(forgeRootView, "CameraCaptureView(", "camera sheet root wiring")
     try requireContains(
@@ -535,6 +559,9 @@ do {
         "final launch status resource action rendering"
     )
     try requireContains(finalLaunchStatusView, "commandRows", "final launch status command rendering")
+    try requireContains(contextCapsuleReviewView, "Context Capsule Review", "context capsule review title")
+    try requireContains(contextCapsuleReviewView, "Approve Capsule", "context capsule approval toggle")
+    try requireContains(contextCapsuleReviewView, "privacyNotes", "context capsule privacy notes")
     try requireContains(devicePreflight, "DevicePreflightSummaryBuilder", "device preflight core builder")
     try requireContains(devicePreflight, "BackendHealthProbe", "backend health probe core type")
     try requireContains(devicePreflight, "final_launch", "device preflight final launch item")
@@ -553,6 +580,10 @@ do {
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileSummaryBuilder", "final launch summary builder")
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileStatus", "final launch summary status")
     try requireContains(finalLaunchMobileSummary, "sanitize", "final launch summary redaction")
+    try requireContains(contextCapsuleReview, "ContextCapsuleReviewBuilder", "context capsule review builder")
+    try requireContains(contextCapsuleReview, "ContextCapsuleReviewStatus", "context capsule review status")
+    try requireContains(contextCapsuleReview, "No raw email", "context capsule raw source privacy note")
+    try requireContains(contextCapsuleReview, "sanitize", "context capsule review redaction")
     try requireContains(
         forgeRootView,
         ".onChange(of: selectedCaptureMode) { mode in",
