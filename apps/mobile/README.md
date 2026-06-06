@@ -192,3 +192,32 @@ docs/superpowers/verification/assets/p0.11-capture-aware-3d-390x844.png
 Remaining device-facing gaps are unchanged: real PhotosPicker/fileImporter
 media selection, ARKit scanning, public or storage-backed media delivery,
 multi-image/scan remesh, real provider-key runs, and iOS 3D rendering.
+
+## P0.12 Device Media Input Bridge
+
+P0.12 replaces the app shell's sample media fallback with source-level real
+input wiring:
+
+- PhotosPicker for `single_photo`, `photo_set`, and ARKit reference photos.
+- fileImporter for `manual_upload` and ARKit scan/model files.
+- `CaptureMediaSelection` in the SwiftPM core to summarize selected media,
+  enforce mode-level readiness, and build the existing `CaptureDraft`.
+- `ForgeRootView` loads selected photo/file bytes into `CaptureMediaDraft`
+  values before calling `ForgeFlowService`.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.12-ios-device-media-input.html
+docs/superpowers/verification/assets/p0.12-ios-device-media-input-390x844.png
+```
+
+Remaining gaps after P0.12 are live camera capture, ARKit mesh capture runtime,
+full simulator/device deployment, iOS 3D rendering, and real provider-key runs.

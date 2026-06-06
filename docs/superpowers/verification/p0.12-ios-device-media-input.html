@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.12 iOS Device Media Input</title>
+  <style>
+    :root {
+      --ink: #172125;
+      --muted: #5f6d72;
+      --line: #cbd8d4;
+      --paper: #f6f9f7;
+      --panel: #ffffff;
+      --green: #276f58;
+      --blue: #285f8d;
+      --gold: #9b6b21;
+      --rose: #8b4657;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow-x: hidden;
+      background: #dde8e3;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .phone {
+      width: min(100%, 390px);
+      min-height: 840px;
+      overflow: hidden;
+      border: 1px solid #bdcbc6;
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 18px 44px rgba(23, 33, 37, 0.2);
+    }
+
+    header {
+      padding: 10px 14px 9px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfb;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      font-weight: 760;
+    }
+
+    .subhead {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    main {
+      padding: 9px 12px 8px;
+    }
+
+    .section {
+      margin-bottom: 8px;
+    }
+
+    .label {
+      margin: 0 0 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 720;
+      text-transform: uppercase;
+    }
+
+    .mode-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef4f1;
+    }
+
+    .mode {
+      padding: 7px 4px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      text-align: center;
+    }
+
+    .mode.active {
+      background: var(--panel);
+      color: var(--green);
+      box-shadow: 0 1px 5px rgba(23, 33, 37, 0.12);
+    }
+
+    .capture-panel {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .capture-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .capture-head strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .capture-head span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      align-self: start;
+      padding: 5px 7px;
+      border-radius: 6px;
+      background: #e8f0f7;
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .control {
+      min-height: 62px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfb;
+    }
+
+    .control strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+
+    .control span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .selected {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px solid #d8e2df;
+      border-radius: 8px;
+      background: #f4f7f5;
+    }
+
+    .icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: #e7f0ed;
+      color: var(--green);
+      font-weight: 840;
+    }
+
+    .selected strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .selected span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .ready {
+      padding: 4px 6px;
+      border-radius: 999px;
+      background: #e7f0ed;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .flow {
+      display: grid;
+      gap: 7px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .dot {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--green);
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .step strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .step small {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .tag {
+      padding: 5px 7px;
+      border-radius: 6px;
+      background: #f6efe3;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .tag.rose {
+      background: #f5e9ec;
+      color: var(--rose);
+    }
+
+    .notice {
+      padding: 6px 9px;
+      border: 1px solid #d4c095;
+      border-radius: 8px;
+      background: #fbf7ef;
+      color: #665021;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header>
+      <div class="status">
+        <span>iOS app shell</span>
+        <span>P0.12</span>
+      </div>
+      <h1>Device Media Input</h1>
+      <p class="subhead">The forge flow now starts from selected PhotosPicker media and imported scan files instead of sample bytes.</p>
+    </header>
+
+    <main>
+      <section class="section">
+        <p class="label">Capture mode</p>
+        <div class="mode-row">
+          <div class="mode active">Photo</div>
+          <div class="mode">Set</div>
+          <div class="mode">File</div>
+          <div class="mode">Scan</div>
+        </div>
+      </section>
+
+      <section class="section capture-panel">
+        <div class="capture-head">
+          <div>
+            <strong>2 photos selected</strong>
+            <span>front.jpg, side.png</span>
+          </div>
+          <div class="badge">ready</div>
+        </div>
+        <div class="controls">
+          <div class="control">
+            <strong>PhotosPicker</strong>
+            <span>Choose Photo or Choose Photos from the device photo library.</span>
+          </div>
+          <div class="control">
+            <strong>fileImporter</strong>
+            <span>Choose File or Choose Scan for GLB, USDZ, and binary scan assets.</span>
+          </div>
+        </div>
+        <div class="selected">
+          <div class="icon">3D</div>
+          <div>
+            <strong>CaptureMediaSelection</strong>
+            <span>source_images and scan assets feed CaptureDraft</span>
+          </div>
+          <div class="ready">real input</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <p class="label">Input to forge flow</p>
+        <div class="flow">
+          <div class="step">
+            <div class="dot">1</div>
+            <div>
+              <strong>PhotosPicker reads image Data</strong>
+              <small>loadTransferable(type: Data.self)</small>
+            </div>
+            <span class="tag">photo</span>
+          </div>
+          <div class="step">
+            <div class="dot">2</div>
+            <div>
+              <strong>fileImporter reads files safely</strong>
+              <small>security-scoped URL access when available</small>
+            </div>
+            <span class="tag">scan</span>
+          </div>
+          <div class="step">
+            <div class="dot">3</div>
+            <div>
+              <strong>Forge Myth uses selected media</strong>
+              <small>CaptureDraft upload, then from-capture myth session</small>
+            </div>
+            <span class="tag rose">GLB</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="notice">
+          Evidence type: source-level no-simulator storyboard. Not a live device
+          capture, ARKit mesh run, simulator build, or iOS 3D renderer screenshot.
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
