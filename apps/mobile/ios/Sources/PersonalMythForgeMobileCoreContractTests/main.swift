@@ -24,6 +24,9 @@ do {
     try testCaptureMediaSelectionRequiresPhotoSetCount()
     try testCaptureMediaSelectionBuildsARKitDraft()
     try testCaptureMediaSelectionClearsWhenModeChanges()
+    try testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset()
+    try testArtifactPreviewStateMarksLocalUSDZAsSceneLoadable()
+    try testArtifactPreviewStateHandlesMissingURI()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
     try await testForgeFlowServiceUploadsCaptureThenCreatesSession()
     try await testForgeFlowServiceStopsBeforeSessionWhenUploadFails()
@@ -655,6 +658,45 @@ private func testSwiftUIScaffoldIncludesWorldResolution() throws {
     try expectContains(worldView, "visibleChanges")
 }
 
+private func testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset() throws {
+    let state = ArtifactPreviewState(
+        session: mythSession(
+            asset: generatedAsset(format: "glb", uri: "https://cdn.example.com/relic.glb")
+        )
+    )
+
+    try expectEqual(state.title, "The Key That Remembered")
+    try expectEqual(state.providerLabel, "meshy")
+    try expectEqual(state.formatLabel, "GLB")
+    try expectFalse(state.isSceneLoadable)
+    try expectEqual(state.statusTitle, "Generated 3D asset ready")
+    try expectContains(state.statusDetail, "download/import step")
+}
+
+private func testArtifactPreviewStateMarksLocalUSDZAsSceneLoadable() throws {
+    let state = ArtifactPreviewState(
+        session: mythSession(
+            asset: generatedAsset(format: "usdz", uri: "file:///tmp/relic.usdz")
+        )
+    )
+
+    try expectTrue(state.isSceneLoadable)
+    try expectEqual(state.statusTitle, "Local scene asset ready")
+    try expectContains(state.statusDetail, "SceneKit")
+}
+
+private func testArtifactPreviewStateHandlesMissingURI() throws {
+    let state = ArtifactPreviewState(
+        session: mythSession(
+            asset: generatedAsset(format: "", uri: "")
+        )
+    )
+
+    try expectFalse(state.isSceneLoadable)
+    try expectEqual(state.formatLabel, "Unknown")
+    try expectEqual(state.statusTitle, "Awaiting 3D asset")
+}
+
 private func sampleCaptureDraft() -> CaptureDraft {
     CaptureDraft(
         label: "old brass key",
@@ -695,6 +737,57 @@ private func captureMedia(
         contentType: contentType,
         data: data,
         kind: kind
+    )
+}
+
+private func generatedAsset(format: String, uri: String) -> GeneratedAsset {
+    GeneratedAsset(
+        kind: "game_asset",
+        provider: "meshy",
+        format: format,
+        uri: uri,
+        prompt: "a brass key relic",
+        moderationStatus: "approved"
+    )
+}
+
+private func mythSession(asset: GeneratedAsset) -> MythSession {
+    MythSession(
+        sessionId: "myth_test",
+        status: "ready",
+        objectCard: ObjectCard(
+            label: "old brass key",
+            materials: ["brass"],
+            source: "phone_capture",
+            affordances: ["opens"],
+            symbolicReading: "memory"
+        ),
+        mythSeed: MythSeed(
+            title: "The Key That Remembered",
+            personalResonance: "It holds a small deadline in its teeth.",
+            generationPrompt: "a brass key relic"
+        ),
+        generatedAsset: asset,
+        npcDirector: "local",
+        npcReactions: [],
+        worldResolution: WorldResolution(
+            arbitrator: "local",
+            summary: "The village gathers.",
+            acceptedActions: [],
+            rejectedActions: [],
+            worldStateDelta: [:],
+            visibleChanges: []
+        ),
+        printCandidate: PrintCandidate(
+            kind: "print_asset",
+            sourceAssetUri: asset.uri,
+            provider: "local",
+            format: "stl",
+            uri: "local://print.stl",
+            requiresUserApproval: true,
+            approvalReason: "review",
+            printabilityNotes: []
+        )
     )
 }
 
