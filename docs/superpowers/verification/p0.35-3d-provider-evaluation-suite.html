@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.35 3D Provider Evaluation Suite</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202522;
+      --muted: #5e6764;
+      --line: #d8dfdb;
+      --paper: #f7faf7;
+      --panel: #ffffff;
+      --green: #3c724e;
+      --blue: #2f7095;
+      --amber: #a05a2f;
+      --plum: #65507c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e8ede9;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 12px 15px 14px;
+      background: var(--paper);
+      border-left: 1px solid #cad5cf;
+      border-right: 1px solid #cad5cf;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      padding: 2px 0 9px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 800;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 830;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      line-height: 1.15;
+      font-weight: 800;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .metric,
+    .row,
+    .case,
+    .gate {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .label {
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.18;
+      font-weight: 790;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 860;
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .amber {
+      color: var(--amber);
+    }
+
+    .rows,
+    .cases {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .row-key {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 780;
+      text-transform: uppercase;
+    }
+
+    .row-value {
+      font-size: 12px;
+      line-height: 1.22;
+      font-weight: 780;
+      overflow-wrap: anywhere;
+    }
+
+    .case {
+      display: grid;
+      grid-template-columns: 72px 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .case-id {
+      color: var(--blue);
+      font-size: 11px;
+      line-height: 1.12;
+      font-weight: 840;
+    }
+
+    .case-copy {
+      font-size: 11px;
+      line-height: 1.18;
+      font-weight: 760;
+    }
+
+    .pill {
+      border-radius: 6px;
+      padding: 4px 6px;
+      background: #e6f0e8;
+      color: #315d3a;
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 820;
+      white-space: nowrap;
+    }
+
+    .gate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .gate-title {
+      color: var(--amber);
+      font-size: 11px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .gate-copy {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.24;
+    }
+
+    code {
+      color: var(--plum);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>3D Provider Evaluation Suite</h1>
+      <div class="tag">P0.35</div>
+    </header>
+
+    <section>
+      <h2>Default Suite</h2>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">cases</div>
+          <div class="value blue">20</div>
+        </div>
+        <div class="metric">
+          <div class="label">categories</div>
+          <div class="value green">5</div>
+        </div>
+        <div class="metric">
+          <div class="label">local pass</div>
+          <div class="value amber">20</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Coverage</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">input</div>
+          <div class="row-value"><code>text_prompt</code> 20, <code>single_image</code> 0, <code>multi_image</code> 0</div>
+        </div>
+        <div class="row">
+          <div class="row-key">variants</div>
+          <div class="row-value"><code>game_asset</code> 20, <code>ios_scene_asset</code> 20</div>
+        </div>
+        <div class="row">
+          <div class="row-key">scene</div>
+          <div class="row-value">20 cases have a SceneKit-loadable variant in local mode.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Report Fields</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">quality</div>
+          <div class="row-value">Manual review fields for artifact quality, prompt alignment, mobile readiness, and printability signal.</div>
+        </div>
+        <div class="row">
+          <div class="row-key">provider</div>
+          <div class="row-value">Per-case elapsed time, generated URI, asset format, variants, provenance, and sanitized error.</div>
+        </div>
+        <div class="row">
+          <div class="row-key">safety</div>
+          <div class="row-value">No provider secrets, raw media data URIs, or local file paths in reports.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Sample Cases</h2>
+      <div class="cases">
+        <div class="case">
+          <div class="case-id">object</div>
+          <div class="case-copy">Worn brass key relic with patina and chipped teeth.</div>
+          <div class="pill">silhouette</div>
+        </div>
+        <div class="case">
+          <div class="case-id">context</div>
+          <div class="case-copy">Desk plant shrine for a hopeful but uncertain new beginning.</div>
+          <div class="pill">tone</div>
+        </div>
+        <div class="case">
+          <div class="case-id">print</div>
+          <div class="case-copy">Thumb-sized totem with stable base and no fragile spikes.</div>
+          <div class="pill">review</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Live Handoff Gates</h2>
+      <div class="gate-grid">
+        <div class="gate">
+          <div class="gate-title">Meshy key</div>
+          <div class="gate-copy"><code>MESHY_API_KEY</code> stays backend-only before running the suite against Meshy.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">Provider cost</div>
+          <div class="gate-copy">Final acceptance does not run this 20-case suite unless called explicitly.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

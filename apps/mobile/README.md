@@ -1071,3 +1071,32 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.34-generation-provenance-contract.html
 docs/superpowers/verification/assets/p0.34-generation-provenance-contract-390x844.png
 ```
+
+## P0.35 3D Provider Evaluation Suite
+
+P0.35 is backend-first but directly supports the final iPhone demo handoff. It
+adds a fixed `default-v0` suite of 20 non-private 3D generation cases so Meshy
+quality can be evaluated consistently once backend-only keys are provided.
+
+Run the no-key local suite:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli evaluate-3d \
+  --provider local \
+  --suite default-v0 \
+  --output /tmp/personal-myth-forge-3d-eval.json
+```
+
+The report records case category, generated asset provenance, asset variants,
+SceneKit-loadable coverage, elapsed time, sanitized errors, and manual review
+fields for later artifact scoring. `--provider meshy` uses the same suite after
+`MESHY_API_KEY` is supplied on the backend. The mobile app still receives only
+generated asset metadata and never stores provider secrets or raw source media.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.35-3d-provider-evaluation-suite.html
+docs/superpowers/verification/assets/p0.35-3d-provider-evaluation-suite-390x844.png
+```
