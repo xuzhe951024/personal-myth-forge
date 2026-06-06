@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
+from myth_forge_api.config import load_settings
 from myth_forge_api.domain.models import (
     CAPTURE_ID_PATTERN,
     MythSession,
@@ -17,6 +18,7 @@ from myth_forge_api.domain.models import (
     MythSessionRequest,
     ObjectCapture,
     ObjectCaptureMetadata,
+    ProviderReadinessResponse,
 )
 from myth_forge_api.domain.pipeline import create_demo_myth_session
 from myth_forge_api.providers.capture_store import CaptureStore, CaptureStoreError, CaptureUpload
@@ -26,6 +28,7 @@ from myth_forge_api.providers.factory import (
     build_three_d_provider,
 )
 from myth_forge_api.providers.npc import OpenAINPCProviderError
+from myth_forge_api.providers.readiness import build_provider_readiness
 from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDSourceAsset, ThreeDSourceImage
 
 DEMO_DIR = Path(__file__).parent / "demo"
@@ -42,6 +45,11 @@ app.mount("/demo/static", StaticFiles(directory=DEMO_DIR), name="demo-static")
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/v1/provider-readiness", response_model=ProviderReadinessResponse)
+def provider_readiness() -> ProviderReadinessResponse:
+    return build_provider_readiness(load_settings())
 
 
 @app.get("/demo", include_in_schema=False)

@@ -137,6 +137,12 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
         return try await send(request, decoding: MythSession.self)
     }
 
+    public func getProviderReadiness() async throws -> ProviderReadinessResponse {
+        var request = URLRequest(url: endpoint("/v1/provider-readiness"))
+        request.httpMethod = "GET"
+        return try await send(request, decoding: ProviderReadinessResponse.self)
+    }
+
     private func endpoint(_ path: String) -> URL {
         let trimmed = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         return baseURL.appendingPathComponent(trimmed)

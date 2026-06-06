@@ -25,6 +25,7 @@ do {
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
     let guidedScanCaptureView = try readText(appRoot.appendingPathComponent("GuidedScanCaptureView.swift"))
+    let providerReadinessView = try readText(appRoot.appendingPathComponent("ProviderReadinessView.swift"))
     let npcReactionsView = try readText(appRoot.appendingPathComponent("NPCReactionsView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
@@ -108,6 +109,7 @@ do {
         "ArtifactSummaryView.swift",
         "Artifact3DPreviewView.swift",
         "GuidedScanCaptureView.swift",
+        "ProviderReadinessView.swift",
         "WorldResolutionView.swift",
         "NPCReactionsView.swift",
     ] {
@@ -124,6 +126,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000009 /* GuidedScanCaptureView.swift in Sources */,",
         "guided scan Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000010 /* ProviderReadinessView.swift in Sources */,",
+        "provider readiness Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -179,8 +187,15 @@ do {
     try requireNotContains(captureFormView, "captureActionTitle", "unused sample-era capture title")
     try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
     try requireContains(forgeRootView, "isGuidedScanPresented", "guided scan sheet state")
+    try requireContains(forgeRootView, "providerReadiness", "provider readiness root state")
     try requireContains(forgeRootView, "ForgeFlowService", "forge flow service source wiring")
     try requireContains(forgeRootView, "forgeService.forge", "forge flow service call")
+    try requireContains(forgeRootView, "getProviderReadiness()", "provider readiness API load")
+    try requireContains(
+        forgeRootView,
+        "ProviderReadinessView(readiness:",
+        "provider readiness view wiring"
+    )
     try requireContains(forgeRootView, "fileImporter", "file importer app shell source")
     try requireContains(
         forgeRootView,
@@ -255,6 +270,31 @@ do {
         guidedScanCaptureView,
         "Object Capture is only available on supported iOS devices.",
         "non-iOS guided scan fallback"
+    )
+    try requireContains(
+        providerReadinessView,
+        "ProviderReadinessResponse",
+        "provider readiness response model use"
+    )
+    try requireContains(
+        providerReadinessView,
+        "overallDemoReady",
+        "provider readiness demo status"
+    )
+    try requireContains(
+        providerReadinessView,
+        "overallRealReady",
+        "provider readiness real status"
+    )
+    try requireContains(
+        providerReadinessView,
+        "missingEnv",
+        "provider readiness missing env display"
+    )
+    try requireNotContains(
+        providerReadinessView,
+        "sk-",
+        "provider readiness secret sample"
     )
     try requireContains(
         artifactSummaryView,

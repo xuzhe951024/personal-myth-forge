@@ -462,3 +462,45 @@ Remaining gaps after P0.19 are Apple SDK license acceptance on this machine,
 real device Object Capture validation, local reconstruction/photogrammetry,
 HEIC-to-JPEG transcoding for Meshy Image-to-3D, simulator/device installation,
 signing, and Unity movement/action execution.
+
+## P0.20 Provider Readiness Preflight
+
+P0.20 adds a backend readiness contract and mobile display for final key/API
+handoff. The backend endpoint:
+
+```http
+GET /v1/provider-readiness
+```
+
+returns rows for `three_d`, `npc`, `print`, and `capture_storage`. Each row
+includes the selected provider, readiness status, demo readiness,
+real-provider readiness, missing environment variable names, capabilities, and
+notes. It never returns raw key values or local absolute storage paths.
+
+The Swift mobile core adds `ProviderReadinessResponse`,
+`ProviderReadinessItem`, and `PersonalMythForgeAPIClient.getProviderReadiness()`.
+`ForgeRootView` loads the contract on display and renders
+`ProviderReadinessView` above the capture form. A missing backend preflight is
+shown as non-blocking status text; the app still keeps the forge flow available
+for local demos.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make mobile-xcode-build
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.20-provider-readiness.html
+docs/superpowers/verification/assets/p0.20-provider-readiness-390x844.png
+```
+
+Remaining gaps after P0.20 are accepting the Apple SDK license on this machine,
+real device Object Capture validation, real Meshy/OpenAI key runs, print
+fulfillment adapters, HEIC-to-JPEG transcoding for Meshy Image-to-3D, signing,
+and Unity movement/action execution.

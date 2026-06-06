@@ -5,11 +5,12 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ForgeRootView: View {
-    private let forgeService = ForgeFlowService(
-        api: PersonalMythForgeAPIClient(baseURL: AppConfiguration.backendBaseURL)
-    )
+    private let apiClient: PersonalMythForgeAPIClient
+    private let forgeService: ForgeFlowService
 
     @State private var state = ForgeFlowState()
+    @State private var providerReadiness: ProviderReadinessResponse?
+    @State private var providerReadinessError: String?
     @State private var objectLabel = "old brass key"
     @State private var materials = "metal, brass"
     @State private var visualNotes = "worn teeth, circular bow, warm reflections"
@@ -23,10 +24,20 @@ struct ForgeRootView: View {
     @State private var isGuidedScanPresented = false
     @State private var captureInputError: String?
 
+    init(
+        apiClient: PersonalMythForgeAPIClient = PersonalMythForgeAPIClient(
+            baseURL: AppConfiguration.backendBaseURL
+        )
+    ) {
+        self.apiClient = apiClient
+        self.forgeService = ForgeFlowService(api: apiClient)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    ProviderReadinessView(readiness: providerReadiness, errorMessage: providerReadinessError)
                     CaptureFormView(
                         objectLabel: $objectLabel,
                         materials: $materials,
@@ -52,6 +63,9 @@ struct ForgeRootView: View {
                 .padding()
             }
             .navigationTitle("Personal Myth Forge")
+            .task {
+                await loadProviderReadiness()
+            }
             .onChange(of: selectedCaptureMode) { mode in
                 mediaSelection = mediaSelection.changingMode(to: mode)
                 selectedSinglePhotoItem = nil
@@ -96,6 +110,20 @@ struct ForgeRootView: View {
                         isGuidedScanPresented = false
                     }
                 )
+            }
+        }
+    }
+
+    private func loadProviderReadiness() async {
+        do {
+            let readiness = try await apiClient.getProviderReadiness()
+            await MainActor.run {
+                providerReadiness = readiness
+                providerReadinessError = nil
+            }
+        } catch {
+            await MainActor.run {
+                providerReadinessError = "Backend preflight is not reachable yet."
             }
         }
     }

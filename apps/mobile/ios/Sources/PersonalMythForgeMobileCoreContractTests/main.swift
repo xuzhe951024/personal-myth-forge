@@ -6,6 +6,7 @@ do {
     try testDecodesMythSessionFixture()
     try testDecodesMythSessionWithoutGeneratedAssetVariants()
     try testDecodesMythSessionWithoutNPCAgentTraceFields()
+    try testDecodesProviderReadinessPayload()
     try testCaptureIDValidation()
     try testMultipartBodyIncludesMetadataAndFileWithoutLocalPaths()
     try testMultipartBuilderSanitizesHeaderValues()
@@ -14,6 +15,8 @@ do {
     try await testInvalidCaptureIDFailsBeforeNetwork()
     try await testHTTPStatusErrorIncludesStatusAndBody()
     try await testHTTPStatusErrorSanitizesSecretsAndTruncatesBody()
+    try await testGetProviderReadinessBuildsGETRequest()
+    try await testGetProviderReadinessSanitizesHTTPErrorBody()
     try await testUploadObjectCaptureUsesGeneratedFilenamesWithoutLocalPaths()
     try await testUploadObjectCaptureRejectsUnsafeContentTypeBeforeNetwork()
     try await testUploadObjectCaptureBuildsARKitScanMultipartRequest()
@@ -119,6 +122,50 @@ private func testDecodesMythSessionWithoutNPCAgentTraceFields() throws {
 
     try expectEqual(session.npcAgentRuntime, "")
     try expectEqual(session.npcAgentTraces, [])
+}
+
+private func testDecodesProviderReadinessPayload() throws {
+    let data = Data(
+        """
+        {
+          "overall_demo_ready": true,
+          "overall_real_ready": false,
+          "providers": [
+            {
+              "kind": "three_d",
+              "selected_provider": "local",
+              "status": "local_stub",
+              "is_demo_ready": true,
+              "is_real_provider_ready": false,
+              "missing_env": [],
+              "capabilities": ["text_to_3d_stub"],
+              "notes": ["Local 3D provider is deterministic."]
+            },
+            {
+              "kind": "npc",
+              "selected_provider": "openai",
+              "status": "missing_configuration",
+              "is_demo_ready": false,
+              "is_real_provider_ready": false,
+              "missing_env": ["OPENAI_API_KEY"],
+              "capabilities": ["structured_agent_traces"],
+              "notes": ["OPENAI_API_KEY is required."]
+            }
+          ]
+        }
+        """.utf8
+    )
+
+    let readiness = try PMFJSON.decoder.decode(ProviderReadinessResponse.self, from: data)
+
+    try expectTrue(readiness.overallDemoReady)
+    try expectFalse(readiness.overallRealReady)
+    try expectEqual(readiness.providers.count, 2)
+    try expectEqual(readiness.providers[0].kind, "three_d")
+    try expectEqual(readiness.providers[0].status, "local_stub")
+    try expectTrue(readiness.providers[0].isDemoReady)
+    try expectFalse(readiness.providers[0].isRealProviderReady)
+    try expectEqual(readiness.providers[1].missingEnv, ["OPENAI_API_KEY"])
 }
 
 private func testCaptureIDValidation() throws {
@@ -292,6 +339,54 @@ private func testHTTPStatusErrorSanitizesSecretsAndTruncatesBody() async throws 
         try expectContains(sanitizedBody, "raw=[redacted]")
         try expectContains(sanitizedBody, "[truncated]")
         try expectTrue(sanitizedBody.count <= 530)
+    }
+}
+
+private func testGetProviderReadinessBuildsGETRequest() async throws {
+    let data = Data(
+        """
+        {
+          "overall_demo_ready": true,
+          "overall_real_ready": false,
+          "providers": []
+        }
+        """.utf8
+    )
+    let transport = RecordingTransport(
+        responses: [HTTPResponse(statusCode: 200, data: data)]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    let readiness = try await client.getProviderReadiness()
+
+    try expectTrue(readiness.overallDemoReady)
+    let request = try require(transport.requests.first, "missing readiness request")
+    try expectEqual(request.httpMethod, "GET")
+    try expectEqual(request.url?.path, "/v1/provider-readiness")
+    try expectEqual(request.httpBody, nil)
+}
+
+private func testGetProviderReadinessSanitizesHTTPErrorBody() async throws {
+    let secret = "test-secret"
+    let body = "Authorization=Bearer \(secret) api_key=\(secret)"
+    let transport = RecordingTransport(
+        responses: [HTTPResponse(statusCode: 502, data: Data(body.utf8))]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    do {
+        _ = try await client.getProviderReadiness()
+        throw ContractTestError.expectationFailed("Expected sanitized readiness error")
+    } catch ForgeFlowError.httpStatus(502, let sanitizedBody) {
+        try expectFalse(sanitizedBody.contains(secret))
+        try expectContains(sanitizedBody, "Authorization=Bearer [redacted]")
+        try expectContains(sanitizedBody, "api_key=[redacted]")
     }
 }
 
