@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.41 Final Showcase Summary</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202421;
+      --muted: #5d645d;
+      --line: #d5dbd2;
+      --paper: #f5f7f1;
+      --panel: #ffffff;
+      --green: #2f7049;
+      --blue: #2a7189;
+      --amber: #9a6228;
+      --plum: #63537c;
+      --red: #963d38;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #dfe5de;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 10px 14px 12px;
+      background: var(--paper);
+      border-right: 1px solid #c8cec6;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 840;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 840;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 13px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .panel,
+    .row,
+    .mini {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .panel {
+      display: grid;
+      gap: 7px;
+    }
+
+    .panel-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .title {
+      font-size: 14px;
+      line-height: 1.15;
+      font-weight: 840;
+    }
+
+    .status {
+      color: var(--green);
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 860;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .artifact {
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 830;
+    }
+
+    .rows {
+      display: grid;
+      gap: 5px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 9px 70px 1fr;
+      gap: 7px;
+      align-items: baseline;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      transform: translateY(-1px);
+    }
+
+    .ready {
+      background: var(--green);
+    }
+
+    .optional {
+      background: var(--blue);
+    }
+
+    .waiting {
+      background: var(--amber);
+    }
+
+    .label {
+      font-size: 10px;
+      line-height: 1.15;
+      font-weight: 840;
+      text-transform: uppercase;
+    }
+
+    .detail {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.18;
+      font-weight: 720;
+      overflow-wrap: anywhere;
+    }
+
+    .privacy {
+      color: var(--muted);
+      font-size: 9.5px;
+      line-height: 1.2;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .mini-title {
+      color: var(--plum);
+      font-size: 10px;
+      line-height: 1.15;
+      font-weight: 840;
+    }
+
+    .mini-copy {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 9.5px;
+      line-height: 1.2;
+    }
+
+    code {
+      color: var(--plum);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 9.5px;
+      line-height: 1.15;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Final Showcase Summary</h1>
+      <div class="tag">P0.41</div>
+    </header>
+
+    <section>
+      <div class="panel">
+        <div class="panel-top">
+          <div>
+            <div class="title">Final Showcase</div>
+            <div class="subtitle">Ready for local demo</div>
+          </div>
+          <div class="status">Ready</div>
+        </div>
+
+        <div class="artifact">The Brass Key That Remembers</div>
+
+        <div class="rows">
+          <div class="row">
+            <div class="dot ready"></div>
+            <div class="label">Capture</div>
+            <div class="detail">3 guided scan photos selected</div>
+          </div>
+          <div class="row">
+            <div class="dot ready"></div>
+            <div class="label">3D Asset</div>
+            <div class="detail"><code>local_stub glb via multi_image</code></div>
+          </div>
+          <div class="row">
+            <div class="dot ready"></div>
+            <div class="label">NPC Agent</div>
+            <div class="detail"><code>local_agent_runtime</code>, 3 saved ticks</div>
+          </div>
+          <div class="row">
+            <div class="dot optional"></div>
+            <div class="label">Print</div>
+            <div class="detail">Print candidate ready; quote not requested yet.</div>
+          </div>
+          <div class="row">
+            <div class="dot ready"></div>
+            <div class="label">Resources</div>
+            <div class="detail">local demo providers ready</div>
+          </div>
+        </div>
+
+        <div class="privacy">
+          Raw capture media stays out of the summary. Provider keys remain
+          backend-only. Checkout links are not surfaced. Local file paths are
+          withheld.
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Acceptance Coverage</h2>
+      <div class="grid">
+        <div class="mini">
+          <div class="mini-title">Core model</div>
+          <div class="mini-copy"><code>FinalShowcaseSummaryBuilder</code> is covered by Swift contract tests.</div>
+        </div>
+        <div class="mini">
+          <div class="mini-title">App source</div>
+          <div class="mini-copy"><code>FinalShowcaseSummaryView</code> compiles in the SwiftUI app target.</div>
+        </div>
+        <div class="mini">
+          <div class="mini-title">Safety</div>
+          <div class="mini-copy">Unsafe source strings are withheld from summary text.</div>
+        </div>
+        <div class="mini">
+          <div class="mini-title">No services</div>
+          <div class="mini-copy">No new backend endpoint or live provider call.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Remaining Local Gates</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="dot waiting"></div>
+          <div class="label">Device</div>
+          <div class="detail">Needs local Team ID and iPhone-reachable backend URL.</div>
+        </div>
+        <div class="row">
+          <div class="dot waiting"></div>
+          <div class="label">Xcode</div>
+          <div class="detail">Apple SDK license gate remains manual on this machine.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

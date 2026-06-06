@@ -1094,3 +1094,29 @@ Static evidence lives at:
 docs/superpowers/verification/p0.40-resource-handoff-bundle.html
 docs/superpowers/verification/assets/p0.40-resource-handoff-bundle-390x844.png
 ```
+
+P0.41 adds a mobile `Final Showcase` summary panel. The Swift mobile core now
+computes a `FinalShowcaseSummary` from existing app state: capture readiness,
+generated 3D asset/provenance, NPC agent output and saved tick count, print
+quote state, provider readiness, and privacy/resource boundaries.
+
+The app renders that summary near the top of `ForgeRootView`, before the
+detailed provider, capture, artifact, NPC, and print panels. It is local
+presentation logic only: it does not add a backend endpoint, call external
+providers, expose provider keys, surface checkout URLs, store raw capture media,
+or mutate Xcode state.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.41-final-showcase-summary.html
+docs/superpowers/verification/assets/p0.41-final-showcase-summary-390x844.png
+```
