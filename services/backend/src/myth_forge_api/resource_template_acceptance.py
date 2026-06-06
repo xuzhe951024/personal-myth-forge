@@ -17,6 +17,9 @@ GITIGNORE_PATH = ".gitignore"
 MAKEFILE_PATH = "Makefile"
 BACKEND_WRITER_PATH = "services/backend/scripts/write_backend_env.sh"
 BACKEND_WRITER_MAKE_TARGET = "backend-write-provider-env"
+CLI_PATH = "services/backend/src/myth_forge_api/cli.py"
+FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.py"
+FINAL_DEMO_LAUNCH_MAKE_TARGET = "final-demo-launch"
 BANNED_WRITER_TEXT = [
     "sudo",
     "xcode-select",
@@ -80,6 +83,10 @@ def run_resource_template_acceptance(
     backend_writer_text, backend_writer_exists = _read_optional_text(
         selected_repo_root / BACKEND_WRITER_PATH
     )
+    cli_text, cli_exists = _read_optional_text(selected_repo_root / CLI_PATH)
+    final_demo_launch_text, final_demo_launch_exists = _read_optional_text(
+        selected_repo_root / FINAL_DEMO_LAUNCH_PATH
+    )
 
     backend_keys = _parse_assignment_keys(backend_text, comment_prefixes=("#",))
     ios_keys = _parse_assignment_keys(ios_text, comment_prefixes=("#", "//"))
@@ -100,6 +107,14 @@ def run_resource_template_acceptance(
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
+    final_demo_launch_checks = _final_demo_launch_checks(
+        cli_text=cli_text,
+        cli_exists=cli_exists,
+        module_text=final_demo_launch_text,
+        module_exists=final_demo_launch_exists,
+        makefile_text=makefile_text,
+        makefile_exists=makefile_exists,
+    )
 
     checks = [
         _check("backend_template_exists", backend_exists),
@@ -110,6 +125,7 @@ def run_resource_template_acceptance(
         _check("gitignore_local_destinations", not missing_gitignore),
         _check("template_safety", _templates_are_safe(safety)),
         _check("backend_writer", all(backend_writer_checks.values())),
+        _check("final_demo_launch", all(final_demo_launch_checks.values())),
     ]
     summary = {
         "passed": sum(1 for check in checks if check["status"] == "passed"),
@@ -148,6 +164,12 @@ def run_resource_template_acceptance(
             "make_target": BACKEND_WRITER_MAKE_TARGET,
             "exists": backend_writer_exists,
             "checks": backend_writer_checks,
+        },
+        "final_demo_launch": {
+            "path": FINAL_DEMO_LAUNCH_PATH,
+            "make_target": FINAL_DEMO_LAUNCH_MAKE_TARGET,
+            "exists": final_demo_launch_exists,
+            "checks": final_demo_launch_checks,
         },
         "safety": safety,
     }
@@ -259,6 +281,31 @@ def _backend_writer_checks(
         "tracked_env_guard": "services/backend/.env must stay untracked" in writer_text,
         "no_banned_commands": not any(
             banned in writer_text for banned in BANNED_WRITER_TEXT
+        ),
+    }
+
+
+def _final_demo_launch_checks(
+    *,
+    cli_text: str,
+    cli_exists: bool,
+    module_text: str,
+    module_exists: bool,
+    makefile_text: str,
+    makefile_exists: bool,
+) -> dict[str, bool]:
+    checked_text = "\n".join([module_text, makefile_text])
+    return {
+        "module_exists": module_exists,
+        "cli_command": cli_exists
+        and "final-demo-launch" in cli_text
+        and "build_final_demo_launch_report" in cli_text,
+        "make_target": makefile_exists
+        and FINAL_DEMO_LAUNCH_MAKE_TARGET in makefile_text
+        and "myth_forge_api.cli final-demo-launch" in makefile_text,
+        "uses_resource_handoff": "build_resource_handoff_report" in module_text,
+        "no_banned_commands": not any(
+            banned in checked_text for banned in BANNED_WRITER_TEXT
         ),
     }
 

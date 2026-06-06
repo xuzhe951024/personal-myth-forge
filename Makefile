@@ -23,6 +23,11 @@ backend-generate-local:
 backend-write-provider-env:
 	@services/backend/scripts/write_backend_env.sh
 
+.PHONY: final-demo-launch
+
+final-demo-launch:
+	cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../..
+
 .PHONY: mobile-xcode-build
 
 mobile-xcode-build:

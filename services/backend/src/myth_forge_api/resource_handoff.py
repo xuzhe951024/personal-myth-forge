@@ -48,6 +48,8 @@ def build_resource_handoff_report(
 
 
 def _backend_items(settings: Settings) -> list[dict[str, Any]]:
+    print_status = _print_provider_status(settings)
+    treatstock_status = _treatstock_key_status(settings)
     return [
         _item(
             "THREE_D_PROVIDER",
@@ -93,21 +95,30 @@ def _backend_items(settings: Settings) -> list[dict[str, Any]]:
             "PRINT_PROVIDER",
             "Print provider selection",
             BACKEND_ENV_DESTINATION,
-            "local print quote review",
-            "ready" if settings.print_provider == "local" else "optional",
+            "print quote review",
+            print_status,
             configured=bool(settings.print_provider),
-            missing=False,
-            notes=["Live Treatstock/Sculpteo adapters are not implemented yet."],
+            missing=print_status == "missing",
+            notes=[
+                "PRINT_PROVIDER=local is deterministic for no-key demos.",
+                (
+                    "PRINT_PROVIDER=treatstock enables live quote handoff when "
+                    "TREATSTOCK_API_KEY is configured; order placement remains manual."
+                ),
+            ],
         ),
         _item(
             "TREATSTOCK_API_KEY",
             "Treatstock API key slot",
             BACKEND_ENV_DESTINATION,
-            "future live print quote/order handoff",
-            "optional",
+            "live Treatstock print quote handoff",
+            treatstock_status,
             configured=bool(settings.treatstock_api_key),
-            missing=False,
-            notes=["Slot exists; current live adapter is intentionally not implemented."],
+            missing=treatstock_status == "missing",
+            notes=[
+                "Treatstock live quote handoff is implemented.",
+                "Automatic order placement remains out of scope and requires user approval.",
+            ],
         ),
         _item(
             "SCULPTEO_API_KEY",
@@ -140,6 +151,20 @@ def _backend_items(settings: Settings) -> list[dict[str, Any]]:
             notes=["Default local myth session storage is acceptable for development."],
         ),
     ]
+
+
+def _print_provider_status(settings: Settings) -> str:
+    if settings.print_provider == "local":
+        return "ready"
+    if settings.print_provider == "treatstock":
+        return "ready" if settings.treatstock_api_key else "missing"
+    return "optional"
+
+
+def _treatstock_key_status(settings: Settings) -> str:
+    if settings.print_provider == "treatstock":
+        return "ready" if settings.treatstock_api_key else "missing"
+    return "optional"
 
 
 def _ios_items(repo_root: Path) -> list[dict[str, Any]]:
@@ -270,6 +295,10 @@ def _operator_actions(
         actions.append("set NPC_PROVIDER=openai")
     if backend_by_id["OPENAI_API_KEY"]["status"] != "ready":
         actions.append("provide OPENAI_API_KEY")
+    if backend_by_id["PRINT_PROVIDER"]["status"] == "missing":
+        actions.append("provide TREATSTOCK_API_KEY or set PRINT_PROVIDER=local")
+    if backend_by_id["TREATSTOCK_API_KEY"]["status"] == "missing":
+        actions.append("provide TREATSTOCK_API_KEY")
     if ios_by_id["DEVELOPMENT_TEAM"]["status"] != "ready":
         actions.append("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
     if ios_by_id["PMF_BACKEND_BASE_URL"]["status"] != "ready":
@@ -292,6 +321,16 @@ def _commands() -> list[str]:
             "cd services/backend && uv run python -m myth_forge_api.cli "
             "resource-template-acceptance "
             "--output /tmp/personal-myth-forge-resource-template-acceptance.json"
+        ),
+        (
+            "cd services/backend && uv run python -m myth_forge_api.cli "
+            "final-demo-launch --mode local --repo-root ../.. "
+            "--output /tmp/personal-myth-forge-final-demo-launch-local.json"
+        ),
+        (
+            "cd services/backend && uv run python -m myth_forge_api.cli "
+            "final-demo-launch --mode configured --repo-root ../.. "
+            "--output /tmp/personal-myth-forge-final-demo-launch-configured.json"
         ),
         (
             "cd services/backend && uv run python -m myth_forge_api.cli final-acceptance "

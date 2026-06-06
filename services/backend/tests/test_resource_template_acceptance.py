@@ -47,6 +47,18 @@ printf '%s\\n' "services/backend/.env must stay untracked."
 MAKEFILE_TEMPLATE = """.PHONY: backend-write-provider-env
 backend-write-provider-env:
 \t@services/backend/scripts/write_backend_env.sh
+.PHONY: final-demo-launch
+final-demo-launch:
+\tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../..
+"""
+
+CLI_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
+subcommands.add_parser("final-demo-launch")
+"""
+
+FINAL_DEMO_LAUNCH_TEMPLATE = """from myth_forge_api.resource_handoff import build_resource_handoff_report
+def build_final_demo_launch_report():
+    return build_resource_handoff_report()
 """
 
 
@@ -58,7 +70,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.exit_code == 0
     assert result.report["kind"] == "resource_template_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 8, "failed": 0}
+    assert result.report["summary"] == {"passed": 9, "failed": 0}
     assert result.report["backend_template"]["missing_keys"] == []
     assert result.report["ios_template"]["missing_keys"] == []
     assert "OPENAI_API_KEY" in result.report["backend_template"]["required_keys"]
@@ -97,6 +109,15 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.report["backend_writer"]["checks"]["redaction"] is True
     assert result.report["backend_writer"]["checks"]["tracked_env_guard"] is True
     assert result.report["backend_writer"]["checks"]["no_banned_commands"] is True
+    assert result.report["final_demo_launch"]["path"] == (
+        "services/backend/src/myth_forge_api/final_demo_launch.py"
+    )
+    assert result.report["final_demo_launch"]["make_target"] == "final-demo-launch"
+    assert result.report["final_demo_launch"]["checks"]["module_exists"] is True
+    assert result.report["final_demo_launch"]["checks"]["cli_command"] is True
+    assert result.report["final_demo_launch"]["checks"]["make_target"] is True
+    assert result.report["final_demo_launch"]["checks"]["uses_resource_handoff"] is True
+    assert result.report["final_demo_launch"]["checks"]["no_banned_commands"] is True
 
 
 def test_resource_template_acceptance_fails_missing_backend_key(tmp_path: Path) -> None:
@@ -190,6 +211,17 @@ def _write_repo(
     (repo_root / ".gitignore").write_text(gitignore_template, encoding="utf-8")
     (repo_root / "services/backend/scripts/write_backend_env.sh").write_text(
         backend_writer,
+        encoding="utf-8",
+    )
+    (repo_root / "services/backend/src/myth_forge_api").mkdir(parents=True)
+    (repo_root / "services/backend/src/myth_forge_api/cli.py").write_text(
+        CLI_TEMPLATE,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/src/myth_forge_api/final_demo_launch.py"
+    ).write_text(
+        FINAL_DEMO_LAUNCH_TEMPLATE,
         encoding="utf-8",
     )
     (repo_root / "Makefile").write_text(makefile, encoding="utf-8")
