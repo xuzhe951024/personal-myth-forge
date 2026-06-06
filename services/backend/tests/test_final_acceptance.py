@@ -35,6 +35,17 @@ def passing_ios_backend_handoff_result() -> IOSBackendHandoffAcceptanceResult:
     )
 
 
+def passing_resource_template_result() -> InlineCheckResult:
+    return InlineCheckResult(
+        exit_code=0,
+        report={
+            "kind": "resource_template_acceptance_report",
+            "status": "succeeded",
+            "summary": {"passed": 7, "failed": 0},
+        },
+    )
+
+
 def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path) -> None:
     commands: list[list[str]] = []
     demo_calls: list[dict[str, object]] = []
@@ -100,6 +111,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
+        resource_template_acceptance_runner=passing_resource_template_result,
     )
 
     assert result.exit_code == 2
@@ -108,7 +120,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.report["allow_live_provider_calls"] is False
     assert result.report["overall_status"] == "blocked"
     assert result.report["summary"] == {
-        "passed": 6,
+        "passed": 7,
         "blocked": 2,
         "failed": 0,
         "skipped": 0,
@@ -121,6 +133,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
         "print_quote_acceptance",
         "ios_showcase_acceptance",
         "ios_backend_handoff_acceptance",
+        "resource_template_acceptance",
         "mobile_deploy_preflight",
         "mobile_xcode_build",
     ]
@@ -137,6 +150,11 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     }
     assert checks["ios_backend_handoff_acceptance"]["status"] == "passed"
     assert checks["ios_backend_handoff_acceptance"]["report"]["summary"] == {
+        "passed": 7,
+        "failed": 0,
+    }
+    assert checks["resource_template_acceptance"]["status"] == "passed"
+    assert checks["resource_template_acceptance"]["report"]["summary"] == {
         "passed": 7,
         "failed": 0,
     }
@@ -223,6 +241,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
+        resource_template_acceptance_runner=passing_resource_template_result,
     )
 
     report_text = json.dumps(result.report)
@@ -241,6 +260,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
     assert checks["capture_3d_acceptance"]["status"] == "passed"
     assert checks["print_quote_acceptance"]["status"] == "passed"
     assert checks["ios_showcase_acceptance"]["status"] == "passed"
+    assert checks["resource_template_acceptance"]["status"] == "passed"
     assert command_calls == 2
     assert "sk-meshy-secret" not in report_text
     assert "sk-openai-secret" not in report_text
@@ -293,6 +313,7 @@ def test_final_acceptance_passes_explicit_live_provider_consent_to_demo_runner(
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
+        resource_template_acceptance_runner=passing_resource_template_result,
     )
 
     assert result.exit_code == 0
@@ -342,6 +363,7 @@ def test_final_acceptance_classifies_demo_consent_gate_as_blocked(tmp_path) -> N
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
+        resource_template_acceptance_runner=passing_resource_template_result,
     )
 
     checks = {check["id"]: check for check in result.report["checks"]}
@@ -395,6 +417,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
         ),
         ios_showcase_acceptance_runner=passing_ios_showcase_result,
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
+        resource_template_acceptance_runner=passing_resource_template_result,
     )
 
     check_ids = [check["id"] for check in result.report["checks"]]
@@ -402,7 +425,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
     assert result.exit_code == 0
     assert result.report["overall_status"] == "passed"
     assert result.report["summary"] == {
-        "passed": 13,
+        "passed": 14,
         "blocked": 0,
         "failed": 0,
         "skipped": 0,
@@ -414,6 +437,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
         "print_quote_acceptance",
         "ios_showcase_acceptance",
         "ios_backend_handoff_acceptance",
+        "resource_template_acceptance",
         "backend_lint",
         "backend_test",
         "swift_project_checks",

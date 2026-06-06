@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.46 Resource Template Acceptance</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1f2937;
+        --muted: #667085;
+        --line: #d0d5dd;
+        --ok: #047857;
+        --warn: #b45309;
+        --paper: #f8fafc;
+        --panel: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        color: var(--ink);
+        background: var(--paper);
+        overflow-x: hidden;
+      }
+
+      main {
+        width: calc(100% - 32px);
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 28px 0 36px;
+      }
+
+      header {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.15;
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .tile,
+      .section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .tile {
+        min-height: 92px;
+        padding: 14px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 10px;
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .ok {
+        color: var(--ok);
+      }
+
+      .warn {
+        color: var(--warn);
+      }
+
+      .section {
+        padding: 16px;
+        margin-top: 12px;
+      }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 17px;
+        letter-spacing: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        padding: 9px 8px;
+        border-top: 1px solid #eaecf0;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+
+      .pill {
+        display: inline-flex;
+        min-width: 64px;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 3px 8px;
+        border: 1px solid #bbf7d0;
+        color: var(--ok);
+        background: #f0fdf4;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 23px;
+        }
+
+        table {
+          display: block;
+          font-size: 12px;
+        }
+
+        thead {
+          display: none;
+        }
+
+        tbody,
+        tr,
+        td {
+          display: block;
+          width: 100%;
+        }
+
+        tr {
+          border-top: 1px solid #eaecf0;
+          padding: 8px 0;
+        }
+
+        td {
+          border-top: 0;
+          padding: 6px 0;
+          overflow-wrap: anywhere;
+        }
+
+        td::before {
+          content: attr(data-label);
+          display: block;
+          margin-bottom: 3px;
+          color: var(--muted);
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P0.46 Template Gate</h1>
+        <p>
+          Final provider keys and iPhone deployment settings have safe,
+          complete checked-in templates.
+        </p>
+      </header>
+
+      <section class="grid" aria-label="Acceptance summary">
+        <div class="tile">
+          <div class="label">Template Gate</div>
+          <div class="value ok">7 / 7</div>
+          <p>All template checks passed.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Final Acceptance</div>
+          <div class="value warn">7 pass, 2 blocked</div>
+          <p>Only local iOS blockers remain.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Backend Regression</div>
+          <div class="value ok">182 passed</div>
+          <p>Known TestClient warning remains.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Required Resource Slots</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Template</th>
+              <th>Destination</th>
+              <th>Verified Slots</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="Template"><code>.env.example</code></td>
+              <td data-label="Destination"><code>services/backend/.env</code></td>
+              <td data-label="Verified Slots">
+                Meshy/OpenAI slots<br />
+                Print slots<br />
+                Storage dirs
+              </td>
+              <td data-label="Status"><span class="pill">passed</span></td>
+            </tr>
+            <tr>
+              <td data-label="Template"><code>Deployment.local.xcconfig.example</code></td>
+              <td data-label="Destination">
+                <code>apps/mobile/ios/Config/<br />Deployment.local.xcconfig</code>
+              </td>
+              <td data-label="Verified Slots">
+                Apple team<br />
+                Bundle id<br />
+                LAN backend URL
+              </td>
+              <td data-label="Status"><span class="pill">passed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h2>Safety Contract</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Check</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="Check">No provider secrets in templates or report</td>
+              <td data-label="Result"><span class="pill">passed</span></td>
+            </tr>
+            <tr>
+              <td data-label="Check">
+                No raw media, local absolute paths, or payment links
+              </td>
+              <td data-label="Result"><span class="pill">passed</span></td>
+            </tr>
+            <tr>
+              <td data-label="Check">No provider calls and no global mutation</td>
+              <td data-label="Result"><span class="pill">passed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </body>
+</html>

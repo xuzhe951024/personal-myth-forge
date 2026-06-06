@@ -129,6 +129,16 @@ def _backend_items(settings: Settings) -> list[dict[str, Any]]:
             missing=False,
             notes=["Default local capture storage is acceptable for development."],
         ),
+        _item(
+            "MYTH_SESSION_STORAGE_DIR",
+            "Myth session storage directory",
+            BACKEND_ENV_DESTINATION,
+            "local myth session persistence",
+            "ready",
+            configured=True,
+            missing=False,
+            notes=["Default local myth session storage is acceptable for development."],
+        ),
     ]
 
 
@@ -276,6 +286,11 @@ def _commands() -> list[str]:
         (
             "cd services/backend && uv run python -m myth_forge_api.cli resource-handoff "
             "--output /tmp/personal-myth-forge-resource-handoff.json"
+        ),
+        (
+            "cd services/backend && uv run python -m myth_forge_api.cli "
+            "resource-template-acceptance "
+            "--output /tmp/personal-myth-forge-resource-template-acceptance.json"
         ),
         (
             "cd services/backend && uv run python -m myth_forge_api.cli final-acceptance "

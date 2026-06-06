@@ -20,10 +20,12 @@ def test_resource_handoff_reports_missing_final_core_resources(tmp_path: Path) -
     assert backend["OPENAI_API_KEY"]["status"] == "missing"
     assert backend["PRINT_PROVIDER"]["status"] == "ready"
     assert backend["TREATSTOCK_API_KEY"]["status"] == "optional"
+    assert backend["MYTH_SESSION_STORAGE_DIR"]["status"] == "ready"
     assert ios["DEVELOPMENT_TEAM"]["status"] == "missing"
     assert ios["PMF_BACKEND_BASE_URL"]["status"] == "blocked"
     assert "provide MESHY_API_KEY" in " ".join(report["operator_actions"])
     assert "make backend-device-demo" in report["commands"]
+    assert any("resource-template-acceptance" in command for command in report["commands"])
     assert "make mobile-deploy-preflight" in report["commands"]
     assert any("--allow-live-provider-calls" in command for command in report["commands"])
 
