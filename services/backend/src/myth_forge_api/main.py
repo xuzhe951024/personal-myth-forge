@@ -18,6 +18,8 @@ from myth_forge_api.domain.models import (
     MythSessionFromCaptureRequest,
     MythSessionHistory,
     MythSessionRequest,
+    NPCAutonomyRun,
+    NPCAutonomyRunRequest,
     NPCAgentTick,
     NPCAgentTickRequest,
     ObjectCapture,
@@ -198,6 +200,53 @@ def advance_myth_session_npc_tick(
         raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=_safe_provider_error(exc)) from exc
+
+
+@app.post("/v1/myth-sessions/{session_id}/autonomy-runs", response_model=NPCAutonomyRun)
+def run_myth_session_autonomy(
+    request: NPCAutonomyRunRequest,
+    session_id: str = PathParam(..., pattern=SESSION_ID_PATTERN),
+) -> NPCAutonomyRun:
+    store = build_myth_session_store()
+    history = store.get_history(session_id)
+    if history is None:
+        raise HTTPException(status_code=404, detail="Myth session not found.")
+    try:
+        return _run_bounded_autonomy(store, history, request.step_count)
+    except OpenAINPCProviderError as exc:
+        raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=_safe_provider_error(exc)) from exc
+
+
+def _run_bounded_autonomy(
+    store,
+    history: MythSessionHistory,
+    step_count: int,
+) -> NPCAutonomyRun:
+    started_tick_index = _next_history_tick_index(history)
+    current_history = history
+    completed_ticks: list[NPCAgentTick] = []
+    runtime = build_npc_tick_runtime()
+    for _ in range(step_count):
+        request = NPCAgentTickRequest(
+            session=current_history.session,
+            tick_index=_next_history_tick_index(current_history),
+            recent_events=_history_recent_events(current_history),
+        )
+        tick = runtime.generate_tick(request)
+        current_history = store.append_tick(current_history.session, tick)
+        completed_ticks.append(tick)
+
+    return NPCAutonomyRun(
+        session_id=history.session_id,
+        requested_steps=step_count,
+        completed_steps=len(completed_ticks),
+        started_tick_index=started_tick_index,
+        completed_tick_index=completed_ticks[-1].tick_index,
+        agent_runtime=completed_ticks[-1].agent_runtime,
+        history=current_history,
+    )
 
 
 def _next_history_tick_index(history: MythSessionHistory) -> int:

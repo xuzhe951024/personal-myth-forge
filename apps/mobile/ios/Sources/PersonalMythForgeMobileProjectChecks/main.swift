@@ -265,6 +265,14 @@ do {
         "applyBackendHistory(history)",
         "server-owned npc history application"
     )
+    try requireContains(forgeRootView, "isRunningAutonomy", "autonomy run loading state")
+    try requireContains(forgeRootView, "runAutonomy", "autonomy run app action")
+    try requireContains(forgeRootView, "runMythSessionAutonomy", "autonomy run API call")
+    try requireContains(
+        forgeRootView,
+        "applyBackendHistory(run.history)",
+        "autonomy run history application"
+    )
     try requireContains(
         forgeRootView,
         "MythSessionID.isValid(session.sessionId)",
@@ -315,6 +323,8 @@ do {
     try requireContains(forgeRootView, "switch selectedCaptureMode", "file importer selected mode source")
     try requireContains(forgeRootView, "guard selectedCaptureMode == mode else", "stale photo load guard")
     try requireContains(forgeRootView, "CaptureInputLoadError.unreadablePhoto", "partial photo load failure source")
+    try requireContains(npcTickView, "Run Autonomy", "autonomy run button label")
+    try requireContains(npcTickView, "runAutonomy", "autonomy run button action")
     try requireContains(
         forgeRootView,
         ".onChange(of: selectedCaptureMode) { mode in",

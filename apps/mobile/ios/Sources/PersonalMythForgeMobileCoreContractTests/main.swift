@@ -8,6 +8,7 @@ do {
     try testDecodesMythSessionWithoutNPCAgentTraceFields()
     try testDecodesNPCAgentTickPayload()
     try testDecodesMythSessionHistoryPayload()
+    try testDecodesNPCAutonomyRunPayload()
     try testDemoRunSnapshotKeepsMatchingTicksSortedAndBounded()
     try testDemoRunSnapshotEncodesSnakeCaseJSONWithoutRawMediaOrSecrets()
     try testDemoRunSnapshotFileStoreSavesLoadsOverwritesAndClears()
@@ -28,6 +29,8 @@ do {
     try await testGetMythSessionHistoryBuildsGETRequest()
     try await testAdvanceMythSessionHistoryBuildsPOSTRequest()
     try await testAdvanceMythSessionHistoryRejectsInvalidIDBeforeNetwork()
+    try await testRunMythSessionAutonomyBuildsPOSTRequest()
+    try await testRunMythSessionAutonomyRejectsInvalidIDBeforeNetwork()
     try await testInvalidMythSessionIDFailsBeforeNetwork()
     try await testCreateNPCAgentTickBuildsJSONRequest()
     try await testCreateNPCAgentTickSanitizesHTTPErrorBody()
@@ -215,6 +218,37 @@ private func testDecodesMythSessionHistoryPayload() throws {
     try expectContains(body, #""session_id":"#)
     try expectContains(body, #""npc_ticks":"#)
     try expectEqual(decoded, payload)
+}
+
+private func testDecodesNPCAutonomyRunPayload() throws {
+    let session = try backendHistorySession()
+    let history = MythSessionHistory(
+        sessionId: session.sessionId,
+        session: session,
+        npcTicks: [
+            npcTick(sessionId: session.sessionId, tickIndex: 1),
+            npcTick(sessionId: session.sessionId, tickIndex: 2),
+            npcTick(sessionId: session.sessionId, tickIndex: 3),
+        ],
+        updatedAt: "2026-06-06T12:10:00+00:00"
+    )
+    let run = NPCAutonomyRun(
+        sessionId: session.sessionId,
+        requestedSteps: 3,
+        completedSteps: 3,
+        startedTickIndex: 1,
+        completedTickIndex: 3,
+        agentRuntime: "local_tick_runtime",
+        history: history
+    )
+
+    let data = try PMFJSON.encoder.encode(run)
+    let body = String(decoding: data, as: UTF8.self)
+    let decoded = try PMFJSON.decoder.decode(NPCAutonomyRun.self, from: data)
+
+    try expectContains(body, #""requested_steps":"#)
+    try expectContains(body, #""completed_tick_index":"#)
+    try expectEqual(decoded, run)
 }
 
 private func testDemoRunSnapshotKeepsMatchingTicksSortedAndBounded() throws {
@@ -652,6 +686,59 @@ private func testAdvanceMythSessionHistoryRejectsInvalidIDBeforeNetwork() async 
 
     do {
         _ = try await client.advanceMythSessionHistory(sessionId: "../myth_0123456789abcdef")
+        throw ContractTestError.expectationFailed("Expected invalid myth session id error")
+    } catch ForgeFlowError.invalidMythSessionID("../myth_0123456789abcdef") {
+        try expectEqual(transport.requests.count, 0)
+    }
+}
+
+private func testRunMythSessionAutonomyBuildsPOSTRequest() async throws {
+    let session = try backendHistorySession()
+    let history = MythSessionHistory(
+        sessionId: session.sessionId,
+        session: session,
+        npcTicks: [npcTick(sessionId: session.sessionId, tickIndex: 3)],
+        updatedAt: "2026-06-06T12:10:00+00:00"
+    )
+    let run = NPCAutonomyRun(
+        sessionId: session.sessionId,
+        requestedSteps: 3,
+        completedSteps: 3,
+        startedTickIndex: 1,
+        completedTickIndex: 3,
+        agentRuntime: "local_tick_runtime",
+        history: history
+    )
+    let data = try PMFJSON.encoder.encode(run)
+    let transport = RecordingTransport(responses: [HTTPResponse(statusCode: 200, data: data)])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    let decoded = try await client.runMythSessionAutonomy(sessionId: session.sessionId, stepCount: 3)
+
+    try expectEqual(decoded, run)
+    let request = try require(transport.requests.first, "missing autonomy run request")
+    try expectEqual(request.httpMethod, "POST")
+    try expectEqual(request.url?.path, "/v1/myth-sessions/\(session.sessionId)/autonomy-runs")
+    try expectEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
+    let body = String(decoding: request.httpBody ?? Data(), as: UTF8.self)
+    try expectContains(body, "\"step_count\":3")
+}
+
+private func testRunMythSessionAutonomyRejectsInvalidIDBeforeNetwork() async throws {
+    let transport = RecordingTransport(responses: [])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    do {
+        _ = try await client.runMythSessionAutonomy(
+            sessionId: "../myth_0123456789abcdef",
+            stepCount: 3
+        )
         throw ContractTestError.expectationFailed("Expected invalid myth session id error")
     } catch ForgeFlowError.invalidMythSessionID("../myth_0123456789abcdef") {
         try expectEqual(transport.requests.count, 0)

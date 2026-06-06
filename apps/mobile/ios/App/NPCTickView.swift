@@ -6,8 +6,10 @@ struct NPCTickView: View {
     let tick: NPCAgentTick?
     let tickHistoryCount: Int
     let isLoading: Bool
+    let isRunningAutonomy: Bool
     let errorMessage: String?
     let advanceVillage: () -> Void
+    let runAutonomy: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -28,15 +30,27 @@ struct NPCTickView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Button(action: advanceVillage) {
-                if isLoading {
-                    ProgressView()
-                } else {
-                    Text("Advance Village")
+            HStack(spacing: 8) {
+                Button(action: advanceVillage) {
+                    if isLoading {
+                        ProgressView()
+                    } else {
+                        Text("Advance Village")
+                    }
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(session == nil || isLoading || isRunningAutonomy)
+
+                Button(action: runAutonomy) {
+                    if isRunningAutonomy {
+                        ProgressView()
+                    } else {
+                        Text("Run Autonomy")
+                    }
+                }
+                .buttonStyle(.bordered)
+                .disabled(session == nil || isLoading || isRunningAutonomy)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(session == nil || isLoading)
 
             if let errorMessage {
                 Text(errorMessage)
