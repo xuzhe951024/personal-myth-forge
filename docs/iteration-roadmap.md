@@ -91,6 +91,7 @@ Bridge deliverable:
 - P0.73 iPhone Context Capsule Review approval gate before forging
 - P0.74 iPhone Artifact Handoff actions for SceneKit, share, conversion, and retry states
 - P0.75 iPhone NPC Agent Mode panel for local, OpenAI-ready, and missing-setup states
+- P0.76 iPhone Final Acceptance readiness rows for missing, blocked, and ready reports
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

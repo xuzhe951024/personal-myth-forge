@@ -2007,3 +2007,33 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.75-mobile-npc-agent-mode.html
 docs/superpowers/verification/assets/p0.75-mobile-npc-agent-mode-390x844.png
 ```
+
+## P0.76 Final Acceptance Readiness
+
+The app now shows final acceptance readiness inside `Final Launch Status`. The
+backend embeds a read-only `final_acceptance_readiness` report in
+`/v1/final-demo-launch` by reading the latest saved local final acceptance JSON.
+
+This keeps Mac-side commands explicit without making the iPhone run them. The
+mobile panel can show a missing report, blocked checks such as
+`mobile_deploy_preflight` and `mobile_xcode_build`, or a ready report. Provider
+keys, local paths, raw media, payment links, and command output secrets stay out
+of the visible rows.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_final_acceptance_readiness.py tests/test_final_demo_launch.py tests/test_ios_showcase_acceptance.py -q
+cd ../..
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.76-final-acceptance-readiness.html
+docs/superpowers/verification/assets/p0.76-final-acceptance-readiness-390x844.png
+```

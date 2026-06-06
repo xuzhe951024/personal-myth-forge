@@ -179,6 +179,61 @@ def test_local_final_demo_launch_marks_unified_apply_ready_with_preflight(
     assert phases["mobile_deploy_preflight"]["status"] == "blocked"
 
 
+def test_final_demo_launch_embeds_saved_final_acceptance_readiness(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_final_acceptance(
+        repo_root,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+            "checks": [
+                {"id": "provider_handoff", "label": "Provider handoff", "status": "passed"},
+                {
+                    "id": "mobile_deploy_preflight",
+                    "label": "iOS deploy preflight",
+                    "status": "blocked",
+                    "classification": "blocked_by_local_ios_backend_health",
+                    "command": ["make", "mobile-deploy-preflight"],
+                    "stderr_tail": "Backend health failed at /Users/zhexu/private sk-secret",
+                },
+            ],
+        },
+    )
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    report_text = json.dumps(result.report)
+    readiness = result.report["final_acceptance_readiness"]
+
+    assert readiness["status"] == "blocked"
+    assert readiness["source_file"] == {
+        "path": "services/backend/.local/final-acceptance-local.json",
+        "exists": True,
+    }
+    assert readiness["summary"] == {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0}
+    assert readiness["blockers"] == [
+        {
+            "id": "mobile_deploy_preflight",
+            "label": "iOS deploy preflight",
+            "status": "blocked",
+            "classification": "blocked_by_local_ios_backend_health",
+            "command": "make mobile-deploy-preflight",
+            "detail": "Backend health failed at [home]/private [redacted]",
+        }
+    ]
+    assert readiness["operator_actions"] == [
+        "start backend-device-demo and rerun mobile deploy preflight"
+    ]
+    assert "sk-secret" not in report_text
+    assert str(tmp_path) not in report_text
+
+
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:
     repo_root = tmp_path / "repo"
     config_dir = repo_root / "apps/mobile/ios/Config"
@@ -201,6 +256,12 @@ def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Pat
             encoding="utf-8",
         )
     return repo_root
+
+
+def _write_final_acceptance(repo_root: Path, report: dict[str, object]) -> None:
+    acceptance = repo_root / "services/backend/.local/final-acceptance-local.json"
+    acceptance.parent.mkdir(parents=True)
+    acceptance.write_text(json.dumps(report), encoding="utf-8")
 
 
 def _write_final_resources(repo_root: Path) -> None:

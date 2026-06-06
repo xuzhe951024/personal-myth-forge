@@ -26,6 +26,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var subtitle: String
     public var phaseRows: [FinalLaunchMobilePhaseRow]
     public var resourceActions: [String]
+    public var acceptanceRows: [String]
     public var commandRows: [String]
     public var notes: [String]
 
@@ -35,6 +36,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         subtitle: String,
         phaseRows: [FinalLaunchMobilePhaseRow],
         resourceActions: [String],
+        acceptanceRows: [String] = [],
         commandRows: [String],
         notes: [String]
     ) {
@@ -43,6 +45,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.subtitle = subtitle
         self.phaseRows = phaseRows
         self.resourceActions = resourceActions
+        self.acceptanceRows = acceptanceRows
         self.commandRows = commandRows
         self.notes = notes
     }
@@ -60,6 +63,7 @@ public enum FinalLaunchMobileSummaryBuilder {
                 subtitle: sanitize(error),
                 phaseRows: [],
                 resourceActions: [],
+                acceptanceRows: [],
                 commandRows: [],
                 notes: baseNotes()
             )
@@ -71,6 +75,7 @@ public enum FinalLaunchMobileSummaryBuilder {
                 subtitle: "Final launch report has not loaded.",
                 phaseRows: [],
                 resourceActions: [],
+                acceptanceRows: [],
                 commandRows: [],
                 notes: baseNotes()
             )
@@ -91,6 +96,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             subtitle: summaryText(report.summary, mode: report.mode),
             phaseRows: Array(phaseRows.prefix(4)),
             resourceActions: resourceActions(from: report.finalResourcesPreflight),
+            acceptanceRows: acceptanceRows(from: report.finalAcceptanceReadiness),
             commandRows: report.commands.prefix(4).map(sanitize),
             notes: baseNotes()
         )
@@ -132,6 +138,32 @@ public enum FinalLaunchMobileSummaryBuilder {
             return preflight.operatorActions.prefix(3).map(sanitize)
         }
         return ["Final resources preflight \(sanitize(preflight.status))."]
+    }
+
+    private static func acceptanceRows(from readiness: FinalAcceptanceReadinessReport?) -> [String] {
+        guard let readiness else {
+            return ["Final acceptance readiness has not loaded."]
+        }
+        switch readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            return ["Final acceptance ready."]
+        case "missing":
+            return ["Run local final acceptance to create the latest readiness report."]
+        case "blocked", "failed":
+            if !readiness.blockers.isEmpty {
+                return readiness.blockers.prefix(3).map { blocker in
+                    sanitize(
+                        "\(blocker.id): \(blocker.status) \(blocker.classification) | \(blocker.command) | \(blocker.detail)"
+                    )
+                }
+            }
+            if !readiness.operatorActions.isEmpty {
+                return readiness.operatorActions.prefix(3).map(sanitize)
+            }
+            return ["Final acceptance blocked."]
+        default:
+            return ["Final acceptance \(sanitize(readiness.status))."]
+        }
     }
 
     private static func baseNotes() -> [String] {

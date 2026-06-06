@@ -562,6 +562,12 @@ do {
         "resourceActions",
         "final launch status resource action rendering"
     )
+    try requireContains(finalLaunchStatusView, "Acceptance", "final launch acceptance section")
+    try requireContains(
+        finalLaunchStatusView,
+        "acceptanceRows",
+        "final launch acceptance row rendering"
+    )
     try requireContains(finalLaunchStatusView, "commandRows", "final launch status command rendering")
     try requireContains(contextCapsuleReviewView, "Context Capsule Review", "context capsule review title")
     try requireContains(contextCapsuleReviewView, "Approve Capsule", "context capsule approval toggle")
@@ -581,8 +587,24 @@ do {
     try requireContains(pmfModels, "FinalDemoLaunchPhase", "final demo launch phase model")
     try requireContains(pmfModels, "FinalResourcesPreflightReport", "final resources preflight report model")
     try requireContains(pmfModels, "FinalResourcesFileStatus", "final resources file status model")
+    try requireContains(
+        pmfModels,
+        "FinalAcceptanceReadinessReport",
+        "final acceptance readiness model"
+    )
+    try requireContains(
+        pmfModels,
+        "finalAcceptanceReadiness",
+        "final demo launch final acceptance readiness field"
+    )
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileSummaryBuilder", "final launch summary builder")
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileStatus", "final launch summary status")
+    try requireContains(finalLaunchMobileSummary, "acceptanceRows", "final launch summary acceptance rows")
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Final acceptance ready.",
+        "final launch acceptance ready copy"
+    )
     try requireContains(finalLaunchMobileSummary, "sanitize", "final launch summary redaction")
     try requireContains(contextCapsuleReview, "ContextCapsuleReviewBuilder", "context capsule review builder")
     try requireContains(contextCapsuleReview, "ContextCapsuleReviewStatus", "context capsule review status")

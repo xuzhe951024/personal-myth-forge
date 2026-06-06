@@ -2091,3 +2091,32 @@ Static evidence lives at:
 docs/superpowers/verification/p0.75-mobile-npc-agent-mode.html
 docs/superpowers/verification/assets/p0.75-mobile-npc-agent-mode-390x844.png
 ```
+
+P0.76 embeds a read-only `final_acceptance_readiness` report in
+`/v1/final-demo-launch`. The backend reads the latest saved local final
+acceptance JSON at `services/backend/.local/final-acceptance-local.json` and
+summarizes whether it is missing, blocked, or ready. It does not run Xcode,
+deployment scripts, provider calls, or signing commands during API handling.
+
+The iPhone `Final Launch Status` panel now renders an `Acceptance` section so
+the operator can see blocked gates such as `mobile_deploy_preflight` and
+`mobile_xcode_build`, including their safe classifications and Mac-side
+commands. All rows are redacted before display.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_final_acceptance_readiness.py tests/test_final_demo_launch.py tests/test_ios_showcase_acceptance.py -q
+cd ../..
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.76-final-acceptance-readiness.html
+docs/superpowers/verification/assets/p0.76-final-acceptance-readiness-390x844.png
+```

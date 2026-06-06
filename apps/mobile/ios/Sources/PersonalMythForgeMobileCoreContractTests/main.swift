@@ -51,8 +51,13 @@ do {
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testFinalLaunchMobileSummaryWaitsForMissingReport()
     try testFinalLaunchMobileSummaryBuildsPartialOperatorStatus()
+    try testDecodesFinalAcceptanceReadinessFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryWaitsForFinalAcceptanceReadiness()
+    try testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance()
+    try testFinalLaunchMobileSummaryShowsReadyFinalAcceptance()
     try testFinalLaunchMobileSummaryMarksReadyReport()
     try testFinalLaunchMobileSummaryRedactsUnsafeReportText()
+    try testFinalLaunchMobileSummaryRedactsUnsafeAcceptanceText()
     try testDevicePreflightMarksLocalDemoReady()
     try testDevicePreflightMarksSavedNPCHistoryReady()
     try testDemoScriptStartsWithCapture()
@@ -1164,6 +1169,65 @@ private func testFinalLaunchMobileSummaryBuildsPartialOperatorStatus() throws {
     try expectContains(summary.notes.joined(separator: " "), "read-only")
 }
 
+private func testDecodesFinalAcceptanceReadinessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(finalAcceptanceStatus: "blocked")
+    )
+
+    let readiness = try require(
+        report.finalAcceptanceReadiness,
+        "missing final acceptance readiness"
+    )
+    try expectEqual(readiness.kind, "final_acceptance_readiness_report")
+    try expectEqual(readiness.status, "blocked")
+    try expectEqual(readiness.sourceFile.path, "services/backend/.local/final-acceptance-local.json")
+    try expectEqual(readiness.sourceFile.exists, true)
+    try expectEqual(readiness.summary.passed, 12)
+    try expectEqual(readiness.summary.blocked, 2)
+    try expectEqual(readiness.blockers.first?.id, "mobile_deploy_preflight")
+    try expectEqual(readiness.blockers.first?.classification, "blocked_by_local_ios_deploy_config")
+    try expectContains(readiness.operatorActions.first ?? "", "provide iOS deploy config")
+    try expectFalse(readiness.safety.commandsRun)
+}
+
+private func testFinalLaunchMobileSummaryWaitsForFinalAcceptanceReadiness() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(finalAcceptanceStatus: "missing"),
+        error: nil
+    )
+
+    try expectEqual(summary.acceptanceRows.first, "Run local final acceptance to create the latest readiness report.")
+}
+
+private func testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(finalAcceptanceStatus: "blocked"),
+        error: nil
+    )
+
+    try expectEqual(summary.acceptanceRows.count, 2)
+    try expectContains(summary.acceptanceRows[0], "mobile_deploy_preflight")
+    try expectContains(summary.acceptanceRows[0], "blocked_by_local_ios_deploy_config")
+    try expectContains(summary.acceptanceRows[0], "make mobile-deploy-preflight")
+    try expectContains(summary.acceptanceRows[1], "mobile_xcode_build")
+    try expectContains(summary.acceptanceRows[1], "blocked_by_apple_sdk_license")
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyFinalAcceptance() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready"
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.overallStatus, .ready)
+    try expectEqual(summary.acceptanceRows.first, "Final acceptance ready.")
+}
+
 private func testFinalLaunchMobileSummaryMarksReadyReport() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -1189,6 +1253,24 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeReportText() throws {
     let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
 
     try expectEqual(summary.overallStatus, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeAcceptanceText() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        finalAcceptanceStatus: "blocked",
+        finalAcceptanceBlockerDetail: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
     try expectContains(text, "[withheld]")
     try expectNotContains(text, "sk-test")
     try expectNotContains(text, "/Users/")
@@ -1824,7 +1906,9 @@ private func finalDemoLaunchPayload(
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     finalResourcesStatus: String = "missing",
-    finalResourcesAction: String = "copy services/backend/final-resources.env.example"
+    finalResourcesAction: String = "copy services/backend/final-resources.env.example",
+    finalAcceptanceStatus: String = "missing",
+    finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig."
 ) -> Data {
     Data(
         """
@@ -1872,6 +1956,50 @@ private func finalDemoLaunchPayload(
               "writes_ios_deploy_config": false,
               "live_provider_calls": false,
               "global_mutation": false
+            }
+          },
+          "final_acceptance_readiness": {
+            "kind": "final_acceptance_readiness_report",
+            "status": "\(finalAcceptanceStatus)",
+            "source_file": {
+              "path": "services/backend/.local/final-acceptance-local.json",
+              "exists": \(finalAcceptanceStatus == "missing" ? "false" : "true")
+            },
+            "summary": {
+              "passed": \(finalAcceptanceStatus == "ready" ? "14" : "12"),
+              "blocked": \(finalAcceptanceStatus == "blocked" ? "2" : "0"),
+              "failed": 0,
+              "skipped": 0
+            },
+            "blockers": \(finalAcceptanceStatus == "blocked" ? """
+            [
+              {
+                "id": "mobile_deploy_preflight",
+                "label": "iOS deploy preflight",
+                "status": "blocked",
+                "classification": "blocked_by_local_ios_deploy_config",
+                "command": "make mobile-deploy-preflight",
+                "detail": "\(finalAcceptanceBlockerDetail)"
+              },
+              {
+                "id": "mobile_xcode_build",
+                "label": "Xcode build gate",
+                "status": "blocked",
+                "classification": "blocked_by_apple_sdk_license",
+                "command": "make mobile-xcode-build",
+                "detail": "Apple SDK license remains external."
+              }
+            ]
+            """ : "[]"),
+            "operator_actions": \(finalAcceptanceStatus == "ready" ? #"["final acceptance is ready"]"# : finalAcceptanceStatus == "missing" ? #"["run local final acceptance and write services/backend/.local/final-acceptance-local.json"]"# : #"["provide iOS deploy config and rerun mobile deploy preflight", "resolve Xcode build gate outside the app"]"#),
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "global_mutation": false,
+              "provider_secrets_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false
             }
           },
           "launch_phases": [
@@ -3431,7 +3559,9 @@ private func finalDemoLaunchReport(
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     finalResourcesStatus: String = "ready",
-    finalResourcesAction: String = "copy services/backend/final-resources.env.example"
+    finalResourcesAction: String = "copy services/backend/final-resources.env.example",
+    finalAcceptanceStatus: String = "missing",
+    finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig."
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -3439,7 +3569,9 @@ private func finalDemoLaunchReport(
             overallStatus: overallStatus,
             unsafeDetail: unsafeDetail,
             finalResourcesStatus: finalResourcesStatus,
-            finalResourcesAction: finalResourcesAction
+            finalResourcesAction: finalResourcesAction,
+            finalAcceptanceStatus: finalAcceptanceStatus,
+            finalAcceptanceBlockerDetail: finalAcceptanceBlockerDetail
         )
     )
 }
