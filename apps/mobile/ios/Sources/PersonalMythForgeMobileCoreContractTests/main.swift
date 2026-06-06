@@ -6,6 +6,7 @@ do {
     try testDecodesMythSessionFixture()
     try testDecodesMythSessionWithoutGeneratedAssetVariants()
     try testDecodesMythSessionWithoutNPCAgentTraceFields()
+    try testDecodesNPCAgentTickPayload()
     try testDecodesProviderReadinessPayload()
     try testCaptureIDValidation()
     try testMultipartBodyIncludesMetadataAndFileWithoutLocalPaths()
@@ -17,6 +18,8 @@ do {
     try await testHTTPStatusErrorSanitizesSecretsAndTruncatesBody()
     try await testGetProviderReadinessBuildsGETRequest()
     try await testGetProviderReadinessSanitizesHTTPErrorBody()
+    try await testCreateNPCAgentTickBuildsJSONRequest()
+    try await testCreateNPCAgentTickSanitizesHTTPErrorBody()
     try await testUploadObjectCaptureUsesGeneratedFilenamesWithoutLocalPaths()
     try await testUploadObjectCaptureRejectsUnsafeContentTypeBeforeNetwork()
     try await testUploadObjectCaptureBuildsARKitScanMultipartRequest()
@@ -122,6 +125,66 @@ private func testDecodesMythSessionWithoutNPCAgentTraceFields() throws {
 
     try expectEqual(session.npcAgentRuntime, "")
     try expectEqual(session.npcAgentTraces, [])
+}
+
+private func testDecodesNPCAgentTickPayload() throws {
+    let data = Data(
+        """
+        {
+          "session_id": "myth_0123456789abcdef",
+          "tick_index": 1,
+          "agent_runtime": "local_tick_runtime",
+          "npc_agent_traces": [
+            {
+              "npc_id": "mara",
+              "name": "Mara",
+              "belief": "The relic is becoming a public promise.",
+              "intention": "turn awe into shared witness",
+              "proposed_action": "invite_neighbors_to_witness",
+              "rationale": "Mara reacts to 1 recent village event.",
+              "confidence": 0.82
+            }
+          ],
+          "npc_reactions": [
+            {
+              "npc_id": "mara",
+              "name": "Mara",
+              "emotion": "awe",
+              "interpretation": "The relic is becoming a public promise.",
+              "plan": ["invite_neighbors_to_witness"],
+              "world_change": "faith_in_player_increases"
+            }
+          ],
+          "world_resolution": {
+            "arbitrator": "local_rules",
+            "summary": "The village accepts 1 ritual actions around the relic.",
+            "accepted_actions": [
+              {
+                "npc_id": "mara",
+                "action": "invite_neighbors_to_witness",
+                "status": "accepted",
+                "reason": "safe ritual or debate action"
+              }
+            ],
+            "rejected_actions": [],
+            "world_state_delta": {
+              "faith": 1,
+              "artifact_renown": 1
+            },
+            "visible_changes": ["Mara prepares to invite neighbors to witness."]
+          }
+        }
+        """.utf8
+    )
+
+    let tick = try PMFJSON.decoder.decode(NPCAgentTick.self, from: data)
+
+    try expectEqual(tick.sessionId, "myth_0123456789abcdef")
+    try expectEqual(tick.tickIndex, 1)
+    try expectEqual(tick.agentRuntime, "local_tick_runtime")
+    try expectEqual(tick.npcAgentTraces[0].proposedAction, "invite_neighbors_to_witness")
+    try expectEqual(tick.npcReactions[0].emotion, "awe")
+    try expectEqual(tick.worldResolution.acceptedActions[0].status, "accepted")
 }
 
 private func testDecodesProviderReadinessPayload() throws {
@@ -387,6 +450,76 @@ private func testGetProviderReadinessSanitizesHTTPErrorBody() async throws {
         try expectFalse(sanitizedBody.contains(secret))
         try expectContains(sanitizedBody, "Authorization=Bearer [redacted]")
         try expectContains(sanitizedBody, "api_key=[redacted]")
+    }
+}
+
+private func testCreateNPCAgentTickBuildsJSONRequest() async throws {
+    let responseData = Data(
+        """
+        {
+          "session_id": "myth_0123456789abcdef",
+          "tick_index": 1,
+          "agent_runtime": "local_tick_runtime",
+          "npc_agent_traces": [],
+          "npc_reactions": [],
+          "world_resolution": {
+            "arbitrator": "local_rules",
+            "summary": "The village holds.",
+            "accepted_actions": [],
+            "rejected_actions": [],
+            "world_state_delta": {},
+            "visible_changes": ["The village studies the relic."]
+          }
+        }
+        """.utf8
+    )
+    let transport = RecordingTransport(responses: [HTTPResponse(statusCode: 200, data: responseData)])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+
+    let tick = try await client.createNPCAgentTick(
+        session: session,
+        tickIndex: 1,
+        recentEvents: ["The village debate grows louder."]
+    )
+
+    try expectEqual(tick.agentRuntime, "local_tick_runtime")
+    let request = try require(transport.requests.first, "missing npc tick request")
+    try expectEqual(request.httpMethod, "POST")
+    try expectEqual(request.url?.path, "/v1/npc-ticks")
+    try expectEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
+    let body = String(decoding: request.httpBody ?? Data(), as: UTF8.self)
+    try expectContains(body, "\"session_id\":\"session_cap_ba02a3816bd145b4\"")
+    try expectContains(body, "\"tick_index\":1")
+    try expectContains(body, "\"recent_events\":[\"The village debate grows louder.\"]")
+}
+
+private func testCreateNPCAgentTickSanitizesHTTPErrorBody() async throws {
+    let body = "Authorization=Bearer test-secret api_key=test-secret"
+    let transport = RecordingTransport(
+        responses: [HTTPResponse(statusCode: 502, data: Data(body.utf8))]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+
+    do {
+        _ = try await client.createNPCAgentTick(
+            session: session,
+            tickIndex: 1,
+            recentEvents: []
+        )
+        throw ContractTestError.expectationFailed("Expected npc tick HTTP status error")
+    } catch let ForgeFlowError.httpStatus(status, sanitizedBody) {
+        try expectEqual(status, 502)
+        try expectContains(sanitizedBody, "Authorization=Bearer [redacted]")
+        try expectContains(sanitizedBody, "api_key=[redacted]")
+        try expectNotContains(sanitizedBody, "test-secret")
     }
 }
 

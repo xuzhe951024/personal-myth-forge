@@ -423,6 +423,31 @@ public struct ProviderReadinessResponse: Codable, Equatable, Sendable {
     }
 }
 
+public struct NPCAgentTick: Codable, Equatable, Sendable {
+    public var sessionId: String
+    public var tickIndex: Int
+    public var agentRuntime: String
+    public var npcAgentTraces: [NPCAgentTrace]
+    public var npcReactions: [NPCReaction]
+    public var worldResolution: WorldResolution
+
+    public init(
+        sessionId: String,
+        tickIndex: Int,
+        agentRuntime: String,
+        npcAgentTraces: [NPCAgentTrace],
+        npcReactions: [NPCReaction],
+        worldResolution: WorldResolution
+    ) {
+        self.sessionId = sessionId
+        self.tickIndex = tickIndex
+        self.agentRuntime = agentRuntime
+        self.npcAgentTraces = npcAgentTraces
+        self.npcReactions = npcReactions
+        self.worldResolution = worldResolution
+    }
+}
+
 public struct MythSession: Codable, Equatable, Sendable {
     public var sessionId: String
     public var status: String
