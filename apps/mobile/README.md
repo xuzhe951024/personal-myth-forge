@@ -1283,3 +1283,37 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.40-resource-handoff-bundle.html
 docs/superpowers/verification/assets/p0.40-resource-handoff-bundle-390x844.png
 ```
+
+## P0.41 Final Showcase Summary
+
+P0.41 adds a compact `Final Showcase` panel near the top of `ForgeRootView`.
+The summary is computed on-device from state the app already has:
+
+- current capture media readiness
+- generated 3D asset provider, format, and provenance input mode
+- initial NPC agent runtime plus saved NPC tick count
+- print candidate or quote state
+- backend provider readiness
+- fixed privacy notes for raw media, provider keys, checkout links, and local
+  file paths
+
+The Swift mobile core owns `FinalShowcaseSummaryBuilder`, so the readiness rules
+are covered by contract tests. The SwiftUI panel is source-checked and compiled
+through the existing app compile gate. This does not add a new backend endpoint,
+call live providers, install to a device, configure signing, or store secrets in
+the app.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.41-final-showcase-summary.html
+docs/superpowers/verification/assets/p0.41-final-showcase-summary-390x844.png
+```

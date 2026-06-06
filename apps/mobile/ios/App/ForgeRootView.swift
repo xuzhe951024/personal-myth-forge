@@ -60,6 +60,16 @@ struct ForgeRootView: View {
                         isSyncingBackendHistory: isSyncingBackendHistory,
                         clearSnapshot: clearDemoRunSnapshot
                     )
+                    FinalShowcaseSummaryView(
+                        summary: FinalShowcaseSummaryBuilder.build(
+                            captureSelection: mediaSelection,
+                            session: readySession,
+                            npcTickHistoryCount: npcTickHistory.count,
+                            printQuote: printQuote,
+                            providerReadiness: providerReadiness,
+                            providerReadinessError: providerReadinessError
+                        )
+                    )
                     ProviderReadinessView(readiness: providerReadiness, errorMessage: providerReadinessError)
                     CaptureFormView(
                         objectLabel: $objectLabel,

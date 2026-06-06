@@ -15,6 +15,11 @@ do {
     try testDemoRunSnapshotFileStoreSavesLoadsOverwritesAndClears()
     try testDecodesProviderReadinessPayload()
     try testDecodesPrintQuotePayload()
+    try testFinalShowcaseSummaryWaitsBeforeSession()
+    try testFinalShowcaseSummaryReadyForLocalDemo()
+    try testFinalShowcaseSummaryMarksPrintQuoteReady()
+    try testFinalShowcaseSummaryMarksProviderErrorNeedsAttention()
+    try testFinalShowcaseSummaryRedactsUnsafeSourceText()
     try testEncodesPrintQuoteRequestAsSnakeCase()
     try testCaptureIDValidation()
     try testMythSessionIDValidation()
@@ -450,6 +455,120 @@ private func testDecodesPrintQuotePayload() throws {
     try expectEqual(quote.checkoutUrl, nil)
     try expectEqual(quote.requiresUserApproval, true)
     try expectEqual(quote.quoteNotes.count, 2)
+}
+
+private func testFinalShowcaseSummaryWaitsBeforeSession() throws {
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: CaptureMediaSelection(mode: .singlePhoto),
+        session: nil,
+        npcTickHistoryCount: 0,
+        printQuote: nil,
+        providerReadiness: nil,
+        providerReadinessError: nil
+    )
+
+    try expectEqual(summary.overallStatus, .waiting)
+    try expectEqual(summary.title, "Waiting for first myth session")
+    try expectEqual(summary.stages.map(\.id), ["capture", "three_d", "npc_agent", "print", "resources"])
+    try expectEqual(summary.stage(id: "capture")?.status, .waiting)
+    try expectEqual(summary.stage(id: "three_d")?.status, .waiting)
+    try expectEqual(summary.stage(id: "npc_agent")?.status, .waiting)
+    try expectEqual(summary.stage(id: "print")?.status, .waiting)
+    try expectEqual(summary.stage(id: "resources")?.status, .waiting)
+}
+
+private func testFinalShowcaseSummaryReadyForLocalDemo() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: nil,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(summary.overallStatus, .readyForLocalDemo)
+    try expectEqual(summary.title, session.mythSeed.title)
+    try expectEqual(summary.stage(id: "capture")?.status, .ready)
+    try expectEqual(summary.stage(id: "three_d")?.status, .ready)
+    try expectContains(summary.stage(id: "three_d")?.detail ?? "", "local_stub")
+    try expectContains(summary.stage(id: "three_d")?.detail ?? "", "multi_image")
+    try expectEqual(summary.stage(id: "npc_agent")?.status, .ready)
+    try expectContains(summary.stage(id: "npc_agent")?.detail ?? "", "3 saved ticks")
+    try expectEqual(summary.stage(id: "print")?.status, .optional)
+    try expectEqual(summary.stage(id: "resources")?.status, .ready)
+    try expectEqual(summary.privacyNotes.count, 4)
+}
+
+private func testFinalShowcaseSummaryMarksPrintQuoteReady() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = PrintQuote(
+        kind: "print_quote",
+        provider: "local_stub",
+        status: "draft_quote",
+        sourceAssetUri: "local://generated-assets/myth_test.glb",
+        printCandidateUri: "local://print-candidates/myth_test.3mf",
+        currency: "USD",
+        estimatedPriceCents: 1600,
+        estimatedProductionDays: 5,
+        estimatedShippingDays: 6,
+        checkoutUrl: nil,
+        requiresUserApproval: true,
+        approvalReason: "review before fulfillment",
+        quoteNotes: ["local quote stub"]
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 1,
+        printQuote: quote,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(summary.overallStatus, .readyForLocalDemo)
+    try expectEqual(summary.stage(id: "print")?.status, .ready)
+    try expectContains(summary.stage(id: "print")?.detail ?? "", "USD 16.00")
+}
+
+private func testFinalShowcaseSummaryMarksProviderErrorNeedsAttention() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 1,
+        printQuote: nil,
+        providerReadiness: nil,
+        providerReadinessError: "Backend preflight is not reachable yet."
+    )
+
+    try expectEqual(summary.overallStatus, .needsAttention)
+    try expectEqual(summary.stage(id: "resources")?.status, .needsAttention)
+    try expectContains(summary.stage(id: "resources")?.detail ?? "", "not reachable")
+}
+
+private func testFinalShowcaseSummaryRedactsUnsafeSourceText() throws {
+    var session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    session.generatedAsset.prompt = "secret sk-test path /Users/me/key.jpg checkout https://checkout.example/pay"
+    session.generatedAsset.uri = "file:///Users/me/private.glb"
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 1,
+        printQuote: nil,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+    let text = ([summary.title] + summary.stages.map(\.detail) + summary.privacyNotes).joined(separator: " ")
+
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "checkout")
 }
 
 private func testEncodesPrintQuoteRequestAsSnakeCase() throws {
@@ -1806,6 +1925,40 @@ private func samplePrintCandidate() -> PrintCandidate {
         requiresUserApproval: true,
         approvalReason: "review before fulfillment",
         printabilityNotes: ["stable base", "repair thin parts"]
+    )
+}
+
+private func readyGuidedScanSelection() -> CaptureMediaSelection {
+    CaptureMediaSelection(
+        mode: .guidedScan,
+        media: [
+            captureMedia(filename: "scan_001.jpg", contentType: "image/jpeg", kind: .image),
+            captureMedia(filename: "scan_002.jpg", contentType: "image/jpeg", kind: .image),
+            captureMedia(filename: "scan_003.jpg", contentType: "image/jpeg", kind: .image),
+        ]
+    )
+}
+
+private func localDemoProviderReadiness() -> ProviderReadinessResponse {
+    ProviderReadinessResponse(
+        overallDemoReady: true,
+        overallRealReady: false,
+        providers: [
+            ProviderReadinessItem(
+                kind: "three_d",
+                selectedProvider: "local",
+                status: "local_stub",
+                isDemoReady: true,
+                isRealProviderReady: false
+            ),
+            ProviderReadinessItem(
+                kind: "npc",
+                selectedProvider: "local",
+                status: "local_agent_runtime",
+                isDemoReady: true,
+                isRealProviderReady: false
+            ),
+        ]
     )
 }
 
