@@ -150,6 +150,20 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="showcase_autopilot",
+        label="Showcase autopilot",
+        requirements=(
+            SourceRequirement("apps/mobile/ios/App/DemoScriptView.swift", "ShowcaseAutopilotPlan"),
+            SourceRequirement("apps/mobile/ios/App/DemoScriptView.swift", "Button(action: runAutopilot)"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "ShowcaseAutopilotPlanner.plan"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "runShowcaseAutopilot"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ShowcaseAutopilot.swift",
+                "ShowcaseAutopilotPlanner",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="deploy_config",
         label="Deploy config",
         requirements=(

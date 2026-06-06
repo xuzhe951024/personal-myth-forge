@@ -29,6 +29,14 @@ do {
     try testDemoScriptMarksLocalDemoLoopReady()
     try testDemoScriptBlocksOnProviderReadinessError()
     try testDemoScriptRedactsUnsafeDetail()
+    try testShowcaseAutopilotBlocksUntilCaptureReady()
+    try testShowcaseAutopilotPlansForgeWhenCaptureReady()
+    try testShowcaseAutopilotPlansBackendAutonomyForReadySession()
+    try testShowcaseAutopilotPlansLegacyTickAdvanceForLegacySession()
+    try testShowcaseAutopilotPlansPrintQuoteAfterNPCAutonomy()
+    try testShowcaseAutopilotCompletesWhenQuoteAndResourcesReady()
+    try testShowcaseAutopilotDisablesWhileBusy()
+    try testShowcaseAutopilotRedactsUnsafeText()
     try testEncodesPrintQuoteRequestAsSnakeCase()
     try testCaptureIDValidation()
     try testMythSessionIDValidation()
@@ -745,6 +753,132 @@ private func testDemoScriptRedactsUnsafeDetail() throws {
     try expectNotContains(text, "/Users/")
     try expectNotContains(text, "file:///")
     try expectNotContains(text, "checkout")
+}
+
+private func testShowcaseAutopilotBlocksUntilCaptureReady() throws {
+    let script = demoScript(captureSelection: CaptureMediaSelection(mode: .singlePhoto))
+
+    let plan = autopilotPlan(script: script, session: nil)
+
+    try expectEqual(plan.action, .blocked)
+    try expectEqual(plan.buttonTitle, "Capture First")
+    try expectFalse(plan.isExecutable)
+    try expectContains(plan.detail, "Capture")
+}
+
+private func testShowcaseAutopilotPlansForgeWhenCaptureReady() throws {
+    let script = demoScript(captureSelection: readyGuidedScanSelection())
+
+    let plan = autopilotPlan(script: script, session: nil)
+
+    try expectEqual(plan.action, .forge)
+    try expectEqual(plan.buttonTitle, "Run Forge")
+    try expectTrue(plan.isExecutable)
+    try expectContains(plan.detail, "myth")
+}
+
+private func testShowcaseAutopilotPlansBackendAutonomyForReadySession() throws {
+    let session = try backendHistorySession()
+    let script = demoScript(session: session, npcTickHistoryCount: 1)
+
+    let plan = autopilotPlan(script: script, session: session, npcTickHistoryCount: 1)
+
+    try expectEqual(plan.action, .runAutonomy)
+    try expectEqual(plan.buttonTitle, "Run NPCs")
+    try expectTrue(plan.isExecutable)
+    try expectContains(plan.detail, "3 ticks")
+}
+
+private func testShowcaseAutopilotPlansLegacyTickAdvanceForLegacySession() throws {
+    var session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    session.sessionId = "legacy_session"
+    let script = demoScript(session: session, npcTickHistoryCount: 1)
+
+    let plan = autopilotPlan(script: script, session: session, npcTickHistoryCount: 1)
+
+    try expectEqual(plan.action, .advanceNPC)
+    try expectEqual(plan.buttonTitle, "Advance NPC")
+    try expectTrue(plan.isExecutable)
+    try expectContains(plan.detail, "legacy")
+}
+
+private func testShowcaseAutopilotPlansPrintQuoteAfterNPCAutonomy() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let script = demoScript(session: session, npcTickHistoryCount: 3)
+
+    let plan = autopilotPlan(script: script, session: session, npcTickHistoryCount: 3)
+
+    try expectEqual(plan.action, .requestQuote)
+    try expectEqual(plan.buttonTitle, "Get Quote")
+    try expectTrue(plan.isExecutable)
+    try expectContains(plan.detail, "print")
+}
+
+private func testShowcaseAutopilotCompletesWhenQuoteAndResourcesReady() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let script = demoScript(session: session, npcTickHistoryCount: 3, printQuote: quote)
+
+    let plan = autopilotPlan(script: script, session: session, npcTickHistoryCount: 3, printQuote: quote)
+
+    try expectEqual(plan.action, .complete)
+    try expectEqual(plan.buttonTitle, "Ready")
+    try expectFalse(plan.isExecutable)
+    try expectContains(plan.detail, "ready")
+}
+
+private func testShowcaseAutopilotDisablesWhileBusy() throws {
+    let script = demoScript(captureSelection: readyGuidedScanSelection())
+
+    let forgePlan = autopilotPlan(script: script, phase: .creatingSession, session: nil)
+    let autonomyPlan = autopilotPlan(
+        script: script,
+        phase: .idle,
+        session: nil,
+        isRunningAutonomy: true
+    )
+    let quotePlan = autopilotPlan(
+        script: script,
+        phase: .idle,
+        session: nil,
+        isLoadingPrintQuote: true
+    )
+
+    try expectEqual(forgePlan.action, .waiting)
+    try expectEqual(autonomyPlan.action, .waiting)
+    try expectEqual(quotePlan.action, .waiting)
+    try expectFalse(forgePlan.isExecutable)
+    try expectFalse(autonomyPlan.isExecutable)
+    try expectFalse(quotePlan.isExecutable)
+}
+
+private func testShowcaseAutopilotRedactsUnsafeText() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        providerReadinessError: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+    )
+
+    let plan = autopilotPlan(
+        script: script,
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        providerReadinessError: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(plan), as: UTF8.self)
+
+    try expectEqual(plan.action, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
 }
 
 private func testEncodesPrintQuoteRequestAsSnakeCase() throws {
@@ -2173,6 +2307,50 @@ private func readyGuidedScanSelection() -> CaptureMediaSelection {
             captureMedia(filename: "scan_002.jpg", contentType: "image/jpeg", kind: .image),
             captureMedia(filename: "scan_003.jpg", contentType: "image/jpeg", kind: .image),
         ]
+    )
+}
+
+private func demoScript(
+    captureSelection: CaptureMediaSelection? = readyGuidedScanSelection(),
+    session: MythSession? = nil,
+    npcTickHistoryCount: Int = 0,
+    printQuote: PrintQuote? = nil,
+    providerReadiness: ProviderReadinessResponse? = localDemoProviderReadiness(),
+    providerReadinessError: String? = nil
+) -> DemoScript {
+    DemoScriptBuilder.build(
+        captureSelection: captureSelection,
+        session: session,
+        npcTickHistoryCount: npcTickHistoryCount,
+        printQuote: printQuote,
+        providerReadiness: providerReadiness,
+        providerReadinessError: providerReadinessError
+    )
+}
+
+private func autopilotPlan(
+    script: DemoScript,
+    phase: ForgeFlowPhase = .idle,
+    session: MythSession?,
+    npcTickHistoryCount: Int = 0,
+    printQuote: PrintQuote? = nil,
+    providerReadiness: ProviderReadinessResponse? = localDemoProviderReadiness(),
+    providerReadinessError: String? = nil,
+    isAdvancingNPCTick: Bool = false,
+    isRunningAutonomy: Bool = false,
+    isLoadingPrintQuote: Bool = false
+) -> ShowcaseAutopilotPlan {
+    ShowcaseAutopilotPlanner.plan(
+        script: script,
+        phase: phase,
+        session: session,
+        npcTickHistoryCount: npcTickHistoryCount,
+        printQuote: printQuote,
+        providerReadiness: providerReadiness,
+        providerReadinessError: providerReadinessError,
+        isAdvancingNPCTick: isAdvancingNPCTick,
+        isRunningAutonomy: isRunningAutonomy,
+        isLoadingPrintQuote: isLoadingPrintQuote
     )
 }
 

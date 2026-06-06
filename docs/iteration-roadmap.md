@@ -66,6 +66,7 @@ Bridge deliverable:
 - P0.48 integrated guided-scan capture to downloadable iOS scene acceptance
 - P0.49 in-app mobile demo script for the final iPhone showcase loop
 - P0.50 SceneKit NPC ritual scene overlay for spatial agent action around the artifact
+- P0.51 operator-controlled showcase autopilot for one-step demo progression
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
