@@ -121,6 +121,7 @@ struct ForgeRootView: View {
                         session: readySession,
                         tick: latestNPCTick,
                         summary: npcAgentTickSummary,
+                        actionGate: npcAgentActionGate,
                         tickHistoryCount: npcTickHistory.count,
                         isLoading: isAdvancingNPCTick,
                         isRunningAutonomy: isRunningAutonomy,
@@ -580,6 +581,16 @@ struct ForgeRootView: View {
             selection: mediaSelection,
             providerReadiness: providerReadiness,
             providerReadinessError: providerReadinessError
+        )
+    }
+
+    private var npcAgentActionGate: NPCAgentActionGate {
+        NPCAgentActionGateBuilder.build(
+            session: readySession,
+            npcAgentModeSummary: npcAgentModeSummary,
+            npcAgentTickSummary: npcAgentTickSummary,
+            isAdvancingTick: isAdvancingNPCTick,
+            isRunningAutonomy: isRunningAutonomy
         )
     }
 

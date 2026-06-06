@@ -183,7 +183,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "ForgeReadinessSummaryBuilder.build forgeReadinessSummary: forgeReadinessSummary "
             "ForgeActionGateBuilder.build forgeActionGate: forgeActionGate "
             "NPCAgentModeSummaryBuilder.build NPCAgentModeView(summary: "
-            "NPCAgentTickSummaryBuilder.build summary: npcAgentTickSummary"
+            "NPCAgentTickSummaryBuilder.build summary: npcAgentTickSummary "
+            "NPCAgentActionGateBuilder.build actionGate: npcAgentActionGate"
         ),
         "apps/mobile/ios/App/GuidedScanCaptureView.swift": (
             "ObjectCaptureSession ObjectCaptureView(session:"
@@ -200,7 +201,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "Artifact Handoff ShareLink Retry Download"
         ),
         "apps/mobile/ios/App/NPCTickView.swift": (
-            "Run Autonomy let summary: NPCAgentTickSummary summary.decisionLabel"
+            "let summary: NPCAgentTickSummary summary.decisionLabel "
+            "let actionGate: NPCAgentActionGate actionGate.canRunAutonomy "
+            "actionGate.canAdvanceVillage actionGate.detail"
         ),
         "apps/mobile/ios/App/NPCAgentModeView.swift": (
             "NPC Agent Mode summary.missingEnv providerLabel"
@@ -259,6 +262,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testArtifactGenerationProvenanceSummaryShowsScanAssets "
             "testNPCAgentModeShowsOpenAIReadyRuntime "
             "testNPCAgentTickSummaryShowsLatestTickResolution "
+            "testNPCAgentActionGateEnablesLocalDemoActions "
             "testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance "
             "testFinalLaunchMobileSummaryShowsHandoffNextActions "
             "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
@@ -284,7 +288,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "NPCAgentModeSummaryBuilder"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentTickSummary.swift": (
-            "NPCAgentTickSummaryBuilder decisionLabel privacyNotes"
+            "NPCAgentTickSummaryBuilder decisionLabel privacyNotes "
+            'NPCAgentActionGateBuilder canRunAutonomy disabledReason autonomyTitle: "Run Autonomy"'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift": (
             "DemoScriptBuilder"

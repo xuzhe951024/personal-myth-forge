@@ -38,6 +38,103 @@ public struct NPCAgentTickSummary: Codable, Equatable, Sendable {
     }
 }
 
+public struct NPCAgentActionGate: Codable, Equatable, Sendable {
+    public let canAdvanceVillage: Bool
+    public let canRunAutonomy: Bool
+    public let advanceTitle: String
+    public let autonomyTitle: String
+    public let detail: String
+    public let disabledReason: String?
+}
+
+public enum NPCAgentActionGateBuilder {
+    public static func build(
+        session: MythSession?,
+        npcAgentModeSummary: NPCAgentModeSummary,
+        npcAgentTickSummary: NPCAgentTickSummary,
+        isAdvancingTick: Bool,
+        isRunningAutonomy: Bool
+    ) -> NPCAgentActionGate {
+        guard session != nil else {
+            return gate(
+                canRun: false,
+                detail: "Forge a myth session before NPC agents can act.",
+                disabledReason: "session_required"
+            )
+        }
+
+        if isAdvancingTick || isRunningAutonomy || npcAgentTickSummary.status == .running {
+            return gate(
+                canRun: false,
+                detail: npcAgentTickSummary.detail,
+                disabledReason: "npc_action_running"
+            )
+        }
+
+        if npcAgentModeSummary.status == .needsSetup {
+            return gate(
+                canRun: false,
+                detail: npcAgentModeSummary.detail,
+                disabledReason: "npc_setup_required"
+            )
+        }
+
+        if npcAgentTickSummary.status == .needsAttention {
+            return gate(
+                canRun: false,
+                detail: npcAgentTickSummary.detail,
+                disabledReason: "npc_recovery_required"
+            )
+        }
+
+        return gate(
+            canRun: true,
+            detail: "\(npcAgentModeSummary.providerLabel) NPC actions are ready.",
+            disabledReason: nil
+        )
+    }
+
+    private static func gate(
+        canRun: Bool,
+        detail: String,
+        disabledReason: String?
+    ) -> NPCAgentActionGate {
+        NPCAgentActionGate(
+            canAdvanceVillage: canRun,
+            canRunAutonomy: canRun,
+            advanceTitle: "Advance Village",
+            autonomyTitle: "Run Autonomy",
+            detail: sanitize(detail),
+            disabledReason: disabledReason
+        )
+    }
+
+    private static func sanitize(_ text: String) -> String {
+        var sanitized = text
+        let patterns = [
+            #"sk-[A-Za-z0-9._-]+"#,
+            #"Bearer\s+[A-Za-z0-9._~+/\-=:-]+"#,
+            #"Authorization"#,
+            #"api[_-]?key\s*[=:]\s*[^\s,;"']+"#,
+            #"local-capture://[^\s,;"']+"#,
+            #"file://[^\s,;"']+"#,
+            #"/Users/[^\s,;"']+"#,
+            #"/tmp/[^\s,;"']+"#,
+            #"checkout_url"#,
+            #"https?://checkout\.[^\s,;"']+"#,
+            #"https?://pay\.[^\s,;"']+"#,
+        ]
+        for pattern in patterns {
+            sanitized = sanitized.replacingOccurrences(
+                of: pattern,
+                with: "[withheld]",
+                options: .regularExpression
+            )
+        }
+        return sanitized
+    }
+}
+
 public enum NPCAgentTickSummaryBuilder {
     public static func build(
         session: MythSession?,

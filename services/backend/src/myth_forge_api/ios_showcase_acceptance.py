@@ -325,7 +325,10 @@ FEATURES = (
         id="npc_agent",
         label="NPC agent",
         requirements=(
-            SourceRequirement("apps/mobile/ios/App/NPCTickView.swift", "Run Autonomy"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentTickSummary.swift",
+                'autonomyTitle: "Run Autonomy"',
+            ),
             SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "runMythSessionAutonomy"),
         ),
     ),
@@ -364,19 +367,47 @@ FEATURES = (
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentTickSummary.swift",
                 "privacyNotes",
             ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentTickSummary.swift",
+                "NPCAgentActionGateBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentTickSummary.swift",
+                "canRunAutonomy",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentTickSummary.swift",
+                "disabledReason",
+            ),
             SourceRequirement("apps/mobile/ios/App/NPCTickView.swift", "let summary: NPCAgentTickSummary"),
+            SourceRequirement("apps/mobile/ios/App/NPCTickView.swift", "let actionGate: NPCAgentActionGate"),
             SourceRequirement("apps/mobile/ios/App/NPCTickView.swift", "summary.decisionLabel"),
+            SourceRequirement("apps/mobile/ios/App/NPCTickView.swift", "actionGate.canRunAutonomy"),
+            SourceRequirement("apps/mobile/ios/App/NPCTickView.swift", "actionGate.canAdvanceVillage"),
+            SourceRequirement("apps/mobile/ios/App/NPCTickView.swift", "actionGate.detail"),
             SourceRequirement(
                 "apps/mobile/ios/App/ForgeRootView.swift",
                 "NPCAgentTickSummaryBuilder.build",
             ),
             SourceRequirement(
                 "apps/mobile/ios/App/ForgeRootView.swift",
+                "NPCAgentActionGateBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
                 "summary: npcAgentTickSummary",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "actionGate: npcAgentActionGate",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testNPCAgentTickSummaryShowsLatestTickResolution",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testNPCAgentActionGateEnablesLocalDemoActions",
             ),
         ),
     ),

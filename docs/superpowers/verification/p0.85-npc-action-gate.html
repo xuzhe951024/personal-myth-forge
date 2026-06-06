@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.85 NPC Action Gate</title>
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #eef2f6;
+      color: #172026;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: flex-start;
+      background: linear-gradient(180deg, #f7fafc 0%, #e7edf3 100%);
+    }
+
+    .phone {
+      width: 488px;
+      min-height: 844px;
+      padding: 18px 16px 24px;
+      background: #f9fbfc;
+      overflow: hidden;
+      transform: scale(0.8);
+      transform-origin: top left;
+    }
+
+    .status {
+      height: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: #25313a;
+      margin-bottom: 12px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .mode {
+      padding: 5px 8px;
+      border-radius: 8px;
+      border: 1px solid #c7d2dc;
+      background: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      color: #33424f;
+    }
+
+    .panel {
+      border-radius: 8px;
+      border: 1px solid #d6e0e8;
+      background: rgba(255, 255, 255, 0.86);
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .panel.soft {
+      background: rgba(239, 245, 248, 0.9);
+    }
+
+    .row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .label {
+      margin: 0 0 3px;
+      font-size: 13px;
+      font-weight: 850;
+      color: #1e2b34;
+    }
+
+    .caption {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #657584;
+    }
+
+    .section-title {
+      margin: 15px 0 8px;
+      font-size: 17px;
+      font-weight: 850;
+    }
+
+    .artifact {
+      height: 178px;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 50% 38%, rgba(46, 125, 83, 0.38), transparent 23%),
+        linear-gradient(145deg, #dfe8ec 0%, #cddae2 100%);
+      border: 1px solid #c9d5dd;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .artifact::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      width: 96px;
+      height: 58px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 16px solid #426c5d;
+      box-shadow: inset 0 0 0 7px #c4a96b;
+    }
+
+    .actor {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #23313a;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .actor.a { left: 68px; bottom: 32px; }
+    .actor.b { right: 72px; bottom: 45px; }
+    .actor.c { left: 50%; bottom: 18px; transform: translateX(-50%); }
+
+    .pill {
+      flex: 0 0 auto;
+      border-radius: 7px;
+      padding: 4px 7px;
+      background: #fff4df;
+      color: #9a5b00;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0;
+      text-align: center;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 8px;
+      font-size: 11px;
+      line-height: 1.32;
+      margin-top: 5px;
+    }
+
+    .metric span:first-child {
+      color: #667784;
+      font-weight: 750;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .button {
+      flex: 1;
+      min-height: 38px;
+      border: 0;
+      border-radius: 8px;
+      background: #9faeb9;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .gate-detail {
+      margin: 8px 0 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #a15b00;
+    }
+
+    .list {
+      display: grid;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .list div {
+      font-size: 10.5px;
+      line-height: 1.32;
+      color: #5c6c79;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="P0.85 iPhone NPC Action Gate">
+    <div class="status">
+      <span>9:41</span>
+      <span>5G 100%</span>
+    </div>
+
+    <div class="header">
+      <h1>Personal Myth Forge</h1>
+      <div class="mode">CONFIG</div>
+    </div>
+
+    <section class="artifact" aria-label="Artifact ritual scene">
+      <div class="actor a">M</div>
+      <div class="actor b">I</div>
+      <div class="actor c">S</div>
+    </section>
+
+    <div class="section-title">NPC Agent Mode</div>
+    <section class="panel">
+      <div class="row">
+        <div>
+          <p class="label">NPC Agent setup needed</p>
+          <p class="caption">Missing OPENAI_API_KEY before AI Agent NPC mode is ready.</p>
+        </div>
+        <div class="pill">CHECK</div>
+      </div>
+      <div class="list">
+        <div>Provider: openai</div>
+        <div>Runtime: local_agent_runtime</div>
+        <div>Missing env: OPENAI_API_KEY</div>
+        <div>NPC provider keys stay backend-only.</div>
+      </div>
+    </section>
+
+    <div class="section-title">Next Village Tick</div>
+    <section class="panel soft">
+      <div class="row">
+        <div>
+          <p class="label">Initial NPC Agent traces</p>
+          <p class="caption">Initial NPC beliefs and intentions are ready, but configured AI Agent setup is incomplete.</p>
+        </div>
+        <div class="pill">CHECK</div>
+      </div>
+      <div class="metric"><span>Runtime</span><span>local_agent_runtime</span></div>
+      <div class="metric"><span>Tick</span><span>initial</span></div>
+      <div class="metric"><span>Decision</span><span>3 initial traces</span></div>
+      <div class="actions">
+        <button class="button" disabled>Advance Village</button>
+        <button class="button" disabled>Run Autonomy</button>
+      </div>
+      <p class="gate-detail">Missing OPENAI_API_KEY before AI Agent NPC mode is ready.</p>
+    </section>
+
+    <section class="panel">
+      <p class="label">Recent interpretation</p>
+      <p class="caption">Mara wants to circle the artifact. Ior proposes guarding it. Senn waits for the world arbiter.</p>
+    </section>
+  </main>
+</body>
+</html>

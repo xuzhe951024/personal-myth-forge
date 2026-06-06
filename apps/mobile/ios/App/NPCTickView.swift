@@ -5,6 +5,7 @@ struct NPCTickView: View {
     let session: MythSession?
     let tick: NPCAgentTick?
     let summary: NPCAgentTickSummary
+    let actionGate: NPCAgentActionGate
     let tickHistoryCount: Int
     let isLoading: Bool
     let isRunningAutonomy: Bool
@@ -38,22 +39,26 @@ struct NPCTickView: View {
                     if isLoading {
                         ProgressView()
                     } else {
-                        Text("Advance Village")
+                        Text(actionGate.advanceTitle)
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(session == nil || isLoading || isRunningAutonomy)
+                .disabled(!actionGate.canAdvanceVillage)
 
                 Button(action: runAutonomy) {
                     if isRunningAutonomy {
                         ProgressView()
                     } else {
-                        Text("Run Autonomy")
+                        Text(actionGate.autonomyTitle)
                     }
                 }
                 .buttonStyle(.bordered)
-                .disabled(session == nil || isLoading || isRunningAutonomy)
+                .disabled(!actionGate.canRunAutonomy)
             }
+
+            Text(actionGate.detail)
+                .font(.caption)
+                .foregroundStyle(actionGate.disabledReason == nil ? Color.secondary : Color.orange)
 
             if let errorMessage {
                 Text(errorMessage)

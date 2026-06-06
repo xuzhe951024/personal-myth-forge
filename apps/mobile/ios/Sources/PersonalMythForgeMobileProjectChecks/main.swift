@@ -600,7 +600,7 @@ do {
     try requireContains(forgeRootView, "switch selectedCaptureMode", "file importer selected mode source")
     try requireContains(forgeRootView, "guard selectedCaptureMode == mode else", "stale photo load guard")
     try requireContains(forgeRootView, "CaptureInputLoadError.unreadablePhoto", "partial photo load failure source")
-    try requireContains(npcTickView, "Run Autonomy", "autonomy run button label")
+    try requireContains(npcAgentTickSummary, #"autonomyTitle: "Run Autonomy""#, "autonomy run button label")
     try requireContains(npcTickView, "runAutonomy", "autonomy run button action")
     try requireContains(finalShowcaseSummaryView, "Final Showcase", "final showcase summary title")
     try requireContains(finalShowcaseSummaryView, "privacyNotes", "final showcase privacy note rendering")
@@ -943,7 +943,7 @@ do {
     try requireContains(npcReactionsView, "npcAgentTraces", "npc agent trace display")
     try requireContains(npcReactionsView, "proposedAction", "npc proposed action display")
     try requireContains(npcTickView, "NPCAgentTick", "npc tick model usage")
-    try requireContains(npcTickView, "Advance Village", "npc tick action label")
+    try requireContains(npcAgentTickSummary, #"advanceTitle: "Advance Village""#, "npc tick action label")
     try requireContains(npcTickView, "tickHistoryCount", "npc tick history count input")
     try requireContains(npcTickView, "agentRuntime", "npc tick runtime display")
     try requireContains(npcTickView, "acceptedActions", "npc tick accepted actions")
@@ -952,11 +952,18 @@ do {
     try requireContains(npcTickView, "let summary: NPCAgentTickSummary", "npc tick summary input")
     try requireContains(npcTickView, "summary.decisionLabel", "npc tick summary decision display")
     try requireContains(npcTickView, "summary.privacyNotes", "npc tick privacy notes display")
+    try requireContains(npcTickView, "let actionGate: NPCAgentActionGate", "npc action gate view input")
+    try requireContains(npcTickView, "actionGate.canRunAutonomy", "npc autonomy action gate")
+    try requireContains(npcTickView, "actionGate.canAdvanceVillage", "npc advance action gate")
+    try requireContains(npcTickView, "actionGate.detail", "npc action gate detail")
     try requireNotContains(npcTickView, "sk-", "npc tick secret sample")
     try requireContains(npcAgentModeSummary, "NPCAgentModeSummaryBuilder", "npc agent mode summary builder")
     try requireContains(npcAgentModeSummary, "NPCAgentModeStatus", "npc agent mode status")
     try requireContains(npcAgentTickSummary, "NPCAgentTickSummaryBuilder", "npc agent tick summary builder")
     try requireContains(npcAgentTickSummary, "NPCAgentTickSummaryStatus", "npc agent tick summary status")
+    try requireContains(npcAgentTickSummary, "NPCAgentActionGateBuilder", "npc agent action gate builder")
+    try requireContains(npcAgentTickSummary, "canRunAutonomy", "npc action gate autonomy flag")
+    try requireContains(npcAgentTickSummary, "disabledReason", "npc action gate disabled reason")
     try requireContains(npcAgentTickSummary, "decisionLabel", "npc agent tick decision summary")
     try requireContains(npcAgentTickSummary, "privacyNotes", "npc agent tick privacy notes")
     try requireContains(npcAgentModeView, "NPC Agent Mode", "npc agent mode title")
@@ -966,10 +973,18 @@ do {
     try requireContains(forgeRootView, "NPCAgentModeView(summary:", "npc agent mode view wiring")
     try requireContains(forgeRootView, "NPCAgentTickSummaryBuilder.build", "npc agent tick summary root wiring")
     try requireContains(forgeRootView, "summary: npcAgentTickSummary", "npc agent tick summary view wiring")
+    try requireContains(forgeRootView, "npcAgentActionGate: NPCAgentActionGate", "npc action gate root property")
+    try requireContains(forgeRootView, "NPCAgentActionGateBuilder.build", "npc action gate root builder wiring")
+    try requireContains(forgeRootView, "actionGate: npcAgentActionGate", "npc action gate view handoff")
     try requireContains(
         contractTests,
         "testNPCAgentTickSummaryShowsLatestTickResolution",
         "npc agent tick summary contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testNPCAgentActionGateEnablesLocalDemoActions",
+        "npc action gate local demo contract test"
     )
     try requireContains(
         contractTests,
