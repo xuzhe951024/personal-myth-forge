@@ -13,6 +13,7 @@ from myth_forge_api.final_acceptance_readiness import (
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
+from myth_forge_api.final_operator_handoff import build_final_operator_handoff_report
 from myth_forge_api.resource_handoff import build_resource_handoff_report
 
 LaunchMode = Literal["local", "configured"]
@@ -49,6 +50,13 @@ def build_final_demo_launch_report(
         resource_report=resource_report,
         final_resources_preflight=final_resources_preflight,
     )
+    final_operator_handoff = build_final_operator_handoff_report(
+        mode=mode,
+        final_resources_preflight=final_resources_preflight,
+        final_acceptance_readiness=final_acceptance_readiness,
+        launch_phases=phases,
+        repo_root=selected_repo_root,
+    )
     resource_summary = dict(resource_report["summary"])
     phase_summary = _summary(phases)
     overall_status = _overall_status(mode=mode, summary=phase_summary)
@@ -60,6 +68,7 @@ def build_final_demo_launch_report(
         "phase_summary": phase_summary,
         "final_resources_preflight": final_resources_preflight,
         "final_acceptance_readiness": final_acceptance_readiness,
+        "final_operator_handoff": final_operator_handoff,
         "resource_report": resource_report,
         "launch_phases": phases,
         "operator_checklist": _operator_checklist(

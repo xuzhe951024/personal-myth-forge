@@ -2120,3 +2120,33 @@ Static evidence lives at:
 docs/superpowers/verification/p0.76-final-acceptance-readiness.html
 docs/superpowers/verification/assets/p0.76-final-acceptance-readiness-390x844.png
 ```
+
+P0.77 embeds a read-only `final_operator_handoff` report in
+`/v1/final-demo-launch`. It consolidates the final Mac-side operation sequence:
+resource preflight, unified apply, LAN backend startup, local final acceptance,
+iOS deploy preflight, Xcode build gate, and optional configured live-provider
+acceptance.
+
+The iPhone `Final Launch Status` panel now renders a `Next` section with the
+first safe operator actions from that handoff. The app still does not execute
+Mac commands, trigger Xcode, deploy to a device, accept Apple licenses, mutate
+global state, or call Meshy/OpenAI/Treatstock. Display rows are redacted before
+they reach the phone.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_final_operator_handoff.py tests/test_final_demo_launch.py tests/test_ios_showcase_acceptance.py -q
+cd ../..
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.77-final-operator-handoff.html
+docs/superpowers/verification/assets/p0.77-final-operator-handoff-390x844.png
+```

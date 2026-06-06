@@ -92,6 +92,7 @@ Bridge deliverable:
 - P0.74 iPhone Artifact Handoff actions for SceneKit, share, conversion, and retry states
 - P0.75 iPhone NPC Agent Mode panel for local, OpenAI-ready, and missing-setup states
 - P0.76 iPhone Final Acceptance readiness rows for missing, blocked, and ready reports
+- P0.77 iPhone Final Operator Handoff next-action rows for the final Mac-side demo sequence
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

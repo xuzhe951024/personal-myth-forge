@@ -770,6 +770,124 @@ public struct FinalAcceptanceReadinessReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalOperatorHandoffSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var manual: Int
+    public var optional: Int
+    public var partial: Int
+    public var live: Int
+
+    public init(
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        manual: Int,
+        optional: Int,
+        partial: Int = 0,
+        live: Int = 0
+    ) {
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.manual = manual
+        self.optional = optional
+        self.partial = partial
+        self.live = live
+    }
+}
+
+public struct FinalOperatorHandoffStep: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var command: String
+    public var requiredFor: String
+    public var source: String
+    public var notes: [String]
+    public var requiresConsent: Bool
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        command: String,
+        requiredFor: String,
+        source: String,
+        notes: [String] = [],
+        requiresConsent: Bool = false
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.command = command
+        self.requiredFor = requiredFor
+        self.source = source
+        self.notes = notes
+        self.requiresConsent = requiresConsent
+    }
+}
+
+public struct FinalOperatorHandoffSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var globalMutation: Bool
+    public var providerSecretsInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+    public var commandExecutionFromApp: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        globalMutation: Bool,
+        providerSecretsInReport: Bool,
+        rawMediaInReport: Bool,
+        paymentLinksInReport: Bool,
+        localPathsInReport: Bool,
+        commandExecutionFromApp: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.globalMutation = globalMutation
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.localPathsInReport = localPathsInReport
+        self.commandExecutionFromApp = commandExecutionFromApp
+    }
+}
+
+public struct FinalOperatorHandoffReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var mode: String
+    public var status: String
+    public var summary: FinalOperatorHandoffSummary
+    public var steps: [FinalOperatorHandoffStep]
+    public var nextActions: [String]
+    public var safety: FinalOperatorHandoffSafety
+
+    public init(
+        kind: String,
+        mode: String,
+        status: String,
+        summary: FinalOperatorHandoffSummary,
+        steps: [FinalOperatorHandoffStep],
+        nextActions: [String],
+        safety: FinalOperatorHandoffSafety
+    ) {
+        self.kind = kind
+        self.mode = mode
+        self.status = status
+        self.summary = summary
+        self.steps = steps
+        self.nextActions = nextActions
+        self.safety = safety
+    }
+}
+
 public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
@@ -778,6 +896,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var phaseSummary: FinalDemoLaunchSummary?
     public var finalResourcesPreflight: FinalResourcesPreflightReport?
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
+    public var finalOperatorHandoff: FinalOperatorHandoffReport?
     public var launchPhases: [FinalDemoLaunchPhase]
     public var operatorChecklist: [String]
     public var commands: [String]
@@ -792,6 +911,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         phaseSummary: FinalDemoLaunchSummary? = nil,
         finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
+        finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
         launchPhases: [FinalDemoLaunchPhase],
         operatorChecklist: [String],
         commands: [String],
@@ -805,6 +925,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.phaseSummary = phaseSummary
         self.finalResourcesPreflight = finalResourcesPreflight
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
+        self.finalOperatorHandoff = finalOperatorHandoff
         self.launchPhases = launchPhases
         self.operatorChecklist = operatorChecklist
         self.commands = commands

@@ -55,9 +55,13 @@ do {
     try testFinalLaunchMobileSummaryWaitsForFinalAcceptanceReadiness()
     try testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance()
     try testFinalLaunchMobileSummaryShowsReadyFinalAcceptance()
+    try testDecodesFinalOperatorHandoffFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsHandoffNextActions()
+    try testFinalLaunchMobileSummaryShowsReadyHandoff()
     try testFinalLaunchMobileSummaryMarksReadyReport()
     try testFinalLaunchMobileSummaryRedactsUnsafeReportText()
     try testFinalLaunchMobileSummaryRedactsUnsafeAcceptanceText()
+    try testFinalLaunchMobileSummaryRedactsUnsafeHandoffText()
     try testDevicePreflightMarksLocalDemoReady()
     try testDevicePreflightMarksSavedNPCHistoryReady()
     try testDemoScriptStartsWithCapture()
@@ -1228,6 +1232,57 @@ private func testFinalLaunchMobileSummaryShowsReadyFinalAcceptance() throws {
     try expectEqual(summary.acceptanceRows.first, "Final acceptance ready.")
 }
 
+private func testDecodesFinalOperatorHandoffFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            finalOperatorHandoffStatus: "blocked",
+            finalOperatorHandoffAction: "provide iOS deploy config and rerun mobile deploy preflight"
+        )
+    )
+
+    let handoff = try require(
+        report.finalOperatorHandoff,
+        "missing final operator handoff"
+    )
+    try expectEqual(handoff.kind, "final_operator_handoff_report")
+    try expectEqual(handoff.status, "blocked")
+    try expectEqual(handoff.summary.blocked, 1)
+    try expectEqual(handoff.summary.live, 0)
+    try expectEqual(handoff.steps.first?.id, "local_final_acceptance")
+    try expectEqual(handoff.steps.first?.source, "final_acceptance_readiness")
+    try expectContains(handoff.nextActions.first ?? "", "provide iOS deploy config")
+    try expectFalse(handoff.safety.commandsRun)
+    try expectFalse(handoff.safety.commandExecutionFromApp)
+}
+
+private func testFinalLaunchMobileSummaryShowsHandoffNextActions() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            finalOperatorHandoffStatus: "blocked",
+            finalOperatorHandoffAction: "provide iOS deploy config and rerun mobile deploy preflight"
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.handoffRows.count, 1)
+    try expectContains(summary.handoffRows[0], "provide iOS deploy config")
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyHandoff() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.handoffRows.first, "Final operator handoff ready.")
+}
+
 private func testFinalLaunchMobileSummaryMarksReadyReport() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -1267,6 +1322,24 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeAcceptanceText() throws {
         overallStatus: "blocked",
         finalAcceptanceStatus: "blocked",
         finalAcceptanceBlockerDetail: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeHandoffText() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        finalOperatorHandoffStatus: "blocked",
+        finalOperatorHandoffAction: "run sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
     )
     let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
     let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
@@ -1908,7 +1981,9 @@ private func finalDemoLaunchPayload(
     finalResourcesStatus: String = "missing",
     finalResourcesAction: String = "copy services/backend/final-resources.env.example",
     finalAcceptanceStatus: String = "missing",
-    finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig."
+    finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
+    finalOperatorHandoffStatus: String = "missing",
+    finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
 ) -> Data {
     Data(
         """
@@ -2000,6 +2075,53 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "payment_links_in_report": false,
               "local_paths_in_report": false
+            }
+          },
+          "final_operator_handoff": {
+            "kind": "final_operator_handoff_report",
+            "mode": "local",
+            "status": "\(finalOperatorHandoffStatus)",
+            "summary": {
+              "ready": \(finalOperatorHandoffStatus == "ready" ? "7" : "4"),
+              "missing": \(finalOperatorHandoffStatus == "missing" ? "1" : "0"),
+              "blocked": \(finalOperatorHandoffStatus == "blocked" ? "1" : "0"),
+              "manual": 1,
+              "optional": 1,
+              "partial": 0,
+              "live": \(finalOperatorHandoffStatus == "live" ? "1" : "0")
+            },
+            "steps": [
+              {
+                "id": "local_final_acceptance",
+                "label": "Run local final acceptance",
+                "status": "\(finalOperatorHandoffStatus)",
+                "command": "cd services/backend && uv run python -m myth_forge_api.cli final-acceptance --profile quick --provider-mode local --repo-root ../.. --output .local/final-acceptance-local.json",
+                "required_for": "no-key deterministic smoke acceptance",
+                "source": "final_acceptance_readiness",
+                "notes": ["\(finalOperatorHandoffAction)"],
+                "requires_consent": false
+              },
+              {
+                "id": "configured_final_acceptance",
+                "label": "Run configured final acceptance",
+                "status": "\(finalOperatorHandoffStatus == "live" ? "live" : "optional")",
+                "command": "cd services/backend && uv run python -m myth_forge_api.cli final-acceptance --profile quick --provider-mode configured --require-real-core --allow-live-provider-calls --repo-root ../.. --output .local/final-acceptance-configured.json",
+                "required_for": "real 3D and AI NPC provider acceptance",
+                "source": "final_demo_launch_phase",
+                "notes": ["May call live providers and spend provider credits."],
+                "requires_consent": \(finalOperatorHandoffStatus == "live" ? "true" : "false")
+              }
+            ],
+            "next_actions": \(finalOperatorHandoffStatus == "ready" ? #"[]"# : "[\"\(finalOperatorHandoffAction)\"]"),
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "global_mutation": false,
+              "provider_secrets_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false,
+              "command_execution_from_app": false
             }
           },
           "launch_phases": [
@@ -3561,7 +3683,9 @@ private func finalDemoLaunchReport(
     finalResourcesStatus: String = "ready",
     finalResourcesAction: String = "copy services/backend/final-resources.env.example",
     finalAcceptanceStatus: String = "missing",
-    finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig."
+    finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
+    finalOperatorHandoffStatus: String = "missing",
+    finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -3571,7 +3695,9 @@ private func finalDemoLaunchReport(
             finalResourcesStatus: finalResourcesStatus,
             finalResourcesAction: finalResourcesAction,
             finalAcceptanceStatus: finalAcceptanceStatus,
-            finalAcceptanceBlockerDetail: finalAcceptanceBlockerDetail
+            finalAcceptanceBlockerDetail: finalAcceptanceBlockerDetail,
+            finalOperatorHandoffStatus: finalOperatorHandoffStatus,
+            finalOperatorHandoffAction: finalOperatorHandoffAction
         )
     )
 }

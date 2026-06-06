@@ -27,6 +27,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var phaseRows: [FinalLaunchMobilePhaseRow]
     public var resourceActions: [String]
     public var acceptanceRows: [String]
+    public var handoffRows: [String]
     public var commandRows: [String]
     public var notes: [String]
 
@@ -37,6 +38,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         phaseRows: [FinalLaunchMobilePhaseRow],
         resourceActions: [String],
         acceptanceRows: [String] = [],
+        handoffRows: [String] = [],
         commandRows: [String],
         notes: [String]
     ) {
@@ -46,6 +48,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.phaseRows = phaseRows
         self.resourceActions = resourceActions
         self.acceptanceRows = acceptanceRows
+        self.handoffRows = handoffRows
         self.commandRows = commandRows
         self.notes = notes
     }
@@ -64,6 +67,7 @@ public enum FinalLaunchMobileSummaryBuilder {
                 phaseRows: [],
                 resourceActions: [],
                 acceptanceRows: [],
+                handoffRows: [],
                 commandRows: [],
                 notes: baseNotes()
             )
@@ -76,6 +80,7 @@ public enum FinalLaunchMobileSummaryBuilder {
                 phaseRows: [],
                 resourceActions: [],
                 acceptanceRows: [],
+                handoffRows: [],
                 commandRows: [],
                 notes: baseNotes()
             )
@@ -97,6 +102,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             phaseRows: Array(phaseRows.prefix(4)),
             resourceActions: resourceActions(from: report.finalResourcesPreflight),
             acceptanceRows: acceptanceRows(from: report.finalAcceptanceReadiness),
+            handoffRows: handoffRows(from: report.finalOperatorHandoff),
             commandRows: report.commands.prefix(4).map(sanitize),
             notes: baseNotes()
         )
@@ -163,6 +169,32 @@ public enum FinalLaunchMobileSummaryBuilder {
             return ["Final acceptance blocked."]
         default:
             return ["Final acceptance \(sanitize(readiness.status))."]
+        }
+    }
+
+    private static func handoffRows(from handoff: FinalOperatorHandoffReport?) -> [String] {
+        guard let handoff else {
+            return ["Final operator handoff has not loaded."]
+        }
+        switch handoff.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            return ["Final operator handoff ready."]
+        case "blocked", "partial", "live":
+            if !handoff.nextActions.isEmpty {
+                return handoff.nextActions.prefix(3).map(sanitize)
+            }
+            if let step = handoff.steps.first(where: { status(from: $0.status) != .ready }) {
+                let note = step.notes.first ?? step.requiredFor
+                return [sanitize("\(step.id): \(step.status) | \(step.command) | \(note)")]
+            }
+            return ["Final operator handoff \(sanitize(handoff.status))."]
+        case "missing":
+            if !handoff.nextActions.isEmpty {
+                return handoff.nextActions.prefix(3).map(sanitize)
+            }
+            return ["Final operator handoff waiting for local operator data."]
+        default:
+            return ["Final operator handoff \(sanitize(handoff.status))."]
         }
     }
 
