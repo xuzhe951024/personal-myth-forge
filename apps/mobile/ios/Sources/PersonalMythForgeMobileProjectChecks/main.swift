@@ -312,6 +312,7 @@ do {
     try requirePlistText(plist, key: "NSCameraUsageDescription")
     try requirePlistText(plist, key: "NSPhotoLibraryUsageDescription")
     try requirePlistText(plist, key: "NSPhotoLibraryAddUsageDescription")
+    try requirePlistText(plist, key: "NSLocalNetworkUsageDescription")
     try requireNestedPlistBool(
         plist,
         dictionaryKey: "NSAppTransportSecurity",

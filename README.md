@@ -1873,3 +1873,28 @@ Static evidence lives at:
 docs/superpowers/verification/p0.67-arkit-scan-generation-acceptance.html
 docs/superpowers/verification/assets/p0.67-arkit-scan-generation-acceptance-390x844.png
 ```
+
+P0.68 adds iOS local network privacy readiness for the physical-device demo.
+The app already reads `PMF_BACKEND_BASE_URL` from deployment config and allows
+local networking through App Transport Security; it now also declares
+`NSLocalNetworkUsageDescription` so the iPhone build has a clear purpose string
+for connecting to the LAN-hosted backend.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py -q
+```
+
+Quick final acceptance includes the strengthened `ios_showcase_acceptance`
+`deploy_config` source gate. This does not run Xcode, sign the app, accept Apple
+licenses, or call providers.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.68-ios-local-network-readiness.html
+docs/superpowers/verification/assets/p0.68-ios-local-network-readiness-390x844.png
+```

@@ -26,6 +26,8 @@
 	<string>Select an object image to forge a myth artifact.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Save generated relic previews when the player chooses to export them.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Connect to the local Personal Myth Forge backend during an iPhone demo.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
