@@ -57,6 +57,18 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
         ),
     )
     _write_final_resources(repo_root)
+    _write_final_acceptance(
+        repo_root,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "passed",
+            "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
+            "checks": [
+                {"id": "provider_handoff", "label": "Provider handoff", "status": "passed"},
+                {"id": "demo_acceptance", "label": "Demo acceptance", "status": "passed"},
+            ],
+        },
+    )
     settings = Settings(
         three_d_provider="meshy",
         meshy_api_key="sk-meshy-secret",
@@ -92,6 +104,19 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
     assert phases["provider_readiness"]["status"] == "ready"
     assert phases["configured_final_acceptance"]["status"] == "ready"
     assert phases["xcode_build_gate"]["status"] == "manual"
+    handoff = result.report["final_operator_handoff"]
+    handoff_steps = {step["id"]: step for step in handoff["steps"]}
+    assert handoff["status"] == "partial"
+    assert handoff["summary"]["live"] == 1
+    assert handoff_steps["configured_final_acceptance"]["status"] == "live"
+    assert handoff_steps["configured_final_acceptance"]["requires_consent"] is True
+    assert handoff["next_actions"] == [
+        (
+            "run configured final acceptance only after live provider cost review "
+            "and --allow-live-provider-calls consent"
+        ),
+        "run Xcode build gate manually on the Mac: make mobile-xcode-build",
+    ]
     assert "sk-meshy-secret" not in report_text
     assert "sk-openai-secret" not in report_text
     assert "treatstock-secret" not in report_text
@@ -230,6 +255,22 @@ def test_final_demo_launch_embeds_saved_final_acceptance_readiness(
     assert readiness["operator_actions"] == [
         "start backend-device-demo and rerun mobile deploy preflight"
     ]
+    handoff = result.report["final_operator_handoff"]
+    handoff_steps = {step["id"]: step for step in handoff["steps"]}
+    assert handoff["status"] == "blocked"
+    assert handoff_steps["local_final_acceptance"]["status"] == "blocked"
+    assert handoff_steps["mobile_deploy_preflight"]["status"] == "blocked"
+    assert handoff_steps["mobile_deploy_preflight"]["source"] == "final_acceptance_readiness"
+    assert handoff["next_actions"][:2] == [
+        (
+            "copy services/backend/final-resources.env.example to "
+            "services/backend/.local/final-resources.env"
+        ),
+        "start backend-device-demo and rerun mobile deploy preflight",
+    ]
+    assert "run Xcode build gate manually on the Mac: make mobile-xcode-build" in handoff[
+        "next_actions"
+    ]
     assert "sk-secret" not in report_text
     assert str(tmp_path) not in report_text
 
@@ -260,7 +301,7 @@ def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Pat
 
 def _write_final_acceptance(repo_root: Path, report: dict[str, object]) -> None:
     acceptance = repo_root / "services/backend/.local/final-acceptance-local.json"
-    acceptance.parent.mkdir(parents=True)
+    acceptance.parent.mkdir(parents=True, exist_ok=True)
     acceptance.write_text(json.dumps(report), encoding="utf-8")
 
 

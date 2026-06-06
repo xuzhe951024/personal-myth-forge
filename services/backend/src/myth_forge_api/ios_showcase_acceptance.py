@@ -317,6 +317,37 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_final_operator_handoff",
+        label="Mobile final operator handoff",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_operator_handoff.py",
+                "build_final_operator_handoff_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "final_operator_handoff",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalOperatorHandoffReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "finalOperatorHandoff",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "handoffRows",
+            ),
+            SourceRequirement("apps/mobile/ios/App/FinalLaunchStatusView.swift", "Next"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsHandoffNextActions",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="device_preflight",
         label="Device preflight",
         requirements=(

@@ -37,6 +37,10 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "Acceptance", lines: summary.acceptanceRows)
             }
 
+            if !summary.handoffRows.isEmpty {
+                groupedLines(title: "Next", lines: summary.handoffRows)
+            }
+
             if !summary.commandRows.isEmpty {
                 groupedLines(title: "Commands", lines: summary.commandRows)
             }

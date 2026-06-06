@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.77 Final Operator Handoff</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e9eef0;
+      color: #172026;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: 100vw;
+      max-width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 18px 14px 24px;
+      background: #fbfcfd;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      border: 1px solid #98a4ad;
+      border-radius: 8px;
+      padding: 4px 7px;
+      color: #42515c;
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .stage {
+      height: 112px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, transparent 0 49%, rgba(255,255,255,.2) 49% 51%, transparent 51%),
+        linear-gradient(140deg, #24343c, #14232b);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #2d4653;
+    }
+
+    .phone {
+      position: absolute;
+      left: 28px;
+      top: 16px;
+      width: 66px;
+      height: 82px;
+      border-radius: 13px;
+      background: #e7eef2;
+      border: 4px solid #7f929f;
+    }
+
+    .mac {
+      position: absolute;
+      right: 28px;
+      top: 26px;
+      width: 104px;
+      height: 58px;
+      border-radius: 8px;
+      background: #d6dee3;
+      border: 3px solid #7c8e99;
+    }
+
+    .mac::after {
+      content: "";
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      bottom: -14px;
+      height: 10px;
+      border-radius: 4px;
+      background: #7c8e99;
+    }
+
+    .pulse {
+      position: absolute;
+      left: 112px;
+      right: 148px;
+      top: 52px;
+      height: 8px;
+      border-radius: 4px;
+      background: #2ba795;
+    }
+
+    .panel {
+      border: 1px solid #d8e0e5;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(20, 31, 40, 0.04);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.25;
+      font-weight: 730;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 2px 0 0;
+      color: #5d6d78;
+      font-size: 11px;
+      line-height: 1.34;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border-radius: 7px;
+      padding: 4px 7px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #a05b16;
+      background: #fff1dc;
+    }
+
+    .badge.blocked {
+      color: #b33232;
+      background: #ffe8e8;
+    }
+
+    .badge.ready {
+      color: #117d69;
+      background: #e8f5f2;
+    }
+
+    .line {
+      padding-top: 7px;
+      border-top: 1px solid #edf1f3;
+      color: #344551;
+      font-size: 11px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .line + .line {
+      margin-top: 6px;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #596b77;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <h1>Final Operator Handoff</h1>
+      <div class="chip">P0.77</div>
+    </div>
+
+    <section class="stage" aria-label="iPhone reading Mac operator handoff">
+      <div class="phone"></div>
+      <div class="pulse"></div>
+      <div class="mac"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Next</h2>
+          <p>Mac-side actions are shown on iPhone, but never run by the app.</p>
+        </div>
+        <div class="badge blocked">BLOCKED</div>
+      </div>
+      <div class="line">copy services/backend/final-resources.env.example to services/backend/.local/final-resources.env</div>
+      <div class="line">run local final acceptance and write services/backend/.local/final-acceptance-local.json</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Operator Sequence</h2>
+          <p>Stable order for the final physical-device demo.</p>
+        </div>
+        <div class="badge">PARTIAL</div>
+      </div>
+      <div class="line mono">1 final-resources-preflight</div>
+      <div class="line mono">2 final-apply-resources</div>
+      <div class="line mono">3 backend-device-demo</div>
+      <div class="line mono">4 local final-acceptance</div>
+      <div class="line mono">5 mobile-deploy-preflight</div>
+      <div class="line mono">6 mobile-xcode-build</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Live Provider Gate</h2>
+          <p>Configured acceptance is visible only as a consent-gated Mac command.</p>
+        </div>
+        <div class="badge ready">SAFE</div>
+      </div>
+      <div class="line">run configured final acceptance only after live provider cost review and --allow-live-provider-calls consent</div>
+      <div class="line">commands_run=false provider_calls=false command_execution_from_app=false</div>
+    </section>
+  </main>
+</body>
+</html>

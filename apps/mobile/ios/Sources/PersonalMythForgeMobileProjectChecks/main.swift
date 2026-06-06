@@ -568,6 +568,12 @@ do {
         "acceptanceRows",
         "final launch acceptance row rendering"
     )
+    try requireContains(finalLaunchStatusView, "Next", "final launch operator handoff section")
+    try requireContains(
+        finalLaunchStatusView,
+        "handoffRows",
+        "final launch operator handoff row rendering"
+    )
     try requireContains(finalLaunchStatusView, "commandRows", "final launch status command rendering")
     try requireContains(contextCapsuleReviewView, "Context Capsule Review", "context capsule review title")
     try requireContains(contextCapsuleReviewView, "Approve Capsule", "context capsule approval toggle")
@@ -597,13 +603,29 @@ do {
         "finalAcceptanceReadiness",
         "final demo launch final acceptance readiness field"
     )
+    try requireContains(
+        pmfModels,
+        "FinalOperatorHandoffReport",
+        "final operator handoff model"
+    )
+    try requireContains(
+        pmfModels,
+        "finalOperatorHandoff",
+        "final demo launch final operator handoff field"
+    )
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileSummaryBuilder", "final launch summary builder")
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileStatus", "final launch summary status")
     try requireContains(finalLaunchMobileSummary, "acceptanceRows", "final launch summary acceptance rows")
+    try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
     try requireContains(
         finalLaunchMobileSummary,
         "Final acceptance ready.",
         "final launch acceptance ready copy"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Final operator handoff ready.",
+        "final launch operator handoff ready copy"
     )
     try requireContains(finalLaunchMobileSummary, "sanitize", "final launch summary redaction")
     try requireContains(contextCapsuleReview, "ContextCapsuleReviewBuilder", "context capsule review builder")
