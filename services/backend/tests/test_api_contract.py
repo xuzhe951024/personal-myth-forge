@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from myth_forge_api.config import Settings
 from myth_forge_api.domain.models import GeneratedAsset
 from myth_forge_api.main import app
 from myth_forge_api.providers.npc import OpenAINPCConfigurationError
@@ -167,10 +168,15 @@ def test_demo_route_includes_capture_upload_mount_points() -> None:
 
 
 def test_provider_readiness_endpoint_returns_safe_status(monkeypatch) -> None:
-    monkeypatch.setenv("THREE_D_PROVIDER", "meshy")
-    monkeypatch.setenv("MESHY_API_KEY", "sk-meshy-secret")
-    monkeypatch.setenv("NPC_PROVIDER", "openai")
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(
+        "myth_forge_api.main.load_settings",
+        lambda: Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-secret",
+            npc_provider="openai",
+            openai_api_key=None,
+        ),
+    )
     client = TestClient(app)
 
     response = client.get("/v1/provider-readiness")
