@@ -114,6 +114,42 @@ def test_upload_object_capture_accepts_guided_scan_images(tmp_path, monkeypatch)
     assert str(tmp_path) not in response.text
 
 
+def test_upload_object_capture_rejects_guided_scan_with_too_few_images(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client = _client_with_store(tmp_path, monkeypatch)
+
+    response = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _guided_scan_metadata_json()},
+        files=[("files", ("fox-front.jpg", b"front-jpeg", "image/jpeg"))],
+    )
+
+    assert response.status_code == 422
+    assert "front-jpeg" not in response.text
+
+
+def test_upload_object_capture_rejects_guided_scan_with_scan_asset(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client = _client_with_store(tmp_path, monkeypatch)
+
+    response = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _guided_scan_metadata_json()},
+        files=[
+            ("files", ("fox-front.jpg", b"front-jpeg", "image/jpeg")),
+            ("files", ("fox.glb", b"fake-glb", "model/gltf-binary")),
+        ],
+    )
+
+    assert response.status_code == 422
+    assert "front-jpeg" not in response.text
+    assert "fake-glb" not in response.text
+
+
 def test_get_object_capture_returns_manifest(tmp_path, monkeypatch) -> None:
     client = _client_with_store(tmp_path, monkeypatch)
     created = client.post(
