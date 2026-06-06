@@ -41,6 +41,7 @@
 		10B000000000000000000105 /* PersonalMythForgeAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalMythForgeAPIClient.swift; sourceTree = "<group>"; };
 		10B000000000000000000106 /* ForgeFlowReducer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeFlowReducer.swift; sourceTree = "<group>"; };
 		10B000000000000000000201 /* PersonalMythForge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PersonalMythForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		10B000000000000000000301 /* Deployment.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Deployment.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +61,7 @@
 			children = (
 				10D000000000000000000002 /* App */,
 				10D000000000000000000003 /* PersonalMythForgeMobileCore */,
+				10B000000000000000000301 /* Deployment.xcconfig */,
 				10D000000000000000000004 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -212,17 +214,16 @@
 /* Begin XCBuildConfiguration section */
 		10I000000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 10B000000000000000000301 /* Deployment.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.personalmythforge.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
@@ -232,17 +233,16 @@
 		};
 		10I000000000000000000002 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 10B000000000000000000301 /* Deployment.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.personalmythforge.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
