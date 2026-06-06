@@ -17,6 +17,7 @@ from myth_forge_api.evaluation.three_d import (
     run_three_d_evaluation,
 )
 from myth_forge_api.final_acceptance import run_final_acceptance
+from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.providers.factory import build_three_d_provider
 from myth_forge_api.providers.readiness import build_provider_readiness
 from myth_forge_api.providers.three_d import (
@@ -84,6 +85,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
+        if args.command == "final-demo-launch":
+            return _final_demo_launch(
+                mode=args.mode,
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
         if args.command == "demo-acceptance":
             return _demo_acceptance(
                 provider_mode=args.provider_mode,
@@ -139,6 +146,15 @@ def _build_parser() -> argparse.ArgumentParser:
     resource_template_parser = subcommands.add_parser("resource-template-acceptance")
     resource_template_parser.add_argument("--repo-root", default=None)
     resource_template_parser.add_argument("--output", default=None)
+
+    final_demo_launch_parser = subcommands.add_parser("final-demo-launch")
+    final_demo_launch_parser.add_argument(
+        "--mode",
+        choices=["local", "configured"],
+        default="local",
+    )
+    final_demo_launch_parser.add_argument("--repo-root", default=None)
+    final_demo_launch_parser.add_argument("--output", default=None)
 
     acceptance_parser = subcommands.add_parser("demo-acceptance")
     acceptance_parser.add_argument(
@@ -236,6 +252,20 @@ def _resource_handoff(repo_root: str | None, output_path: str | None) -> int:
 
 def _resource_template_acceptance(repo_root: str | None, output_path: str | None) -> int:
     result = run_resource_template_acceptance(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _final_demo_launch(
+    *,
+    mode: str,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = build_final_demo_launch_report(
+        mode=mode,
         repo_root=Path(repo_root) if repo_root else None,
     )
     _write_json_payload(result.report, output_path)

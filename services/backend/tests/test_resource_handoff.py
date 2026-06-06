@@ -60,8 +60,12 @@ def test_resource_handoff_marks_core_resources_ready_without_secret_leak(
     assert backend["MESHY_API_KEY"]["status"] == "ready"
     assert backend["NPC_PROVIDER"]["status"] == "ready"
     assert backend["OPENAI_API_KEY"]["status"] == "ready"
+    assert backend["PRINT_PROVIDER"]["status"] == "ready"
     assert backend["TREATSTOCK_API_KEY"]["configured"] is True
-    assert backend["TREATSTOCK_API_KEY"]["status"] == "optional"
+    assert backend["TREATSTOCK_API_KEY"]["status"] == "ready"
+    assert "Treatstock live quote handoff is implemented" in " ".join(
+        backend["TREATSTOCK_API_KEY"]["notes"]
+    )
     assert ios["DEVELOPMENT_TEAM"]["status"] == "ready"
     assert ios["PMF_BACKEND_BASE_URL"]["status"] == "ready"
     assert report["safety"]["provider_secrets_in_report"] is False
@@ -69,6 +73,20 @@ def test_resource_handoff_marks_core_resources_ready_without_secret_leak(
     assert "sk-openai-secret" not in report_text
     assert "treatstock-secret" not in report_text
     assert str(tmp_path) not in report_text
+
+
+def test_resource_handoff_blocks_treatstock_when_selected_without_key(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    settings = Settings(print_provider="treatstock")
+
+    report = build_resource_handoff_report(settings=settings, repo_root=repo_root)
+    backend = {item["id"]: item for item in report["backend"]["items"]}
+
+    assert backend["PRINT_PROVIDER"]["status"] == "missing"
+    assert backend["TREATSTOCK_API_KEY"]["status"] == "missing"
+    assert "provide TREATSTOCK_API_KEY" in " ".join(report["operator_actions"])
 
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:

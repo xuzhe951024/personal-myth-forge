@@ -99,6 +99,25 @@ file is ignored by git, should not contain provider keys, and is guarded against
 being tracked. The preflight then checks required signing values, rejects
 loopback backend URLs for device demos, and calls `$PMF_BACKEND_BASE_URL/health`.
 
+P0.63 adds a consolidated final demo launch report for the operator handoff:
+
+```bash
+make final-demo-launch
+```
+
+That local mode is a no-key dry run. After backend provider keys and iOS deploy
+values are supplied through the project-local writers, run configured mode:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../..
+```
+
+The report shows the exact backend device-server, provider readiness,
+configured final acceptance, deploy preflight, and Xcode build-gate commands.
+It does not store mobile provider secrets and does not mutate Xcode, signing, or
+global developer settings.
+
 ## P0.8 Xcode App Shell
 
 P0.8 adds:

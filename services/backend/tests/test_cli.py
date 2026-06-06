@@ -4,6 +4,7 @@ import pytest
 
 from myth_forge_api.acceptance import DemoAcceptanceResult
 from myth_forge_api.config import Settings
+from myth_forge_api.final_demo_launch import FinalDemoLaunchResult
 from myth_forge_api.final_acceptance import FinalAcceptanceResult
 from myth_forge_api.resource_template_acceptance import ResourceTemplateAcceptanceResult
 from myth_forge_api.cli import main
@@ -505,6 +506,53 @@ def test_cli_resource_template_acceptance_prints_stdout_when_ready(
     assert exit_code == 0
     assert payload["kind"] == "resource_template_acceptance_report"
     assert payload["status"] == "succeeded"
+
+
+def test_cli_final_demo_launch_writes_report_and_returns_result_code(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "final-demo-launch.json"
+    calls = []
+
+    def fake_build_final_demo_launch_report(**kwargs):
+        calls.append(kwargs)
+        return FinalDemoLaunchResult(
+            exit_code=0,
+            report={
+                "kind": "final_demo_launch_report",
+                "mode": kwargs["mode"],
+                "overall_status": "partial",
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_final_demo_launch_report",
+        fake_build_final_demo_launch_report,
+    )
+
+    exit_code = main(
+        [
+            "final-demo-launch",
+            "--mode",
+            "local",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 0
+    assert calls == [
+        {
+            "mode": "local",
+            "repo_root": tmp_path,
+        }
+    ]
+    assert report["kind"] == "final_demo_launch_report"
+    assert report["mode"] == "local"
 
 
 def test_cli_demo_acceptance_writes_report(tmp_path, monkeypatch) -> None:

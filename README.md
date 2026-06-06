@@ -87,6 +87,31 @@ uv run python -m myth_forge_api.cli provider-handoff --require-core-real
 ignored by git. Its command output redacts key values and does not make live
 Meshy/OpenAI calls.
 
+Preview the final demo launch lane without writing secrets or calling live
+providers:
+
+```bash
+make final-demo-launch
+```
+
+For the final key-backed handoff, write the backend and iOS local config files
+first, then run the configured launch report:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-demo-launch \
+  --mode configured \
+  --repo-root ../.. \
+  --output /tmp/personal-myth-forge-final-demo-launch-configured.json
+```
+
+The launch report consolidates resource status, backend device-server commands,
+provider readiness, local/configured final acceptance, iOS deploy preflight, and
+the Xcode build gate. It never starts servers, calls Meshy/OpenAI/Treatstock, or
+changes Xcode/signing/global machine state by itself. Live provider calls remain
+explicitly gated behind `final-acceptance --provider-mode configured
+--require-real-core --allow-live-provider-calls`.
+
 Upload a local object capture, then create a myth session from that capture:
 
 ```bash
