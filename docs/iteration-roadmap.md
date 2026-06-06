@@ -46,6 +46,7 @@ Bridge deliverable:
 - P0.28 mobile backend history sync that refreshes restored demo runs from backend history
 - P0.29 server-owned NPC advance endpoint that appends and returns stored history
 - P0.30 bounded foreground NPC autonomy run that appends 1-3 backend-owned ticks per user action
+- P0.31 integrated demo acceptance harness for local no-key and configured real-provider runs
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

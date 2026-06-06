@@ -755,3 +755,39 @@ Static evidence lives at:
 docs/superpowers/verification/p0.30-bounded-autonomous-npc-run.html
 docs/superpowers/verification/assets/p0.30-bounded-autonomous-npc-run-390x844.png
 ```
+
+P0.31 adds a backend demo acceptance harness for final API/key handoff. The
+local mode runs the integrated backend loop without Meshy/OpenAI keys or live
+provider calls:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli demo-acceptance \
+  --provider-mode local \
+  --npc-steps 3 \
+  --output /tmp/personal-myth-forge-demo-acceptance.json
+```
+
+After backend-only provider keys are supplied, configured strict mode uses the
+same report schema and exits `2` before provider calls until the core real
+provider set is ready:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli demo-acceptance \
+  --provider-mode configured \
+  --require-real-core \
+  --npc-steps 3 \
+  --output /tmp/personal-myth-forge-demo-acceptance.json
+```
+
+The report summarizes provider readiness, generated asset/scene variant,
+initial NPC runtime, bounded NPC ticks, and safety policy. It does not include
+provider secrets, raw media, local file paths, or raw personal source bodies.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.31-integrated-demo-acceptance.html
+docs/superpowers/verification/assets/p0.31-integrated-demo-acceptance-390x844.png
+```

@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.31 Integrated Demo Acceptance</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202422;
+      --muted: #5f6964;
+      --line: #d8ded6;
+      --paper: #fbfcf8;
+      --panel: #ffffff;
+      --green: #4e7458;
+      --blue: #2f6e99;
+      --rust: #a05d35;
+      --violet: #665b91;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e8ece8;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 10px 16px 12px;
+      background: var(--paper);
+      border-left: 1px solid #d2dad1;
+      border-right: 1px solid #d2dad1;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      padding: 4px 0 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 780;
+    }
+
+    .tag {
+      color: var(--rust);
+      font-size: 12px;
+      font-weight: 780;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .panel,
+    .metric,
+    .step {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px;
+    }
+
+    .panel {
+      margin-bottom: 5px;
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+      margin-bottom: 4px;
+      font-size: 14px;
+      font-weight: 760;
+    }
+
+    .pill {
+      border-radius: 6px;
+      padding: 4px 7px;
+      background: #e5efe7;
+      color: #315c3b;
+      font-size: 10px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .pill.warn {
+      background: #f5eadf;
+      color: #8d4f2f;
+    }
+
+    .detail {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.28;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 730;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.12;
+    }
+
+    .ok {
+      color: var(--green);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .violet {
+      color: var(--violet);
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .step-index {
+      color: var(--violet);
+      font-size: 13px;
+      font-weight: 820;
+    }
+
+    .step-copy {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.24;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.25;
+    }
+
+    li {
+      margin-bottom: 3px;
+    }
+
+    code {
+      color: var(--blue);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10px;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Integrated Demo Acceptance</h1>
+      <div class="tag">P0.31</div>
+    </header>
+
+    <section>
+      <h2>Acceptance Modes</h2>
+      <div class="grid">
+        <div class="metric">
+          <div class="label">local no-key</div>
+          <div class="value ok">passes</div>
+        </div>
+        <div class="metric">
+          <div class="label">configured</div>
+          <div class="value blue">key-ready</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">
+          <span>Strict real-provider gate</span>
+          <span class="pill warn">exit 2</span>
+        </div>
+        <div class="detail">Configured mode stops before Meshy/OpenAI calls until core providers are real-ready.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Command</h2>
+      <div class="panel">
+        <div class="panel-title">
+          <span>Backend operator report</span>
+          <span class="pill">CLI</span>
+        </div>
+        <div class="detail"><code>demo-acceptance --provider-mode local --npc-steps 3 --output /tmp/report.json</code></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Acceptance Flow</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-index">01</div>
+          <div class="step-copy">Create a safe brass key myth session.</div>
+          <span class="pill">3D</span>
+        </div>
+        <div class="step">
+          <div class="step-index">02</div>
+          <div class="step-copy">Summarize GLB asset and USDZ scene variant.</div>
+          <span class="pill">scene</span>
+        </div>
+        <div class="step">
+          <div class="step-index">03</div>
+          <div class="step-copy">Run bounded NPC ticks through stored history.</div>
+          <span class="pill">NPC</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Report Contents</h2>
+      <div class="grid">
+        <div class="metric">
+          <div class="label">asset</div>
+          <div class="value blue">GLB + USDZ</div>
+        </div>
+        <div class="metric">
+          <div class="label">npc steps</div>
+          <div class="value ok">0 to 3</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Safety Boundary</h2>
+      <ul>
+        <li>Provider keys stay backend-only.</li>
+        <li>No raw media, local paths, or personal source bodies.</li>
+        <li>Local mode makes no live Meshy/OpenAI calls.</li>
+        <li>iOS deploy/signing gates remain separate.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Verification</h2>
+      <div class="grid">
+        <div class="metric">
+          <div class="label">backend</div>
+          <div class="value ok">136 pass</div>
+        </div>
+        <div class="metric">
+          <div class="label">smoke</div>
+          <div class="value violet">succeeded</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

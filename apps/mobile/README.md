@@ -919,3 +919,49 @@ Remaining gaps after P0.30 are true background autonomous NPC loops, production
 account memory, accepting the Apple SDK license on this machine, real device
 installation, real Meshy/OpenAI key runs, Unity movement execution, and print
 fulfillment.
+
+## P0.31 Integrated Demo Acceptance
+
+P0.31 adds a backend CLI acceptance report for the final key handoff and demo
+review. It is intentionally backend-first: the mobile app still receives no
+provider secrets, and the command can be run before iOS signing/device work is
+unblocked.
+
+Run the no-key local integrated acceptance path:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli demo-acceptance \
+  --provider-mode local \
+  --npc-steps 3 \
+  --output /tmp/personal-myth-forge-demo-acceptance.json
+```
+
+After backend `.env` contains Meshy/OpenAI selection and keys, run the strict
+configured path:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli demo-acceptance \
+  --provider-mode configured \
+  --require-real-core \
+  --npc-steps 3 \
+  --output /tmp/personal-myth-forge-demo-acceptance.json
+```
+
+Strict configured mode exits `2` before provider calls until `three_d`, `npc`,
+and `capture_storage` are real-provider-ready. Successful reports include the
+3D asset provider/format, SceneKit-loadable scene variant when present, initial
+NPC runtime, completed bounded NPC ticks, and safety policy.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.31-integrated-demo-acceptance.html
+docs/superpowers/verification/assets/p0.31-integrated-demo-acceptance-390x844.png
+```
+
+Remaining gaps after P0.31 are accepting the Apple SDK license on this machine,
+real device installation, live Meshy/OpenAI key acceptance runs, real device
+Object Capture validation, Unity movement execution, background NPC loops,
+production account memory, and print fulfillment.
