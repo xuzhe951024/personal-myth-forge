@@ -12,13 +12,14 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_showcase_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 16, "failed": 0}
+    assert result.report["summary"] == {"passed": 17, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "camera_capture",
         "guided_scan",
         "arkit_scan_package",
         "capture_generation_readiness",
         "capture_upload",
+        "context_capsule_review",
         "three_d_preview",
         "npc_ritual_scene",
         "npc_agent",
@@ -52,7 +53,7 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 15, "failed": 1}
+    assert result.report["summary"] == {"passed": 16, "failed": 1}
     assert features["camera_capture"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/CameraCaptureView.swift",
@@ -79,7 +80,7 @@ def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolu
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 15, "failed": 1}
+    assert result.report["summary"] == {"passed": 16, "failed": 1}
     assert features["arkit_scan_package"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
@@ -106,7 +107,7 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_readiness_with
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 15, "failed": 1}
+    assert result.report["summary"] == {"passed": 16, "failed": 1}
     assert features["capture_generation_readiness"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
@@ -131,7 +132,7 @@ def test_ios_showcase_acceptance_fails_missing_local_network_usage_without_absol
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 15, "failed": 1}
+    assert result.report["summary"] == {"passed": 16, "failed": 1}
     assert features["deploy_config"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/Info.plist",
@@ -150,7 +151,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/App/CaptureFormView.swift": (
             "Take Photo generationReadinessTitle generationReadinessRouteLabel "
-            "generationReadinessDetail"
+            "generationReadinessDetail ContextCapsuleReviewView( isContextCapsuleApproved"
         ),
         "apps/mobile/ios/App/ForgeRootView.swift": (
             "CameraCaptureMediaBuilder.singlePhotoSelection "
@@ -161,7 +162,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "DemoScriptBuilder.build ArtifactSummaryView(session: readySession, latestTick: latestNPCTick) "
             "ShowcaseAutopilotPlanner.plan runShowcaseAutopilot "
             "arkitScanPackageSelection ARKitScanPackageBuilder.selection "
-            "CaptureGenerationReadinessBuilder.build captureGenerationReadiness.route.displayLabel"
+            "CaptureGenerationReadinessBuilder.build captureGenerationReadiness.route.displayLabel "
+            "ContextCapsuleReviewBuilder.build guard isContextCapsuleApproved else"
         ),
         "apps/mobile/ios/App/GuidedScanCaptureView.swift": (
             "ObjectCaptureSession ObjectCaptureView(session:"
@@ -178,6 +180,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/FinalShowcaseSummaryView.swift": "Final Showcase",
         "apps/mobile/ios/App/DevicePreflightView.swift": (
             "Device Preflight backendBaseURL Check checkBackend"
+        ),
+        "apps/mobile/ios/App/ContextCapsuleReviewView.swift": (
+            "Context Capsule Review Approve Capsule privacyNotes"
         ),
         "apps/mobile/ios/App/DemoScriptView.swift": (
             "Demo Script ShowcaseAutopilotPlan Button(action: runAutopilot)"
@@ -199,10 +204,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "CaptureGenerationReadinessBuilder maximumProviderSourceImages = 4 "
             "CaptureGenerationRoute displayLabel"
         ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ContextCapsuleReview.swift": (
+            "ContextCapsuleReviewBuilder"
+        ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
             "testARKitScanPackageBuilderBuildsReadySelection "
             "testCaptureGenerationReadinessMarksGuidedScanMultiImageRoute "
-            "testCaptureGenerationReadinessMarksARKitScanAssetRoute"
+            "testCaptureGenerationReadinessMarksARKitScanAssetRoute "
+            "testContextCapsuleReviewMarksApprovedSummaryReady"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeFlowService.swift": (
             "uploadObjectCapture createMythSessionFromCapture"

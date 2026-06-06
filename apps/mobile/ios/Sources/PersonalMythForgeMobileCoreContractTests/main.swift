@@ -24,6 +24,10 @@ do {
     try testFinalShowcaseSummaryMarksPrintQuoteReady()
     try testFinalShowcaseSummaryMarksProviderErrorNeedsAttention()
     try testFinalShowcaseSummaryRedactsUnsafeSourceText()
+    try testContextCapsuleReviewWaitsForMissingSummary()
+    try testContextCapsuleReviewWaitsForApproval()
+    try testContextCapsuleReviewMarksApprovedSummaryReady()
+    try testContextCapsuleReviewRedactsUnsafeText()
     try testDevicePreflightBlocksLoopbackBackendURL()
     try testDevicePreflightWaitsForUncheckedBackendHealth()
     try testDevicePreflightMarksBackendHealthChecking()
@@ -697,6 +701,69 @@ private func testFinalShowcaseSummaryRedactsUnsafeSourceText() throws {
     try expectNotContains(text, "/Users/")
     try expectNotContains(text, "file:///")
     try expectNotContains(text, "checkout")
+}
+
+private func testContextCapsuleReviewWaitsForMissingSummary() throws {
+    let review = ContextCapsuleReviewBuilder.build(
+        currentTheme: "",
+        desiredTone: "tender, strange",
+        isApproved: false
+    )
+
+    try expectEqual(review.status, .waiting)
+    try expectContains(review.title, "incomplete")
+    try expectContains(review.detail, "theme")
+    try expectEqual(review.canApprove, false)
+    try expectEqual(review.canForge, false)
+}
+
+private func testContextCapsuleReviewWaitsForApproval() throws {
+    let review = ContextCapsuleReviewBuilder.build(
+        currentTheme: "deadline pressure",
+        desiredTone: "tender, strange",
+        isApproved: false
+    )
+
+    try expectEqual(review.status, .waiting)
+    try expectContains(review.title, "Review context capsule")
+    try expectContains(review.detail, "Approve")
+    try expectEqual(review.canApprove, true)
+    try expectEqual(review.canForge, false)
+    try expectContains(review.summaryLines.joined(separator: " "), "deadline pressure")
+}
+
+private func testContextCapsuleReviewMarksApprovedSummaryReady() throws {
+    let review = ContextCapsuleReviewBuilder.build(
+        currentTheme: "deadline pressure",
+        desiredTone: "tender, strange",
+        isApproved: true
+    )
+
+    try expectEqual(review.status, .ready)
+    try expectContains(review.title, "Context capsule approved")
+    try expectEqual(review.canApprove, true)
+    try expectEqual(review.canForge, true)
+    try expectContains(review.summaryLines.joined(separator: " "), "deadline pressure")
+    try expectContains(review.summaryLines.joined(separator: " "), "tender, strange")
+    try expectContains(review.privacyNotes.joined(separator: " "), "No raw")
+}
+
+private func testContextCapsuleReviewRedactsUnsafeText() throws {
+    let review = ContextCapsuleReviewBuilder.build(
+        currentTheme: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap",
+        desiredTone: "checkout_url Bearer token",
+        isApproved: true
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(review), as: UTF8.self)
+
+    try expectEqual(review.status, .ready)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
 }
 
 private func testDevicePreflightBlocksLoopbackBackendURL() throws {

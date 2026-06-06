@@ -8,6 +8,7 @@ struct CaptureFormView: View {
     @Binding var visualNotes: String
     @Binding var currentTheme: String
     @Binding var desiredTone: String
+    @Binding var isContextCapsuleApproved: Bool
     @Binding var selectedCaptureMode: CaptureMode
     @Binding var selectedSinglePhotoItem: PhotosPickerItem?
     @Binding var selectedPhotoItems: [PhotosPickerItem]
@@ -17,6 +18,7 @@ struct CaptureFormView: View {
     let generationReadinessTitle: String
     let generationReadinessRouteLabel: String
     let generationReadinessDetail: String
+    let contextCapsuleReview: ContextCapsuleReview
     let captureInputError: String?
     let isMediaReadyForUpload: Bool
     let chooseCapture: () -> Void
@@ -102,10 +104,14 @@ struct CaptureFormView: View {
                 .padding(.top, 8)
             TextField("Current theme", text: $currentTheme)
             TextField("Desired tone", text: $desiredTone)
+            ContextCapsuleReviewView(
+                review: contextCapsuleReview,
+                isApproved: $isContextCapsuleApproved
+            )
 
             Button("Forge Myth", action: forgeMyth)
                 .buttonStyle(.borderedProminent)
-                .disabled(!isMediaReadyForUpload)
+                .disabled(!(isMediaReadyForUpload && contextCapsuleReview.status == .ready))
 
             Text(statusText)
                 .font(.caption)

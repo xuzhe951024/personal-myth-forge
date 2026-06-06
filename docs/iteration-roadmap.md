@@ -88,6 +88,7 @@ Bridge deliverable:
 - P0.70 read-only final resources preflight before unified apply
 - P0.71 iPhone Device Preflight row for final resources preflight readiness
 - P0.72 iPhone Final Launch Status panel for launch phases, resource actions, and command rows
+- P0.73 iPhone Context Capsule Review approval gate before forging
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

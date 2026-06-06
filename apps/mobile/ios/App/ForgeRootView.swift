@@ -32,6 +32,7 @@ struct ForgeRootView: View {
     @State private var visualNotes = "worn teeth, circular bow, warm reflections"
     @State private var currentTheme = "deadline pressure"
     @State private var desiredTone = "tender, strange"
+    @State private var isContextCapsuleApproved = false
     @State private var selectedCaptureMode = CaptureMode.singlePhoto
     @State private var mediaSelection = CaptureMediaSelection(mode: .singlePhoto)
     @State private var selectedSinglePhotoItem: PhotosPickerItem?
@@ -85,6 +86,7 @@ struct ForgeRootView: View {
                         visualNotes: $visualNotes,
                         currentTheme: $currentTheme,
                         desiredTone: $desiredTone,
+                        isContextCapsuleApproved: $isContextCapsuleApproved,
                         selectedCaptureMode: $selectedCaptureMode,
                         selectedSinglePhotoItem: $selectedSinglePhotoItem,
                         selectedPhotoItems: $selectedPhotoItems,
@@ -94,6 +96,7 @@ struct ForgeRootView: View {
                         generationReadinessTitle: captureGenerationReadiness.title,
                         generationReadinessRouteLabel: captureGenerationReadiness.route.displayLabel,
                         generationReadinessDetail: captureGenerationReadiness.detail,
+                        contextCapsuleReview: contextCapsuleReview,
                         captureInputError: captureInputError,
                         isMediaReadyForUpload: mediaSelection.isReadyForUpload,
                         chooseCapture: chooseCapture,
@@ -138,6 +141,12 @@ struct ForgeRootView: View {
                 selectedSinglePhotoItem = nil
                 selectedPhotoItems = []
                 captureInputError = nil
+            }
+            .onChange(of: currentTheme) { _ in
+                isContextCapsuleApproved = false
+            }
+            .onChange(of: desiredTone) { _ in
+                isContextCapsuleApproved = false
             }
             .onChange(of: selectedSinglePhotoItem?.itemIdentifier) { _ in
                 guard let selectedSinglePhotoItem else {
@@ -331,6 +340,9 @@ struct ForgeRootView: View {
     }
 
     private func forgeMyth() {
+        guard isContextCapsuleApproved else {
+            return
+        }
         npcTickHistory = []
         restoredSnapshot = nil
         snapshotStatusText = nil
@@ -531,6 +543,14 @@ struct ForgeRootView: View {
             selection: mediaSelection,
             providerReadiness: providerReadiness,
             providerReadinessError: providerReadinessError
+        )
+    }
+
+    private var contextCapsuleReview: ContextCapsuleReview {
+        ContextCapsuleReviewBuilder.build(
+            currentTheme: currentTheme,
+            desiredTone: desiredTone,
+            isApproved: isContextCapsuleApproved
         )
     }
 
