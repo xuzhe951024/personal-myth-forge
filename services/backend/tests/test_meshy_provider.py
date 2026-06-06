@@ -74,6 +74,13 @@ def test_meshy_provider_creates_preview_refines_and_returns_glb() -> None:
     assert refine_payload["mode"] == "refine"
     assert refine_payload["preview_task_id"] == "preview-123"
     assert refine_payload["target_formats"] == ["glb", "usdz"]
+    assert asset.generation_provenance is not None
+    assert asset.generation_provenance.input_mode == "text_prompt"
+    assert asset.generation_provenance.provider_route == "/openapi/v2/text-to-3d"
+    assert asset.generation_provenance.source_image_count == 0
+    assert asset.generation_provenance.selected_source_image_count == 0
+    assert asset.generation_provenance.source_asset_count == 0
+    assert asset.generation_provenance.raw_sources_included is False
 
 
 def test_meshy_provider_uses_image_to_3d_when_source_image_exists() -> None:
@@ -139,6 +146,12 @@ def test_meshy_provider_uses_image_to_3d_when_source_image_exists() -> None:
     assert image_payload["should_remesh"] is True
     assert image_payload["should_texture"] is True
     assert "mode" not in image_payload
+    assert asset.generation_provenance is not None
+    assert asset.generation_provenance.input_mode == "single_image"
+    assert asset.generation_provenance.provider_route == "/openapi/v1/image-to-3d"
+    assert asset.generation_provenance.source_image_count == 1
+    assert asset.generation_provenance.selected_source_image_count == 1
+    assert asset.generation_provenance.raw_sources_included is False
 
 
 def test_meshy_provider_uses_multi_image_to_3d_for_guided_scan_images() -> None:
@@ -200,6 +213,13 @@ def test_meshy_provider_uses_multi_image_to_3d_for_guided_scan_images() -> None:
     assert multi_payload["enable_pbr"] is True
     assert multi_payload["should_texture"] is True
     assert "image_url" not in multi_payload
+    assert asset.generation_provenance is not None
+    assert asset.generation_provenance.input_mode == "multi_image"
+    assert asset.generation_provenance.provider_route == "/openapi/v1/multi-image-to-3d"
+    assert asset.generation_provenance.source_image_count == 2
+    assert asset.generation_provenance.selected_source_image_count == 2
+    assert asset.generation_provenance.max_source_images == 4
+    assert asset.generation_provenance.raw_sources_included is False
 
 
 def test_meshy_provider_limits_multi_image_input_to_first_four_supported_images() -> None:
@@ -231,7 +251,7 @@ def test_meshy_provider_limits_multi_image_input_to_first_four_supported_images(
         max_wait_seconds=1,
     )
 
-    provider.generate_game_asset(
+    asset = provider.generate_game_asset(
         _request(
             source_images=tuple(_source_image(f"angle-{index}", "image/jpeg") for index in range(5))
         )
@@ -248,6 +268,11 @@ def test_meshy_provider_limits_multi_image_input_to_first_four_supported_images(
         "data:image/jpeg;base64,angle-2",
         "data:image/jpeg;base64,angle-3",
     ]
+    assert asset.generation_provenance is not None
+    assert asset.generation_provenance.input_mode == "multi_image"
+    assert asset.generation_provenance.source_image_count == 5
+    assert asset.generation_provenance.selected_source_image_count == 4
+    assert asset.generation_provenance.max_source_images == 4
 
 
 def test_meshy_provider_filters_unsupported_images_before_multi_image_routing() -> None:

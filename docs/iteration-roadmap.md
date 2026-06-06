@@ -49,6 +49,7 @@ Bridge deliverable:
 - P0.31 integrated demo acceptance harness for local no-key and configured real-provider runs
 - P0.32 final acceptance report that classifies provider, iOS deploy, and Xcode local blockers
 - P0.33 Meshy multi-image guided scan routing for 2-4 prepared reference images
+- P0.34 safe generation provenance contract for text, single-image, and multi-image 3D routes
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

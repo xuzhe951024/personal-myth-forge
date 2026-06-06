@@ -130,6 +130,17 @@ class GeneratedAssetVariant(BaseModel):
     is_scene_loadable: bool = False
 
 
+class GeneratedAssetProvenance(BaseModel):
+    input_mode: Literal["unknown", "text_prompt", "single_image", "multi_image"]
+    provider_route: str | None = None
+    source_image_count: int = Field(default=0, ge=0)
+    selected_source_image_count: int = Field(default=0, ge=0)
+    source_asset_count: int = Field(default=0, ge=0)
+    max_source_images: int | None = Field(default=None, ge=1)
+    selection_reason: str
+    raw_sources_included: bool = False
+
+
 class GeneratedAsset(BaseModel):
     kind: Literal["game_asset"]
     provider: str
@@ -138,6 +149,7 @@ class GeneratedAsset(BaseModel):
     prompt: str
     moderation_status: Literal["not_requested", "approved", "needs_review"]
     variants: list[GeneratedAssetVariant] = Field(default_factory=list)
+    generation_provenance: GeneratedAssetProvenance | None = None
 
 
 class PrintCandidate(BaseModel):

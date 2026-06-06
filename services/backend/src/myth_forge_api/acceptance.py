@@ -210,9 +210,18 @@ def _session_summary(session) -> dict[str, Any]:
         "generated_asset_provider": session.generated_asset.provider,
         "generated_asset_format": session.generated_asset.format,
         "generated_asset_uri": session.generated_asset.uri,
+        "generation_provenance": _generation_provenance_summary(
+            session.generated_asset.generation_provenance
+        ),
         "scene_variant_uri": scene_variant.uri if scene_variant is not None else None,
         "print_candidate_format": session.print_candidate.format,
     }
+
+
+def _generation_provenance_summary(provenance) -> dict[str, Any] | None:
+    if provenance is None:
+        return None
+    return provenance.model_dump(mode="json")
 
 
 def _npc_summary(

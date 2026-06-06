@@ -39,6 +39,14 @@ def test_create_myth_session_endpoint_returns_reviewable_session() -> None:
     assert payload["generated_asset"]["variants"][1]["role"] == "ios_scene_asset"
     assert payload["generated_asset"]["variants"][1]["format"] == "usdz"
     assert payload["generated_asset"]["variants"][1]["is_scene_loadable"] is True
+    provenance = payload["generated_asset"]["generation_provenance"]
+    assert provenance["input_mode"] == "text_prompt"
+    assert provenance["provider_route"] == "local_stub"
+    assert provenance["source_image_count"] == 0
+    assert provenance["selected_source_image_count"] == 0
+    assert provenance["raw_sources_included"] is False
+    assert "data:image" not in response.text
+    assert "/tmp" not in response.text
     assert payload["print_candidate"]["requires_user_approval"] is True
 
 

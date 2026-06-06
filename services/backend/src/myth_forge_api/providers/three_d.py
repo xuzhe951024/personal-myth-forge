@@ -6,7 +6,11 @@ from typing import Protocol
 
 import httpx
 
-from myth_forge_api.domain.models import GeneratedAsset, GeneratedAssetVariant
+from myth_forge_api.domain.models import (
+    GeneratedAsset,
+    GeneratedAssetProvenance,
+    GeneratedAssetVariant,
+)
 
 MESHY_GAME_ASSET_TARGET_FORMATS = ["glb", "usdz"]
 MESHY_IMAGE_TO_3D_CONTENT_TYPES = {"image/jpeg", "image/png"}
@@ -70,6 +74,7 @@ class LocalThreeDProvider:
                     is_scene_loadable=True,
                 ),
             ],
+            generation_provenance=_local_generation_provenance(request),
         )
 
 
@@ -111,6 +116,10 @@ class MeshyThreeDProvider:
         return self._generate_text_asset(request)
 
     def _generate_text_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
+        provenance = _meshy_text_provenance(
+            request=request,
+            provider_route=self._text_to_3d_path,
+        )
         preview_task_id = self._create_task(
             self._text_to_3d_path,
             {
@@ -131,13 +140,22 @@ class MeshyThreeDProvider:
             }
         )
         refined_task = self._poll_task(self._text_to_3d_path, refine_task_id)
-        return self._asset_from_task(request=request, task=refined_task)
+        return self._asset_from_task(
+            request=request,
+            task=refined_task,
+            generation_provenance=provenance,
+        )
 
     def _generate_image_asset(
         self,
         request: ThreeDGenerationRequest,
         source_image: ThreeDSourceImage,
     ) -> GeneratedAsset:
+        provenance = _meshy_image_provenance(
+            request=request,
+            provider_route=self._image_to_3d_path,
+            source_image_count=1,
+        )
         task_id = self._create_task(
             self._image_to_3d_path,
             {
@@ -149,7 +167,11 @@ class MeshyThreeDProvider:
             },
         )
         task = self._poll_task(self._image_to_3d_path, task_id)
-        return self._asset_from_task(request=request, task=task)
+        return self._asset_from_task(
+            request=request,
+            task=task,
+            generation_provenance=provenance,
+        )
 
     def _generate_multi_image_asset(
         self,
@@ -157,6 +179,12 @@ class MeshyThreeDProvider:
         source_images: tuple[ThreeDSourceImage, ...],
     ) -> GeneratedAsset:
         selected_images = source_images[:MESHY_MULTI_IMAGE_TO_3D_MAX_IMAGES]
+        provenance = _meshy_multi_image_provenance(
+            request=request,
+            provider_route=self._multi_image_to_3d_path,
+            source_image_count=len(source_images),
+            selected_source_image_count=len(selected_images),
+        )
         task_id = self._create_task(
             self._multi_image_to_3d_path,
             {
@@ -167,12 +195,17 @@ class MeshyThreeDProvider:
             },
         )
         task = self._poll_task(self._multi_image_to_3d_path, task_id)
-        return self._asset_from_task(request=request, task=task)
+        return self._asset_from_task(
+            request=request,
+            task=task,
+            generation_provenance=provenance,
+        )
 
     def _asset_from_task(
         self,
         request: ThreeDGenerationRequest,
         task: dict[str, object],
+        generation_provenance: GeneratedAssetProvenance,
     ) -> GeneratedAsset:
         glb_uri = task.get("model_urls", {}).get("glb")
         if not glb_uri:
@@ -203,6 +236,7 @@ class MeshyThreeDProvider:
             prompt=request.prompt,
             moderation_status="needs_review",
             variants=variants,
+            generation_provenance=generation_provenance,
         )
 
     def _create_task(self, path: str, payload: dict[str, object]) -> str:
@@ -283,6 +317,83 @@ def _prompt_with_source_summary(request: ThreeDGenerationRequest) -> str:
         f"{request.prompt}\n\n"
         f"Provider input summary: source_images={len(request.source_images)}; "
         f"source_assets={len(request.source_assets)}."
+    )
+
+
+def _local_generation_provenance(request: ThreeDGenerationRequest) -> GeneratedAssetProvenance:
+    source_image_count = len(request.source_images)
+    if source_image_count == 0:
+        input_mode = "text_prompt"
+        selected_source_image_count = 0
+        selection_reason = "Local stub generated from text prompt because no source images were attached."
+    elif source_image_count == 1:
+        input_mode = "single_image"
+        selected_source_image_count = 1
+        selection_reason = "Local stub recorded one attached source image for generation."
+    else:
+        input_mode = "multi_image"
+        selected_source_image_count = source_image_count
+        selection_reason = "Local stub recorded multiple attached source images for generation."
+    return GeneratedAssetProvenance(
+        input_mode=input_mode,
+        provider_route="local_stub",
+        source_image_count=source_image_count,
+        selected_source_image_count=selected_source_image_count,
+        source_asset_count=len(request.source_assets),
+        selection_reason=selection_reason,
+        raw_sources_included=False,
+    )
+
+
+def _meshy_text_provenance(
+    request: ThreeDGenerationRequest,
+    provider_route: str,
+) -> GeneratedAssetProvenance:
+    return GeneratedAssetProvenance(
+        input_mode="text_prompt",
+        provider_route=provider_route,
+        source_image_count=0,
+        selected_source_image_count=0,
+        source_asset_count=len(request.source_assets),
+        selection_reason="No supported source images were available; Meshy used text-to-3D.",
+        raw_sources_included=False,
+    )
+
+
+def _meshy_image_provenance(
+    request: ThreeDGenerationRequest,
+    provider_route: str,
+    source_image_count: int,
+) -> GeneratedAssetProvenance:
+    return GeneratedAssetProvenance(
+        input_mode="single_image",
+        provider_route=provider_route,
+        source_image_count=source_image_count,
+        selected_source_image_count=1,
+        source_asset_count=len(request.source_assets),
+        selection_reason="Meshy used one supported source image for image-to-3D.",
+        raw_sources_included=False,
+    )
+
+
+def _meshy_multi_image_provenance(
+    request: ThreeDGenerationRequest,
+    provider_route: str,
+    source_image_count: int,
+    selected_source_image_count: int,
+) -> GeneratedAssetProvenance:
+    return GeneratedAssetProvenance(
+        input_mode="multi_image",
+        provider_route=provider_route,
+        source_image_count=source_image_count,
+        selected_source_image_count=selected_source_image_count,
+        source_asset_count=len(request.source_assets),
+        max_source_images=MESHY_MULTI_IMAGE_TO_3D_MAX_IMAGES,
+        selection_reason=(
+            "Meshy used supported source images for multi-image-to-3D, capped at "
+            f"{MESHY_MULTI_IMAGE_TO_3D_MAX_IMAGES} images."
+        ),
+        raw_sources_included=False,
     )
 
 

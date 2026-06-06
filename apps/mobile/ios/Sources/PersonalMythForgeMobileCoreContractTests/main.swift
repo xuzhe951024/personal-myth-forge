@@ -5,6 +5,7 @@ do {
     try testDecodesObjectCaptureFixture()
     try testDecodesMythSessionFixture()
     try testDecodesMythSessionWithoutGeneratedAssetVariants()
+    try testDecodesMythSessionWithoutGenerationProvenance()
     try testDecodesMythSessionWithoutNPCAgentTraceFields()
     try testDecodesNPCAgentTickPayload()
     try testDecodesMythSessionHistoryPayload()
@@ -105,6 +106,17 @@ private func testDecodesMythSessionFixture() throws {
     try expectEqual(session.generatedAsset.variants[1].role, "ios_scene_asset")
     try expectEqual(session.generatedAsset.variants[1].format, "usdz")
     try expectTrue(session.generatedAsset.variants[1].isSceneLoadable)
+    let provenance = try require(
+        session.generatedAsset.generationProvenance,
+        "expected generated asset provenance"
+    )
+    try expectEqual(provenance.inputMode, "multi_image")
+    try expectEqual(provenance.providerRoute, "/openapi/v1/multi-image-to-3d")
+    try expectEqual(provenance.sourceImageCount, 3)
+    try expectEqual(provenance.selectedSourceImageCount, 3)
+    try expectEqual(provenance.sourceAssetCount, 0)
+    try expectEqual(provenance.maxSourceImages, 4)
+    try expectFalse(provenance.rawSourcesIncluded)
     try expectEqual(session.printCandidate.requiresUserApproval, true)
 }
 
@@ -124,6 +136,26 @@ private func testDecodesMythSessionWithoutGeneratedAssetVariants() throws {
     let session = try PMFJSON.decoder.decode(MythSession.self, from: data)
 
     try expectEqual(session.generatedAsset.variants, [])
+}
+
+private func testDecodesMythSessionWithoutGenerationProvenance() throws {
+    var payload = try require(
+        try JSONSerialization.jsonObject(with: FixtureLoader.data(from: "myth-session-response")) as? [String: Any],
+        "expected myth session fixture object"
+    )
+    var generatedAsset = try require(
+        payload["generated_asset"] as? [String: Any],
+        "expected generated asset object"
+    )
+    generatedAsset.removeValue(forKey: "generation_provenance")
+    payload["generated_asset"] = generatedAsset
+
+    let data = try JSONSerialization.data(withJSONObject: payload)
+    let session = try PMFJSON.decoder.decode(MythSession.self, from: data)
+
+    if session.generatedAsset.generationProvenance != nil {
+        throw ContractTestError.expectationFailed("Expected missing generation provenance to decode as nil")
+    }
 }
 
 private func testDecodesMythSessionWithoutNPCAgentTraceFields() throws {

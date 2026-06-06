@@ -1040,3 +1040,34 @@ Remaining gaps after P0.33 are accepting the Apple SDK license on this machine,
 real iPhone deployment, live Meshy/OpenAI key acceptance runs, real device
 guided scan quality evaluation, Unity movement execution, production NPC memory,
 and print fulfillment.
+
+## P0.34 Generation Provenance Contract
+
+P0.34 adds an optional `generation_provenance` block to generated assets so the
+app and acceptance reports can show how a 3D artifact was generated without
+exposing source media. The iOS model decodes:
+
+- `input_mode`: `text_prompt`, `single_image`, or `multi_image`
+- provider route, such as `/openapi/v1/multi-image-to-3d`
+- total and selected source image counts
+- source asset count
+- `raw_sources_included`, currently `false`
+
+`ArtifactSummaryView` renders a compact generation block only when this field
+is present. Older stored sessions without provenance still decode because the
+field is optional.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.34-generation-provenance-contract.html
+docs/superpowers/verification/assets/p0.34-generation-provenance-contract-390x844.png
+```
