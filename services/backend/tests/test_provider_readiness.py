@@ -43,7 +43,7 @@ def test_provider_readiness_reports_missing_treatstock_key() -> None:
     assert print_provider.missing_env == ["TREATSTOCK_API_KEY"]
 
 
-def test_provider_readiness_does_not_mark_unimplemented_treatstock_ready() -> None:
+def test_provider_readiness_marks_treatstock_ready_without_leaking_key() -> None:
     readiness = build_provider_readiness(
         Settings(print_provider="treatstock", treatstock_api_key="treatstock-secret")
     )
@@ -52,10 +52,13 @@ def test_provider_readiness_does_not_mark_unimplemented_treatstock_ready() -> No
     print_provider = providers["print"]
     serialized = readiness.model_dump_json()
     assert print_provider.selected_provider == "treatstock"
-    assert print_provider.status == "not_implemented"
-    assert print_provider.is_demo_ready is False
-    assert print_provider.is_real_provider_ready is False
+    assert print_provider.status == "ready"
+    assert print_provider.is_demo_ready is True
+    assert print_provider.is_real_provider_ready is True
     assert print_provider.missing_env == []
+    assert "url_upload_quote" in print_provider.capabilities
+    assert "minimum_price_quote" in print_provider.capabilities
+    assert "checkout_handoff" in print_provider.capabilities
     assert "treatstock-secret" not in serialized
 
 

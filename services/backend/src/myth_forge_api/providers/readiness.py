@@ -163,11 +163,19 @@ def _print_readiness(settings: Settings) -> ProviderReadinessItem:
         return ProviderReadinessItem(
             kind="print",
             selected_provider="treatstock",
-            status="not_implemented",
-            is_demo_ready=False,
-            is_real_provider_ready=False,
-            capabilities=["quote_api_key_configured", "order_handoff_future"],
-            notes=["Treatstock key is configured, but live quote adapter is not implemented yet."],
+            status="ready",
+            is_demo_ready=True,
+            is_real_provider_ready=True,
+            capabilities=[
+                "url_upload_quote",
+                "minimum_price_quote",
+                "checkout_handoff",
+                "manual_review_required",
+            ],
+            notes=[
+                "Treatstock is configured for live print quote handoff.",
+                "Order placement still requires separate user approval and shipping data.",
+            ],
         )
     if selected_provider == "sculpteo":
         missing = [] if settings.sculpteo_api_key else ["SCULPTEO_API_KEY"]

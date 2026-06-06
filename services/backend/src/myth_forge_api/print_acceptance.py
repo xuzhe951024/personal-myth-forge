@@ -35,6 +35,7 @@ def run_print_quote_acceptance() -> PrintQuoteAcceptanceResult:
             "kind": "print_quote_acceptance_report",
             "status": "succeeded",
             "candidate_format": candidate.format,
+            "candidate_uri": candidate.uri,
             "quote_status": quote.status,
             "provider": quote.provider,
             "currency": quote.currency,

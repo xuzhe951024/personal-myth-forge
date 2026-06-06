@@ -8,7 +8,7 @@ from myth_forge_api.providers.npc_ticks import (
     NPCTickRuntime,
     OpenAINPCTickRuntime,
 )
-from myth_forge_api.providers.printing import LocalPrintProvider, PrintProvider
+from myth_forge_api.providers.printing import LocalPrintProvider, PrintProvider, TreatstockPrintProvider
 from myth_forge_api.providers.session_store import LocalMythSessionStore, MythSessionStore
 from myth_forge_api.providers.three_d import LocalThreeDProvider, MeshyThreeDProvider, ThreeDProvider
 
@@ -44,6 +44,8 @@ def build_print_provider(settings: Settings | None = None) -> PrintProvider:
     selected_settings = settings or load_settings()
     if selected_settings.print_provider == "local":
         return LocalPrintProvider()
+    if selected_settings.print_provider == "treatstock":
+        return TreatstockPrintProvider.from_settings(selected_settings)
     raise ValueError(
         f"PRINT_PROVIDER={selected_settings.print_provider} is not implemented for live quotes."
     )

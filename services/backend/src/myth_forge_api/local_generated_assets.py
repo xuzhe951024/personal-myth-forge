@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import struct
+import zipfile
+from io import BytesIO
 
 from myth_forge_api.domain.models import (
     GeneratedAssetVariant,
@@ -110,6 +112,52 @@ def local_generated_scene_dae(session_id: str) -> str:
 """
 
 
+def local_generated_print_3mf(session_id: str) -> bytes:
+    model_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+  <resources>
+    <object id="1" type="model">
+      <mesh>
+        <vertices>
+          <vertex x="0" y="8" z="0"/>
+          <vertex x="-6" y="-4" z="4"/>
+          <vertex x="6" y="-4" z="4"/>
+          <vertex x="0" y="-4" z="-6"/>
+        </vertices>
+        <triangles>
+          <triangle v1="0" v2="1" v3="2"/>
+          <triangle v1="0" v2="2" v3="3"/>
+          <triangle v1="0" v2="3" v3="1"/>
+          <triangle v1="1" v2="3" v3="2"/>
+        </triangles>
+      </mesh>
+    </object>
+  </resources>
+  <build>
+    <item objectid="1" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>
+  </build>
+  <metadata name="Title">Personal Myth Forge {session_id} print candidate</metadata>
+</model>
+"""
+    rels_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>
+</Relationships>
+"""
+    content_types_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>
+</Types>
+"""
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("[Content_Types].xml", content_types_xml)
+        archive.writestr("_rels/.rels", rels_xml)
+        archive.writestr("3D/3dmodel.model", model_xml)
+    return buffer.getvalue()
+
+
 def with_served_local_generated_asset_urls(
     session: MythSession,
     *,
@@ -121,6 +169,7 @@ def with_served_local_generated_asset_urls(
     asset = session.generated_asset
     game_url = _asset_url(base_url, session.session_id, "game.glb")
     scene_url = _asset_url(base_url, session.session_id, "scene.dae")
+    print_url = _print_candidate_url(base_url, session.session_id)
     variants = [_served_variant(variant, game_url=game_url, scene_url=scene_url) for variant in asset.variants]
     served_asset = asset.model_copy(
         update={
@@ -135,6 +184,7 @@ def with_served_local_generated_asset_urls(
                 session.print_candidate,
                 old_source_uri=asset.uri,
                 game_url=game_url,
+                print_url=print_url,
             ),
         }
     )
@@ -160,15 +210,31 @@ def _served_print_candidate(
     *,
     old_source_uri: str,
     game_url: str,
+    print_url: str,
 ) -> PrintCandidate:
     if print_candidate.source_asset_uri != old_source_uri:
         return print_candidate
-    return print_candidate.model_copy(update={"source_asset_uri": game_url})
+    return print_candidate.model_copy(
+        update={
+            "source_asset_uri": game_url,
+            "uri": print_url
+            if _is_local_print_candidate_uri(print_candidate.uri)
+            else print_candidate.uri,
+        }
+    )
 
 
 def _asset_url(base_url: str, session_id: str, filename: str) -> str:
     return f"{base_url.rstrip('/')}/v1/generated-assets/{session_id}/{filename}"
 
 
+def _print_candidate_url(base_url: str, session_id: str) -> str:
+    return f"{base_url.rstrip('/')}/v1/print-candidates/{session_id}/print.3mf"
+
+
 def _is_local_generated_asset_uri(uri: str) -> bool:
     return uri.startswith("local://generated-assets/")
+
+
+def _is_local_print_candidate_uri(uri: str) -> bool:
+    return uri.startswith("local://print-candidates/")

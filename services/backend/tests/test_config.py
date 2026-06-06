@@ -34,10 +34,12 @@ def test_load_settings_reads_print_provider_configuration() -> None:
         {
             "PRINT_PROVIDER": "treatstock",
             "TREATSTOCK_API_KEY": "treatstock-secret",
+            "TREATSTOCK_API_BASE_URL": "https://treatstock.test",
             "SCULPTEO_API_KEY": "sculpteo-secret",
         }
     )
 
     assert settings.print_provider == "treatstock"
     assert settings.treatstock_api_key == "treatstock-secret"
+    assert settings.treatstock_api_base_url == "https://treatstock.test"
     assert settings.sculpteo_api_key == "sculpteo-secret"

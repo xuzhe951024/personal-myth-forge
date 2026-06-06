@@ -11,6 +11,7 @@ def test_print_quote_acceptance_creates_safe_local_quote() -> None:
     assert result.report["kind"] == "print_quote_acceptance_report"
     assert result.report["status"] == "succeeded"
     assert result.report["candidate_format"] == "3mf"
+    assert result.report["candidate_uri"].endswith(".3mf")
     assert result.report["quote_status"] == "draft_quote"
     assert result.report["provider"] == "local_stub"
     assert result.report["currency"] == "USD"

@@ -30,6 +30,7 @@ from myth_forge_api.domain.models import (
 from myth_forge_api.domain.pipeline import create_demo_myth_session
 from myth_forge_api.local_generated_assets import (
     local_generated_game_glb,
+    local_generated_print_3mf,
     local_generated_scene_dae,
     with_served_local_generated_asset_urls,
 )
@@ -45,6 +46,7 @@ from myth_forge_api.providers.factory import (
 )
 from myth_forge_api.providers.image_preparation import ImagePreparationError
 from myth_forge_api.providers.npc import OpenAINPCProviderError
+from myth_forge_api.providers.printing import TreatstockProviderError
 from myth_forge_api.providers.readiness import build_provider_readiness
 from myth_forge_api.providers.three_d import MeshyProviderError
 
@@ -92,6 +94,17 @@ def get_local_generated_game_asset(
         content=local_generated_game_glb(session_id),
         media_type="model/gltf-binary",
         headers={"Content-Disposition": f'inline; filename="{session_id}-game.glb"'},
+    )
+
+
+@app.get("/v1/print-candidates/{session_id}/print.3mf")
+def get_local_print_candidate(
+    session_id: str = PathParam(..., pattern=SESSION_ID_PATTERN),
+) -> Response:
+    return Response(
+        content=local_generated_print_3mf(session_id),
+        media_type="model/3mf",
+        headers={"Content-Disposition": f'inline; filename="{session_id}-print.3mf"'},
     )
 
 
@@ -209,7 +222,7 @@ def create_myth_session(request: Request, payload: MythSessionRequest) -> MythSe
 def create_print_quote(request: PrintQuoteRequest) -> PrintQuote:
     try:
         return build_print_provider().create_print_quote(request)
-    except ValueError as exc:
+    except (TreatstockProviderError, ValueError) as exc:
         raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
 
 
