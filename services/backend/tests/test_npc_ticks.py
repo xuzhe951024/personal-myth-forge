@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from myth_forge_api.domain.arbitration import LocalWorldArbitrator
 from myth_forge_api.domain.models import (
     GeneratedAsset,
+    NPCAgentTick,
     NPCAgentTickRequest,
     NPCReaction,
     WorldResolution,
@@ -220,6 +221,93 @@ def test_create_npc_tick_endpoint_appends_backend_session_history(monkeypatch, t
     assert [tick.tick_index for tick in history.npc_ticks] == [1]
 
 
+def test_advance_stored_myth_session_endpoint_appends_and_returns_history(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    session = _session()
+    store.save_session(session)
+    client = TestClient(app)
+
+    response = client.post(f"/v1/myth-sessions/{session.session_id}/npc-ticks")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["session_id"] == session.session_id
+    assert payload["session"]["session_id"] == session.session_id
+    assert [tick["tick_index"] for tick in payload["npc_ticks"]] == [1]
+    assert payload["npc_ticks"][0]["agent_runtime"] == "local_tick_runtime"
+    history = store.get_history(session.session_id)
+    assert history is not None
+    assert [tick.tick_index for tick in history.npc_ticks] == [1]
+
+
+def test_advance_stored_myth_session_endpoint_uses_backend_history_for_next_tick(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    runtime = RecordingNPCTickRuntime()
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    monkeypatch.setattr("myth_forge_api.main.build_npc_tick_runtime", lambda: runtime)
+    session = _session()
+    store.save_session(session)
+    store.append_tick(
+        session,
+        _stored_tick(
+            session=session,
+            tick_index=7,
+            visible_changes=["Mara moved closer.", "Ior marked a boundary."],
+        ),
+    )
+    client = TestClient(app)
+
+    response = client.post(f"/v1/myth-sessions/{session.session_id}/npc-ticks")
+
+    assert response.status_code == 200
+    assert [tick["tick_index"] for tick in response.json()["npc_ticks"]] == [7, 8]
+    assert len(runtime.requests) == 1
+    request = runtime.requests[0]
+    assert request.session == session
+    assert request.tick_index == 8
+    assert request.recent_events == ["Mara moved closer.", "Ior marked a boundary."]
+
+
+def test_advance_stored_myth_session_endpoint_returns_404_for_unknown_session(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    client = TestClient(app)
+
+    response = client.post("/v1/myth-sessions/myth_0123456789abcdef/npc-ticks")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Myth session not found."
+
+
+def test_advance_stored_myth_session_endpoint_sanitizes_provider_failure(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    session = _session()
+    store.save_session(session)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    monkeypatch.setattr("myth_forge_api.main.build_npc_tick_runtime", lambda: RaisingNPCTickRuntime())
+    client = TestClient(app)
+
+    response = client.post(f"/v1/myth-sessions/{session.session_id}/npc-ticks")
+
+    assert response.status_code == 502
+    assert "test-secret" not in response.text
+    assert "Authorization" not in response.text
+    assert "raw=private" not in response.text
+
+
 def _session():
     return create_demo_myth_session(
         object_observation={
@@ -254,6 +342,46 @@ def _tick_context():
     from myth_forge_api.domain.models import ContextCapsule
 
     return ContextCapsule(current_theme="tick test", desired_tone="watchful")
+
+
+class RecordingNPCTickRuntime:
+    runtime_name = "recording_tick_runtime"
+
+    def __init__(self) -> None:
+        self.requests: list[NPCAgentTickRequest] = []
+
+    def generate_tick(self, request: NPCAgentTickRequest) -> NPCAgentTick:
+        self.requests.append(request)
+        tick = LocalNPCTickRuntime().generate_tick(request)
+        return tick.model_copy(update={"agent_runtime": self.runtime_name})
+
+
+class RaisingNPCTickRuntime:
+    runtime_name = "raising_tick_runtime"
+
+    def generate_tick(self, request: NPCAgentTickRequest) -> NPCAgentTick:
+        raise OpenAINPCProviderError("provider failed Authorization=Bearer test-secret raw=private")
+
+
+def _stored_tick(
+    session,
+    tick_index: int,
+    visible_changes: list[str],
+) -> NPCAgentTick:
+    tick = LocalNPCTickRuntime().generate_tick(
+        NPCAgentTickRequest(
+            session=session,
+            tick_index=tick_index,
+            recent_events=["seed"],
+        )
+    )
+    return tick.model_copy(
+        update={
+            "world_resolution": tick.world_resolution.model_copy(
+                update={"visible_changes": visible_changes}
+            )
+        }
+    )
 
 
 class FakeParsedResponse:
