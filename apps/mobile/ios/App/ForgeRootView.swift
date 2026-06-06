@@ -105,6 +105,7 @@ struct ForgeRootView: View {
                         generationReadinessDetail: captureGenerationReadiness.detail,
                         contextCapsuleReview: contextCapsuleReview,
                         forgeReadinessSummary: forgeReadinessSummary,
+                        forgeActionGate: forgeActionGate,
                         captureInputError: captureInputError,
                         isMediaReadyForUpload: mediaSelection.isReadyForUpload,
                         chooseCapture: chooseCapture,
@@ -597,6 +598,14 @@ struct ForgeRootView: View {
             providerReadiness: providerReadiness,
             providerReadinessError: providerReadinessError,
             npcAgentModeSummary: npcAgentModeSummary
+        )
+    }
+
+    private var forgeActionGate: ForgeActionGate {
+        ForgeActionGateBuilder.build(
+            isMediaReadyForUpload: mediaSelection.isReadyForUpload,
+            contextCapsuleReview: contextCapsuleReview,
+            forgeReadinessSummary: forgeReadinessSummary
         )
     }
 

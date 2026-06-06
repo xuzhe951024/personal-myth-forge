@@ -45,6 +45,11 @@ do {
     try testForgeReadinessMarksProviderErrorNeedsAttention()
     try testForgeReadinessMarksMissingConfiguredProviders()
     try testForgeReadinessRedactsUnsafeText()
+    try testForgeActionGateDisablesWithoutCapture()
+    try testForgeActionGateDisablesUntilContextApproved()
+    try testForgeActionGateDisablesWhenReadinessNeedsAttention()
+    try testForgeActionGateEnablesLocalDemoForge()
+    try testForgeActionGateRedactsUnsafeDetail()
     try testDevicePreflightBlocksLoopbackBackendURL()
     try testDevicePreflightWaitsForUncheckedBackendHealth()
     try testDevicePreflightMarksBackendHealthChecking()
@@ -1225,6 +1230,94 @@ private func testForgeReadinessRedactsUnsafeText() throws {
     let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
 
     try expectEqual(summary.status, .needsAttention)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "Authorization")
+}
+
+private func testForgeActionGateDisablesWithoutCapture() throws {
+    let gate = ForgeActionGateBuilder.build(
+        isMediaReadyForUpload: false,
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        forgeReadinessSummary: readyForgeReadinessSummary()
+    )
+
+    try expectEqual(gate.isEnabled, false)
+    try expectEqual(gate.title, "Forge Myth")
+    try expectEqual(gate.disabledReason, "capture_required")
+    try expectContains(gate.detail, "Capture")
+}
+
+private func testForgeActionGateDisablesUntilContextApproved() throws {
+    let gate = ForgeActionGateBuilder.build(
+        isMediaReadyForUpload: true,
+        contextCapsuleReview: ContextCapsuleReviewBuilder.build(
+            currentTheme: "lost compass",
+            desiredTone: "quiet",
+            isApproved: false
+        ),
+        forgeReadinessSummary: readyForgeReadinessSummary()
+    )
+
+    try expectEqual(gate.isEnabled, false)
+    try expectEqual(gate.disabledReason, "context_approval_required")
+    try expectContains(gate.detail, "Approve")
+}
+
+private func testForgeActionGateDisablesWhenReadinessNeedsAttention() throws {
+    let summary = ForgeReadinessSummaryBuilder.build(
+        captureGenerationReadiness: readyCaptureGenerationReadiness(providerReadiness: missingProviderReadiness()),
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        providerReadiness: missingProviderReadiness(),
+        providerReadinessError: nil,
+        npcAgentModeSummary: missingOpenAINPCAgentModeSummary()
+    )
+    let gate = ForgeActionGateBuilder.build(
+        isMediaReadyForUpload: true,
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        forgeReadinessSummary: summary
+    )
+
+    try expectEqual(gate.isEnabled, false)
+    try expectEqual(gate.disabledReason, "forge_readiness_required")
+    try expectContains(gate.detail, "MESHY_API_KEY")
+}
+
+private func testForgeActionGateEnablesLocalDemoForge() throws {
+    let gate = ForgeActionGateBuilder.build(
+        isMediaReadyForUpload: true,
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        forgeReadinessSummary: readyForgeReadinessSummary()
+    )
+
+    try expectEqual(gate.isEnabled, true)
+    try expectEqual(gate.disabledReason, nil)
+    try expectContains(gate.detail, "local_demo")
+}
+
+private func testForgeActionGateRedactsUnsafeDetail() throws {
+    let summary = ForgeReadinessSummary(
+        status: .needsAttention,
+        title: "Forge needs attention",
+        detail: "Authorization Bearer token sk-test /Users/zhexu file:///tmp/private local-capture://cap checkout_url",
+        routeLabel: "needs_attention",
+        rows: [],
+        privacyNotes: [],
+        canForge: false
+    )
+    let gate = ForgeActionGateBuilder.build(
+        isMediaReadyForUpload: true,
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        forgeReadinessSummary: summary
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(gate), as: UTF8.self)
+
+    try expectEqual(gate.isEnabled, false)
     try expectContains(text, "[withheld]")
     try expectNotContains(text, "sk-test")
     try expectNotContains(text, "/Users/")
@@ -4066,6 +4159,16 @@ private func readyCaptureGenerationReadiness(
     )
 }
 
+private func readyForgeReadinessSummary() -> ForgeReadinessSummary {
+    ForgeReadinessSummaryBuilder.build(
+        captureGenerationReadiness: readyCaptureGenerationReadiness(),
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        npcAgentModeSummary: localDemoNPCAgentModeSummary()
+    )
+}
+
 private func approvedContextCapsuleReview() -> ContextCapsuleReview {
     ContextCapsuleReviewBuilder.build(
         currentTheme: "deadline pressure",
@@ -4289,6 +4392,31 @@ private func missingOpenAINPCProviderReadiness() -> ProviderReadinessResponse {
         overallDemoReady: false,
         overallRealReady: false,
         providers: [
+            ProviderReadinessItem(
+                kind: "npc",
+                selectedProvider: "openai",
+                status: "missing_configuration",
+                isDemoReady: false,
+                isRealProviderReady: false,
+                missingEnv: ["OPENAI_API_KEY"]
+            ),
+        ]
+    )
+}
+
+private func missingProviderReadiness() -> ProviderReadinessResponse {
+    ProviderReadinessResponse(
+        overallDemoReady: false,
+        overallRealReady: false,
+        providers: [
+            ProviderReadinessItem(
+                kind: "three_d",
+                selectedProvider: "meshy",
+                status: "missing_configuration",
+                isDemoReady: false,
+                isRealProviderReady: false,
+                missingEnv: ["MESHY_API_KEY"]
+            ),
             ProviderReadinessItem(
                 kind: "npc",
                 selectedProvider: "openai",

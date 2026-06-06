@@ -20,6 +20,7 @@ struct CaptureFormView: View {
     let generationReadinessDetail: String
     let contextCapsuleReview: ContextCapsuleReview
     let forgeReadinessSummary: ForgeReadinessSummary
+    let forgeActionGate: ForgeActionGate
     let captureInputError: String?
     let isMediaReadyForUpload: Bool
     let chooseCapture: () -> Void
@@ -112,9 +113,13 @@ struct CaptureFormView: View {
 
             forgeReadinessPanel
 
-            Button("Forge Myth", action: forgeMyth)
+            Button(forgeActionGate.title, action: forgeMyth)
                 .buttonStyle(.borderedProminent)
-                .disabled(!(isMediaReadyForUpload && contextCapsuleReview.status == .ready))
+                .disabled(!forgeActionGate.isEnabled)
+
+            Text(forgeActionGate.detail)
+                .font(.caption)
+                .foregroundStyle(forgeActionGate.isEnabled ? Color.secondary : Color.orange)
 
             Text(statusText)
                 .font(.caption)

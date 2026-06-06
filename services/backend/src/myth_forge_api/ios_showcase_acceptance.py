@@ -193,10 +193,26 @@ FEATURES = (
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeReadinessSummary.swift",
                 "canForge",
             ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeReadinessSummary.swift",
+                "ForgeActionGateBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeReadinessSummary.swift",
+                "disabledReason",
+            ),
             SourceRequirement("apps/mobile/ios/App/CaptureFormView.swift", "Forge Readiness"),
             SourceRequirement(
                 "apps/mobile/ios/App/CaptureFormView.swift",
                 "forgeReadinessSummary.routeLabel",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "forgeActionGate.isEnabled",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "forgeActionGate.detail",
             ),
             SourceRequirement(
                 "apps/mobile/ios/App/ForgeRootView.swift",
@@ -207,8 +223,20 @@ FEATURES = (
                 "forgeReadinessSummary: forgeReadinessSummary",
             ),
             SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "ForgeActionGateBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "forgeActionGate: forgeActionGate",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testForgeReadinessMarksLocalDemoReady",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testForgeActionGateEnablesLocalDemoForge",
             ),
         ),
     ),
