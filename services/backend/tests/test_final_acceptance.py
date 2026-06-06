@@ -216,6 +216,62 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert "/Users/zhexu/private" not in json.dumps(result.report)
 
 
+def test_final_acceptance_classifies_mobile_backend_health_blocker(tmp_path) -> None:
+    def command_runner(command: list[str], cwd: Path) -> CommandExecutionResult:
+        if command == ["make", "mobile-deploy-preflight"]:
+            return CommandExecutionResult(
+                exit_code=2,
+                stdout="",
+                stderr="Backend health check failed. Start backend-device-demo.",
+                elapsed_seconds=0.01,
+            )
+        return CommandExecutionResult(exit_code=0, stdout="ok", stderr="", elapsed_seconds=0.01)
+
+    result = run_final_acceptance(
+        profile="quick",
+        provider_mode="local",
+        require_real_core=False,
+        repo_root=tmp_path,
+        command_runner=command_runner,
+        provider_handoff_runner=lambda require_core_real: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "provider_handoff_report", "core_real_ready": False},
+        ),
+        demo_acceptance_runner=lambda **kwargs: DemoAcceptanceResult(
+            exit_code=0,
+            report={
+                "kind": "demo_acceptance_report",
+                "mode": kwargs["provider_mode"],
+                "status": "succeeded",
+            },
+        ),
+        capture_3d_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
+        ),
+        print_quote_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "print_quote_acceptance_report", "status": "succeeded"},
+        ),
+        ios_showcase_acceptance_runner=passing_ios_showcase_result,
+        ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
+        resource_template_acceptance_runner=passing_resource_template_result,
+        local_asset_handoff_acceptance_runner=passing_local_asset_handoff_result,
+        capture_scene_handoff_acceptance_runner=passing_capture_scene_handoff_result,
+    )
+
+    checks = {check["id"]: check for check in result.report["checks"]}
+    assert result.exit_code == 2
+    assert checks["mobile_deploy_preflight"]["status"] == "blocked"
+    assert checks["mobile_deploy_preflight"]["classification"] == (
+        "blocked_by_local_ios_backend_health"
+    )
+    assert checks["mobile_xcode_build"]["status"] == "passed"
+    assert checks["mobile_deploy_preflight"]["stderr_tail"] == (
+        "Backend health check failed. Start backend-device-demo."
+    )
+
+
 def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) -> None:
     command_calls = 0
 

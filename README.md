@@ -1493,3 +1493,25 @@ Static evidence lives at:
 docs/superpowers/verification/p0.53-backend-health-probe.html
 docs/superpowers/verification/assets/p0.53-backend-health-probe-390x844.png
 ```
+
+P0.54 upgrades the command-line iOS deploy preflight. After local signing,
+bundle id, and `PMF_BACKEND_BASE_URL` values are present and non-loopback,
+`make mobile-deploy-preflight` now calls the configured backend `/health`
+endpoint:
+
+```bash
+make mobile-deploy-preflight
+```
+
+It passes only when the backend responds with `status=ok`. Missing backend
+processes, wrong LAN URLs, firewall issues, and non-ok health payloads exit `2`
+with a safe `Backend health check failed` message. The script uses project-local
+files only, does not run Xcode, does not mutate global developer settings, and
+does not call Meshy/OpenAI/print providers.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.54-deploy-health-preflight.html
+docs/superpowers/verification/assets/p0.54-deploy-health-preflight-390x844.png
+```

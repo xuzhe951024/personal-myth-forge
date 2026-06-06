@@ -1591,3 +1591,23 @@ swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppC
 
 `ios_showcase_acceptance` now checks `backend_health_probe` as the fourteenth
 source feature.
+
+## P0.54 Deploy Health Preflight
+
+P0.54 extends `make mobile-deploy-preflight` so the command-line iOS deploy
+check validates the configured backend before Xcode/device work starts. After
+the ignored local config provides `DEVELOPMENT_TEAM`,
+`PRODUCT_BUNDLE_IDENTIFIER`, and a non-loopback `PMF_BACKEND_BASE_URL`, the
+script calls:
+
+```text
+GET $PMF_BACKEND_BASE_URL/health
+```
+
+It passes only when the backend returns `status=ok`. Backend health failures
+are classified separately in final acceptance as
+`blocked_by_local_ios_backend_health`, while missing local config remains
+`blocked_by_local_ios_deploy_config`.
+
+The script stays project-local: no `sudo`, no `xcode-select`, no license
+mutation, no provider calls, and no simulator/device execution.

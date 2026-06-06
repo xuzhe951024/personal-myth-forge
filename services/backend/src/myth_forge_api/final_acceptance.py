@@ -470,6 +470,12 @@ def _classify_command_result(
     if result.exit_code == 0:
         return "passed", "command_succeeded"
     output = f"{result.stdout}\n{result.stderr}".lower()
+    if (
+        check_id == "mobile_deploy_preflight"
+        and result.exit_code == 2
+        and "backend health" in output
+    ):
+        return "blocked", "blocked_by_local_ios_backend_health"
     if check_id == "mobile_deploy_preflight" and result.exit_code == 2:
         return "blocked", "blocked_by_local_ios_deploy_config"
     if check_id == "mobile_xcode_build":
