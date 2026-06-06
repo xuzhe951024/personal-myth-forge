@@ -1,4 +1,4 @@
-from myth_forge_api.domain.models import GeneratedAsset
+from myth_forge_api.domain.models import GeneratedAsset, PrintQuoteRequest
 from myth_forge_api.providers.printing import LocalPrintProvider
 from myth_forge_api.providers.three_d import (
     LocalThreeDProvider,
@@ -113,3 +113,34 @@ def test_local_print_provider_derives_candidate_from_generated_asset() -> None:
     assert candidate.source_asset_uri == asset.uri
     assert candidate.uri == "local://print-candidates/myth_test.3mf"
     assert candidate.requires_user_approval is True
+
+
+def test_local_print_provider_creates_draft_quote() -> None:
+    asset = GeneratedAsset(
+        kind="game_asset",
+        provider="local_stub",
+        format="glb",
+        uri="local://generated-assets/myth_test.glb",
+        prompt="Create a strange key-shaped relic for a mobile game scene.",
+        moderation_status="needs_review",
+    )
+    provider = LocalPrintProvider()
+    candidate = provider.create_print_candidate(asset)
+
+    quote = provider.create_print_quote(
+        PrintQuoteRequest(
+            print_candidate=candidate,
+            quantity=2,
+            material="standard_resin",
+            finish="matte",
+            ship_to_country="US",
+        )
+    )
+
+    assert quote.kind == "print_quote"
+    assert quote.provider == "local_stub"
+    assert quote.status == "draft_quote"
+    assert quote.estimated_price_cents == 3200
+    assert quote.currency == "USD"
+    assert quote.checkout_url is None
+    assert quote.requires_user_approval is True

@@ -14,9 +14,49 @@ def test_provider_readiness_defaults_to_demo_ready_local_stubs() -> None:
     assert providers["three_d"].is_real_provider_ready is False
     assert providers["npc"].selected_provider == "local"
     assert providers["npc"].status == "local_stub"
-    assert providers["print"].selected_provider == "local_stub"
+    assert providers["print"].selected_provider == "local"
     assert providers["print"].status == "local_stub"
     assert providers["capture_storage"].status == "ready"
+
+
+def test_provider_readiness_reports_print_quote_stub_capability() -> None:
+    readiness = build_provider_readiness(Settings())
+
+    providers = {item.kind: item for item in readiness.providers}
+    print_provider = providers["print"]
+    assert print_provider.selected_provider == "local"
+    assert print_provider.status == "local_stub"
+    assert print_provider.is_demo_ready is True
+    assert print_provider.is_real_provider_ready is False
+    assert "quote_stub" in print_provider.capabilities
+
+
+def test_provider_readiness_reports_missing_treatstock_key() -> None:
+    readiness = build_provider_readiness(Settings(print_provider="treatstock"))
+
+    providers = {item.kind: item for item in readiness.providers}
+    print_provider = providers["print"]
+    assert print_provider.selected_provider == "treatstock"
+    assert print_provider.status == "missing_configuration"
+    assert print_provider.is_demo_ready is False
+    assert print_provider.is_real_provider_ready is False
+    assert print_provider.missing_env == ["TREATSTOCK_API_KEY"]
+
+
+def test_provider_readiness_does_not_mark_unimplemented_treatstock_ready() -> None:
+    readiness = build_provider_readiness(
+        Settings(print_provider="treatstock", treatstock_api_key="treatstock-secret")
+    )
+
+    providers = {item.kind: item for item in readiness.providers}
+    print_provider = providers["print"]
+    serialized = readiness.model_dump_json()
+    assert print_provider.selected_provider == "treatstock"
+    assert print_provider.status == "not_implemented"
+    assert print_provider.is_demo_ready is False
+    assert print_provider.is_real_provider_ready is False
+    assert print_provider.missing_env == []
+    assert "treatstock-secret" not in serialized
 
 
 def test_provider_readiness_reports_missing_meshy_key_without_secret_value() -> None:

@@ -24,6 +24,9 @@ class Settings:
     openai_api_key: str | None = None
     openai_npc_model: str = "gpt-4.1-mini"
     openai_api_base_url: str | None = None
+    print_provider: str = "local"
+    treatstock_api_key: str | None = None
+    sculpteo_api_key: str | None = None
     capture_storage_dir: str = DEFAULT_CAPTURE_STORAGE_DIR
     myth_session_storage_dir: str = DEFAULT_MYTH_SESSION_STORAGE_DIR
 
@@ -41,6 +44,9 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         openai_api_key=source.get("OPENAI_API_KEY") or None,
         openai_npc_model=source.get("OPENAI_NPC_MODEL", "gpt-4.1-mini"),
         openai_api_base_url=source.get("OPENAI_API_BASE_URL") or None,
+        print_provider=source.get("PRINT_PROVIDER", "local").strip().lower(),
+        treatstock_api_key=source.get("TREATSTOCK_API_KEY") or None,
+        sculpteo_api_key=source.get("SCULPTEO_API_KEY") or None,
         capture_storage_dir=source.get("CAPTURE_STORAGE_DIR") or DEFAULT_CAPTURE_STORAGE_DIR,
         myth_session_storage_dir=source.get("MYTH_SESSION_STORAGE_DIR")
         or DEFAULT_MYTH_SESSION_STORAGE_DIR,

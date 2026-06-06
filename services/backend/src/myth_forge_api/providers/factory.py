@@ -8,6 +8,7 @@ from myth_forge_api.providers.npc_ticks import (
     NPCTickRuntime,
     OpenAINPCTickRuntime,
 )
+from myth_forge_api.providers.printing import LocalPrintProvider, PrintProvider
 from myth_forge_api.providers.session_store import LocalMythSessionStore, MythSessionStore
 from myth_forge_api.providers.three_d import LocalThreeDProvider, MeshyThreeDProvider, ThreeDProvider
 
@@ -37,6 +38,15 @@ def build_npc_tick_runtime(settings: Settings | None = None) -> NPCTickRuntime:
     if selected_settings.npc_provider == "openai":
         return OpenAINPCTickRuntime.from_settings(selected_settings)
     raise ValueError(f"Unsupported NPC_PROVIDER: {selected_settings.npc_provider}")
+
+
+def build_print_provider(settings: Settings | None = None) -> PrintProvider:
+    selected_settings = settings or load_settings()
+    if selected_settings.print_provider == "local":
+        return LocalPrintProvider()
+    raise ValueError(
+        f"PRINT_PROVIDER={selected_settings.print_provider} is not implemented for live quotes."
+    )
 
 
 def build_capture_store(settings: Settings | None = None) -> CaptureStore:

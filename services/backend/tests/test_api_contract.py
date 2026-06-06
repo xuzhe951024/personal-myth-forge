@@ -50,6 +50,50 @@ def test_create_myth_session_endpoint_returns_reviewable_session() -> None:
     assert payload["print_candidate"]["requires_user_approval"] is True
 
 
+def _print_candidate_payload() -> dict[str, object]:
+    return {
+        "kind": "print_asset",
+        "source_asset_uri": "local://generated-assets/myth_test.glb",
+        "provider": "local_stub",
+        "format": "3mf",
+        "uri": "local://print-candidates/myth_test.3mf",
+        "requires_user_approval": True,
+        "approval_reason": "review before fulfillment",
+        "printability_notes": ["stable base", "repair thin parts"],
+    }
+
+
+def test_create_print_quote_returns_safe_local_quote() -> None:
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/print-quotes",
+        json={
+            "print_candidate": _print_candidate_payload(),
+            "quantity": 2,
+            "material": "standard_resin",
+            "finish": "matte",
+            "ship_to_country": "US",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["kind"] == "print_quote"
+    assert payload["provider"] == "local_stub"
+    assert payload["status"] == "draft_quote"
+    assert payload["source_asset_uri"] == "local://generated-assets/myth_test.glb"
+    assert payload["print_candidate_uri"] == "local://print-candidates/myth_test.3mf"
+    assert payload["currency"] == "USD"
+    assert payload["estimated_price_cents"] == 3200
+    assert payload["estimated_production_days"] == 5
+    assert payload["estimated_shipping_days"] == 6
+    assert payload["checkout_url"] is None
+    assert payload["requires_user_approval"] is True
+    assert "data:image" not in response.text
+    assert "api_key" not in response.text.lower()
+
+
 def test_demo_route_serves_mobile_first_shell() -> None:
     client = TestClient(app)
 
