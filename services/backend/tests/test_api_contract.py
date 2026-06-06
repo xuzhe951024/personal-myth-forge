@@ -1,10 +1,11 @@
 from fastapi.testclient import TestClient
 
 from myth_forge_api.config import Settings
-from myth_forge_api.domain.models import GeneratedAsset, NPCAgentTick
+from myth_forge_api.domain.models import GeneratedAsset, MythSession, NPCAgentTick
 from myth_forge_api.domain.pipeline import create_demo_myth_session
 from myth_forge_api.main import app
 from myth_forge_api.providers.npc import OpenAINPCConfigurationError, OpenAINPCProviderError
+from myth_forge_api.providers.session_store import LocalMythSessionStore
 from myth_forge_api.providers.three_d import ThreeDGenerationRequest
 
 
@@ -146,6 +147,61 @@ def test_create_myth_session_response_includes_world_resolution() -> None:
     payload = response.json()
     assert payload["npc_director"] == "local_stub"
     assert payload["world_resolution"]["visible_changes"]
+
+
+def test_create_myth_session_endpoint_persists_readable_history(monkeypatch, tmp_path) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/myth-sessions",
+        json={
+            "object_observation": {
+                "label": "tiny bell",
+                "materials": ["metal"],
+                "source": "manual_upload",
+            },
+            "context_capsule": {
+                "current_theme": "calling attention",
+                "desired_tone": "solemn and bright",
+            },
+        },
+    )
+    assert response.status_code == 200
+    session_id = response.json()["session_id"]
+
+    history_response = client.get(f"/v1/myth-sessions/{session_id}/history")
+
+    assert history_response.status_code == 200
+    history = history_response.json()
+    assert history["session_id"] == session_id
+    assert history["session"]["session_id"] == session_id
+    assert history["npc_ticks"] == []
+    assert history["updated_at"]
+
+
+def test_get_myth_session_endpoint_returns_saved_session(monkeypatch, tmp_path) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    session = MythSession.model_validate(_sample_myth_session())
+    store.save_session(session)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    client = TestClient(app)
+
+    response = client.get(f"/v1/myth-sessions/{session.session_id}")
+
+    assert response.status_code == 200
+    assert response.json()["session_id"] == session.session_id
+
+
+def test_get_myth_session_history_unknown_session_returns_404(monkeypatch, tmp_path) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    client = TestClient(app)
+
+    response = client.get("/v1/myth-sessions/myth_0000000000000000/history")
+
+    assert response.status_code == 404
 
 
 def test_create_npc_tick_endpoint_returns_safe_agent_tick() -> None:

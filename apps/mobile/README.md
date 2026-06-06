@@ -750,3 +750,46 @@ docs/superpowers/verification/assets/p0.26-mobile-demo-snapshot-390x844.png
 Remaining gaps after P0.26 are server-side NPC memory, autonomous background
 loops, accepting the Apple SDK license on this machine, real device installation,
 real Meshy/OpenAI key runs, Unity movement execution, and print fulfillment.
+
+## P0.27 Backend Session History
+
+P0.27 adds a backend local history contract for demo recovery across clients.
+The backend now writes generated myth sessions and NPC ticks into an ignored
+JSON store and exposes:
+
+```http
+GET /v1/myth-sessions/{session_id}
+GET /v1/myth-sessions/{session_id}/history
+```
+
+`MYTH_SESSION_STORAGE_DIR` can override the default
+`services/backend/.local/myth-sessions` path. The store keeps a bounded history
+of 24 NPC ticks per session and sanitizes raw media data URIs, bearer tokens,
+API keys, and raw provider payload markers before writing JSON.
+
+The Swift mobile core adds `MythSessionHistory`,
+`getMythSession(sessionId:)`, and `getMythSessionHistory(sessionId:)`. Session
+ids are validated before network calls using the backend `myth_<16 hex>`
+contract.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.27-backend-session-history.html
+docs/superpowers/verification/assets/p0.27-backend-session-history-390x844.png
+```
+
+Remaining gaps after P0.27 are production account memory, background autonomous
+NPC loops, server-authoritative world simulation, accepting the Apple SDK
+license on this machine, real device installation, real provider-key runs, Unity
+movement execution, and print fulfillment.

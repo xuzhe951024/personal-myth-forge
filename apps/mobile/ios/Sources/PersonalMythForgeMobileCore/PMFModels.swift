@@ -531,3 +531,22 @@ public struct MythSession: Codable, Equatable, Sendable {
         try container.encode(printCandidate, forKey: .printCandidate)
     }
 }
+
+public struct MythSessionHistory: Codable, Equatable, Sendable {
+    public var sessionId: String
+    public var session: MythSession
+    public var npcTicks: [NPCAgentTick]
+    public var updatedAt: String
+
+    public init(
+        sessionId: String,
+        session: MythSession,
+        npcTicks: [NPCAgentTick],
+        updatedAt: String
+    ) {
+        self.sessionId = sessionId
+        self.session = session
+        self.npcTicks = npcTicks
+        self.updatedAt = updatedAt
+    }
+}

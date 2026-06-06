@@ -7,6 +7,7 @@ do {
     try testDecodesMythSessionWithoutGeneratedAssetVariants()
     try testDecodesMythSessionWithoutNPCAgentTraceFields()
     try testDecodesNPCAgentTickPayload()
+    try testDecodesMythSessionHistoryPayload()
     try testDemoRunSnapshotKeepsMatchingTicksSortedAndBounded()
     try testDemoRunSnapshotEncodesSnakeCaseJSONWithoutRawMediaOrSecrets()
     try testDemoRunSnapshotFileStoreSavesLoadsOverwritesAndClears()
@@ -21,6 +22,9 @@ do {
     try await testHTTPStatusErrorSanitizesSecretsAndTruncatesBody()
     try await testGetProviderReadinessBuildsGETRequest()
     try await testGetProviderReadinessSanitizesHTTPErrorBody()
+    try await testGetMythSessionBuildsGETRequest()
+    try await testGetMythSessionHistoryBuildsGETRequest()
+    try await testInvalidMythSessionIDFailsBeforeNetwork()
     try await testCreateNPCAgentTickBuildsJSONRequest()
     try await testCreateNPCAgentTickSanitizesHTTPErrorBody()
     try await testUploadObjectCaptureUsesGeneratedFilenamesWithoutLocalPaths()
@@ -188,6 +192,25 @@ private func testDecodesNPCAgentTickPayload() throws {
     try expectEqual(tick.npcAgentTraces[0].proposedAction, "invite_neighbors_to_witness")
     try expectEqual(tick.npcReactions[0].emotion, "awe")
     try expectEqual(tick.worldResolution.acceptedActions[0].status, "accepted")
+}
+
+private func testDecodesMythSessionHistoryPayload() throws {
+    let session = try backendHistorySession()
+    let tick = npcTick(sessionId: session.sessionId, tickIndex: 1)
+    let payload = MythSessionHistory(
+        sessionId: session.sessionId,
+        session: session,
+        npcTicks: [tick],
+        updatedAt: "2026-06-06T12:00:00+00:00"
+    )
+
+    let data = try PMFJSON.encoder.encode(payload)
+    let body = String(decoding: data, as: UTF8.self)
+    let decoded = try PMFJSON.decoder.decode(MythSessionHistory.self, from: data)
+
+    try expectContains(body, #""session_id":"#)
+    try expectContains(body, #""npc_ticks":"#)
+    try expectEqual(decoded, payload)
 }
 
 private func testDemoRunSnapshotKeepsMatchingTicksSortedAndBounded() throws {
@@ -518,6 +541,63 @@ private func testGetProviderReadinessSanitizesHTTPErrorBody() async throws {
         try expectFalse(sanitizedBody.contains(secret))
         try expectContains(sanitizedBody, "Authorization=Bearer [redacted]")
         try expectContains(sanitizedBody, "api_key=[redacted]")
+    }
+}
+
+private func testGetMythSessionBuildsGETRequest() async throws {
+    let session = try backendHistorySession()
+    let data = try PMFJSON.encoder.encode(session)
+    let transport = RecordingTransport(responses: [HTTPResponse(statusCode: 200, data: data)])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    let result = try await client.getMythSession(sessionId: session.sessionId)
+
+    try expectEqual(result.sessionId, session.sessionId)
+    let request = try require(transport.requests.first, "missing myth session request")
+    try expectEqual(request.httpMethod, "GET")
+    try expectEqual(request.url?.path, "/v1/myth-sessions/\(session.sessionId)")
+    try expectEqual(request.httpBody, nil)
+}
+
+private func testGetMythSessionHistoryBuildsGETRequest() async throws {
+    let session = try backendHistorySession()
+    let history = MythSessionHistory(
+        sessionId: session.sessionId,
+        session: session,
+        npcTicks: [npcTick(sessionId: session.sessionId, tickIndex: 1)],
+        updatedAt: "2026-06-06T12:00:00+00:00"
+    )
+    let data = try PMFJSON.encoder.encode(history)
+    let transport = RecordingTransport(responses: [HTTPResponse(statusCode: 200, data: data)])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    let result = try await client.getMythSessionHistory(sessionId: session.sessionId)
+
+    try expectEqual(result, history)
+    let request = try require(transport.requests.first, "missing myth session history request")
+    try expectEqual(request.httpMethod, "GET")
+    try expectEqual(request.url?.path, "/v1/myth-sessions/\(session.sessionId)/history")
+    try expectEqual(request.httpBody, nil)
+}
+
+private func testInvalidMythSessionIDFailsBeforeNetwork() async throws {
+    let transport = RecordingTransport(responses: [])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    do {
+        _ = try await client.getMythSession(sessionId: "../myth_0123456789abcdef")
+        throw ContractTestError.expectationFailed("Expected invalid myth session id error")
+    } catch ForgeFlowError.invalidMythSessionID("../myth_0123456789abcdef") {
+        try expectEqual(transport.requests.count, 0)
     }
 }
 
@@ -1509,6 +1589,12 @@ private func npcTick(sessionId: String, tickIndex: Int) -> NPCAgentTick {
             visibleChanges: ["Mara marks restored tick \(tickIndex)."]
         )
     )
+}
+
+private func backendHistorySession() throws -> MythSession {
+    var session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    session.sessionId = "myth_0123456789abcdef"
+    return session
 }
 
 private enum FixtureLoader {

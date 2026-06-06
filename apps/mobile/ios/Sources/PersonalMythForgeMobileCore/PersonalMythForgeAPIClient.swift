@@ -41,6 +41,7 @@ public struct CaptureUpload: Equatable, Sendable {
 public enum ForgeFlowError: Error, Equatable, Sendable {
     case invalidBaseURL
     case invalidCaptureID(String)
+    case invalidMythSessionID(String)
     case invalidCaptureDraft(String)
     case encodingFailed(String)
     case httpStatus(Int, String)
@@ -137,6 +138,20 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
         return try await send(request, decoding: MythSession.self)
     }
 
+    public func getMythSession(sessionId: String) async throws -> MythSession {
+        try validateMythSessionId(sessionId)
+        var request = URLRequest(url: endpoint("/v1/myth-sessions/\(sessionId)"))
+        request.httpMethod = "GET"
+        return try await send(request, decoding: MythSession.self)
+    }
+
+    public func getMythSessionHistory(sessionId: String) async throws -> MythSessionHistory {
+        try validateMythSessionId(sessionId)
+        var request = URLRequest(url: endpoint("/v1/myth-sessions/\(sessionId)/history"))
+        request.httpMethod = "GET"
+        return try await send(request, decoding: MythSessionHistory.self)
+    }
+
     public func getProviderReadiness() async throws -> ProviderReadinessResponse {
         var request = URLRequest(url: endpoint("/v1/provider-readiness"))
         request.httpMethod = "GET"
@@ -168,6 +183,13 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
     private func validateCaptureId(_ captureId: String) throws {
         if !CaptureID.isValid(captureId) {
             throw ForgeFlowError.invalidCaptureID(captureId)
+        }
+    }
+
+    private func validateMythSessionId(_ sessionId: String) throws {
+        let pattern = #"^myth_[0-9a-f]{16}$"#
+        if sessionId.range(of: pattern, options: .regularExpression) == nil {
+            throw ForgeFlowError.invalidMythSessionID(sessionId)
         }
     }
 
