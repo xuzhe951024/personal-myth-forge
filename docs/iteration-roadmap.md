@@ -36,6 +36,7 @@ Bridge deliverable:
 - P0.18 no-global-pollution Xcode iOS build gate for the checked-in app project
 - P0.19 iOS guided scan entry that imports Object Capture photo sets into the capture-to-myth flow
 - P0.20 provider readiness preflight for backend-only API/key handoff and mobile display
+- P0.21 backend HEIC/HEIF-to-JPEG provider input preparation for Meshy Image-to-3D guided scans
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
