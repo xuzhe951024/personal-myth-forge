@@ -255,3 +255,31 @@ docs/superpowers/verification/assets/p0.13-ios-app-compile-gate-390x844.png
 
 Remaining gaps after P0.13 are full Xcode simulator/device deployment, live
 ARKit mesh capture, iOS 3D rendering, and real provider-key runs.
+
+## P0.14 iOS 3D Artifact Preview
+
+P0.14 adds the first native 3D artifact preview surface to the app source.
+`ArtifactPreviewState` lives in `PersonalMythForgeMobileCore` and classifies
+whether a generated asset can be loaded directly by SceneKit. The app layer adds
+`Artifact3DPreviewView`, which imports SceneKit, builds an `SCNScene` proxy
+artifact, and embeds it in `ArtifactSummaryView`.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.14-ios-3d-artifact-preview.html
+docs/superpowers/verification/assets/p0.14-ios-3d-artifact-preview-390x844.png
+```
+
+Remaining gaps after P0.14 are actual generated asset download/cache/import,
+GLB runtime conversion or USDZ handoff, full Xcode simulator/device deployment,
+live ARKit mesh capture, richer 3D village rendering, and real provider-key
+runs.
