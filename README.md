@@ -1027,3 +1027,40 @@ Static evidence lives at:
 docs/superpowers/verification/p0.38-print-quote-handoff.html
 docs/superpowers/verification/assets/p0.38-print-quote-handoff-390x844.png
 ```
+
+P0.39 wires that print quote contract into the iOS app source. When a myth
+session is ready, the mobile UI now shows a `Print Quote` review panel with the
+current print candidate, a `Get Quote` action, and the returned local
+`draft_quote` summary.
+
+The Swift API client calls:
+
+```http
+POST /v1/print-quotes
+```
+
+with the ready session's `print_candidate` and default review preferences:
+`quantity=1`, `material=standard_resin`, `finish=matte`, and
+`ship_to_country=US`. The local backend quote remains deterministic at
+`USD 16.00`; the mobile view shows production/shipping days and user approval
+requirements. It does not show a checkout/payment action or store provider keys
+in the app.
+
+Run the mobile checks:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Expected final acceptance summary remains `passed=4`, `blocked=2`, `failed=0`.
+The remaining blockers are unchanged: local iOS deploy config and the Apple SDK
+license on this machine.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.39-mobile-print-quote-review.html
+docs/superpowers/verification/assets/p0.39-mobile-print-quote-review-390x844.png
+```

@@ -20,6 +20,9 @@ struct ForgeRootView: View {
     @State private var npcTickError: String?
     @State private var isAdvancingNPCTick = false
     @State private var isRunningAutonomy = false
+    @State private var printQuote: PrintQuote?
+    @State private var printQuoteError: String?
+    @State private var isLoadingPrintQuote = false
     @State private var objectLabel = "old brass key"
     @State private var materials = "metal, brass"
     @State private var visualNotes = "worn teeth, circular bow, warm reflections"
@@ -88,6 +91,13 @@ struct ForgeRootView: View {
                         errorMessage: npcTickError,
                         advanceVillage: advanceNPCTick,
                         runAutonomy: runAutonomy
+                    )
+                    PrintQuoteReviewView(
+                        session: readySession,
+                        quote: printQuote,
+                        isLoading: isLoadingPrintQuote,
+                        errorMessage: printQuoteError,
+                        requestQuote: requestPrintQuote
                     )
                 }
                 .padding()
@@ -203,6 +213,7 @@ struct ForgeRootView: View {
             backendHistoryStatusText = nil
             isSyncingBackendHistory = false
             isRunningAutonomy = false
+            clearPrintQuoteState()
             if readySession != nil {
                 state = ForgeFlowReducer.reduce(state: state, event: .reset)
             }
@@ -229,6 +240,7 @@ struct ForgeRootView: View {
         isSyncingBackendHistory = false
         npcTickError = nil
         isRunningAutonomy = false
+        clearPrintQuoteState()
         let draft = mediaSelection.captureDraft(
             label: objectLabel,
             materialsText: materials,
@@ -349,6 +361,36 @@ struct ForgeRootView: View {
         }
     }
 
+    private func requestPrintQuote() {
+        guard let session = readySession else {
+            return
+        }
+        isLoadingPrintQuote = true
+        printQuoteError = nil
+
+        Task {
+            do {
+                let quote = try await apiClient.createPrintQuote(printCandidate: session.printCandidate)
+                await MainActor.run {
+                    printQuote = quote
+                    isLoadingPrintQuote = false
+                    printQuoteError = nil
+                }
+            } catch {
+                await MainActor.run {
+                    isLoadingPrintQuote = false
+                    printQuoteError = "Print quote is not reachable yet."
+                }
+            }
+        }
+    }
+
+    private func clearPrintQuoteState() {
+        printQuote = nil
+        printQuoteError = nil
+        isLoadingPrintQuote = false
+    }
+
     private var readySession: MythSession? {
         if case let .ready(session) = state.phase {
             return session
@@ -390,6 +432,7 @@ struct ForgeRootView: View {
 
     @discardableResult
     private func applyBackendHistory(_ history: MythSessionHistory) -> Int {
+        clearPrintQuoteState()
         let snapshot = DemoRunSnapshot(history: history, savedAt: currentSnapshotTimestamp())
         state = ForgeFlowReducer.reduce(state: state, event: .sessionCreated(snapshot.session))
         npcTickHistory = snapshot.npcTicks

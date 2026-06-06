@@ -54,6 +54,7 @@ Bridge deliverable:
 - P0.36 media-backed guided scan smoke evaluation for single-image and multi-image 3D routes
 - P0.37 final acceptance capture-to-3D gate for guided scan source-image routing
 - P0.38 local print quote handoff contract with final acceptance gate
+- P0.39 mobile print quote review UI and API client handoff
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

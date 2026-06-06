@@ -416,6 +416,74 @@ public struct PrintCandidate: Codable, Equatable, Sendable {
     }
 }
 
+public struct PrintQuoteRequest: Codable, Equatable, Sendable {
+    public var printCandidate: PrintCandidate
+    public var quantity: Int
+    public var material: String
+    public var finish: String
+    public var shipToCountry: String
+
+    public init(
+        printCandidate: PrintCandidate,
+        quantity: Int = 1,
+        material: String = "standard_resin",
+        finish: String = "matte",
+        shipToCountry: String = "US"
+    ) {
+        self.printCandidate = printCandidate
+        self.quantity = quantity
+        self.material = material
+        self.finish = finish
+        self.shipToCountry = shipToCountry
+    }
+}
+
+public struct PrintQuote: Codable, Equatable, Sendable {
+    public var kind: String
+    public var provider: String
+    public var status: String
+    public var sourceAssetUri: String
+    public var printCandidateUri: String
+    public var currency: String
+    public var estimatedPriceCents: Int
+    public var estimatedProductionDays: Int
+    public var estimatedShippingDays: Int
+    public var checkoutUrl: String?
+    public var requiresUserApproval: Bool
+    public var approvalReason: String
+    public var quoteNotes: [String]
+
+    public init(
+        kind: String,
+        provider: String,
+        status: String,
+        sourceAssetUri: String,
+        printCandidateUri: String,
+        currency: String,
+        estimatedPriceCents: Int,
+        estimatedProductionDays: Int,
+        estimatedShippingDays: Int,
+        checkoutUrl: String? = nil,
+        requiresUserApproval: Bool,
+        approvalReason: String,
+        quoteNotes: [String]
+    ) {
+        self.kind = kind
+        self.provider = provider
+        self.status = status
+        self.sourceAssetUri = sourceAssetUri
+        self.printCandidateUri = printCandidateUri
+        self.currency = currency
+        self.estimatedPriceCents = estimatedPriceCents
+        self.estimatedProductionDays = estimatedProductionDays
+        self.estimatedShippingDays = estimatedShippingDays
+        self.checkoutUrl = checkoutUrl
+        self.requiresUserApproval = requiresUserApproval
+        self.approvalReason = approvalReason
+        self.quoteNotes = quoteNotes
+    }
+}
+
 public struct ProviderReadinessItem: Codable, Equatable, Sendable {
     public var kind: String
     public var selectedProvider: String

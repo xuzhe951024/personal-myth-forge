@@ -1206,3 +1206,46 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.38-print-quote-handoff.html
 docs/superpowers/verification/assets/p0.38-print-quote-handoff-390x844.png
 ```
+
+## P0.39 Mobile Print Quote Review
+
+P0.39 connects the P0.38 quote contract to the iOS app source. A ready myth
+session now renders `PrintQuoteReviewView` below the NPC controls. The panel
+shows the backend-produced `print_candidate`, then lets the user tap `Get Quote`
+to call:
+
+```http
+POST /v1/print-quotes
+```
+
+The Swift mobile core adds `PrintQuoteRequest`, `PrintQuote`, and
+`PersonalMythForgeAPIClient.createPrintQuote(...)`. The app sends the current
+session's print candidate with local review defaults:
+
+- quantity `1`
+- material `standard_resin`
+- finish `matte`
+- ship-to country `US`
+
+The local backend returns a `draft_quote` for `USD 16.00`, five production days,
+six shipping days, and `requires_user_approval: true`. The app displays that as
+review information only. It does not open checkout URLs, submit orders, collect
+payment, or store provider keys.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Final acceptance quick remains `passed=4`, `blocked=2`, `failed=0`; the blocked
+checks are still local deploy config and the Apple SDK license on this machine.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.39-mobile-print-quote-review.html
+docs/superpowers/verification/assets/p0.39-mobile-print-quote-review-390x844.png
+```
