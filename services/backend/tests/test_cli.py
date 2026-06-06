@@ -368,6 +368,83 @@ def test_cli_provider_handoff_prints_json_to_stdout(capsys, monkeypatch) -> None
     assert payload["kind"] == "provider_handoff_report"
 
 
+def test_cli_resource_handoff_writes_report(tmp_path, monkeypatch) -> None:
+    output_file = tmp_path / "resource-handoff.json"
+    calls = []
+
+    def fake_report(*, repo_root=None):
+        calls.append(repo_root)
+        return {
+            "kind": "resource_handoff_report",
+            "overall_status": "blocked",
+            "summary": {
+                "ready": 1,
+                "missing": 1,
+                "blocked": 0,
+                "manual": 0,
+                "optional": 0,
+            },
+            "backend": {"items": []},
+            "ios": {"items": []},
+            "operator_actions": [],
+            "commands": [],
+            "safety": {
+                "provider_secrets_in_report": False,
+                "local_paths_in_report": False,
+            },
+        }
+
+    monkeypatch.setattr("myth_forge_api.cli.build_resource_handoff_report", fake_report)
+
+    exit_code = main(
+        [
+            "resource-handoff",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 2
+    assert report["kind"] == "resource_handoff_report"
+    assert report["overall_status"] == "blocked"
+    assert calls == [tmp_path]
+
+
+def test_cli_resource_handoff_prints_stdout_when_ready(capsys, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_resource_handoff_report",
+        lambda repo_root=None: {
+            "kind": "resource_handoff_report",
+            "overall_status": "ready",
+            "summary": {
+                "ready": 2,
+                "missing": 0,
+                "blocked": 0,
+                "manual": 0,
+                "optional": 0,
+            },
+            "backend": {"items": []},
+            "ios": {"items": []},
+            "operator_actions": [],
+            "commands": [],
+            "safety": {
+                "provider_secrets_in_report": False,
+                "local_paths_in_report": False,
+            },
+        },
+    )
+
+    exit_code = main(["resource-handoff"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert payload["kind"] == "resource_handoff_report"
+    assert payload["overall_status"] == "ready"
+
+
 def test_cli_demo_acceptance_writes_report(tmp_path, monkeypatch) -> None:
     output_file = tmp_path / "acceptance.json"
     calls = []

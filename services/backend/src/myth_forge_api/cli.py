@@ -24,6 +24,7 @@ from myth_forge_api.providers.three_d import (
     MeshyProviderError,
     ThreeDGenerationRequest,
 )
+from myth_forge_api.resource_handoff import build_resource_handoff_report
 
 CORE_PROVIDER_KINDS = ["three_d", "npc", "capture_storage"]
 BACKEND_ONLY_ENV = [
@@ -72,6 +73,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 output_path=args.output,
                 require_core_real=args.require_core_real,
             )
+        if args.command == "resource-handoff":
+            return _resource_handoff(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
         if args.command == "demo-acceptance":
             return _demo_acceptance(
                 provider_mode=args.provider_mode,
@@ -117,6 +123,10 @@ def _build_parser() -> argparse.ArgumentParser:
     handoff_parser = subcommands.add_parser("provider-handoff")
     handoff_parser.add_argument("--output", default=None)
     handoff_parser.add_argument("--require-core-real", action="store_true")
+
+    resource_handoff_parser = subcommands.add_parser("resource-handoff")
+    resource_handoff_parser.add_argument("--repo-root", default=None)
+    resource_handoff_parser.add_argument("--output", default=None)
 
     acceptance_parser = subcommands.add_parser("demo-acceptance")
     acceptance_parser.add_argument(
@@ -200,6 +210,14 @@ def _provider_handoff(output_path: str | None, require_core_real: bool) -> int:
     if require_core_real and not report["core_real_ready"]:
         return 2
     return 0
+
+
+def _resource_handoff(repo_root: str | None, output_path: str | None) -> int:
+    report = build_resource_handoff_report(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(report, output_path)
+    return 0 if report["overall_status"] == "ready" else 2
 
 
 def _demo_acceptance(

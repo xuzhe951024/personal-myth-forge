@@ -1249,3 +1249,37 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.39-mobile-print-quote-review.html
 docs/superpowers/verification/assets/p0.39-mobile-print-quote-review-390x844.png
 ```
+
+## P0.40 Resource Handoff Bundle
+
+P0.40 adds one backend CLI report for the final operator resource handoff. It
+consolidates:
+
+- backend-only Meshy/OpenAI provider settings and keys
+- print provider key slots for future Treatstock/Sculpteo work
+- iOS `Deployment.local.xcconfig` values for Team ID, bundle id, and backend URL
+- the Apple SDK license/build gate
+- next commands for resource handoff, final acceptance, deploy preflight, and
+  Xcode build
+
+Run:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli resource-handoff \
+  --repo-root ../.. \
+  --output /tmp/personal-myth-forge-resource-handoff.json
+```
+
+The mobile app still receives only backend-generated state and readiness
+metadata. Meshy, OpenAI, Treatstock, and Sculpteo key values stay in backend
+configuration, not iOS source, `Info.plist`, screenshots, or error text. The
+default report exits `2` until a local `Deployment.local.xcconfig` supplies an
+Apple Team ID and a non-loopback backend URL reachable from iPhone.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.40-resource-handoff-bundle.html
+docs/superpowers/verification/assets/p0.40-resource-handoff-bundle-390x844.png
+```

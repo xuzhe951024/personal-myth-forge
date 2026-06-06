@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.40 Resource Handoff Bundle</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202421;
+      --muted: #5c625c;
+      --line: #d4d9d2;
+      --paper: #f5f7f2;
+      --panel: #ffffff;
+      --green: #2f7049;
+      --blue: #286f8b;
+      --amber: #9b6425;
+      --red: #963d38;
+      --plum: #62537d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #dfe5de;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 10px 14px 12px;
+      background: var(--paper);
+      border-left: 1px solid #c7cec8;
+      border-right: 1px solid #c7cec8;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 840;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 840;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 13px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+
+    .metric,
+    .row,
+    .gate {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.1;
+      font-weight: 820;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin-top: 4px;
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 870;
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .amber {
+      color: var(--amber);
+    }
+
+    .red {
+      color: var(--red);
+    }
+
+    .plum {
+      color: var(--plum);
+    }
+
+    .rows {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 86px 1fr 58px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .row-key {
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.15;
+      font-weight: 820;
+      text-transform: uppercase;
+      overflow-wrap: anywhere;
+    }
+
+    .row-value {
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 790;
+      overflow-wrap: anywhere;
+    }
+
+    .status {
+      justify-self: end;
+      min-width: 50px;
+      padding: 3px 5px;
+      border-radius: 6px;
+      background: #f2f4ef;
+      font-size: 8px;
+      line-height: 1.1;
+      font-weight: 850;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .status.ready {
+      color: var(--green);
+      border: 1px solid #b8d2c1;
+    }
+
+    .status.missing,
+    .status.blocked {
+      color: var(--red);
+      border: 1px solid #e0bab6;
+    }
+
+    .status.manual,
+    .status.optional {
+      color: var(--amber);
+      border: 1px solid #e2c9a6;
+    }
+
+    .gate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
+
+    .gate-title {
+      color: var(--plum);
+      font-size: 10px;
+      line-height: 1.15;
+      font-weight: 840;
+    }
+
+    .gate-copy {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 9.5px;
+      line-height: 1.18;
+    }
+
+    code {
+      color: var(--plum);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 9.5px;
+      line-height: 1.15;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Resource Handoff Bundle</h1>
+      <div class="tag">P0.40</div>
+    </header>
+
+    <section>
+      <h2>Default Report</h2>
+      <div class="summary">
+        <div class="metric">
+          <div class="metric-label">ready</div>
+          <div class="metric-value green">3</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">missing</div>
+          <div class="metric-value red">3</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">blocked</div>
+          <div class="metric-value red">1</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">manual</div>
+          <div class="metric-value amber">3</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">optional</div>
+          <div class="metric-value blue">2</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Backend Resources</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">3D</div>
+          <div class="row-value"><code>THREE_D_PROVIDER=meshy</code></div>
+          <div class="status manual">manual</div>
+        </div>
+        <div class="row">
+          <div class="row-key">Meshy</div>
+          <div class="row-value"><code>MESHY_API_KEY</code> backend only</div>
+          <div class="status missing">missing</div>
+        </div>
+        <div class="row">
+          <div class="row-key">NPC</div>
+          <div class="row-value"><code>NPC_PROVIDER=openai</code></div>
+          <div class="status manual">manual</div>
+        </div>
+        <div class="row">
+          <div class="row-key">OpenAI</div>
+          <div class="row-value"><code>OPENAI_API_KEY</code> backend only</div>
+          <div class="status missing">missing</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>iOS Deploy Resources</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">Team</div>
+          <div class="row-value"><code>DEVELOPMENT_TEAM</code> local xcconfig</div>
+          <div class="status missing">missing</div>
+        </div>
+        <div class="row">
+          <div class="row-key">Backend</div>
+          <div class="row-value"><code>PMF_BACKEND_BASE_URL</code> needs LAN URL</div>
+          <div class="status blocked">blocked</div>
+        </div>
+        <div class="row">
+          <div class="row-key">Xcode</div>
+          <div class="row-value">Apple SDK license accepted outside repo</div>
+          <div class="status manual">manual</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Print And Safety</h2>
+      <div class="gate-grid">
+        <div class="gate">
+          <div class="gate-title">Local Print</div>
+          <div class="gate-copy"><code>PRINT_PROVIDER=local</code> remains ready for quote review.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">Live Print</div>
+          <div class="gate-copy">Treatstock and Sculpteo slots are optional until adapters exist.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">No Secrets</div>
+          <div class="gate-copy">Report shows env names and configured flags, never key values.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">No Mutation</div>
+          <div class="gate-copy">No provider calls, Xcode changes, signing edits, or license commands.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Next Command</h2>
+      <div class="row">
+        <div class="row-key">CLI</div>
+        <div class="row-value"><code>python -m myth_forge_api.cli resource-handoff</code></div>
+        <div class="status blocked">exit 2</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1064,3 +1064,33 @@ Static evidence lives at:
 docs/superpowers/verification/p0.39-mobile-print-quote-review.html
 docs/superpowers/verification/assets/p0.39-mobile-print-quote-review-390x844.png
 ```
+
+P0.40 adds a consolidated final resource handoff bundle for the operator
+resource stage. It reads backend settings and project-local iOS deploy config,
+then writes one sanitized JSON report covering Meshy/OpenAI provider keys,
+print provider key slots, iOS signing/backend URL values, the Apple SDK manual
+gate, next commands, and safety checks.
+
+Run:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli resource-handoff \
+  --repo-root ../.. \
+  --output /tmp/personal-myth-forge-resource-handoff.json
+```
+
+The command is configuration-only: it does not call Meshy, OpenAI, Treatstock,
+Sculpteo, or Apple services; does not mutate `.env`, Xcode, signing, keychain,
+or license state; and never prints provider key values. On a default local
+checkout it exits `2` with a safe blocked report until the backend gets
+`THREE_D_PROVIDER=meshy`, `MESHY_API_KEY`, `NPC_PROVIDER=openai`,
+`OPENAI_API_KEY`, and the ignored iOS deploy config gets a Team ID plus an
+iPhone-reachable LAN backend URL.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.40-resource-handoff-bundle.html
+docs/superpowers/verification/assets/p0.40-resource-handoff-bundle-390x844.png
+```
