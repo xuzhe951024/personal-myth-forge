@@ -62,6 +62,9 @@ do {
     try await testGetBackendHealthBuildsGETRequest()
     try await testGetProviderReadinessBuildsGETRequest()
     try await testGetProviderReadinessSanitizesHTTPErrorBody()
+    try testDecodesFinalDemoLaunchPayload()
+    try await testGetFinalDemoLaunchBuildsGETRequest()
+    try await testGetFinalDemoLaunchRejectsInvalidModeBeforeNetwork()
     try await testCreatePrintQuoteBuildsJSONRequest()
     try await testCreatePrintQuoteSanitizesCheckoutHTTPErrorBody()
     try await testGetMythSessionBuildsGETRequest()
@@ -1303,6 +1306,64 @@ private func testGetProviderReadinessSanitizesHTTPErrorBody() async throws {
     }
 }
 
+private func testDecodesFinalDemoLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload()
+    )
+
+    try expectEqual(report.kind, "final_demo_launch_report")
+    try expectEqual(report.mode, "local")
+    try expectEqual(report.overallStatus, "partial")
+    try expectEqual(report.summary.ready, 4)
+    try expectEqual(report.phaseSummary?.blocked, 2)
+    try expectEqual(report.launchPhases.map(\.id), ["backend_device_server", "final_launch"])
+    try expectEqual(report.launchPhases[0].status, "ready")
+    try expectEqual(report.launchPhases[0].command, "make backend-device-demo")
+    try expectEqual(report.operatorChecklist.first, "set PMF_BACKEND_BASE_URL to a LAN URL")
+    try expectEqual(report.commands.first, "make backend-device-demo")
+    try expectFalse(report.liveCallPolicy.liveCallsByDefault)
+    try expectTrue(report.liveCallPolicy.configuredAcceptanceRequiresConsent)
+    try expectEqual(report.liveCallPolicy.consentFlag, "--allow-live-provider-calls")
+    try expectFalse(report.safety.providerSecretsInReport)
+    try expectFalse(report.safety.localPathsInReport)
+}
+
+private func testGetFinalDemoLaunchBuildsGETRequest() async throws {
+    let transport = RecordingTransport(
+        responses: [HTTPResponse(statusCode: 200, data: finalDemoLaunchPayload())]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://192.168.1.10:8080")!,
+        transport: transport
+    )
+
+    let report = try await client.getFinalDemoLaunch(mode: "local")
+
+    try expectEqual(report.mode, "local")
+    let request = try require(transport.requests.first, "missing final launch request")
+    try expectEqual(request.httpMethod, "GET")
+    try expectEqual(request.url?.path, "/v1/final-demo-launch")
+    try expectEqual(request.url?.query, "mode=local")
+    try expectEqual(request.httpBody, nil)
+}
+
+private func testGetFinalDemoLaunchRejectsInvalidModeBeforeNetwork() async throws {
+    let transport = RecordingTransport(responses: [])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://192.168.1.10:8080")!,
+        transport: transport
+    )
+
+    do {
+        _ = try await client.getFinalDemoLaunch(mode: "live")
+        throw ContractTestError.expectationFailed("Expected invalid final demo launch mode")
+    } catch ForgeFlowError.encodingFailed(let message) {
+        try expectContains(message, "Unsupported final demo launch mode")
+        try expectEqual(transport.requests.count, 0)
+    }
+}
+
 private func testCreatePrintQuoteBuildsJSONRequest() async throws {
     let responseData = Data(
         """
@@ -1348,6 +1409,69 @@ private func testCreatePrintQuoteBuildsJSONRequest() async throws {
     try expectContains(body, "\"ship_to_country\":\"US\"")
     try expectNotContains(body, "api_key")
     try expectNotContains(body, "checkout_url")
+}
+
+private func finalDemoLaunchPayload(
+    overallStatus: String = "partial",
+    unsafeDetail: String = "Launch report partial; review operator checklist."
+) -> Data {
+    Data(
+        """
+        {
+          "kind": "final_demo_launch_report",
+          "mode": "local",
+          "overall_status": "\(overallStatus)",
+          "summary": {
+            "ready": 4,
+            "missing": 3,
+            "blocked": 1,
+            "manual": 3,
+            "optional": 2,
+            "partial": 0
+          },
+          "phase_summary": {
+            "ready": 3,
+            "missing": 0,
+            "blocked": 2,
+            "manual": 1,
+            "optional": 2,
+            "partial": 0
+          },
+          "launch_phases": [
+            {
+              "id": "backend_device_server",
+              "label": "Start backend on LAN",
+              "status": "ready",
+              "required_for": "iPhone-to-Mac API calls",
+              "command": "make backend-device-demo",
+              "notes": ["No global state changes."]
+            },
+            {
+              "id": "final_launch",
+              "label": "Final Launch",
+              "status": "\(overallStatus)",
+              "required_for": "operator readiness",
+              "command": "make final-demo-launch",
+              "notes": ["\(unsafeDetail)"]
+            }
+          ],
+          "operator_checklist": ["set PMF_BACKEND_BASE_URL to a LAN URL"],
+          "commands": ["make backend-device-demo"],
+          "live_call_policy": {
+            "live_calls_by_default": false,
+            "configured_acceptance_requires_consent": true,
+            "consent_flag": "--allow-live-provider-calls"
+          },
+          "safety": {
+            "provider_secrets_in_report": false,
+            "local_paths_in_report": false,
+            "payment_links_in_report": false,
+            "global_mutation": false,
+            "live_provider_calls_by_default": false
+          }
+        }
+        """.utf8
+    )
 }
 
 private func testCreatePrintQuoteSanitizesCheckoutHTTPErrorBody() async throws {

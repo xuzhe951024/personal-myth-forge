@@ -531,6 +531,131 @@ public struct ProviderReadinessResponse: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalDemoLaunchSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var manual: Int
+    public var optional: Int
+    public var partial: Int
+
+    public init(
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        manual: Int,
+        optional: Int,
+        partial: Int = 0
+    ) {
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.manual = manual
+        self.optional = optional
+        self.partial = partial
+    }
+}
+
+public struct FinalDemoLaunchPhase: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var requiredFor: String
+    public var command: String
+    public var notes: [String]
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        requiredFor: String,
+        command: String,
+        notes: [String] = []
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.requiredFor = requiredFor
+        self.command = command
+        self.notes = notes
+    }
+}
+
+public struct FinalDemoLaunchLiveCallPolicy: Codable, Equatable, Sendable {
+    public var liveCallsByDefault: Bool
+    public var configuredAcceptanceRequiresConsent: Bool
+    public var consentFlag: String
+
+    public init(
+        liveCallsByDefault: Bool,
+        configuredAcceptanceRequiresConsent: Bool,
+        consentFlag: String
+    ) {
+        self.liveCallsByDefault = liveCallsByDefault
+        self.configuredAcceptanceRequiresConsent = configuredAcceptanceRequiresConsent
+        self.consentFlag = consentFlag
+    }
+}
+
+public struct FinalDemoLaunchSafety: Codable, Equatable, Sendable {
+    public var providerSecretsInReport: Bool
+    public var localPathsInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var globalMutation: Bool
+    public var liveProviderCallsByDefault: Bool
+
+    public init(
+        providerSecretsInReport: Bool,
+        localPathsInReport: Bool,
+        paymentLinksInReport: Bool,
+        globalMutation: Bool,
+        liveProviderCallsByDefault: Bool
+    ) {
+        self.providerSecretsInReport = providerSecretsInReport
+        self.localPathsInReport = localPathsInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.globalMutation = globalMutation
+        self.liveProviderCallsByDefault = liveProviderCallsByDefault
+    }
+}
+
+public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var mode: String
+    public var overallStatus: String
+    public var summary: FinalDemoLaunchSummary
+    public var phaseSummary: FinalDemoLaunchSummary?
+    public var launchPhases: [FinalDemoLaunchPhase]
+    public var operatorChecklist: [String]
+    public var commands: [String]
+    public var liveCallPolicy: FinalDemoLaunchLiveCallPolicy
+    public var safety: FinalDemoLaunchSafety
+
+    public init(
+        kind: String,
+        mode: String,
+        overallStatus: String,
+        summary: FinalDemoLaunchSummary,
+        phaseSummary: FinalDemoLaunchSummary? = nil,
+        launchPhases: [FinalDemoLaunchPhase],
+        operatorChecklist: [String],
+        commands: [String],
+        liveCallPolicy: FinalDemoLaunchLiveCallPolicy,
+        safety: FinalDemoLaunchSafety
+    ) {
+        self.kind = kind
+        self.mode = mode
+        self.overallStatus = overallStatus
+        self.summary = summary
+        self.phaseSummary = phaseSummary
+        self.launchPhases = launchPhases
+        self.operatorChecklist = operatorChecklist
+        self.commands = commands
+        self.liveCallPolicy = liveCallPolicy
+        self.safety = safety
+    }
+}
+
 public struct NPCAgentTick: Codable, Equatable, Sendable {
     public var sessionId: String
     public var tickIndex: Int
