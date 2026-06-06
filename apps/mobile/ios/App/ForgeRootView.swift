@@ -39,6 +39,7 @@ struct ForgeRootView: View {
                         mediaSummaryTitle: mediaSelection.summary.title,
                         mediaSummaryDetail: mediaSelection.summary.detail,
                         captureInputError: captureInputError,
+                        isMediaReadyForUpload: mediaSelection.isReadyForUpload,
                         chooseCapture: chooseCapture,
                         forgeMyth: forgeMyth
                     )
@@ -123,7 +124,7 @@ struct ForgeRootView: View {
         let usdz = UTType(filenameExtension: "usdz") ?? .data
         let heic = UTType("public.heic") ?? .image
         let heif = UTType("public.heif") ?? .image
-        switch mode {
+        switch selectedCaptureMode {
         case .singlePhoto, .photoSet:
             return [.jpeg, .png, heic, heif]
         case .manualUpload:
@@ -138,7 +139,7 @@ struct ForgeRootView: View {
             var media: [CaptureMediaDraft] = []
             for (index, item) in items.enumerated() {
                 guard let data = try await item.loadTransferable(type: Data.self) else {
-                    continue
+                    throw CaptureInputLoadError.unreadablePhoto
                 }
                 let contentType = imageContentType(for: item.supportedContentTypes)
                 media.append(
@@ -151,6 +152,9 @@ struct ForgeRootView: View {
                 )
             }
             await MainActor.run {
+                guard selectedCaptureMode == mode else {
+                    return
+                }
                 guard !media.isEmpty else {
                     captureInputError = "Could not read selected photo data."
                     return
@@ -160,6 +164,9 @@ struct ForgeRootView: View {
             }
         } catch {
             await MainActor.run {
+                guard selectedCaptureMode == mode else {
+                    return
+                }
                 captureInputError = "Could not read selected photos."
             }
         }
@@ -206,6 +213,9 @@ struct ForgeRootView: View {
 
     @MainActor
     private func applyPhotoMedia(_ media: [CaptureMediaDraft], mode: CaptureMode) {
+        guard selectedCaptureMode == mode else {
+            return
+        }
         if mode == .arkitScan {
             let scanAssets = mediaSelection.media.filter { $0.kind == .scanAsset }
             mediaSelection = CaptureMediaSelection(mode: mode, media: scanAssets + media)
@@ -286,4 +296,8 @@ struct ForgeRootView: View {
             return "photo_\(index).jpg"
         }
     }
+}
+
+private enum CaptureInputLoadError: Error {
+    case unreadablePhoto
 }

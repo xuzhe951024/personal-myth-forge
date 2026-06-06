@@ -15,6 +15,7 @@ struct CaptureFormView: View {
     let mediaSummaryTitle: String
     let mediaSummaryDetail: String
     let captureInputError: String?
+    let isMediaReadyForUpload: Bool
     let chooseCapture: () -> Void
     let forgeMyth: () -> Void
 
@@ -93,7 +94,8 @@ struct CaptureFormView: View {
             TextField("Desired tone", text: $desiredTone)
 
             Button("Forge Myth", action: forgeMyth)
-            .buttonStyle(.borderedProminent)
+                .buttonStyle(.borderedProminent)
+                .disabled(!isMediaReadyForUpload)
 
             Text(statusText)
                 .font(.caption)
