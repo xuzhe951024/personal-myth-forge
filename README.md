@@ -367,8 +367,9 @@ fed into the existing capture upload and myth-session creation flow.
 
 This iteration deliberately uploads guided photo sets, not a locally
 reconstructed mesh. JPEG, PNG, HEIC, and HEIF are accepted by the app/backend
-capture contract; the Meshy adapter only sends JPEG/PNG to Image-to-3D and falls
-back to text-to-3D for HEIC/HEIF-only captures until image transcoding is added.
+capture contract. P0.21 adds backend-side HEIC/HEIF preparation so decodable
+iPhone image captures can become Meshy-compatible JPEG Image-to-3D inputs during
+generation.
 
 Run:
 
@@ -390,8 +391,8 @@ docs/superpowers/verification/assets/p0.19-guided-scan-entry-390x844.png
 
 On this machine `make mobile-xcode-build` still stops at the Apple SDK license
 gate. P0.19 does not claim simulator/device installation, real Object Capture
-device runtime validation, local photogrammetry reconstruction, HEIC-to-JPEG
-transcoding, or Unity village import.
+device runtime validation, local photogrammetry reconstruction, or Unity village
+import.
 
 P0.20 adds a provider readiness preflight for the final API/key handoff. The
 backend exposes:
@@ -427,3 +428,37 @@ docs/superpowers/verification/assets/p0.20-provider-readiness-390x844.png
 P0.20 does not create provider keys, store secrets in the mobile app, run live
 Meshy/OpenAI calls, implement print fulfillment, or bypass the Apple SDK license
 gate.
+
+P0.21 adds backend HEIC/HEIF-to-JPEG provider input preparation for iOS capture
+flows. The upload and manifest contract still accepts and records original
+`image/heic` and `image/heif` files. During
+`POST /v1/myth-sessions/from-capture`, the backend reads local capture media,
+converts decodable HEIC/HEIF reference images into JPEG bytes, and builds
+provider-only `data:image/jpeg;base64,...` source images before calling the 3D
+provider. Raw media bytes, data URIs, local filesystem paths, and provider keys
+are not returned to mobile clients.
+
+This makes HEIC-only guided scans eligible for Meshy Image-to-3D when the
+source images decode successfully. Invalid HEIC/HEIF input returns a sanitized
+422 instead of silently falling back to text-to-3D.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+make mobile-xcode-build
+```
+
+Regression evidence lives at:
+
+```text
+docs/superpowers/verification/2026-06-06-p0.21-heic-meshy-inputs-regression.md
+```
+
+P0.21 does not run live Meshy/OpenAI calls, create provider keys, validate on a
+real iPhone, implement local photogrammetry reconstruction, add print
+fulfillment, configure signing, or bypass the Apple SDK license gate.

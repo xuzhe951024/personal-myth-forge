@@ -410,6 +410,8 @@ Run the full local source gates with:
 swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
 swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
 swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
 make mobile-xcode-build
 ```
 
@@ -438,9 +440,9 @@ upload media. The app layer adds:
   directory into `CaptureMediaSelection(mode: .guidedScan, media: ...)`.
 
 This is a guided photo-set handoff, not local mesh reconstruction. The app and
-backend accept JPEG, PNG, HEIC, and HEIF for `guided_scan`. Meshy Image-to-3D is
-only fed JPEG/PNG today; HEIC/HEIF-only captures fall back to text-to-3D until a
-transcoding step is added.
+backend accept JPEG, PNG, HEIC, and HEIF for `guided_scan`. P0.21 adds
+backend-side HEIC/HEIF preparation so decodable iPhone captures can become
+Meshy-compatible JPEG Image-to-3D inputs during generation.
 
 Run:
 
@@ -460,8 +462,7 @@ docs/superpowers/verification/assets/p0.19-guided-scan-entry-390x844.png
 
 Remaining gaps after P0.19 are Apple SDK license acceptance on this machine,
 real device Object Capture validation, local reconstruction/photogrammetry,
-HEIC-to-JPEG transcoding for Meshy Image-to-3D, simulator/device installation,
-signing, and Unity movement/action execution.
+simulator/device installation, signing, and Unity movement/action execution.
 
 ## P0.20 Provider Readiness Preflight
 
@@ -502,5 +503,41 @@ docs/superpowers/verification/assets/p0.20-provider-readiness-390x844.png
 
 Remaining gaps after P0.20 are accepting the Apple SDK license on this machine,
 real device Object Capture validation, real Meshy/OpenAI key runs, print
-fulfillment adapters, HEIC-to-JPEG transcoding for Meshy Image-to-3D, signing,
-and Unity movement/action execution.
+fulfillment adapters, signing, and Unity movement/action execution.
+
+## P0.21 HEIC Meshy Inputs
+
+P0.21 keeps the mobile upload contract unchanged while making iPhone HEIC/HEIF
+photos usable by Meshy Image-to-3D. Capture manifests still record original
+`image/heic` and `image/heif` media items with their `local-capture://` URIs.
+When the app calls `POST /v1/myth-sessions/from-capture`, the backend prepares
+provider-facing source images:
+
+- JPEG and PNG pass through unchanged.
+- Decodable HEIC and HEIF media is converted into JPEG bytes.
+- The resulting `ThreeDSourceImage` keeps the original capture URI but uses
+  `content_type: image/jpeg` and a backend-only JPEG data URI.
+- Invalid HEIC/HEIF returns a sanitized 422 response instead of silently falling
+  back to text-to-3D.
+
+No provider keys, raw media bytes, local filesystem paths, or data URIs are
+returned to the mobile app.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make mobile-xcode-build
+```
+
+Regression evidence lives at:
+
+```text
+docs/superpowers/verification/2026-06-06-p0.21-heic-meshy-inputs-regression.md
+```
+
+Remaining gaps after P0.21 are Apple SDK license acceptance on this machine,
+real device Object Capture validation, live Meshy/OpenAI key runs, print
+fulfillment adapters, signing, and Unity movement/action execution.
