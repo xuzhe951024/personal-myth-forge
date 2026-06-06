@@ -406,6 +406,59 @@ def test_create_myth_session_from_guided_scan_capture_passes_images_to_3d_provid
     assert "side-png" not in response.text
 
 
+def test_create_myth_session_from_guided_scan_capture_passes_heic_images_to_3d_provider(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    store = LocalCaptureStore(root_dir=tmp_path)
+    provider = RecordingThreeDProvider()
+    monkeypatch.setattr("myth_forge_api.main.build_capture_store", lambda: store)
+    monkeypatch.setattr("myth_forge_api.main.build_three_d_provider", lambda: provider)
+    client = TestClient(app)
+
+    created_response = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _guided_scan_metadata_json()},
+        files=[
+            ("files", ("fox-front.heic", b"front-heic", "image/heic")),
+            ("files", ("fox-side.heif", b"side-heif", "image/heif")),
+        ],
+    )
+
+    assert created_response.status_code == 200
+    created = created_response.json()
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": created["capture_id"],
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(provider.calls) == 1
+    generation_request = provider.calls[0]
+    assert len(generation_request.source_images) == 2
+    assert len(generation_request.source_assets) == 0
+    assert [image.uri for image in generation_request.source_images] == [
+        f"local-capture://{created['capture_id']}/media_0.heic",
+        f"local-capture://{created['capture_id']}/media_1.heif",
+    ]
+    assert [image.content_type for image in generation_request.source_images] == [
+        "image/heic",
+        "image/heif",
+    ]
+    assert all(
+        image.data_uri.startswith(f"data:{image.content_type};base64,")
+        for image in generation_request.source_images
+    )
+    assert "front-heic" not in response.text
+    assert "side-heif" not in response.text
+
+
 def test_create_myth_session_from_capture_redacts_provider_error_media_details(
     tmp_path,
     monkeypatch,
