@@ -27,13 +27,17 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
         "configured_acceptance_requires_consent": True,
         "consent_flag": "--allow-live-provider-calls",
     }
+    assert result.report["final_resources_preflight"]["status"] == "missing"
     assert any("--allow-live-provider-calls" in command for command in result.report["commands"])
     phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
-    assert phases["apply_final_resources"]["status"] == "blocked"
+    assert phases["apply_final_resources"]["status"] == "missing"
     assert phases["apply_final_resources"]["command"] == "make final-apply-resources"
     assert "write_backend_env" not in phases
     assert "write_ios_deploy_config" not in phases
     assert phases["configured_final_acceptance"]["status"] == "blocked"
+    assert result.report["commands"].index("make final-resources-preflight") < (
+        result.report["commands"].index("make final-apply-resources")
+    )
     assert "make final-apply-resources" in result.report["commands"]
     assert all("backend-write-provider-env" not in command for command in result.report["commands"])
     assert all("mobile-write-deploy-config" not in command for command in result.report["commands"])
@@ -52,6 +56,7 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
             "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"
         ),
     )
+    _write_final_resources(repo_root)
     settings = Settings(
         three_d_provider="meshy",
         meshy_api_key="sk-meshy-secret",
@@ -75,6 +80,7 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
 
     assert result.exit_code == 0
     assert result.report["overall_status"] == "partial"
+    assert result.report["final_resources_preflight"]["status"] == "ready"
     assert backend["MESHY_API_KEY"]["status"] == "ready"
     assert backend["OPENAI_API_KEY"]["status"] == "ready"
     assert backend["PRINT_PROVIDER"]["status"] == "ready"
@@ -106,11 +112,15 @@ def test_local_final_demo_launch_is_no_key_ready_but_surfaces_ios_actions(
     assert result.exit_code == 0
     assert result.report["mode"] == "local"
     assert result.report["overall_status"] == "partial"
+    assert result.report["final_resources_preflight"]["status"] == "missing"
     phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
-    assert phases["apply_final_resources"]["status"] == "blocked"
+    assert phases["apply_final_resources"]["status"] == "missing"
     assert phases["apply_final_resources"]["command"] == "make final-apply-resources"
     assert "write_backend_env" not in phases
     assert "write_ios_deploy_config" not in phases
+    assert result.report["commands"].index("make final-resources-preflight") < (
+        result.report["commands"].index("make final-apply-resources")
+    )
     assert "make final-apply-resources" in result.report["commands"]
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
@@ -123,7 +133,7 @@ def test_local_final_demo_launch_is_no_key_ready_but_surfaces_ios_actions(
     )
 
 
-def test_local_final_demo_launch_marks_unified_apply_partial_with_ios_only(
+def test_local_final_demo_launch_marks_unified_apply_missing_with_ios_only(
     tmp_path: Path,
 ) -> None:
     repo_root = _write_deploy_config(
@@ -144,8 +154,29 @@ def test_local_final_demo_launch_marks_unified_apply_partial_with_ios_only(
 
     assert result.exit_code == 0
     assert result.report["overall_status"] == "partial"
-    assert phases["apply_final_resources"]["status"] == "partial"
+    assert result.report["final_resources_preflight"]["status"] == "missing"
+    assert phases["apply_final_resources"]["status"] == "missing"
     assert phases["mobile_deploy_preflight"]["status"] == "ready"
+
+
+def test_local_final_demo_launch_marks_unified_apply_ready_with_preflight(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_final_resources(repo_root)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
+
+    assert result.exit_code == 0
+    assert result.report["overall_status"] == "partial"
+    assert result.report["final_resources_preflight"]["status"] == "ready"
+    assert phases["apply_final_resources"]["status"] == "ready"
+    assert phases["mobile_deploy_preflight"]["status"] == "blocked"
 
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:
@@ -170,3 +201,21 @@ def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Pat
             encoding="utf-8",
         )
     return repo_root
+
+
+def _write_final_resources(repo_root: Path) -> None:
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "\n".join(
+            [
+                "MESHY_API_KEY=meshy-secret-test",
+                "OPENAI_API_KEY=sk-openai-test",
+                "PRINT_PROVIDER=local",
+                "DEVELOPMENT_TEAM=TEAM12345",
+                "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
+                "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+            ]
+        ),
+        encoding="utf-8",
+    )

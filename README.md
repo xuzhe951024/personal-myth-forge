@@ -74,10 +74,14 @@ one ignored resource file to apply the full local handoff:
 mkdir -p services/backend/.local
 cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
 $EDITOR services/backend/.local/final-resources.env
+make final-resources-preflight
 make final-apply-resources
 ```
 
-`final-apply-resources` writes only `services/backend/.env` and
+`final-resources-preflight` is read-only: it checks missing keys, unknown keys,
+loopback iPhone backend URLs, and Treatstock key dependencies without writing
+config files or calling providers. `final-apply-resources` writes only
+`services/backend/.env` and
 `apps/mobile/ios/Config/Deployment.local.xcconfig`, both ignored by git. Its
 output redacts provider keys and it does not call Meshy/OpenAI/Treatstock, start
 servers, run Xcode, sign apps, touch keychain, accept Apple licenses, or mutate
@@ -110,6 +114,7 @@ then run the configured launch report:
 mkdir -p services/backend/.local
 cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
 $EDITOR services/backend/.local/final-resources.env
+make final-resources-preflight
 make final-apply-resources
 cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch \
@@ -118,9 +123,10 @@ uv run python -m myth_forge_api.cli final-demo-launch \
   --output .local/final-demo-launch-configured.json
 ```
 
-The launch report now uses `apply_final_resources` as the single resource
-application phase for backend provider settings and iOS deployment config. It
-also consolidates backend device-server commands, provider readiness,
+The launch report includes the `final_resources_preflight` report and uses
+`apply_final_resources` as the single resource application phase for backend
+provider settings and iOS deployment config. It also consolidates backend
+device-server commands, provider readiness,
 local/configured final acceptance, iOS deploy preflight, and the Xcode build
 gate. It never starts servers, calls Meshy/OpenAI/Treatstock, or changes
 Xcode/signing/global machine state by itself. Live provider calls remain
@@ -1931,4 +1937,32 @@ Static evidence lives at:
 ```text
 docs/superpowers/verification/p0.69-final-launch-unified-apply.html
 docs/superpowers/verification/assets/p0.69-final-launch-unified-apply-390x844.png
+```
+
+P0.70 adds a read-only preflight for the unified final resource file. It checks
+`services/backend/.local/final-resources.env` before the apply step, reports
+missing/unknown keys, blocks loopback iPhone backend URLs, and requires
+`TREATSTOCK_API_KEY` when `PRINT_PROVIDER=treatstock`. Reports expose only key
+names and redacted configured status.
+
+Run:
+
+```bash
+make final-resources-preflight
+cd services/backend
+uv run pytest tests/test_final_resources_preflight.py \
+  tests/test_final_demo_launch.py \
+  tests/test_resource_template_acceptance.py -q
+```
+
+`final-demo-launch` now includes a top-level `final_resources_preflight` object.
+The `apply_final_resources` phase is `missing` when the final resources file is
+absent, `blocked` when the file is invalid, and `ready` when the file can be
+applied.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.70-final-resources-preflight.html
+docs/superpowers/verification/assets/p0.70-final-resources-preflight-390x844.png
 ```

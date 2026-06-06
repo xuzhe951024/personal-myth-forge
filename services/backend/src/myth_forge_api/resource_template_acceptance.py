@@ -20,6 +20,10 @@ BACKEND_WRITER_MAKE_TARGET = "backend-write-provider-env"
 FINAL_RESOURCE_TEMPLATE_PATH = "services/backend/final-resources.env.example"
 FINAL_RESOURCE_APPLY_PATH = "services/backend/scripts/apply_final_resources.sh"
 FINAL_RESOURCE_APPLY_MAKE_TARGET = "final-apply-resources"
+FINAL_RESOURCES_PREFLIGHT_PATH = (
+    "services/backend/src/myth_forge_api/final_resources_preflight.py"
+)
+FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET = "final-resources-preflight"
 CLI_PATH = "services/backend/src/myth_forge_api/cli.py"
 FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.py"
 FINAL_DEMO_LAUNCH_MAKE_TARGET = "final-demo-launch"
@@ -105,6 +109,9 @@ def run_resource_template_acceptance(
     final_resource_apply_text, final_resource_apply_exists = _read_optional_text(
         selected_repo_root / FINAL_RESOURCE_APPLY_PATH
     )
+    final_resources_preflight_text, final_resources_preflight_exists = (
+        _read_optional_text(selected_repo_root / FINAL_RESOURCES_PREFLIGHT_PATH)
+    )
     cli_text, cli_exists = _read_optional_text(selected_repo_root / CLI_PATH)
     final_demo_launch_text, final_demo_launch_exists = _read_optional_text(
         selected_repo_root / FINAL_DEMO_LAUNCH_PATH
@@ -146,6 +153,15 @@ def run_resource_template_acceptance(
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
+    final_resources_preflight_checks = _final_resources_preflight_checks(
+        module_text=final_resources_preflight_text,
+        module_exists=final_resources_preflight_exists,
+        cli_text=cli_text,
+        cli_exists=cli_exists,
+        final_demo_launch_text=final_demo_launch_text,
+        makefile_text=makefile_text,
+        makefile_exists=makefile_exists,
+    )
     final_demo_launch_checks = _final_demo_launch_checks(
         cli_text=cli_text,
         cli_exists=cli_exists,
@@ -165,6 +181,10 @@ def run_resource_template_acceptance(
         _check("template_safety", _templates_are_safe(safety)),
         _check("backend_writer", all(backend_writer_checks.values())),
         _check("final_resource_apply", all(final_resource_apply_checks.values())),
+        _check(
+            "final_resources_preflight",
+            all(final_resources_preflight_checks.values()),
+        ),
         _check("final_demo_launch", all(final_demo_launch_checks.values())),
     ]
     summary = {
@@ -215,6 +235,12 @@ def run_resource_template_acceptance(
             "present_keys": sorted(final_resource_keys),
             "missing_keys": final_resource_missing,
             "checks": final_resource_apply_checks,
+        },
+        "final_resources_preflight": {
+            "path": FINAL_RESOURCES_PREFLIGHT_PATH,
+            "make_target": FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET,
+            "exists": final_resources_preflight_exists,
+            "checks": final_resources_preflight_checks,
         },
         "final_demo_launch": {
             "path": FINAL_DEMO_LAUNCH_PATH,
@@ -359,6 +385,34 @@ def _final_resource_apply_checks(
         or "write_backend_env.sh" in script_text,
         "uses_ios_writer": "write_deploy_local_config.sh" in script_text,
         "redaction": "configured (redacted)" in script_text,
+        "no_banned_commands": not any(
+            banned in checked_text for banned in BANNED_WRITER_TEXT
+        ),
+    }
+
+
+def _final_resources_preflight_checks(
+    *,
+    module_text: str,
+    module_exists: bool,
+    cli_text: str,
+    cli_exists: bool,
+    final_demo_launch_text: str,
+    makefile_text: str,
+    makefile_exists: bool,
+) -> dict[str, bool]:
+    checked_text = "\n".join([module_text, final_demo_launch_text, makefile_text])
+    return {
+        "module_exists": module_exists,
+        "cli_command": cli_exists
+        and "final-resources-preflight" in cli_text
+        and "build_final_resources_preflight_report" in cli_text,
+        "make_target": makefile_exists
+        and FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET in makefile_text
+        and "myth_forge_api.cli final-resources-preflight" in makefile_text,
+        "launch_integration": "build_final_resources_preflight_report"
+        in final_demo_launch_text
+        and "final_resources_preflight" in final_demo_launch_text,
         "no_banned_commands": not any(
             banned in checked_text for banned in BANNED_WRITER_TEXT
         ),

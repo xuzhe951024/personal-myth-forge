@@ -113,16 +113,18 @@ configured mode:
 mkdir -p services/backend/.local
 cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
 $EDITOR services/backend/.local/final-resources.env
+make final-resources-preflight
 make final-apply-resources
 cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../..
 ```
 
-The report shows `apply_final_resources` as the single resource application
-phase, followed by the backend device-server, provider readiness, configured
-final acceptance, deploy preflight, and Xcode build-gate commands. It does not
-store mobile provider secrets and does not mutate Xcode, signing, or global
-developer settings.
+The read-only preflight checks the final resources file before any ignored
+config is written. The launch report then shows `final_resources_preflight` and
+`apply_final_resources`, followed by the backend device-server, provider
+readiness, configured final acceptance, deploy preflight, and Xcode build-gate
+commands. It does not store mobile provider secrets and does not mutate Xcode,
+signing, or global developer settings.
 
 P0.64 exposes the same sanitized status through:
 

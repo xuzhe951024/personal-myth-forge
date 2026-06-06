@@ -28,6 +28,11 @@ backend-write-provider-env:
 final-apply-resources:
 	@services/backend/scripts/apply_final_resources.sh
 
+.PHONY: final-resources-preflight
+
+final-resources-preflight:
+	cd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../..
+
 .PHONY: final-demo-launch
 
 final-demo-launch:
