@@ -27,6 +27,15 @@ Accepted local content types:
 - `model/vnd.usdz+zip`
 - `application/octet-stream`
 
+Supported `capture_mode` values:
+
+- `single_photo`: exactly 1 image.
+- `photo_set`: 2-12 images.
+- `guided_scan`: 2-12 images captured or imported from the iOS Object Capture
+  guided scan entry.
+- `manual_upload`: 1-12 accepted files.
+- `arkit_scan`: 1-12 accepted files with at least one scan/model asset.
+
 Local development limits:
 
 - max files: 12
@@ -77,6 +86,18 @@ Error status guide:
 - `422`: malformed JSON, metadata validation failure, or no files
 - `413`: too many files or a file over the local size limit
 - `415`: unsupported content type
+
+### Guided Scan Notes
+
+`guided_scan` is a photo-set contract. The iOS app may collect the photos through
+RealityKit `ObjectCaptureSession`, but P0.19 uploads the captured images rather
+than a local reconstructed mesh or USDZ. The backend passes guided scan images to
+the 3D provider contract as `source_images`.
+
+JPEG, PNG, HEIC, and HEIF are accepted by the upload API. The Meshy adapter only
+uses JPEG/PNG as Image-to-3D input today; mixed captures choose the first
+JPEG/PNG source image, while HEIC/HEIF-only captures safely fall back to
+text-to-3D until a transcoding step exists.
 
 ## Lookup Object Capture
 

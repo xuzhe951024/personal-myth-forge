@@ -423,3 +423,42 @@ docs/superpowers/verification/assets/p0.18-xcode-ios-build-gate-390x844.png
 Remaining gaps after P0.18 are simulator/device installation, signing,
 long-running device capture testing, live ARKit mesh capture, richer Unity
 movement/action execution, and real provider-key runs.
+
+## P0.19 Guided Scan Entry
+
+P0.19 adds `guided_scan` as a first-class capture mode for the iOS app shell.
+`CaptureDraft` validates it as 2-12 image uploads, and
+`GuidedScanPhotoSetBuilder` turns Object Capture image directories into sorted
+upload media. The app layer adds:
+
+- `Start Guided Scan` in `CaptureFormView`.
+- `GuidedScanCaptureView`, an iOS-only RealityKit `ObjectCaptureSession` sheet
+  with a macOS fallback so local SwiftPM checks keep running.
+- `ForgeRootView.loadGuidedScanDirectory`, which imports the completed photo
+  directory into `CaptureMediaSelection(mode: .guidedScan, media: ...)`.
+
+This is a guided photo-set handoff, not local mesh reconstruction. The app and
+backend accept JPEG, PNG, HEIC, and HEIF for `guided_scan`. Meshy Image-to-3D is
+only fed JPEG/PNG today; HEIC/HEIF-only captures fall back to text-to-3D until a
+transcoding step is added.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make mobile-xcode-build
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.19-guided-scan-entry.html
+docs/superpowers/verification/assets/p0.19-guided-scan-entry-390x844.png
+```
+
+Remaining gaps after P0.19 are Apple SDK license acceptance on this machine,
+real device Object Capture validation, local reconstruction/photogrammetry,
+HEIC-to-JPEG transcoding for Meshy Image-to-3D, simulator/device installation,
+signing, and Unity movement/action execution.
