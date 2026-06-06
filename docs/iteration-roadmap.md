@@ -33,6 +33,7 @@ Bridge deliverable:
 - P0.15 iOS generated asset download/cache handoff for SceneKit-loadable formats
 - P0.16 generated asset variant contract with GLB primary asset plus USDZ iOS scene handoff
 - P0.17 NPC agent runtime trace contract with mobile decode/display
+- P0.18 no-global-pollution Xcode iOS build gate for the checked-in app project
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

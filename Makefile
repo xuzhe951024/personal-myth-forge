@@ -14,3 +14,8 @@ backend-demo:
 
 backend-generate-local:
 	cd services/backend && uv run python -m myth_forge_api.cli generate-asset --provider local --prompt "Create a brass key relic worshiped by a tiny village."
+
+.PHONY: mobile-xcode-build
+
+mobile-xcode-build:
+	apps/mobile/ios/scripts/xcode_build_gate.sh

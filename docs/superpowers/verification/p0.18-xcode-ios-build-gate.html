@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.18 Xcode iOS Build Gate Evidence</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101315;
+      --panel: #1a2023;
+      --row: #242b2f;
+      --text: #f5f0e8;
+      --muted: #bdc6ca;
+      --line: #3a464b;
+      --green: #62d890;
+      --cyan: #42bad8;
+      --amber: #e1b85f;
+      --rose: #df7770;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      width: min(100%, 430px);
+      margin: 0 auto;
+      padding: 10px 14px 12px;
+    }
+
+    header {
+      display: grid;
+      gap: 6px;
+      padding-bottom: 8px;
+    }
+
+    .eyebrow {
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 5px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.3;
+    }
+
+    code {
+      color: #eef3f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .stack {
+      display: grid;
+      gap: 7px;
+    }
+
+    .panel,
+    .row,
+    .command {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .panel {
+      padding: 9px;
+    }
+
+    .command {
+      display: grid;
+      gap: 4px;
+      padding: 9px;
+      background: #121719;
+    }
+
+    .command strong {
+      font-size: 13px;
+    }
+
+    .command .cmd {
+      color: var(--cyan);
+      overflow-wrap: anywhere;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 7px;
+      background: var(--row);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 5px;
+      background: var(--green);
+    }
+
+    .dot.cyan { background: var(--cyan); }
+    .dot.warn { background: var(--amber); }
+    .dot.stop { background: var(--rose); }
+
+    .row strong {
+      display: block;
+      margin-bottom: 1px;
+      font-size: 12.5px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">P0.18 mobile evidence</div>
+      <h1>Xcode iOS Build Gate</h1>
+      <p>The checked-in iOS app project now has a repeatable Xcode build command that avoids global developer-directory mutation and signing setup.</p>
+    </header>
+
+    <section class="stack" aria-label="P0.18 acceptance evidence">
+      <div class="command">
+        <strong>Acceptance command</strong>
+        <p class="cmd"><code>make mobile-xcode-build</code></p>
+        <p>Runs the shared <code>PersonalMythForge</code> scheme for <code>generic/platform=iOS</code>.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Build contract</h2>
+        <p><code>xcode_build_gate.sh</code> uses <code>DEVELOPER_DIR</code> per command, falls back to <code>/Applications/Xcode.app/Contents/Developer</code>, writes DerivedData under <code>apps/mobile/ios/.build</code>, and disables signing.</p>
+      </div>
+
+      <div class="row">
+        <span class="dot"></span>
+        <p><strong>SwiftPM source gates passed</strong> Project checks, core contract tests, and app source compile checks pass.</p>
+      </div>
+      <div class="row">
+        <span class="dot cyan"></span>
+        <p><strong>Backend gates passed</strong> Lint and 67 backend tests pass; the existing Starlette/httpx deprecation warning remains.</p>
+      </div>
+      <div class="row">
+        <span class="dot warn"></span>
+        <p><strong>Xcode license gate reached</strong> This machine has Xcode 26.5, but <code>xcodebuild</code> is blocked until the Apple SDK license is accepted in Terminal.</p>
+      </div>
+      <div class="row">
+        <span class="dot stop"></span>
+        <p><strong>No deployment claim</strong> P0.18 does not launch a simulator, install to a device, archive, sign, or run ARKit capture.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

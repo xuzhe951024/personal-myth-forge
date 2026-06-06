@@ -8,10 +8,18 @@ do {
     let packageFile = iosRoot.appendingPathComponent("Package.swift")
     let projectFile = iosRoot.appendingPathComponent("PersonalMythForge.xcodeproj/project.pbxproj")
     let plistFile = appRoot.appendingPathComponent("Info.plist")
+    let xcodeBuildGateScriptFile = iosRoot.appendingPathComponent("scripts/xcode_build_gate.sh")
+    let sharedSchemeFile = iosRoot.appendingPathComponent(
+        "PersonalMythForge.xcodeproj/xcshareddata/xcschemes/PersonalMythForge.xcscheme"
+    )
+    let makefileFile = repositoryRoot.appendingPathComponent("Makefile")
 
     let packageManifest = try readText(packageFile)
     let project = try readText(projectFile)
     let plist = try readPropertyList(plistFile)
+    let xcodeBuildGateScript = try readText(xcodeBuildGateScriptFile)
+    let sharedScheme = try readText(sharedSchemeFile)
+    let makefile = try readText(makefileFile)
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
@@ -48,6 +56,47 @@ do {
     try requireContains(project, "productName = PersonalMythForgeMobileCore", "core package product dependency")
     try requireContains(project, "packageProductDependencies", "target package dependency list")
     try requireContains(project, "PersonalMythForgeMobileCore in Frameworks", "linked core product")
+    try requireContains(xcodeBuildGateScript, "DEVELOPER_DIR", "Xcode gate per-command developer dir")
+    try requireContains(
+        xcodeBuildGateScript,
+        "/Applications/Xcode.app/Contents/Developer",
+        "Xcode gate default developer dir"
+    )
+    try requireContains(xcodeBuildGateScript, "xcodebuild", "Xcode gate command")
+    try requireContains(xcodeBuildGateScript, "-project", "Xcode gate project argument")
+    try requireContains(xcodeBuildGateScript, "PersonalMythForge.xcodeproj", "Xcode gate project path")
+    try requireContains(xcodeBuildGateScript, "-scheme", "Xcode gate scheme argument")
+    try requireContains(xcodeBuildGateScript, "PersonalMythForge", "Xcode gate scheme name")
+    try requireContains(xcodeBuildGateScript, "generic/platform=iOS", "Xcode gate generic iOS destination")
+    try requireContains(xcodeBuildGateScript, "-derivedDataPath", "Xcode gate derived data argument")
+    try requireContains(xcodeBuildGateScript, ".build/xcode-derived-data", "Xcode gate local derived data")
+    try requireContains(xcodeBuildGateScript, "CODE_SIGNING_ALLOWED=NO", "Xcode gate signing disabled")
+    try requireContains(
+        xcodeBuildGateScript,
+        "CODE_SIGNING_REQUIRED=NO",
+        "Xcode gate signing requirement disabled"
+    )
+    try requireContains(xcodeBuildGateScript, #"exec "$XCODEBUILD""#, "Xcode gate calls configured xcodebuild")
+    try requireNotContains(xcodeBuildGateScript, "xcode-select", "Xcode gate global developer dir mutation")
+    try requireContains(
+        sharedScheme,
+        #"BlueprintIdentifier = "10E000000000000000000001""#,
+        "shared Xcode scheme target identifier"
+    )
+    try requireContains(sharedScheme, #"BlueprintName = "PersonalMythForge""#, "shared Xcode scheme app target")
+    try requireContains(sharedScheme, #"BuildableName = "PersonalMythForge.app""#, "shared Xcode scheme buildable app")
+    try requireContains(
+        sharedScheme,
+        #"ReferencedContainer = "container:PersonalMythForge.xcodeproj""#,
+        "shared Xcode scheme container"
+    )
+    try requireContains(makefile, ".PHONY: mobile-xcode-build", "mobile Xcode Make phony target")
+    try requireContains(makefile, "mobile-xcode-build:", "mobile Xcode Make target")
+    try requireContains(
+        makefile,
+        "apps/mobile/ios/scripts/xcode_build_gate.sh",
+        "mobile Xcode Make target script"
+    )
 
     for file in [
         "AppConfiguration.swift",
