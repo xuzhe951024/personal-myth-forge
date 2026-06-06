@@ -29,9 +29,14 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
     }
     assert any("--allow-live-provider-calls" in command for command in result.report["commands"])
     phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
-    assert phases["write_backend_env"]["status"] == "blocked"
-    assert phases["write_ios_deploy_config"]["status"] == "blocked"
+    assert phases["apply_final_resources"]["status"] == "blocked"
+    assert phases["apply_final_resources"]["command"] == "make final-apply-resources"
+    assert "write_backend_env" not in phases
+    assert "write_ios_deploy_config" not in phases
     assert phases["configured_final_acceptance"]["status"] == "blocked"
+    assert "make final-apply-resources" in result.report["commands"]
+    assert all("backend-write-provider-env" not in command for command in result.report["commands"])
+    assert all("mobile-write-deploy-config" not in command for command in result.report["commands"])
     assert result.report["safety"]["global_mutation"] is False
     assert result.report["safety"]["live_provider_calls_by_default"] is False
 
@@ -77,6 +82,7 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
     assert "Treatstock live quote handoff is implemented" in " ".join(
         backend["TREATSTOCK_API_KEY"]["notes"]
     )
+    assert phases["apply_final_resources"]["status"] == "ready"
     assert phases["provider_readiness"]["status"] == "ready"
     assert phases["configured_final_acceptance"]["status"] == "ready"
     assert phases["xcode_build_gate"]["status"] == "manual"
@@ -100,14 +106,46 @@ def test_local_final_demo_launch_is_no_key_ready_but_surfaces_ios_actions(
     assert result.exit_code == 0
     assert result.report["mode"] == "local"
     assert result.report["overall_status"] == "partial"
+    phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
+    assert phases["apply_final_resources"]["status"] == "blocked"
+    assert phases["apply_final_resources"]["command"] == "make final-apply-resources"
+    assert "write_backend_env" not in phases
+    assert "write_ios_deploy_config" not in phases
     assert "make final-apply-resources" in result.report["commands"]
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
     assert all("MESHY_API_KEY=..." not in command for command in result.report["commands"])
+    assert all("backend-write-provider-env" not in command for command in result.report["commands"])
+    assert all("mobile-write-deploy-config" not in command for command in result.report["commands"])
     assert any(
         "set PMF_BACKEND_BASE_URL" in action
         for action in result.report["operator_checklist"]
     )
+
+
+def test_local_final_demo_launch_marks_unified_apply_partial_with_ios_only(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge\n"
+            "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"
+        ),
+    )
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
+
+    assert result.exit_code == 0
+    assert result.report["overall_status"] == "partial"
+    assert phases["apply_final_resources"]["status"] == "partial"
+    assert phases["mobile_deploy_preflight"]["status"] == "ready"
 
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:

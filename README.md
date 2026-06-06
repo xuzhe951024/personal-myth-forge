@@ -103,10 +103,14 @@ providers:
 make final-demo-launch
 ```
 
-For the final key-backed handoff, write the backend and iOS local config files
-first, then run the configured launch report:
+For the final key-backed handoff, fill the one-file resource bundle, apply it,
+then run the configured launch report:
 
 ```bash
+mkdir -p services/backend/.local
+cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
+$EDITOR services/backend/.local/final-resources.env
+make final-apply-resources
 cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch \
   --mode configured \
@@ -114,10 +118,12 @@ uv run python -m myth_forge_api.cli final-demo-launch \
   --output .local/final-demo-launch-configured.json
 ```
 
-The launch report consolidates resource status, backend device-server commands,
-provider readiness, local/configured final acceptance, iOS deploy preflight, and
-the Xcode build gate. It never starts servers, calls Meshy/OpenAI/Treatstock, or
-changes Xcode/signing/global machine state by itself. Live provider calls remain
+The launch report now uses `apply_final_resources` as the single resource
+application phase for backend provider settings and iOS deployment config. It
+also consolidates backend device-server commands, provider readiness,
+local/configured final acceptance, iOS deploy preflight, and the Xcode build
+gate. It never starts servers, calls Meshy/OpenAI/Treatstock, or changes
+Xcode/signing/global machine state by itself. Live provider calls remain
 explicitly gated behind `final-acceptance --provider-mode configured
 --require-real-core --allow-live-provider-calls`.
 
@@ -1897,4 +1903,32 @@ Static evidence lives at:
 ```text
 docs/superpowers/verification/p0.68-ios-local-network-readiness.html
 docs/superpowers/verification/assets/p0.68-ios-local-network-readiness-390x844.png
+```
+
+P0.69 updates the final demo launch report to make `make
+final-apply-resources` the single primary resource application step. The older
+`backend-write-provider-env` and `mobile-write-deploy-config` commands remain
+available for lower-level debugging, but local and configured final launch
+command lists now point at the unified one-file handoff.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_final_demo_launch.py \
+  tests/test_resource_handoff.py \
+  tests/test_resource_template_acceptance.py -q
+```
+
+The report phase id to inspect is `apply_final_resources`; in local no-key mode
+the overall launch can still be usable while this phase is blocked or partial.
+It becomes ready only when the unified apply command has both the core
+Meshy/OpenAI backend resources and iOS deploy config readiness. The report is
+still configuration-only and never calls live providers.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.69-final-launch-unified-apply.html
+docs/superpowers/verification/assets/p0.69-final-launch-unified-apply-390x844.png
 ```

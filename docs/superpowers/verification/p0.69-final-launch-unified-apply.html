@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.69 Final Launch Unified Apply</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17212a;
+      --muted: #5f6d76;
+      --line: #d9e1df;
+      --panel: #f7f9f8;
+      --pass: #247854;
+      --wait: #a15d17;
+      --blue: #2e6486;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #fff; color: var(--ink); }
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      padding: 14px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    .lede {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 10px;
+      margin-bottom: 9px;
+    }
+    .top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+    h2 {
+      margin: 0 0 2px;
+      font-size: 17px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    .badge {
+      margin-left: auto;
+      color: var(--pass);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      padding-top: 2px;
+      white-space: nowrap;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 14px 116px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .row:last-child { border-bottom: 0; }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: var(--pass);
+    }
+    .dot.wait { background: var(--wait); }
+    .label {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .detail {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.28;
+      overflow-wrap: anywhere;
+    }
+    code {
+      color: var(--blue);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: .92em;
+    }
+    .metric {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 9px;
+    }
+    .metric div {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px 7px;
+      min-height: 42px;
+    }
+    .num {
+      display: block;
+      color: var(--blue);
+      font-size: 18px;
+      font-weight: 850;
+      line-height: 1;
+    }
+    .cap {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.15;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Final Launch Apply</h1>
+    <p class="lede">P0.69 makes the final demo launch checklist use one resource handoff command for backend provider config and iPhone deploy config.</p>
+
+    <section class="panel" aria-label="Unified resource application">
+      <div class="top">
+        <div>
+          <h2>Unified Phase</h2>
+          <p class="sub">final-demo-launch report contract</p>
+        </div>
+        <div class="badge">PASSED</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Phase ID</div>
+        <div class="detail"><code>apply_final_resources</code> replaces the old split launch phases.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Command</div>
+        <div class="detail"><code>make final-apply-resources</code> is the only primary resource apply step.</div>
+      </div>
+      <div class="row">
+        <div class="dot wait"></div>
+        <div class="label">Local Mode</div>
+        <div class="detail">Missing final provider keys keep apply partial while no-key acceptance can continue.</div>
+      </div>
+      <div class="metric" aria-label="Unified launch checklist status">
+        <div><span class="num">1</span><span class="cap">apply phase</span></div>
+        <div><span class="num">0</span><span class="cap">old launch phases</span></div>
+        <div><span class="num">0</span><span class="cap">live calls</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Command checklist cleanup">
+      <div class="top">
+        <div>
+          <h2>Command Checklist</h2>
+          <p class="sub">operator path is narrower</p>
+        </div>
+        <div class="badge">READY</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Included</div>
+        <div class="detail">Local and configured commands include <code>make final-apply-resources</code>.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Removed</div>
+        <div class="detail"><code>backend-write-provider-env</code> is no longer a final launch command.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Removed</div>
+        <div class="detail"><code>mobile-write-deploy-config</code> is no longer a final launch command.</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Safety boundary">
+      <div class="top">
+        <div>
+          <h2>Safety Boundary</h2>
+          <p class="sub">configuration-only report</p>
+        </div>
+        <div class="badge">SAFE</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Boundary</div>
+        <div class="detail">No live provider calls; output stays sanitized for provider keys and local paths.</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -94,30 +94,26 @@ def _launch_phases(
     )
     local_backend_status = "ready"
     local_acceptance_status = "ready"
+    final_resource_apply_status = _final_resource_apply_status(
+        mode=mode,
+        core_backend_status=core_backend_status,
+        ios_status=ios_status,
+    )
     configured_acceptance_status = _combined_status([core_backend_status, ios_status])
     if mode == "local":
         configured_acceptance_status = "optional"
     return [
         _phase(
-            "write_backend_env",
-            "Write backend provider env",
-            core_backend_status if mode == "configured" else "optional",
-            "configured Meshy/OpenAI provider run",
-            "make backend-write-provider-env",
+            "apply_final_resources",
+            "Apply final resources",
+            final_resource_apply_status,
+            "one-file backend and iOS final demo handoff",
+            "make final-apply-resources",
             [
-                "Writes only ignored services/backend/.env.",
-                "Provider secrets stay backend-only and command output is redacted.",
-            ],
-        ),
-        _phase(
-            "write_ios_deploy_config",
-            "Write iOS deploy config",
-            ios_status,
-            "physical iPhone LAN demo",
-            "make mobile-write-deploy-config",
-            [
-                "Writes only ignored Deployment.local.xcconfig.",
-                "Use a LAN backend URL, not localhost or 127.0.0.1.",
+                "Reads only ignored services/backend/.local/final-resources.env.",
+                "Writes only ignored services/backend/.env and Deployment.local.xcconfig.",
+                "Use a LAN backend URL for PMF_BACKEND_BASE_URL, not localhost or 127.0.0.1.",
+                "Local no-key acceptance can continue when this phase is blocked or partial.",
             ],
         ),
         _phase(
@@ -195,6 +191,21 @@ def _combined_status(statuses: list[str]) -> str:
     return "ready"
 
 
+def _final_resource_apply_status(
+    *,
+    mode: LaunchMode,
+    core_backend_status: str,
+    ios_status: str,
+) -> str:
+    if mode == "configured":
+        return _combined_status([core_backend_status, ios_status])
+    if ios_status != "ready":
+        return ios_status
+    if core_backend_status != "ready":
+        return "partial"
+    return "ready"
+
+
 def _phase(
     phase_id: str,
     label: str,
@@ -241,7 +252,6 @@ def _commands(mode: LaunchMode) -> list[str]:
         return [
             "make final-apply-resources",
             "make backend-device-demo",
-            "make mobile-write-deploy-config",
             "make mobile-deploy-preflight",
             (
                 "cd services/backend && uv run python -m myth_forge_api.cli "
@@ -256,13 +266,6 @@ def _commands(mode: LaunchMode) -> list[str]:
         ]
     return [
         "make final-apply-resources",
-        "MESHY_API_KEY=... OPENAI_API_KEY=... TREATSTOCK_API_KEY=... make backend-write-provider-env",
-        (
-            "DEVELOPMENT_TEAM=ABCDE12345 "
-            "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge "
-            "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080 "
-            "make mobile-write-deploy-config"
-        ),
         "make backend-device-demo",
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "
