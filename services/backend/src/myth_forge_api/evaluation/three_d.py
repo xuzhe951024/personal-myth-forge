@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from typing import Protocol
 
-from myth_forge_api.providers.three_d import ThreeDGenerationRequest
+from myth_forge_api.providers.three_d import ThreeDGenerationRequest, ThreeDSourceImage
 
 REVIEW_RUBRIC = [
     "Artifact silhouette is recognizable",
@@ -39,6 +39,15 @@ class ThreeDEvaluationCase:
     prompt: str
     expected_input_mode: str
     review_focus: str
+    source_images: tuple["ThreeDEvaluationSourceImage", ...] = ()
+
+
+@dataclass(frozen=True)
+class ThreeDEvaluationSourceImage:
+    source_id: str
+    role: str
+    content_type: str
+    data_uri: str
 
 
 DEFAULT_THREE_D_EVALUATION_SUITE = (
@@ -232,6 +241,76 @@ DEFAULT_THREE_D_EVALUATION_SUITE = (
     ),
 )
 
+SYNTHETIC_PNG_DATA_URIS = {
+    "front": (
+        "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+    ),
+    "side": (
+        "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+    ),
+    "top": (
+        "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+    ),
+    "detail": (
+        "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+    ),
+}
+
+
+def _synthetic_source(role: str) -> ThreeDEvaluationSourceImage:
+    return ThreeDEvaluationSourceImage(
+        source_id=role,
+        role=role,
+        content_type="image/png",
+        data_uri=SYNTHETIC_PNG_DATA_URIS[role],
+    )
+
+
+GUIDED_SCAN_SMOKE_EVALUATION_SUITE = (
+    ThreeDEvaluationCase(
+        case_id="scan_01_single_reference_key",
+        category="guided_scan_smoke",
+        prompt=(
+            "Create a worn brass key relic from a single guided scan reference, preserving "
+            "the broad bow, chipped teeth, and handheld scale."
+        ),
+        expected_input_mode="single_image",
+        review_focus="single-image source routing and recognizable key silhouette",
+        source_images=(_synthetic_source("front"),),
+    ),
+    ThreeDEvaluationCase(
+        case_id="scan_02_two_angle_key",
+        category="guided_scan_smoke",
+        prompt=(
+            "Create a worn brass key relic from front and side guided scan references, "
+            "preserving thickness, teeth, and patina."
+        ),
+        expected_input_mode="multi_image",
+        review_focus="two-image source routing and stronger depth cues",
+        source_images=(_synthetic_source("front"), _synthetic_source("side")),
+    ),
+    ThreeDEvaluationCase(
+        case_id="scan_03_four_angle_key",
+        category="guided_scan_smoke",
+        prompt=(
+            "Create a worn brass key relic from front, side, top, and detail guided scan "
+            "references, emphasizing readable teeth and hand-polished wear."
+        ),
+        expected_input_mode="multi_image",
+        review_focus="four-image source routing and capped provider media selection",
+        source_images=(
+            _synthetic_source("front"),
+            _synthetic_source("side"),
+            _synthetic_source("top"),
+            _synthetic_source("detail"),
+        ),
+    ),
+)
+
 
 def build_custom_prompt_cases(prompts: list[str]) -> tuple[ThreeDEvaluationCase, ...]:
     return tuple(
@@ -279,12 +358,22 @@ def _run_case(
     evaluation_case: ThreeDEvaluationCase,
 ) -> dict[str, object]:
     started_at = time.perf_counter()
+    provider_source_images = tuple(
+        ThreeDSourceImage(
+            uri=f"evaluation-source://{evaluation_case.case_id}/{source_image.source_id}",
+            content_type=source_image.content_type,
+            data_uri=source_image.data_uri,
+        )
+        for source_image in evaluation_case.source_images
+    )
     base_report = {
         "case_id": evaluation_case.case_id,
         "category": evaluation_case.category,
         "prompt": evaluation_case.prompt,
         "expected_input_mode": evaluation_case.expected_input_mode,
         "review_focus": evaluation_case.review_focus,
+        "source_image_count": len(evaluation_case.source_images),
+        "source_image_roles": [source_image.role for source_image in evaluation_case.source_images],
         "manual_review": dict(MANUAL_REVIEW_EMPTY),
     }
     try:
@@ -292,6 +381,7 @@ def _run_case(
             ThreeDGenerationRequest(
                 session_id=_session_id_for_case(evaluation_case.case_id),
                 prompt=evaluation_case.prompt,
+                source_images=provider_source_images,
             )
         )
         variant_roles = [variant.role for variant in asset.variants]

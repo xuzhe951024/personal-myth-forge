@@ -1100,3 +1100,33 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.35-3d-provider-evaluation-suite.html
 docs/superpowers/verification/assets/p0.35-3d-provider-evaluation-suite-390x844.png
 ```
+
+## P0.36 Media-Backed 3D Evaluation
+
+P0.36 is still backend-first, but it specifically protects the iOS guided scan
+handoff. The new `guided-scan-smoke-v0` suite sends synthetic source images
+through the 3D provider contract so local runs can verify the same single-image
+and multi-image routes used by uploaded phone captures.
+
+Run the no-key smoke suite:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli evaluate-3d \
+  --provider local \
+  --suite guided-scan-smoke-v0 \
+  --output /tmp/personal-myth-forge-guided-scan-eval.json
+```
+
+The expected local report has three cases, source image counts `1 / 2 / 4`, and
+coverage `single_image=1`, `multi_image=2`. The suite uses non-private
+synthetic PNG data URIs internally and does not write raw media, local file
+paths, or provider secrets into reports. Live iPhone media manifests and real
+Meshy runs still require device/provider validation.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.36-media-backed-3d-evaluation.html
+docs/superpowers/verification/assets/p0.36-media-backed-3d-evaluation-390x844.png
+```

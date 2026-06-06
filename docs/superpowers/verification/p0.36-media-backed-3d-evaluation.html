@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.36 Media-Backed 3D Evaluation</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #222520;
+      --muted: #5e6660;
+      --line: #d7ded8;
+      --paper: #f8faf6;
+      --panel: #ffffff;
+      --green: #356f4d;
+      --blue: #2d6e93;
+      --amber: #9a5b2a;
+      --plum: #65507a;
+      --red: #8e3f38;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e5ebe6;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 10px 15px 12px;
+      background: var(--paper);
+      border-left: 1px solid #cad4ce;
+      border-right: 1px solid #cad4ce;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      padding: 1px 0 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 830;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 830;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      line-height: 1.15;
+      font-weight: 800;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .metric,
+    .row,
+    .case,
+    .gate {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px;
+    }
+
+    .label {
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.18;
+      font-weight: 790;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 860;
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .amber {
+      color: var(--amber);
+    }
+
+    .rows,
+    .cases {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .row-key {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 780;
+      text-transform: uppercase;
+    }
+
+    .row-value {
+      font-size: 12px;
+      line-height: 1.22;
+      font-weight: 780;
+      overflow-wrap: anywhere;
+    }
+
+    .case {
+      display: grid;
+      grid-template-columns: 76px 1fr 42px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .case-id {
+      color: var(--blue);
+      font-size: 11px;
+      line-height: 1.12;
+      font-weight: 840;
+    }
+
+    .case-copy {
+      font-size: 11px;
+      line-height: 1.18;
+      font-weight: 760;
+    }
+
+    .pill {
+      border-radius: 6px;
+      padding: 4px 5px;
+      background: #e6f0e8;
+      color: #315d3a;
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 820;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .gate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .gate-title {
+      color: var(--amber);
+      font-size: 11px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .gate-copy {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.18;
+    }
+
+    .safety {
+      color: var(--red);
+      font-weight: 830;
+    }
+
+    code {
+      color: var(--plum);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Media-Backed 3D Evaluation</h1>
+      <div class="tag">P0.36</div>
+    </header>
+
+    <section>
+      <h2>Guided Scan Suite</h2>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">suite</div>
+          <div class="value blue">v0</div>
+        </div>
+        <div class="metric">
+          <div class="label">cases</div>
+          <div class="value green">3</div>
+        </div>
+        <div class="metric">
+          <div class="label">local pass</div>
+          <div class="value amber">3</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Coverage</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">suite id</div>
+          <div class="row-value"><code>guided-scan-smoke-v0</code></div>
+        </div>
+        <div class="row">
+          <div class="row-key">input</div>
+          <div class="row-value"><code>single_image</code> 1, <code>multi_image</code> 2, <code>text_prompt</code> 0</div>
+        </div>
+        <div class="row">
+          <div class="row-key">sources</div>
+          <div class="row-value">Counts are <code>1 / 2 / 4</code>; roles are front, side, top, and detail.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Smoke Cases</h2>
+      <div class="cases">
+        <div class="case">
+          <div class="case-id">scan 01</div>
+          <div class="case-copy">Single reference image for a worn brass key relic.</div>
+          <div class="pill">1 img</div>
+        </div>
+        <div class="case">
+          <div class="case-id">scan 02</div>
+          <div class="case-copy">Front and side references route to multi-image generation.</div>
+          <div class="pill">2 img</div>
+        </div>
+        <div class="case">
+          <div class="case-id">scan 03</div>
+          <div class="case-copy">Front, side, top, and detail references preserve 4-image handoff.</div>
+          <div class="pill">4 img</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Report Safety</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">media</div>
+          <div class="row-value">Synthetic PNG data URIs are provider-only; reports expose counts and roles, not raw payloads.</div>
+        </div>
+        <div class="row">
+          <div class="row-key">secret</div>
+          <div class="row-value"><span class="safety">No</span> provider keys, local file paths, or authorization headers in evaluation output.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Live Handoff Gates</h2>
+      <div class="gate-grid">
+        <div class="gate">
+          <div class="gate-title">Real iPhone media</div>
+          <div class="gate-copy">Device photo manifests still need hardware validation after local synthetic smoke tests.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">Meshy run</div>
+          <div class="gate-copy"><code>MESHY_API_KEY</code> stays backend-only before spending credits on live generation.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
