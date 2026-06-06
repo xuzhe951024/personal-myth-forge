@@ -47,6 +47,7 @@ Bridge deliverable:
 - P0.29 server-owned NPC advance endpoint that appends and returns stored history
 - P0.30 bounded foreground NPC autonomy run that appends 1-3 backend-owned ticks per user action
 - P0.31 integrated demo acceptance harness for local no-key and configured real-provider runs
+- P0.32 final acceptance report that classifies provider, iOS deploy, and Xcode local blockers
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

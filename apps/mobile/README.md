@@ -965,3 +965,43 @@ Remaining gaps after P0.31 are accepting the Apple SDK license on this machine,
 real device installation, live Meshy/OpenAI key acceptance runs, real device
 Object Capture validation, Unity movement execution, background NPC loops,
 production account memory, and print fulfillment.
+
+## P0.32 Final Acceptance Report
+
+P0.32 adds one backend CLI command that gathers the mobile-facing deploy gates
+alongside provider handoff and demo acceptance:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+The quick profile runs:
+
+- provider handoff readiness
+- local demo acceptance
+- `make mobile-deploy-preflight`
+- `make mobile-xcode-build`
+
+Until `apps/mobile/ios/Config/Deployment.local.xcconfig` contains local signing
+and iPhone-reachable backend settings, deploy preflight is reported as
+`blocked_by_local_ios_deploy_config`. Until the Apple SDK license gate is
+handled locally, the Xcode build gate is reported as
+`blocked_by_apple_sdk_license`. The command returns `2` for those blockers so
+they remain visible without being treated as code failures.
+
+Use `--profile full` to include backend lint/tests and SwiftPM project,
+contract, and app compile checks in the same report. Use
+`--provider-mode configured --require-real-core` after backend-only Meshy/OpenAI
+keys are supplied; strict mode exits before live provider calls until the core
+provider set is ready.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.32-final-acceptance-report.html
+docs/superpowers/verification/assets/p0.32-final-acceptance-report-390x844.png
+```

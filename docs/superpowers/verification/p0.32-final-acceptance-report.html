@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.32 Final Acceptance Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2523;
+      --muted: #5c6763;
+      --line: #d5ddd8;
+      --paper: #f7faf7;
+      --panel: #ffffff;
+      --green: #426d4d;
+      --amber: #a5632d;
+      --blue: #2d6f95;
+      --plum: #65517c;
+      --red: #9a493d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e6ece8;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 11px 15px 12px;
+      background: var(--paper);
+      border-left: 1px solid #ccd6d1;
+      border-right: 1px solid #ccd6d1;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      padding: 3px 0 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 790;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      line-height: 1.15;
+      font-weight: 790;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 7px;
+    }
+
+    .metric,
+    .check,
+    .action {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px;
+    }
+
+    .status {
+      font-size: 27px;
+      line-height: 1;
+      font-weight: 860;
+      color: var(--amber);
+    }
+
+    .small-label {
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .count {
+      font-size: 19px;
+      line-height: 1;
+      font-weight: 850;
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .amber {
+      color: var(--amber);
+    }
+
+    .red {
+      color: var(--red);
+    }
+
+    .copy {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.27;
+    }
+
+    .checks {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: 25px 1fr auto;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .dot.ok {
+      background: var(--green);
+    }
+
+    .dot.blocked {
+      background: var(--amber);
+    }
+
+    .check-title {
+      font-size: 12px;
+      line-height: 1.12;
+      font-weight: 790;
+    }
+
+    .check-sub {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.22;
+    }
+
+    .pill {
+      border-radius: 6px;
+      padding: 4px 6px;
+      background: #e6f0e8;
+      color: #315d3a;
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .pill.blocked {
+      background: #f5eadf;
+      color: #8c4e2d;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+
+    .action-title {
+      margin-bottom: 3px;
+      color: var(--blue);
+      font-size: 11.5px;
+      line-height: 1.15;
+      font-weight: 810;
+    }
+
+    code {
+      color: var(--plum);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 9.5px;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Final Acceptance Report</h1>
+      <div class="tag">P0.32</div>
+    </header>
+
+    <section>
+      <h2>Quick Profile Result</h2>
+      <div class="hero">
+        <div class="metric">
+          <div class="small-label">overall</div>
+          <div class="status">blocked</div>
+          <div class="copy">Expected locally until deploy config and Apple SDK license are handled.</div>
+        </div>
+        <div class="metric">
+          <div class="small-label">exit code</div>
+          <div class="status">2</div>
+          <div class="copy">Blocked is distinct from failed; product checks can still pass.</div>
+        </div>
+      </div>
+      <div class="summary-grid">
+        <div class="metric">
+          <div class="small-label">passed</div>
+          <div class="count green">2</div>
+        </div>
+        <div class="metric">
+          <div class="small-label">blocked</div>
+          <div class="count amber">2</div>
+        </div>
+        <div class="metric">
+          <div class="small-label">failed</div>
+          <div class="count red">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Checks</h2>
+      <div class="checks">
+        <div class="check">
+          <div class="dot ok">1</div>
+          <div>
+            <div class="check-title">Provider handoff readiness</div>
+            <div class="check-sub">Backend-only secret boundary is reported without key values.</div>
+          </div>
+          <div class="pill">passed</div>
+        </div>
+        <div class="check">
+          <div class="dot ok">2</div>
+          <div>
+            <div class="check-title">Demo acceptance</div>
+            <div class="check-sub">Local 3D asset, print candidate, and 3 NPC ticks complete.</div>
+          </div>
+          <div class="pill">passed</div>
+        </div>
+        <div class="check">
+          <div class="dot blocked">3</div>
+          <div>
+            <div class="check-title">iOS deploy preflight</div>
+            <div class="check-sub">Needs ignored Team ID and iPhone-reachable backend URL.</div>
+          </div>
+          <div class="pill blocked">blocked</div>
+        </div>
+        <div class="check">
+          <div class="dot blocked">4</div>
+          <div>
+            <div class="check-title">Xcode build gate</div>
+            <div class="check-sub">Apple SDK license state remains a local machine gate.</div>
+          </div>
+          <div class="pill blocked">blocked</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Operator Actions</h2>
+      <div class="actions">
+        <div class="action">
+          <div class="action-title">Local no-key rerun</div>
+          <div class="copy"><code>final-acceptance --profile quick --provider-mode local</code></div>
+        </div>
+        <div class="action">
+          <div class="action-title">Real provider rerun</div>
+          <div class="copy"><code>final-acceptance --provider-mode configured --require-real-core</code></div>
+        </div>
+        <div class="action">
+          <div class="action-title">Full regression rerun</div>
+          <div class="copy"><code>final-acceptance --profile full --provider-mode local</code></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Safety</h2>
+      <div class="copy">
+        Reports redact bearer tokens, API key values, raw payload markers, data
+        URIs, and local filesystem paths. Mobile receives readiness metadata,
+        never provider secrets or raw personal source bodies.
+      </div>
+    </section>
+  </main>
+</body>
+</html>
