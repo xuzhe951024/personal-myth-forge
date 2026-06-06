@@ -2,8 +2,28 @@ import json
 
 from fastapi.testclient import TestClient
 
+from myth_forge_api.domain.models import GeneratedAsset
 from myth_forge_api.main import app
 from myth_forge_api.providers.capture_store import LocalCaptureStore
+from myth_forge_api.providers.three_d import ThreeDGenerationRequest
+
+
+class RecordingThreeDProvider:
+    provider_name = "recording"
+
+    def __init__(self) -> None:
+        self.calls: list[ThreeDGenerationRequest] = []
+
+    def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
+        self.calls.append(request)
+        return GeneratedAsset(
+            kind="game_asset",
+            provider=self.provider_name,
+            format="glb",
+            uri=f"recording://{request.session_id}.glb",
+            prompt=request.prompt,
+            moderation_status="needs_review",
+        )
 
 
 def _client_with_store(tmp_path, monkeypatch) -> TestClient:
@@ -222,6 +242,67 @@ def test_create_myth_session_from_arkit_scan_capture_includes_media_refs(
     assert f"local-capture://{created['capture_id']}/media_1.jpg" in payload["object_card"][
         "symbolic_reading"
     ]
+
+
+def test_create_myth_session_from_capture_passes_media_sources_to_3d_provider(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    store = LocalCaptureStore(root_dir=tmp_path)
+    provider = RecordingThreeDProvider()
+    monkeypatch.setattr("myth_forge_api.main.build_capture_store", lambda: store)
+    monkeypatch.setattr("myth_forge_api.main.build_three_d_provider", lambda: provider)
+    client = TestClient(app)
+    metadata = json.dumps(
+        {
+            "label": "small idol",
+            "materials": ["stone"],
+            "source": "phone_capture",
+            "capture_mode": "arkit_scan",
+            "visual_notes": "rough scan bundle",
+        }
+    )
+    created = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": metadata},
+        files=[
+            ("files", ("idol.glb", b"fake-glb", "model/gltf-binary")),
+            ("files", ("reference.jpg", b"fake-jpeg", "image/jpeg")),
+        ],
+    ).json()
+
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": created["capture_id"],
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(provider.calls) == 1
+    generation_request = provider.calls[0]
+    assert len(generation_request.source_images) == 1
+    assert len(generation_request.source_assets) == 1
+    assert generation_request.source_images[0].uri == (
+        f"local-capture://{created['capture_id']}/media_1.jpg"
+    )
+    assert generation_request.source_images[0].content_type == "image/jpeg"
+    assert generation_request.source_images[0].data_uri.startswith(
+        "data:image/jpeg;base64,"
+    )
+    assert "ZmFrZS1qcGVn" in generation_request.source_images[0].data_uri
+    assert generation_request.source_assets[0].uri == (
+        f"local-capture://{created['capture_id']}/media_0.glb"
+    )
+    assert generation_request.source_assets[0].content_type == "model/gltf-binary"
+    assert "data:image" not in response.text
+    assert "ZmFrZS1qcGVn" not in response.text
+    assert "fake-jpeg" not in response.text
+    assert "fake-glb" not in response.text
 
 
 def test_create_myth_session_from_capture_returns_404_for_missing_capture(
