@@ -290,6 +290,33 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_final_acceptance_readiness",
+        label="Mobile final acceptance readiness",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_acceptance_readiness.py",
+                "build_final_acceptance_readiness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "final_acceptance_readiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalAcceptanceReadinessReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "acceptanceRows",
+            ),
+            SourceRequirement("apps/mobile/ios/App/FinalLaunchStatusView.swift", "Acceptance"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="device_preflight",
         label="Device preflight",
         requirements=(

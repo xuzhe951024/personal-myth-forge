@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any, Literal
 
 from myth_forge_api.config import Settings, load_settings
+from myth_forge_api.final_acceptance_readiness import (
+    build_final_acceptance_readiness_report,
+)
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
@@ -38,6 +41,9 @@ def build_final_demo_launch_report(
     final_resources_preflight = build_final_resources_preflight_report(
         repo_root=selected_repo_root,
     ).report
+    final_acceptance_readiness = build_final_acceptance_readiness_report(
+        repo_root=selected_repo_root,
+    ).report
     phases = _launch_phases(
         mode=mode,
         resource_report=resource_report,
@@ -53,6 +59,7 @@ def build_final_demo_launch_report(
         "summary": resource_summary,
         "phase_summary": phase_summary,
         "final_resources_preflight": final_resources_preflight,
+        "final_acceptance_readiness": final_acceptance_readiness,
         "resource_report": resource_report,
         "launch_phases": phases,
         "operator_checklist": _operator_checklist(
