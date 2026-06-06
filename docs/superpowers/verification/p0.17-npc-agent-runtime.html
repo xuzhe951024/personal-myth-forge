@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.17 NPC Agent Runtime Evidence</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111314;
+      --panel: #1b2022;
+      --row: #242b2e;
+      --text: #f4f1e8;
+      --muted: #bdc5c7;
+      --line: #3a4549;
+      --green: #64d28e;
+      --cyan: #48bdd6;
+      --amber: #e1b95d;
+      --rose: #e07572;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      width: min(100%, 430px);
+      margin: 0 auto;
+      padding: 10px 14px 12px;
+    }
+
+    header {
+      display: grid;
+      gap: 5px;
+      padding-bottom: 8px;
+    }
+
+    .eyebrow {
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.3;
+    }
+
+    code {
+      color: #eef3f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .stack {
+      display: grid;
+      gap: 7px;
+    }
+
+    .panel,
+    .trace,
+    .row {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .panel {
+      padding: 9px;
+    }
+
+    .panel h2 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .runtime {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .runtime strong {
+      font-size: 14px;
+    }
+
+    .runtime span {
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .trace {
+      display: grid;
+      gap: 3px;
+      padding: 8px;
+      background: var(--row);
+    }
+
+    .trace header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0;
+    }
+
+    .trace strong {
+      font-size: 13px;
+    }
+
+    .confidence {
+      color: var(--cyan);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .label {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 7px;
+      background: var(--row);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: var(--green);
+    }
+
+    .dot.cyan { background: var(--cyan); }
+    .dot.warn { background: var(--amber); }
+    .dot.stop { background: var(--rose); }
+
+    .row strong {
+      display: block;
+      margin-bottom: 1px;
+      font-size: 12.5px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">P0.17 mobile evidence</div>
+      <h1>NPC Agent Runtime Trace</h1>
+      <p>Each NPC now exposes a belief, intention, action proposal, rationale, and confidence before the world arbitrator resolves visible actions.</p>
+    </header>
+
+    <section class="stack" aria-label="P0.17 acceptance evidence">
+      <div class="panel">
+        <div class="runtime">
+          <strong>npc_agent_runtime</strong>
+          <span>local_agent_runtime</span>
+        </div>
+        <p><code>npc_reactions</code> remain player-facing; traces reveal the lightweight agent layer.</p>
+      </div>
+
+      <div class="trace">
+        <header><strong>Mara</strong><span class="confidence">84%</span></header>
+        <p><span class="label">Belief:</span> the relic is a sign the village was heard.</p>
+        <p><span class="label">Intention:</span> welcome it into witness.</p>
+        <p><span class="label">Action:</span> approach_artifact.</p>
+        <p><span class="label">Rationale:</span> awe invites public witness.</p>
+      </div>
+
+      <div class="trace">
+        <header><strong>Ior</strong><span class="confidence">72%</span></header>
+        <p><span class="label">Belief:</span> the relic may be a test.</p>
+        <p><span class="label">Intention:</span> protect the village.</p>
+        <p><span class="label">Action:</span> keep_distance.</p>
+        <p><span class="label">Rationale:</span> caution keeps trust stable.</p>
+      </div>
+
+      <div class="trace">
+        <header><strong>Senn</strong><span class="confidence">78%</span></header>
+        <p><span class="label">Belief:</span> the relic should be named first.</p>
+        <p><span class="label">Intention:</span> turn curiosity into ritual language.</p>
+        <p><span class="label">Action:</span> suggest_ritual_name.</p>
+        <p><span class="label">Rationale:</span> names make debate safer.</p>
+      </div>
+
+      <div class="row">
+        <span class="dot"></span>
+        <p><strong>World arbitrator handoff</strong> Proposed actions feed the existing accepted/rejected action contract.</p>
+      </div>
+      <div class="row">
+        <span class="dot cyan"></span>
+        <p><strong>Privacy boundary</strong> Agents receive approved capsule summaries only, not raw messages, calendar text, or contacts.</p>
+      </div>
+      <div class="row">
+        <span class="dot warn"></span>
+        <p><strong>OpenAI optional</strong> The OpenAI path can parse structured traces or synthesize conservative traces from valid reactions.</p>
+      </div>
+      <div class="row">
+        <span class="dot stop"></span>
+        <p><strong>No simulator/device evidence</strong> P0.17 uses SwiftPM compile checks, backend tests, and static Browser evidence only.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

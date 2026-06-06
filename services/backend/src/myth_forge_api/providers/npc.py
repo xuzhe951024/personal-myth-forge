@@ -149,7 +149,7 @@ class OpenAINPCDirector:
         if len(output.reactions) != 3 or npc_ids != EXPECTED_NPC_IDS:
             expected = ", ".join(EXPECTED_NPC_ID_LIST)
             raise OpenAINPCProviderError(f"OpenAI NPC response must include exactly: {expected}.")
-        agent_traces = output.agent_traces or _agent_traces_from_reactions(output.reactions)
+        agent_traces = _validated_agent_traces(output.agent_traces, output.reactions)
         trace_ids = {trace.npc_id for trace in agent_traces}
         if len(agent_traces) != 3 or trace_ids != EXPECTED_NPC_IDS:
             expected = ", ".join(EXPECTED_NPC_ID_LIST)
@@ -190,8 +190,8 @@ def _npc_director_prompt(
         f"Generated asset URI: {generated_asset.uri}\n"
         "Return exactly three reactions for NPC ids mara, ior, and senn. "
         "Also return one agent trace per NPC with belief, intention, proposed_action, "
-        "rationale, and confidence. Each agent trace should explain the NPC's "
-        "private reasoning summary without revealing raw personal data. "
+        "rationale, and confidence. Each agent trace should include a brief NPC "
+        "rationale without revealing raw personal data. "
         "Each plan item must be a safe visible action, not a purchase, print order, "
         "private-data request, or destructive act."
     )
@@ -265,13 +265,39 @@ def _local_reactions_from_traces(
             emotion="curiosity",
             interpretation=trace_by_id["senn"].belief,
             plan=[
-                trace_by_id["senn"].proposed_action,
                 "circle_artifact",
                 "sketch_symbol_in_dirt",
+                trace_by_id["senn"].proposed_action,
             ],
             world_change="artifact_gets_a_local_name",
         ),
     ]
+
+
+def _validated_agent_traces(
+    agent_traces: list[NPCAgentTrace],
+    reactions: list[NPCReaction],
+) -> list[NPCAgentTrace]:
+    if not agent_traces:
+        return _agent_traces_from_reactions(reactions)
+
+    fallback_by_id = {
+        trace.npc_id: trace
+        for trace in _agent_traces_from_reactions(reactions)
+    }
+    reactions_by_id = {reaction.npc_id: reaction for reaction in reactions}
+    validated: list[NPCAgentTrace] = []
+    for trace in agent_traces:
+        reaction = reactions_by_id.get(trace.npc_id)
+        if not reaction:
+            validated.append(trace)
+            continue
+        planned_actions = {_normalized_action(action) for action in reaction.plan}
+        if _normalized_action(trace.proposed_action) not in planned_actions:
+            validated.append(fallback_by_id[trace.npc_id])
+            continue
+        validated.append(trace)
+    return validated
 
 
 def _agent_traces_from_reactions(reactions: list[NPCReaction]) -> list[NPCAgentTrace]:
@@ -287,6 +313,10 @@ def _agent_traces_from_reactions(reactions: list[NPCReaction]) -> list[NPCAgentT
         )
         for reaction in reactions
     ]
+
+
+def _normalized_action(action: str) -> str:
+    return action.strip().lower()
 
 
 def _sanitize_provider_error(exc: Exception, secret: str | None = None) -> str:
