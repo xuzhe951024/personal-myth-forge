@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.80 Final Launch Mode Policy Summary</title>
+  <style>
+    :root {
+      --ink: #1b1c1f;
+      --muted: #5f6672;
+      --panel: #ffffff;
+      --line: #d8dde6;
+      --paper: #f4f0e8;
+      --green: #207a4c;
+      --red: #b7363b;
+      --blue: #255f9a;
+      --gold: #a26a14;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      overflow-x: hidden;
+    }
+
+    main {
+      width: 390px;
+      max-width: 390px;
+      margin: 0;
+      padding: 18px 10px 26px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.15;
+      letter-spacing: 0;
+      min-width: 0;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border: 1px solid #7c965f;
+      border-radius: 6px;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 700;
+      background: #eef7ea;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 8px 24px rgba(41, 32, 18, 0.08);
+      margin-bottom: 12px;
+    }
+
+    .status-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 11px;
+    }
+
+    .status-head > div:first-child {
+      min-width: 0;
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 10px minmax(72px, 96px) minmax(0, 1fr);
+      gap: 8px;
+      align-items: baseline;
+      padding: 5px 0;
+      border-top: 1px solid #edf0f5;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--green);
+      transform: translateY(-1px);
+    }
+
+    .dot.wait {
+      background: var(--gold);
+    }
+
+    .phase-name {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.25;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .phase-detail {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10.5px;
+      line-height: 1.35;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .group {
+      margin-top: 11px;
+      padding-top: 9px;
+      border-top: 1px solid #edf0f5;
+    }
+
+    .group h2 {
+      margin: 0 0 5px;
+      font-size: 12px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .line {
+      margin: 3px 0;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10.5px;
+      line-height: 1.38;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .callout {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+    }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      border: 1px solid #b9c5d2;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 800;
+      background: #edf5fb;
+    }
+
+    .callout h2 {
+      margin: 0 0 4px;
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .callout p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .danger {
+      color: var(--red);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <h1>P0.80 Final Launch</h1>
+      <div class="chip">MODE POLICY</div>
+    </div>
+
+    <section class="panel" aria-label="Final Launch Status">
+      <div class="status-head">
+        <div>
+          <div class="title">Final Launch Status</div>
+          <div class="subtitle">mode configured; ready 4, missing 3, blocked 1, manual 3</div>
+        </div>
+        <div class="badge">WAITING</div>
+      </div>
+
+      <div class="phase">
+        <div class="dot"></div>
+        <div class="phase-name">Start backend on LAN</div>
+        <div class="phase-detail">make backend-device-demo | no global state changes</div>
+      </div>
+      <div class="phase">
+        <div class="dot wait"></div>
+        <div class="phase-name">Configured final acceptance</div>
+        <div class="phase-detail">requires explicit live provider consent</div>
+      </div>
+
+      <div class="group">
+        <h2>Mode</h2>
+        <div class="line">Mode: Configured</div>
+        <div class="line">Live calls by default: no</div>
+        <div class="line">Consent flag: --allow-live-provider-calls</div>
+      </div>
+
+      <div class="group">
+        <h2>Resources</h2>
+        <div class="line">set PMF_FINAL_LAUNCH_MODE to local or configured</div>
+      </div>
+
+      <div class="group">
+        <h2>Next</h2>
+        <div class="line">provide iOS deploy config and rerun mobile deploy preflight</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="callout">
+        <div class="icon">i</div>
+        <div>
+          <h2>Read-only phone surface</h2>
+          <p>Provider keys stay backend-only. The app displays launch readiness and Mac-side commands; it does not execute provider calls or mutate resource files.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="callout">
+        <div class="icon danger">!</div>
+        <div>
+          <h2>Configured mode still needs consent</h2>
+          <p>The live Meshy/OpenAI/Treatstock path remains behind explicit operator flags and final resource preflight checks.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

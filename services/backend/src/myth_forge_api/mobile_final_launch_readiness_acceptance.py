@@ -221,6 +221,18 @@ SOURCE_REQUIREMENTS = (
         "FinalLaunchMobileStatus",
     ),
     SourceRequirement(
+        "mobile_summary_mode_policy_rows",
+        "Mobile final launch mode policy rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "modePolicyRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_live_policy",
+        "Mobile final launch live policy mapping",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "liveCallPolicy",
+    ),
+    SourceRequirement(
         "mobile_summary_redaction",
         "Mobile final launch summary redaction",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -237,6 +249,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch status resource actions",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "resourceActions",
+    ),
+    SourceRequirement(
+        "mobile_status_view_mode_section",
+        "Mobile final launch mode section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Mode",
     ),
     SourceRequirement(
         "mobile_status_view_commands",
@@ -339,6 +357,12 @@ SOURCE_REQUIREMENTS = (
         "Contract test builds mobile final launch summary",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
+    ),
+    SourceRequirement(
+        "contract_mobile_summary_mode_policy",
+        "Contract test renders final launch mode policy",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",
     ),
     SourceRequirement(
         "contract_mobile_summary_redaction",

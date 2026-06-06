@@ -397,6 +397,19 @@ FEATURES = (
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testGetConfiguredFinalDemoLaunchBuildsGETRequest",
             ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "modePolicyRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "liveCallPolicy",
+            ),
+            SourceRequirement("apps/mobile/ios/App/FinalLaunchStatusView.swift", "Mode"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",
+            ),
         ),
     ),
     FeatureRequirement(

@@ -569,6 +569,12 @@ do {
     try requireContains(devicePreflightView, "checkBackend", "device preflight check action")
     try requireContains(devicePreflightView, "Check", "device preflight check button")
     try requireContains(finalLaunchStatusView, "Final Launch Status", "final launch status title")
+    try requireContains(finalLaunchStatusView, "Mode", "final launch mode policy section")
+    try requireContains(
+        finalLaunchStatusView,
+        "modePolicyRows",
+        "final launch mode policy row rendering"
+    )
     try requireContains(
         finalLaunchStatusView,
         "resourceActions",
@@ -632,6 +638,8 @@ do {
     )
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileSummaryBuilder", "final launch summary builder")
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileStatus", "final launch summary status")
+    try requireContains(finalLaunchMobileSummary, "modePolicyRows", "final launch summary mode policy rows")
+    try requireContains(finalLaunchMobileSummary, "liveCallPolicy", "final launch summary live policy mapping")
     try requireContains(finalLaunchMobileSummary, "acceptanceRows", "final launch summary acceptance rows")
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
     try requireContains(

@@ -41,6 +41,8 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "root_view_mode_picker" in requirement_ids
     assert "root_view_configured_mode" in requirement_ids
     assert "root_view_mode_reload" in requirement_ids
+    assert "mobile_summary_mode_policy_rows" in requirement_ids
+    assert "mobile_status_view_mode_section" in requirement_ids
     assert result.report["safety"] == {
         "global_mutation": False,
         "live_provider_calls_by_default": False,
@@ -158,12 +160,15 @@ def _write_minimal_mobile_source(root: Path) -> None:
             [
                 "FinalLaunchMobileSummaryBuilder",
                 "FinalLaunchMobileStatus",
+                "modePolicyRows",
+                "liveCallPolicy",
                 "sanitize",
             ]
         ),
         "apps/mobile/ios/App/FinalLaunchStatusView.swift": "\n".join(
             [
                 "Final Launch Status",
+                "Mode",
                 "resourceActions",
                 "commandRows",
             ]
@@ -190,6 +195,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightBlocksAndRedactsFinalResourcesPreflight",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
                 "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
+                "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",
                 "testFinalLaunchMobileSummaryRedactsUnsafeReportText",
             ]
         ),

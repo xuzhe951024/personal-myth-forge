@@ -25,6 +25,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var title: String
     public var subtitle: String
     public var phaseRows: [FinalLaunchMobilePhaseRow]
+    public var modePolicyRows: [String]
     public var resourceActions: [String]
     public var acceptanceRows: [String]
     public var handoffRows: [String]
@@ -36,6 +37,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         title: String,
         subtitle: String,
         phaseRows: [FinalLaunchMobilePhaseRow],
+        modePolicyRows: [String] = [],
         resourceActions: [String],
         acceptanceRows: [String] = [],
         handoffRows: [String] = [],
@@ -46,6 +48,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.title = title
         self.subtitle = subtitle
         self.phaseRows = phaseRows
+        self.modePolicyRows = modePolicyRows
         self.resourceActions = resourceActions
         self.acceptanceRows = acceptanceRows
         self.handoffRows = handoffRows
@@ -100,12 +103,39 @@ public enum FinalLaunchMobileSummaryBuilder {
             title: "Final launch \(sanitize(report.overallStatus))",
             subtitle: summaryText(report.summary, mode: report.mode),
             phaseRows: Array(phaseRows.prefix(4)),
+            modePolicyRows: modePolicyRows(from: report),
             resourceActions: resourceActions(from: report.finalResourcesPreflight),
             acceptanceRows: acceptanceRows(from: report.finalAcceptanceReadiness),
             handoffRows: handoffRows(from: report.finalOperatorHandoff),
             commandRows: report.commands.prefix(4).map(sanitize),
             notes: baseNotes()
         )
+    }
+
+    private static func modePolicyRows(from report: FinalDemoLaunchReport) -> [String] {
+        var rows = [
+            "Mode: \(displayMode(report.mode))",
+            "Live calls by default: \(yesNo(report.liveCallPolicy.liveCallsByDefault))",
+        ]
+        if report.liveCallPolicy.configuredAcceptanceRequiresConsent {
+            rows.append("Consent flag: \(sanitize(report.liveCallPolicy.consentFlag))")
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func displayMode(_ mode: String) -> String {
+        switch mode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "configured":
+            return "Configured"
+        case "local":
+            return "Local"
+        default:
+            return sanitize(mode)
+        }
+    }
+
+    private static func yesNo(_ value: Bool) -> String {
+        value ? "yes" : "no"
     }
 
     private static func status(from raw: String) -> FinalLaunchMobileStatus {
