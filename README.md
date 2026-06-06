@@ -1461,3 +1461,35 @@ Static evidence lives at:
 docs/superpowers/verification/p0.52-device-preflight.html
 docs/superpowers/verification/assets/p0.52-device-preflight-390x844.png
 ```
+
+P0.53 adds a manual backend health probe to the same `Device Preflight` panel.
+The panel now includes a compact `Check` action that calls the configured
+`PMFBackendBaseURL` `/health` endpoint once per tap and folds the result into
+the backend row:
+
+- loopback URLs still block physical iPhone demos
+- unchecked non-loopback URLs wait for the operator to tap `Check`
+- `{"status":"ok"}` marks backend health ready
+- failed, non-2xx, or non-ok health responses block the device preflight
+
+This proves LAN/firewall/server reachability from inside the app source path
+before capture, 3D generation, NPC autonomy, or print quote actions. The source
+only `ios_showcase_acceptance` gate now includes `backend_health_probe` and
+reports `passed=14`, `failed=0` when the mobile showcase source is complete.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py tests/test_final_acceptance.py -q
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.53-backend-health-probe.html
+docs/superpowers/verification/assets/p0.53-backend-health-probe-390x844.png
+```

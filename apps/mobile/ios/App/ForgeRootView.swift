@@ -12,11 +12,13 @@ struct ForgeRootView: View {
     @State private var state = ForgeFlowState()
     @State private var providerReadiness: ProviderReadinessResponse?
     @State private var providerReadinessError: String?
+    @State private var backendHealthProbe: BackendHealthProbe?
     @State private var restoredSnapshot: DemoRunSnapshot?
     @State private var npcTickHistory: [NPCAgentTick] = []
     @State private var snapshotStatusText: String?
     @State private var backendHistoryStatusText: String?
     @State private var isSyncingBackendHistory = false
+    @State private var isCheckingBackendHealth = false
     @State private var npcTickError: String?
     @State private var isAdvancingNPCTick = false
     @State private var isRunningAutonomy = false
@@ -64,7 +66,7 @@ struct ForgeRootView: View {
                     FinalShowcaseSummaryView(
                         summary: finalShowcaseSummary
                     )
-                    DevicePreflightView(summary: devicePreflightSummary)
+                    DevicePreflightView(summary: devicePreflightSummary, isCheckingBackend: isCheckingBackendHealth, checkBackend: checkBackendHealth)
                     DemoScriptView(
                         script: demoScript,
                         autopilotPlan: showcaseAutopilotPlan,
@@ -194,6 +196,32 @@ struct ForgeRootView: View {
         } catch {
             await MainActor.run {
                 providerReadinessError = "Backend preflight is not reachable yet."
+            }
+        }
+    }
+
+    private func checkBackendHealth() {
+        guard !isCheckingBackendHealth else {
+            return
+        }
+        isCheckingBackendHealth = true
+        backendHealthProbe = BackendHealthProbe(status: .checking, detail: "Checking backend health.")
+
+        Task {
+            do {
+                let health = try await apiClient.getBackendHealth()
+                await MainActor.run {
+                    backendHealthProbe = BackendHealthProbe(response: health)
+                    isCheckingBackendHealth = false
+                }
+            } catch {
+                await MainActor.run {
+                    backendHealthProbe = BackendHealthProbe(
+                        status: .unreachable,
+                        detail: "Backend health check failed."
+                    )
+                    isCheckingBackendHealth = false
+                }
             }
         }
     }
@@ -477,11 +505,19 @@ struct ForgeRootView: View {
     private var devicePreflightSummary: DevicePreflightSummary {
         DevicePreflightSummaryBuilder.build(
             backendBaseURL: AppConfiguration.backendBaseURL,
+            backendHealthProbe: currentBackendHealthProbe,
             providerReadiness: providerReadiness,
             providerReadinessError: providerReadinessError,
             finalShowcaseSummary: finalShowcaseSummary,
             savedNPCTickCount: npcTickHistory.count
         )
+    }
+
+    private var currentBackendHealthProbe: BackendHealthProbe? {
+        if isCheckingBackendHealth {
+            return BackendHealthProbe(status: .checking, detail: "Checking backend health.")
+        }
+        return backendHealthProbe
     }
 
     private var demoScript: DemoScript {

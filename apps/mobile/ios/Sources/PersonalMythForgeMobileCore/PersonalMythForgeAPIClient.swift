@@ -178,6 +178,12 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
         return try await send(request, decoding: ProviderReadinessResponse.self)
     }
 
+    public func getBackendHealth() async throws -> BackendHealthResponse {
+        var request = URLRequest(url: endpoint("/health"))
+        request.httpMethod = "GET"
+        return try await send(request, decoding: BackendHealthResponse.self)
+    }
+
     public func createPrintQuote(
         printCandidate: PrintCandidate,
         quantity: Int = 1,

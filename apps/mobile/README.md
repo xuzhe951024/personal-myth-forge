@@ -1543,7 +1543,7 @@ mobile core to classify the iPhone demo handoff before an operator starts the
 showcase:
 
 - loopback backend URLs are blocked because an iPhone cannot reach them
-- private LAN backend URLs are marked ready
+- private LAN backend URLs are no longer blocked by URL shape
 - provider readiness errors or missing provider setup are surfaced without
   provider secrets
 - the local final showcase state and saved NPC tick history are summarized
@@ -1563,3 +1563,31 @@ swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppC
 
 `ios_showcase_acceptance` now checks `device_preflight` as the thirteenth source
 feature.
+
+## P0.53 Backend Health Probe
+
+P0.53 adds a manual `Check` action to the `Device Preflight` panel. The action
+calls `GET /health` on the configured `PMFBackendBaseURL` and updates the
+backend row:
+
+- loopback URLs stay blocked for physical iPhone demos
+- non-loopback URLs wait until the operator runs the check
+- `status=ok` marks backend health ready
+- request failures, non-2xx responses, and non-ok health payloads block the
+  preflight with safe generic text
+
+The check does not run automatically, poll in the background, call provider
+APIs, or mutate Xcode/signing settings. It is a quick LAN/firewall/server
+reachability step before the operator starts capture, 3D generation, NPC
+autonomy, or print quote actions.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+`ios_showcase_acceptance` now checks `backend_health_probe` as the fourteenth
+source feature.

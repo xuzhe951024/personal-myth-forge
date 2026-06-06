@@ -152,6 +152,25 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="backend_health_probe",
+        label="Backend health probe",
+        requirements=(
+            SourceRequirement("apps/mobile/ios/App/DevicePreflightView.swift", "Check"),
+            SourceRequirement("apps/mobile/ios/App/DevicePreflightView.swift", "checkBackend"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "getBackendHealth()"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "checkBackendHealth"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "backendHealthProbe"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DevicePreflight.swift",
+                "BackendHealthProbe",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift",
+                "getBackendHealth",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="demo_script",
         label="Demo script",
         requirements=(
