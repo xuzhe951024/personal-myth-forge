@@ -107,6 +107,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "FinalDemoLaunchPhase",
                 "FinalDemoLaunchLiveCallPolicy",
                 "FinalDemoLaunchSafety",
+                "FinalResourcesPreflightReport",
+                "FinalResourcesFileStatus",
+                "FinalResourcesPreflightSummary",
             ]
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift": "\n".join(
@@ -129,9 +132,11 @@ def _write_minimal_mobile_source(root: Path) -> None:
             [
                 "final_launch",
                 "FinalDemoLaunchReport",
+                "final_resources",
+                "Final Resources",
                 "Final launch readiness is read-only.",
                 "case \"ready\"",
-                "required = Set([\"backend_url\", \"providers\", \"final_launch\", \"local_demo\"])",
+                "required = Set([\"backend_url\", \"providers\", \"final_launch\", \"final_resources\", \"local_demo\"])",
             ]
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": "\n".join(
@@ -140,6 +145,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testGetFinalDemoLaunchBuildsGETRequest",
                 "testGetFinalDemoLaunchRejectsInvalidModeBeforeNetwork",
                 "testDevicePreflightMapsFinalLaunchPartialToWaiting",
+                "testDevicePreflightMapsMissingFinalResourcesPreflightToWaiting",
+                "testDevicePreflightMarksReadyFinalResourcesPreflight",
+                "testDevicePreflightBlocksAndRedactsFinalResourcesPreflight",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
             ]
         ),

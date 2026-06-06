@@ -35,6 +35,9 @@ do {
     try testDevicePreflightBlocksAndRedactsProviderError()
     try testDevicePreflightWaitsForFinalLaunchReport()
     try testDevicePreflightMapsFinalLaunchPartialToWaiting()
+    try testDevicePreflightMapsMissingFinalResourcesPreflightToWaiting()
+    try testDevicePreflightMarksReadyFinalResourcesPreflight()
+    try testDevicePreflightBlocksAndRedactsFinalResourcesPreflight()
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testDevicePreflightMarksLocalDemoReady()
     try testDevicePreflightMarksSavedNPCHistoryReady()
@@ -821,6 +824,56 @@ private func testDevicePreflightMapsFinalLaunchPartialToWaiting() throws {
     try expectContains(summary.item(id: "final_launch")?.detail ?? "", "partial")
 }
 
+private func testDevicePreflightMapsMissingFinalResourcesPreflightToWaiting() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "partial",
+            finalResourcesStatus: "missing",
+            finalResourcesAction: "copy services/backend/final-resources.env.example"
+        )
+    )
+
+    try expectEqual(summary.overallStatus, .waiting)
+    try expectEqual(summary.item(id: "final_resources")?.status, .waiting)
+    try expectContains(summary.item(id: "final_resources")?.detail ?? "", "missing")
+}
+
+private func testDevicePreflightMarksReadyFinalResourcesPreflight() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready"
+        )
+    )
+
+    try expectEqual(summary.item(id: "final_resources")?.status, .ready)
+    try expectContains(summary.item(id: "final_resources")?.detail ?? "", "ready")
+}
+
+private func testDevicePreflightBlocksAndRedactsFinalResourcesPreflight() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "partial",
+            finalResourcesStatus: "blocked",
+            finalResourcesAction: "remove sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+        )
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "final_resources")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDevicePreflightBlocksAndRedactsFinalLaunchError() throws {
     let summary = devicePreflightSummary(
         backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
@@ -1364,6 +1417,13 @@ private func testDecodesFinalDemoLaunchPayload() throws {
     try expectEqual(report.launchPhases.map(\.id), ["backend_device_server", "final_launch"])
     try expectEqual(report.launchPhases[0].status, "ready")
     try expectEqual(report.launchPhases[0].command, "make backend-device-demo")
+    try expectEqual(report.finalResourcesPreflight?.status, "missing")
+    try expectEqual(
+        report.finalResourcesPreflight?.resourcesFile.path,
+        "services/backend/.local/final-resources.env"
+    )
+    try expectEqual(report.finalResourcesPreflight?.resourcesFile.exists, false)
+    try expectEqual(report.finalResourcesPreflight?.summary.missing, 1)
     try expectEqual(report.operatorChecklist.first, "set PMF_BACKEND_BASE_URL to a LAN URL")
     try expectEqual(report.commands.first, "make backend-device-demo")
     try expectFalse(report.liveCallPolicy.liveCallsByDefault)
@@ -1457,7 +1517,9 @@ private func testCreatePrintQuoteBuildsJSONRequest() async throws {
 
 private func finalDemoLaunchPayload(
     overallStatus: String = "partial",
-    unsafeDetail: String = "Launch report partial; review operator checklist."
+    unsafeDetail: String = "Launch report partial; review operator checklist.",
+    finalResourcesStatus: String = "missing",
+    finalResourcesAction: String = "copy services/backend/final-resources.env.example"
 ) -> Data {
     Data(
         """
@@ -1480,6 +1542,32 @@ private func finalDemoLaunchPayload(
             "manual": 1,
             "optional": 2,
             "partial": 0
+          },
+          "final_resources_preflight": {
+            "kind": "final_resources_preflight_report",
+            "status": "\(finalResourcesStatus)",
+            "resources_file": {
+              "path": "services/backend/.local/final-resources.env",
+              "exists": \(finalResourcesStatus == "missing" ? "false" : "true")
+            },
+            "summary": {
+              "ready": \(finalResourcesStatus == "ready" ? "5" : "0"),
+              "missing": \(finalResourcesStatus == "missing" ? "1" : "0"),
+              "blocked": \(finalResourcesStatus == "blocked" ? "1" : "0"),
+              "optional": 2
+            },
+            "items": [],
+            "unknown_keys": [],
+            "malformed_lines": [],
+            "operator_actions": ["\(finalResourcesAction)"],
+            "safety": {
+              "provider_secrets_in_report": false,
+              "local_paths_in_report": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "live_provider_calls": false,
+              "global_mutation": false
+            }
           },
           "launch_phases": [
             {
@@ -2925,10 +3013,18 @@ private func devicePreflightSummary(
     )
 }
 
-private func finalDemoLaunchReport(overallStatus: String = "partial") -> FinalDemoLaunchReport {
+private func finalDemoLaunchReport(
+    overallStatus: String = "partial",
+    finalResourcesStatus: String = "ready",
+    finalResourcesAction: String = "copy services/backend/final-resources.env.example"
+) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
-        from: finalDemoLaunchPayload(overallStatus: overallStatus)
+        from: finalDemoLaunchPayload(
+            overallStatus: overallStatus,
+            finalResourcesStatus: finalResourcesStatus,
+            finalResourcesAction: finalResourcesAction
+        )
     )
 }
 

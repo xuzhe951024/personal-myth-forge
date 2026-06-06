@@ -86,6 +86,7 @@ Bridge deliverable:
 - P0.68 iOS local network privacy readiness for physical-device LAN backend demos
 - P0.69 final demo launch unified resource-apply phase and command checklist cleanup
 - P0.70 read-only final resources preflight before unified apply
+- P0.71 iPhone Device Preflight row for final resources preflight readiness
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
