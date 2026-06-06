@@ -315,3 +315,37 @@ docs/superpowers/verification/assets/p0.15-ios-generated-asset-handoff-390x844.p
 Remaining gaps after P0.15 are provider-side USDZ export or GLB-to-USDZ
 conversion, runtime GLB import, full Xcode simulator/device deployment, live
 ARKit mesh capture, richer 3D village rendering, and real provider-key runs.
+
+## P0.16 Asset Variant Contract
+
+P0.16 makes the backend generated asset contract multi-format while preserving
+the existing primary `generated_asset` fields. New responses may include
+`generated_asset.variants`, starting with:
+
+- `game_asset` GLB as the primary in-game asset.
+- `ios_scene_asset` USDZ when the backend/provider has a SceneKit-loadable
+  derivative.
+
+`GeneratedAsset` in the Swift core decodes missing `variants` as `[]`, so older
+fixtures and backend responses remain valid. `ArtifactAssetPreparer` now checks
+`preferredSceneVariant` first and downloads/caches that USDZ before falling back
+to the primary GLB path.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.16-asset-variant-contract.html
+docs/superpowers/verification/assets/p0.16-asset-variant-contract-390x844.png
+```
+
+Remaining gaps after P0.16 are runtime GLB import, conversion retry when USDZ is
+missing, full Xcode simulator/device deployment, live ARKit mesh capture, richer
+3D village rendering, and print asset repair.

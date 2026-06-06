@@ -270,3 +270,36 @@ docs/superpowers/verification/assets/p0.15-ios-generated-asset-handoff-390x844.p
 
 This still does not solve provider-side USDZ export, GLB runtime conversion,
 simulator/device deployment, live ARKit mesh capture, or Unity village import.
+
+P0.16 adds a generated asset variant contract. The backend keeps
+`generated_asset` as the primary game asset, usually GLB, and now also returns
+`generated_asset.variants` for alternate files from the same generation. The
+local provider returns a deterministic USDZ `ios_scene_asset` variant, and the
+Meshy adapter requests GLB plus USDZ and maps `model_urls.usdz` into that
+variant when present.
+
+The iOS models decode missing `variants` as an empty list for older responses.
+`ArtifactAssetPreparer` now prefers a scene-loadable `ios_scene_asset` before
+falling back to the primary asset, so a backend-provided USDZ can become the
+SceneKit handoff path without sending provider API keys to the mobile app.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.16-asset-variant-contract.html
+docs/superpowers/verification/assets/p0.16-asset-variant-contract-390x844.png
+```
+
+This still does not solve runtime GLB import, provider conversion retries when
+USDZ is absent, simulator/device deployment, live ARKit mesh capture, print
+asset repair, or Unity village import.
