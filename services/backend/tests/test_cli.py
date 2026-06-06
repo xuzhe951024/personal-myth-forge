@@ -39,10 +39,98 @@ def test_cli_evaluate_3d_writes_report(tmp_path) -> None:
 
     assert exit_code == 0
     report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert report["kind"] == "three_d_evaluation_report"
+    assert report["suite"] == "custom-prompts"
     assert report["provider"] == "local"
-    assert report["total_prompts"] == 2
-    assert [row["status"] for row in report["rows"]] == ["succeeded", "succeeded"]
-    assert all("elapsed_seconds" in row for row in report["rows"])
+    assert report["total_cases"] == 2
+    assert [case["case_id"] for case in report["cases"]] == ["custom_001", "custom_002"]
+    assert [case["category"] for case in report["cases"]] == [
+        "custom_prompt",
+        "custom_prompt",
+    ]
+    assert [case["status"] for case in report["cases"]] == ["succeeded", "succeeded"]
+    assert all("elapsed_seconds" in case for case in report["cases"])
+
+
+def test_cli_evaluate_3d_default_suite_writes_rich_report(tmp_path) -> None:
+    output_file = tmp_path / "suite-report.json"
+
+    exit_code = main(
+        [
+            "evaluate-3d",
+            "--provider",
+            "local",
+            "--suite",
+            "default-v0",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report_text = output_file.read_text(encoding="utf-8")
+    report = json.loads(report_text)
+
+    assert exit_code == 0
+    assert report["kind"] == "three_d_evaluation_report"
+    assert report["suite"] == "default-v0"
+    assert report["provider"] == "local"
+    assert report["total_cases"] == 20
+    assert report["succeeded"] == 20
+    assert report["failed"] == 0
+    assert report["coverage"]["input_modes"]["text_prompt"] == 20
+    assert report["coverage"]["variant_roles"]["game_asset"] == 20
+    assert report["coverage"]["variant_roles"]["ios_scene_asset"] == 20
+    assert report["coverage"]["scene_loadable_cases"] == 20
+    assert len(report["review_rubric"]) == 5
+    assert report["safety"]["raw_media_in_report"] is False
+    assert report["safety"]["provider_secrets_in_report"] is False
+    assert report["safety"]["local_paths_in_report"] is False
+    first_case = report["cases"][0]
+    assert first_case["case_id"]
+    assert first_case["category"] == "object_description"
+    assert first_case["expected_input_mode"] == "text_prompt"
+    assert first_case["review_focus"]
+    assert first_case["generation_provenance"]["input_mode"] == "text_prompt"
+    assert first_case["generation_provenance"]["raw_sources_included"] is False
+    assert first_case["variant_roles"] == ["game_asset", "ios_scene_asset"]
+    assert first_case["scene_loadable_variant"] is True
+    assert first_case["manual_review"] == {
+        "artifact_quality": None,
+        "prompt_alignment": None,
+        "mobile_readiness": None,
+        "printability_signal": None,
+        "notes": None,
+    }
+    assert "data:image" not in report_text
+    assert "Authorization" not in report_text
+
+
+def test_cli_evaluate_3d_requires_suite_or_prompts_file(tmp_path) -> None:
+    output_file = tmp_path / "report.json"
+
+    with pytest.raises(SystemExit):
+        main(["evaluate-3d", "--provider", "local", "--output", str(output_file)])
+
+
+def test_cli_evaluate_3d_rejects_suite_and_prompts_file_together(tmp_path) -> None:
+    prompts_file = tmp_path / "prompts.txt"
+    output_file = tmp_path / "report.json"
+    prompts_file.write_text("Create a moon cup.\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit):
+        main(
+            [
+                "evaluate-3d",
+                "--provider",
+                "local",
+                "--suite",
+                "default-v0",
+                "--prompts-file",
+                str(prompts_file),
+                "--output",
+                str(output_file),
+            ]
+        )
 
 
 def test_cli_evaluate_3d_returns_error_without_report_when_provider_config_fails(
@@ -107,10 +195,13 @@ def test_cli_evaluate_3d_sanitizes_per_prompt_errors(tmp_path, monkeypatch) -> N
     report = json.loads(report_text)
 
     assert exit_code == 0
-    assert report["rows"][0]["status"] == "failed"
+    assert report["cases"][0]["status"] == "failed"
+    assert report["cases"][0]["error"] == "failed [redacted] [redacted]"
     assert "test-secret" not in report_text
     assert "Authorization" not in report_text
     assert "raw=" not in report_text
+    assert "data:image" not in report_text
+    assert "file://" not in report_text
 
 
 def test_cli_provider_handoff_writes_local_report(tmp_path, monkeypatch) -> None:

@@ -883,3 +883,28 @@ Static evidence lives at:
 docs/superpowers/verification/p0.34-generation-provenance-contract.html
 docs/superpowers/verification/assets/p0.34-generation-provenance-contract-390x844.png
 ```
+
+P0.35 adds a canonical 20-case 3D provider evaluation suite for the final
+Meshy quality handoff. It extends `evaluate-3d` with:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli evaluate-3d \
+  --provider local \
+  --suite default-v0 \
+  --output /tmp/personal-myth-forge-3d-eval.json
+```
+
+The report includes suite/category metadata, generated asset provenance,
+variant coverage, SceneKit-loadable coverage, elapsed time, sanitized errors,
+and empty manual review fields for later quality scoring. Custom prompt files
+still work and are reported as `custom-prompts`. Running the same suite through
+Meshy is opt-in and requires backend-only `MESHY_API_KEY`; final acceptance does
+not automatically spend provider credits.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.35-3d-provider-evaluation-suite.html
+docs/superpowers/verification/assets/p0.35-3d-provider-evaluation-suite-390x844.png
+```

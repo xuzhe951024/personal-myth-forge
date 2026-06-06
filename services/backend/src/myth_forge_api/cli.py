@@ -3,15 +3,18 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import re
 import sys
-import time
 from dataclasses import replace
 from pathlib import Path
 from typing import Sequence
 
 from myth_forge_api.acceptance import run_demo_acceptance
 from myth_forge_api.config import load_settings
+from myth_forge_api.evaluation.three_d import (
+    DEFAULT_THREE_D_EVALUATION_SUITE,
+    build_custom_prompt_cases,
+    run_three_d_evaluation,
+)
 from myth_forge_api.final_acceptance import run_final_acceptance
 from myth_forge_api.providers.factory import build_three_d_provider
 from myth_forge_api.providers.readiness import build_provider_readiness
@@ -41,6 +44,8 @@ NEXT_HANDOFF_COMMANDS = [
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
+    if args.command == "evaluate-3d" and bool(args.prompts_file) == bool(args.suite):
+        parser.error("evaluate-3d requires exactly one of --suite or --prompts-file.")
 
     try:
         if args.command == "generate-asset":
@@ -57,6 +62,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "evaluate-3d":
             return _evaluate_3d(
                 prompts_file=args.prompts_file,
+                suite_name=args.suite,
                 provider_name=args.provider,
                 output_path=args.output,
             )
@@ -102,7 +108,8 @@ def _build_parser() -> argparse.ArgumentParser:
     batch_parser.add_argument("--provider", choices=["local", "meshy"], default=None)
 
     evaluate_parser = subcommands.add_parser("evaluate-3d")
-    evaluate_parser.add_argument("--prompts-file", required=True)
+    evaluate_parser.add_argument("--prompts-file", default=None)
+    evaluate_parser.add_argument("--suite", choices=["default-v0"], default=None)
     evaluate_parser.add_argument("--provider", choices=["local", "meshy"], default=None)
     evaluate_parser.add_argument("--output", required=True)
 
@@ -143,8 +150,21 @@ def _generate_asset(prompt: str, provider_name: str | None):
     return provider.generate_game_asset(_generation_request_for_prompt(prompt))
 
 
-def _evaluate_3d(prompts_file: str, provider_name: str | None, output_path: str) -> int:
-    prompts = _read_prompts(prompts_file)
+def _evaluate_3d(
+    prompts_file: str | None,
+    suite_name: str | None,
+    provider_name: str | None,
+    output_path: str,
+) -> int:
+    if bool(prompts_file) == bool(suite_name):
+        raise ValueError("Provide exactly one of --suite or --prompts-file.")
+    if suite_name == "default-v0":
+        cases = DEFAULT_THREE_D_EVALUATION_SUITE
+        report_suite_name = suite_name
+    else:
+        cases = build_custom_prompt_cases(_read_prompts(prompts_file or ""))
+        report_suite_name = "custom-prompts"
+
     settings = load_settings()
     if provider_name:
         settings = replace(settings, three_d_provider=provider_name)
@@ -158,40 +178,12 @@ def _evaluate_3d(prompts_file: str, provider_name: str | None, output_path: str)
         print(str(exc), file=sys.stderr)
         return 1
 
-    rows = []
-    for prompt in prompts:
-        started_at = time.perf_counter()
-        try:
-            asset = provider.generate_game_asset(_generation_request_for_prompt(prompt))
-            rows.append(
-                {
-                    "prompt": prompt,
-                    "provider": asset.provider,
-                    "status": "succeeded",
-                    "asset_uri": asset.uri,
-                    "elapsed_seconds": round(time.perf_counter() - started_at, 4),
-                    "error": None,
-                }
-            )
-        except Exception as exc:
-            rows.append(
-                {
-                    "prompt": prompt,
-                    "provider": selected_provider,
-                    "status": "failed",
-                    "asset_uri": None,
-                    "elapsed_seconds": round(time.perf_counter() - started_at, 4),
-                    "error": _safe_provider_error(exc),
-                }
-            )
-
-    report = {
-        "provider": selected_provider,
-        "total_prompts": len(prompts),
-        "succeeded": sum(1 for row in rows if row["status"] == "succeeded"),
-        "failed": sum(1 for row in rows if row["status"] == "failed"),
-        "rows": rows,
-    }
+    report = run_three_d_evaluation(
+        provider=provider,
+        selected_provider=selected_provider,
+        suite_name=report_suite_name,
+        cases=cases,
+    )
     destination = Path(output_path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -313,19 +305,6 @@ def _session_id_for_prompt(prompt: str) -> str:
 
 def _generation_request_for_prompt(prompt: str) -> ThreeDGenerationRequest:
     return ThreeDGenerationRequest(session_id=_session_id_for_prompt(prompt), prompt=prompt)
-
-
-def _safe_provider_error(exc: Exception) -> str:
-    message = str(exc)
-    replacements = [
-        r"Authorization\s*[=:]\s*Bearer\s+[A-Za-z0-9._:-]+",
-        r"Bearer\s+[A-Za-z0-9._:-]+",
-        r"raw=[^\s,;]+",
-        r"api[_-]?key\s*[=:]\s*[^\s,;]+",
-    ]
-    for pattern in replacements:
-        message = re.sub(pattern, "[redacted]", message, flags=re.IGNORECASE)
-    return message
 
 
 if __name__ == "__main__":
