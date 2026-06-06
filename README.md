@@ -791,3 +791,53 @@ Static evidence lives at:
 docs/superpowers/verification/p0.31-integrated-demo-acceptance.html
 docs/superpowers/verification/assets/p0.31-integrated-demo-acceptance-390x844.png
 ```
+
+P0.32 adds a single final acceptance report that collects the key handoff,
+backend demo acceptance, and local iOS/Xcode gates without changing global
+machine state:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+The quick profile runs provider handoff, local demo acceptance,
+`make mobile-deploy-preflight`, and `make mobile-xcode-build`. On this machine
+the command is expected to exit `2` until local iOS deploy config and the Apple
+SDK license gate are handled; those states are reported as `blocked`, not as
+product failures.
+
+Run the full local regression profile before final review:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile full \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+After backend-only Meshy/OpenAI keys are supplied, use configured strict mode:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode configured \
+  --require-real-core \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+Strict mode exits `2` before live provider calls until the core provider set is
+real-provider-ready. Final acceptance reports redact provider secrets, bearer
+tokens, raw payload markers, data URIs, and local filesystem paths.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.32-final-acceptance-report.html
+docs/superpowers/verification/assets/p0.32-final-acceptance-report-390x844.png
+```

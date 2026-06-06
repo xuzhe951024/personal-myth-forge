@@ -4,6 +4,7 @@ import pytest
 
 from myth_forge_api.acceptance import DemoAcceptanceResult
 from myth_forge_api.config import Settings
+from myth_forge_api.final_acceptance import FinalAcceptanceResult
 from myth_forge_api.cli import main
 from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDGenerationRequest
 
@@ -258,3 +259,88 @@ def test_cli_demo_acceptance_prints_stdout_and_returns_result_code(capsys, monke
 def test_cli_demo_acceptance_rejects_invalid_npc_steps(npc_steps: str) -> None:
     with pytest.raises(SystemExit):
         main(["demo-acceptance", "--npc-steps", npc_steps])
+
+
+def test_cli_final_acceptance_writes_report_and_returns_result_code(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "final-acceptance.json"
+    calls = []
+
+    def fake_run_final_acceptance(**kwargs):
+        calls.append(kwargs)
+        return FinalAcceptanceResult(
+            exit_code=2,
+            report={
+                "kind": "final_acceptance_report",
+                "profile": kwargs["profile"],
+                "overall_status": "blocked",
+            },
+        )
+
+    monkeypatch.setattr("myth_forge_api.cli.run_final_acceptance", fake_run_final_acceptance)
+
+    exit_code = main(
+        [
+            "final-acceptance",
+            "--profile",
+            "full",
+            "--provider-mode",
+            "configured",
+            "--require-real-core",
+            "--npc-steps",
+            "2",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 2
+    assert calls == [
+        {
+            "profile": "full",
+            "provider_mode": "configured",
+            "require_real_core": True,
+            "npc_steps": 2,
+            "repo_root": str(tmp_path),
+        }
+    ]
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert report["kind"] == "final_acceptance_report"
+    assert report["overall_status"] == "blocked"
+
+
+def test_cli_final_acceptance_prints_stdout_with_defaults(capsys, monkeypatch) -> None:
+    calls = []
+
+    def fake_run_final_acceptance(**kwargs):
+        calls.append(kwargs)
+        return FinalAcceptanceResult(
+            exit_code=0,
+            report={
+                "kind": "final_acceptance_report",
+                "profile": kwargs["profile"],
+                "overall_status": "passed",
+            },
+        )
+
+    monkeypatch.setattr("myth_forge_api.cli.run_final_acceptance", fake_run_final_acceptance)
+
+    exit_code = main(["final-acceptance"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert calls == [
+        {
+            "profile": "quick",
+            "provider_mode": "local",
+            "require_real_core": False,
+            "npc_steps": 3,
+            "repo_root": None,
+        }
+    ]
+    assert payload["kind"] == "final_acceptance_report"
+    assert payload["overall_status"] == "passed"
