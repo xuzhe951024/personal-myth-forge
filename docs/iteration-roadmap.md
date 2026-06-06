@@ -38,6 +38,7 @@ Bridge deliverable:
 - P0.20 provider readiness preflight for backend-only API/key handoff and mobile display
 - P0.21 backend HEIC/HEIF-to-JPEG provider input preparation for Meshy Image-to-3D guided scans
 - P0.22 stateless NPC agent tick loop with mobile next-action display
+- P0.23 OpenAI structured-output provider path for stateless NPC agent ticks
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

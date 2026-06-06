@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.23 OpenAI NPC Tick Provider</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2520;
+      --muted: #637068;
+      --line: #d8ded6;
+      --paper: #fbfcf8;
+      --panel: #ffffff;
+      --sage: #5e7c62;
+      --clay: #a4553a;
+      --gold: #b88628;
+      --blue: #3d6b8f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #edf1ea;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      background: var(--paper);
+      border-left: 1px solid #d3dbd0;
+      border-right: 1px solid #d3dbd0;
+      padding: 18px 16px 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.05;
+      font-weight: 760;
+    }
+
+    .tag {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--clay);
+    }
+
+    section {
+      padding: 15px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .runtime {
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 740;
+      text-align: right;
+    }
+
+    .readiness {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 10px;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .provider {
+      font-size: 14px;
+      font-weight: 720;
+    }
+
+    .detail {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .status {
+      min-width: 58px;
+      border-radius: 6px;
+      background: #e7f0e2;
+      color: #315b37;
+      padding: 5px 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    button {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--sage);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 760;
+      margin: 0 0 12px;
+    }
+
+    .tick-number {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .trace {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .trace-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+
+    .npc {
+      font-size: 14px;
+      font-weight: 760;
+    }
+
+    .confidence {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 720;
+    }
+
+    .intent {
+      margin: 0 0 4px;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .action {
+      margin: 0 0 4px;
+      color: var(--clay);
+      font-size: 12px;
+      font-weight: 760;
+      overflow-wrap: anywhere;
+    }
+
+    .rationale {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .list-title {
+      margin: 0 0 6px;
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 16px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    .accepted .list-title {
+      color: var(--sage);
+    }
+
+    .rejected .list-title {
+      color: var(--clay);
+    }
+
+    .world {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .world strong {
+      color: var(--ink);
+    }
+
+    .footer {
+      border-bottom: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Personal Myth Forge</h1>
+      <div class="tag">P0.23</div>
+    </header>
+
+    <section>
+      <div class="section-title">
+        <h2>Provider Readiness</h2>
+        <div class="runtime">backend only</div>
+      </div>
+      <div class="readiness">
+        <div>
+          <div class="provider">NPC · OpenAI</div>
+          <div class="detail">structured_agent_traces · structured_agent_ticks · world_handoff</div>
+        </div>
+        <div class="status">READY</div>
+        <div>
+          <div class="provider">3D · Meshy</div>
+          <div class="detail">text/image to GLB with iOS scene variant handoff</div>
+        </div>
+        <div class="status">READY</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h2>Next Village Tick</h2>
+        <div class="runtime">openai_tick_structured_runtime</div>
+      </div>
+      <button>Advance Village</button>
+      <p class="tick-number">Tick 2 · current myth session summary only</p>
+
+      <article class="trace">
+        <div class="trace-head">
+          <div class="npc">Mara</div>
+          <div class="confidence">82%</div>
+        </div>
+        <p class="intent">turn awe into public witness</p>
+        <p class="action">invite_neighbors_to_witness</p>
+        <p class="rationale">Mara moves the crowd toward a shared ritual without exposing private context.</p>
+      </article>
+
+      <article class="trace">
+        <div class="trace-head">
+          <div class="npc">Ior</div>
+          <div class="confidence">71%</div>
+        </div>
+        <p class="intent">guard the artifact without ending debate</p>
+        <p class="action">guard_artifact</p>
+        <p class="rationale">Ior accepts the sign but asks for visible rules before anyone handles it.</p>
+      </article>
+
+      <article class="trace">
+        <div class="trace-head">
+          <div class="npc">Senn</div>
+          <div class="confidence">78%</div>
+        </div>
+        <p class="intent">make the relic legible</p>
+        <p class="action">suggest_ritual_name</p>
+        <p class="rationale">Senn turns uncertainty into language the village can repeat safely.</p>
+      </article>
+    </section>
+
+    <section>
+      <div class="columns">
+        <div class="accepted">
+          <p class="list-title">Accepted</p>
+          <ul>
+            <li>Mara prepares to invite neighbors to witness.</li>
+            <li>Ior prepares to guard artifact.</li>
+            <li>Senn prepares to suggest ritual name.</li>
+          </ul>
+        </div>
+        <div class="rejected">
+          <p class="list-title">Rejected</p>
+          <ul>
+            <li>order_print_without_approval blocked by safety and privacy rules.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">
+        <h2>Visible Changes</h2>
+      </div>
+      <div class="world">
+        <div><strong>Village:</strong> the debate grows louder around the guarded artifact.</div>
+        <div><strong>Artifact:</strong> the relic gains a local name before any print order exists.</div>
+      </div>
+    </section>
+
+    <section class="footer">
+      Provider keys stay on the backend. Raw recent events, media payloads,
+      data URIs, and local capture paths are not sent to the mobile app.
+    </section>
+  </main>
+</body>
+</html>

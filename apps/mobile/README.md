@@ -591,3 +591,37 @@ docs/superpowers/verification/assets/p0.22-npc-agent-ticks-390x844.png
 Remaining gaps after P0.22 are persistent server-side tick history, live OpenAI
 tick generation, Unity movement execution, real device validation, signing, and
 Apple SDK license acceptance on this machine.
+
+## P0.23 OpenAI NPC Tick Provider
+
+P0.23 keeps the iOS contract stable while making the backend tick runtime
+provider-driven. When the backend is configured with `NPC_PROVIDER=openai` and
+`OPENAI_API_KEY`, `POST /v1/npc-ticks` returns the same `NPCAgentTick` shape but
+uses `agent_runtime: openai_tick_structured_runtime`.
+
+The mobile app does not receive or store provider keys. `NPCTickView` already
+renders the backend runtime label, NPC traces, accepted/rejected actions, and
+visible world changes. This means the same `Advance Village` control works for
+local deterministic ticks and OpenAI structured ticks.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+make mobile-xcode-build
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.23-openai-npc-tick-provider.html
+docs/superpowers/verification/assets/p0.23-openai-npc-tick-provider-390x844.png
+```
+
+Remaining gaps after P0.23 are live provider-key acceptance testing, persistent
+server-side tick history, Unity movement execution, real device validation,
+signing, and Apple SDK license acceptance on this machine.

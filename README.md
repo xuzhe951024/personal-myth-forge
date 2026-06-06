@@ -52,7 +52,7 @@ Set `CAPTURE_STORAGE_DIR` to override the local ignored capture storage director
 The default local path is intended for development artifacts, not durable user
 storage.
 
-To route NPC interpretation through OpenAI structured output:
+To route NPC interpretation and stateless NPC ticks through OpenAI structured output:
 
 ```bash
 export OPENAI_API_KEY=...
@@ -501,3 +501,43 @@ docs/superpowers/verification/assets/p0.22-npc-agent-ticks-390x844.png
 P0.22 does not persist server-side sessions, add live OpenAI tick generation,
 execute Unity character movement, configure signing, or bypass the Apple SDK
 license gate.
+
+P0.23 routes the NPC tick loop through the same provider switch used by initial
+NPC reactions. When the backend runs with:
+
+```bash
+export OPENAI_API_KEY=...
+export NPC_PROVIDER=openai
+```
+
+`POST /v1/myth-sessions` uses `OpenAINPCDirector` for the first structured NPC
+reaction batch and `POST /v1/npc-ticks` uses `OpenAINPCTickRuntime` for the next
+structured NPC action tick. Both paths share `OPENAI_NPC_MODEL` and
+`OPENAI_API_BASE_URL`; no OpenAI key is stored in or sent to the iOS app.
+
+The OpenAI tick prompt receives approved myth session fields and an aggregate
+recent-event count. It does not include raw `recent_events`, data URIs, local
+capture paths, provider keys, or media payloads. The generated actions are still
+passed through the world arbitrator before they are returned to mobile clients.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+make mobile-xcode-build
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.23-openai-npc-tick-provider.html
+docs/superpowers/verification/assets/p0.23-openai-npc-tick-provider-390x844.png
+```
+
+P0.23 does not run a live OpenAI request in automated tests, persist tick
+history, add background loops, execute Unity movement, configure signing, or
+bypass the Apple SDK license gate.
