@@ -174,6 +174,25 @@ public struct MythSeed: Codable, Equatable, Sendable {
     }
 }
 
+public struct GeneratedAssetVariant: Codable, Equatable, Sendable {
+    public var role: String
+    public var format: String
+    public var uri: String
+    public var isSceneLoadable: Bool
+
+    public init(
+        role: String,
+        format: String,
+        uri: String,
+        isSceneLoadable: Bool
+    ) {
+        self.role = role
+        self.format = format
+        self.uri = uri
+        self.isSceneLoadable = isSceneLoadable
+    }
+}
+
 public struct GeneratedAsset: Codable, Equatable, Sendable {
     public var kind: String
     public var provider: String
@@ -181,6 +200,17 @@ public struct GeneratedAsset: Codable, Equatable, Sendable {
     public var uri: String
     public var prompt: String
     public var moderationStatus: String
+    public var variants: [GeneratedAssetVariant]
+
+    private enum CodingKeys: String, CodingKey {
+        case kind
+        case provider
+        case format
+        case uri
+        case prompt
+        case moderationStatus
+        case variants
+    }
 
     public init(
         kind: String,
@@ -188,7 +218,8 @@ public struct GeneratedAsset: Codable, Equatable, Sendable {
         format: String,
         uri: String,
         prompt: String,
-        moderationStatus: String
+        moderationStatus: String,
+        variants: [GeneratedAssetVariant] = []
     ) {
         self.kind = kind
         self.provider = provider
@@ -196,6 +227,29 @@ public struct GeneratedAsset: Codable, Equatable, Sendable {
         self.uri = uri
         self.prompt = prompt
         self.moderationStatus = moderationStatus
+        self.variants = variants
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.kind = try container.decode(String.self, forKey: .kind)
+        self.provider = try container.decode(String.self, forKey: .provider)
+        self.format = try container.decode(String.self, forKey: .format)
+        self.uri = try container.decode(String.self, forKey: .uri)
+        self.prompt = try container.decode(String.self, forKey: .prompt)
+        self.moderationStatus = try container.decode(String.self, forKey: .moderationStatus)
+        self.variants = try container.decodeIfPresent([GeneratedAssetVariant].self, forKey: .variants) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(kind, forKey: .kind)
+        try container.encode(provider, forKey: .provider)
+        try container.encode(format, forKey: .format)
+        try container.encode(uri, forKey: .uri)
+        try container.encode(prompt, forKey: .prompt)
+        try container.encode(moderationStatus, forKey: .moderationStatus)
+        try container.encode(variants, forKey: .variants)
     }
 }
 

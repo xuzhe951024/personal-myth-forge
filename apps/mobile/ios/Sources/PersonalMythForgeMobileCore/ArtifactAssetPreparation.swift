@@ -1,5 +1,19 @@
 import Foundation
 
+private let sceneKitLoadableAssetFormats: Set<String> = ["dae", "scn", "usd", "usdz"]
+private let conversionRequiredAssetFormats: Set<String> = ["glb", "gltf"]
+
+public extension GeneratedAsset {
+    var preferredSceneVariant: GeneratedAssetVariant? {
+        variants.first { variant in
+            variant.role == "ios_scene_asset"
+                && variant.isSceneLoadable
+                && sceneKitLoadableAssetFormats.contains(variant.format.normalizedAssetFormat)
+                && !variant.uri.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+    }
+}
+
 public enum PreparedArtifactAssetStatus: String, Equatable, Sendable {
     case awaitingAsset
     case awaitingFormat
@@ -82,9 +96,6 @@ public struct FileSystemArtifactAssetCache: ArtifactAssetCache, Sendable {
 }
 
 public struct ArtifactAssetPreparer: Sendable {
-    private static let sceneKitFormats: Set<String> = ["dae", "scn", "usd", "usdz"]
-    private static let conversionRequiredFormats: Set<String> = ["glb", "gltf"]
-
     private let downloader: any ArtifactAssetDownloader
     private let cache: any ArtifactAssetCache
 
@@ -110,10 +121,9 @@ public struct ArtifactAssetPreparer: Sendable {
 
     public func prepare(session: MythSession) async -> PreparedArtifactAsset {
         let preview = ArtifactPreviewState(session: session)
-        let format = session.generatedAsset.format
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        let uri = preview.uri
+        let selectedAsset = ArtifactAssetReference(generatedAsset: session.generatedAsset)
+        let format = selectedAsset.format.normalizedAssetFormat
+        let uri = selectedAsset.uri.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !uri.isEmpty else {
             return PreparedArtifactAsset(
@@ -158,7 +168,7 @@ public struct ArtifactAssetPreparer: Sendable {
                 data: data,
                 filename: cacheFilename(
                     sessionId: session.sessionId,
-                    provider: session.generatedAsset.provider,
+                    provider: selectedAsset.provider,
                     format: format
                 )
             )
@@ -185,10 +195,10 @@ public struct ArtifactAssetPreparer: Sendable {
         sourceURL: URL,
         format: String
     ) -> PreparedArtifactAsset {
-        if Self.sceneKitFormats.contains(format) {
+        if sceneKitLoadableAssetFormats.contains(format) {
             return PreparedArtifactAsset(
                 preview: preview,
-                sourceURI: preview.uri,
+                sourceURI: sourceURL.absoluteString,
                 cachedURL: sourceURL,
                 sceneURL: sourceURL,
                 status: .localSceneReady,
@@ -197,7 +207,7 @@ public struct ArtifactAssetPreparer: Sendable {
             )
         }
 
-        return unsupportedFormat(preview: preview, sourceURI: preview.uri, cachedURL: sourceURL)
+        return unsupportedFormat(preview: preview, sourceURI: sourceURL.absoluteString, cachedURL: sourceURL)
     }
 
     private func prepareCachedAsset(
@@ -206,7 +216,7 @@ public struct ArtifactAssetPreparer: Sendable {
         cachedURL: URL,
         format: String
     ) -> PreparedArtifactAsset {
-        if Self.sceneKitFormats.contains(format) {
+        if sceneKitLoadableAssetFormats.contains(format) {
             return PreparedArtifactAsset(
                 preview: preview,
                 sourceURI: sourceURL.absoluteString,
@@ -218,7 +228,7 @@ public struct ArtifactAssetPreparer: Sendable {
             )
         }
 
-        if Self.conversionRequiredFormats.contains(format) {
+        if conversionRequiredAssetFormats.contains(format) {
             return PreparedArtifactAsset(
                 preview: preview,
                 sourceURI: sourceURL.absoluteString,
@@ -290,5 +300,29 @@ public struct ArtifactAssetPreparer: Sendable {
             .split(separator: "-", omittingEmptySubsequences: true)
             .joined(separator: "-")
         return sanitized.isEmpty ? fallback : sanitized
+    }
+}
+
+private struct ArtifactAssetReference {
+    let provider: String
+    let format: String
+    let uri: String
+
+    init(generatedAsset: GeneratedAsset) {
+        if let variant = generatedAsset.preferredSceneVariant {
+            self.provider = generatedAsset.provider
+            self.format = variant.format
+            self.uri = variant.uri
+        } else {
+            self.provider = generatedAsset.provider
+            self.format = generatedAsset.format
+            self.uri = generatedAsset.uri
+        }
+    }
+}
+
+private extension String {
+    var normalizedAssetFormat: String {
+        trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }

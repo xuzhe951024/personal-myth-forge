@@ -4,6 +4,7 @@ import PersonalMythForgeMobileCore
 do {
     try testDecodesObjectCaptureFixture()
     try testDecodesMythSessionFixture()
+    try testDecodesMythSessionWithoutGeneratedAssetVariants()
     try testCaptureIDValidation()
     try testMultipartBodyIncludesMetadataAndFileWithoutLocalPaths()
     try testMultipartBuilderSanitizesHeaderValues()
@@ -31,6 +32,8 @@ do {
     try await testArtifactAssetPreparerUsesLocalSceneURL()
     try await testArtifactAssetPreparerDownloadsRemoteUSDZForSceneKit()
     try await testArtifactAssetPreparerCachesRemoteGLBButRequiresConversion()
+    try await testArtifactAssetPreparerPrefersSceneVariantOverPrimaryGLB()
+    try await testArtifactAssetPreparerReportsLocalSceneVariantSourceURI()
     try await testArtifactAssetPreparerRejectsInvalidRemoteURI()
     try await testArtifactAssetPreparerSkipsDownloadWhenFormatMissing()
     try await testArtifactAssetPreparerTreatsCancellationAsCancelled()
@@ -60,7 +63,31 @@ private func testDecodesMythSessionFixture() throws {
     try expectEqual(session.objectCard.label, "old brass key")
     try expectEqual(session.npcReactions.count, 3)
     try expectEqual(session.worldResolution.acceptedActions.count, 2)
+    try expectEqual(session.generatedAsset.variants.count, 2)
+    try expectEqual(session.generatedAsset.variants[0].role, "game_asset")
+    try expectEqual(session.generatedAsset.variants[0].format, "glb")
+    try expectEqual(session.generatedAsset.variants[1].role, "ios_scene_asset")
+    try expectEqual(session.generatedAsset.variants[1].format, "usdz")
+    try expectTrue(session.generatedAsset.variants[1].isSceneLoadable)
     try expectEqual(session.printCandidate.requiresUserApproval, true)
+}
+
+private func testDecodesMythSessionWithoutGeneratedAssetVariants() throws {
+    var payload = try require(
+        try JSONSerialization.jsonObject(with: FixtureLoader.data(from: "myth-session-response")) as? [String: Any],
+        "expected myth session fixture object"
+    )
+    var generatedAsset = try require(
+        payload["generated_asset"] as? [String: Any],
+        "expected generated asset object"
+    )
+    generatedAsset.removeValue(forKey: "variants")
+    payload["generated_asset"] = generatedAsset
+
+    let data = try JSONSerialization.data(withJSONObject: payload)
+    let session = try PMFJSON.decoder.decode(MythSession.self, from: data)
+
+    try expectEqual(session.generatedAsset.variants, [])
 }
 
 private func testCaptureIDValidation() throws {
@@ -766,6 +793,69 @@ private func testArtifactAssetPreparerCachesRemoteGLBButRequiresConversion() asy
     try expectEqual(await cache.storedFilenames(), ["myth_test-meshy.glb"])
 }
 
+private func testArtifactAssetPreparerPrefersSceneVariantOverPrimaryGLB() async throws {
+    let downloader = RecordingArtifactAssetDownloader(data: Data("usdz-bytes".utf8))
+    let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
+    let session = mythSession(
+        asset: generatedAsset(
+            format: "glb",
+            uri: "https://cdn.example.com/relic.glb",
+            variants: [
+                GeneratedAssetVariant(
+                    role: "game_asset",
+                    format: "glb",
+                    uri: "https://cdn.example.com/relic.glb",
+                    isSceneLoadable: false
+                ),
+                GeneratedAssetVariant(
+                    role: "ios_scene_asset",
+                    format: "usdz",
+                    uri: "https://cdn.example.com/relic.usdz",
+                    isSceneLoadable: true
+                ),
+            ]
+        )
+    )
+    let prepared = await ArtifactAssetPreparer(downloader: downloader, cache: cache)
+        .prepare(session: session)
+
+    try expectEqual(prepared.status, .cachedSceneReady)
+    try expectEqual(prepared.sourceURI, "https://cdn.example.com/relic.usdz")
+    try expectEqual(prepared.cachedURL, URL(fileURLWithPath: "/tmp/pmf-assets/myth_test-meshy.usdz"))
+    try expectEqual(prepared.sceneURL, prepared.cachedURL)
+    try expectEqual(await downloader.requestedURLs(), [URL(string: "https://cdn.example.com/relic.usdz")!])
+    try expectEqual(await cache.storedFilenames(), ["myth_test-meshy.usdz"])
+    try expectEqual(await cache.storedData(), [Data("usdz-bytes".utf8)])
+}
+
+private func testArtifactAssetPreparerReportsLocalSceneVariantSourceURI() async throws {
+    let downloader = RecordingArtifactAssetDownloader()
+    let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
+    let session = mythSession(
+        asset: generatedAsset(
+            format: "glb",
+            uri: "file:///tmp/relic.glb",
+            variants: [
+                GeneratedAssetVariant(
+                    role: "ios_scene_asset",
+                    format: "usdz",
+                    uri: "file:///tmp/relic.usdz",
+                    isSceneLoadable: true
+                ),
+            ]
+        )
+    )
+    let prepared = await ArtifactAssetPreparer(downloader: downloader, cache: cache)
+        .prepare(session: session)
+
+    try expectEqual(prepared.status, .localSceneReady)
+    try expectEqual(prepared.sourceURI, "file:///tmp/relic.usdz")
+    try expectEqual(prepared.cachedURL, URL(string: "file:///tmp/relic.usdz"))
+    try expectEqual(prepared.sceneURL, URL(string: "file:///tmp/relic.usdz"))
+    try expectEqual(await downloader.requestedURLs(), [])
+    try expectEqual(await cache.storedFilenames(), [])
+}
+
 private func testArtifactAssetPreparerRejectsInvalidRemoteURI() async throws {
     let downloader = RecordingArtifactAssetDownloader()
     let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
@@ -858,14 +948,19 @@ private func captureMedia(
     )
 }
 
-private func generatedAsset(format: String, uri: String) -> GeneratedAsset {
+private func generatedAsset(
+    format: String,
+    uri: String,
+    variants: [GeneratedAssetVariant] = []
+) -> GeneratedAsset {
     GeneratedAsset(
         kind: "game_asset",
         provider: "meshy",
         format: format,
         uri: uri,
         prompt: "a brass key relic",
-        moderationStatus: "approved"
+        moderationStatus: "approved",
+        variants: variants
     )
 }
 

@@ -31,6 +31,7 @@ Bridge deliverable:
 - P0.13 SwiftPM app-source compile gate for no-global-Xcode iOS deployment readiness checks
 - P0.14 SwiftPM-compiled SceneKit artifact preview surface in the iOS app source
 - P0.15 iOS generated asset download/cache handoff for SceneKit-loadable formats
+- P0.16 generated asset variant contract with GLB primary asset plus USDZ iOS scene handoff
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
