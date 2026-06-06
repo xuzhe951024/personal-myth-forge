@@ -38,6 +38,7 @@ do {
     let npcTickView = try readText(appRoot.appendingPathComponent("NPCTickView.swift"))
     let demoSnapshotStatusView = try readText(appRoot.appendingPathComponent("DemoSnapshotStatusView.swift"))
     let printQuoteReviewView = try readText(appRoot.appendingPathComponent("PrintQuoteReviewView.swift"))
+    let finalShowcaseSummaryView = try readText(appRoot.appendingPathComponent("FinalShowcaseSummaryView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
     let mythSessionID = try readText(coreRoot.appendingPathComponent("MythSessionID.swift"))
     let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
@@ -157,6 +158,7 @@ do {
         "NPCTickView.swift",
         "DemoSnapshotStatusView.swift",
         "PrintQuoteReviewView.swift",
+        "FinalShowcaseSummaryView.swift",
     ] {
         try requireContains(project, file, "Xcode project file reference")
     }
@@ -195,6 +197,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000013 /* PrintQuoteReviewView.swift in Sources */,",
         "print quote review Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000014 /* FinalShowcaseSummaryView.swift in Sources */,",
+        "final showcase summary Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -255,6 +263,14 @@ do {
     try requireContains(forgeRootView, "printQuote", "print quote root state")
     try requireContains(forgeRootView, "isLoadingPrintQuote", "print quote loading state")
     try requireContains(forgeRootView, "printQuoteError", "print quote error state")
+    try requireContains(forgeRootView, "FinalShowcaseSummaryView(", "final showcase summary view wiring")
+    try requireContains(forgeRootView, "FinalShowcaseSummaryBuilder.build", "final showcase summary builder wiring")
+    try requireBefore(
+        forgeRootView,
+        "FinalShowcaseSummaryView(",
+        "ProviderReadinessView(",
+        "final showcase summary before provider readiness"
+    )
     try requireContains(forgeRootView, "PrintQuoteReviewView(", "print quote review view wiring")
     try requireContains(forgeRootView, "createPrintQuote", "print quote API call")
     try requireContains(forgeRootView, "clearPrintQuoteState", "stale print quote clearing")
@@ -339,6 +355,8 @@ do {
     try requireContains(forgeRootView, "CaptureInputLoadError.unreadablePhoto", "partial photo load failure source")
     try requireContains(npcTickView, "Run Autonomy", "autonomy run button label")
     try requireContains(npcTickView, "runAutonomy", "autonomy run button action")
+    try requireContains(finalShowcaseSummaryView, "Final Showcase", "final showcase summary title")
+    try requireContains(finalShowcaseSummaryView, "privacyNotes", "final showcase privacy note rendering")
     try requireContains(
         forgeRootView,
         ".onChange(of: selectedCaptureMode) { mode in",
@@ -572,6 +590,18 @@ private func requireContains(_ haystack: String, _ needle: String, _ label: Stri
 private func requireNotContains(_ haystack: String, _ needle: String, _ label: String) throws {
     if haystack.contains(needle) {
         throw ProjectCheckError.unexpectedText(label, needle)
+    }
+}
+
+private func requireBefore(_ text: String, _ first: String, _ second: String, _ label: String) throws {
+    guard let firstRange = text.range(of: first) else {
+        throw ProjectCheckError.missingText(label, first)
+    }
+    guard let secondRange = text.range(of: second) else {
+        throw ProjectCheckError.missingText(label, second)
+    }
+    if firstRange.lowerBound >= secondRange.lowerBound {
+        throw ProjectCheckError.unexpectedText(label, "\(first) after \(second)")
     }
 }
 
