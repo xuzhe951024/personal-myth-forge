@@ -379,6 +379,9 @@ do {
     )
     try requireContains(forgeRootView, "DevicePreflightSummaryBuilder.build", "device preflight summary wiring")
     try requireContains(forgeRootView, "DevicePreflightView(summary:", "device preflight view wiring")
+    try requireContains(forgeRootView, "finalDemoLaunch", "final demo launch root state")
+    try requireContains(forgeRootView, "loadFinalDemoLaunch", "final demo launch app load path")
+    try requireContains(forgeRootView, "getFinalDemoLaunch(mode: \"local\")", "final demo launch API call")
     try requireContains(forgeRootView, "backendHealthProbe", "backend health probe root state")
     try requireContains(forgeRootView, "isCheckingBackendHealth", "backend health loading state")
     try requireContains(forgeRootView, "getBackendHealth()", "backend health API call")
@@ -509,7 +512,15 @@ do {
     try requireContains(devicePreflightView, "Check", "device preflight check button")
     try requireContains(devicePreflight, "DevicePreflightSummaryBuilder", "device preflight core builder")
     try requireContains(devicePreflight, "BackendHealthProbe", "backend health probe core type")
+    try requireContains(devicePreflight, "final_launch", "device preflight final launch item")
+    try requireContains(devicePreflight, "FinalDemoLaunchReport", "device preflight final launch model")
+    try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")
+    try requireContains(apiClient, "getFinalDemoLaunch", "final demo launch API client method")
+    try requireContains(apiClient, "/v1/final-demo-launch", "final demo launch API endpoint")
+    try requireContains(apiClient, "Unsupported final demo launch mode", "final launch mode guard")
+    try requireContains(pmfModels, "FinalDemoLaunchReport", "final demo launch report model")
+    try requireContains(pmfModels, "FinalDemoLaunchPhase", "final demo launch phase model")
     try requireContains(
         forgeRootView,
         ".onChange(of: selectedCaptureMode) { mode in",

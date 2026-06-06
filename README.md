@@ -112,6 +112,17 @@ changes Xcode/signing/global machine state by itself. Live provider calls remain
 explicitly gated behind `final-acceptance --provider-mode configured
 --require-real-core --allow-live-provider-calls`.
 
+The same sanitized launch status is available to the iPhone app:
+
+```bash
+curl http://127.0.0.1:8080/v1/final-demo-launch?mode=local
+```
+
+The mobile device preflight panel loads this read-only report and shows a
+`Final Launch` row alongside backend, provider, local demo, and saved NPC
+history checks. The endpoint does not write config files, start servers, call
+live providers, or expose secret values.
+
 Upload a local object capture, then create a myth session from that capture:
 
 ```bash

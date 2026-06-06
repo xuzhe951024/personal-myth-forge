@@ -79,6 +79,7 @@ Bridge deliverable:
 - P0.61 final acceptance source/config gate for the OpenAI NPC Agent provider path
 - P0.62 Treatstock print quote adapter plus downloadable local 3MF print candidate handoff
 - P0.63 final demo launch profile that consolidates local/configured resource handoff, provider readiness, final acceptance, iOS preflight, and Xcode build gate commands
+- P0.64 backend `/v1/final-demo-launch` plus iOS device preflight integration for mobile-visible launch readiness
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

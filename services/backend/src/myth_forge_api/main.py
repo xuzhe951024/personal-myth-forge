@@ -4,7 +4,9 @@ import json
 import re
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, Path as PathParam, Request, Response, UploadFile
+from typing import Literal
+
+from fastapi import FastAPI, File, Form, HTTPException, Path as PathParam, Query, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
@@ -28,6 +30,7 @@ from myth_forge_api.domain.models import (
     ProviderReadinessResponse,
 )
 from myth_forge_api.domain.pipeline import create_demo_myth_session
+from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.local_generated_assets import (
     local_generated_game_glb,
     local_generated_print_3mf,
@@ -68,6 +71,16 @@ def health() -> dict[str, str]:
 @app.get("/v1/provider-readiness", response_model=ProviderReadinessResponse)
 def provider_readiness() -> ProviderReadinessResponse:
     return build_provider_readiness(load_settings())
+
+
+@app.get("/v1/final-demo-launch")
+def final_demo_launch(
+    mode: Literal["local", "configured"] = Query("local"),
+) -> dict[str, object]:
+    return build_final_demo_launch_report(
+        mode=mode,
+        settings=load_settings(),
+    ).report
 
 
 @app.get("/demo", include_in_schema=False)

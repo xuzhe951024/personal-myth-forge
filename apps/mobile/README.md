@@ -118,6 +118,16 @@ configured final acceptance, deploy preflight, and Xcode build-gate commands.
 It does not store mobile provider secrets and does not mutate Xcode, signing, or
 global developer settings.
 
+P0.64 exposes the same sanitized status through:
+
+```http
+GET /v1/final-demo-launch?mode=local
+```
+
+`ForgeRootView` loads that report and passes it into `DevicePreflightSummary`.
+The device preflight panel now includes a `Final Launch` row so the operator can
+see the final launch lane state directly on the phone.
+
 ## P0.8 Xcode App Shell
 
 P0.8 adds:

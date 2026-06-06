@@ -178,6 +178,23 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
         return try await send(request, decoding: ProviderReadinessResponse.self)
     }
 
+    public func getFinalDemoLaunch(mode: String = "local") async throws -> FinalDemoLaunchReport {
+        guard ["local", "configured"].contains(mode) else {
+            throw ForgeFlowError.encodingFailed("Unsupported final demo launch mode.")
+        }
+        var components = URLComponents(
+            url: endpoint("/v1/final-demo-launch"),
+            resolvingAgainstBaseURL: false
+        )
+        components?.queryItems = [URLQueryItem(name: "mode", value: mode)]
+        guard let url = components?.url else {
+            throw ForgeFlowError.invalidBaseURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        return try await send(request, decoding: FinalDemoLaunchReport.self)
+    }
+
     public func getBackendHealth() async throws -> BackendHealthResponse {
         var request = URLRequest(url: endpoint("/health"))
         request.httpMethod = "GET"

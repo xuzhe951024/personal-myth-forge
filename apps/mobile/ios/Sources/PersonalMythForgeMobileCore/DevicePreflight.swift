@@ -89,12 +89,15 @@ public enum DevicePreflightSummaryBuilder {
         backendHealthProbe: BackendHealthProbe? = nil,
         providerReadiness: ProviderReadinessResponse?,
         providerReadinessError: String?,
+        finalDemoLaunch: FinalDemoLaunchReport? = nil,
+        finalDemoLaunchError: String? = nil,
         finalShowcaseSummary: FinalShowcaseSummary,
         savedNPCTickCount: Int
     ) -> DevicePreflightSummary {
         let items = [
             backendItem(backendBaseURL, healthProbe: backendHealthProbe),
             providerItem(readiness: providerReadiness, error: providerReadinessError),
+            finalLaunchItem(report: finalDemoLaunch, error: finalDemoLaunchError),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
         ]
@@ -107,6 +110,7 @@ public enum DevicePreflightSummaryBuilder {
             notes: [
                 "Provider keys stay backend-only.",
                 "Use a Mac LAN URL for iPhone demos.",
+                "Final launch readiness is read-only.",
                 "This preflight does not install or sign the app.",
             ]
         )
@@ -156,6 +160,38 @@ public enum DevicePreflightSummaryBuilder {
         return item("providers", "Providers", .blocked, detail)
     }
 
+    private static func finalLaunchItem(
+        report: FinalDemoLaunchReport?,
+        error: String?
+    ) -> DevicePreflightItem {
+        if let error {
+            return item("final_launch", "Final Launch", .blocked, error)
+        }
+        guard let report else {
+            return item("final_launch", "Final Launch", .waiting, "Final launch report has not loaded.")
+        }
+        switch report.overallStatus {
+        case "ready":
+            return item("final_launch", "Final Launch", .ready, "Final launch lane ready.")
+        case "blocked":
+            return item("final_launch", "Final Launch", .blocked, finalLaunchDetail(report))
+        default:
+            return item("final_launch", "Final Launch", .waiting, finalLaunchDetail(report))
+        }
+    }
+
+    private static func finalLaunchDetail(_ report: FinalDemoLaunchReport) -> String {
+        if let firstAction = report.operatorChecklist.first {
+            return "\(report.overallStatus): \(firstAction)"
+        }
+        if let firstBlockedPhase = report.launchPhases.first(where: { phase in
+            phase.status == "blocked" || phase.status == "missing"
+        }) {
+            return "\(report.overallStatus): \(firstBlockedPhase.label)"
+        }
+        return "Final launch report \(report.overallStatus)."
+    }
+
     private static func localDemoItem(_ summary: FinalShowcaseSummary) -> DevicePreflightItem {
         switch summary.overallStatus {
         case .readyForLocalDemo:
@@ -188,7 +224,7 @@ public enum DevicePreflightSummaryBuilder {
         if items.contains(where: { $0.status == .blocked }) {
             return .blocked
         }
-        let required = Set(["backend_url", "providers", "local_demo"])
+        let required = Set(["backend_url", "providers", "final_launch", "local_demo"])
         let requiredReady = required.allSatisfy { id in
             items.first(where: { $0.id == id })?.status == .ready
         }

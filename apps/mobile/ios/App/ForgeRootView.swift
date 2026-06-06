@@ -12,6 +12,8 @@ struct ForgeRootView: View {
     @State private var state = ForgeFlowState()
     @State private var providerReadiness: ProviderReadinessResponse?
     @State private var providerReadinessError: String?
+    @State private var finalDemoLaunch: FinalDemoLaunchReport?
+    @State private var finalDemoLaunchError: String?
     @State private var backendHealthProbe: BackendHealthProbe?
     @State private var restoredSnapshot: DemoRunSnapshot?
     @State private var npcTickHistory: [NPCAgentTick] = []
@@ -125,6 +127,7 @@ struct ForgeRootView: View {
                     await syncBackendHistory(for: restoredSessionId)
                 }
                 await loadProviderReadiness()
+                await loadFinalDemoLaunch()
             }
             .onChange(of: selectedCaptureMode) { mode in
                 mediaSelection = mediaSelection.changingMode(to: mode)
@@ -199,6 +202,20 @@ struct ForgeRootView: View {
         } catch {
             await MainActor.run {
                 providerReadinessError = "Backend preflight is not reachable yet."
+            }
+        }
+    }
+
+    private func loadFinalDemoLaunch() async {
+        do {
+            let report = try await apiClient.getFinalDemoLaunch(mode: "local")
+            await MainActor.run {
+                finalDemoLaunch = report
+                finalDemoLaunchError = nil
+            }
+        } catch {
+            await MainActor.run {
+                finalDemoLaunchError = "Final launch report is not reachable yet."
             }
         }
     }
@@ -519,6 +536,8 @@ struct ForgeRootView: View {
             backendHealthProbe: currentBackendHealthProbe,
             providerReadiness: providerReadiness,
             providerReadinessError: providerReadinessError,
+            finalDemoLaunch: finalDemoLaunch,
+            finalDemoLaunchError: finalDemoLaunchError,
             finalShowcaseSummary: finalShowcaseSummary,
             savedNPCTickCount: npcTickHistory.count
         )
