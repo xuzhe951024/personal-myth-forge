@@ -5,6 +5,7 @@ import pytest
 from myth_forge_api.acceptance import DemoAcceptanceResult
 from myth_forge_api.config import Settings
 from myth_forge_api.final_acceptance import FinalAcceptanceResult
+from myth_forge_api.resource_template_acceptance import ResourceTemplateAcceptanceResult
 from myth_forge_api.cli import main
 from myth_forge_api.providers.three_d import (
     LocalThreeDProvider,
@@ -443,6 +444,67 @@ def test_cli_resource_handoff_prints_stdout_when_ready(capsys, monkeypatch) -> N
     assert exit_code == 0
     assert payload["kind"] == "resource_handoff_report"
     assert payload["overall_status"] == "ready"
+
+
+def test_cli_resource_template_acceptance_writes_report(tmp_path, monkeypatch) -> None:
+    output_file = tmp_path / "resource-template-acceptance.json"
+    calls = []
+
+    def fake_run_resource_template_acceptance(*, repo_root=None):
+        calls.append(repo_root)
+        return ResourceTemplateAcceptanceResult(
+            exit_code=1,
+            report={
+                "kind": "resource_template_acceptance_report",
+                "status": "failed",
+                "summary": {"passed": 6, "failed": 1},
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.run_resource_template_acceptance",
+        fake_run_resource_template_acceptance,
+    )
+
+    exit_code = main(
+        [
+            "resource-template-acceptance",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 1
+    assert calls == [tmp_path]
+    assert report["kind"] == "resource_template_acceptance_report"
+    assert report["status"] == "failed"
+
+
+def test_cli_resource_template_acceptance_prints_stdout_when_ready(
+    capsys,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "myth_forge_api.cli.run_resource_template_acceptance",
+        lambda repo_root=None: ResourceTemplateAcceptanceResult(
+            exit_code=0,
+            report={
+                "kind": "resource_template_acceptance_report",
+                "status": "succeeded",
+                "summary": {"passed": 7, "failed": 0},
+            },
+        ),
+    )
+
+    exit_code = main(["resource-template-acceptance"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert payload["kind"] == "resource_template_acceptance_report"
+    assert payload["status"] == "succeeded"
 
 
 def test_cli_demo_acceptance_writes_report(tmp_path, monkeypatch) -> None:

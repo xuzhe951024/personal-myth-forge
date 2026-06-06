@@ -25,6 +25,7 @@ from myth_forge_api.providers.three_d import (
     ThreeDGenerationRequest,
 )
 from myth_forge_api.resource_handoff import build_resource_handoff_report
+from myth_forge_api.resource_template_acceptance import run_resource_template_acceptance
 
 CORE_PROVIDER_KINDS = ["three_d", "npc", "capture_storage"]
 BACKEND_ONLY_ENV = [
@@ -75,6 +76,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if args.command == "resource-handoff":
             return _resource_handoff(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
+        if args.command == "resource-template-acceptance":
+            return _resource_template_acceptance(
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
@@ -129,6 +135,10 @@ def _build_parser() -> argparse.ArgumentParser:
     resource_handoff_parser = subcommands.add_parser("resource-handoff")
     resource_handoff_parser.add_argument("--repo-root", default=None)
     resource_handoff_parser.add_argument("--output", default=None)
+
+    resource_template_parser = subcommands.add_parser("resource-template-acceptance")
+    resource_template_parser.add_argument("--repo-root", default=None)
+    resource_template_parser.add_argument("--output", default=None)
 
     acceptance_parser = subcommands.add_parser("demo-acceptance")
     acceptance_parser.add_argument(
@@ -222,6 +232,14 @@ def _resource_handoff(repo_root: str | None, output_path: str | None) -> int:
     )
     _write_json_payload(report, output_path)
     return 0 if report["overall_status"] == "ready" else 2
+
+
+def _resource_template_acceptance(repo_root: str | None, output_path: str | None) -> int:
+    result = run_resource_template_acceptance(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
 
 
 def _demo_acceptance(
