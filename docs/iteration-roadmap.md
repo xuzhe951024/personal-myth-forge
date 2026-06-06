@@ -82,6 +82,7 @@ Bridge deliverable:
 - P0.64 backend `/v1/final-demo-launch` plus iOS device preflight integration for mobile-visible launch readiness
 - P0.65 final acceptance gate for the mobile Final Launch readiness endpoint and iOS source handoff
 - P0.66 unified final resource apply handoff for Meshy/OpenAI/Treatstock/iOS deploy values
+- P0.67 final acceptance gate for ARKit/Object Capture scan package handoff into backend 3D generation requests
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
