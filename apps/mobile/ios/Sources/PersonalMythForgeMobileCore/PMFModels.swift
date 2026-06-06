@@ -550,3 +550,31 @@ public struct MythSessionHistory: Codable, Equatable, Sendable {
         self.updatedAt = updatedAt
     }
 }
+
+public struct NPCAutonomyRun: Codable, Equatable, Sendable {
+    public var sessionId: String
+    public var requestedSteps: Int
+    public var completedSteps: Int
+    public var startedTickIndex: Int
+    public var completedTickIndex: Int
+    public var agentRuntime: String
+    public var history: MythSessionHistory
+
+    public init(
+        sessionId: String,
+        requestedSteps: Int,
+        completedSteps: Int,
+        startedTickIndex: Int,
+        completedTickIndex: Int,
+        agentRuntime: String,
+        history: MythSessionHistory
+    ) {
+        self.sessionId = sessionId
+        self.requestedSteps = requestedSteps
+        self.completedSteps = completedSteps
+        self.startedTickIndex = startedTickIndex
+        self.completedTickIndex = completedTickIndex
+        self.agentRuntime = agentRuntime
+        self.history = history
+    }
+}

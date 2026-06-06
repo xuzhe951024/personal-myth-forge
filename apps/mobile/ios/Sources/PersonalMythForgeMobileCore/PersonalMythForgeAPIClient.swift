@@ -159,6 +159,19 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
         return try await send(request, decoding: MythSessionHistory.self)
     }
 
+    public func runMythSessionAutonomy(
+        sessionId: String,
+        stepCount: Int
+    ) async throws -> NPCAutonomyRun {
+        try validateMythSessionId(sessionId)
+        let body = NPCAutonomyRunBody(stepCount: stepCount)
+        var request = URLRequest(url: endpoint("/v1/myth-sessions/\(sessionId)/autonomy-runs"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try encodeJSONBody(body)
+        return try await send(request, decoding: NPCAutonomyRun.self)
+    }
+
     public func getProviderReadiness() async throws -> ProviderReadinessResponse {
         var request = URLRequest(url: endpoint("/v1/provider-readiness"))
         request.httpMethod = "GET"
@@ -297,4 +310,8 @@ private struct NPCAgentTickBody: Encodable {
     let session: MythSession
     let tickIndex: Int
     let recentEvents: [String]
+}
+
+private struct NPCAutonomyRunBody: Encodable {
+    let stepCount: Int
 }
