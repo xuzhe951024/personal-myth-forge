@@ -80,6 +80,56 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="capture_generation_readiness",
+        label="Capture generation readiness",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
+                "CaptureGenerationReadinessBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
+                "maximumProviderSourceImages = 4",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
+                "CaptureGenerationRoute",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
+                "displayLabel",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "CaptureGenerationReadinessBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "captureGenerationReadiness.route.displayLabel",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "generationReadinessTitle",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "generationReadinessRouteLabel",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "generationReadinessDetail",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testCaptureGenerationReadinessMarksGuidedScanMultiImageRoute",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testCaptureGenerationReadinessMarksARKitScanAssetRoute",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="capture_upload",
         label="Capture upload",
         requirements=(
