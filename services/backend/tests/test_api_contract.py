@@ -147,6 +147,46 @@ def test_create_myth_session_response_includes_world_resolution() -> None:
     assert payload["world_resolution"]["visible_changes"]
 
 
+def test_create_npc_tick_endpoint_returns_safe_agent_tick() -> None:
+    client = TestClient(app)
+    session_response = client.post(
+        "/v1/myth-sessions",
+        json={
+            "object_observation": {
+                "label": "tiny bell",
+                "materials": ["metal"],
+                "source": "manual_upload",
+            },
+            "context_capsule": {
+                "current_theme": "calling attention",
+                "desired_tone": "solemn and bright",
+            },
+        },
+    )
+    session = session_response.json()
+
+    response = client.post(
+        "/v1/npc-ticks",
+        json={
+            "session": session,
+            "tick_index": 1,
+            "recent_events": [
+                "raw=data:image/jpeg;base64,ZmFrZQ== Authorization=Bearer test-secret"
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["session_id"] == session["session_id"]
+    assert payload["agent_runtime"] == "local_tick_runtime"
+    assert len(payload["npc_agent_traces"]) == 3
+    assert payload["world_resolution"]["visible_changes"]
+    assert "data:image" not in response.text
+    assert "test-secret" not in response.text
+    assert "Authorization" not in response.text
+
+
 def test_demo_route_includes_world_resolution_mount_points() -> None:
     client = TestClient(app)
 

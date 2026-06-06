@@ -195,3 +195,18 @@ class MythSessionRequest(BaseModel):
 class MythSessionFromCaptureRequest(BaseModel):
     capture_id: str = Field(min_length=1, pattern=CAPTURE_ID_PATTERN)
     context_capsule: ContextCapsule
+
+
+class NPCAgentTickRequest(BaseModel):
+    session: MythSession
+    tick_index: int = Field(ge=1)
+    recent_events: list[str] = Field(default_factory=list, max_length=12)
+
+
+class NPCAgentTick(BaseModel):
+    session_id: str
+    tick_index: int = Field(ge=1)
+    agent_runtime: str
+    npc_agent_traces: list[NPCAgentTrace]
+    npc_reactions: list[NPCReaction]
+    world_resolution: WorldResolution
