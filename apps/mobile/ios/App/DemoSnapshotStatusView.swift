@@ -5,6 +5,8 @@ struct DemoSnapshotStatusView: View {
     let savedAt: String?
     let tickCount: Int
     let statusText: String?
+    let backendHistoryStatusText: String?
+    let isSyncingBackendHistory: Bool
     let clearSnapshot: () -> Void
 
     var body: some View {
@@ -35,6 +37,22 @@ struct DemoSnapshotStatusView: View {
 
             if let statusText {
                 Text(statusText)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
+            if isSyncingBackendHistory {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Syncing backend history")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if let backendHistoryStatusText {
+                Text(backendHistoryStatusText)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }

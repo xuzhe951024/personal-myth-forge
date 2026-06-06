@@ -38,6 +38,7 @@ do {
     let npcTickView = try readText(appRoot.appendingPathComponent("NPCTickView.swift"))
     let demoSnapshotStatusView = try readText(appRoot.appendingPathComponent("DemoSnapshotStatusView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
+    let mythSessionID = try readText(coreRoot.appendingPathComponent("MythSessionID.swift"))
     let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
@@ -250,6 +251,17 @@ do {
     try requireContains(forgeRootView, "clearDemoRunSnapshot", "demo snapshot clear app path")
     try requireContains(forgeRootView, "npcTickHistory", "npc tick history app state")
     try requireContains(forgeRootView, "DemoSnapshotStatusView(", "demo snapshot status view wiring")
+    try requireContains(forgeRootView, "isSyncingBackendHistory", "backend history sync loading state")
+    try requireContains(forgeRootView, "backendHistoryStatusText", "backend history sync status text")
+    try requireContains(forgeRootView, "syncBackendHistory", "backend history sync app path")
+    try requireContains(forgeRootView, "getMythSessionHistory", "backend history GET call")
+    try requireContains(forgeRootView, "applyBackendHistory", "backend history app state application")
+    try requireContains(forgeRootView, "MythSessionID.isValid", "backend history id guard")
+    try requireContains(
+        forgeRootView,
+        "Backend history not reachable; using local demo state.",
+        "backend history fallback status"
+    )
     try requireContains(forgeRootView, "ForgeFlowService", "forge flow service source wiring")
     try requireContains(forgeRootView, "forgeService.forge", "forge flow service call")
     try requireContains(forgeRootView, "getProviderReadiness()", "provider readiness API load")
@@ -387,6 +399,8 @@ do {
     try requireContains(pmfModels, "variants: [GeneratedAssetVariant]", "generated asset variants")
     try requireContains(pmfModels, "NPCAgentTrace", "npc agent trace model")
     try requireContains(pmfModels, "npcAgentTraces: [NPCAgentTrace]", "npc agent traces model")
+    try requireContains(mythSessionID, "MythSessionID", "myth session id validator")
+    try requireContains(mythSessionID, "myth_", "myth session id prefix")
     try requireContains(demoRunSnapshot, "DemoRunSnapshot", "demo run snapshot model")
     try requireContains(demoRunSnapshot, "maximumStoredTicks = 12", "demo snapshot tick cap")
     try requireContains(demoRunSnapshot, "DemoRunSnapshotFileStore", "demo snapshot file store")
@@ -405,6 +419,21 @@ do {
     try requireNotContains(npcTickView, "sk-", "npc tick secret sample")
     try requireContains(demoSnapshotStatusView, "Restored Demo Run", "demo snapshot restored label")
     try requireContains(demoSnapshotStatusView, "Clear", "demo snapshot clear action")
+    try requireContains(
+        demoSnapshotStatusView,
+        "isSyncingBackendHistory",
+        "demo snapshot backend sync progress input"
+    )
+    try requireContains(
+        demoSnapshotStatusView,
+        "backendHistoryStatusText",
+        "demo snapshot backend status input"
+    )
+    try requireContains(
+        demoSnapshotStatusView,
+        "ProgressView",
+        "demo snapshot backend sync progress indicator"
+    )
     try requireNotContains(demoSnapshotStatusView, "file://", "demo snapshot no local path display")
     try requireContains(
         artifactAssetPreparation,
