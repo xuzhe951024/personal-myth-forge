@@ -59,6 +59,11 @@ Bridge deliverable:
 - P0.41 mobile final showcase summary for capture, 3D, NPC, print, and resource readiness
 - P0.42 iOS camera capture bridge for single-photo object input
 - P0.43 quick final acceptance iOS showcase source gate
+- P0.44 explicit live-provider consent gate for acceptance commands
+- P0.45 iPhone backend launch handoff for LAN device demos
+- P0.46 source-only final resource template acceptance
+- P0.47 backend-served local GLB and DAE scene asset handoff
+- P0.48 integrated guided-scan capture to downloadable iOS scene acceptance
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

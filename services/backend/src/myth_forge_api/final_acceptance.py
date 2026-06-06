@@ -13,6 +13,10 @@ from myth_forge_api.capture_acceptance import (
     Capture3DAcceptanceResult,
     run_capture_3d_acceptance,
 )
+from myth_forge_api.capture_scene_handoff_acceptance import (
+    CaptureSceneHandoffAcceptanceResult,
+    run_capture_scene_handoff_acceptance,
+)
 from myth_forge_api.config import load_settings
 from myth_forge_api.ios_backend_handoff_acceptance import (
     IOSBackendHandoffAcceptanceResult,
@@ -91,6 +95,10 @@ ResourceTemplateAcceptanceRunner = Callable[
 LocalAssetHandoffAcceptanceRunner = Callable[
     [],
     LocalAssetHandoffAcceptanceResult | InlineCheckResult,
+]
+CaptureSceneHandoffAcceptanceRunner = Callable[
+    [],
+    CaptureSceneHandoffAcceptanceResult | InlineCheckResult,
 ]
 
 
@@ -172,6 +180,7 @@ def run_final_acceptance(
     ios_backend_handoff_acceptance_runner: IOSBackendHandoffAcceptanceRunner | None = None,
     resource_template_acceptance_runner: ResourceTemplateAcceptanceRunner | None = None,
     local_asset_handoff_acceptance_runner: LocalAssetHandoffAcceptanceRunner | None = None,
+    capture_scene_handoff_acceptance_runner: CaptureSceneHandoffAcceptanceRunner | None = None,
 ) -> FinalAcceptanceResult:
     if profile not in ("quick", "full"):
         raise ValueError(f"Unsupported final acceptance profile: {profile}")
@@ -204,6 +213,9 @@ def run_final_acceptance(
     selected_local_asset_handoff_acceptance_runner = (
         local_asset_handoff_acceptance_runner
         or (lambda: run_local_asset_handoff_acceptance(repo_root=selected_repo_root))
+    )
+    selected_capture_scene_handoff_acceptance_runner = (
+        capture_scene_handoff_acceptance_runner or run_capture_scene_handoff_acceptance
     )
 
     checks: list[dict[str, Any]] = []
@@ -276,6 +288,14 @@ def run_final_acceptance(
             require_real_core=False,
         )
     )
+    checks.append(
+        _run_inline_check(
+            check_id="capture_scene_handoff_acceptance",
+            label="Capture-to-scene asset handoff acceptance",
+            runner=selected_capture_scene_handoff_acceptance_runner,
+            require_real_core=False,
+        )
+    )
 
     for definition in _command_checks_for_profile(profile):
         checks.append(
@@ -333,6 +353,7 @@ def _run_inline_check(
         | IOSBackendHandoffAcceptanceResult
         | ResourceTemplateAcceptanceResult
         | LocalAssetHandoffAcceptanceResult
+        | CaptureSceneHandoffAcceptanceResult
     ],
     require_real_core: bool,
 ) -> dict[str, Any]:
