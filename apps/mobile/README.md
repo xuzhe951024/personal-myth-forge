@@ -1773,3 +1773,32 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.60-capture-readiness-showcase-acceptance.html
 docs/superpowers/verification/assets/p0.60-capture-readiness-showcase-acceptance-390x844.png
 ```
+
+## P0.61 NPC Agent Provider Acceptance
+
+P0.61 adds a backend source/config gate named
+`npc_agent_provider_acceptance` to quick and full final acceptance. It verifies
+that `NPC_PROVIDER=openai` is wired to `OpenAINPCDirector` and
+`OpenAINPCTickRuntime`, that structured output contracts are present for NPC
+reactions and ticks, and that readiness/resource handoff docs keep
+`OPENAI_API_KEY` backend-only.
+
+The mobile app still receives the same decoded `npc_agent_runtime`,
+`npc_agent_traces`, reactions, and world-resolution payloads. No provider keys
+or raw private context are stored in the app. The gate does not make live OpenAI
+calls; it proves that the checked-in source has the AI Agent provider path ready
+for the final resource handoff.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_npc_agent_provider_acceptance.py tests/test_final_acceptance.py -q
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.61-npc-agent-provider-acceptance.html
+docs/superpowers/verification/assets/p0.61-npc-agent-provider-acceptance-390x844.png
+```

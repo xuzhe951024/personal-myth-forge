@@ -68,6 +68,17 @@ def passing_capture_scene_handoff_result() -> InlineCheckResult:
     )
 
 
+def passing_npc_agent_provider_result() -> InlineCheckResult:
+    return InlineCheckResult(
+        exit_code=0,
+        report={
+            "kind": "npc_agent_provider_acceptance_report",
+            "status": "succeeded",
+            "summary": {"passed": 7, "failed": 0},
+        },
+    )
+
+
 def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path) -> None:
     commands: list[list[str]] = []
     demo_calls: list[dict[str, object]] = []
@@ -111,6 +122,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
                 },
             )
         ),
+        npc_agent_provider_acceptance_runner=passing_npc_agent_provider_result,
         capture_3d_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={
@@ -144,7 +156,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.report["allow_live_provider_calls"] is False
     assert result.report["overall_status"] == "blocked"
     assert result.report["summary"] == {
-        "passed": 9,
+        "passed": 10,
         "blocked": 2,
         "failed": 0,
         "skipped": 0,
@@ -153,6 +165,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert list(checks) == [
         "provider_handoff",
         "demo_acceptance",
+        "npc_agent_provider_acceptance",
         "capture_3d_acceptance",
         "print_quote_acceptance",
         "ios_showcase_acceptance",
@@ -165,6 +178,11 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     ]
     assert checks["provider_handoff"]["status"] == "passed"
     assert checks["demo_acceptance"]["status"] == "passed"
+    assert checks["npc_agent_provider_acceptance"]["status"] == "passed"
+    assert checks["npc_agent_provider_acceptance"]["report"]["summary"] == {
+        "passed": 7,
+        "failed": 0,
+    }
     assert checks["capture_3d_acceptance"]["status"] == "passed"
     assert checks["capture_3d_acceptance"]["report"]["source_image_count"] == 3
     assert checks["print_quote_acceptance"]["status"] == "passed"
@@ -245,6 +263,7 @@ def test_final_acceptance_classifies_mobile_backend_health_blocker(tmp_path) -> 
                 "status": "succeeded",
             },
         ),
+        npc_agent_provider_acceptance_runner=passing_npc_agent_provider_result,
         capture_3d_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
@@ -306,6 +325,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
                 ),
             },
         ),
+        npc_agent_provider_acceptance_runner=passing_npc_agent_provider_result,
         capture_3d_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={
@@ -351,6 +371,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
     assert checks["demo_acceptance"]["classification"] == (
         "blocked_by_provider_configuration"
     )
+    assert checks["npc_agent_provider_acceptance"]["status"] == "passed"
     assert checks["capture_3d_acceptance"]["status"] == "passed"
     assert checks["print_quote_acceptance"]["status"] == "passed"
     assert checks["ios_showcase_acceptance"]["status"] == "passed"
@@ -399,6 +420,7 @@ def test_final_acceptance_passes_explicit_live_provider_consent_to_demo_runner(
                 report={"kind": "demo_acceptance_report", "status": "succeeded"},
             )
         ),
+        npc_agent_provider_acceptance_runner=passing_npc_agent_provider_result,
         capture_3d_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
@@ -451,6 +473,7 @@ def test_final_acceptance_classifies_demo_consent_gate_as_blocked(tmp_path) -> N
                 "error": "Live provider calls require --allow-live-provider-calls.",
             },
         ),
+        npc_agent_provider_acceptance_runner=passing_npc_agent_provider_result,
         capture_3d_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
@@ -497,6 +520,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
             exit_code=0,
             report={"kind": "demo_acceptance_report", "status": "succeeded"},
         ),
+        npc_agent_provider_acceptance_runner=passing_npc_agent_provider_result,
         capture_3d_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={
@@ -527,7 +551,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
     assert result.exit_code == 0
     assert result.report["overall_status"] == "passed"
     assert result.report["summary"] == {
-        "passed": 16,
+        "passed": 17,
         "blocked": 0,
         "failed": 0,
         "skipped": 0,
@@ -535,6 +559,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
     assert check_ids == [
         "provider_handoff",
         "demo_acceptance",
+        "npc_agent_provider_acceptance",
         "capture_3d_acceptance",
         "print_quote_acceptance",
         "ios_showcase_acceptance",

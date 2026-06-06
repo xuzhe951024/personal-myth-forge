@@ -30,6 +30,10 @@ from myth_forge_api.local_asset_handoff_acceptance import (
     LocalAssetHandoffAcceptanceResult,
     run_local_asset_handoff_acceptance,
 )
+from myth_forge_api.npc_agent_provider_acceptance import (
+    NPCAgentProviderAcceptanceResult,
+    run_npc_agent_provider_acceptance,
+)
 from myth_forge_api.print_acceptance import (
     PrintQuoteAcceptanceResult,
     run_print_quote_acceptance,
@@ -95,6 +99,10 @@ ResourceTemplateAcceptanceRunner = Callable[
 LocalAssetHandoffAcceptanceRunner = Callable[
     [],
     LocalAssetHandoffAcceptanceResult | InlineCheckResult,
+]
+NPCAgentProviderAcceptanceRunner = Callable[
+    [],
+    NPCAgentProviderAcceptanceResult | InlineCheckResult,
 ]
 CaptureSceneHandoffAcceptanceRunner = Callable[
     [],
@@ -180,6 +188,7 @@ def run_final_acceptance(
     ios_backend_handoff_acceptance_runner: IOSBackendHandoffAcceptanceRunner | None = None,
     resource_template_acceptance_runner: ResourceTemplateAcceptanceRunner | None = None,
     local_asset_handoff_acceptance_runner: LocalAssetHandoffAcceptanceRunner | None = None,
+    npc_agent_provider_acceptance_runner: NPCAgentProviderAcceptanceRunner | None = None,
     capture_scene_handoff_acceptance_runner: CaptureSceneHandoffAcceptanceRunner | None = None,
 ) -> FinalAcceptanceResult:
     if profile not in ("quick", "full"):
@@ -214,6 +223,10 @@ def run_final_acceptance(
         local_asset_handoff_acceptance_runner
         or (lambda: run_local_asset_handoff_acceptance(repo_root=selected_repo_root))
     )
+    selected_npc_agent_provider_acceptance_runner = (
+        npc_agent_provider_acceptance_runner
+        or (lambda: run_npc_agent_provider_acceptance(repo_root=selected_repo_root))
+    )
     selected_capture_scene_handoff_acceptance_runner = (
         capture_scene_handoff_acceptance_runner or run_capture_scene_handoff_acceptance
     )
@@ -238,6 +251,14 @@ def run_final_acceptance(
                 allow_live_provider_calls=allow_live_provider_calls,
             ),
             require_real_core=require_real_core,
+        )
+    )
+    checks.append(
+        _run_inline_check(
+            check_id="npc_agent_provider_acceptance",
+            label="NPC agent provider source acceptance",
+            runner=selected_npc_agent_provider_acceptance_runner,
+            require_real_core=False,
         )
     )
     checks.append(
@@ -353,6 +374,7 @@ def _run_inline_check(
         | IOSBackendHandoffAcceptanceResult
         | ResourceTemplateAcceptanceResult
         | LocalAssetHandoffAcceptanceResult
+        | NPCAgentProviderAcceptanceResult
         | CaptureSceneHandoffAcceptanceResult
     ],
     require_real_core: bool,
