@@ -14,6 +14,18 @@ from myth_forge_api.resource_handoff import (
 BACKEND_TEMPLATE_PATH = ".env.example"
 IOS_TEMPLATE_PATH = "apps/mobile/ios/Config/Deployment.local.xcconfig.example"
 GITIGNORE_PATH = ".gitignore"
+MAKEFILE_PATH = "Makefile"
+BACKEND_WRITER_PATH = "services/backend/scripts/write_backend_env.sh"
+BACKEND_WRITER_MAKE_TARGET = "backend-write-provider-env"
+BANNED_WRITER_TEXT = [
+    "sudo",
+    "xcode-select",
+    "xcodebuild -license",
+    "security ",
+    "codesign",
+    "curl ",
+    "urllib.request",
+]
 
 BACKEND_REQUIRED_KEYS = [
     "THREE_D_PROVIDER",
@@ -64,6 +76,10 @@ def run_resource_template_acceptance(
     gitignore_text, gitignore_exists = _read_optional_text(
         selected_repo_root / GITIGNORE_PATH
     )
+    makefile_text, makefile_exists = _read_optional_text(selected_repo_root / MAKEFILE_PATH)
+    backend_writer_text, backend_writer_exists = _read_optional_text(
+        selected_repo_root / BACKEND_WRITER_PATH
+    )
 
     backend_keys = _parse_assignment_keys(backend_text, comment_prefixes=("#",))
     ios_keys = _parse_assignment_keys(ios_text, comment_prefixes=("#", "//"))
@@ -78,6 +94,12 @@ def run_resource_template_acceptance(
         item["path"] for item in gitignore_items if not item["ignored"]
     ]
     safety = _safety_summary("\n".join([backend_text, ios_text]))
+    backend_writer_checks = _backend_writer_checks(
+        writer_text=backend_writer_text,
+        writer_exists=backend_writer_exists,
+        makefile_text=makefile_text,
+        makefile_exists=makefile_exists,
+    )
 
     checks = [
         _check("backend_template_exists", backend_exists),
@@ -87,6 +109,7 @@ def run_resource_template_acceptance(
         _check("gitignore_exists", gitignore_exists),
         _check("gitignore_local_destinations", not missing_gitignore),
         _check("template_safety", _templates_are_safe(safety)),
+        _check("backend_writer", all(backend_writer_checks.values())),
     ]
     summary = {
         "passed": sum(1 for check in checks if check["status"] == "passed"),
@@ -119,6 +142,12 @@ def run_resource_template_acceptance(
             "exists": gitignore_exists,
             "local_destinations": gitignore_items,
             "missing_paths": missing_gitignore,
+        },
+        "backend_writer": {
+            "path": BACKEND_WRITER_PATH,
+            "make_target": BACKEND_WRITER_MAKE_TARGET,
+            "exists": backend_writer_exists,
+            "checks": backend_writer_checks,
         },
         "safety": safety,
     }
@@ -201,6 +230,36 @@ def _check(check_id: str, passed: bool) -> dict[str, str]:
     return {
         "id": check_id,
         "status": "passed" if passed else "failed",
+    }
+
+
+def _backend_writer_checks(
+    *,
+    writer_text: str,
+    writer_exists: bool,
+    makefile_text: str,
+    makefile_exists: bool,
+) -> dict[str, bool]:
+    return {
+        "exists": writer_exists,
+        "make_target": makefile_exists
+        and BACKEND_WRITER_MAKE_TARGET in makefile_text
+        and BACKEND_WRITER_PATH in makefile_text,
+        "required_keys": all(
+            key in writer_text
+            for key in [
+                "MESHY_API_KEY",
+                "OPENAI_API_KEY",
+                "THREE_D_PROVIDER=meshy",
+                "NPC_PROVIDER=openai",
+                "PRINT_PROVIDER=local",
+            ]
+        ),
+        "redaction": "configured (redacted)" in writer_text,
+        "tracked_env_guard": "services/backend/.env must stay untracked" in writer_text,
+        "no_banned_commands": not any(
+            banned in writer_text for banned in BANNED_WRITER_TEXT
+        ),
     }
 
 

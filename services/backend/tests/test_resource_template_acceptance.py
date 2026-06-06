@@ -32,6 +32,23 @@ services/backend/.local/
 apps/mobile/ios/Config/Deployment.local.xcconfig
 """
 
+BACKEND_WRITER_TEMPLATE = """#!/usr/bin/env sh
+set -eu
+MESHY_API_KEY="${MESHY_API_KEY:-}"
+OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+printf '%s\\n' "THREE_D_PROVIDER=meshy"
+printf '%s\\n' "NPC_PROVIDER=openai"
+printf '%s\\n' "PRINT_PROVIDER=local"
+printf '%s\\n' "MESHY_API_KEY: configured (redacted)"
+printf '%s\\n' "OPENAI_API_KEY: configured (redacted)"
+printf '%s\\n' "services/backend/.env must stay untracked."
+"""
+
+MAKEFILE_TEMPLATE = """.PHONY: backend-write-provider-env
+backend-write-provider-env:
+\t@services/backend/scripts/write_backend_env.sh
+"""
+
 
 def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) -> None:
     repo_root = _write_repo(tmp_path)
@@ -41,7 +58,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.exit_code == 0
     assert result.report["kind"] == "resource_template_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 7, "failed": 0}
+    assert result.report["summary"] == {"passed": 8, "failed": 0}
     assert result.report["backend_template"]["missing_keys"] == []
     assert result.report["ios_template"]["missing_keys"] == []
     assert "OPENAI_API_KEY" in result.report["backend_template"]["required_keys"]
@@ -70,6 +87,16 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         "provider_calls": False,
         "global_mutation": False,
     }
+    assert result.report["backend_writer"]["path"] == (
+        "services/backend/scripts/write_backend_env.sh"
+    )
+    assert result.report["backend_writer"]["make_target"] == "backend-write-provider-env"
+    assert result.report["backend_writer"]["checks"]["exists"] is True
+    assert result.report["backend_writer"]["checks"]["make_target"] is True
+    assert result.report["backend_writer"]["checks"]["required_keys"] is True
+    assert result.report["backend_writer"]["checks"]["redaction"] is True
+    assert result.report["backend_writer"]["checks"]["tracked_env_guard"] is True
+    assert result.report["backend_writer"]["checks"]["no_banned_commands"] is True
 
 
 def test_resource_template_acceptance_fails_missing_backend_key(tmp_path: Path) -> None:
@@ -149,13 +176,21 @@ def _write_repo(
     backend_template: str = BACKEND_TEMPLATE,
     ios_template: str = IOS_TEMPLATE,
     gitignore_template: str = GITIGNORE_TEMPLATE,
+    backend_writer: str = BACKEND_WRITER_TEMPLATE,
+    makefile: str = MAKEFILE_TEMPLATE,
 ) -> Path:
     repo_root = tmp_path / "repo"
     (repo_root / "apps/mobile/ios/Config").mkdir(parents=True)
+    (repo_root / "services/backend/scripts").mkdir(parents=True)
     (repo_root / ".env.example").write_text(backend_template, encoding="utf-8")
     (repo_root / "apps/mobile/ios/Config/Deployment.local.xcconfig.example").write_text(
         ios_template,
         encoding="utf-8",
     )
     (repo_root / ".gitignore").write_text(gitignore_template, encoding="utf-8")
+    (repo_root / "services/backend/scripts/write_backend_env.sh").write_text(
+        backend_writer,
+        encoding="utf-8",
+    )
+    (repo_root / "Makefile").write_text(makefile, encoding="utf-8")
     return repo_root

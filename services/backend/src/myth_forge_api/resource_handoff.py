@@ -280,6 +280,7 @@ def _operator_actions(
 
 def _commands() -> list[str]:
     return [
+        "make backend-write-provider-env",
         "make backend-dev",
         "make backend-device-demo",
         "curl http://127.0.0.1:8080/v1/provider-readiness",

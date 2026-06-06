@@ -67,6 +67,26 @@ global developer settings.
 The demo defaults to the deterministic local 3D provider, so it does not require external API
 keys.
 
+When final Meshy/OpenAI resources are available, create the ignored backend env
+file through the project-local writer:
+
+```bash
+MESHY_API_KEY=... \
+OPENAI_API_KEY=... \
+make backend-write-provider-env
+```
+
+Then validate configured provider readiness explicitly:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli provider-handoff --require-core-real
+```
+
+`backend-write-provider-env` writes only `services/backend/.env`, which is
+ignored by git. Its command output redacts key values and does not make live
+Meshy/OpenAI calls.
+
 Upload a local object capture, then create a myth session from that capture:
 
 ```bash
@@ -578,13 +598,12 @@ a configuration-level check: it reads backend settings, reuses
 `GET /v1/provider-readiness` semantics, writes a sanitized JSON report, and does
 not call Meshy or OpenAI by default.
 
-Prepare a backend-only `.env` from `.env.example`:
+Prepare a backend-only `.env` through the project-local writer:
 
 ```bash
-THREE_D_PROVIDER=meshy
-NPC_PROVIDER=openai
-MESHY_API_KEY=...
-OPENAI_API_KEY=...
+MESHY_API_KEY=... \
+OPENAI_API_KEY=... \
+make backend-write-provider-env
 ```
 
 Then run:
@@ -1123,6 +1142,9 @@ checkout it exits `2` with a safe blocked report until the backend gets
 `THREE_D_PROVIDER=meshy`, `MESHY_API_KEY`, `NPC_PROVIDER=openai`,
 `OPENAI_API_KEY`, and the ignored iOS deploy config gets a Team ID plus an
 iPhone-reachable LAN backend URL.
+
+Use `make backend-write-provider-env` before this report to write the ignored
+backend `.env` from explicit Meshy/OpenAI values with redacted command output.
 
 Static evidence lives at:
 
