@@ -728,3 +728,30 @@ Static evidence lives at:
 docs/superpowers/verification/p0.29-server-owned-npc-advance.html
 docs/superpowers/verification/assets/p0.29-server-owned-npc-advance-390x844.png
 ```
+
+P0.30 adds a user-triggered bounded NPC autonomy run on top of the stored
+backend history path:
+
+```http
+POST /v1/myth-sessions/{session_id}/autonomy-runs
+```
+
+The request body accepts `step_count` from `1` to `3` and defaults to `3`. The
+backend loads the stored `MythSessionHistory`, runs the configured NPC tick
+runtime one step at a time, appends each tick before creating the next request,
+and returns an `NPCAutonomyRun` summary plus the updated history. This is a
+bounded foreground action, not a background daemon.
+
+The iOS core decodes `NPCAutonomyRun` and calls
+`runMythSessionAutonomy(sessionId:stepCount:)`. `ForgeRootView` exposes a
+`Run Autonomy` control beside `Advance Village`, then applies `run.history`
+through the same backend history path used by restore and server-owned single
+tick advance. Provider keys, raw media, and raw personal source documents remain
+backend-only.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.30-bounded-autonomous-npc-run.html
+docs/superpowers/verification/assets/p0.30-bounded-autonomous-npc-run-390x844.png
+```

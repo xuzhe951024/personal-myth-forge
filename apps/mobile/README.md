@@ -876,3 +876,46 @@ Remaining gaps after P0.29 are true background autonomous NPC loops, production
 account memory, accepting the Apple SDK license on this machine, real device
 installation, real Meshy/OpenAI key runs, Unity movement execution, and print
 fulfillment.
+
+## P0.30 Bounded Autonomous NPC Run
+
+P0.30 adds a foreground `Run Autonomy` control for valid backend myth sessions.
+Instead of requiring three separate taps on `Advance Village`, the app calls:
+
+```http
+POST /v1/myth-sessions/{session_id}/autonomy-runs
+```
+
+with a bounded `step_count` from `1` to `3`. The backend appends each generated
+NPC tick to stored history before generating the next one, then returns an
+`NPCAutonomyRun` response containing the requested/completed step counts,
+started/completed tick indexes, runtime name, and updated `MythSessionHistory`.
+
+`PersonalMythForgeAPIClient.runMythSessionAutonomy(sessionId:stepCount:)`
+performs the POST with a small JSON body. `ForgeRootView.runAutonomy()` requests
+three steps and applies `run.history` through the same `applyBackendHistory(_:)`
+path used by launch restore, backend history sync, and server-owned single tick
+advance. Legacy non-backend session ids are rejected before network calls with
+a compact UI message.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.30-bounded-autonomous-npc-run.html
+docs/superpowers/verification/assets/p0.30-bounded-autonomous-npc-run-390x844.png
+```
+
+Remaining gaps after P0.30 are true background autonomous NPC loops, production
+account memory, accepting the Apple SDK license on this machine, real device
+installation, real Meshy/OpenAI key runs, Unity movement execution, and print
+fulfillment.
