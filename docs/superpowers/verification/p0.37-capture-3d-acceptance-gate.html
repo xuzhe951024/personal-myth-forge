@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.37 Capture 3D Acceptance Gate</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #222520;
+      --muted: #5e6660;
+      --line: #d7ded8;
+      --paper: #f8faf6;
+      --panel: #ffffff;
+      --green: #356f4d;
+      --blue: #2d6e93;
+      --amber: #9a5b2a;
+      --plum: #65507a;
+      --red: #8e3f38;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e5ebe6;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 10px 15px 12px;
+      background: var(--paper);
+      border-left: 1px solid #cad4ce;
+      border-right: 1px solid #cad4ce;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      padding: 1px 0 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 830;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 830;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      line-height: 1.15;
+      font-weight: 800;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .metric,
+    .row,
+    .gate {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px;
+    }
+
+    .label {
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.18;
+      font-weight: 790;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 860;
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .amber {
+      color: var(--amber);
+    }
+
+    .rows {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .row-key {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 780;
+      text-transform: uppercase;
+    }
+
+    .row-value {
+      font-size: 12px;
+      line-height: 1.22;
+      font-weight: 780;
+      overflow-wrap: anywhere;
+    }
+
+    .gate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .gate-title {
+      color: var(--amber);
+      font-size: 11px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .gate-copy {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.18;
+    }
+
+    .safety {
+      color: var(--red);
+      font-weight: 830;
+    }
+
+    code {
+      color: var(--plum);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Capture 3D Acceptance Gate</h1>
+      <div class="tag">P0.37</div>
+    </header>
+
+    <section>
+      <h2>Final Acceptance</h2>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">passed</div>
+          <div class="value green">3</div>
+        </div>
+        <div class="metric">
+          <div class="label">blocked</div>
+          <div class="value amber">2</div>
+        </div>
+        <div class="metric">
+          <div class="label">failed</div>
+          <div class="value blue">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>New Check</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">id</div>
+          <div class="row-value"><code>capture_3d_acceptance</code></div>
+        </div>
+        <div class="row">
+          <div class="row-key">capture</div>
+          <div class="row-value"><code>guided_scan</code> with 3 stored source images.</div>
+        </div>
+        <div class="row">
+          <div class="row-key">provider</div>
+          <div class="row-value">3 source images passed into the local 3D request.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>3D Provenance</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">input</div>
+          <div class="row-value"><code>multi_image</code>, source count 3, selected count 3.</div>
+        </div>
+        <div class="row">
+          <div class="row-key">variant</div>
+          <div class="row-value">Local gate returns a SceneKit-loadable <code>ios_scene_asset</code>.</div>
+        </div>
+        <div class="row">
+          <div class="row-key">route</div>
+          <div class="row-value">Uses the same capture source helper as <code>from-capture</code>.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Report Safety</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">media</div>
+          <div class="row-value"><span class="safety">No</span> raw <code>data:image</code> payloads or <code>local-capture://</code> refs.</div>
+        </div>
+        <div class="row">
+          <div class="row-key">secret</div>
+          <div class="row-value"><span class="safety">No</span> local paths, bearer tokens, or provider keys in reports.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Live Handoff Gates</h2>
+      <div class="gate-grid">
+        <div class="gate">
+          <div class="gate-title">Real iPhone media</div>
+          <div class="gate-copy">Device photo manifests still need hardware validation after local synthetic acceptance.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">Deploy</div>
+          <div class="gate-copy">Signing config, LAN URL, and Apple SDK license remain local blockers.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">Meshy run</div>
+          <div class="gate-copy"><code>MESHY_API_KEY</code> stays backend-only before live generation.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">OpenAI NPC</div>
+          <div class="gate-copy"><code>OPENAI_API_KEY</code> remains backend-only for configured AI traces.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

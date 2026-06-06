@@ -52,6 +52,7 @@ Bridge deliverable:
 - P0.34 safe generation provenance contract for text, single-image, and multi-image 3D routes
 - P0.35 canonical 20-case 3D provider evaluation suite for final Meshy quality handoff
 - P0.36 media-backed guided scan smoke evaluation for single-image and multi-image 3D routes
+- P0.37 final acceptance capture-to-3D gate for guided scan source-image routing
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
