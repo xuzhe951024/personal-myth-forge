@@ -44,6 +44,26 @@ address, such as `http://192.168.1.10:8080`. `backend-dev` remains the
 localhost/browser path; `backend-device-demo` does not change firewall, signing,
 or Apple SDK license state.
 
+Create or update that ignored iOS local config from explicit user-owned values:
+
+```bash
+DEVELOPMENT_TEAM=ABCDE12345 \
+PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge \
+PMF_BACKEND_BASE_URL=http://192.168.1.10:8080 \
+make mobile-write-deploy-config
+```
+
+Then validate the local config and backend health gate:
+
+```bash
+make mobile-deploy-preflight
+```
+
+`mobile-write-deploy-config` writes only
+`apps/mobile/ios/Config/Deployment.local.xcconfig`, which is ignored by git. It
+does not store provider keys and does not mutate Xcode, signing, keychain, or
+global developer settings.
+
 The demo defaults to the deterministic local 3D provider, so it does not require external API
 keys.
 
