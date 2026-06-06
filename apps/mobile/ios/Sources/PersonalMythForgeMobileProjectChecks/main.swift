@@ -16,6 +16,7 @@ do {
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
+    let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
@@ -172,6 +173,13 @@ do {
         "asset downloader implementation"
     )
     try requireContains(artifact3DPreviewView, "ArtifactAssetPreparer.live()", "live asset preparer wiring")
+    try requireContains(pmfModels, "GeneratedAssetVariant", "generated asset variant model")
+    try requireContains(pmfModels, "variants: [GeneratedAssetVariant]", "generated asset variants")
+    try requireContains(
+        artifactAssetPreparation,
+        "preferredSceneVariant",
+        "scene variant selection"
+    )
     try requireContains(
         artifact3DPreviewView,
         ".task(id: session?.sessionId)",

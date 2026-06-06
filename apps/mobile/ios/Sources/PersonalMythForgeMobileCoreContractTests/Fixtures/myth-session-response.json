@@ -19,7 +19,21 @@
     "format": "glb",
     "uri": "stub://assets/old-brass-key.glb",
     "prompt": "Create a small enchanted brass key with worn teeth and a soft green patina.",
-    "moderation_status": "not_requested"
+    "moderation_status": "not_requested",
+    "variants": [
+      {
+        "role": "game_asset",
+        "format": "glb",
+        "uri": "stub://assets/old-brass-key.glb",
+        "is_scene_loadable": false
+      },
+      {
+        "role": "ios_scene_asset",
+        "format": "usdz",
+        "uri": "stub://assets/old-brass-key.usdz",
+        "is_scene_loadable": true
+      }
+    ]
   },
   "npc_director": "local_stub",
   "npc_reactions": [
