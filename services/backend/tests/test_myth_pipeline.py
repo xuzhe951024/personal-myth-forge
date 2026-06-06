@@ -134,6 +134,12 @@ def test_generates_session_from_real_object_and_context() -> None:
     assert session.generated_asset.kind == "game_asset"
     assert session.generated_asset.provider == "local_stub"
     assert session.generated_asset.format == "glb"
+    assert session.generated_asset.variants
+    assert session.generated_asset.variants[0].format == "glb"
+    assert session.generated_asset.variants[0].role == "game_asset"
+    assert session.generated_asset.variants[1].format == "usdz"
+    assert session.generated_asset.variants[1].role == "ios_scene_asset"
+    assert session.generated_asset.variants[1].is_scene_loadable is True
     assert session.print_candidate.kind == "print_asset"
     assert session.print_candidate.requires_user_approval is True
 
@@ -155,6 +161,9 @@ def test_session_serializes_to_json_safe_payload() -> None:
 
     assert payload["object_card"]["label"] == "ceramic mug"
     assert payload["generated_asset"]["uri"].startswith("local://")
+    assert payload["generated_asset"]["variants"][1]["format"] == "usdz"
+    assert payload["generated_asset"]["variants"][1]["role"] == "ios_scene_asset"
+    assert payload["generated_asset"]["variants"][1]["is_scene_loadable"] is True
     assert payload["print_candidate"]["approval_reason"]
 
 

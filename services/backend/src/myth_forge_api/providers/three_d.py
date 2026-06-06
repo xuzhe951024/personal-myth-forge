@@ -6,7 +6,9 @@ from typing import Protocol
 
 import httpx
 
-from myth_forge_api.domain.models import GeneratedAsset
+from myth_forge_api.domain.models import GeneratedAsset, GeneratedAssetVariant
+
+MESHY_GAME_ASSET_TARGET_FORMATS = ["glb", "usdz"]
 
 
 @dataclass(frozen=True)
@@ -43,13 +45,29 @@ class LocalThreeDProvider:
     provider_name = "local_stub"
 
     def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
+        glb_uri = f"local://generated-assets/{request.session_id}.glb"
+        usdz_uri = f"local://generated-assets/{request.session_id}.usdz"
         return GeneratedAsset(
             kind="game_asset",
             provider=self.provider_name,
             format="glb",
-            uri=f"local://generated-assets/{request.session_id}.glb",
+            uri=glb_uri,
             prompt=_prompt_with_source_summary(request),
             moderation_status="needs_review",
+            variants=[
+                GeneratedAssetVariant(
+                    role="game_asset",
+                    format="glb",
+                    uri=glb_uri,
+                    is_scene_loadable=False,
+                ),
+                GeneratedAssetVariant(
+                    role="ios_scene_asset",
+                    format="usdz",
+                    uri=usdz_uri,
+                    is_scene_loadable=True,
+                ),
+            ],
         )
 
 
@@ -92,7 +110,7 @@ class MeshyThreeDProvider:
             {
                 "mode": "preview",
                 "prompt": request.prompt[:600],
-                "target_formats": ["glb"],
+                "target_formats": MESHY_GAME_ASSET_TARGET_FORMATS,
                 "moderation": True,
             }
         )
@@ -102,7 +120,7 @@ class MeshyThreeDProvider:
             {
                 "mode": "refine",
                 "preview_task_id": preview_task_id,
-                "target_formats": ["glb"],
+                "target_formats": MESHY_GAME_ASSET_TARGET_FORMATS,
                 "moderation": True,
             }
         )
@@ -117,7 +135,7 @@ class MeshyThreeDProvider:
                 "image_url": source_image.data_uri,
                 "enable_pbr": True,
                 "should_remesh": True,
-                "target_formats": ["glb"],
+                "target_formats": MESHY_GAME_ASSET_TARGET_FORMATS,
                 "should_texture": True,
             },
         )
@@ -132,13 +150,32 @@ class MeshyThreeDProvider:
         glb_uri = task.get("model_urls", {}).get("glb")
         if not glb_uri:
             raise MeshyProviderError("Meshy task succeeded but did not return a GLB URL.")
+        usdz_uri = task.get("model_urls", {}).get("usdz")
+        variants = [
+            GeneratedAssetVariant(
+                role="game_asset",
+                format="glb",
+                uri=str(glb_uri),
+                is_scene_loadable=False,
+            )
+        ]
+        if usdz_uri:
+            variants.append(
+                GeneratedAssetVariant(
+                    role="ios_scene_asset",
+                    format="usdz",
+                    uri=str(usdz_uri),
+                    is_scene_loadable=True,
+                )
+            )
         return GeneratedAsset(
             kind="game_asset",
             provider=self.provider_name,
             format="glb",
-            uri=glb_uri,
+            uri=str(glb_uri),
             prompt=request.prompt,
             moderation_status="needs_review",
+            variants=variants,
         )
 
     def _create_task(self, path: str, payload: dict[str, object]) -> str:

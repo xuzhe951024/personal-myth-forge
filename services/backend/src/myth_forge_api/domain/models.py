@@ -103,6 +103,13 @@ class WorldResolution(BaseModel):
     visible_changes: list[str]
 
 
+class GeneratedAssetVariant(BaseModel):
+    role: Literal["game_asset", "ios_scene_asset", "print_source"]
+    format: str
+    uri: str
+    is_scene_loadable: bool = False
+
+
 class GeneratedAsset(BaseModel):
     kind: Literal["game_asset"]
     provider: str
@@ -110,6 +117,7 @@ class GeneratedAsset(BaseModel):
     uri: str
     prompt: str
     moderation_status: Literal["not_requested", "approved", "needs_review"]
+    variants: list[GeneratedAssetVariant] = Field(default_factory=list)
 
 
 class PrintCandidate(BaseModel):

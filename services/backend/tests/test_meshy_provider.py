@@ -31,7 +31,10 @@ def test_meshy_provider_creates_preview_refines_and_returns_glb() -> None:
             json={
                 "id": "refine-456",
                 "status": "SUCCEEDED",
-                "model_urls": {"glb": "https://assets.example/refined.glb"},
+                "model_urls": {
+                    "glb": "https://assets.example/refined.glb",
+                    "usdz": "https://assets.example/refined.usdz",
+                },
             },
         ),
     ]
@@ -57,12 +60,20 @@ def test_meshy_provider_creates_preview_refines_and_returns_glb() -> None:
     refine_payload = json.loads(requests[2].content)
     assert asset.provider == "meshy"
     assert asset.uri == "https://assets.example/refined.glb"
+    assert len(asset.variants) == 2
+    assert asset.variants[0].role == "game_asset"
+    assert asset.variants[0].uri == "https://assets.example/refined.glb"
+    assert asset.variants[1].role == "ios_scene_asset"
+    assert asset.variants[1].format == "usdz"
+    assert asset.variants[1].uri == "https://assets.example/refined.usdz"
+    assert asset.variants[1].is_scene_loadable is True
     assert [request.method for request in requests] == ["POST", "GET", "POST", "GET"]
     assert preview_payload["mode"] == "preview"
-    assert preview_payload["target_formats"] == ["glb"]
+    assert preview_payload["target_formats"] == ["glb", "usdz"]
     assert preview_payload["moderation"] is True
     assert refine_payload["mode"] == "refine"
     assert refine_payload["preview_task_id"] == "preview-123"
+    assert refine_payload["target_formats"] == ["glb", "usdz"]
 
 
 def test_meshy_provider_uses_image_to_3d_when_source_image_exists() -> None:
@@ -74,7 +85,10 @@ def test_meshy_provider_uses_image_to_3d_when_source_image_exists() -> None:
             json={
                 "id": "image-task-789",
                 "status": "SUCCEEDED",
-                "model_urls": {"glb": "https://assets.example/image.glb"},
+                "model_urls": {
+                    "glb": "https://assets.example/image.glb",
+                    "usdz": "https://assets.example/image.usdz",
+                },
             },
         ),
     ]
@@ -111,17 +125,63 @@ def test_meshy_provider_uses_image_to_3d_when_source_image_exists() -> None:
     assert asset.provider == "meshy"
     assert asset.uri == "https://assets.example/image.glb"
     assert asset.prompt == "Create a shrine key."
+    assert [variant.format for variant in asset.variants] == ["glb", "usdz"]
+    assert asset.variants[1].role == "ios_scene_asset"
+    assert asset.variants[1].uri == "https://assets.example/image.usdz"
     assert [request.method for request in requests] == ["POST", "GET"]
     assert [request.url.path for request in requests] == [
         "/openapi/v1/image-to-3d",
         "/openapi/v1/image-to-3d/image-task-789",
     ]
     assert image_payload["image_url"] == data_uri
-    assert image_payload["target_formats"] == ["glb"]
+    assert image_payload["target_formats"] == ["glb", "usdz"]
     assert image_payload["enable_pbr"] is True
     assert image_payload["should_remesh"] is True
     assert image_payload["should_texture"] is True
     assert "mode" not in image_payload
+
+
+def test_meshy_provider_keeps_glb_only_asset_when_usdz_is_missing() -> None:
+    responses = [
+        httpx.Response(200, json={"result": "preview-123"}),
+        httpx.Response(
+            200,
+            json={
+                "id": "preview-123",
+                "status": "SUCCEEDED",
+                "model_urls": {"glb": "https://assets.example/preview.glb"},
+            },
+        ),
+        httpx.Response(200, json={"result": "refine-456"}),
+        httpx.Response(
+            200,
+            json={
+                "id": "refine-456",
+                "status": "SUCCEEDED",
+                "model_urls": {"glb": "https://assets.example/refined.glb"},
+            },
+        ),
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return responses.pop(0)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://api.meshy.test",
+    )
+    provider = MeshyThreeDProvider(
+        api_key="test-key",
+        client=client,
+        poll_interval_seconds=0,
+        max_wait_seconds=1,
+    )
+
+    asset = provider.generate_game_asset(_request())
+
+    assert asset.uri == "https://assets.example/refined.glb"
+    assert [variant.format for variant in asset.variants] == ["glb"]
+    assert asset.variants[0].is_scene_loadable is False
 
 
 def test_meshy_provider_requires_api_key() -> None:
