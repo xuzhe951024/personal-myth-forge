@@ -36,11 +36,12 @@ BACKEND_ONLY_ENV = [
     "SCULPTEO_API_KEY",
 ]
 NEXT_HANDOFF_COMMANDS = [
+    "make final-apply-resources",
     "make backend-dev",
     "curl http://127.0.0.1:8080/v1/provider-readiness",
     (
         "cd services/backend && uv run python -m myth_forge_api.cli provider-handoff "
-        "--require-core-real --output /tmp/personal-myth-forge-provider-handoff.json"
+        "--require-core-real --output .local/provider-handoff.json"
     ),
 ]
 

@@ -23,6 +23,11 @@ backend-generate-local:
 backend-write-provider-env:
 	@services/backend/scripts/write_backend_env.sh
 
+.PHONY: final-apply-resources
+
+final-apply-resources:
+	@services/backend/scripts/apply_final_resources.sh
+
 .PHONY: final-demo-launch
 
 final-demo-launch:

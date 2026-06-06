@@ -17,6 +17,9 @@ GITIGNORE_PATH = ".gitignore"
 MAKEFILE_PATH = "Makefile"
 BACKEND_WRITER_PATH = "services/backend/scripts/write_backend_env.sh"
 BACKEND_WRITER_MAKE_TARGET = "backend-write-provider-env"
+FINAL_RESOURCE_TEMPLATE_PATH = "services/backend/final-resources.env.example"
+FINAL_RESOURCE_APPLY_PATH = "services/backend/scripts/apply_final_resources.sh"
+FINAL_RESOURCE_APPLY_MAKE_TARGET = "final-apply-resources"
 CLI_PATH = "services/backend/src/myth_forge_api/cli.py"
 FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.py"
 FINAL_DEMO_LAUNCH_MAKE_TARGET = "final-demo-launch"
@@ -42,9 +45,22 @@ BACKEND_REQUIRED_KEYS = [
     "OPENAI_API_KEY",
     "PRINT_PROVIDER",
     "TREATSTOCK_API_KEY",
+    "TREATSTOCK_API_BASE_URL",
     "SCULPTEO_API_KEY",
     "CAPTURE_STORAGE_DIR",
     "MYTH_SESSION_STORAGE_DIR",
+]
+
+FINAL_RESOURCE_REQUIRED_KEYS = [
+    "MESHY_API_KEY",
+    "OPENAI_API_KEY",
+    "PRINT_PROVIDER",
+    "TREATSTOCK_API_KEY",
+    "TREATSTOCK_API_BASE_URL",
+    "SCULPTEO_API_KEY",
+    "DEVELOPMENT_TEAM",
+    "PRODUCT_BUNDLE_IDENTIFIER",
+    "PMF_BACKEND_BASE_URL",
 ]
 
 IOS_REQUIRED_KEYS = [
@@ -83,6 +99,12 @@ def run_resource_template_acceptance(
     backend_writer_text, backend_writer_exists = _read_optional_text(
         selected_repo_root / BACKEND_WRITER_PATH
     )
+    final_resource_template_text, final_resource_template_exists = _read_optional_text(
+        selected_repo_root / FINAL_RESOURCE_TEMPLATE_PATH
+    )
+    final_resource_apply_text, final_resource_apply_exists = _read_optional_text(
+        selected_repo_root / FINAL_RESOURCE_APPLY_PATH
+    )
     cli_text, cli_exists = _read_optional_text(selected_repo_root / CLI_PATH)
     final_demo_launch_text, final_demo_launch_exists = _read_optional_text(
         selected_repo_root / FINAL_DEMO_LAUNCH_PATH
@@ -90,10 +112,18 @@ def run_resource_template_acceptance(
 
     backend_keys = _parse_assignment_keys(backend_text, comment_prefixes=("#",))
     ios_keys = _parse_assignment_keys(ios_text, comment_prefixes=("#", "//"))
+    final_resource_keys = _parse_assignment_keys(
+        final_resource_template_text,
+        comment_prefixes=("#",),
+    )
     gitignore_patterns = _parse_gitignore_patterns(gitignore_text)
 
     backend_missing = _missing_keys(BACKEND_REQUIRED_KEYS, backend_keys)
     ios_missing = _missing_keys(IOS_REQUIRED_KEYS, ios_keys)
+    final_resource_missing = _missing_keys(
+        FINAL_RESOURCE_REQUIRED_KEYS,
+        final_resource_keys,
+    )
     gitignore_items = [
         _gitignore_item(path, gitignore_patterns) for path in LOCAL_DESTINATIONS
     ]
@@ -104,6 +134,15 @@ def run_resource_template_acceptance(
     backend_writer_checks = _backend_writer_checks(
         writer_text=backend_writer_text,
         writer_exists=backend_writer_exists,
+        makefile_text=makefile_text,
+        makefile_exists=makefile_exists,
+    )
+    final_resource_apply_checks = _final_resource_apply_checks(
+        template_text=final_resource_template_text,
+        template_exists=final_resource_template_exists,
+        missing_keys=final_resource_missing,
+        script_text=final_resource_apply_text,
+        script_exists=final_resource_apply_exists,
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
@@ -125,6 +164,7 @@ def run_resource_template_acceptance(
         _check("gitignore_local_destinations", not missing_gitignore),
         _check("template_safety", _templates_are_safe(safety)),
         _check("backend_writer", all(backend_writer_checks.values())),
+        _check("final_resource_apply", all(final_resource_apply_checks.values())),
         _check("final_demo_launch", all(final_demo_launch_checks.values())),
     ]
     summary = {
@@ -164,6 +204,17 @@ def run_resource_template_acceptance(
             "make_target": BACKEND_WRITER_MAKE_TARGET,
             "exists": backend_writer_exists,
             "checks": backend_writer_checks,
+        },
+        "final_resource_apply": {
+            "path": FINAL_RESOURCE_APPLY_PATH,
+            "template_path": FINAL_RESOURCE_TEMPLATE_PATH,
+            "make_target": FINAL_RESOURCE_APPLY_MAKE_TARGET,
+            "exists": final_resource_apply_exists,
+            "template_exists": final_resource_template_exists,
+            "required_keys": FINAL_RESOURCE_REQUIRED_KEYS,
+            "present_keys": sorted(final_resource_keys),
+            "missing_keys": final_resource_missing,
+            "checks": final_resource_apply_checks,
         },
         "final_demo_launch": {
             "path": FINAL_DEMO_LAUNCH_PATH,
@@ -274,13 +325,42 @@ def _backend_writer_checks(
                 "OPENAI_API_KEY",
                 "THREE_D_PROVIDER=meshy",
                 "NPC_PROVIDER=openai",
-                "PRINT_PROVIDER=local",
+                "PRINT_PROVIDER",
+                "TREATSTOCK_API_BASE_URL",
             ]
         ),
         "redaction": "configured (redacted)" in writer_text,
         "tracked_env_guard": "services/backend/.env must stay untracked" in writer_text,
         "no_banned_commands": not any(
             banned in writer_text for banned in BANNED_WRITER_TEXT
+        ),
+    }
+
+
+def _final_resource_apply_checks(
+    *,
+    template_text: str,
+    template_exists: bool,
+    missing_keys: list[str],
+    script_text: str,
+    script_exists: bool,
+    makefile_text: str,
+    makefile_exists: bool,
+) -> dict[str, bool]:
+    checked_text = "\n".join([template_text, script_text, makefile_text])
+    return {
+        "template_exists": template_exists,
+        "template_keys": not missing_keys,
+        "script_exists": script_exists,
+        "make_target": makefile_exists
+        and FINAL_RESOURCE_APPLY_MAKE_TARGET in makefile_text
+        and FINAL_RESOURCE_APPLY_PATH in makefile_text,
+        "uses_existing_writers": BACKEND_WRITER_PATH in script_text
+        or "write_backend_env.sh" in script_text,
+        "uses_ios_writer": "write_deploy_local_config.sh" in script_text,
+        "redaction": "configured (redacted)" in script_text,
+        "no_banned_commands": not any(
+            banned in checked_text for banned in BANNED_WRITER_TEXT
         ),
     }
 

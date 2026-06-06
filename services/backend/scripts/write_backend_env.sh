@@ -15,7 +15,9 @@ Options:
   --meshy-key VALUE
   --openai-key VALUE
   --openai-base-url VALUE
+  --print-provider VALUE
   --treatstock-key VALUE
+  --treatstock-base-url VALUE
   --sculpteo-key VALUE
   --capture-storage-dir VALUE
   --myth-session-storage-dir VALUE
@@ -42,7 +44,9 @@ require_arg() {
 meshy_key="${MESHY_API_KEY:-}"
 openai_key="${OPENAI_API_KEY:-}"
 openai_base_url="${OPENAI_API_BASE_URL:-}"
+print_provider="${PRINT_PROVIDER:-local}"
 treatstock_key="${TREATSTOCK_API_KEY:-}"
+treatstock_base_url="${TREATSTOCK_API_BASE_URL:-https://www.treatstock.com}"
 sculpteo_key="${SCULPTEO_API_KEY:-}"
 capture_storage_dir="${CAPTURE_STORAGE_DIR:-}"
 myth_session_storage_dir="${MYTH_SESSION_STORAGE_DIR:-}"
@@ -64,9 +68,19 @@ while [ "$#" -gt 0 ]; do
       openai_base_url="$2"
       shift 2
       ;;
+    --print-provider)
+      require_arg "$1" "$@"
+      print_provider="$2"
+      shift 2
+      ;;
     --treatstock-key)
       require_arg "$1" "$@"
       treatstock_key="$2"
+      shift 2
+      ;;
+    --treatstock-base-url)
+      require_arg "$1" "$@"
+      treatstock_base_url="$2"
       shift 2
       ;;
     --sculpteo-key)
@@ -105,11 +119,26 @@ if [ -z "$openai_key" ]; then
   missing=1
 fi
 
+print_provider=$(printf '%s' "$print_provider" | tr '[:upper:]' '[:lower:]')
+case "$print_provider" in
+  local|treatstock) ;;
+  *)
+    printf '%s\n' "Unsupported PRINT_PROVIDER: $print_provider." >&2
+    missing=1
+    ;;
+esac
+if [ "$print_provider" = "treatstock" ] && [ -z "$treatstock_key" ]; then
+  printf '%s\n' "TREATSTOCK_API_KEY is required when PRINT_PROVIDER=treatstock." >&2
+  missing=1
+fi
+
 for value in \
   "$meshy_key" \
   "$openai_key" \
   "$openai_base_url" \
+  "$print_provider" \
   "$treatstock_key" \
+  "$treatstock_base_url" \
   "$sculpteo_key" \
   "$capture_storage_dir" \
   "$myth_session_storage_dir"; do
@@ -147,7 +176,8 @@ trap 'rm -f "$tmp_file"' EXIT HUP INT TERM
   printf '%s\n' "OPENAI_NPC_MODEL=gpt-4.1-mini"
   printf '%s\n' "OPENAI_API_BASE_URL=$openai_base_url"
   printf '%s\n' "OPENAI_API_KEY=$openai_key"
-  printf '%s\n' "PRINT_PROVIDER=local"
+  printf '%s\n' "PRINT_PROVIDER=$print_provider"
+  printf '%s\n' "TREATSTOCK_API_BASE_URL=$treatstock_base_url"
   printf '%s\n' "TREATSTOCK_API_KEY=$treatstock_key"
   printf '%s\n' "SCULPTEO_API_KEY=$sculpteo_key"
   printf '%s\n' "CAPTURE_STORAGE_DIR=$capture_storage_dir"
@@ -164,5 +194,8 @@ printf '%s\n' "THREE_D_PROVIDER: meshy"
 printf '%s\n' "MESHY_API_KEY: configured (redacted)"
 printf '%s\n' "NPC_PROVIDER: openai"
 printf '%s\n' "OPENAI_API_KEY: configured (redacted)"
-printf '%s\n' "PRINT_PROVIDER: local"
+printf '%s\n' "PRINT_PROVIDER: $print_provider"
+if [ -n "$treatstock_key" ]; then
+  printf '%s\n' "TREATSTOCK_API_KEY: configured (redacted)"
+fi
 printf '%s\n' "Next: cd services/backend && uv run python -m myth_forge_api.cli provider-handoff --require-core-real"
