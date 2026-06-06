@@ -140,7 +140,7 @@ def test_generates_session_from_real_object_and_context() -> None:
     assert session.generated_asset.variants
     assert session.generated_asset.variants[0].format == "glb"
     assert session.generated_asset.variants[0].role == "game_asset"
-    assert session.generated_asset.variants[1].format == "usdz"
+    assert session.generated_asset.variants[1].format == "dae"
     assert session.generated_asset.variants[1].role == "ios_scene_asset"
     assert session.generated_asset.variants[1].is_scene_loadable is True
     assert session.print_candidate.kind == "print_asset"
@@ -164,7 +164,7 @@ def test_session_serializes_to_json_safe_payload() -> None:
 
     assert payload["object_card"]["label"] == "ceramic mug"
     assert payload["generated_asset"]["uri"].startswith("local://")
-    assert payload["generated_asset"]["variants"][1]["format"] == "usdz"
+    assert payload["generated_asset"]["variants"][1]["format"] == "dae"
     assert payload["generated_asset"]["variants"][1]["role"] == "ios_scene_asset"
     assert payload["generated_asset"]["variants"][1]["is_scene_loadable"] is True
     assert payload["npc_agent_runtime"] == "local_agent_runtime"

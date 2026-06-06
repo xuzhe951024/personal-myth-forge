@@ -29,8 +29,8 @@
       },
       {
         "role": "ios_scene_asset",
-        "format": "usdz",
-        "uri": "stub://assets/old-brass-key.usdz",
+        "format": "dae",
+        "uri": "http://192.168.1.10:8080/v1/generated-assets/myth_0123456789abcdef/scene.dae",
         "is_scene_loadable": true
       }
     ],

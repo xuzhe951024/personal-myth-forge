@@ -1247,3 +1247,45 @@ make backend-device-demo
 Expected quick final acceptance on this local checkout is now
 `passed=6`, `blocked=2`, `failed=0`; the two blockers remain local iOS signing
 config and the Apple SDK/Xcode license gate.
+
+P0.46 adds a source-only resource template acceptance gate. It verifies that the
+checked-in templates expose every final resource slot the operator must fill:
+Meshy/OpenAI provider settings, print provider key slots, local capture/session
+storage overrides, and iPhone deployment values. It also verifies that local
+destination files are ignored by git and that templates/reports contain no
+provider secrets, raw media, local absolute paths, or payment links.
+
+Run:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli resource-template-acceptance \
+  --repo-root ../.. \
+  --output /tmp/personal-myth-forge-resource-template-acceptance.json
+```
+
+P0.47 makes local generated scene assets downloadable by the iOS app. Local demo
+sessions now expose a SceneKit-loadable `ios_scene_asset` as a backend-served DAE
+URL:
+
+```http
+GET /v1/generated-assets/{session_id}/game.glb
+GET /v1/generated-assets/{session_id}/scene.dae
+```
+
+When an iPhone calls the backend through `PMF_BACKEND_BASE_URL`, local
+`generated_asset` and `ios_scene_asset` URLs are rewritten to the same
+device-reachable backend base URL. Meshy HTTP(S) URLs are left untouched. The
+local assets are deterministic demo geometry only; they contain no raw capture
+media, provider keys, local filesystem paths, or personal source text.
+
+Expected quick final acceptance on this local checkout is now
+`passed=8`, `blocked=2`, `failed=0`; the two blockers remain local iOS signing
+config and the Apple SDK/Xcode license gate.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.47-local-scene-asset-handoff.html
+docs/superpowers/verification/assets/p0.47-local-scene-asset-handoff-390x844.png
+```

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.47 Local Scene Asset Handoff</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1f2937;
+        --muted: #667085;
+        --line: #d0d5dd;
+        --ok: #047857;
+        --warn: #b45309;
+        --paper: #f8fafc;
+        --panel: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        background: var(--paper);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: calc(100% - 32px);
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 28px 0 36px;
+      }
+
+      header {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 22px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 17px;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .tile,
+      .section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .tile {
+        min-height: 92px;
+        padding: 14px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 10px;
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .ok {
+        color: var(--ok);
+      }
+
+      .warn {
+        color: var(--warn);
+      }
+
+      .section {
+        padding: 16px;
+        margin-top: 12px;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      li + li {
+        margin-top: 4px;
+      }
+
+      .flow {
+        display: grid;
+        gap: 8px;
+      }
+
+      .step {
+        border-top: 1px solid #eaecf0;
+        padding-top: 9px;
+      }
+
+      .step:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      @media (max-width: 760px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 23px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P0.47 Local Scene Asset</h1>
+        <p>Local 3D output now reaches iOS as DAE.</p>
+      </header>
+
+      <section class="grid" aria-label="Acceptance summary">
+        <div class="tile">
+          <div class="label">Asset Handoff</div>
+          <div class="value ok">6 / 6</div>
+          <p>Asset routes and safety passed.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Final Acceptance</div>
+          <div class="value warn">8 pass, 2 blocked</div>
+          <p>Only local iOS blockers remain.</p>
+        </div>
+        <div class="tile">
+          <div class="label">iOS Contract</div>
+          <div class="value ok">passed</div>
+          <p>Remote DAE caches as SceneKit-ready.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Handoff Flow</h2>
+        <div class="flow">
+          <div class="step">
+            <div class="label">1. Forge</div>
+            <p>Local provider emits GLB plus DAE.</p>
+          </div>
+          <div class="step">
+            <div class="label">2. Rewrite</div>
+            <p>FastAPI returns an HTTP scene URL.</p>
+          </div>
+          <div class="step">
+            <div class="label">3. Preview</div>
+            <p>iOS downloads <code>scene.dae</code>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Safety</h2>
+        <ul>
+          <li>No raw capture media in the generated scene.</li>
+          <li>No provider keys, bearer tokens, or local paths in reports.</li>
+          <li>No live provider calls and no global mutation.</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

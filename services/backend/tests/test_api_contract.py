@@ -37,7 +37,7 @@ def test_create_myth_session_endpoint_returns_reviewable_session() -> None:
     assert payload["npc_agent_traces"][0]["proposed_action"]
     assert payload["generated_asset"]["kind"] == "game_asset"
     assert payload["generated_asset"]["variants"][1]["role"] == "ios_scene_asset"
-    assert payload["generated_asset"]["variants"][1]["format"] == "usdz"
+    assert payload["generated_asset"]["variants"][1]["format"] == "dae"
     assert payload["generated_asset"]["variants"][1]["is_scene_loadable"] is True
     provenance = payload["generated_asset"]["generation_provenance"]
     assert provenance["input_mode"] == "text_prompt"
@@ -48,6 +48,60 @@ def test_create_myth_session_endpoint_returns_reviewable_session() -> None:
     assert "data:image" not in response.text
     assert "/tmp" not in response.text
     assert payload["print_candidate"]["requires_user_approval"] is True
+
+
+def test_create_myth_session_endpoint_returns_served_local_scene_asset() -> None:
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/myth-sessions",
+        json={
+            "object_observation": {
+                "label": "tiny desk plant",
+                "materials": ["leaf", "soil", "ceramic"],
+                "source": "phone_capture",
+            },
+            "context_capsule": {
+                "current_theme": "new beginning",
+                "desired_tone": "hopeful but mysterious",
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    scene_variant = payload["generated_asset"]["variants"][1]
+    assert payload["generated_asset"]["uri"].startswith(
+        "http://testserver/v1/generated-assets/"
+    )
+    assert payload["generated_asset"]["uri"].endswith("/game.glb")
+    assert scene_variant["role"] == "ios_scene_asset"
+    assert scene_variant["format"] == "dae"
+    assert scene_variant["uri"].startswith("http://testserver/v1/generated-assets/")
+    assert scene_variant["uri"].endswith("/scene.dae")
+    assert payload["print_candidate"]["source_asset_uri"].startswith(
+        "http://testserver/v1/generated-assets/"
+    )
+
+    game_response = client.get(payload["generated_asset"]["uri"])
+    asset_response = client.get(scene_variant["uri"])
+
+    assert game_response.status_code == 200
+    assert game_response.content.startswith(b"glTF")
+    assert asset_response.status_code == 200
+    assert "COLLADA" in asset_response.text
+    assert payload["session_id"] in asset_response.text
+    assert "local://" not in asset_response.text
+    assert "data:image" not in asset_response.text
+    assert "/tmp" not in asset_response.text
+
+
+def test_generated_scene_asset_rejects_unknown_session_id_shape() -> None:
+    client = TestClient(app)
+
+    response = client.get("/v1/generated-assets/not-a-session/scene.dae")
+
+    assert response.status_code == 422
 
 
 def _print_candidate_payload() -> dict[str, object]:

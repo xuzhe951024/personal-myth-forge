@@ -4,7 +4,7 @@ import json
 import re
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, Path as PathParam, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Path as PathParam, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
@@ -28,6 +28,11 @@ from myth_forge_api.domain.models import (
     ProviderReadinessResponse,
 )
 from myth_forge_api.domain.pipeline import create_demo_myth_session
+from myth_forge_api.local_generated_assets import (
+    local_generated_game_glb,
+    local_generated_scene_dae,
+    with_served_local_generated_asset_urls,
+)
 from myth_forge_api.providers.capture_store import CaptureStoreError, CaptureUpload
 from myth_forge_api.providers.capture_sources import build_capture_generation_sources
 from myth_forge_api.providers.factory import (
@@ -66,6 +71,28 @@ def provider_readiness() -> ProviderReadinessResponse:
 @app.get("/demo", include_in_schema=False)
 def demo() -> FileResponse:
     return FileResponse(DEMO_DIR / "index.html")
+
+
+@app.get("/v1/generated-assets/{session_id}/scene.dae")
+def get_local_generated_scene_asset(
+    session_id: str = PathParam(..., pattern=SESSION_ID_PATTERN),
+) -> Response:
+    return Response(
+        content=local_generated_scene_dae(session_id),
+        media_type="model/vnd.collada+xml",
+        headers={"Content-Disposition": f'inline; filename="{session_id}-scene.dae"'},
+    )
+
+
+@app.get("/v1/generated-assets/{session_id}/game.glb")
+def get_local_generated_game_asset(
+    session_id: str = PathParam(..., pattern=SESSION_ID_PATTERN),
+) -> Response:
+    return Response(
+        content=local_generated_game_glb(session_id),
+        media_type="model/gltf-binary",
+        headers={"Content-Disposition": f'inline; filename="{session_id}-game.glb"'},
+    )
 
 
 @app.post("/v1/object-captures", response_model=ObjectCapture)
@@ -121,9 +148,12 @@ def get_myth_session_history(
 
 
 @app.post("/v1/myth-sessions/from-capture", response_model=MythSession)
-def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> MythSession:
+def create_myth_session_from_capture(
+    request: Request,
+    payload: MythSessionFromCaptureRequest,
+) -> MythSession:
     capture_store = build_capture_store()
-    capture = capture_store.get_capture(request.capture_id)
+    capture = capture_store.get_capture(payload.capture_id)
     if capture is None:
         raise HTTPException(status_code=404, detail="Object capture not found.")
     observation = capture.object_observation.model_copy(
@@ -136,11 +166,15 @@ def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> 
         source_images, source_assets = build_capture_generation_sources(capture, capture_store)
         session = create_demo_myth_session(
             object_observation=observation,
-            context_capsule=request.context_capsule,
+            context_capsule=payload.context_capsule,
             three_d_provider=build_three_d_provider(),
             npc_director=build_npc_director(),
             source_images=source_images,
             source_assets=source_assets,
+        )
+        session = with_served_local_generated_asset_urls(
+            session,
+            base_url=str(request.base_url),
         )
         build_myth_session_store().save_session(session)
         return session
@@ -153,13 +187,17 @@ def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> 
 
 
 @app.post("/v1/myth-sessions", response_model=MythSession)
-def create_myth_session(request: MythSessionRequest) -> MythSession:
+def create_myth_session(request: Request, payload: MythSessionRequest) -> MythSession:
     try:
         session = create_demo_myth_session(
-            object_observation=request.object_observation,
-            context_capsule=request.context_capsule,
+            object_observation=payload.object_observation,
+            context_capsule=payload.context_capsule,
             three_d_provider=build_three_d_provider(),
             npc_director=build_npc_director(),
+        )
+        session = with_served_local_generated_asset_urls(
+            session,
+            base_url=str(request.base_url),
         )
         build_myth_session_store().save_session(session)
         return session

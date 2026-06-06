@@ -22,6 +22,10 @@ from myth_forge_api.ios_showcase_acceptance import (
     IOSShowcaseAcceptanceResult,
     run_ios_showcase_acceptance,
 )
+from myth_forge_api.local_asset_handoff_acceptance import (
+    LocalAssetHandoffAcceptanceResult,
+    run_local_asset_handoff_acceptance,
+)
 from myth_forge_api.print_acceptance import (
     PrintQuoteAcceptanceResult,
     run_print_quote_acceptance,
@@ -83,6 +87,10 @@ IOSBackendHandoffAcceptanceRunner = Callable[
 ResourceTemplateAcceptanceRunner = Callable[
     [],
     ResourceTemplateAcceptanceResult | InlineCheckResult,
+]
+LocalAssetHandoffAcceptanceRunner = Callable[
+    [],
+    LocalAssetHandoffAcceptanceResult | InlineCheckResult,
 ]
 
 
@@ -163,6 +171,7 @@ def run_final_acceptance(
     ios_showcase_acceptance_runner: IOSShowcaseAcceptanceRunner | None = None,
     ios_backend_handoff_acceptance_runner: IOSBackendHandoffAcceptanceRunner | None = None,
     resource_template_acceptance_runner: ResourceTemplateAcceptanceRunner | None = None,
+    local_asset_handoff_acceptance_runner: LocalAssetHandoffAcceptanceRunner | None = None,
 ) -> FinalAcceptanceResult:
     if profile not in ("quick", "full"):
         raise ValueError(f"Unsupported final acceptance profile: {profile}")
@@ -191,6 +200,10 @@ def run_final_acceptance(
     selected_resource_template_acceptance_runner = (
         resource_template_acceptance_runner
         or (lambda: run_resource_template_acceptance(repo_root=selected_repo_root))
+    )
+    selected_local_asset_handoff_acceptance_runner = (
+        local_asset_handoff_acceptance_runner
+        or (lambda: run_local_asset_handoff_acceptance(repo_root=selected_repo_root))
     )
 
     checks: list[dict[str, Any]] = []
@@ -255,6 +268,14 @@ def run_final_acceptance(
             require_real_core=False,
         )
     )
+    checks.append(
+        _run_inline_check(
+            check_id="local_asset_handoff_acceptance",
+            label="Local generated asset handoff acceptance",
+            runner=selected_local_asset_handoff_acceptance_runner,
+            require_real_core=False,
+        )
+    )
 
     for definition in _command_checks_for_profile(profile):
         checks.append(
@@ -311,6 +332,7 @@ def _run_inline_check(
         | IOSShowcaseAcceptanceResult
         | IOSBackendHandoffAcceptanceResult
         | ResourceTemplateAcceptanceResult
+        | LocalAssetHandoffAcceptanceResult
     ],
     require_real_core: bool,
 ) -> dict[str, Any]:

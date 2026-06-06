@@ -72,6 +72,7 @@ do {
     try testArtifactPreviewStateHandlesMissingFormat()
     try await testArtifactAssetPreparerUsesLocalSceneURL()
     try await testArtifactAssetPreparerDownloadsRemoteUSDZForSceneKit()
+    try await testArtifactAssetPreparerDownloadsRemoteDAEForLocalBackendScene()
     try await testArtifactAssetPreparerCachesRemoteGLBButRequiresConversion()
     try await testArtifactAssetPreparerPrefersSceneVariantOverPrimaryGLB()
     try await testArtifactAssetPreparerReportsLocalSceneVariantSourceURI()
@@ -114,7 +115,11 @@ private func testDecodesMythSessionFixture() throws {
     try expectEqual(session.generatedAsset.variants[0].role, "game_asset")
     try expectEqual(session.generatedAsset.variants[0].format, "glb")
     try expectEqual(session.generatedAsset.variants[1].role, "ios_scene_asset")
-    try expectEqual(session.generatedAsset.variants[1].format, "usdz")
+    try expectEqual(session.generatedAsset.variants[1].format, "dae")
+    try expectEqual(
+        session.generatedAsset.variants[1].uri,
+        "http://192.168.1.10:8080/v1/generated-assets/myth_0123456789abcdef/scene.dae"
+    )
     try expectTrue(session.generatedAsset.variants[1].isSceneLoadable)
     let provenance = try require(
         session.generatedAsset.generationProvenance,
@@ -1780,6 +1785,26 @@ private func testArtifactAssetPreparerDownloadsRemoteUSDZForSceneKit() async thr
     try expectEqual(await downloader.requestedURLs(), [URL(string: "https://cdn.example.com/relic.usdz")!])
     try expectEqual(await cache.storedFilenames(), ["myth_test-meshy.usdz"])
     try expectEqual(await cache.storedData(), [Data("usdz-bytes".utf8)])
+}
+
+private func testArtifactAssetPreparerDownloadsRemoteDAEForLocalBackendScene() async throws {
+    let downloader = RecordingArtifactAssetDownloader(data: Data("<COLLADA></COLLADA>".utf8))
+    let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
+    let session = mythSession(
+        asset: generatedAsset(format: "dae", uri: "http://192.168.1.10:8080/v1/generated-assets/myth_test/scene.dae")
+    )
+    let prepared = await ArtifactAssetPreparer(downloader: downloader, cache: cache)
+        .prepare(session: session)
+
+    try expectEqual(prepared.status, .cachedSceneReady)
+    try expectEqual(prepared.cachedURL, URL(fileURLWithPath: "/tmp/pmf-assets/myth_test-meshy.dae"))
+    try expectEqual(prepared.sceneURL, prepared.cachedURL)
+    try expectEqual(
+        await downloader.requestedURLs(),
+        [URL(string: "http://192.168.1.10:8080/v1/generated-assets/myth_test/scene.dae")!]
+    )
+    try expectEqual(await cache.storedFilenames(), ["myth_test-meshy.dae"])
+    try expectEqual(await cache.storedData(), [Data("<COLLADA></COLLADA>".utf8)])
 }
 
 private func testArtifactAssetPreparerCachesRemoteGLBButRequiresConversion() async throws {
