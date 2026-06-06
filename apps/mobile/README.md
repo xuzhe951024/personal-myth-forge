@@ -1161,3 +1161,48 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.37-capture-3d-acceptance-gate.html
 docs/superpowers/verification/assets/p0.37-capture-3d-acceptance-gate-390x844.png
 ```
+
+## P0.38 Print Quote Handoff
+
+P0.38 keeps the mobile UI unchanged and adds the backend contract the app will
+eventually call from a print review screen:
+
+```http
+POST /v1/print-quotes
+```
+
+The request carries a backend-produced `print_candidate`, quantity, material,
+finish, and shipping country. The current local provider returns a deterministic
+`draft_quote` for review:
+
+- provider `local_stub`
+- `USD 16.00` per item
+- five production days and six shipping days
+- `requires_user_approval: true`
+- no checkout/payment URL
+
+Provider readiness now has `PRINT_PROVIDER`, `TREATSTOCK_API_KEY`, and
+`SCULPTEO_API_KEY` slots for future live quote adapters. Configured
+Treatstock/Sculpteo keys are not returned to the app, and those providers are
+not marked real-ready until live adapters are implemented.
+
+Run:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+Expected local summary after P0.38 is `passed=4`, `blocked=2`, `failed=0`.
+The new passing check is `print_quote_acceptance`; local deploy config and the
+Apple SDK license remain blocked on this machine.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.38-print-quote-handoff.html
+docs/superpowers/verification/assets/p0.38-print-quote-handoff-390x844.png
+```

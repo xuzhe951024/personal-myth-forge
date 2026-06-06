@@ -23,6 +23,8 @@ from myth_forge_api.domain.models import (
     NPCAgentTickRequest,
     ObjectCapture,
     ObjectCaptureMetadata,
+    PrintQuote,
+    PrintQuoteRequest,
     ProviderReadinessResponse,
 )
 from myth_forge_api.domain.pipeline import create_demo_myth_session
@@ -33,6 +35,7 @@ from myth_forge_api.providers.factory import (
     build_myth_session_store,
     build_npc_director,
     build_npc_tick_runtime,
+    build_print_provider,
     build_three_d_provider,
 )
 from myth_forge_api.providers.image_preparation import ImagePreparationError
@@ -161,6 +164,14 @@ def create_myth_session(request: MythSessionRequest) -> MythSession:
         build_myth_session_store().save_session(session)
         return session
     except (MeshyProviderError, OpenAINPCProviderError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
+
+
+@app.post("/v1/print-quotes", response_model=PrintQuote)
+def create_print_quote(request: PrintQuoteRequest) -> PrintQuote:
+    try:
+        return build_print_provider().create_print_quote(request)
+    except ValueError as exc:
         raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
 
 

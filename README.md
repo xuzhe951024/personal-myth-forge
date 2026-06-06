@@ -965,3 +965,65 @@ Static evidence lives at:
 docs/superpowers/verification/p0.37-capture-3d-acceptance-gate.html
 docs/superpowers/verification/assets/p0.37-capture-3d-acceptance-gate-390x844.png
 ```
+
+P0.38 adds the first print quote handoff contract for printable relic review.
+The backend exposes a safe local draft quote endpoint:
+
+```http
+POST /v1/print-quotes
+```
+
+Create a local request from an existing print candidate shape:
+
+```bash
+cat >/tmp/print-quote-request.json <<'JSON'
+{
+  "print_candidate": {
+    "kind": "print_asset",
+    "source_asset_uri": "local://generated-assets/myth_test.glb",
+    "provider": "local_stub",
+    "format": "3mf",
+    "uri": "local://print-candidates/myth_test.3mf",
+    "requires_user_approval": true,
+    "approval_reason": "review before fulfillment",
+    "printability_notes": ["stable base", "repair thin parts"]
+  },
+  "quantity": 1,
+  "material": "standard_resin",
+  "finish": "matte",
+  "ship_to_country": "US"
+}
+JSON
+
+curl -X POST http://127.0.0.1:8080/v1/print-quotes \
+  -H 'Content-Type: application/json' \
+  -d @/tmp/print-quote-request.json
+```
+
+The local provider returns a deterministic `draft_quote`, `USD 16.00` per item,
+and `requires_user_approval: true`. `PRINT_PROVIDER=treatstock` and
+`PRINT_PROVIDER=sculpteo` now have backend config/readiness slots, but live quote
+adapters remain intentionally unimplemented and are not marked real-ready.
+
+Run final acceptance:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+Expected local summary after P0.38 is `passed=4`, `blocked=2`, `failed=0`.
+The new passing check is `print_quote_acceptance`; the blocked checks remain
+local iOS deploy config and the Apple SDK license on this machine. Reports must
+not include checkout/payment identifiers, provider keys, raw media payloads, or
+local filesystem paths.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.38-print-quote-handoff.html
+docs/superpowers/verification/assets/p0.38-print-quote-handoff-390x844.png
+```

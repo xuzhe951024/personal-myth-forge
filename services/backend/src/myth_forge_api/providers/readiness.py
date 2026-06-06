@@ -8,7 +8,7 @@ def build_provider_readiness(settings: Settings) -> ProviderReadinessResponse:
     providers = [
         _three_d_readiness(settings),
         _npc_readiness(settings),
-        _print_readiness(),
+        _print_readiness(settings),
         _capture_storage_readiness(),
     ]
     return ProviderReadinessResponse(
@@ -131,18 +131,64 @@ def _npc_readiness(settings: Settings) -> ProviderReadinessItem:
     )
 
 
-def _print_readiness() -> ProviderReadinessItem:
+def _print_readiness(settings: Settings) -> ProviderReadinessItem:
+    selected_provider = settings.print_provider
+    if selected_provider == "local":
+        return ProviderReadinessItem(
+            kind="print",
+            selected_provider="local",
+            status="local_stub",
+            is_demo_ready=True,
+            is_real_provider_ready=False,
+            capabilities=["print_candidate_stub", "quote_stub", "manual_review_required"],
+            notes=[
+                "Local print quote provider is deterministic and demo-ready.",
+                "Select PRINT_PROVIDER=treatstock or sculpteo after live quote adapters are implemented.",
+            ],
+        )
+    if selected_provider == "treatstock":
+        if not settings.treatstock_api_key:
+            return ProviderReadinessItem(
+                kind="print",
+                selected_provider="treatstock",
+                status="missing_configuration",
+                is_demo_ready=False,
+                is_real_provider_ready=False,
+                missing_env=["TREATSTOCK_API_KEY"],
+                capabilities=["quote_api_key_slot", "order_handoff_future"],
+                notes=[
+                    "TREATSTOCK_API_KEY is required for future Treatstock quote integration."
+                ],
+            )
+        return ProviderReadinessItem(
+            kind="print",
+            selected_provider="treatstock",
+            status="not_implemented",
+            is_demo_ready=False,
+            is_real_provider_ready=False,
+            capabilities=["quote_api_key_configured", "order_handoff_future"],
+            notes=["Treatstock key is configured, but live quote adapter is not implemented yet."],
+        )
+    if selected_provider == "sculpteo":
+        missing = [] if settings.sculpteo_api_key else ["SCULPTEO_API_KEY"]
+        return ProviderReadinessItem(
+            kind="print",
+            selected_provider="sculpteo",
+            status="not_implemented" if not missing else "missing_configuration",
+            is_demo_ready=False,
+            is_real_provider_ready=False,
+            missing_env=missing,
+            capabilities=["quote_api_key_slot", "order_handoff_future"],
+            notes=["Sculpteo live quote adapter is not implemented yet."],
+        )
     return ProviderReadinessItem(
         kind="print",
-        selected_provider="local_stub",
-        status="local_stub",
-        is_demo_ready=True,
+        selected_provider=selected_provider,
+        status="unsupported",
+        is_demo_ready=False,
         is_real_provider_ready=False,
-        capabilities=["print_candidate_stub", "manual_review_required"],
-        notes=[
-            "Print candidate generation is local and demo-ready.",
-            "Treatstock/Sculpteo fulfillment adapters are not implemented yet.",
-        ],
+        capabilities=[],
+        notes=[f"Unsupported PRINT_PROVIDER value: {selected_provider}."],
     )
 
 

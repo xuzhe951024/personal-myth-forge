@@ -163,6 +163,30 @@ class PrintCandidate(BaseModel):
     printability_notes: list[str]
 
 
+class PrintQuoteRequest(BaseModel):
+    print_candidate: PrintCandidate
+    quantity: int = Field(default=1, ge=1, le=10)
+    material: str = Field(default="standard_resin", min_length=1)
+    finish: str = Field(default="matte", min_length=1)
+    ship_to_country: str = Field(default="US", min_length=2, max_length=2)
+
+
+class PrintQuote(BaseModel):
+    kind: Literal["print_quote"]
+    provider: str
+    status: Literal["draft_quote", "needs_provider_configuration", "not_implemented"]
+    source_asset_uri: str
+    print_candidate_uri: str
+    currency: str
+    estimated_price_cents: int = Field(ge=0)
+    estimated_production_days: int = Field(ge=0)
+    estimated_shipping_days: int = Field(ge=0)
+    checkout_url: str | None = None
+    requires_user_approval: bool
+    approval_reason: str
+    quote_notes: list[str]
+
+
 class ProviderReadinessItem(BaseModel):
     kind: Literal["three_d", "npc", "print", "capture_storage"]
     selected_provider: str
