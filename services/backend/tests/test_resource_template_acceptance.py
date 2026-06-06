@@ -76,15 +76,26 @@ final-demo-launch:
 .PHONY: final-apply-resources
 final-apply-resources:
 \t@services/backend/scripts/apply_final_resources.sh
+.PHONY: final-resources-preflight
+final-resources-preflight:
+\tcd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../..
 """
 
 CLI_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
+from myth_forge_api.final_resources_preflight import build_final_resources_preflight_report
 subcommands.add_parser("final-demo-launch")
+subcommands.add_parser("final-resources-preflight")
 """
 
 FINAL_DEMO_LAUNCH_TEMPLATE = """from myth_forge_api.resource_handoff import build_resource_handoff_report
+from myth_forge_api.final_resources_preflight import build_final_resources_preflight_report
 def build_final_demo_launch_report():
+    build_final_resources_preflight_report()
     return build_resource_handoff_report()
+"""
+
+FINAL_RESOURCES_PREFLIGHT_TEMPLATE = """def build_final_resources_preflight_report():
+    return {"safety": {"live_provider_calls": False, "global_mutation": False}}
 """
 
 
@@ -96,7 +107,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.exit_code == 0
     assert result.report["kind"] == "resource_template_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 10, "failed": 0}
+    assert result.report["summary"] == {"passed": 11, "failed": 0}
     assert result.report["backend_template"]["missing_keys"] == []
     assert result.report["ios_template"]["missing_keys"] == []
     assert "OPENAI_API_KEY" in result.report["backend_template"]["required_keys"]
@@ -159,6 +170,19 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.report["final_resource_apply"]["checks"]["uses_ios_writer"] is True
     assert result.report["final_resource_apply"]["checks"]["redaction"] is True
     assert result.report["final_resource_apply"]["checks"]["no_banned_commands"] is True
+    assert result.report["final_resources_preflight"]["path"] == (
+        "services/backend/src/myth_forge_api/final_resources_preflight.py"
+    )
+    assert result.report["final_resources_preflight"]["make_target"] == (
+        "final-resources-preflight"
+    )
+    assert result.report["final_resources_preflight"]["checks"]["module_exists"] is True
+    assert result.report["final_resources_preflight"]["checks"]["cli_command"] is True
+    assert result.report["final_resources_preflight"]["checks"]["make_target"] is True
+    assert (
+        result.report["final_resources_preflight"]["checks"]["launch_integration"] is True
+    )
+    assert result.report["final_resources_preflight"]["checks"]["no_banned_commands"] is True
 
 
 def test_resource_template_acceptance_fails_missing_backend_key(tmp_path: Path) -> None:
@@ -241,6 +265,7 @@ def _write_repo(
     backend_writer: str = BACKEND_WRITER_TEMPLATE,
     final_resource_template: str = FINAL_RESOURCE_TEMPLATE,
     final_resource_apply: str = FINAL_RESOURCE_APPLY_TEMPLATE,
+    final_resources_preflight: str = FINAL_RESOURCES_PREFLIGHT_TEMPLATE,
     makefile: str = MAKEFILE_TEMPLATE,
 ) -> Path:
     repo_root = tmp_path / "repo"
@@ -273,6 +298,12 @@ def _write_repo(
         repo_root / "services/backend/src/myth_forge_api/final_demo_launch.py"
     ).write_text(
         FINAL_DEMO_LAUNCH_TEMPLATE,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/src/myth_forge_api/final_resources_preflight.py"
+    ).write_text(
+        final_resources_preflight,
         encoding="utf-8",
     )
     (repo_root / "Makefile").write_text(makefile, encoding="utf-8")

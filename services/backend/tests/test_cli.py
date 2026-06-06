@@ -449,6 +449,64 @@ def test_cli_resource_handoff_prints_stdout_when_ready(capsys, monkeypatch) -> N
     assert payload["overall_status"] == "ready"
 
 
+def test_cli_final_resources_preflight_writes_ready_report(tmp_path) -> None:
+    repo_root = tmp_path / "repo"
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    output_file = tmp_path / "final-resources-preflight.json"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "\n".join(
+            [
+                "MESHY_API_KEY=meshy-secret-test",
+                "OPENAI_API_KEY=sk-openai-test",
+                "PRINT_PROVIDER=local",
+                "DEVELOPMENT_TEAM=ABCDE12345",
+                "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
+                "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "final-resources-preflight",
+            "--repo-root",
+            str(repo_root),
+            "--resources-file",
+            str(resources),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report_text = output_file.read_text(encoding="utf-8")
+    report = json.loads(report_text)
+    assert exit_code == 0
+    assert report["kind"] == "final_resources_preflight_report"
+    assert report["status"] == "ready"
+    assert report["resources_file"]["path"] == "services/backend/.local/final-resources.env"
+    assert "meshy-secret-test" not in report_text
+    assert "sk-openai-test" not in report_text
+    assert str(tmp_path) not in report_text
+
+
+def test_cli_final_resources_preflight_returns_two_when_missing(
+    tmp_path,
+    capsys,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    exit_code = main(["final-resources-preflight", "--repo-root", str(repo_root)])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 2
+    assert payload["kind"] == "final_resources_preflight_report"
+    assert payload["status"] == "missing"
+    assert str(tmp_path) not in json.dumps(payload)
+
+
 def test_cli_resource_template_acceptance_writes_report(tmp_path, monkeypatch) -> None:
     output_file = tmp_path / "resource-template-acceptance.json"
     calls = []

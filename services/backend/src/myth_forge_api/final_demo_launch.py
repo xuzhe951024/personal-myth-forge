@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any, Literal
 
 from myth_forge_api.config import Settings, load_settings
+from myth_forge_api.final_resources_preflight import (
+    build_final_resources_preflight_report,
+)
 from myth_forge_api.resource_handoff import build_resource_handoff_report
 
 LaunchMode = Literal["local", "configured"]
@@ -32,7 +35,14 @@ def build_final_demo_launch_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
     )
-    phases = _launch_phases(mode=mode, resource_report=resource_report)
+    final_resources_preflight = build_final_resources_preflight_report(
+        repo_root=selected_repo_root,
+    ).report
+    phases = _launch_phases(
+        mode=mode,
+        resource_report=resource_report,
+        final_resources_preflight=final_resources_preflight,
+    )
     resource_summary = dict(resource_report["summary"])
     phase_summary = _summary(phases)
     overall_status = _overall_status(mode=mode, summary=phase_summary)
@@ -42,11 +52,13 @@ def build_final_demo_launch_report(
         "overall_status": overall_status,
         "summary": resource_summary,
         "phase_summary": phase_summary,
+        "final_resources_preflight": final_resources_preflight,
         "resource_report": resource_report,
         "launch_phases": phases,
         "operator_checklist": _operator_checklist(
             mode=mode,
             resource_report=resource_report,
+            final_resources_preflight=final_resources_preflight,
             phases=phases,
         ),
         "commands": _commands(mode),
@@ -74,6 +86,7 @@ def _launch_phases(
     *,
     mode: LaunchMode,
     resource_report: dict[str, Any],
+    final_resources_preflight: dict[str, Any],
 ) -> list[dict[str, Any]]:
     backend = _items_by_id(resource_report["backend"]["items"])
     ios = _items_by_id(resource_report["ios"]["items"])
@@ -98,6 +111,7 @@ def _launch_phases(
         mode=mode,
         core_backend_status=core_backend_status,
         ios_status=ios_status,
+        final_resources_preflight_status=final_resources_preflight["status"],
     )
     configured_acceptance_status = _combined_status([core_backend_status, ios_status])
     if mode == "local":
@@ -113,7 +127,7 @@ def _launch_phases(
                 "Reads only ignored services/backend/.local/final-resources.env.",
                 "Writes only ignored services/backend/.env and Deployment.local.xcconfig.",
                 "Use a LAN backend URL for PMF_BACKEND_BASE_URL, not localhost or 127.0.0.1.",
-                "Local no-key acceptance can continue when this phase is blocked or partial.",
+                "Local no-key acceptance can continue when this phase is missing, blocked, or partial.",
             ],
         ),
         _phase(
@@ -196,7 +210,12 @@ def _final_resource_apply_status(
     mode: LaunchMode,
     core_backend_status: str,
     ios_status: str,
+    final_resources_preflight_status: str,
 ) -> str:
+    if final_resources_preflight_status in {"missing", "blocked"}:
+        return final_resources_preflight_status
+    if final_resources_preflight_status == "ready":
+        return "ready"
     if mode == "configured":
         return _combined_status([core_backend_status, ios_status])
     if ios_status != "ready":
@@ -228,9 +247,11 @@ def _operator_checklist(
     *,
     mode: LaunchMode,
     resource_report: dict[str, Any],
+    final_resources_preflight: dict[str, Any],
     phases: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
+    actions.extend(final_resources_preflight.get("operator_actions", []))
     if mode == "configured":
         actions.extend(resource_report["operator_actions"])
     else:
@@ -250,6 +271,7 @@ def _operator_checklist(
 def _commands(mode: LaunchMode) -> list[str]:
     if mode == "local":
         return [
+            "make final-resources-preflight",
             "make final-apply-resources",
             "make backend-device-demo",
             "make mobile-deploy-preflight",
@@ -265,6 +287,7 @@ def _commands(mode: LaunchMode) -> list[str]:
             ),
         ]
     return [
+        "make final-resources-preflight",
         "make final-apply-resources",
         "make backend-device-demo",
         (
