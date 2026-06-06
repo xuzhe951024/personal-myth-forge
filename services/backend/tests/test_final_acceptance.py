@@ -57,6 +57,17 @@ def passing_local_asset_handoff_result() -> InlineCheckResult:
     )
 
 
+def passing_capture_scene_handoff_result() -> InlineCheckResult:
+    return InlineCheckResult(
+        exit_code=0,
+        report={
+            "kind": "capture_scene_handoff_acceptance_report",
+            "status": "succeeded",
+            "summary": {"passed": 8, "failed": 0},
+        },
+    )
+
+
 def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path) -> None:
     commands: list[list[str]] = []
     demo_calls: list[dict[str, object]] = []
@@ -124,6 +135,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
         resource_template_acceptance_runner=passing_resource_template_result,
         local_asset_handoff_acceptance_runner=passing_local_asset_handoff_result,
+        capture_scene_handoff_acceptance_runner=passing_capture_scene_handoff_result,
     )
 
     assert result.exit_code == 2
@@ -132,7 +144,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.report["allow_live_provider_calls"] is False
     assert result.report["overall_status"] == "blocked"
     assert result.report["summary"] == {
-        "passed": 8,
+        "passed": 9,
         "blocked": 2,
         "failed": 0,
         "skipped": 0,
@@ -147,6 +159,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
         "ios_backend_handoff_acceptance",
         "resource_template_acceptance",
         "local_asset_handoff_acceptance",
+        "capture_scene_handoff_acceptance",
         "mobile_deploy_preflight",
         "mobile_xcode_build",
     ]
@@ -174,6 +187,11 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert checks["local_asset_handoff_acceptance"]["status"] == "passed"
     assert checks["local_asset_handoff_acceptance"]["report"]["summary"] == {
         "passed": 6,
+        "failed": 0,
+    }
+    assert checks["capture_scene_handoff_acceptance"]["status"] == "passed"
+    assert checks["capture_scene_handoff_acceptance"]["report"]["summary"] == {
+        "passed": 8,
         "failed": 0,
     }
     assert checks["mobile_deploy_preflight"]["status"] == "blocked"
@@ -261,6 +279,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
         resource_template_acceptance_runner=passing_resource_template_result,
         local_asset_handoff_acceptance_runner=passing_local_asset_handoff_result,
+        capture_scene_handoff_acceptance_runner=passing_capture_scene_handoff_result,
     )
 
     report_text = json.dumps(result.report)
@@ -281,6 +300,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
     assert checks["ios_showcase_acceptance"]["status"] == "passed"
     assert checks["resource_template_acceptance"]["status"] == "passed"
     assert checks["local_asset_handoff_acceptance"]["status"] == "passed"
+    assert checks["capture_scene_handoff_acceptance"]["status"] == "passed"
     assert command_calls == 2
     assert "sk-meshy-secret" not in report_text
     assert "sk-openai-secret" not in report_text
@@ -335,6 +355,7 @@ def test_final_acceptance_passes_explicit_live_provider_consent_to_demo_runner(
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
         resource_template_acceptance_runner=passing_resource_template_result,
         local_asset_handoff_acceptance_runner=passing_local_asset_handoff_result,
+        capture_scene_handoff_acceptance_runner=passing_capture_scene_handoff_result,
     )
 
     assert result.exit_code == 0
@@ -386,6 +407,7 @@ def test_final_acceptance_classifies_demo_consent_gate_as_blocked(tmp_path) -> N
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
         resource_template_acceptance_runner=passing_resource_template_result,
         local_asset_handoff_acceptance_runner=passing_local_asset_handoff_result,
+        capture_scene_handoff_acceptance_runner=passing_capture_scene_handoff_result,
     )
 
     checks = {check["id"]: check for check in result.report["checks"]}
@@ -441,6 +463,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
         ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
         resource_template_acceptance_runner=passing_resource_template_result,
         local_asset_handoff_acceptance_runner=passing_local_asset_handoff_result,
+        capture_scene_handoff_acceptance_runner=passing_capture_scene_handoff_result,
     )
 
     check_ids = [check["id"] for check in result.report["checks"]]
@@ -448,7 +471,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
     assert result.exit_code == 0
     assert result.report["overall_status"] == "passed"
     assert result.report["summary"] == {
-        "passed": 15,
+        "passed": 16,
         "blocked": 0,
         "failed": 0,
         "skipped": 0,
@@ -462,6 +485,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
         "ios_backend_handoff_acceptance",
         "resource_template_acceptance",
         "local_asset_handoff_acceptance",
+        "capture_scene_handoff_acceptance",
         "backend_lint",
         "backend_test",
         "swift_project_checks",

@@ -1289,3 +1289,41 @@ Static evidence lives at:
 docs/superpowers/verification/p0.47-local-scene-asset-handoff.html
 docs/superpowers/verification/assets/p0.47-local-scene-asset-handoff-390x844.png
 ```
+
+P0.48 adds an integrated capture-to-scene handoff acceptance gate. It uploads a
+synthetic guided scan through `POST /v1/object-captures`, creates a session with
+`POST /v1/myth-sessions/from-capture`, verifies multi-image generation
+provenance, then downloads the returned backend-served assets:
+
+```http
+GET /v1/generated-assets/{session_id}/game.glb
+GET /v1/generated-assets/{session_id}/scene.dae
+```
+
+The new final acceptance check is `capture_scene_handoff_acceptance`. It proves
+that the current mobile scan path can reach an iOS-loadable local scene asset
+without calling Meshy/OpenAI or exposing raw scan media, `local-capture://`
+references, local filesystem paths, provider tokens, or personal source text in
+the report.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_capture_scene_handoff_acceptance.py tests/test_final_acceptance.py -q
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --repo-root ../.. \
+  --output /tmp/personal-myth-forge-final-acceptance-p0.48.json
+```
+
+Expected quick final acceptance on this local checkout is now
+`passed=9`, `blocked=2`, `failed=0`; the two blockers remain local iOS signing
+config and the Apple SDK/Xcode license gate.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.48-capture-scene-handoff-acceptance.html
+docs/superpowers/verification/assets/p0.48-capture-scene-handoff-acceptance-390x844.png
+```
