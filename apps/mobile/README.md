@@ -1873,3 +1873,29 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.62-treatstock-print-quote-adapter.html
 docs/superpowers/verification/assets/p0.62-treatstock-print-quote-adapter-390x844.png
 ```
+
+## P0.71 Mobile Final Resources Preflight
+
+The Device Preflight panel now shows a separate `Final Resources` row from the
+backend `final_resources_preflight` report. This lets the iPhone operator see
+whether `services/backend/.local/final-resources.env` is missing, blocked, or
+ready before running the final apply step.
+
+The app still never reads provider keys or local resource files directly. It
+only decodes the backend's sanitized final launch report and redacts unsafe
+details before display.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+cd services/backend
+uv run pytest tests/test_mobile_final_launch_readiness_acceptance.py -q
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.71-mobile-final-resources-preflight.html
+docs/superpowers/verification/assets/p0.71-mobile-final-resources-preflight-390x844.png
+```

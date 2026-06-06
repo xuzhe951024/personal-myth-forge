@@ -514,6 +514,8 @@ do {
     try requireContains(devicePreflight, "DevicePreflightSummaryBuilder", "device preflight core builder")
     try requireContains(devicePreflight, "BackendHealthProbe", "backend health probe core type")
     try requireContains(devicePreflight, "final_launch", "device preflight final launch item")
+    try requireContains(devicePreflight, "final_resources", "device preflight final resources item")
+    try requireContains(devicePreflight, "Final Resources", "device preflight final resources label")
     try requireContains(devicePreflight, "FinalDemoLaunchReport", "device preflight final launch model")
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")
@@ -522,6 +524,8 @@ do {
     try requireContains(apiClient, "Unsupported final demo launch mode", "final launch mode guard")
     try requireContains(pmfModels, "FinalDemoLaunchReport", "final demo launch report model")
     try requireContains(pmfModels, "FinalDemoLaunchPhase", "final demo launch phase model")
+    try requireContains(pmfModels, "FinalResourcesPreflightReport", "final resources preflight report model")
+    try requireContains(pmfModels, "FinalResourcesFileStatus", "final resources file status model")
     try requireContains(
         forgeRootView,
         ".onChange(of: selectedCaptureMode) { mode in",

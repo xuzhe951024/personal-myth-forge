@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.71 Mobile Final Resources Preflight</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17212a;
+      --muted: #5e6c76;
+      --line: #d8e1df;
+      --panel: #f7f9f8;
+      --ready: #247854;
+      --wait: #a15d17;
+      --blocked: #b33a3a;
+      --blue: #2e6486;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #fff; color: var(--ink); }
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      padding: 14px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    .lede {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 10px;
+      margin-bottom: 9px;
+    }
+    .top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+    h2 {
+      margin: 0 0 2px;
+      font-size: 17px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    .badge {
+      margin-left: auto;
+      color: var(--wait);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      padding-top: 2px;
+      white-space: nowrap;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 14px 112px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .row:last-child { border-bottom: 0; }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: var(--ready);
+    }
+    .dot.wait { background: var(--wait); }
+    .dot.blocked { background: var(--blocked); }
+    .label {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .detail {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.28;
+      overflow-wrap: anywhere;
+    }
+    code {
+      color: var(--blue);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: .92em;
+    }
+    .metric {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 9px;
+    }
+    .metric div {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px 7px;
+      min-height: 42px;
+    }
+    .num {
+      display: block;
+      color: var(--blue);
+      font-size: 18px;
+      font-weight: 850;
+      line-height: 1;
+    }
+    .cap {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.15;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Mobile Resource Gate</h1>
+    <p class="lede">P0.71 shows final resource readiness directly in the iPhone Device Preflight panel.</p>
+
+    <section class="panel" aria-label="Device Preflight panel">
+      <div class="top">
+        <div>
+          <h2>Device Preflight</h2>
+          <p class="sub">Device demo preflight pending</p>
+        </div>
+        <div class="badge">WAITING</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Backend URL</div>
+        <div class="detail">Backend /health returned ok.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Providers</div>
+        <div class="detail">Local demo providers ready.</div>
+      </div>
+      <div class="row">
+        <div class="dot wait"></div>
+        <div class="label">Final Launch</div>
+        <div class="detail">partial: copy final resources before apply.</div>
+      </div>
+      <div class="row">
+        <div class="dot wait"></div>
+        <div class="label">Final Resources</div>
+        <div class="detail">Final resources file missing.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Local Demo</div>
+        <div class="detail">Final showcase state is ready.</div>
+      </div>
+      <div class="metric" aria-label="Mobile resource status">
+        <div><span class="num">1</span><span class="cap">new row</span></div>
+        <div><span class="num">0</span><span class="cap">keys in app</span></div>
+        <div><span class="num">0</span><span class="cap">local file reads</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Contract coverage">
+      <div class="top">
+        <div>
+          <h2>Contract Coverage</h2>
+          <p class="sub">Swift and source gates</p>
+        </div>
+        <div class="badge">READY</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Decode</div>
+        <div class="detail"><code>FinalResourcesPreflightReport</code> is part of the final launch model.</div>
+      </div>
+      <div class="row">
+        <div class="dot blocked"></div>
+        <div class="label">Blocked</div>
+        <div class="detail">Unsafe blocked details render as <code>[withheld]</code>.</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

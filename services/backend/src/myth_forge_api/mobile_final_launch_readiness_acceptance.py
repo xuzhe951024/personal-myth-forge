@@ -72,6 +72,24 @@ SOURCE_REQUIREMENTS = (
         "FinalDemoLaunchSafety",
     ),
     SourceRequirement(
+        "model_final_resources_preflight",
+        "Final resources preflight model",
+        PMF_MODELS_PATH,
+        "FinalResourcesPreflightReport",
+    ),
+    SourceRequirement(
+        "model_final_resources_file",
+        "Final resources file status model",
+        PMF_MODELS_PATH,
+        "FinalResourcesFileStatus",
+    ),
+    SourceRequirement(
+        "model_final_resources_summary",
+        "Final resources preflight summary model",
+        PMF_MODELS_PATH,
+        "FinalResourcesPreflightSummary",
+    ),
+    SourceRequirement(
         "api_client_method",
         "Final launch API client method",
         API_CLIENT_PATH,
@@ -132,6 +150,18 @@ SOURCE_REQUIREMENTS = (
         "FinalDemoLaunchReport",
     ),
     SourceRequirement(
+        "preflight_final_resources_item",
+        "Device preflight final resources item",
+        DEVICE_PREFLIGHT_PATH,
+        "final_resources",
+    ),
+    SourceRequirement(
+        "preflight_final_resources_label",
+        "Device preflight final resources label",
+        DEVICE_PREFLIGHT_PATH,
+        "Final Resources",
+    ),
+    SourceRequirement(
         "preflight_read_only_note",
         "Device preflight read-only note",
         DEVICE_PREFLIGHT_PATH,
@@ -147,7 +177,7 @@ SOURCE_REQUIREMENTS = (
         "preflight_required_item",
         "Device preflight required item",
         DEVICE_PREFLIGHT_PATH,
-        'Set(["backend_url", "providers", "final_launch", "local_demo"])',
+        'Set(["backend_url", "providers", "final_launch", "final_resources", "local_demo"])',
     ),
     SourceRequirement(
         "contract_decode",
@@ -172,6 +202,24 @@ SOURCE_REQUIREMENTS = (
         "Contract test maps partial launch report",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightMapsFinalLaunchPartialToWaiting",
+    ),
+    SourceRequirement(
+        "contract_final_resources_missing",
+        "Contract test maps missing final resources",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMapsMissingFinalResourcesPreflightToWaiting",
+    ),
+    SourceRequirement(
+        "contract_final_resources_ready",
+        "Contract test maps ready final resources",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyFinalResourcesPreflight",
+    ),
+    SourceRequirement(
+        "contract_final_resources_blocked",
+        "Contract test redacts blocked final resources",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksAndRedactsFinalResourcesPreflight",
     ),
     SourceRequirement(
         "contract_preflight_error",

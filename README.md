@@ -1966,3 +1966,25 @@ Static evidence lives at:
 docs/superpowers/verification/p0.70-final-resources-preflight.html
 docs/superpowers/verification/assets/p0.70-final-resources-preflight-390x844.png
 ```
+
+P0.71 surfaces that backend preflight inside the iPhone Device Preflight panel.
+`FinalDemoLaunchReport` now decodes `final_resources_preflight`, and
+`DevicePreflightSummaryBuilder` adds a `Final Resources` row. Missing resource
+files show as waiting, blocked resource files show as blocked, and ready files
+show as ready. Details still pass through mobile redaction, so provider keys and
+local paths are withheld.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+cd services/backend
+uv run pytest tests/test_mobile_final_launch_readiness_acceptance.py -q
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.71-mobile-final-resources-preflight.html
+docs/superpowers/verification/assets/p0.71-mobile-final-resources-preflight-390x844.png
+```

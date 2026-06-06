@@ -619,12 +619,59 @@ public struct FinalDemoLaunchSafety: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalResourcesFileStatus: Codable, Equatable, Sendable {
+    public var path: String
+    public var exists: Bool
+
+    public init(path: String, exists: Bool) {
+        self.path = path
+        self.exists = exists
+    }
+}
+
+public struct FinalResourcesPreflightSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var optional: Int
+
+    public init(ready: Int, missing: Int, blocked: Int, optional: Int) {
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.optional = optional
+    }
+}
+
+public struct FinalResourcesPreflightReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var resourcesFile: FinalResourcesFileStatus
+    public var summary: FinalResourcesPreflightSummary
+    public var operatorActions: [String]
+
+    public init(
+        kind: String,
+        status: String,
+        resourcesFile: FinalResourcesFileStatus,
+        summary: FinalResourcesPreflightSummary,
+        operatorActions: [String] = []
+    ) {
+        self.kind = kind
+        self.status = status
+        self.resourcesFile = resourcesFile
+        self.summary = summary
+        self.operatorActions = operatorActions
+    }
+}
+
 public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
     public var overallStatus: String
     public var summary: FinalDemoLaunchSummary
     public var phaseSummary: FinalDemoLaunchSummary?
+    public var finalResourcesPreflight: FinalResourcesPreflightReport?
     public var launchPhases: [FinalDemoLaunchPhase]
     public var operatorChecklist: [String]
     public var commands: [String]
@@ -637,6 +684,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         overallStatus: String,
         summary: FinalDemoLaunchSummary,
         phaseSummary: FinalDemoLaunchSummary? = nil,
+        finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
         launchPhases: [FinalDemoLaunchPhase],
         operatorChecklist: [String],
         commands: [String],
@@ -648,6 +696,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.overallStatus = overallStatus
         self.summary = summary
         self.phaseSummary = phaseSummary
+        self.finalResourcesPreflight = finalResourcesPreflight
         self.launchPhases = launchPhases
         self.operatorChecklist = operatorChecklist
         self.commands = commands

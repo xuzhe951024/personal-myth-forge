@@ -98,6 +98,7 @@ public enum DevicePreflightSummaryBuilder {
             backendItem(backendBaseURL, healthProbe: backendHealthProbe),
             providerItem(readiness: providerReadiness, error: providerReadinessError),
             finalLaunchItem(report: finalDemoLaunch, error: finalDemoLaunchError),
+            finalResourcesItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
         ]
@@ -192,6 +193,57 @@ public enum DevicePreflightSummaryBuilder {
         return "Final launch report \(report.overallStatus)."
     }
 
+    private static func finalResourcesItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "final_resources",
+                "Final Resources",
+                .waiting,
+                "Final resources preflight has not loaded."
+            )
+        }
+        guard let preflight = report.finalResourcesPreflight else {
+            return item(
+                "final_resources",
+                "Final Resources",
+                .waiting,
+                "Final resources preflight has not loaded."
+            )
+        }
+        switch preflight.status {
+        case "ready":
+            return item(
+                "final_resources",
+                "Final Resources",
+                .ready,
+                "Final resources file ready to apply."
+            )
+        case "blocked":
+            return item("final_resources", "Final Resources", .blocked, finalResourcesDetail(preflight))
+        case "missing":
+            return item(
+                "final_resources",
+                "Final Resources",
+                .waiting,
+                "Final resources file missing."
+            )
+        default:
+            return item(
+                "final_resources",
+                "Final Resources",
+                .waiting,
+                "Final resources preflight \(preflight.status)."
+            )
+        }
+    }
+
+    private static func finalResourcesDetail(_ report: FinalResourcesPreflightReport) -> String {
+        if let firstAction = report.operatorActions.first {
+            return "\(report.status): \(firstAction)"
+        }
+        return "Final resources preflight \(report.status)."
+    }
+
     private static func localDemoItem(_ summary: FinalShowcaseSummary) -> DevicePreflightItem {
         switch summary.overallStatus {
         case .readyForLocalDemo:
@@ -224,7 +276,7 @@ public enum DevicePreflightSummaryBuilder {
         if items.contains(where: { $0.status == .blocked }) {
             return .blocked
         }
-        let required = Set(["backend_url", "providers", "final_launch", "local_demo"])
+        let required = Set(["backend_url", "providers", "final_launch", "final_resources", "local_demo"])
         let requiredReady = required.allSatisfy { id in
             items.first(where: { $0.id == id })?.status == .ready
         }
