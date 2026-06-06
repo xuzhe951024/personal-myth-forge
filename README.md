@@ -33,6 +33,17 @@ Open the first local demo at:
 http://127.0.0.1:8080/demo
 ```
 
+For an iPhone on the same LAN, run the backend on a device-reachable interface:
+
+```bash
+make backend-device-demo
+```
+
+Then point `PMF_BACKEND_BASE_URL` in the ignored iOS local config at the Mac LAN
+address, such as `http://192.168.1.10:8080`. `backend-dev` remains the
+localhost/browser path; `backend-device-demo` does not change firewall, signing,
+or Apple SDK license state.
+
 The demo defaults to the deterministic local 3D provider, so it does not require external API
 keys.
 
@@ -608,6 +619,7 @@ PMF_BACKEND_BASE_URL = http://192.168.1.10:8080
 Run:
 
 ```bash
+make backend-device-demo
 make mobile-deploy-preflight
 make mobile-xcode-build
 ```
@@ -1218,3 +1230,20 @@ uv run python -m myth_forge_api.cli final-acceptance \
   --allow-live-provider-calls \
   --output /tmp/personal-myth-forge-final-acceptance.json
 ```
+
+P0.45 adds the iPhone backend launch handoff. The new `backend-device-demo`
+target runs the FastAPI app on `0.0.0.0:8080`, which is the backend mode to use
+when `PMF_BACKEND_BASE_URL` points to the Mac's LAN address from a real iPhone.
+Final acceptance now includes `ios_backend_handoff_acceptance`, a source-only
+gate that verifies the device backend target, LAN URL example, loopback preflight
+guard, and app config lookup are all present.
+
+Run:
+
+```bash
+make backend-device-demo
+```
+
+Expected quick final acceptance on this local checkout is now
+`passed=6`, `blocked=2`, `failed=0`; the two blockers remain local iOS signing
+config and the Apple SDK/Xcode license gate.

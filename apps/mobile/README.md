@@ -690,12 +690,15 @@ Then set:
 Run:
 
 ```bash
+make backend-device-demo
 make mobile-deploy-preflight
 ```
 
 Without local values, this intentionally exits `2` and reports the missing Team
 ID plus the loopback backend URL. After the local config is filled, it prints
-the bundle id and backend URL without exposing secrets.
+the bundle id and backend URL without exposing secrets. `backend-device-demo`
+binds the FastAPI backend to `0.0.0.0:8080`; use it when
+`PMF_BACKEND_BASE_URL` points at the Mac LAN address from a physical iPhone.
 
 After Apple's SDK license is accepted outside Codex, run:
 
@@ -1422,3 +1425,28 @@ uv run python -m myth_forge_api.cli final-acceptance \
   --allow-live-provider-calls \
   --output /tmp/personal-myth-forge-final-acceptance.json
 ```
+
+## P0.45 iPhone Backend Handoff
+
+P0.45 makes the real-device backend launch path explicit without running a
+device, mutating Xcode settings, or changing global machine state. Local
+Mac/browser development still uses:
+
+```bash
+make backend-dev
+```
+
+For a physical iPhone on the same LAN, start:
+
+```bash
+make backend-device-demo
+```
+
+Then set `PMF_BACKEND_BASE_URL` in the ignored
+`apps/mobile/ios/Config/Deployment.local.xcconfig` to the Mac LAN URL, not
+`127.0.0.1`. Quick final acceptance now includes
+`ios_backend_handoff_acceptance`, which verifies the Make target, LAN URL
+example, loopback guard, Info.plist handoff, and runtime config lookup. On this
+machine the expected quick summary is `passed=6, blocked=2, failed=0`; the
+remaining blockers are local signing config and the Apple SDK/Xcode license
+gate.
