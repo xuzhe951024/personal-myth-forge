@@ -80,6 +80,10 @@ class CaptureContentTypeError(CaptureStoreError):
     status_code = 415
 
 
+class CaptureModeMediaError(CaptureStoreError):
+    status_code = 422
+
+
 class CaptureMediaNotFoundError(CaptureStoreError):
     status_code = 404
 
@@ -100,7 +104,7 @@ class LocalCaptureStore:
         metadata: ObjectCaptureMetadata,
         files: list[CaptureUpload],
     ) -> ObjectCapture:
-        self._validate_files(files)
+        self._validate_files(metadata, files)
         capture_id = f"cap_{uuid4().hex[:16]}"
         capture_dir = self.root_dir / capture_id
         capture_dir.mkdir(parents=True, exist_ok=False)
@@ -188,7 +192,7 @@ class LocalCaptureStore:
             data=media_path.read_bytes(),
         )
 
-    def _validate_files(self, files: list[CaptureUpload]) -> None:
+    def _validate_files(self, metadata: ObjectCaptureMetadata, files: list[CaptureUpload]) -> None:
         if not files:
             raise EmptyCaptureUploadError("At least one capture file is required.")
         if len(files) > self.max_files:
@@ -202,3 +206,23 @@ class LocalCaptureStore:
                 raise CaptureFileTooLargeError(
                     f"Capture file exceeds {self.max_file_bytes} bytes."
                 )
+        self._validate_mode_media(metadata, files)
+
+    def _validate_mode_media(
+        self,
+        metadata: ObjectCaptureMetadata,
+        files: list[CaptureUpload],
+    ) -> None:
+        image_count = sum(1 for upload in files if upload.content_type in IMAGE_CONTENT_TYPES)
+        scan_asset_count = len(files) - image_count
+        capture_mode = metadata.capture_mode
+
+        if capture_mode == "single_photo":
+            if len(files) != 1 or image_count != 1:
+                raise CaptureModeMediaError("single_photo requires exactly one image file.")
+        elif capture_mode in {"photo_set", "guided_scan"}:
+            if not (2 <= len(files) <= self.max_files) or image_count != len(files):
+                raise CaptureModeMediaError(f"{capture_mode} requires 2-12 image files.")
+        elif capture_mode == "arkit_scan":
+            if scan_asset_count < 1:
+                raise CaptureModeMediaError("arkit_scan requires at least one scan asset.")

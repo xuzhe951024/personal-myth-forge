@@ -17,6 +17,7 @@ struct CaptureFormView: View {
     let captureInputError: String?
     let isMediaReadyForUpload: Bool
     let chooseCapture: () -> Void
+    let startGuidedScan: () -> Void
     let forgeMyth: () -> Void
 
     var body: some View {
@@ -75,12 +76,12 @@ struct CaptureFormView: View {
             .background(.regularMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-            if selectedCaptureMode == .arkitScan {
+            if selectedCaptureMode == .arkitScan || selectedCaptureMode == .guidedScan {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Scan readiness")
+                    Text(scanReadinessTitle)
                         .font(.subheadline.weight(.semibold))
                     Spacer()
-                    Text("mesh + reference")
+                    Text(scanReadinessDetail)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -116,6 +117,18 @@ struct CaptureFormView: View {
                 Label("Choose Photos", systemImage: "photo.on.rectangle")
             }
             .buttonStyle(.bordered)
+        case .guidedScan:
+            VStack(alignment: .leading, spacing: 8) {
+                Button(action: startGuidedScan) {
+                    Label("Start Guided Scan", systemImage: "camera.viewfinder")
+                }
+                .buttonStyle(.borderedProminent)
+
+                PhotosPicker(selection: $selectedPhotoItems, maxSelectionCount: 12, matching: .images) {
+                    Label("Choose Photos", systemImage: "photo.stack")
+                }
+                .buttonStyle(.bordered)
+            }
         case .manualUpload:
             Button(action: chooseCapture) {
                 Label("Choose File", systemImage: "doc")
@@ -142,6 +155,8 @@ struct CaptureFormView: View {
             return "Single photo"
         case .photoSet:
             return "Photo set"
+        case .guidedScan:
+            return "Guided scan"
         case .manualUpload:
             return "Manual upload"
         case .arkitScan:
@@ -155,6 +170,8 @@ struct CaptureFormView: View {
             return "One image becomes the object observation."
         case .photoSet:
             return "Multiple angles become one object observation."
+        case .guidedScan:
+            return "Object Capture guided photos become one object observation."
         case .manualUpload:
             return "Imported media becomes the object observation."
         case .arkitScan:
@@ -168,10 +185,30 @@ struct CaptureFormView: View {
             return "Photo"
         case .photoSet:
             return "Set"
+        case .guidedScan:
+            return "Scan"
         case .manualUpload:
             return "File"
         case .arkitScan:
-            return "Scan"
+            return "Mesh"
+        }
+    }
+
+    private var scanReadinessTitle: String {
+        switch selectedCaptureMode {
+        case .guidedScan:
+            return "Guided scan readiness"
+        default:
+            return "Scan readiness"
+        }
+    }
+
+    private var scanReadinessDetail: String {
+        switch selectedCaptureMode {
+        case .guidedScan:
+            return "2+ photos"
+        default:
+            return "mesh + reference"
         }
     }
 

@@ -9,6 +9,7 @@ import httpx
 from myth_forge_api.domain.models import GeneratedAsset, GeneratedAssetVariant
 
 MESHY_GAME_ASSET_TARGET_FORMATS = ["glb", "usdz"]
+MESHY_IMAGE_TO_3D_CONTENT_TYPES = {"image/jpeg", "image/png"}
 
 
 @dataclass(frozen=True)
@@ -100,8 +101,9 @@ class MeshyThreeDProvider:
         )
 
     def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
-        if request.source_images:
-            return self._generate_image_asset(request)
+        supported_source_image = _first_meshy_supported_source_image(request.source_images)
+        if supported_source_image:
+            return self._generate_image_asset(request, supported_source_image)
         return self._generate_text_asset(request)
 
     def _generate_text_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
@@ -127,8 +129,11 @@ class MeshyThreeDProvider:
         refined_task = self._poll_task(self._text_to_3d_path, refine_task_id)
         return self._asset_from_task(request=request, task=refined_task)
 
-    def _generate_image_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
-        source_image = request.source_images[0]
+    def _generate_image_asset(
+        self,
+        request: ThreeDGenerationRequest,
+        source_image: ThreeDSourceImage,
+    ) -> GeneratedAsset:
         task_id = self._create_task(
             self._image_to_3d_path,
             {
@@ -257,6 +262,15 @@ def _prompt_with_source_summary(request: ThreeDGenerationRequest) -> str:
         f"Provider input summary: source_images={len(request.source_images)}; "
         f"source_assets={len(request.source_assets)}."
     )
+
+
+def _first_meshy_supported_source_image(
+    source_images: tuple[ThreeDSourceImage, ...],
+) -> ThreeDSourceImage | None:
+    for source_image in source_images:
+        if source_image.content_type.lower() in MESHY_IMAGE_TO_3D_CONTENT_TYPES:
+            return source_image
+    return None
 
 
 def _task_error_message(data: dict[str, object]) -> str:

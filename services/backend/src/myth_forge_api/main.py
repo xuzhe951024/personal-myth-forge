@@ -29,7 +29,7 @@ from myth_forge_api.providers.npc import OpenAINPCProviderError
 from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDSourceAsset, ThreeDSourceImage
 
 DEMO_DIR = Path(__file__).parent / "demo"
-THREE_D_SOURCE_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png"}
+THREE_D_SOURCE_IMAGE_CONTENT_TYPES = {"image/heic", "image/heif", "image/jpeg", "image/png"}
 
 app = FastAPI(
     title="Personal Myth Forge API",

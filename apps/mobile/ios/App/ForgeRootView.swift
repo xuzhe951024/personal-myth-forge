@@ -20,6 +20,7 @@ struct ForgeRootView: View {
     @State private var selectedSinglePhotoItem: PhotosPickerItem?
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var isFileImporterPresented = false
+    @State private var isGuidedScanPresented = false
     @State private var captureInputError: String?
 
     var body: some View {
@@ -41,6 +42,7 @@ struct ForgeRootView: View {
                         captureInputError: captureInputError,
                         isMediaReadyForUpload: mediaSelection.isReadyForUpload,
                         chooseCapture: chooseCapture,
+                        startGuidedScan: startGuidedScan,
                         forgeMyth: forgeMyth
                     )
                     ArtifactSummaryView(session: readySession)
@@ -82,11 +84,30 @@ struct ForgeRootView: View {
                     await loadImportedFiles(result)
                 }
             }
+            .sheet(isPresented: $isGuidedScanPresented) {
+                GuidedScanCaptureView(
+                    onComplete: { directory in
+                        isGuidedScanPresented = false
+                        Task {
+                            await loadGuidedScanDirectory(directory)
+                        }
+                    },
+                    onCancel: {
+                        isGuidedScanPresented = false
+                    }
+                )
+            }
         }
     }
 
     private func chooseCapture() {
         isFileImporterPresented = true
+    }
+
+    private func startGuidedScan() {
+        selectedCaptureMode = .guidedScan
+        captureInputError = nil
+        isGuidedScanPresented = true
     }
 
     private func forgeMyth() {
@@ -127,12 +148,32 @@ struct ForgeRootView: View {
         let heic = UTType("public.heic") ?? .image
         let heif = UTType("public.heif") ?? .image
         switch selectedCaptureMode {
-        case .singlePhoto, .photoSet:
+        case .singlePhoto, .photoSet, .guidedScan:
             return [.jpeg, .png, heic, heif]
         case .manualUpload:
             return [.jpeg, .png, heic, heif, glb, usdz, .data]
         case .arkitScan:
             return [glb, usdz, .data]
+        }
+    }
+
+    private func loadGuidedScanDirectory(_ directory: URL) async {
+        do {
+            let images = try guidedScanImageFiles(in: directory)
+            let media = try GuidedScanPhotoSetBuilder.mediaDrafts(from: images)
+            await MainActor.run {
+                selectedCaptureMode = .guidedScan
+                mediaSelection = CaptureMediaSelection(mode: .guidedScan, media: media)
+                selectedSinglePhotoItem = nil
+                selectedPhotoItems = []
+                captureInputError = nil
+                isGuidedScanPresented = false
+            }
+        } catch {
+            await MainActor.run {
+                captureInputError = "Could not import guided scan photos."
+                isGuidedScanPresented = false
+            }
         }
     }
 
@@ -193,6 +234,32 @@ struct ForgeRootView: View {
             await MainActor.run {
                 captureInputError = "Could not import selected files."
             }
+        }
+    }
+
+    private func guidedScanImageFiles(in directory: URL) throws -> [GuidedScanImageFile] {
+        let urls = try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )
+        return try urls.compactMap { url in
+            let values = try url.resourceValues(forKeys: [.isRegularFileKey])
+            guard values.isRegularFile == true else {
+                return nil
+            }
+            let contentType = contentType(
+                for: UTType(filenameExtension: url.pathExtension),
+                filename: url.lastPathComponent
+            )
+            guard guidedScanContentTypes.contains(contentType) else {
+                return nil
+            }
+            return GuidedScanImageFile(
+                filename: url.lastPathComponent,
+                contentType: contentType,
+                data: try Data(contentsOf: url)
+            )
         }
     }
 
@@ -284,6 +351,15 @@ struct ForgeRootView: View {
             return .image
         }
         return .scanAsset
+    }
+
+    private var guidedScanContentTypes: Set<String> {
+        [
+            "image/heic",
+            "image/heif",
+            "image/jpeg",
+            "image/png",
+        ]
     }
 
     private func photoFilename(index: Int, contentType: String) -> String {

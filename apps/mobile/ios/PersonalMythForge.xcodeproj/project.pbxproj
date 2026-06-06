@@ -15,6 +15,7 @@
 		10A000000000000000000006 /* NPCReactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000006 /* NPCReactionsView.swift */; };
 		10A000000000000000000007 /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000007 /* AppConfiguration.swift */; };
 		10A000000000000000000008 /* Artifact3DPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000009 /* Artifact3DPreviewView.swift */; };
+		10A000000000000000000009 /* GuidedScanCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000010 /* GuidedScanCaptureView.swift */; };
 		10A000000000000000000201 /* PersonalMythForgeMobileCore in Frameworks */ = {isa = PBXBuildFile; productRef = 10K000000000000000000001 /* PersonalMythForgeMobileCore */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,7 @@
 		10B000000000000000000007 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
 		10B000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		10B000000000000000000009 /* Artifact3DPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Artifact3DPreviewView.swift; sourceTree = "<group>"; };
+		10B000000000000000000010 /* GuidedScanCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidedScanCaptureView.swift; sourceTree = "<group>"; };
 		10B000000000000000000101 /* PMFJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFJSON.swift; sourceTree = "<group>"; };
 		10B000000000000000000102 /* PMFModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFModels.swift; sourceTree = "<group>"; };
 		10B000000000000000000103 /* CaptureID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureID.swift; sourceTree = "<group>"; };
@@ -67,6 +69,7 @@
 				10B000000000000000000003 /* CaptureFormView.swift */,
 				10B000000000000000000004 /* ArtifactSummaryView.swift */,
 				10B000000000000000000009 /* Artifact3DPreviewView.swift */,
+				10B000000000000000000010 /* GuidedScanCaptureView.swift */,
 				10B000000000000000000005 /* WorldResolutionView.swift */,
 				10B000000000000000000006 /* NPCReactionsView.swift */,
 				10B000000000000000000008 /* Info.plist */,
@@ -177,6 +180,7 @@
 				10A000000000000000000006 /* NPCReactionsView.swift in Sources */,
 				10A000000000000000000007 /* AppConfiguration.swift in Sources */,
 				10A000000000000000000008 /* Artifact3DPreviewView.swift in Sources */,
+				10A000000000000000000009 /* GuidedScanCaptureView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

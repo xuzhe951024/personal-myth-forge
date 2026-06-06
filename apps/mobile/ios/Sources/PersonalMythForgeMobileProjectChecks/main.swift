@@ -24,9 +24,11 @@ do {
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
+    let guidedScanCaptureView = try readText(appRoot.appendingPathComponent("GuidedScanCaptureView.swift"))
     let npcReactionsView = try readText(appRoot.appendingPathComponent("NPCReactionsView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
+    let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
     try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
@@ -105,6 +107,7 @@ do {
         "CaptureFormView.swift",
         "ArtifactSummaryView.swift",
         "Artifact3DPreviewView.swift",
+        "GuidedScanCaptureView.swift",
         "WorldResolutionView.swift",
         "NPCReactionsView.swift",
     ] {
@@ -115,6 +118,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000008 /* Artifact3DPreviewView.swift in Sources */,",
         "3D preview Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000009 /* GuidedScanCaptureView.swift in Sources */,",
+        "guided scan Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -142,8 +151,11 @@ do {
     try requireContains(captureFormView, "CaptureMode", "capture mode app shell source")
     try requireContains(captureFormView, "Scan readiness", "scan readiness app shell source")
     try requireContains(captureFormView, "chooseCapture", "capture button closure")
+    try requireContains(captureFormView, "startGuidedScan", "guided scan button closure")
     try requireContains(captureFormView, "forgeMyth", "forge button closure")
     try requireContains(captureFormView, "PhotosPicker", "photo picker app shell source")
+    try requireContains(captureFormView, "Start Guided Scan", "guided scan primary action")
+    try requireContains(captureFormView, "Guided scan", "guided scan mode label")
     try requireContains(captureFormView, "let isMediaReadyForUpload", "media readiness form input")
     try requireContains(captureFormView, ".disabled(!isMediaReadyForUpload)", "disabled forge button source")
     try requireContains(
@@ -166,9 +178,22 @@ do {
     try requireNotContains(captureFormView, "Future Xcode target triggers", "forge button no-op comment")
     try requireNotContains(captureFormView, "captureActionTitle", "unused sample-era capture title")
     try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
+    try requireContains(forgeRootView, "isGuidedScanPresented", "guided scan sheet state")
     try requireContains(forgeRootView, "ForgeFlowService", "forge flow service source wiring")
     try requireContains(forgeRootView, "forgeService.forge", "forge flow service call")
     try requireContains(forgeRootView, "fileImporter", "file importer app shell source")
+    try requireContains(
+        forgeRootView,
+        ".sheet(isPresented: $isGuidedScanPresented)",
+        "guided scan sheet presentation"
+    )
+    try requireContains(forgeRootView, "GuidedScanCaptureView(", "guided scan view wiring")
+    try requireContains(forgeRootView, "loadGuidedScanDirectory", "guided scan directory loader")
+    try requireContains(
+        forgeRootView,
+        "GuidedScanPhotoSetBuilder.mediaDrafts",
+        "guided scan photo importer wiring"
+    )
     try requireContains(forgeRootView, "loadTransferable(type: Data.self)", "photo data loading source")
     try requireContains(forgeRootView, "UTType", "file content type source")
     try requireContains(forgeRootView, "CaptureMediaSelection", "capture media selection source")
@@ -205,6 +230,33 @@ do {
     try requireNotContains(forgeRootView, "sample-image", "sample image bytes")
     try requireNotContains(forgeRootView, "scan-glb", "sample scan bytes")
     try requireContains(
+        guidedScanCaptureView,
+        "#if os(iOS) && canImport(RealityKit)",
+        "iOS-only RealityKit object capture guard"
+    )
+    try requireContains(guidedScanCaptureView, "import RealityKit", "RealityKit guided scan import")
+    try requireContains(guidedScanCaptureView, "ObjectCaptureSession", "Object Capture session source")
+    try requireContains(
+        guidedScanCaptureView,
+        "ObjectCaptureView(session:",
+        "Object Capture camera view source"
+    )
+    try requireContains(
+        guidedScanCaptureView,
+        "start(imagesDirectory:",
+        "Object Capture image directory start"
+    )
+    try requireContains(
+        guidedScanCaptureView,
+        "numberOfShotsTakenUpdates",
+        "Object Capture shot count observation"
+    )
+    try requireContains(
+        guidedScanCaptureView,
+        "Object Capture is only available on supported iOS devices.",
+        "non-iOS guided scan fallback"
+    )
+    try requireContains(
         artifactSummaryView,
         "Artifact3DPreviewView(session: session)",
         "artifact summary 3D preview wiring"
@@ -216,6 +268,12 @@ do {
     try requireContains(artifact3DPreviewView, "SCNCylinder", "artifact pedestal geometry")
     try requireContains(artifact3DPreviewView, "SCNTorus", "myth artifact proxy geometry")
     try requireContains(artifactAssetPreparation, "ArtifactAssetPreparer", "asset preparation service")
+    try requireContains(guidedScanPhotoSetBuilder, "GuidedScanPhotoSetBuilder", "guided scan importer")
+    try requireContains(
+        guidedScanPhotoSetBuilder,
+        "maximumImportedImages = 12",
+        "guided scan importer upload cap"
+    )
     try requireContains(artifactAssetPreparation, "FileSystemArtifactAssetCache", "asset cache implementation")
     try requireContains(
         artifactAssetPreparation,

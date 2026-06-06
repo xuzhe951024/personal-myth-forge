@@ -34,6 +34,7 @@ Bridge deliverable:
 - P0.16 generated asset variant contract with GLB primary asset plus USDZ iOS scene handoff
 - P0.17 NPC agent runtime trace contract with mobile decode/display
 - P0.18 no-global-pollution Xcode iOS build gate for the checked-in app project
+- P0.19 iOS guided scan entry that imports Object Capture photo sets into the capture-to-myth flow
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

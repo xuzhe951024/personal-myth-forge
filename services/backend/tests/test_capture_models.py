@@ -56,3 +56,15 @@ def test_capture_metadata_creates_object_observation() -> None:
     assert observation.materials == ["ceramic"]
     assert observation.source == "manual_upload"
     assert observation.visual_notes == "blue glaze"
+
+
+def test_capture_metadata_accepts_guided_scan_mode() -> None:
+    metadata = ObjectCaptureMetadata(
+        label="carved wooden fox",
+        materials=["wood"],
+        source="phone_capture",
+        capture_mode="guided_scan",
+        visual_notes="captured from many angles",
+    )
+
+    assert metadata.capture_mode == "guided_scan"

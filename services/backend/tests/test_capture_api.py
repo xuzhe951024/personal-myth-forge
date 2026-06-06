@@ -56,6 +56,18 @@ def _metadata_json() -> str:
     )
 
 
+def _guided_scan_metadata_json() -> str:
+    return json.dumps(
+        {
+            "label": "carved wooden fox",
+            "materials": ["wood"],
+            "source": "phone_capture",
+            "capture_mode": "guided_scan",
+            "visual_notes": "captured from many angles",
+        }
+    )
+
+
 def test_upload_object_capture_returns_manifest(tmp_path, monkeypatch) -> None:
     client = _client_with_store(tmp_path, monkeypatch)
 
@@ -72,6 +84,70 @@ def test_upload_object_capture_returns_manifest(tmp_path, monkeypatch) -> None:
     assert payload["media_items"][0]["uri"].startswith("local-capture://")
     assert "fake-jpeg" not in response.text
     assert str(tmp_path) not in response.text
+
+
+def test_upload_object_capture_accepts_guided_scan_images(tmp_path, monkeypatch) -> None:
+    client = _client_with_store(tmp_path, monkeypatch)
+
+    response = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _guided_scan_metadata_json()},
+        files=[
+            ("files", ("fox-front.jpg", b"front-jpeg", "image/jpeg")),
+            ("files", ("fox-side.png", b"side-png", "image/png")),
+        ],
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["capture_mode"] == "guided_scan"
+    assert [item["role"] for item in payload["media_items"]] == [
+        "reference_image",
+        "reference_image",
+    ]
+    assert [item["content_type"] for item in payload["media_items"]] == [
+        "image/jpeg",
+        "image/png",
+    ]
+    assert "front-jpeg" not in response.text
+    assert "side-png" not in response.text
+    assert str(tmp_path) not in response.text
+
+
+def test_upload_object_capture_rejects_guided_scan_with_too_few_images(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client = _client_with_store(tmp_path, monkeypatch)
+
+    response = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _guided_scan_metadata_json()},
+        files=[("files", ("fox-front.jpg", b"front-jpeg", "image/jpeg"))],
+    )
+
+    assert response.status_code == 422
+    assert "front-jpeg" not in response.text
+
+
+def test_upload_object_capture_rejects_guided_scan_with_scan_asset(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client = _client_with_store(tmp_path, monkeypatch)
+
+    response = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _guided_scan_metadata_json()},
+        files=[
+            ("files", ("fox-front.jpg", b"front-jpeg", "image/jpeg")),
+            ("files", ("fox.glb", b"fake-glb", "model/gltf-binary")),
+        ],
+    )
+
+    assert response.status_code == 422
+    assert "front-jpeg" not in response.text
+    assert "fake-glb" not in response.text
 
 
 def test_get_object_capture_returns_manifest(tmp_path, monkeypatch) -> None:
@@ -310,6 +386,113 @@ def test_create_myth_session_from_capture_passes_media_sources_to_3d_provider(
     assert "ZmFrZS1qcGVn" not in response.text
     assert "fake-jpeg" not in response.text
     assert "fake-glb" not in response.text
+
+
+def test_create_myth_session_from_guided_scan_capture_passes_images_to_3d_provider(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    store = LocalCaptureStore(root_dir=tmp_path)
+    provider = RecordingThreeDProvider()
+    monkeypatch.setattr("myth_forge_api.main.build_capture_store", lambda: store)
+    monkeypatch.setattr("myth_forge_api.main.build_three_d_provider", lambda: provider)
+    client = TestClient(app)
+
+    created_response = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _guided_scan_metadata_json()},
+        files=[
+            ("files", ("fox-front.jpg", b"front-jpeg", "image/jpeg")),
+            ("files", ("fox-side.png", b"side-png", "image/png")),
+        ],
+    )
+
+    assert created_response.status_code == 200
+    created = created_response.json()
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": created["capture_id"],
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(provider.calls) == 1
+    generation_request = provider.calls[0]
+    assert len(generation_request.source_images) == 2
+    assert len(generation_request.source_assets) == 0
+    assert [image.uri for image in generation_request.source_images] == [
+        f"local-capture://{created['capture_id']}/media_0.jpg",
+        f"local-capture://{created['capture_id']}/media_1.png",
+    ]
+    assert [image.content_type for image in generation_request.source_images] == [
+        "image/jpeg",
+        "image/png",
+    ]
+    assert all(
+        image.data_uri.startswith(f"data:{image.content_type};base64,")
+        for image in generation_request.source_images
+    )
+    assert "data:image" not in response.text
+    assert "front-jpeg" not in response.text
+    assert "side-png" not in response.text
+
+
+def test_create_myth_session_from_guided_scan_capture_passes_heic_images_to_3d_provider(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    store = LocalCaptureStore(root_dir=tmp_path)
+    provider = RecordingThreeDProvider()
+    monkeypatch.setattr("myth_forge_api.main.build_capture_store", lambda: store)
+    monkeypatch.setattr("myth_forge_api.main.build_three_d_provider", lambda: provider)
+    client = TestClient(app)
+
+    created_response = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _guided_scan_metadata_json()},
+        files=[
+            ("files", ("fox-front.heic", b"front-heic", "image/heic")),
+            ("files", ("fox-side.heif", b"side-heif", "image/heif")),
+        ],
+    )
+
+    assert created_response.status_code == 200
+    created = created_response.json()
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": created["capture_id"],
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    assert len(provider.calls) == 1
+    generation_request = provider.calls[0]
+    assert len(generation_request.source_images) == 2
+    assert len(generation_request.source_assets) == 0
+    assert [image.uri for image in generation_request.source_images] == [
+        f"local-capture://{created['capture_id']}/media_0.heic",
+        f"local-capture://{created['capture_id']}/media_1.heif",
+    ]
+    assert [image.content_type for image in generation_request.source_images] == [
+        "image/heic",
+        "image/heif",
+    ]
+    assert all(
+        image.data_uri.startswith(f"data:{image.content_type};base64,")
+        for image in generation_request.source_images
+    )
+    assert "front-heic" not in response.text
+    assert "side-heif" not in response.text
 
 
 def test_create_myth_session_from_capture_redacts_provider_error_media_details(

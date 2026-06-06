@@ -358,3 +358,37 @@ docs/superpowers/verification/assets/p0.18-xcode-ios-build-gate-390x844.png
 
 This still does not solve simulator/device installation, signing, live ARKit mesh
 capture, Unity movement execution, or real provider-key runs.
+
+P0.19 adds the first guided scan entry for the iOS app shell. The mobile capture
+contract now includes `guided_scan`, and the SwiftUI app exposes a `Start Guided
+Scan` action that presents an iOS-only RealityKit `ObjectCaptureSession` sheet
+behind compile guards. Completed sessions are imported as 2-12 guided photos and
+fed into the existing capture upload and myth-session creation flow.
+
+This iteration deliberately uploads guided photo sets, not a locally
+reconstructed mesh. JPEG, PNG, HEIC, and HEIF are accepted by the app/backend
+capture contract; the Meshy adapter only sends JPEG/PNG to Image-to-3D and falls
+back to text-to-3D for HEIC/HEIF-only captures until image transcoding is added.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+make mobile-xcode-build
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.19-guided-scan-entry.html
+docs/superpowers/verification/assets/p0.19-guided-scan-entry-390x844.png
+```
+
+On this machine `make mobile-xcode-build` still stops at the Apple SDK license
+gate. P0.19 does not claim simulator/device installation, real Object Capture
+device runtime validation, local photogrammetry reconstruction, HEIC-to-JPEG
+transcoding, or Unity village import.

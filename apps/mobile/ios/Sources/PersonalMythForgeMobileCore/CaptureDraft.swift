@@ -5,6 +5,7 @@ public enum CaptureMode: String, Codable, Equatable, Hashable, CaseIterable, Sen
     case photoSet = "photo_set"
     case manualUpload = "manual_upload"
     case arkitScan = "arkit_scan"
+    case guidedScan = "guided_scan"
 }
 
 public enum CaptureMediaKind: String, Codable, Equatable, Sendable {
@@ -152,6 +153,10 @@ public struct CaptureDraft: Equatable, Sendable {
                 throw CaptureDraftValidationError.invalidMediaCount(mode, media.count)
             }
         case .photoSet:
+            guard (2...12).contains(media.count), media.allSatisfy({ $0.kind == .image }) else {
+                throw CaptureDraftValidationError.invalidMediaCount(mode, media.count)
+            }
+        case .guidedScan:
             guard (2...12).contains(media.count), media.allSatisfy({ $0.kind == .image }) else {
                 throw CaptureDraftValidationError.invalidMediaCount(mode, media.count)
             }

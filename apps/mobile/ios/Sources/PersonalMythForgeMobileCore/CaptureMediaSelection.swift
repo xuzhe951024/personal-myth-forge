@@ -35,6 +35,8 @@ public struct CaptureMediaSelection: Equatable, Sendable {
             return media.count == 1 && imageCount == 1
         case .photoSet:
             return (2...12).contains(media.count) && imageCount == media.count
+        case .guidedScan:
+            return (2...12).contains(media.count) && imageCount == media.count
         case .manualUpload:
             return (1...12).contains(media.count)
         case .arkitScan:
@@ -83,6 +85,13 @@ public struct CaptureMediaSelection: Equatable, Sendable {
             return imageCount == 1 ? "1 photo selected" : "Choose 1 photo"
         case .photoSet:
             return imageCount == 1 ? "1 photo selected" : "\(imageCount) photos selected"
+        case .guidedScan:
+            if imageCount == 0 {
+                return "Choose guided scan photos"
+            }
+            return imageCount == 1
+                ? "1 guided scan photo selected"
+                : "\(imageCount) guided scan photos selected"
         case .manualUpload:
             return media.count == 1 ? "1 file selected" : "\(media.count) files selected"
         case .arkitScan:
@@ -100,6 +109,8 @@ public struct CaptureMediaSelection: Equatable, Sendable {
             return "No photo selected"
         case .photoSet:
             return "Choose at least 2 photos"
+        case .guidedScan:
+            return "Choose at least 2 guided scan photos"
         case .manualUpload:
             return "No file selected"
         case .arkitScan:
