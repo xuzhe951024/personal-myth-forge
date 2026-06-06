@@ -37,6 +37,7 @@ Bridge deliverable:
 - P0.19 iOS guided scan entry that imports Object Capture photo sets into the capture-to-myth flow
 - P0.20 provider readiness preflight for backend-only API/key handoff and mobile display
 - P0.21 backend HEIC/HEIF-to-JPEG provider input preparation for Meshy Image-to-3D guided scans
+- P0.22 stateless NPC agent tick loop with mobile next-action display
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
