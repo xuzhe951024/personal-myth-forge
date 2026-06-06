@@ -63,6 +63,8 @@ do {
     try testFinalLaunchMobileSummaryRedactsUnsafeAcceptanceText()
     try testFinalLaunchMobileSummaryRedactsUnsafeHandoffText()
     try testFinalLaunchModeDefaultsToLocalForUnsafeValues()
+    try testFinalLaunchMobileSummaryShowsLocalModePolicy()
+    try testFinalLaunchMobileSummaryShowsConfiguredModePolicy()
     try testDevicePreflightMarksLocalDemoReady()
     try testDevicePreflightMarksSavedNPCHistoryReady()
     try testDemoScriptStartsWithCapture()
@@ -1956,6 +1958,30 @@ private func testFinalLaunchModeDefaultsToLocalForUnsafeValues() throws {
     try expectEqual(FinalLaunchMode.configured.displayLabel, "Configured")
 }
 
+private func testFinalLaunchMobileSummaryShowsLocalModePolicy() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(mode: "local"),
+        error: nil
+    )
+
+    try expectEqual(summary.modePolicyRows.count, 3)
+    try expectEqual(summary.modePolicyRows[0], "Mode: Local")
+    try expectEqual(summary.modePolicyRows[1], "Live calls by default: no")
+    try expectEqual(summary.modePolicyRows[2], "Consent flag: --allow-live-provider-calls")
+}
+
+private func testFinalLaunchMobileSummaryShowsConfiguredModePolicy() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(mode: "configured"),
+        error: nil
+    )
+
+    try expectEqual(summary.modePolicyRows.count, 3)
+    try expectEqual(summary.modePolicyRows[0], "Mode: Configured")
+    try expectEqual(summary.modePolicyRows[1], "Live calls by default: no")
+    try expectEqual(summary.modePolicyRows[2], "Consent flag: --allow-live-provider-calls")
+}
+
 private func testCreatePrintQuoteBuildsJSONRequest() async throws {
     let responseData = Data(
         """
@@ -3707,6 +3733,7 @@ private func devicePreflightSummary(
 }
 
 private func finalDemoLaunchReport(
+    mode: String = "local",
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     finalResourcesStatus: String = "ready",
@@ -3719,6 +3746,7 @@ private func finalDemoLaunchReport(
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
         from: finalDemoLaunchPayload(
+            mode: mode,
             overallStatus: overallStatus,
             unsafeDetail: unsafeDetail,
             finalResourcesStatus: finalResourcesStatus,
