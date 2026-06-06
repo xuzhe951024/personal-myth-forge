@@ -541,3 +541,43 @@ docs/superpowers/verification/assets/p0.23-openai-npc-tick-provider-390x844.png
 P0.23 does not run a live OpenAI request in automated tests, persist tick
 history, add background loops, execute Unity movement, configure signing, or
 bypass the Apple SDK license gate.
+
+P0.24 adds a provider handoff smoke report for the final API/key handoff. It is
+a configuration-level check: it reads backend settings, reuses
+`GET /v1/provider-readiness` semantics, writes a sanitized JSON report, and does
+not call Meshy or OpenAI by default.
+
+Prepare a backend-only `.env` from `.env.example`:
+
+```bash
+THREE_D_PROVIDER=meshy
+NPC_PROVIDER=openai
+MESHY_API_KEY=...
+OPENAI_API_KEY=...
+```
+
+Then run:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli provider-handoff \
+  --require-core-real \
+  --output /tmp/personal-myth-forge-provider-handoff.json
+```
+
+The report includes selected providers, demo readiness, real-provider
+readiness, missing env names, backend-only secret policy, and next commands.
+`--require-core-real` returns exit code `2` until the core demo providers
+(`three_d`, `npc`, and `capture_storage`) are real-provider-ready. Print remains
+reported but does not block core iOS/AI/3D handoff readiness.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.24-provider-handoff-smoke.html
+docs/superpowers/verification/assets/p0.24-provider-handoff-smoke-390x844.png
+```
+
+P0.24 does not create provider keys, run live Meshy/OpenAI calls, mutate global
+environment state, implement print fulfillment, configure signing, or bypass the
+Apple SDK license gate.
