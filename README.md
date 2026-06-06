@@ -581,3 +581,48 @@ docs/superpowers/verification/assets/p0.24-provider-handoff-smoke-390x844.png
 P0.24 does not create provider keys, run live Meshy/OpenAI calls, mutate global
 environment state, implement print fulfillment, configure signing, or bypass the
 Apple SDK license gate.
+
+P0.25 adds a project-local iOS deployment handoff. The checked-in Xcode target
+now uses `apps/mobile/ios/Config/Deployment.xcconfig` for bundle id, signing
+style, and `PMF_BACKEND_BASE_URL`. Machine-specific values belong in the ignored
+`apps/mobile/ios/Config/Deployment.local.xcconfig`.
+
+Prepare local device deployment values:
+
+```bash
+cp apps/mobile/ios/Config/Deployment.local.xcconfig.example \
+  apps/mobile/ios/Config/Deployment.local.xcconfig
+```
+
+Then fill:
+
+```xcconfig
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge
+PMF_BACKEND_BASE_URL = http://192.168.1.10:8080
+```
+
+`PMF_BACKEND_BASE_URL` must use a Mac/LAN address reachable from iPhone, not
+`127.0.0.1` or `localhost`.
+
+Run:
+
+```bash
+make mobile-deploy-preflight
+make mobile-xcode-build
+```
+
+`make mobile-deploy-preflight` exits `2` until the ignored local config provides
+the required Team ID and iPhone-reachable backend URL. `make mobile-xcode-build`
+still requires Apple's SDK license to be accepted outside Codex on this machine.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.25-ios-deploy-config.html
+docs/superpowers/verification/assets/p0.25-ios-deploy-config-390x844.png
+```
+
+P0.25 does not create an Apple developer team, commit provisioning values, store
+provider keys in the app, install to a real device, mutate global Xcode settings,
+or bypass the Apple SDK license gate.
