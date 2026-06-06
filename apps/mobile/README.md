@@ -1450,3 +1450,34 @@ example, loopback guard, Info.plist handoff, and runtime config lookup. On this
 machine the expected quick summary is `passed=6, blocked=2, failed=0`; the
 remaining blockers are local signing config and the Apple SDK/Xcode license
 gate.
+
+## P0.49 Mobile Demo Script
+
+P0.49 adds a compact `Demo Script` panel to the iOS app. It appears below the
+final showcase summary and turns current app state into a live operator
+checklist:
+
+- Capture Object
+- Forge Myth
+- Load 3D Scene
+- Run NPC Autonomy
+- Request Print Quote
+- Check Resources
+
+The script marks each step as waiting, current, complete, optional, or blocked
+and keeps the next action visible at the top of the panel. It uses only typed
+state already present in the app: media selection, myth session, NPC tick count,
+print quote, provider readiness, and provider readiness errors.
+
+The Swift core builder redacts unsafe details before they can be displayed or
+encoded. Raw media, local paths, checkout links, and provider secrets are not
+included in the script.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+`ios_showcase_acceptance` now checks `demo_script` as a tenth source feature.

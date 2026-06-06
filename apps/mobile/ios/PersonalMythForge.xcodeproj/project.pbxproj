@@ -22,6 +22,7 @@
 		10A000000000000000000013 /* PrintQuoteReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000014 /* PrintQuoteReviewView.swift */; };
 		10A000000000000000000014 /* FinalShowcaseSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000015 /* FinalShowcaseSummaryView.swift */; };
 		10A000000000000000000015 /* CameraCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000016 /* CameraCaptureView.swift */; };
+		10A000000000000000000016 /* DemoScriptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000017 /* DemoScriptView.swift */; };
 		10A000000000000000000201 /* PersonalMythForgeMobileCore in Frameworks */ = {isa = PBXBuildFile; productRef = 10K000000000000000000001 /* PersonalMythForgeMobileCore */; };
 /* End PBXBuildFile section */
 
@@ -42,6 +43,7 @@
 		10B000000000000000000014 /* PrintQuoteReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintQuoteReviewView.swift; sourceTree = "<group>"; };
 		10B000000000000000000015 /* FinalShowcaseSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinalShowcaseSummaryView.swift; sourceTree = "<group>"; };
 		10B000000000000000000016 /* CameraCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCaptureView.swift; sourceTree = "<group>"; };
+		10B000000000000000000017 /* DemoScriptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoScriptView.swift; sourceTree = "<group>"; };
 		10B000000000000000000101 /* PMFJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFJSON.swift; sourceTree = "<group>"; };
 		10B000000000000000000102 /* PMFModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFModels.swift; sourceTree = "<group>"; };
 		10B000000000000000000103 /* CaptureID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureID.swift; sourceTree = "<group>"; };
@@ -91,6 +93,7 @@
 				10B000000000000000000013 /* DemoSnapshotStatusView.swift */,
 				10B000000000000000000014 /* PrintQuoteReviewView.swift */,
 				10B000000000000000000015 /* FinalShowcaseSummaryView.swift */,
+				10B000000000000000000017 /* DemoScriptView.swift */,
 				10B000000000000000000016 /* CameraCaptureView.swift */,
 				10B000000000000000000008 /* Info.plist */,
 			);
@@ -207,6 +210,7 @@
 				10A000000000000000000013 /* PrintQuoteReviewView.swift in Sources */,
 				10A000000000000000000014 /* FinalShowcaseSummaryView.swift in Sources */,
 				10A000000000000000000015 /* CameraCaptureView.swift in Sources */,
+				10A000000000000000000016 /* DemoScriptView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
