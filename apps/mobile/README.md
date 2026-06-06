@@ -1481,3 +1481,28 @@ swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppC
 ```
 
 `ios_showcase_acceptance` now checks `demo_script` as a tenth source feature.
+
+## P0.50 NPC Ritual Scene
+
+P0.50 turns the existing SceneKit artifact preview into a spatial NPC ritual
+surface for the iPhone showcase. `NPCRitualSceneBuilder` derives three visible
+NPC actors from the myth session and latest NPC tick, including stance, action,
+emotion, and fixed positions around the relic.
+
+`Artifact3DPreviewView` now overlays simple SceneKit NPC markers and ritual
+rings on either the downloaded scene asset or the fallback proxy artifact. The
+latest tick controls the visible action when present; if the tick only contains
+one or two NPC traces, the builder backfills remaining actors from the session
+so the scene still shows three NPCs.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+`ios_showcase_acceptance` now checks `npc_ritual_scene` as the eleventh source
+feature. This is still the native iOS demo surface; richer Unity village
+rendering remains a later step.

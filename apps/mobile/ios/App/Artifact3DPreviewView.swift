@@ -20,11 +20,17 @@ private func artifactSceneColor(red: CGFloat, green: CGFloat, blue: CGFloat, alp
 
 struct Artifact3DPreviewView: View {
     let session: MythSession?
+    let latestTick: NPCAgentTick?
     private let preparer: ArtifactAssetPreparer
     @State private var preparedAsset: PreparedArtifactAsset?
 
-    init(session: MythSession?, preparer: ArtifactAssetPreparer = ArtifactAssetPreparer.live()) {
+    init(
+        session: MythSession?,
+        latestTick: NPCAgentTick? = nil,
+        preparer: ArtifactAssetPreparer = ArtifactAssetPreparer.live()
+    ) {
         self.session = session
+        self.latestTick = latestTick
         self.preparer = preparer
     }
 
@@ -35,8 +41,9 @@ struct Artifact3DPreviewView: View {
 
             if let session {
                 let preview = preparedAsset?.preview ?? ArtifactPreviewState(session: session)
+                let ritualScene = NPCRitualSceneBuilder.build(session: session, latestTick: latestTick)
 
-                SceneView(scene: Self.previewScene(for: preparedAsset, fallback: preview),
+                SceneView(scene: Self.previewScene(for: preparedAsset, fallback: preview, ritualScene: ritualScene),
                     options: [.allowsCameraControl, .autoenablesDefaultLighting]
                 )
                 .frame(height: 220)
@@ -50,6 +57,10 @@ struct Artifact3DPreviewView: View {
                 Text("\(preview.providerLabel) \(preview.formatLabel)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Text("NPC ritual: \(Self.ritualStatusText(ritualScene))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
                 Text(preparedAsset?.cachedURL?.absoluteString ?? preview.uri)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -96,10 +107,12 @@ struct Artifact3DPreviewView: View {
 
     private static func previewScene(
         for preparedAsset: PreparedArtifactAsset?,
-        fallback preview: ArtifactPreviewState
+        fallback preview: ArtifactPreviewState,
+        ritualScene: NPCRitualScene
     ) -> SCNScene {
         if let sceneURL = preparedAsset?.sceneURL,
            let scene = try? SCNScene(url: sceneURL, options: nil) {
+            addNPCRitualOverlay(to: scene, ritualScene: ritualScene)
             return scene
         }
 
@@ -107,6 +120,7 @@ struct Artifact3DPreviewView: View {
         let titleNode = SCNNode()
         titleNode.name = preview.title
         scene.rootNode.addChildNode(titleNode)
+        addNPCRitualOverlay(to: scene, ritualScene: ritualScene)
         return scene
     }
 
@@ -144,6 +158,49 @@ struct Artifact3DPreviewView: View {
 
         return scene
     }
+
+    private static func addNPCRitualOverlay(to scene: SCNScene, ritualScene: NPCRitualScene) {
+        for actor in ritualScene.actors {
+            let markerHeight = npcMarkerHeight(for: actor.stance)
+            let marker = SCNCylinder(radius: 0.075, height: markerHeight)
+            marker.materials = [ArtifactScenePalette.npcMaterial(for: actor.stance)]
+
+            let markerNode = SCNNode(geometry: marker)
+            markerNode.name = "\(actor.name) \(actor.stance.rawValue): \(actor.action)"
+            markerNode.position = SCNVector3(
+                Float(actor.positionX),
+                Float(-0.35 + markerHeight / 2),
+                Float(actor.positionZ)
+            )
+            scene.rootNode.addChildNode(markerNode)
+
+            let halo = SCNTorus(ringRadius: 0.15, pipeRadius: 0.012)
+            halo.materials = [ArtifactScenePalette.npcHaloMaterial(for: actor.stance)]
+            let haloNode = SCNNode(geometry: halo)
+            haloNode.name = "\(actor.name) ritual ring"
+            haloNode.eulerAngles.x = .pi / 2
+            haloNode.position = SCNVector3(Float(actor.positionX), -0.36, Float(actor.positionZ))
+            scene.rootNode.addChildNode(haloNode)
+        }
+    }
+
+    private static func npcMarkerHeight(for stance: NPCRitualStance) -> CGFloat {
+        switch stance {
+        case .acting:
+            return 0.48
+        case .debating:
+            return 0.4
+        case .watching:
+            return 0.32
+        }
+    }
+
+    private static func ritualStatusText(_ ritualScene: NPCRitualScene) -> String {
+        let status = ritualScene.actors.map { actor in
+            "\(actor.name) \(actor.stance.rawValue)"
+        }
+        return status.isEmpty ? "waiting" : status.joined(separator: " | ")
+    }
 }
 
 private enum ArtifactScenePalette {
@@ -164,5 +221,32 @@ private enum ArtifactScenePalette {
         material.metalness.contents = 0.7
         material.roughness.contents = 0.34
         return material
+    }
+
+    static func npcMaterial(for stance: NPCRitualStance) -> SCNMaterial {
+        let material = SCNMaterial()
+        material.diffuse.contents = npcColor(for: stance)
+        material.emission.contents = npcColor(for: stance, alpha: 0.16)
+        material.roughness.contents = 0.54
+        return material
+    }
+
+    static func npcHaloMaterial(for stance: NPCRitualStance) -> SCNMaterial {
+        let material = SCNMaterial()
+        material.diffuse.contents = npcColor(for: stance, alpha: 0.48)
+        material.emission.contents = npcColor(for: stance, alpha: 0.22)
+        material.isDoubleSided = true
+        return material
+    }
+
+    private static func npcColor(for stance: NPCRitualStance, alpha: CGFloat = 1) -> PlatformColor {
+        switch stance {
+        case .acting:
+            return artifactSceneColor(red: 0.95, green: 0.7, blue: 0.22, alpha: alpha)
+        case .debating:
+            return artifactSceneColor(red: 0.55, green: 0.72, blue: 0.96, alpha: alpha)
+        case .watching:
+            return artifactSceneColor(red: 0.68, green: 0.86, blue: 0.58, alpha: alpha)
+        }
     }
 }

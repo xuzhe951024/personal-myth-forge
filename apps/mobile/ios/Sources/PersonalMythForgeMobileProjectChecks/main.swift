@@ -44,6 +44,7 @@ do {
     let mythSessionID = try readText(coreRoot.appendingPathComponent("MythSessionID.swift"))
     let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
+    let npcRitualScene = try readText(coreRoot.appendingPathComponent("NPCRitualScene.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
     let apiClient = try readText(coreRoot.appendingPathComponent("PersonalMythForgeAPIClient.swift"))
 
@@ -326,6 +327,11 @@ do {
         "server-owned npc tick id guard"
     )
     try requireContains(forgeRootView, "NPCTickView(", "npc tick view wiring")
+    try requireContains(
+        forgeRootView,
+        "ArtifactSummaryView(session: readySession, latestTick: latestNPCTick)",
+        "npc ritual latest tick summary wiring"
+    )
     try requireContains(forgeRootView, "demoSnapshotStore", "demo snapshot store app state")
     try requireContains(forgeRootView, "restoreDemoRunSnapshot", "demo snapshot restore app path")
     try requireContains(forgeRootView, "saveDemoRunSnapshot", "demo snapshot save app path")
@@ -460,9 +466,10 @@ do {
     )
     try requireContains(
         artifactSummaryView,
-        "Artifact3DPreviewView(session: session)",
+        "Artifact3DPreviewView(session: session, latestTick: latestTick)",
         "artifact summary 3D preview wiring"
     )
+    try requireContains(artifactSummaryView, "let latestTick: NPCAgentTick?", "artifact summary latest tick input")
     try requireContains(
         artifactSummaryView,
         "generationProvenance",
@@ -479,6 +486,10 @@ do {
     try requireContains(artifact3DPreviewView, "SCNScene", "SceneKit scene construction")
     try requireContains(artifact3DPreviewView, "SCNCylinder", "artifact pedestal geometry")
     try requireContains(artifact3DPreviewView, "SCNTorus", "myth artifact proxy geometry")
+    try requireContains(artifact3DPreviewView, "NPCRitualSceneBuilder.build", "NPC ritual scene builder")
+    try requireContains(artifact3DPreviewView, "addNPCRitualOverlay", "NPC ritual scene overlay")
+    try requireContains(artifact3DPreviewView, "NPC ritual", "NPC ritual scene status copy")
+    try requireContains(npcRitualScene, "NPCRitualSceneBuilder", "NPC ritual scene model builder")
     try requireContains(artifactAssetPreparation, "ArtifactAssetPreparer", "asset preparation service")
     try requireContains(guidedScanPhotoSetBuilder, "GuidedScanPhotoSetBuilder", "guided scan importer")
     try requireContains(
