@@ -106,17 +106,23 @@ make final-demo-launch
 ```
 
 That local mode is a no-key dry run. After backend provider keys and iOS deploy
-values are supplied through the project-local writers, run configured mode:
+values are supplied through the unified final resource file, apply them and run
+configured mode:
 
 ```bash
+mkdir -p services/backend/.local
+cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
+$EDITOR services/backend/.local/final-resources.env
+make final-apply-resources
 cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../..
 ```
 
-The report shows the exact backend device-server, provider readiness,
-configured final acceptance, deploy preflight, and Xcode build-gate commands.
-It does not store mobile provider secrets and does not mutate Xcode, signing, or
-global developer settings.
+The report shows `apply_final_resources` as the single resource application
+phase, followed by the backend device-server, provider readiness, configured
+final acceptance, deploy preflight, and Xcode build-gate commands. It does not
+store mobile provider secrets and does not mutate Xcode, signing, or global
+developer settings.
 
 P0.64 exposes the same sanitized status through:
 

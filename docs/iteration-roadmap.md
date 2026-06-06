@@ -84,6 +84,7 @@ Bridge deliverable:
 - P0.66 unified final resource apply handoff for Meshy/OpenAI/Treatstock/iOS deploy values
 - P0.67 final acceptance gate for ARKit/Object Capture scan package handoff into backend 3D generation requests
 - P0.68 iOS local network privacy readiness for physical-device LAN backend demos
+- P0.69 final demo launch unified resource-apply phase and command checklist cleanup
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
