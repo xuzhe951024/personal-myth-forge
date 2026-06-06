@@ -67,14 +67,23 @@ global developer settings.
 The demo defaults to the deterministic local 3D provider, so it does not require external API
 keys.
 
-When final Meshy/OpenAI resources are available, create the ignored backend env
-file through the project-local writer:
+When final Meshy/OpenAI/Treatstock and iOS deploy resources are available, use
+one ignored resource file to apply the full local handoff:
 
 ```bash
-MESHY_API_KEY=... \
-OPENAI_API_KEY=... \
-make backend-write-provider-env
+mkdir -p services/backend/.local
+cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
+$EDITOR services/backend/.local/final-resources.env
+make final-apply-resources
 ```
+
+`final-apply-resources` writes only `services/backend/.env` and
+`apps/mobile/ios/Config/Deployment.local.xcconfig`, both ignored by git. Its
+output redacts provider keys and it does not call Meshy/OpenAI/Treatstock, start
+servers, run Xcode, sign apps, touch keychain, accept Apple licenses, or mutate
+global machine state. The lower-level `backend-write-provider-env` and
+`mobile-write-deploy-config` targets remain available for separate handoff
+steps.
 
 Then validate configured provider readiness explicitly:
 
@@ -83,9 +92,9 @@ cd services/backend
 uv run python -m myth_forge_api.cli provider-handoff --require-core-real
 ```
 
-`backend-write-provider-env` writes only `services/backend/.env`, which is
-ignored by git. Its command output redacts key values and does not make live
-Meshy/OpenAI calls.
+The unified resource file can set `PRINT_PROVIDER=treatstock` plus
+`TREATSTOCK_API_KEY` for live quote handoff. Use `PRINT_PROVIDER=local` for a
+no-key print quote demo.
 
 Preview the final demo launch lane without writing secrets or calling live
 providers:
@@ -1802,4 +1811,34 @@ Static evidence lives at:
 ```text
 docs/superpowers/verification/p0.65-mobile-final-launch-readiness-acceptance.html
 docs/superpowers/verification/assets/p0.65-mobile-final-launch-readiness-acceptance-390x844.png
+```
+
+P0.66 adds a unified final resource apply path for the last operator handoff.
+The tracked `services/backend/final-resources.env.example` documents all values
+needed for configured Meshy 3D generation, OpenAI NPC Agent ticks, optional
+Treatstock quote handoff, and iPhone deployment. The filled copy lives at
+`services/backend/.local/final-resources.env` and remains ignored.
+
+Run:
+
+```bash
+mkdir -p services/backend/.local
+cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
+$EDITOR services/backend/.local/final-resources.env
+make final-apply-resources
+cd services/backend
+uv run pytest tests/test_final_resource_apply_script.py \
+  tests/test_backend_env_writer_script.py \
+  tests/test_resource_template_acceptance.py -q
+```
+
+The apply script validates required resources before writing, rejects unknown
+keys and loopback iPhone backend URLs, requires `TREATSTOCK_API_KEY` when
+`PRINT_PROVIDER=treatstock`, and prints only redacted key status.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.66-unified-resource-apply.html
+docs/superpowers/verification/assets/p0.66-unified-resource-apply-390x844.png
 ```

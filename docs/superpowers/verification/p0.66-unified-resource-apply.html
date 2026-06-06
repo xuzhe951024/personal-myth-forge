@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.66 Unified Final Resource Apply</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #162027;
+      --muted: #60717b;
+      --line: #d7e0e4;
+      --panel: #f7f9f8;
+      --green: #218756;
+      --amber: #a86712;
+      --blue: #2c6383;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #fff; color: var(--ink); }
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      padding: 18px 16px 16px;
+    }
+    h1 {
+      margin: 0 0 7px;
+      font-size: 24px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    .lede {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .top {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .top h2 {
+      margin: 0 0 2px;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+    .top p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+    .badge {
+      margin-left: auto;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      padding-top: 2px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 14px 105px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .row:last-child { border-bottom: 0; }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: var(--green);
+    }
+    .dot.wait { background: var(--amber); }
+    .label {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .detail {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.28;
+      overflow-wrap: anywhere;
+    }
+    .command {
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 9px;
+      margin: 10px 0 0;
+      font-size: 11px;
+      line-height: 1.32;
+      color: var(--blue);
+      overflow-wrap: anywhere;
+    }
+    .callout {
+      border-left: 3px solid var(--blue);
+      padding-left: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.34;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Unified Resource Apply</h1>
+    <p class="lede">P0.66 gives the final demo one local file for provider keys and iPhone deploy values, then writes the existing ignored configs.</p>
+
+    <section class="panel" aria-label="Resource apply flow">
+      <div class="top">
+        <div>
+          <h2>final-apply-resources</h2>
+          <p>single handoff file, two local outputs</p>
+        </div>
+        <div class="badge">READY</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Template</div>
+        <div class="detail">Tracked example lists Meshy, OpenAI, Treatstock, and iOS deploy values.</div>
+      </div>
+      <div class="row">
+        <div class="dot wait"></div>
+        <div class="label">Filled Copy</div>
+        <div class="detail">Operator fills <code>services/backend/.local/final-resources.env</code>, which is ignored.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">Backend Env</div>
+        <div class="detail">Writes <code>services/backend/.env</code> with Meshy/OpenAI and optional Treatstock settings.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">iOS Deploy</div>
+        <div class="detail">Writes Team ID, bundle id, and iPhone-reachable backend URL.</div>
+      </div>
+      <code class="command">make final-apply-resources</code>
+    </section>
+
+    <section class="panel" aria-label="Safety checks">
+      <div class="top">
+        <div>
+          <h2>Safety Gates</h2>
+          <p>validated before local writes</p>
+        </div>
+        <div class="badge">PASSED</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">No Secrets Log</div>
+        <div class="detail">Provider keys are printed only as configured and redacted.</div>
+      </div>
+      <div class="row">
+        <div class="dot"></div>
+        <div class="label">No Global State</div>
+        <div class="detail">No provider calls, Xcode, signing, keychain, license, or global config changes.</div>
+      </div>
+    </section>
+
+    <p class="callout">This moves final acceptance closer to a real handoff: the remaining operator step is filling one ignored file with resources.</p>
+  </main>
+</body>
+</html>

@@ -239,6 +239,7 @@ def _operator_checklist(
 def _commands(mode: LaunchMode) -> list[str]:
     if mode == "local":
         return [
+            "make final-apply-resources",
             "make backend-device-demo",
             "make mobile-write-deploy-config",
             "make mobile-deploy-preflight",
@@ -254,6 +255,7 @@ def _commands(mode: LaunchMode) -> list[str]:
             ),
         ]
     return [
+        "make final-apply-resources",
         "MESHY_API_KEY=... OPENAI_API_KEY=... TREATSTOCK_API_KEY=... make backend-write-provider-env",
         (
             "DEVELOPMENT_TEAM=ABCDE12345 "

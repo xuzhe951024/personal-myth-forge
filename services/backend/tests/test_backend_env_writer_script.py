@@ -25,6 +25,7 @@ OPENAI_NPC_MODEL=gpt-4.1-mini
 OPENAI_API_BASE_URL=
 OPENAI_API_KEY=sk-openai-test
 PRINT_PROVIDER=local
+TREATSTOCK_API_BASE_URL=https://www.treatstock.com
 TREATSTOCK_API_KEY=treatstock-optional
 SCULPTEO_API_KEY=
 CAPTURE_STORAGE_DIR=
@@ -122,6 +123,12 @@ def test_writer_flags_override_environment(script_repo: Path) -> None:
         "sk-openai-flags",
         "--openai-base-url",
         "https://api.openai.test/v1",
+        "--print-provider",
+        "treatstock",
+        "--treatstock-key",
+        "treatstock-from-flags",
+        "--treatstock-base-url",
+        "https://treatstock.test",
         env={"MESHY_API_KEY": "meshy-from-env", "OPENAI_API_KEY": "sk-openai-env"},
     )
 
@@ -130,8 +137,26 @@ def test_writer_flags_override_environment(script_repo: Path) -> None:
     assert "MESHY_API_KEY=meshy-from-flags" in written
     assert "OPENAI_API_KEY=sk-openai-flags" in written
     assert "OPENAI_API_BASE_URL=https://api.openai.test/v1" in written
+    assert "PRINT_PROVIDER=treatstock" in written
+    assert "TREATSTOCK_API_KEY=treatstock-from-flags" in written
+    assert "TREATSTOCK_API_BASE_URL=https://treatstock.test" in written
     assert "meshy-from-env" not in written
     assert "sk-openai-env" not in written
+
+
+def test_writer_requires_treatstock_key_when_treatstock_is_selected(script_repo: Path) -> None:
+    result = run_writer(
+        script_repo,
+        env={
+            "MESHY_API_KEY": "meshy-secret-test",
+            "OPENAI_API_KEY": "sk-openai-test",
+            "PRINT_PROVIDER": "treatstock",
+        },
+    )
+
+    assert result.returncode == 2
+    assert "TREATSTOCK_API_KEY is required when PRINT_PROVIDER=treatstock" in result.stderr
+    assert not backend_env_path(script_repo).exists()
 
 
 def test_writer_blocks_multiline_values(script_repo: Path) -> None:

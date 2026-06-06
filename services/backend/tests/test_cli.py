@@ -310,7 +310,9 @@ def test_cli_provider_handoff_writes_local_report(tmp_path, monkeypatch) -> None
     assert "MESHY_API_KEY" in report["backend_only_env"]
     assert "OPENAI_API_KEY" in report["backend_only_env"]
     assert "Provider secrets stay on the backend" in report["mobile_secret_policy"]
+    assert "make final-apply-resources" in report["next_commands"]
     assert any("provider-readiness" in command for command in report["next_commands"])
+    assert all("/tmp/" not in command for command in report["next_commands"])
 
 
 def test_cli_provider_handoff_require_core_real_returns_two_when_keys_missing(

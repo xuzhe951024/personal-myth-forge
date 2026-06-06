@@ -14,6 +14,7 @@ def test_resource_handoff_reports_missing_final_core_resources(tmp_path: Path) -
     ios = {item["id"]: item for item in report["ios"]["items"]}
     assert report["kind"] == "resource_handoff_report"
     assert report["overall_status"] == "blocked"
+    assert "make final-apply-resources" in report["commands"]
     assert backend["THREE_D_PROVIDER"]["status"] == "manual"
     assert backend["MESHY_API_KEY"]["status"] == "missing"
     assert backend["NPC_PROVIDER"]["status"] == "manual"

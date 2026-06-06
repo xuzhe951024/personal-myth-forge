@@ -100,6 +100,7 @@ def test_local_final_demo_launch_is_no_key_ready_but_surfaces_ios_actions(
     assert result.exit_code == 0
     assert result.report["mode"] == "local"
     assert result.report["overall_status"] == "partial"
+    assert "make final-apply-resources" in result.report["commands"]
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
     assert all("MESHY_API_KEY=..." not in command for command in result.report["commands"])
