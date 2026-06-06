@@ -1,11 +1,13 @@
 from myth_forge_api.config import Settings
 from myth_forge_api.providers.factory import (
+    build_myth_session_store,
     build_npc_director,
     build_npc_tick_runtime,
     build_three_d_provider,
 )
 from myth_forge_api.providers.npc import LocalNPCDirector, OpenAINPCDirector
 from myth_forge_api.providers.npc_ticks import LocalNPCTickRuntime, OpenAINPCTickRuntime
+from myth_forge_api.providers.session_store import LocalMythSessionStore
 from myth_forge_api.providers.three_d import LocalThreeDProvider, MeshyThreeDProvider
 
 
@@ -57,3 +59,10 @@ def test_npc_tick_factory_selects_openai_runtime() -> None:
 
     assert isinstance(runtime, OpenAINPCTickRuntime)
     assert runtime.api_base_url == "https://openai.test/v1"
+
+
+def test_myth_session_store_factory_uses_configured_local_directory(tmp_path) -> None:
+    store = build_myth_session_store(Settings(myth_session_storage_dir=str(tmp_path)))
+
+    assert isinstance(store, LocalMythSessionStore)
+    assert store.root_dir == tmp_path

@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 CAPTURE_ID_PATTERN = r"^cap_[0-9a-f]{16}$"
+SESSION_ID_PATTERN = r"^myth_[0-9a-f]{16}$"
 CaptureMode = Literal[
     "single_photo",
     "photo_set",
@@ -210,3 +211,10 @@ class NPCAgentTick(BaseModel):
     npc_agent_traces: list[NPCAgentTrace]
     npc_reactions: list[NPCReaction]
     world_resolution: WorldResolution
+
+
+class MythSessionHistory(BaseModel):
+    session_id: str = Field(pattern=SESSION_ID_PATTERN)
+    session: MythSession
+    npc_ticks: list[NPCAgentTick] = Field(default_factory=list)
+    updated_at: str

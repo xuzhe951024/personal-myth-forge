@@ -8,6 +8,7 @@ from myth_forge_api.providers.npc_ticks import (
     NPCTickRuntime,
     OpenAINPCTickRuntime,
 )
+from myth_forge_api.providers.session_store import LocalMythSessionStore, MythSessionStore
 from myth_forge_api.providers.three_d import LocalThreeDProvider, MeshyThreeDProvider, ThreeDProvider
 
 
@@ -41,3 +42,8 @@ def build_npc_tick_runtime(settings: Settings | None = None) -> NPCTickRuntime:
 def build_capture_store(settings: Settings | None = None) -> CaptureStore:
     selected_settings = settings or load_settings()
     return LocalCaptureStore(root_dir=selected_settings.capture_storage_dir)
+
+
+def build_myth_session_store(settings: Settings | None = None) -> MythSessionStore:
+    selected_settings = settings or load_settings()
+    return LocalMythSessionStore(root_dir=selected_settings.myth_session_storage_dir)
