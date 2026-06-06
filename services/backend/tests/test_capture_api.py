@@ -443,6 +443,7 @@ def test_create_myth_session_from_guided_scan_capture_passes_images_to_3d_provid
     assert "data:image" not in response.text
     assert "front-jpeg" not in response.text
     assert "side-png" not in response.text
+    assert str(tmp_path) not in response.text
 
 
 def test_create_myth_session_from_guided_scan_capture_passes_heic_images_to_3d_provider(

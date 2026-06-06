@@ -1005,3 +1005,38 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.32-final-acceptance-report.html
 docs/superpowers/verification/assets/p0.32-final-acceptance-report-390x844.png
 ```
+
+## P0.33 Meshy Multi-Image Guided Scan
+
+P0.33 makes the existing guided scan photo set materially useful for Meshy.
+When the backend prepares two or more JPEG/PNG reference images from an iPhone
+guided scan, `MeshyThreeDProvider` calls:
+
+```http
+POST /openapi/v1/multi-image-to-3d
+```
+
+Provider routing is now:
+
+- 2-4 prepared JPEG/PNG images -> Meshy multi-image-to-3D
+- 5+ prepared JPEG/PNG images -> first four images sent to Meshy
+- 1 prepared JPEG/PNG image -> Meshy image-to-3D
+- 0 prepared images -> Meshy text-to-3D
+
+The mobile app still uploads private capture media only to the backend. The
+backend reads local capture storage, converts HEIC/HEIF to JPEG when needed,
+creates backend-only data URIs for Meshy, and returns only generated asset
+metadata to the app. No Meshy/OpenAI key or raw media data is stored in the iOS
+client.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.33-meshy-multi-image-guided-scan.html
+docs/superpowers/verification/assets/p0.33-meshy-multi-image-guided-scan-390x844.png
+```
+
+Remaining gaps after P0.33 are accepting the Apple SDK license on this machine,
+real iPhone deployment, live Meshy/OpenAI key acceptance runs, real device
+guided scan quality evaluation, Unity movement execution, production NPC memory,
+and print fulfillment.

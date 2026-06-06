@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.33 Meshy Multi-Image Guided Scan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202522;
+      --muted: #5e6863;
+      --line: #d6ded8;
+      --paper: #f8faf6;
+      --panel: #ffffff;
+      --green: #416f4d;
+      --blue: #2f6c91;
+      --amber: #a3612f;
+      --plum: #66537d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e7ece7;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 11px 15px 12px;
+      background: var(--paper);
+      border-left: 1px solid #ccd6d1;
+      border-right: 1px solid #ccd6d1;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      padding: 3px 0 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 790;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 810;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      line-height: 1.15;
+      font-weight: 790;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+
+    .metric,
+    .step,
+    .rule {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px;
+    }
+
+    .label {
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 760;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 860;
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .amber {
+      color: var(--amber);
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--blue);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .step-title {
+      font-size: 12px;
+      line-height: 1.12;
+      font-weight: 790;
+    }
+
+    .copy {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.24;
+    }
+
+    .pill {
+      border-radius: 6px;
+      padding: 4px 6px;
+      background: #e6f0e8;
+      color: #315d3a;
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .pill.warn {
+      background: #f5eadf;
+      color: #8c4e2d;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
+
+    .rule-title {
+      color: var(--blue);
+      font-size: 11px;
+      line-height: 1.12;
+      font-weight: 820;
+    }
+
+    .rule-value {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.18;
+      font-weight: 790;
+    }
+
+    code {
+      color: var(--plum);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 9.5px;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Meshy Multi-Image Guided Scan</h1>
+      <div class="tag">P0.33</div>
+    </header>
+
+    <section>
+      <h2>Provider Routing</h2>
+      <div class="grid">
+        <div class="metric">
+          <div class="label">scan refs</div>
+          <div class="value green">2-4</div>
+        </div>
+        <div class="metric">
+          <div class="label">endpoint</div>
+          <div class="value blue">multi</div>
+        </div>
+        <div class="metric">
+          <div class="label">live calls</div>
+          <div class="value amber">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Guided Scan Flow</h2>
+      <div class="flow">
+        <div class="step">
+          <div class="num">1</div>
+          <div>
+            <div class="step-title">iPhone guided scan photos</div>
+            <div class="copy">2-12 images upload to backend capture storage.</div>
+          </div>
+          <div class="pill">private</div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div>
+            <div class="step-title">Backend provider preparation</div>
+            <div class="copy">HEIC/HEIF converts to JPEG; raw media stays out of API responses.</div>
+          </div>
+          <div class="pill">safe</div>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <div>
+            <div class="step-title">Meshy multi-image task</div>
+            <div class="copy"><code>/openapi/v1/multi-image-to-3d</code> receives up to four data URIs.</div>
+          </div>
+          <div class="pill">ready</div>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <div>
+            <div class="step-title">GLB plus USDZ handoff</div>
+            <div class="copy">Generated asset variants keep game and iOS scene roles.</div>
+          </div>
+          <div class="pill">same API</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Fallback Rules</h2>
+      <div class="rules">
+        <div class="rule">
+          <div class="rule-title">5+ images</div>
+          <div class="rule-value">first four sent to Meshy</div>
+        </div>
+        <div class="rule">
+          <div class="rule-title">1 image</div>
+          <div class="rule-value">image-to-3D path</div>
+        </div>
+        <div class="rule">
+          <div class="rule-title">0 images</div>
+          <div class="rule-value">text-to-3D path</div>
+        </div>
+        <div class="rule">
+          <div class="rule-title">keys</div>
+          <div class="rule-value">backend only</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Still Gated</h2>
+      <div class="flow">
+        <div class="step">
+          <div class="num">!</div>
+          <div>
+            <div class="step-title">Real Meshy/OpenAI acceptance</div>
+            <div class="copy">Runs later with backend `.env` keys and configured strict mode.</div>
+          </div>
+          <div class="pill warn">key gate</div>
+        </div>
+        <div class="step">
+          <div class="num">!</div>
+          <div>
+            <div class="step-title">iPhone deployment</div>
+            <div class="copy">Needs local Team ID, LAN backend URL, and Apple SDK license.</div>
+          </div>
+          <div class="pill warn">local</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Regression</h2>
+      <div class="copy">
+        Provider tests use mocked HTTP transport. Backend tests, SwiftPM checks,
+        app compile, and final acceptance quick remain part of the P0.33 gate.
+      </div>
+    </section>
+  </main>
+</body>
+</html>

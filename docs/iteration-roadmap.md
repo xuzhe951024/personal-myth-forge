@@ -48,6 +48,7 @@ Bridge deliverable:
 - P0.30 bounded foreground NPC autonomy run that appends 1-3 backend-owned ticks per user action
 - P0.31 integrated demo acceptance harness for local no-key and configured real-provider runs
 - P0.32 final acceptance report that classifies provider, iOS deploy, and Xcode local blockers
+- P0.33 Meshy multi-image guided scan routing for 2-4 prepared reference images
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
