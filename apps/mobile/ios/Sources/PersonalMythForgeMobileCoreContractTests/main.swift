@@ -5,6 +5,7 @@ do {
     try testDecodesObjectCaptureFixture()
     try testDecodesMythSessionFixture()
     try testDecodesMythSessionWithoutGeneratedAssetVariants()
+    try testDecodesMythSessionWithoutNPCAgentTraceFields()
     try testCaptureIDValidation()
     try testMultipartBodyIncludesMetadataAndFileWithoutLocalPaths()
     try testMultipartBuilderSanitizesHeaderValues()
@@ -62,6 +63,12 @@ private func testDecodesMythSessionFixture() throws {
     try expectEqual(session.status, "ready_for_review")
     try expectEqual(session.objectCard.label, "old brass key")
     try expectEqual(session.npcReactions.count, 3)
+    try expectEqual(session.npcAgentRuntime, "local_agent_runtime")
+    try expectEqual(session.npcAgentTraces.count, 3)
+    try expectEqual(session.npcAgentTraces[0].npcId, "npc_archivist")
+    try expectEqual(session.npcAgentTraces[0].belief, "The key belongs to a door that remembers who knocked.")
+    try expectEqual(session.npcAgentTraces[0].proposedAction, "catalog the key")
+    try expectEqual(session.npcAgentTraces[0].confidence, 0.81)
     try expectEqual(session.worldResolution.acceptedActions.count, 2)
     try expectEqual(session.generatedAsset.variants.count, 2)
     try expectEqual(session.generatedAsset.variants[0].role, "game_asset")
@@ -88,6 +95,21 @@ private func testDecodesMythSessionWithoutGeneratedAssetVariants() throws {
     let session = try PMFJSON.decoder.decode(MythSession.self, from: data)
 
     try expectEqual(session.generatedAsset.variants, [])
+}
+
+private func testDecodesMythSessionWithoutNPCAgentTraceFields() throws {
+    var payload = try require(
+        try JSONSerialization.jsonObject(with: FixtureLoader.data(from: "myth-session-response")) as? [String: Any],
+        "expected myth session fixture object"
+    )
+    payload.removeValue(forKey: "npc_agent_runtime")
+    payload.removeValue(forKey: "npc_agent_traces")
+
+    let data = try JSONSerialization.data(withJSONObject: payload)
+    let session = try PMFJSON.decoder.decode(MythSession.self, from: data)
+
+    try expectEqual(session.npcAgentRuntime, "")
+    try expectEqual(session.npcAgentTraces, [])
 }
 
 private func testCaptureIDValidation() throws {

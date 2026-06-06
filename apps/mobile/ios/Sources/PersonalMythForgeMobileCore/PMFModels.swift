@@ -278,6 +278,34 @@ public struct NPCReaction: Codable, Equatable, Sendable {
     }
 }
 
+public struct NPCAgentTrace: Codable, Equatable, Sendable {
+    public var npcId: String
+    public var name: String
+    public var belief: String
+    public var intention: String
+    public var proposedAction: String
+    public var rationale: String
+    public var confidence: Double
+
+    public init(
+        npcId: String,
+        name: String,
+        belief: String,
+        intention: String,
+        proposedAction: String,
+        rationale: String,
+        confidence: Double
+    ) {
+        self.npcId = npcId
+        self.name = name
+        self.belief = belief
+        self.intention = intention
+        self.proposedAction = proposedAction
+        self.rationale = rationale
+        self.confidence = confidence
+    }
+}
+
 public struct ResolvedNPCAction: Codable, Equatable, Sendable {
     public var npcId: String
     public var action: String
@@ -355,9 +383,25 @@ public struct MythSession: Codable, Equatable, Sendable {
     public var mythSeed: MythSeed
     public var generatedAsset: GeneratedAsset
     public var npcDirector: String
+    public var npcAgentRuntime: String
+    public var npcAgentTraces: [NPCAgentTrace]
     public var npcReactions: [NPCReaction]
     public var worldResolution: WorldResolution
     public var printCandidate: PrintCandidate
+
+    private enum CodingKeys: String, CodingKey {
+        case sessionId
+        case status
+        case objectCard
+        case mythSeed
+        case generatedAsset
+        case npcDirector
+        case npcAgentRuntime
+        case npcAgentTraces
+        case npcReactions
+        case worldResolution
+        case printCandidate
+    }
 
     public init(
         sessionId: String,
@@ -366,6 +410,8 @@ public struct MythSession: Codable, Equatable, Sendable {
         mythSeed: MythSeed,
         generatedAsset: GeneratedAsset,
         npcDirector: String,
+        npcAgentRuntime: String = "",
+        npcAgentTraces: [NPCAgentTrace] = [],
         npcReactions: [NPCReaction],
         worldResolution: WorldResolution,
         printCandidate: PrintCandidate
@@ -376,8 +422,40 @@ public struct MythSession: Codable, Equatable, Sendable {
         self.mythSeed = mythSeed
         self.generatedAsset = generatedAsset
         self.npcDirector = npcDirector
+        self.npcAgentRuntime = npcAgentRuntime
+        self.npcAgentTraces = npcAgentTraces
         self.npcReactions = npcReactions
         self.worldResolution = worldResolution
         self.printCandidate = printCandidate
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.sessionId = try container.decode(String.self, forKey: .sessionId)
+        self.status = try container.decode(String.self, forKey: .status)
+        self.objectCard = try container.decode(ObjectCard.self, forKey: .objectCard)
+        self.mythSeed = try container.decode(MythSeed.self, forKey: .mythSeed)
+        self.generatedAsset = try container.decode(GeneratedAsset.self, forKey: .generatedAsset)
+        self.npcDirector = try container.decode(String.self, forKey: .npcDirector)
+        self.npcAgentRuntime = try container.decodeIfPresent(String.self, forKey: .npcAgentRuntime) ?? ""
+        self.npcAgentTraces = try container.decodeIfPresent([NPCAgentTrace].self, forKey: .npcAgentTraces) ?? []
+        self.npcReactions = try container.decode([NPCReaction].self, forKey: .npcReactions)
+        self.worldResolution = try container.decode(WorldResolution.self, forKey: .worldResolution)
+        self.printCandidate = try container.decode(PrintCandidate.self, forKey: .printCandidate)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(sessionId, forKey: .sessionId)
+        try container.encode(status, forKey: .status)
+        try container.encode(objectCard, forKey: .objectCard)
+        try container.encode(mythSeed, forKey: .mythSeed)
+        try container.encode(generatedAsset, forKey: .generatedAsset)
+        try container.encode(npcDirector, forKey: .npcDirector)
+        try container.encode(npcAgentRuntime, forKey: .npcAgentRuntime)
+        try container.encode(npcAgentTraces, forKey: .npcAgentTraces)
+        try container.encode(npcReactions, forKey: .npcReactions)
+        try container.encode(worldResolution, forKey: .worldResolution)
+        try container.encode(printCandidate, forKey: .printCandidate)
     }
 }

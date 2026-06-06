@@ -36,6 +36,36 @@
     ]
   },
   "npc_director": "local_stub",
+  "npc_agent_runtime": "local_agent_runtime",
+  "npc_agent_traces": [
+    {
+      "npc_id": "npc_archivist",
+      "name": "Archivist Mara",
+      "belief": "The key belongs to a door that remembers who knocked.",
+      "intention": "preserve the key's provenance before the town acts",
+      "proposed_action": "catalog the key",
+      "rationale": "The archive can prevent the artifact from becoming rumor.",
+      "confidence": 0.81
+    },
+    {
+      "npc_id": "npc_smith",
+      "name": "Tomas the Smith",
+      "belief": "The worn teeth show years of urgent use.",
+      "intention": "test whether the key is physically safe",
+      "proposed_action": "test the metal",
+      "rationale": "The smith trusts material evidence before village legend.",
+      "confidence": 0.64
+    },
+    {
+      "npc_id": "npc_child",
+      "name": "Ilo",
+      "belief": "A small thing can still open a large story.",
+      "intention": "help the village witness the passage gently",
+      "proposed_action": "carry a lantern",
+      "rationale": "Ilo believes the relic needs light more than force.",
+      "confidence": 0.76
+    }
+  ],
   "npc_reactions": [
     {
       "npc_id": "npc_archivist",
