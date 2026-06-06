@@ -6,7 +6,11 @@ from myth_forge_api.acceptance import DemoAcceptanceResult
 from myth_forge_api.config import Settings
 from myth_forge_api.final_acceptance import FinalAcceptanceResult
 from myth_forge_api.cli import main
-from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDGenerationRequest
+from myth_forge_api.providers.three_d import (
+    LocalThreeDProvider,
+    MeshyProviderError,
+    ThreeDGenerationRequest,
+)
 
 
 def test_cli_generates_local_asset_json(capsys) -> None:
@@ -105,6 +109,76 @@ def test_cli_evaluate_3d_default_suite_writes_rich_report(tmp_path) -> None:
     assert "Authorization" not in report_text
 
 
+def test_cli_evaluate_3d_guided_scan_suite_writes_media_safe_report(tmp_path) -> None:
+    output_file = tmp_path / "guided-scan-report.json"
+
+    exit_code = main(
+        [
+            "evaluate-3d",
+            "--provider",
+            "local",
+            "--suite",
+            "guided-scan-smoke-v0",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report_text = output_file.read_text(encoding="utf-8")
+    report = json.loads(report_text)
+
+    assert exit_code == 0
+    assert report["kind"] == "three_d_evaluation_report"
+    assert report["suite"] == "guided-scan-smoke-v0"
+    assert report["total_cases"] == 3
+    assert report["succeeded"] == 3
+    assert report["failed"] == 0
+    assert report["coverage"]["input_modes"]["single_image"] == 1
+    assert report["coverage"]["input_modes"]["multi_image"] == 2
+    assert report["coverage"]["input_modes"]["text_prompt"] == 0
+    assert [case["source_image_count"] for case in report["cases"]] == [1, 2, 4]
+    assert [case["source_image_roles"] for case in report["cases"]] == [
+        ["front"],
+        ["front", "side"],
+        ["front", "side", "top", "detail"],
+    ]
+    assert report["cases"][0]["generation_provenance"]["input_mode"] == "single_image"
+    assert report["cases"][1]["generation_provenance"]["input_mode"] == "multi_image"
+    assert report["cases"][2]["generation_provenance"]["source_image_count"] == 4
+    assert report["cases"][2]["generation_provenance"]["selected_source_image_count"] == 4
+    assert "data:image" not in report_text
+    assert "file://" not in report_text
+    assert "Authorization" not in report_text
+
+
+def test_cli_evaluate_3d_guided_scan_suite_passes_source_images_to_provider(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "guided-scan-report.json"
+    provider = RecordingThreeDProvider()
+    monkeypatch.setattr("myth_forge_api.cli.build_three_d_provider", lambda settings: provider)
+
+    exit_code = main(
+        [
+            "evaluate-3d",
+            "--provider",
+            "local",
+            "--suite",
+            "guided-scan-smoke-v0",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 0
+    assert [len(request.source_images) for request in provider.requests] == [1, 2, 4]
+    assert provider.requests[0].source_images[0].content_type == "image/png"
+    assert provider.requests[0].source_images[0].data_uri.startswith("data:image/png;base64,")
+    report_text = output_file.read_text(encoding="utf-8")
+    assert "data:image" not in report_text
+
+
 def test_cli_evaluate_3d_requires_suite_or_prompts_file(tmp_path) -> None:
     output_file = tmp_path / "report.json"
 
@@ -167,6 +241,18 @@ class FailingThreeDProvider:
 
     def generate_game_asset(self, request: ThreeDGenerationRequest):
         raise MeshyProviderError("failed Authorization=Bearer test-secret raw=test-secret")
+
+
+class RecordingThreeDProvider:
+    provider_name = "recording"
+
+    def __init__(self) -> None:
+        self.requests: list[ThreeDGenerationRequest] = []
+        self.local_provider = LocalThreeDProvider()
+
+    def generate_game_asset(self, request: ThreeDGenerationRequest):
+        self.requests.append(request)
+        return self.local_provider.generate_game_asset(request)
 
 
 def test_cli_evaluate_3d_sanitizes_per_prompt_errors(tmp_path, monkeypatch) -> None:

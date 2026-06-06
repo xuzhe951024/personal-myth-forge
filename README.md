@@ -908,3 +908,30 @@ Static evidence lives at:
 docs/superpowers/verification/p0.35-3d-provider-evaluation-suite.html
 docs/superpowers/verification/assets/p0.35-3d-provider-evaluation-suite-390x844.png
 ```
+
+P0.36 adds a media-backed guided scan smoke suite for the 3D provider contract.
+It uses synthetic non-private PNG data URIs internally to exercise source-image
+provider paths, while the written report only records source image counts,
+roles, and sanitized provenance.
+
+Run the no-key local media route smoke:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli evaluate-3d \
+  --provider local \
+  --suite guided-scan-smoke-v0 \
+  --output /tmp/personal-myth-forge-guided-scan-eval.json
+```
+
+Expected local coverage is one `single_image` case and two `multi_image` cases
+with source image counts `1 / 2 / 4`. Running the same suite through Meshy is
+opt-in and requires backend-only `MESHY_API_KEY`; reports must not contain raw
+`data:image` payloads, provider keys, or local file paths.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.36-media-backed-3d-evaluation.html
+docs/superpowers/verification/assets/p0.36-media-backed-3d-evaluation-390x844.png
+```

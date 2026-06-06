@@ -12,6 +12,7 @@ from myth_forge_api.acceptance import run_demo_acceptance
 from myth_forge_api.config import load_settings
 from myth_forge_api.evaluation.three_d import (
     DEFAULT_THREE_D_EVALUATION_SUITE,
+    GUIDED_SCAN_SMOKE_EVALUATION_SUITE,
     build_custom_prompt_cases,
     run_three_d_evaluation,
 )
@@ -109,7 +110,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     evaluate_parser = subcommands.add_parser("evaluate-3d")
     evaluate_parser.add_argument("--prompts-file", default=None)
-    evaluate_parser.add_argument("--suite", choices=["default-v0"], default=None)
+    evaluate_parser.add_argument("--suite", choices=["default-v0", "guided-scan-smoke-v0"], default=None)
     evaluate_parser.add_argument("--provider", choices=["local", "meshy"], default=None)
     evaluate_parser.add_argument("--output", required=True)
 
@@ -160,6 +161,9 @@ def _evaluate_3d(
         raise ValueError("Provide exactly one of --suite or --prompts-file.")
     if suite_name == "default-v0":
         cases = DEFAULT_THREE_D_EVALUATION_SUITE
+        report_suite_name = suite_name
+    elif suite_name == "guided-scan-smoke-v0":
+        cases = GUIDED_SCAN_SMOKE_EVALUATION_SUITE
         report_suite_name = suite_name
     else:
         cases = build_custom_prompt_cases(_read_prompts(prompts_file or ""))
