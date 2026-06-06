@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.63 Final Demo Launch Profile</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #5d6972;
+      --line: #d7dee2;
+      --panel: #f6f8f7;
+      --ok: #1f7a4d;
+      --warn: #a56210;
+      --block: #b83232;
+      --accent: #315f78;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #ffffff;
+      color: var(--ink);
+    }
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      margin: 0;
+      padding: 18px 16px 14px;
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: 25px;
+      line-height: 1.08;
+      margin: 0 0 8px;
+      letter-spacing: 0;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      margin: 0;
+    }
+    .mode-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .mode {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 82px;
+      min-width: 0;
+    }
+    .mode strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+    .mode span {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 7px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--ok);
+      margin-bottom: 6px;
+    }
+    .mode.blocked span { background: var(--block); }
+    .mode p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.32;
+      color: var(--muted);
+    }
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: .06em;
+      margin: 16px 0 7px;
+    }
+    .phase {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr) minmax(38px, auto);
+      gap: 9px;
+      align-items: start;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 0;
+    }
+    .dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--ok);
+      margin-top: 1px;
+    }
+    .dot.warn { background: var(--warn); }
+    .dot.block { background: var(--block); }
+    .phase h2 {
+      font-size: 14px;
+      line-height: 1.2;
+      margin: 0 0 4px;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+    .phase p {
+      font-size: 12px;
+      line-height: 1.3;
+      margin: 0;
+      color: var(--muted);
+    }
+    code {
+      display: inline-block;
+      max-width: 100%;
+      color: var(--accent);
+      font-size: 11px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      padding-top: 2px;
+      text-align: right;
+      min-width: 0;
+    }
+    .policy {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfb;
+    }
+    .policy h2 {
+      font-size: 14px;
+      margin: 0 0 7px;
+    }
+    .policy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Final Demo Launch Profile</h1>
+      <p class="sub">A single report links resource writers, provider readiness, acceptance, iPhone preflight, and the Xcode gate without touching global state.</p>
+    </header>
+
+    <div class="mode-row" aria-label="Launch modes">
+      <div class="mode">
+        <strong>Local mode</strong>
+        <span>Exit 0</span>
+        <p>No keys required. Shows the no-key dry-run path and device setup actions.</p>
+      </div>
+      <div class="mode blocked">
+        <strong>Configured mode</strong>
+        <span>Blocked</span>
+        <p>Waits for Meshy, OpenAI, Treatstock, LAN backend URL, and signing values.</p>
+      </div>
+    </div>
+
+    <div class="section-title">Launch Phases</div>
+    <section>
+      <div class="phase">
+        <div class="dot warn"></div>
+        <div>
+          <h2>Write backend env</h2>
+          <p><code>make backend-write-provider-env</code></p>
+        </div>
+        <div class="tag">keys</div>
+      </div>
+      <div class="phase">
+        <div class="dot block"></div>
+        <div>
+          <h2>Write iOS deploy config</h2>
+          <p><code>make mobile-write-deploy-config</code></p>
+        </div>
+        <div class="tag">LAN</div>
+      </div>
+      <div class="phase">
+        <div class="dot"></div>
+        <div>
+          <h2>Start backend for iPhone</h2>
+          <p><code>make backend-device-demo</code></p>
+        </div>
+        <div class="tag">API</div>
+      </div>
+      <div class="phase">
+        <div class="dot warn"></div>
+        <div>
+          <h2>Provider readiness</h2>
+          <p><code>provider-handoff --require-core-real</code></p>
+        </div>
+        <div class="tag">3D AI</div>
+      </div>
+      <div class="phase">
+        <div class="dot"></div>
+        <div>
+          <h2>Local final acceptance</h2>
+          <p><code>final-acceptance --provider-mode local</code></p>
+        </div>
+        <div class="tag">dry</div>
+      </div>
+      <div class="phase">
+        <div class="dot block"></div>
+        <div>
+          <h2>Configured final acceptance</h2>
+          <p><code>--require-real-core --allow-live-provider-calls</code></p>
+        </div>
+        <div class="tag">live</div>
+      </div>
+      <div class="phase">
+        <div class="dot block"></div>
+        <div>
+          <h2>iOS deploy preflight</h2>
+          <p><code>make mobile-deploy-preflight</code></p>
+        </div>
+        <div class="tag">phone</div>
+      </div>
+      <div class="phase">
+        <div class="dot warn"></div>
+        <div>
+          <h2>Xcode build gate</h2>
+          <p><code>make mobile-xcode-build</code></p>
+        </div>
+        <div class="tag">manual</div>
+      </div>
+    </section>
+
+    <div class="policy">
+      <h2>Safety policy</h2>
+      <p>No secrets, raw media, payment links, local paths, provider calls, Xcode license commands, signing, keychain, or global settings are produced by this report.</p>
+    </div>
+  </main>
+</body>
+</html>
