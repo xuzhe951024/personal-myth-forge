@@ -19,6 +19,7 @@ struct ForgeRootView: View {
     @State private var isSyncingBackendHistory = false
     @State private var npcTickError: String?
     @State private var isAdvancingNPCTick = false
+    @State private var isRunningAutonomy = false
     @State private var objectLabel = "old brass key"
     @State private var materials = "metal, brass"
     @State private var visualNotes = "worn teeth, circular bow, warm reflections"
@@ -83,8 +84,10 @@ struct ForgeRootView: View {
                         tick: latestNPCTick,
                         tickHistoryCount: npcTickHistory.count,
                         isLoading: isAdvancingNPCTick,
+                        isRunningAutonomy: isRunningAutonomy,
                         errorMessage: npcTickError,
-                        advanceVillage: advanceNPCTick
+                        advanceVillage: advanceNPCTick,
+                        runAutonomy: runAutonomy
                     )
                 }
                 .padding()
@@ -199,6 +202,7 @@ struct ForgeRootView: View {
             snapshotStatusText = "Cleared local demo state."
             backendHistoryStatusText = nil
             isSyncingBackendHistory = false
+            isRunningAutonomy = false
             if readySession != nil {
                 state = ForgeFlowReducer.reduce(state: state, event: .reset)
             }
@@ -224,6 +228,7 @@ struct ForgeRootView: View {
         backendHistoryStatusText = nil
         isSyncingBackendHistory = false
         npcTickError = nil
+        isRunningAutonomy = false
         let draft = mediaSelection.captureDraft(
             label: objectLabel,
             materialsText: materials,
@@ -309,6 +314,37 @@ struct ForgeRootView: View {
             await MainActor.run {
                 isAdvancingNPCTick = false
                 npcTickError = "NPC tick is not reachable yet."
+            }
+        }
+    }
+
+    private func runAutonomy() {
+        guard let session = readySession else {
+            return
+        }
+        guard MythSessionID.isValid(session.sessionId) else {
+            npcTickError = "Autonomy run needs a backend history session."
+            return
+        }
+        isRunningAutonomy = true
+        npcTickError = nil
+
+        Task {
+            do {
+                let run = try await apiClient.runMythSessionAutonomy(
+                    sessionId: session.sessionId,
+                    stepCount: 3
+                )
+                await MainActor.run {
+                    _ = applyBackendHistory(run.history)
+                    isRunningAutonomy = false
+                    npcTickError = nil
+                }
+            } catch {
+                await MainActor.run {
+                    isRunningAutonomy = false
+                    npcTickError = "NPC autonomy run is not reachable yet."
+                }
             }
         }
     }
