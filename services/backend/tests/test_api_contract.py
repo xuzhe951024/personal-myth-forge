@@ -5,6 +5,7 @@ from myth_forge_api.domain.models import GeneratedAsset, MythSession, NPCAgentTi
 from myth_forge_api.domain.pipeline import create_demo_myth_session
 from myth_forge_api.main import app
 from myth_forge_api.providers.npc import OpenAINPCConfigurationError, OpenAINPCProviderError
+from myth_forge_api.providers.printing import TreatstockProviderError
 from myth_forge_api.providers.session_store import LocalMythSessionStore
 from myth_forge_api.providers.three_d import ThreeDGenerationRequest
 
@@ -146,6 +147,73 @@ def test_create_print_quote_returns_safe_local_quote() -> None:
     assert payload["requires_user_approval"] is True
     assert "data:image" not in response.text
     assert "api_key" not in response.text.lower()
+
+
+def test_create_print_quote_sanitizes_treatstock_provider_error(monkeypatch) -> None:
+    class RaisingPrintProvider:
+        provider_name = "treatstock"
+
+        def create_print_candidate(self, generated_asset):
+            raise AssertionError("not used")
+
+        def create_print_quote(self, request):
+            raise TreatstockProviderError(
+                "Authorization=Bearer treatstock-secret raw=private"
+            )
+
+    monkeypatch.setattr("myth_forge_api.main.build_print_provider", lambda: RaisingPrintProvider())
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/print-quotes",
+        json={
+            "print_candidate": {
+                "kind": "print_asset",
+                "source_asset_uri": "https://example.com/relic.3mf",
+                "provider": "treatstock",
+                "format": "3mf",
+                "uri": "https://example.com/relic.3mf",
+                "requires_user_approval": True,
+                "approval_reason": "Review before quote.",
+                "printability_notes": ["safe test candidate"],
+            }
+        },
+    )
+
+    assert response.status_code == 502
+    assert "treatstock-secret" not in response.text
+    assert "Authorization" not in response.text
+    assert "raw=private" not in response.text
+
+
+def test_local_print_candidate_url_is_served_from_session() -> None:
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/myth-sessions",
+        json={
+            "object_observation": {
+                "label": "small brass key",
+                "materials": ["metal"],
+                "source": "desk",
+                "visual_notes": "worn bow",
+            },
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender, strange",
+            },
+        },
+    )
+
+    payload = response.json()
+    candidate_uri = payload["print_candidate"]["uri"]
+    assert candidate_uri.startswith("http://testserver/v1/print-candidates/")
+    assert candidate_uri.endswith("/print.3mf")
+
+    download_response = client.get(candidate_uri)
+    assert download_response.status_code == 200
+    assert download_response.headers["content-type"].startswith("model/3mf")
+    assert download_response.content.startswith(b"PK")
 
 
 def test_demo_route_serves_mobile_first_shell() -> None:
