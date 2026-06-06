@@ -83,7 +83,13 @@ struct Artifact3DPreviewView: View {
             preparedAsset = nil
         }
         let asset = await preparer.prepare(session: session)
+        guard !Task.isCancelled else {
+            return
+        }
         await MainActor.run {
+            guard !Task.isCancelled else {
+                return
+            }
             preparedAsset = asset
         }
     }

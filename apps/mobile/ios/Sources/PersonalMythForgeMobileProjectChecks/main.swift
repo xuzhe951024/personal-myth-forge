@@ -179,6 +179,11 @@ do {
     )
     try requireContains(artifact3DPreviewView, "PreparedArtifactAsset", "prepared asset state")
     try requireContains(artifact3DPreviewView, "SCNScene(url:", "local SceneKit asset loading")
+    try requireContains(
+        artifact3DPreviewView,
+        "guard !Task.isCancelled else",
+        "cancelled asset preparation does not overwrite preview state"
+    )
 
     try scanForMobileSecrets(in: [appRoot, coreRoot], additionalFiles: [packageFile, projectFile, plistFile])
 

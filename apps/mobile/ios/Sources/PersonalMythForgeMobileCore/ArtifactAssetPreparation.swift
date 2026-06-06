@@ -2,12 +2,14 @@ import Foundation
 
 public enum PreparedArtifactAssetStatus: String, Equatable, Sendable {
     case awaitingAsset
+    case awaitingFormat
     case localSceneReady
     case cachedSceneReady
     case cachedRequiresConversion
     case unsupportedURI
     case unsupportedFormat
     case downloadFailed
+    case cancelled
 }
 
 public struct PreparedArtifactAsset: Equatable, Sendable {
@@ -124,6 +126,17 @@ public struct ArtifactAssetPreparer: Sendable {
                 statusDetail: preview.statusDetail
             )
         }
+        guard !format.isEmpty else {
+            return PreparedArtifactAsset(
+                preview: preview,
+                sourceURI: uri,
+                cachedURL: nil,
+                sceneURL: nil,
+                status: .awaitingFormat,
+                statusTitle: preview.statusTitle,
+                statusDetail: preview.statusDetail
+            )
+        }
 
         guard let sourceURL = URL(string: uri), let scheme = sourceURL.scheme?.lowercased() else {
             return unsupportedURI(preview: preview, sourceURI: uri)
@@ -138,7 +151,9 @@ public struct ArtifactAssetPreparer: Sendable {
         }
 
         do {
+            try Task.checkCancellation()
             let data = try await downloader.download(from: sourceURL)
+            try Task.checkCancellation()
             let cachedURL = try await cache.store(
                 data: data,
                 filename: cacheFilename(
@@ -148,6 +163,10 @@ public struct ArtifactAssetPreparer: Sendable {
                 )
             )
             return prepareCachedAsset(preview: preview, sourceURL: sourceURL, cachedURL: cachedURL, format: format)
+        } catch is CancellationError {
+            return cancelled(preview: preview, sourceURI: uri)
+        } catch let error as URLError where error.code == .cancelled {
+            return cancelled(preview: preview, sourceURI: uri)
         } catch {
             return PreparedArtifactAsset(
                 preview: preview,
@@ -223,6 +242,18 @@ public struct ArtifactAssetPreparer: Sendable {
             status: .unsupportedURI,
             statusTitle: "Unsupported asset URI",
             statusDetail: "The generated asset URI must be a local file or an HTTP(S) URL before the app can prepare it."
+        )
+    }
+
+    private func cancelled(preview: ArtifactPreviewState, sourceURI: String) -> PreparedArtifactAsset {
+        PreparedArtifactAsset(
+            preview: preview,
+            sourceURI: sourceURI,
+            cachedURL: nil,
+            sceneURL: nil,
+            status: .cancelled,
+            statusTitle: "Asset preparation cancelled",
+            statusDetail: "The generated asset handoff was cancelled before it could update the preview."
         )
     }
 

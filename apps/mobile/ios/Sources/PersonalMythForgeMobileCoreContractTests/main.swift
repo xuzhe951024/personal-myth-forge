@@ -32,6 +32,8 @@ do {
     try await testArtifactAssetPreparerDownloadsRemoteUSDZForSceneKit()
     try await testArtifactAssetPreparerCachesRemoteGLBButRequiresConversion()
     try await testArtifactAssetPreparerRejectsInvalidRemoteURI()
+    try await testArtifactAssetPreparerSkipsDownloadWhenFormatMissing()
+    try await testArtifactAssetPreparerTreatsCancellationAsCancelled()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
     try await testForgeFlowServiceUploadsCaptureThenCreatesSession()
     try await testForgeFlowServiceStopsBeforeSessionWhenUploadFails()
@@ -780,6 +782,39 @@ private func testArtifactAssetPreparerRejectsInvalidRemoteURI() async throws {
     try expectEqual(await cache.storedFilenames(), [])
 }
 
+private func testArtifactAssetPreparerSkipsDownloadWhenFormatMissing() async throws {
+    let downloader = RecordingArtifactAssetDownloader()
+    let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
+    let session = mythSession(
+        asset: generatedAsset(format: "", uri: "https://cdn.example.com/relic")
+    )
+    let prepared = await ArtifactAssetPreparer(downloader: downloader, cache: cache)
+        .prepare(session: session)
+
+    try expectEqual(prepared.status, .awaitingFormat)
+    try expectEqual(prepared.statusTitle, "Awaiting 3D asset format")
+    try expectEqual(prepared.cachedURL, nil)
+    try expectEqual(prepared.sceneURL, nil)
+    try expectEqual(await downloader.requestedURLs(), [])
+    try expectEqual(await cache.storedFilenames(), [])
+}
+
+private func testArtifactAssetPreparerTreatsCancellationAsCancelled() async throws {
+    let downloader = RecordingArtifactAssetDownloader(error: CancellationError())
+    let cache = RecordingArtifactAssetCache(rootURL: URL(fileURLWithPath: "/tmp/pmf-assets"))
+    let session = mythSession(
+        asset: generatedAsset(format: "usdz", uri: "https://cdn.example.com/relic.usdz")
+    )
+    let prepared = await ArtifactAssetPreparer(downloader: downloader, cache: cache)
+        .prepare(session: session)
+
+    try expectEqual(prepared.status, .cancelled)
+    try expectEqual(prepared.statusTitle, "Asset preparation cancelled")
+    try expectEqual(prepared.cachedURL, nil)
+    try expectEqual(prepared.sceneURL, nil)
+    try expectEqual(await cache.storedFilenames(), [])
+}
+
 private func sampleCaptureDraft() -> CaptureDraft {
     CaptureDraft(
         label: "old brass key",
@@ -932,14 +967,19 @@ private final class FakeForgeFlowAPI: ForgeFlowAPI, @unchecked Sendable {
 
 private actor RecordingArtifactAssetDownloader: ArtifactAssetDownloader {
     private let data: Data
+    private let error: Error?
     private var urls: [URL] = []
 
-    init(data: Data = Data("asset-bytes".utf8)) {
+    init(data: Data = Data("asset-bytes".utf8), error: Error? = nil) {
         self.data = data
+        self.error = error
     }
 
     func download(from url: URL) async throws -> Data {
         urls.append(url)
+        if let error {
+            throw error
+        }
         return data
     }
 
