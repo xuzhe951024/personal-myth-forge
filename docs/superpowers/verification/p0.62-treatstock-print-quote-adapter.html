@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.62 Treatstock Print Quote Adapter</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f2ee;
+      --panel: #fffefb;
+      --ink: #222426;
+      --muted: #686f73;
+      --line: #d7cfc2;
+      --green: #28724e;
+      --blue: #2e5f8b;
+      --amber: #9a691c;
+      --soft-blue: #edf6fb;
+      --soft-green: #eef8f1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      overflow-x: hidden;
+    }
+
+    .screen {
+      width: 390px;
+      max-width: 390px;
+      min-height: 844px;
+      padding: 18px 12px 24px;
+      background: linear-gradient(180deg, #fbfaf6 0%, #e9eee9 100%);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 23px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .pill {
+      flex: 0 0 auto;
+      border: 1px solid #bed0c5;
+      border-radius: 999px;
+      padding: 6px 9px;
+      background: #f1fbf3;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 820;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(34, 36, 38, 0.08);
+    }
+
+    .hero {
+      padding: 14px;
+      border-bottom: 1px solid #dccfab;
+      background: #fff8ea;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--amber);
+      font-size: 11px;
+      font-weight: 820;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.24;
+      letter-spacing: 0;
+    }
+
+    .copy {
+      margin: 0;
+      color: #505751;
+      font-size: 12px;
+      line-height: 1.4;
+      font-weight: 640;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 10px 8px;
+      border: 1px solid #bed0c5;
+      border-radius: 8px;
+      background: var(--soft-green);
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--green);
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 860;
+    }
+
+    .metric span {
+      display: block;
+      color: #3d6049;
+      font-size: 11px;
+      line-height: 1.22;
+      font-weight: 760;
+      overflow-wrap: anywhere;
+    }
+
+    .flow {
+      margin: 12px;
+      padding: 12px;
+      border: 1px solid #bad2df;
+      border-radius: 8px;
+      background: var(--soft-blue);
+    }
+
+    .flow h3 {
+      margin: 0 0 10px;
+      color: var(--blue);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .rows {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 8px;
+      align-items: start;
+      min-width: 0;
+      padding: 8px;
+      border-radius: 7px;
+      border: 1px solid rgba(46, 95, 139, 0.16);
+      background: rgba(255, 255, 255, 0.76);
+    }
+
+    .check {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--green);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .row p {
+      margin: 0;
+      color: var(--ink);
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .note {
+      margin: 0 12px 12px;
+      padding: 11px;
+      border: 1px solid #decca5;
+      border-radius: 8px;
+      background: #fff8e7;
+      color: #685017;
+      font-size: 12px;
+      line-height: 1.38;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <div class="topbar">
+      <h1>Treatstock Print Quote Adapter</h1>
+      <div class="pill">P0.62</div>
+    </div>
+
+    <section class="panel">
+      <div class="hero">
+        <p class="eyebrow">Print Handoff</p>
+        <h2>Backend can now route print quotes to Treatstock.</h2>
+        <p class="copy">
+          The app keeps the same print quote API while the backend handles URL
+          upload, cost lookup, sanitization, and user approval boundaries.
+        </p>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <strong>3MF</strong>
+          <span>local candidate endpoint</span>
+        </div>
+        <div class="metric">
+          <strong>0</strong>
+          <span>orders placed automatically</span>
+        </div>
+        <div class="metric">
+          <strong>54</strong>
+          <span>focused tests before docs</span>
+        </div>
+      </div>
+
+      <div class="flow">
+        <h3>PRINT_PROVIDER=treatstock</h3>
+        <div class="rows">
+          <div class="row">
+            <div class="check">✓</div>
+            <p>`/v1/print-candidates/{session_id}/print.3mf` serves the local print candidate.</p>
+          </div>
+          <div class="row">
+            <div class="check">✓</div>
+            <p>Treatstock adapter uploads an STL/PLY/3MF URL to `printable-packs`.</p>
+          </div>
+          <div class="row">
+            <div class="check">✓</div>
+            <p>Lowest returned Treatstock price becomes a review-only `draft_quote`.</p>
+          </div>
+          <div class="row">
+            <div class="check">✓</div>
+            <p>Provider key, private-key query strings, and raw provider failures stay redacted.</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">
+        Checkout URLs are handoff links only. Shipping, payment, and order creation
+        require a future explicit approval flow.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

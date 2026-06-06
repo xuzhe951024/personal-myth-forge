@@ -77,6 +77,7 @@ Bridge deliverable:
 - P0.59 mobile-core capture generation readiness summary for guided scan, ARKit scan, and provider setup
 - P0.60 final acceptance source gate for mobile capture generation readiness
 - P0.61 final acceptance source/config gate for the OpenAI NPC Agent provider path
+- P0.62 Treatstock print quote adapter plus downloadable local 3MF print candidate handoff
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

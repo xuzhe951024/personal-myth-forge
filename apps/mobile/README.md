@@ -1223,7 +1223,8 @@ finish, and shipping country. The current local provider returns a deterministic
 Provider readiness now has `PRINT_PROVIDER`, `TREATSTOCK_API_KEY`, and
 `SCULPTEO_API_KEY` slots for future live quote adapters. Configured
 Treatstock/Sculpteo keys are not returned to the app, and those providers are
-not marked real-ready until live adapters are implemented.
+not returned to the app. Treatstock becomes real-provider-ready in P0.62;
+Sculpteo remains a future adapter.
 
 Run:
 
@@ -1801,4 +1802,37 @@ Visual evidence lives at:
 ```text
 docs/superpowers/verification/p0.61-npc-agent-provider-acceptance.html
 docs/superpowers/verification/assets/p0.61-npc-agent-provider-acceptance-390x844.png
+```
+
+## P0.62 Treatstock Print Quote Adapter
+
+P0.62 keeps the mobile contract stable while making the backend print quote
+provider-driven. When the backend is configured with `PRINT_PROVIDER=treatstock`
+and `TREATSTOCK_API_KEY`, the same `createPrintQuote` API call can return a
+Treatstock-backed `draft_quote` from a downloadable STL/PLY/3MF print candidate
+URL.
+
+Local demo sessions now rewrite the backend-produced `printCandidate.uri` to a
+downloadable 3MF endpoint:
+
+```http
+GET /v1/print-candidates/{session_id}/print.3mf
+```
+
+The app still stores no Treatstock key, checkout secret, shipping address, or
+payment data. Treatstock order creation remains outside the app flow until a
+future explicit approval/fulfillment step.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_provider_adapters.py tests/test_api_contract.py tests/test_print_acceptance.py -q
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.62-treatstock-print-quote-adapter.html
+docs/superpowers/verification/assets/p0.62-treatstock-print-quote-adapter-390x844.png
 ```

@@ -1057,8 +1057,8 @@ curl -X POST http://127.0.0.1:8080/v1/print-quotes \
 
 The local provider returns a deterministic `draft_quote`, `USD 16.00` per item,
 and `requires_user_approval: true`. `PRINT_PROVIDER=treatstock` and
-`PRINT_PROVIDER=sculpteo` now have backend config/readiness slots, but live quote
-adapters remain intentionally unimplemented and are not marked real-ready.
+`PRINT_PROVIDER=sculpteo` now have backend config/readiness slots. Treatstock is
+implemented in P0.62; Sculpteo remains a future adapter.
 
 Run final acceptance:
 
@@ -1697,4 +1697,43 @@ Static evidence lives at:
 ```text
 docs/superpowers/verification/p0.61-npc-agent-provider-acceptance.html
 docs/superpowers/verification/assets/p0.61-npc-agent-provider-acceptance-390x844.png
+```
+
+P0.62 adds the first third-party print quote adapter path. When
+`PRINT_PROVIDER=treatstock` and backend-only `TREATSTOCK_API_KEY` are configured,
+`POST /v1/print-quotes` uses the official Treatstock printable-pack flow:
+
+- upload a public STL/PLY/3MF candidate URL to `/api/v2/printable-packs`
+- request costs from `/api/v2/printable-pack-costs/`
+- return the lowest price as a `draft_quote`
+- include a checkout handoff URL when Treatstock returns one
+- keep `requires_user_approval: true`
+
+Local sessions now also expose a downloadable placeholder 3MF candidate at:
+
+```http
+GET /v1/print-candidates/{session_id}/print.3mf
+```
+
+The adapter does not place Treatstock orders, collect shipping/contact/payment
+details, or upload local private files. Live Treatstock calls only happen when
+the backend is explicitly configured with `PRINT_PROVIDER=treatstock`; automated
+tests use fake clients and never call Treatstock. `TREATSTOCK_API_BASE_URL` is
+available for sandbox/test routing.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_provider_adapters.py tests/test_config.py \
+  tests/test_provider_factory.py tests/test_provider_readiness.py \
+  tests/test_api_contract.py tests/test_print_acceptance.py \
+  tests/test_final_acceptance.py -q
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.62-treatstock-print-quote-adapter.html
+docs/superpowers/verification/assets/p0.62-treatstock-print-quote-adapter-390x844.png
 ```
