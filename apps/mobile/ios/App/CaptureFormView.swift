@@ -32,9 +32,9 @@ struct CaptureFormView: View {
             .pickerStyle(.segmented)
 
             TextField("Object label", text: $objectLabel)
-                .textInputAutocapitalization(.never)
+                .mobileTextInputAutocapitalizationDisabled()
             TextField("Materials", text: $materials)
-                .textInputAutocapitalization(.never)
+                .mobileTextInputAutocapitalizationDisabled()
             TextField("Visual notes", text: $visualNotes, axis: .vertical)
                 .lineLimit(3, reservesSpace: true)
 
@@ -190,5 +190,16 @@ struct CaptureFormView: View {
         case .failed:
             return "Needs attention"
         }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func mobileTextInputAutocapitalizationDisabled() -> some View {
+        #if os(iOS)
+        self.textInputAutocapitalization(.never)
+        #else
+        self
+        #endif
     }
 }

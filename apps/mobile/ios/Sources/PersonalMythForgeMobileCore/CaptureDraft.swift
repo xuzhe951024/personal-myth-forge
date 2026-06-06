@@ -26,7 +26,7 @@ public struct CaptureMediaDraft: Equatable, Sendable {
     }
 }
 
-public struct CaptureUploadPayload: Equatable {
+public struct CaptureUploadPayload: Equatable, Sendable {
     public let metadata: ObjectCaptureMetadata
     public let uploads: [CaptureUpload]
 

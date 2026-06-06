@@ -85,6 +85,22 @@ do {
     try requireContains(captureFormView, "PhotosPicker", "photo picker app shell source")
     try requireContains(captureFormView, "let isMediaReadyForUpload", "media readiness form input")
     try requireContains(captureFormView, ".disabled(!isMediaReadyForUpload)", "disabled forge button source")
+    try requireContains(
+        captureFormView,
+        "mobileTextInputAutocapitalizationDisabled()",
+        "portable text input capitalization helper use"
+    )
+    try requireContains(captureFormView, "#if os(iOS)", "iOS-only text input capitalization guard")
+    try requireNotContains(
+        captureFormView,
+        "TextField(\"Object label\", text: $objectLabel)\n                .textInputAutocapitalization(.never)",
+        "direct object label iOS-only text input modifier"
+    )
+    try requireNotContains(
+        captureFormView,
+        "TextField(\"Materials\", text: $materials)\n                .textInputAutocapitalization(.never)",
+        "direct materials iOS-only text input modifier"
+    )
     try requireNotContains(captureFormView, "Future Xcode target wires", "capture button no-op comment")
     try requireNotContains(captureFormView, "Future Xcode target triggers", "forge button no-op comment")
     try requireNotContains(captureFormView, "captureActionTitle", "unused sample-era capture title")
@@ -98,6 +114,26 @@ do {
     try requireContains(forgeRootView, "switch selectedCaptureMode", "file importer selected mode source")
     try requireContains(forgeRootView, "guard selectedCaptureMode == mode else", "stale photo load guard")
     try requireContains(forgeRootView, "CaptureInputLoadError.unreadablePhoto", "partial photo load failure source")
+    try requireContains(
+        forgeRootView,
+        ".onChange(of: selectedCaptureMode) { mode in",
+        "macOS 13-compatible capture mode onChange"
+    )
+    try requireNotContains(
+        forgeRootView,
+        ".onChange(of: selectedCaptureMode) { _, mode in",
+        "macOS 14-only capture mode onChange"
+    )
+    try requireNotContains(
+        forgeRootView,
+        ".onChange(of: selectedSinglePhotoItem?.itemIdentifier) { _, _ in",
+        "macOS 14-only single photo onChange"
+    )
+    try requireNotContains(
+        forgeRootView,
+        ".onChange(of: selectedPhotoItems.map(\\.itemIdentifier)) { _, _ in",
+        "macOS 14-only photo set onChange"
+    )
     try requireContains(
         forgeRootView,
         "startAccessingSecurityScopedResource",

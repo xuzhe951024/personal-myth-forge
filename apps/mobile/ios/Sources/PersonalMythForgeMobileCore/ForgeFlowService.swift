@@ -1,9 +1,9 @@
-public protocol ForgeFlowAPI {
+public protocol ForgeFlowAPI: Sendable {
     func uploadObjectCapture(metadata: ObjectCaptureMetadata, media: [CaptureUpload]) async throws -> ObjectCapture
     func createMythSessionFromCapture(captureId: String, context: ContextCapsule) async throws -> MythSession
 }
 
-public struct ForgeFlowService {
+public struct ForgeFlowService: Sendable {
     private let api: any ForgeFlowAPI
 
     public init(api: any ForgeFlowAPI) {
@@ -13,7 +13,7 @@ public struct ForgeFlowService {
     public func forge(
         draft: CaptureDraft,
         context: ContextCapsule,
-        stateChanged: (ForgeFlowState) -> Void = { _ in }
+        stateChanged: @Sendable (ForgeFlowState) -> Void = { _ in }
     ) async -> ForgeFlowState {
         var state = ForgeFlowState()
         let payload: CaptureUploadPayload
