@@ -10,6 +10,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Sequence
 
+from myth_forge_api.acceptance import run_demo_acceptance
 from myth_forge_api.config import load_settings
 from myth_forge_api.providers.factory import build_three_d_provider
 from myth_forge_api.providers.readiness import build_provider_readiness
@@ -63,6 +64,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 output_path=args.output,
                 require_core_real=args.require_core_real,
             )
+        if args.command == "demo-acceptance":
+            return _demo_acceptance(
+                provider_mode=args.provider_mode,
+                npc_steps=args.npc_steps,
+                require_real_core=args.require_real_core,
+                output_path=args.output,
+            )
     except (MeshyProviderError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -91,6 +99,16 @@ def _build_parser() -> argparse.ArgumentParser:
     handoff_parser = subcommands.add_parser("provider-handoff")
     handoff_parser.add_argument("--output", default=None)
     handoff_parser.add_argument("--require-core-real", action="store_true")
+
+    acceptance_parser = subcommands.add_parser("demo-acceptance")
+    acceptance_parser.add_argument(
+        "--provider-mode",
+        choices=["local", "configured"],
+        default="local",
+    )
+    acceptance_parser.add_argument("--npc-steps", type=_npc_steps_arg, default=3)
+    acceptance_parser.add_argument("--require-real-core", action="store_true")
+    acceptance_parser.add_argument("--output", default=None)
 
     return parser
 
@@ -160,6 +178,29 @@ def _evaluate_3d(prompts_file: str, provider_name: str | None, output_path: str)
 
 def _provider_handoff(output_path: str | None, require_core_real: bool) -> int:
     report = _provider_handoff_report()
+    _write_json_payload(report, output_path)
+    if require_core_real and not report["core_real_ready"]:
+        return 2
+    return 0
+
+
+def _demo_acceptance(
+    *,
+    provider_mode: str,
+    npc_steps: int,
+    require_real_core: bool,
+    output_path: str | None,
+) -> int:
+    result = run_demo_acceptance(
+        provider_mode=provider_mode,
+        npc_steps=npc_steps,
+        require_real_core=require_real_core,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _write_json_payload(report: dict[str, object], output_path: str | None) -> None:
     payload = json.dumps(report, indent=2)
     if output_path:
         destination = Path(output_path)
@@ -167,9 +208,16 @@ def _provider_handoff(output_path: str | None, require_core_real: bool) -> int:
         destination.write_text(payload, encoding="utf-8")
     else:
         print(payload)
-    if require_core_real and not report["core_real_ready"]:
-        return 2
-    return 0
+
+
+def _npc_steps_arg(value: str) -> int:
+    try:
+        steps = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("npc steps must be an integer from 0 to 3.") from exc
+    if steps < 0 or steps > 3:
+        raise argparse.ArgumentTypeError("npc steps must be an integer from 0 to 3.")
+    return steps
 
 
 def _provider_handoff_report() -> dict[str, object]:

@@ -1,5 +1,8 @@
 import json
 
+import pytest
+
+from myth_forge_api.acceptance import DemoAcceptanceResult
 from myth_forge_api.config import Settings
 from myth_forge_api.cli import main
 from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDGenerationRequest
@@ -185,3 +188,73 @@ def test_cli_provider_handoff_prints_json_to_stdout(capsys, monkeypatch) -> None
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 0
     assert payload["kind"] == "provider_handoff_report"
+
+
+def test_cli_demo_acceptance_writes_report(tmp_path, monkeypatch) -> None:
+    output_file = tmp_path / "acceptance.json"
+    calls = []
+
+    def fake_run_demo_acceptance(**kwargs):
+        calls.append(kwargs)
+        return DemoAcceptanceResult(
+            exit_code=0,
+            report={
+                "kind": "demo_acceptance_report",
+                "mode": kwargs["provider_mode"],
+                "status": "succeeded",
+            },
+        )
+
+    monkeypatch.setattr("myth_forge_api.cli.run_demo_acceptance", fake_run_demo_acceptance)
+
+    exit_code = main(
+        [
+            "demo-acceptance",
+            "--provider-mode",
+            "local",
+            "--npc-steps",
+            "3",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 0
+    assert calls == [
+        {
+            "provider_mode": "local",
+            "npc_steps": 3,
+            "require_real_core": False,
+        }
+    ]
+    assert json.loads(output_file.read_text(encoding="utf-8"))["kind"] == (
+        "demo_acceptance_report"
+    )
+
+
+def test_cli_demo_acceptance_prints_stdout_and_returns_result_code(capsys, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "myth_forge_api.cli.run_demo_acceptance",
+        lambda **kwargs: DemoAcceptanceResult(
+            exit_code=2,
+            report={
+                "kind": "demo_acceptance_report",
+                "mode": kwargs["provider_mode"],
+                "status": "not_ready",
+            },
+        ),
+    )
+
+    exit_code = main(["demo-acceptance", "--provider-mode", "configured", "--require-real-core"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 2
+    assert payload["kind"] == "demo_acceptance_report"
+    assert payload["mode"] == "configured"
+    assert payload["status"] == "not_ready"
+
+
+@pytest.mark.parametrize("npc_steps", ["-1", "4"])
+def test_cli_demo_acceptance_rejects_invalid_npc_steps(npc_steps: str) -> None:
+    with pytest.raises(SystemExit):
+        main(["demo-acceptance", "--npc-steps", npc_steps])
