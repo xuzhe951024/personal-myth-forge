@@ -39,6 +39,19 @@ def test_deploy_preflight_blocks_loopback_backend(script_repo: Path) -> None:
     assert "not loopback" in result.stderr
 
 
+def test_deploy_preflight_blocks_invalid_final_launch_mode(script_repo: Path) -> None:
+    write_local_config(
+        script_repo,
+        backend_url="http://192.168.1.10:8080",
+        final_launch_mode="live",
+    )
+
+    result = run_preflight(script_repo)
+
+    assert result.returncode == 2
+    assert "PMF_FINAL_LAUNCH_MODE must be local or configured." in result.stderr
+
+
 def test_deploy_preflight_fails_tracked_local_config(script_repo: Path) -> None:
     write_local_config(script_repo, backend_url="http://192.168.1.10:8080")
     subprocess.run(
@@ -63,6 +76,21 @@ def test_deploy_preflight_passes_when_backend_health_is_ok(script_repo: Path) ->
     assert result.returncode == 0
     assert "iOS deploy preflight passed." in result.stdout
     assert "Backend health: ok" in result.stdout
+
+
+def test_deploy_preflight_passes_with_configured_final_launch_mode(
+    script_repo: Path,
+) -> None:
+    with health_server('{"status":"ok"}') as backend_url:
+        write_local_config(
+            script_repo,
+            backend_url=backend_url,
+            final_launch_mode="configured",
+        )
+        result = run_preflight(script_repo)
+
+    assert result.returncode == 0
+    assert "Final launch mode: configured" in result.stdout
 
 
 def test_deploy_preflight_blocks_non_ok_backend_without_leaking_body(script_repo: Path) -> None:
@@ -93,17 +121,19 @@ def write_local_config(
     backend_url: str,
     team: str = "ABCDE12345",
     bundle_id: str = "com.example.personalmythforge",
+    final_launch_mode: str | None = None,
 ) -> None:
     local_config = root / "apps/mobile/ios/Config/Deployment.local.xcconfig"
+    lines = [
+        f"DEVELOPMENT_TEAM = {team}",
+        f"PRODUCT_BUNDLE_IDENTIFIER = {bundle_id}",
+        f"PMF_BACKEND_BASE_URL = {backend_url}",
+    ]
+    if final_launch_mode is not None:
+        lines.append(f"PMF_FINAL_LAUNCH_MODE = {final_launch_mode}")
+    lines.append("")
     local_config.write_text(
-        "\n".join(
-            [
-                f"DEVELOPMENT_TEAM = {team}",
-                f"PRODUCT_BUNDLE_IDENTIFIER = {bundle_id}",
-                f"PMF_BACKEND_BASE_URL = {backend_url}",
-                "",
-            ]
-        ),
+        "\n".join(lines),
         encoding="utf-8",
     )
 
