@@ -29,6 +29,7 @@ Bridge deliverable:
 - P0.11 capture-aware 3D provider contract that passes reference images and scan asset refs into generation
 - P0.12 iOS device media input bridge with PhotosPicker, fileImporter, and selected media draft wiring
 - P0.13 SwiftPM app-source compile gate for no-global-Xcode iOS deployment readiness checks
+- P0.14 SwiftPM-compiled SceneKit artifact preview surface in the iOS app source
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

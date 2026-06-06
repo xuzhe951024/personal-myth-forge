@@ -221,3 +221,28 @@ docs/superpowers/verification/assets/p0.13-ios-app-compile-gate-390x844.png
 
 This is still not a simulator build, device install, signing pass, ARKit mesh
 capture, or iOS 3D renderer screenshot.
+
+P0.14 adds a SwiftPM-compiled SceneKit artifact preview surface to the iOS app
+source. `ArtifactPreviewState` classifies generated asset readiness in the
+mobile core, and `Artifact3DPreviewView` renders a SceneKit proxy artifact in
+`ArtifactSummaryView` while preserving the caveat that Meshy GLB download,
+cache, and import/conversion are later work.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.14-ios-3d-artifact-preview.html
+docs/superpowers/verification/assets/p0.14-ios-3d-artifact-preview-390x844.png
+```
+
+This is still not a real provider asset download/cache/import path, GLB runtime
+conversion, simulator/device deployment, live ARKit mesh capture, or the richer
+3D village scene.

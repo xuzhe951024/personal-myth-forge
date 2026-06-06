@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.14 iOS 3D Artifact Preview Evidence</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111316;
+      --panel: #1b1f24;
+      --panel-2: #232932;
+      --text: #f4f0e8;
+      --muted: #b8c0c9;
+      --line: #3a424d;
+      --teal: #21b7aa;
+      --amber: #dba945;
+      --red: #df6a5d;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      width: min(100%, 430px);
+      margin: 0 auto;
+      padding: 18px 14px 24px;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      padding: 4px 0 16px;
+    }
+
+    .eyebrow {
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 27px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .screen {
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 14px;
+    }
+
+    .artifact-title {
+      display: grid;
+      gap: 4px;
+    }
+
+    .artifact-title h2 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .resonance {
+      color: #d9d1bf;
+    }
+
+    .preview {
+      overflow: hidden;
+      min-height: 234px;
+      background: #0d1014;
+      position: relative;
+    }
+
+    .scene-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .scene-label strong {
+      font-size: 15px;
+    }
+
+    .badge {
+      border: 1px solid #54606d;
+      border-radius: 999px;
+      color: #d4dee8;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      white-space: nowrap;
+    }
+
+    .stage {
+      display: grid;
+      place-items: center;
+      height: 145px;
+      border: 1px solid #2f3843;
+      border-radius: 8px;
+      background: #121821;
+      perspective: 560px;
+      position: relative;
+    }
+
+    .stage::before {
+      content: "";
+      position: absolute;
+      width: 160px;
+      height: 28px;
+      bottom: 25px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.36);
+    }
+
+    .artifact-proxy {
+      width: 108px;
+      height: 108px;
+      border: 12px solid var(--teal);
+      border-radius: 50%;
+      transform: rotateX(62deg) rotateZ(-21deg);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12), 0 16px 38px rgba(33, 183, 170, 0.28);
+      position: relative;
+    }
+
+    .artifact-proxy::after {
+      content: "";
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      top: 27px;
+      left: 27px;
+      border-radius: 50%;
+      background: #111821;
+      border: 5px solid #8ce2db;
+    }
+
+    .pedestal {
+      position: absolute;
+      bottom: 25px;
+      width: 128px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1px solid #a2aab4;
+      background: #7f8791;
+      transform: rotateX(58deg);
+    }
+
+    .status {
+      display: grid;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .status strong {
+      font-size: 14px;
+    }
+
+    .uri {
+      overflow-wrap: anywhere;
+      color: #9fb1c1;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      gap: 9px;
+      align-items: start;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+
+    .dot.warn {
+      background: var(--amber);
+    }
+
+    .dot.stop {
+      background: var(--red);
+    }
+
+    .check strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 13px;
+    }
+
+    footer {
+      margin-top: 14px;
+      color: #8f9aa6;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">P0.14 mobile evidence</div>
+      <h1>iOS 3D Artifact Preview</h1>
+      <p>Generated artifacts now have a SwiftPM-compiled SceneKit surface in the app source, replacing text-only generated asset metadata.</p>
+    </header>
+
+    <section class="screen" aria-label="P0.14 acceptance evidence">
+      <div class="panel artifact-title">
+        <h2>The Key That Remembered</h2>
+        <p class="resonance">It holds a small deadline in its teeth.</p>
+      </div>
+
+      <div class="panel preview">
+        <div class="scene-label">
+          <strong>3D Artifact Preview</strong>
+          <span class="badge">meshy GLB</span>
+        </div>
+        <div class="stage" aria-label="3D preview panel visible">
+          <div class="pedestal"></div>
+          <div class="artifact-proxy"></div>
+        </div>
+        <div class="status">
+          <strong>Generated 3D asset ready</strong>
+          <p>This provider asset is ready for the later download/import step before direct iOS scene loading.</p>
+          <div class="uri">https://cdn.example.com/relic.glb</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="check">
+          <span class="dot"></span>
+          <p><strong>SceneKit compile/source gate</strong> `Artifact3DPreviewView` imports SceneKit, builds an `SCNScene`, and uses `SceneView(scene:)` in SwiftUI.</p>
+        </div>
+        <div class="check">
+          <span class="dot warn"></span>
+          <p><strong>GLB import caveat</strong> Real Meshy GLB download, cache, and runtime conversion remain a later iteration.</p>
+        </div>
+        <div class="check">
+          <span class="dot stop"></span>
+          <p><strong>No simulator/device evidence</strong> P0.14 uses SwiftPM compile checks and static Browser evidence only; no Xcode deploy or ARKit runtime was executed.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Verification target: 390x844 mobile viewport, no horizontal overflow, preview panel visible, caveats visible.
+    </footer>
+  </main>
+</body>
+</html>
