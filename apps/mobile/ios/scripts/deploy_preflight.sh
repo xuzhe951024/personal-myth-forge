@@ -32,6 +32,41 @@ get_value() {
   printf '%s' "$value"
 }
 
+health_url() {
+  case "$1" in
+    */) printf '%shealth' "$1" ;;
+    *) printf '%s/health' "$1" ;;
+  esac
+}
+
+check_backend_health() {
+  url=$(health_url "$backend_url")
+  body=""
+  if command -v python3 >/dev/null 2>&1; then
+    body=$(python3 - "$url" <<'PY' 2>/dev/null || true
+import sys
+import urllib.request
+
+url = sys.argv[1]
+with urllib.request.urlopen(url, timeout=3) as response:
+    print(response.read(512).decode("utf-8", errors="replace"))
+PY
+)
+  elif command -v curl >/dev/null 2>&1; then
+    body=$(curl --fail --silent --show-error --max-time 3 "$url" 2>/dev/null | head -c 512 || true)
+  else
+    printf '%s\n' "Backend health check failed. python3 or curl is required." >&2
+    return 1
+  fi
+
+  compact=$(printf '%s' "$body" | tr -d '[:space:]')
+  case "$compact" in
+    *'"status":"ok"'*) return 0 ;;
+  esac
+  printf '%s\n' "Backend health check failed. Start backend-device-demo and verify PMF_BACKEND_BASE_URL." >&2
+  return 1
+}
+
 if [ ! -f "$BASE_CONFIG" ]; then
   printf '%s\n' "Missing Deployment.xcconfig." >&2
   exit 1
@@ -72,6 +107,11 @@ if [ "$missing" -ne 0 ]; then
   exit 2
 fi
 
+if ! check_backend_health; then
+  exit 2
+fi
+
 printf '%s\n' "iOS deploy preflight passed."
 printf '%s\n' "Bundle: $bundle_id"
 printf '%s\n' "Backend: $backend_url"
+printf '%s\n' "Backend health: ok"

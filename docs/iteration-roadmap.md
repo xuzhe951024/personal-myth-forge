@@ -69,6 +69,7 @@ Bridge deliverable:
 - P0.51 operator-controlled showcase autopilot for one-step demo progression
 - P0.52 iPhone device preflight panel for backend URL, providers, local demo state, and saved NPC history
 - P0.53 operator-triggered backend health probe inside the iPhone device preflight panel
+- P0.54 command-line iOS deploy preflight backend health check
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
