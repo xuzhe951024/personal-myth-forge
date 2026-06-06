@@ -68,7 +68,11 @@ struct ForgeRootView: View {
                     FinalShowcaseSummaryView(
                         summary: finalShowcaseSummary
                     )
-                    DevicePreflightView(summary: devicePreflightSummary, isCheckingBackend: isCheckingBackendHealth, checkBackend: checkBackendHealth)
+                    DevicePreflightView(summary: devicePreflightSummary,
+                        isCheckingBackend: isCheckingBackendHealth,
+                        checkBackend: checkBackendHealth
+                    )
+                    FinalLaunchStatusView(summary: finalLaunchMobileSummary)
                     DemoScriptView(
                         script: demoScript,
                         autopilotPlan: showcaseAutopilotPlan,
@@ -540,6 +544,13 @@ struct ForgeRootView: View {
             finalDemoLaunchError: finalDemoLaunchError,
             finalShowcaseSummary: finalShowcaseSummary,
             savedNPCTickCount: npcTickHistory.count
+        )
+    }
+
+    private var finalLaunchMobileSummary: FinalLaunchMobileSummary {
+        FinalLaunchMobileSummaryBuilder.build(
+            report: finalDemoLaunch,
+            error: finalDemoLaunchError
         )
     }
 

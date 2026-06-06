@@ -1899,3 +1899,29 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.71-mobile-final-resources-preflight.html
 docs/superpowers/verification/assets/p0.71-mobile-final-resources-preflight-390x844.png
 ```
+
+## P0.72 Mobile Final Launch Status
+
+The app now renders a `Final Launch Status` panel below Device Preflight. It
+summarizes the backend final launch report into phase rows, final resource
+actions, and command rows for the Mac-side operator.
+
+This is read-only. The iPhone app does not run launch commands, read
+`final-resources.env`, or store provider keys. It only displays the sanitized
+backend report and applies mobile redaction again before rendering.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+cd services/backend
+uv run pytest tests/test_mobile_final_launch_readiness_acceptance.py -q
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.72-mobile-final-launch-status.html
+docs/superpowers/verification/assets/p0.72-mobile-final-launch-status-390x844.png
+```

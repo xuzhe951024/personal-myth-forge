@@ -42,6 +42,10 @@ FORGE_ROOT_VIEW_PATH = "apps/mobile/ios/App/ForgeRootView.swift"
 DEVICE_PREFLIGHT_PATH = (
     "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DevicePreflight.swift"
 )
+FINAL_LAUNCH_MOBILE_SUMMARY_PATH = (
+    "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift"
+)
+FINAL_LAUNCH_STATUS_VIEW_PATH = "apps/mobile/ios/App/FinalLaunchStatusView.swift"
 CORE_CONTRACT_TESTS_PATH = (
     "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift"
 )
@@ -138,6 +142,54 @@ SOURCE_REQUIREMENTS = (
         "DevicePreflightSummaryBuilder.build",
     ),
     SourceRequirement(
+        "root_view_final_launch_status_panel",
+        "Root view final launch status panel",
+        FORGE_ROOT_VIEW_PATH,
+        "FinalLaunchStatusView(",
+    ),
+    SourceRequirement(
+        "root_view_final_launch_summary_builder",
+        "Root view final launch summary builder",
+        FORGE_ROOT_VIEW_PATH,
+        "FinalLaunchMobileSummaryBuilder.build",
+    ),
+    SourceRequirement(
+        "mobile_summary_builder",
+        "Mobile final launch summary builder",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "FinalLaunchMobileSummaryBuilder",
+    ),
+    SourceRequirement(
+        "mobile_summary_status",
+        "Mobile final launch summary status",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "FinalLaunchMobileStatus",
+    ),
+    SourceRequirement(
+        "mobile_summary_redaction",
+        "Mobile final launch summary redaction",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "sanitize",
+    ),
+    SourceRequirement(
+        "mobile_status_view_title",
+        "Mobile final launch status view title",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Final Launch Status",
+    ),
+    SourceRequirement(
+        "mobile_status_view_resources",
+        "Mobile final launch status resource actions",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "resourceActions",
+    ),
+    SourceRequirement(
+        "mobile_status_view_commands",
+        "Mobile final launch status commands",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "commandRows",
+    ),
+    SourceRequirement(
         "preflight_item",
         "Device preflight final launch item",
         DEVICE_PREFLIGHT_PATH,
@@ -226,6 +278,18 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts launch errors",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightBlocksAndRedactsFinalLaunchError",
+    ),
+    SourceRequirement(
+        "contract_mobile_summary_partial",
+        "Contract test builds mobile final launch summary",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
+    ),
+    SourceRequirement(
+        "contract_mobile_summary_redaction",
+        "Contract test redacts mobile final launch summary",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeReportText",
     ),
 )
 

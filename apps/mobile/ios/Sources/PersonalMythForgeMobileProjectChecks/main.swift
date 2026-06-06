@@ -46,6 +46,7 @@ do {
     let printQuoteReviewView = try readText(appRoot.appendingPathComponent("PrintQuoteReviewView.swift"))
     let finalShowcaseSummaryView = try readText(appRoot.appendingPathComponent("FinalShowcaseSummaryView.swift"))
     let devicePreflightView = try readText(appRoot.appendingPathComponent("DevicePreflightView.swift"))
+    let finalLaunchStatusView = try readText(appRoot.appendingPathComponent("FinalLaunchStatusView.swift"))
     let demoScriptView = try readText(appRoot.appendingPathComponent("DemoScriptView.swift"))
     let cameraCaptureView = try readText(appRoot.appendingPathComponent("CameraCaptureView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
@@ -55,6 +56,9 @@ do {
     let npcRitualScene = try readText(coreRoot.appendingPathComponent("NPCRitualScene.swift"))
     let showcaseAutopilot = try readText(coreRoot.appendingPathComponent("ShowcaseAutopilot.swift"))
     let devicePreflight = try readText(coreRoot.appendingPathComponent("DevicePreflight.swift"))
+    let finalLaunchMobileSummary = try readText(
+        coreRoot.appendingPathComponent("FinalLaunchMobileSummary.swift")
+    )
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
     let arkitScanPackageBuilder = try readText(coreRoot.appendingPathComponent("ARKitScanPackageBuilder.swift"))
     let captureGenerationReadiness = try readText(
@@ -237,6 +241,7 @@ do {
         "PrintQuoteReviewView.swift",
         "FinalShowcaseSummaryView.swift",
         "DevicePreflightView.swift",
+        "FinalLaunchStatusView.swift",
         "CameraCaptureView.swift",
     ] {
         try requireContains(project, file, "Xcode project file reference")
@@ -294,6 +299,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000017 /* DevicePreflightView.swift in Sources */,",
         "device preflight Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000018 /* FinalLaunchStatusView.swift in Sources */,",
+        "final launch status Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -380,6 +391,12 @@ do {
     )
     try requireContains(forgeRootView, "DevicePreflightSummaryBuilder.build", "device preflight summary wiring")
     try requireContains(forgeRootView, "DevicePreflightView(summary:", "device preflight view wiring")
+    try requireContains(forgeRootView, "FinalLaunchStatusView(", "final launch status root wiring")
+    try requireContains(
+        forgeRootView,
+        "FinalLaunchMobileSummaryBuilder.build",
+        "final launch mobile summary root wiring"
+    )
     try requireContains(forgeRootView, "finalDemoLaunch", "final demo launch root state")
     try requireContains(forgeRootView, "loadFinalDemoLaunch", "final demo launch app load path")
     try requireContains(forgeRootView, "getFinalDemoLaunch(mode: \"local\")", "final demo launch API call")
@@ -511,6 +528,13 @@ do {
     try requireContains(devicePreflightView, "backendBaseURL", "device preflight backend URL")
     try requireContains(devicePreflightView, "checkBackend", "device preflight check action")
     try requireContains(devicePreflightView, "Check", "device preflight check button")
+    try requireContains(finalLaunchStatusView, "Final Launch Status", "final launch status title")
+    try requireContains(
+        finalLaunchStatusView,
+        "resourceActions",
+        "final launch status resource action rendering"
+    )
+    try requireContains(finalLaunchStatusView, "commandRows", "final launch status command rendering")
     try requireContains(devicePreflight, "DevicePreflightSummaryBuilder", "device preflight core builder")
     try requireContains(devicePreflight, "BackendHealthProbe", "backend health probe core type")
     try requireContains(devicePreflight, "final_launch", "device preflight final launch item")
@@ -526,6 +550,9 @@ do {
     try requireContains(pmfModels, "FinalDemoLaunchPhase", "final demo launch phase model")
     try requireContains(pmfModels, "FinalResourcesPreflightReport", "final resources preflight report model")
     try requireContains(pmfModels, "FinalResourcesFileStatus", "final resources file status model")
+    try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileSummaryBuilder", "final launch summary builder")
+    try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileStatus", "final launch summary status")
+    try requireContains(finalLaunchMobileSummary, "sanitize", "final launch summary redaction")
     try requireContains(
         forgeRootView,
         ".onChange(of: selectedCaptureMode) { mode in",
