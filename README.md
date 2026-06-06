@@ -201,3 +201,23 @@ docs/superpowers/verification/assets/p0.12-ios-device-media-input-390x844.png
 This remains no-simulator evidence. Live camera capture, ARKit mesh capture
 runtime, full simulator/device deployment, and iOS 3D rendering are still
 separate work.
+
+P0.13 adds a local SwiftPM compile gate for the SwiftUI app source. The package
+now includes `PersonalMythForgeMobileAppCompileCheck`, which compiles
+`apps/mobile/ios/App` against `PersonalMythForgeMobileCore` without changing
+global Xcode settings:
+
+```bash
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+This gate caught and fixed app-source API availability and Swift 6 concurrency
+issues that source-string checks did not cover. Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.13-ios-app-compile-gate.html
+docs/superpowers/verification/assets/p0.13-ios-app-compile-gate-390x844.png
+```
+
+This is still not a simulator build, device install, signing pass, ARKit mesh
+capture, or iOS 3D renderer screenshot.

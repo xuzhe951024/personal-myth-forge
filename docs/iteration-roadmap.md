@@ -28,6 +28,7 @@ Bridge deliverable:
 - P0.10 iOS forge flow service that uploads capture drafts and creates myth sessions
 - P0.11 capture-aware 3D provider contract that passes reference images and scan asset refs into generation
 - P0.12 iOS device media input bridge with PhotosPicker, fileImporter, and selected media draft wiring
+- P0.13 SwiftPM app-source compile gate for no-global-Xcode iOS deployment readiness checks
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
