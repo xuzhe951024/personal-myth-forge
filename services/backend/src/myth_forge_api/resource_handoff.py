@@ -315,28 +315,28 @@ def _commands() -> list[str]:
         "curl http://127.0.0.1:8080/v1/provider-readiness",
         (
             "cd services/backend && uv run python -m myth_forge_api.cli resource-handoff "
-            "--output /tmp/personal-myth-forge-resource-handoff.json"
+            "--output .local/resource-handoff.json"
         ),
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "
             "resource-template-acceptance "
-            "--output /tmp/personal-myth-forge-resource-template-acceptance.json"
+            "--output .local/resource-template-acceptance.json"
         ),
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "
             "final-demo-launch --mode local --repo-root ../.. "
-            "--output /tmp/personal-myth-forge-final-demo-launch-local.json"
+            "--output .local/final-demo-launch-local.json"
         ),
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "
             "final-demo-launch --mode configured --repo-root ../.. "
-            "--output /tmp/personal-myth-forge-final-demo-launch-configured.json"
+            "--output .local/final-demo-launch-configured.json"
         ),
         (
             "cd services/backend && uv run python -m myth_forge_api.cli final-acceptance "
             "--profile quick --provider-mode configured --require-real-core "
             "--allow-live-provider-calls "
-            "--output /tmp/personal-myth-forge-final-acceptance.json"
+            "--output .local/final-acceptance-configured.json"
         ),
         "make mobile-deploy-preflight",
         "make mobile-xcode-build",

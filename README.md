@@ -102,7 +102,7 @@ cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch \
   --mode configured \
   --repo-root ../.. \
-  --output /tmp/personal-myth-forge-final-demo-launch-configured.json
+  --output .local/final-demo-launch-configured.json
 ```
 
 The launch report consolidates resource status, backend device-server commands,
@@ -1772,4 +1772,34 @@ Static evidence lives at:
 ```text
 docs/superpowers/verification/p0.62-treatstock-print-quote-adapter.html
 docs/superpowers/verification/assets/p0.62-treatstock-print-quote-adapter-390x844.png
+```
+
+P0.65 closes the acceptance loop for the mobile Final Launch readiness path.
+The new `mobile_final_launch_readiness_acceptance` gate is now part of quick
+and full final acceptance. It checks the real
+`GET /v1/final-demo-launch?mode=local` endpoint, invalid-mode rejection, Swift
+model/API/root-view/device-preflight/contract-test wiring, and safety flags for
+read-only no-secret no-live-call launch reports.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_mobile_final_launch_readiness_acceptance.py \
+  tests/test_final_acceptance.py -q
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --repo-root ../..
+```
+
+On this machine the quick final acceptance should now report `11 passed, 2
+blocked, 0 failed`. The remaining blocked checks are local device/Xcode gates:
+`mobile_deploy_preflight` and `mobile_xcode_build`.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.65-mobile-final-launch-readiness-acceptance.html
+docs/superpowers/verification/assets/p0.65-mobile-final-launch-readiness-acceptance-390x844.png
 ```

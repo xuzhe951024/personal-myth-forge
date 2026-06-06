@@ -30,6 +30,10 @@ from myth_forge_api.local_asset_handoff_acceptance import (
     LocalAssetHandoffAcceptanceResult,
     run_local_asset_handoff_acceptance,
 )
+from myth_forge_api.mobile_final_launch_readiness_acceptance import (
+    MobileFinalLaunchReadinessAcceptanceResult,
+    run_mobile_final_launch_readiness_acceptance,
+)
 from myth_forge_api.npc_agent_provider_acceptance import (
     NPCAgentProviderAcceptanceResult,
     run_npc_agent_provider_acceptance,
@@ -95,6 +99,10 @@ IOSBackendHandoffAcceptanceRunner = Callable[
 ResourceTemplateAcceptanceRunner = Callable[
     [],
     ResourceTemplateAcceptanceResult | InlineCheckResult,
+]
+MobileFinalLaunchReadinessAcceptanceRunner = Callable[
+    [],
+    MobileFinalLaunchReadinessAcceptanceResult | InlineCheckResult,
 ]
 LocalAssetHandoffAcceptanceRunner = Callable[
     [],
@@ -187,6 +195,9 @@ def run_final_acceptance(
     ios_showcase_acceptance_runner: IOSShowcaseAcceptanceRunner | None = None,
     ios_backend_handoff_acceptance_runner: IOSBackendHandoffAcceptanceRunner | None = None,
     resource_template_acceptance_runner: ResourceTemplateAcceptanceRunner | None = None,
+    mobile_final_launch_readiness_acceptance_runner: (
+        MobileFinalLaunchReadinessAcceptanceRunner | None
+    ) = None,
     local_asset_handoff_acceptance_runner: LocalAssetHandoffAcceptanceRunner | None = None,
     npc_agent_provider_acceptance_runner: NPCAgentProviderAcceptanceRunner | None = None,
     capture_scene_handoff_acceptance_runner: CaptureSceneHandoffAcceptanceRunner | None = None,
@@ -218,6 +229,14 @@ def run_final_acceptance(
     selected_resource_template_acceptance_runner = (
         resource_template_acceptance_runner
         or (lambda: run_resource_template_acceptance(repo_root=selected_repo_root))
+    )
+    selected_mobile_final_launch_readiness_acceptance_runner = (
+        mobile_final_launch_readiness_acceptance_runner
+        or (
+            lambda: run_mobile_final_launch_readiness_acceptance(
+                repo_root=selected_repo_root
+            )
+        )
     )
     selected_local_asset_handoff_acceptance_runner = (
         local_asset_handoff_acceptance_runner
@@ -303,6 +322,14 @@ def run_final_acceptance(
     )
     checks.append(
         _run_inline_check(
+            check_id="mobile_final_launch_readiness_acceptance",
+            label="Mobile final launch readiness acceptance",
+            runner=selected_mobile_final_launch_readiness_acceptance_runner,
+            require_real_core=False,
+        )
+    )
+    checks.append(
+        _run_inline_check(
             check_id="local_asset_handoff_acceptance",
             label="Local generated asset handoff acceptance",
             runner=selected_local_asset_handoff_acceptance_runner,
@@ -373,6 +400,7 @@ def _run_inline_check(
         | IOSShowcaseAcceptanceResult
         | IOSBackendHandoffAcceptanceResult
         | ResourceTemplateAcceptanceResult
+        | MobileFinalLaunchReadinessAcceptanceResult
         | LocalAssetHandoffAcceptanceResult
         | NPCAgentProviderAcceptanceResult
         | CaptureSceneHandoffAcceptanceResult

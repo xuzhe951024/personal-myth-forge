@@ -80,6 +80,7 @@ Bridge deliverable:
 - P0.62 Treatstock print quote adapter plus downloadable local 3MF print candidate handoff
 - P0.63 final demo launch profile that consolidates local/configured resource handoff, provider readiness, final acceptance, iOS preflight, and Xcode build gate commands
 - P0.64 backend `/v1/final-demo-launch` plus iOS device preflight integration for mobile-visible launch readiness
+- P0.65 final acceptance gate for the mobile Final Launch readiness endpoint and iOS source handoff
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
