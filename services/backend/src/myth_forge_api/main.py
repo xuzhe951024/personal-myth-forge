@@ -27,6 +27,7 @@ from myth_forge_api.providers.capture_store import CaptureStore, CaptureStoreErr
 from myth_forge_api.providers.factory import (
     build_capture_store,
     build_npc_director,
+    build_npc_tick_runtime,
     build_three_d_provider,
 )
 from myth_forge_api.providers.image_preparation import (
@@ -34,7 +35,6 @@ from myth_forge_api.providers.image_preparation import (
     prepare_provider_source_image,
 )
 from myth_forge_api.providers.npc import OpenAINPCProviderError
-from myth_forge_api.providers.npc_ticks import LocalNPCTickRuntime
 from myth_forge_api.providers.readiness import build_provider_readiness
 from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDSourceAsset, ThreeDSourceImage
 
@@ -144,7 +144,9 @@ def create_myth_session(request: MythSessionRequest) -> MythSession:
 @app.post("/v1/npc-ticks", response_model=NPCAgentTick)
 def create_npc_tick(request: NPCAgentTickRequest) -> NPCAgentTick:
     try:
-        return LocalNPCTickRuntime().generate_tick(request)
+        return build_npc_tick_runtime().generate_tick(request)
+    except OpenAINPCProviderError as exc:
+        raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=_safe_provider_error(exc)) from exc
 

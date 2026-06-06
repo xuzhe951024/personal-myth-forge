@@ -3,6 +3,11 @@ from __future__ import annotations
 from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.providers.capture_store import CaptureStore, LocalCaptureStore
 from myth_forge_api.providers.npc import LocalNPCDirector, NPCDirector, OpenAINPCDirector
+from myth_forge_api.providers.npc_ticks import (
+    LocalNPCTickRuntime,
+    NPCTickRuntime,
+    OpenAINPCTickRuntime,
+)
 from myth_forge_api.providers.three_d import LocalThreeDProvider, MeshyThreeDProvider, ThreeDProvider
 
 
@@ -21,6 +26,15 @@ def build_npc_director(settings: Settings | None = None) -> NPCDirector:
         return LocalNPCDirector()
     if selected_settings.npc_provider == "openai":
         return OpenAINPCDirector.from_settings(selected_settings)
+    raise ValueError(f"Unsupported NPC_PROVIDER: {selected_settings.npc_provider}")
+
+
+def build_npc_tick_runtime(settings: Settings | None = None) -> NPCTickRuntime:
+    selected_settings = settings or load_settings()
+    if selected_settings.npc_provider == "local":
+        return LocalNPCTickRuntime()
+    if selected_settings.npc_provider == "openai":
+        return OpenAINPCTickRuntime.from_settings(selected_settings)
     raise ValueError(f"Unsupported NPC_PROVIDER: {selected_settings.npc_provider}")
 
 

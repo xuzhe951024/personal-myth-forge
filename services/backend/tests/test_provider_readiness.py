@@ -59,6 +59,7 @@ def test_provider_readiness_reports_missing_openai_key() -> None:
     assert npc.is_demo_ready is False
     assert npc.is_real_provider_ready is False
     assert npc.missing_env == ["OPENAI_API_KEY"]
+    assert "structured_agent_ticks" in npc.capabilities
 
 
 def test_provider_readiness_marks_openai_ready_without_leaking_key() -> None:
@@ -73,4 +74,6 @@ def test_provider_readiness_marks_openai_ready_without_leaking_key() -> None:
     assert npc.is_demo_ready is True
     assert npc.is_real_provider_ready is True
     assert npc.missing_env == []
+    assert "structured_agent_ticks" in npc.capabilities
+    assert "tick" in " ".join(npc.notes).lower()
     assert "sk-openai-secret" not in serialized

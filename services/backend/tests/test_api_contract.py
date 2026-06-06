@@ -1,9 +1,10 @@
 from fastapi.testclient import TestClient
 
 from myth_forge_api.config import Settings
-from myth_forge_api.domain.models import GeneratedAsset
+from myth_forge_api.domain.models import GeneratedAsset, NPCAgentTick
+from myth_forge_api.domain.pipeline import create_demo_myth_session
 from myth_forge_api.main import app
-from myth_forge_api.providers.npc import OpenAINPCConfigurationError
+from myth_forge_api.providers.npc import OpenAINPCConfigurationError, OpenAINPCProviderError
 from myth_forge_api.providers.three_d import ThreeDGenerationRequest
 
 
@@ -187,6 +188,51 @@ def test_create_npc_tick_endpoint_returns_safe_agent_tick() -> None:
     assert "Authorization" not in response.text
 
 
+class FakeTickRuntime:
+    def generate_tick(self, request):
+        return NPCAgentTick(
+            session_id=request.session.session_id,
+            tick_index=request.tick_index,
+            agent_runtime="fake_tick_runtime",
+            npc_agent_traces=request.session.npc_agent_traces,
+            npc_reactions=request.session.npc_reactions,
+            world_resolution=request.session.world_resolution,
+        )
+
+
+def test_create_npc_tick_endpoint_routes_through_provider_factory(monkeypatch) -> None:
+    monkeypatch.setattr("myth_forge_api.main.build_npc_tick_runtime", lambda: FakeTickRuntime())
+    session = _sample_myth_session()
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/npc-ticks",
+        json={"session": session, "tick_index": 3, "recent_events": []},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["agent_runtime"] == "fake_tick_runtime"
+
+
+def test_create_npc_tick_endpoint_sanitizes_openai_errors(monkeypatch) -> None:
+    class RaisingTickRuntime:
+        def generate_tick(self, request):
+            raise OpenAINPCProviderError("failed Authorization=Bearer test-secret raw=private")
+
+    monkeypatch.setattr("myth_forge_api.main.build_npc_tick_runtime", lambda: RaisingTickRuntime())
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/npc-ticks",
+        json={"session": _sample_myth_session(), "tick_index": 1, "recent_events": []},
+    )
+
+    assert response.status_code == 502
+    assert "test-secret" not in response.text
+    assert "raw=private" not in response.text
+    assert "[redacted]" in response.text
+
+
 def test_demo_route_includes_world_resolution_mount_points() -> None:
     client = TestClient(app)
 
@@ -233,3 +279,18 @@ def test_provider_readiness_endpoint_returns_safe_status(monkeypatch) -> None:
     assert "MESHY_API_KEY" not in response.text
     assert "sk-meshy-secret" not in response.text
     assert "OPENAI_API_KEY" in response.text
+
+
+def _sample_myth_session() -> dict:
+    session = create_demo_myth_session(
+        object_observation={
+            "label": "tiny bell",
+            "materials": ["metal"],
+            "source": "manual_upload",
+        },
+        context_capsule={
+            "current_theme": "calling attention",
+            "desired_tone": "solemn and bright",
+        },
+    )
+    return session.model_dump(mode="json")

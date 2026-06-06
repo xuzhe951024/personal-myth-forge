@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from myth_forge_api.domain.arbitration import LocalWorldArbitrator
@@ -9,7 +10,12 @@ from myth_forge_api.domain.models import (
 )
 from myth_forge_api.domain.pipeline import create_demo_myth_session
 from myth_forge_api.main import app
-from myth_forge_api.providers.npc_ticks import LocalNPCTickRuntime
+from myth_forge_api.providers.npc import OpenAINPCConfigurationError, OpenAINPCProviderError
+from myth_forge_api.providers.npc_ticks import (
+    LocalNPCTickRuntime,
+    OpenAINPCTickOutput,
+    OpenAINPCTickRuntime,
+)
 
 
 def test_local_npc_tick_runtime_generates_three_agent_actions() -> None:
@@ -78,6 +84,94 @@ def test_world_arbitrator_rejects_unsafe_tick_action() -> None:
     assert resolution.rejected_actions[0].reason == "blocked by safety and privacy rules"
 
 
+def test_openai_npc_tick_runtime_requires_api_key_before_network_call() -> None:
+    runtime = OpenAINPCTickRuntime(api_key="", model="gpt-4.1-mini")
+
+    with pytest.raises(OpenAINPCConfigurationError):
+        runtime.generate_tick(NPCAgentTickRequest(session=_session(), tick_index=1))
+
+
+def test_openai_npc_tick_runtime_parses_structured_response_without_raw_recent_events() -> None:
+    parsed = _openai_tick_payload()
+    client = FakeOpenAIClient(parsed)
+    runtime = OpenAINPCTickRuntime(api_key="test-key", model="gpt-4.1-mini", client=client)
+    request = NPCAgentTickRequest(
+        session=_session_with_data_uri_asset(),
+        tick_index=2,
+        recent_events=["raw=data:image/jpeg;base64,ZmFrZQ== Authorization=Bearer test-secret"],
+    )
+
+    tick = runtime.generate_tick(request)
+
+    assert tick.session_id == request.session.session_id
+    assert tick.tick_index == 2
+    assert tick.agent_runtime == "openai_tick_structured_runtime"
+    assert [reaction.npc_id for reaction in tick.npc_reactions] == ["mara", "ior", "senn"]
+    assert tick.world_resolution.accepted_actions
+    call = client.responses.calls[0]
+    prompt = call["input"][1]["content"]
+    assert call["model"] == "gpt-4.1-mini"
+    assert call["text_format"] is OpenAINPCTickOutput
+    assert "1 recent village event" in prompt
+    assert "data:image" not in prompt
+    assert "test-secret" not in prompt
+    assert "Authorization" not in prompt
+
+
+def test_openai_npc_tick_runtime_synthesizes_missing_traces() -> None:
+    runtime = OpenAINPCTickRuntime(
+        api_key="test-key",
+        model="gpt-4.1-mini",
+        client=FakeOpenAIClient({"reactions": _openai_tick_payload()["reactions"]}),
+    )
+
+    tick = runtime.generate_tick(NPCAgentTickRequest(session=_session(), tick_index=1))
+
+    assert [trace.npc_id for trace in tick.npc_agent_traces] == ["mara", "ior", "senn"]
+    assert tick.npc_agent_traces[0].confidence == 0.5
+
+
+def test_openai_npc_tick_runtime_replaces_trace_action_outside_reaction_plan() -> None:
+    parsed = _openai_tick_payload()
+    parsed["agent_traces"][0]["proposed_action"] = "order_print_without_approval"
+    runtime = OpenAINPCTickRuntime(
+        api_key="test-key",
+        model="gpt-4.1-mini",
+        client=FakeOpenAIClient(parsed),
+    )
+
+    tick = runtime.generate_tick(NPCAgentTickRequest(session=_session(), tick_index=1))
+
+    assert tick.npc_agent_traces[0].proposed_action == "invite_neighbors_to_witness"
+    assert tick.npc_agent_traces[0].rationale.startswith("Synthesized from")
+
+
+def test_openai_npc_tick_runtime_rejects_wrong_npc_ids() -> None:
+    runtime = OpenAINPCTickRuntime(
+        api_key="test-key",
+        model="gpt-4.1-mini",
+        client=FakeOpenAIClient({"reactions": []}),
+    )
+
+    with pytest.raises(OpenAINPCProviderError, match="mara, ior, senn"):
+        runtime.generate_tick(NPCAgentTickRequest(session=_session(), tick_index=1))
+
+
+def test_openai_npc_tick_runtime_wraps_provider_errors_without_secret() -> None:
+    runtime = OpenAINPCTickRuntime(
+        api_key="test-key",
+        model="gpt-4.1-mini",
+        client=RaisingOpenAIClient(),
+    )
+
+    with pytest.raises(OpenAINPCProviderError) as exc:
+        runtime.generate_tick(NPCAgentTickRequest(session=_session(), tick_index=1))
+
+    message = str(exc.value)
+    assert "test-secret" not in message
+    assert "raw=private" not in message
+
+
 def test_create_npc_tick_endpoint_returns_tick_contract() -> None:
     session = _session()
     client = TestClient(app)
@@ -137,3 +231,92 @@ def _tick_context():
     from myth_forge_api.domain.models import ContextCapsule
 
     return ContextCapsule(current_theme="tick test", desired_tone="watchful")
+
+
+class FakeParsedResponse:
+    def __init__(self, parsed) -> None:
+        self.output_parsed = parsed
+
+
+class FakeResponses:
+    def __init__(self, parsed) -> None:
+        self.parsed = parsed
+        self.calls = []
+
+    def parse(self, **kwargs):
+        self.calls.append(kwargs)
+        return FakeParsedResponse(self.parsed)
+
+
+class FakeOpenAIClient:
+    def __init__(self, parsed) -> None:
+        self.responses = FakeResponses(parsed)
+
+
+class RaisingResponses:
+    def parse(self, **kwargs):
+        raise RuntimeError("provider failed Authorization=Bearer test-secret raw=private")
+
+
+class RaisingOpenAIClient:
+    responses = RaisingResponses()
+
+
+def _openai_tick_payload():
+    return {
+        "reactions": [
+            {
+                "npc_id": "mara",
+                "name": "Mara",
+                "emotion": "awe",
+                "interpretation": "The village sees the key as a promise.",
+                "plan": ["invite_neighbors_to_witness"],
+                "world_change": "faith_in_player_increases",
+            },
+            {
+                "npc_id": "ior",
+                "name": "Ior",
+                "emotion": "suspicion",
+                "interpretation": "The key needs rules.",
+                "plan": ["guard_artifact"],
+                "world_change": "village_debate_starts",
+            },
+            {
+                "npc_id": "senn",
+                "name": "Senn",
+                "emotion": "curiosity",
+                "interpretation": "The key needs a public name.",
+                "plan": ["suggest_ritual_name"],
+                "world_change": "artifact_gets_a_local_name",
+            },
+        ],
+        "agent_traces": [
+            {
+                "npc_id": "mara",
+                "name": "Mara",
+                "belief": "The village sees the key as a promise.",
+                "intention": "turn awe into public witness",
+                "proposed_action": "invite_neighbors_to_witness",
+                "rationale": "Mara wants the reaction to stay communal.",
+                "confidence": 0.82,
+            },
+            {
+                "npc_id": "ior",
+                "name": "Ior",
+                "belief": "The key needs rules.",
+                "intention": "guard the artifact without ending debate",
+                "proposed_action": "guard_artifact",
+                "rationale": "Ior distrusts unreviewed gifts.",
+                "confidence": 0.71,
+            },
+            {
+                "npc_id": "senn",
+                "name": "Senn",
+                "belief": "The key needs a public name.",
+                "intention": "make the relic legible",
+                "proposed_action": "suggest_ritual_name",
+                "rationale": "Senn uses naming to make uncertainty safer.",
+                "confidence": 0.78,
+            },
+        ],
+    }
