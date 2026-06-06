@@ -76,6 +76,7 @@ Bridge deliverable:
 - P0.58 final acceptance source gate for the ARKit scan package bridge
 - P0.59 mobile-core capture generation readiness summary for guided scan, ARKit scan, and provider setup
 - P0.60 final acceptance source gate for mobile capture generation readiness
+- P0.61 final acceptance source/config gate for the OpenAI NPC Agent provider path
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

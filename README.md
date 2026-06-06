@@ -1663,3 +1663,38 @@ Static evidence lives at:
 docs/superpowers/verification/p0.60-capture-readiness-showcase-acceptance.html
 docs/superpowers/verification/assets/p0.60-capture-readiness-showcase-acceptance-390x844.png
 ```
+
+P0.61 adds a dedicated source/config final acceptance gate for the OpenAI AI
+Agent NPC provider path. The new `npc_agent_provider_acceptance` check proves
+that the backend has:
+
+- `OpenAINPCDirector` for the initial structured NPC reaction batch.
+- `OpenAINPCTickRuntime` for stateless structured NPC ticks.
+- `NPC_PROVIDER=openai` factory wiring for both paths.
+- readiness/resource handoff coverage for `OPENAI_API_KEY` and backend-only key
+  handling.
+- backend and mobile documentation that mobile clients receive generated NPC
+  state only, never provider keys.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_npc_agent_provider_acceptance.py tests/test_final_acceptance.py -q
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --repo-root ../.. \
+  --output /tmp/personal-myth-forge-final-acceptance-p0.61.json
+```
+
+This gate is intentionally source/config only. It does not call OpenAI, create
+keys, persist tick history, execute Unity movement, or change the local
+deterministic NPC fallback.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.61-npc-agent-provider-acceptance.html
+docs/superpowers/verification/assets/p0.61-npc-agent-provider-acceptance-390x844.png
+```
