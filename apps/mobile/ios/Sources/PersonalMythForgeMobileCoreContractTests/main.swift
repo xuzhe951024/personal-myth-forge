@@ -60,6 +60,7 @@ do {
     try testCaptureMediaSelectionBuildsARKitDraft()
     try testCaptureMediaSelectionSummarizesGuidedScan()
     try testCaptureMediaSelectionClearsWhenModeChanges()
+    try testCameraCaptureMediaBuilderBuildsReadySinglePhotoSelection()
     try testGuidedScanPhotoSetBuilderBuildsSortedImageDrafts()
     try testGuidedScanPhotoSetBuilderTruncatesToTwelveImages()
     try testGuidedScanPhotoSetBuilderRejectsTooFewImages()
@@ -1483,6 +1484,29 @@ private func testCaptureMediaSelectionClearsWhenModeChanges() throws {
     try expectEqual(changed.mode, .manualUpload)
     try expectEqual(changed.media.count, 0)
     try expectFalse(changed.isReadyForUpload)
+}
+
+private func testCameraCaptureMediaBuilderBuildsReadySinglePhotoSelection() throws {
+    let jpegData = Data([0xff, 0xd8, 0xff, 0xd9])
+
+    let selection = CameraCaptureMediaBuilder.singlePhotoSelection(jpegData: jpegData)
+    let payload = try selection.captureDraft(
+        label: "silver spoon",
+        materialsText: "metal",
+        visualNotes: "bright reflection",
+        source: "phone_camera"
+    ).validatedUploadPayload()
+
+    try expectEqual(selection.mode, .singlePhoto)
+    try expectTrue(selection.isReadyForUpload)
+    try expectEqual(selection.media.count, 1)
+    try expectEqual(selection.media[0].kind, .image)
+    try expectEqual(selection.media[0].contentType, "image/jpeg")
+    try expectEqual(selection.media[0].originalFilename, "camera-capture.jpg")
+    try expectEqual(payload.metadata.captureMode, "single_photo")
+    try expectEqual(payload.uploads[0].filename, "camera-capture.jpg")
+    try expectEqual(payload.uploads[0].contentType, "image/jpeg")
+    try expectEqual(payload.uploads[0].data, jpegData)
 }
 
 private func testGuidedScanPhotoSetBuilderBuildsSortedImageDrafts() throws {

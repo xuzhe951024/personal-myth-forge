@@ -39,6 +39,7 @@ do {
     let demoSnapshotStatusView = try readText(appRoot.appendingPathComponent("DemoSnapshotStatusView.swift"))
     let printQuoteReviewView = try readText(appRoot.appendingPathComponent("PrintQuoteReviewView.swift"))
     let finalShowcaseSummaryView = try readText(appRoot.appendingPathComponent("FinalShowcaseSummaryView.swift"))
+    let cameraCaptureView = try readText(appRoot.appendingPathComponent("CameraCaptureView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
     let mythSessionID = try readText(coreRoot.appendingPathComponent("MythSessionID.swift"))
     let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
@@ -159,6 +160,7 @@ do {
         "DemoSnapshotStatusView.swift",
         "PrintQuoteReviewView.swift",
         "FinalShowcaseSummaryView.swift",
+        "CameraCaptureView.swift",
     ] {
         try requireContains(project, file, "Xcode project file reference")
     }
@@ -204,6 +206,12 @@ do {
         "10A000000000000000000014 /* FinalShowcaseSummaryView.swift in Sources */,",
         "final showcase summary Xcode source membership"
     )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000015 /* CameraCaptureView.swift in Sources */,",
+        "camera capture Xcode source membership"
+    )
     for file in [
         "PMFJSON.swift",
         "PMFModels.swift",
@@ -230,6 +238,8 @@ do {
     try requireContains(captureFormView, "CaptureMode", "capture mode app shell source")
     try requireContains(captureFormView, "Scan readiness", "scan readiness app shell source")
     try requireContains(captureFormView, "chooseCapture", "capture button closure")
+    try requireContains(captureFormView, "let takePhoto: () -> Void", "camera action form input")
+    try requireContains(captureFormView, "Take Photo", "single photo camera action")
     try requireContains(captureFormView, "startGuidedScan", "guided scan button closure")
     try requireContains(captureFormView, "forgeMyth", "forge button closure")
     try requireContains(captureFormView, "PhotosPicker", "photo picker app shell source")
@@ -257,6 +267,13 @@ do {
     try requireNotContains(captureFormView, "Future Xcode target triggers", "forge button no-op comment")
     try requireNotContains(captureFormView, "captureActionTitle", "unused sample-era capture title")
     try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
+    try requireContains(forgeRootView, "isCameraCapturePresented", "camera sheet root state")
+    try requireContains(forgeRootView, "CameraCaptureView(", "camera sheet root wiring")
+    try requireContains(
+        forgeRootView,
+        "CameraCaptureMediaBuilder.singlePhotoSelection",
+        "camera media builder wiring"
+    )
     try requireContains(forgeRootView, "isGuidedScanPresented", "guided scan sheet state")
     try requireContains(forgeRootView, "providerReadiness", "provider readiness root state")
     try requireContains(forgeRootView, "latestNPCTick", "npc tick root state")
@@ -413,6 +430,9 @@ do {
         "Object Capture is only available on supported iOS devices.",
         "non-iOS guided scan fallback"
     )
+    try requireContains(cameraCaptureView, "UIImagePickerController", "UIKit camera picker source")
+    try requireContains(cameraCaptureView, "jpegData(compressionQuality:", "camera JPEG conversion source")
+    try requireContains(cameraCaptureView, "Camera unavailable", "camera unsupported fallback")
     try requireContains(
         providerReadinessView,
         "ProviderReadinessResponse",

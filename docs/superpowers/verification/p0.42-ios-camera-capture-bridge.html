@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.42 iOS Camera Capture Bridge</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202421;
+      --muted: #5f665f;
+      --line: #d5dbd2;
+      --paper: #f5f7f1;
+      --panel: #ffffff;
+      --green: #2f7049;
+      --blue: #2a7189;
+      --amber: #9a6228;
+      --plum: #63537c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #dfe5de;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 10px 14px 12px;
+      background: var(--paper);
+      border-right: 1px solid #c8cec6;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 840;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 840;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 7px;
+      font-size: 13px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .panel,
+    .field,
+    .button,
+    .summary {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .panel {
+      display: grid;
+      gap: 8px;
+      padding: 9px;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #e7ebe4;
+    }
+
+    .segment {
+      padding: 5px 2px;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1;
+      text-align: center;
+      font-weight: 760;
+    }
+
+    .segment.active {
+      background: #ffffff;
+      color: var(--green);
+      box-shadow: 0 1px 2px rgba(32, 36, 33, 0.12);
+    }
+
+    .field {
+      padding: 7px 8px;
+      font-size: 12px;
+      font-weight: 720;
+      color: var(--ink);
+    }
+
+    .field span {
+      color: var(--muted);
+      font-weight: 680;
+    }
+
+    .hint {
+      background: #eef2ee;
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .hint-title,
+    .summary-title {
+      font-size: 12px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .hint-detail,
+    .summary-detail,
+    .status {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .summary {
+      display: grid;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 8px 9px;
+      font-size: 11.5px;
+      line-height: 1;
+      font-weight: 820;
+    }
+
+    .primary {
+      border-color: #2f7049;
+      background: #2f7049;
+      color: #ffffff;
+    }
+
+    .secondary {
+      color: var(--blue);
+    }
+
+    .forge {
+      min-height: 38px;
+      background: var(--blue);
+      color: #ffffff;
+      border-color: var(--blue);
+      font-size: 12px;
+    }
+
+    .icon {
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .mini {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .mini b {
+      display: block;
+      font-size: 11px;
+      line-height: 1.15;
+      margin-bottom: 3px;
+    }
+
+    .mini span {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.18;
+      font-weight: 680;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Personal Myth Forge</h1>
+      <div class="tag">P0.42</div>
+    </header>
+
+    <section>
+      <h2>Final Showcase</h2>
+      <div class="grid">
+        <div class="mini">
+          <b>Capture</b>
+          <span>single photo ready from camera</span>
+        </div>
+        <div class="mini">
+          <b>Privacy</b>
+          <span>keys stay on backend</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Object Capture</h2>
+      <div class="panel">
+        <div class="segmented" aria-label="Capture mode">
+          <div class="segment active">Photo</div>
+          <div class="segment">Set</div>
+          <div class="segment">Scan</div>
+          <div class="segment">File</div>
+          <div class="segment">Mesh</div>
+        </div>
+
+        <div class="field">Object label <span>old brass key</span></div>
+        <div class="field">Materials <span>metal, brass</span></div>
+        <div class="field">Visual notes <span>worn teeth, warm reflections</span></div>
+
+        <div class="hint">
+          <div class="hint-title">Single photo</div>
+          <div class="hint-detail">Take or choose one image to become the object observation.</div>
+        </div>
+
+        <div class="summary">
+          <div>
+            <div class="summary-title">1 photo selected</div>
+            <div class="summary-detail">camera-capture.jpg</div>
+          </div>
+
+          <div class="actions">
+            <div class="button primary"><span class="icon">camera</span> Take Photo</div>
+            <div class="button secondary"><span class="icon">photo</span> Choose Photo</div>
+          </div>
+        </div>
+
+        <div class="field">Current theme <span>deadline pressure</span></div>
+        <div class="field">Desired tone <span>tender, strange</span></div>
+
+        <div class="button forge">Forge Myth</div>
+        <div class="status">Ready to upload through the existing capture-to-3D path.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Generated Loop</h2>
+      <div class="grid">
+        <div class="mini">
+          <b>3D Asset</b>
+          <span>provider route unchanged</span>
+        </div>
+        <div class="mini">
+          <b>NPC Agent</b>
+          <span>ticks remain backend-owned</span>
+        </div>
+        <div class="mini">
+          <b>Print Quote</b>
+          <span>review contract unchanged</span>
+        </div>
+        <div class="mini">
+          <b>Device Gate</b>
+          <span>iPhone validation still required</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

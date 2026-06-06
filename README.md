@@ -1120,3 +1120,29 @@ Static evidence lives at:
 docs/superpowers/verification/p0.41-final-showcase-summary.html
 docs/superpowers/verification/assets/p0.41-final-showcase-summary-390x844.png
 ```
+
+P0.42 adds a direct iOS `Take Photo` bridge for the single-photo capture mode.
+The SwiftUI app now presents `CameraCaptureView`, uses UIKit's camera picker
+behind iOS compile guards, converts a captured image to JPEG bytes, and feeds it
+through `CameraCaptureMediaBuilder.singlePhotoSelection(...)` into the same
+capture upload path used by PhotosPicker.
+
+Provider keys still stay backend-only, and camera bytes are not written into
+demo snapshots. This is source-level and static visual evidence only on this
+machine; final device acceptance still requires running the app on an iPhone
+with signing, a LAN-reachable backend URL, and camera permission.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.42-ios-camera-capture-bridge.html
+docs/superpowers/verification/assets/p0.42-ios-camera-capture-bridge-390x844.png
+```

@@ -1317,3 +1317,36 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.41-final-showcase-summary.html
 docs/superpowers/verification/assets/p0.41-final-showcase-summary-390x844.png
 ```
+
+## P0.42 iOS Camera Capture Bridge
+
+P0.42 adds a direct `Take Photo` action to single-photo mode in
+`CaptureFormView`. On iOS, `CameraCaptureView` wraps `UIImagePickerController`
+behind compile guards, converts the captured image into JPEG bytes, and passes
+those bytes through `CameraCaptureMediaBuilder.singlePhotoSelection(...)`.
+
+The resulting media selection uses the existing upload contract:
+
+- mode `single_photo`
+- filename `camera-capture.jpg`
+- content type `image/jpeg`
+- no provider keys or raw media in demo snapshots
+
+`Choose Photo` remains visible as a fallback for simulator/source-level demos.
+This iteration does not claim real iPhone camera validation; that remains part
+of final device acceptance after local signing and LAN backend configuration.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.42-ios-camera-capture-bridge.html
+docs/superpowers/verification/assets/p0.42-ios-camera-capture-bridge-390x844.png
+```
