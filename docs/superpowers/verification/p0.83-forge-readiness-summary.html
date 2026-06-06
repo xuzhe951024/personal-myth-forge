@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.83 Forge Readiness Summary</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #eef2f6;
+      color: #172026;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: flex-start;
+      background:
+        linear-gradient(180deg, #f7fafc 0%, #e7edf3 100%);
+    }
+
+    .phone {
+      width: 488px;
+      min-height: 844px;
+      padding: 18px 16px 24px;
+      background: #f9fbfc;
+      overflow: hidden;
+      transform: scale(0.8);
+      transform-origin: top left;
+    }
+
+    .status {
+      height: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #25313a;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .mode {
+      padding: 5px 8px;
+      border-radius: 8px;
+      border: 1px solid #c7d2dc;
+      background: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      color: #33424f;
+    }
+
+    .section-title {
+      margin: 15px 0 8px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 2px;
+      padding: 3px;
+      border-radius: 8px;
+      background: #dce4eb;
+      margin-bottom: 10px;
+    }
+
+    .segment {
+      min-height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #465766;
+    }
+
+    .segment.active {
+      background: #fff;
+      color: #172026;
+      box-shadow: 0 1px 3px rgba(16, 24, 40, 0.14);
+    }
+
+    .field {
+      height: 38px;
+      border: 1px solid #ccd7e1;
+      background: #fff;
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: #607180;
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .panel {
+      border-radius: 8px;
+      border: 1px solid #d6e0e8;
+      background: rgba(255, 255, 255, 0.84);
+      padding: 10px;
+      margin-bottom: 9px;
+    }
+
+    .panel.soft {
+      background: rgba(239, 245, 248, 0.88);
+    }
+
+    .row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .label {
+      margin: 0 0 3px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #1e2b34;
+    }
+
+    .caption {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #657584;
+    }
+
+    .pill {
+      flex: 0 0 auto;
+      border-radius: 7px;
+      padding: 4px 7px;
+      background: #e8f7ec;
+      color: #16733b;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .route {
+      margin-top: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      color: #607180;
+      text-align: right;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .button {
+      border-radius: 8px;
+      min-height: 34px;
+      padding: 8px 10px;
+      border: 1px solid #b8c8d5;
+      background: #fff;
+      color: #23313a;
+      font-size: 12px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .button.primary {
+      border-color: #1d6f4a;
+      background: #1e7b53;
+      color: #fff;
+    }
+
+    .approve {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #273740;
+      font-weight: 700;
+    }
+
+    .toggle {
+      width: 42px;
+      height: 24px;
+      border-radius: 999px;
+      background: #1e7b53;
+      position: relative;
+    }
+
+    .toggle::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+    }
+
+    .checklist {
+      display: grid;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .checklist div {
+      font-size: 10.5px;
+      line-height: 1.32;
+      color: #5c6c79;
+    }
+
+    .forge-button {
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      background: #1e7b53;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 850;
+      margin-top: 2px;
+    }
+
+    .footer {
+      margin-top: 7px;
+      font-size: 11px;
+      color: #72818d;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="P0.83 iPhone Forge Readiness Summary">
+    <div class="status">
+      <span>9:41</span>
+      <span>5G 100%</span>
+    </div>
+
+    <div class="header">
+      <h1>Personal Myth Forge</h1>
+      <div class="mode">LOCAL</div>
+    </div>
+
+    <div class="section-title">Object Capture</div>
+    <div class="segmented">
+      <div class="segment">Photo</div>
+      <div class="segment">Set</div>
+      <div class="segment active">Scan</div>
+      <div class="segment">File</div>
+      <div class="segment">Mesh</div>
+    </div>
+    <div class="field">Found brass compass</div>
+    <div class="field">Brass, glass, worn leather</div>
+    <div class="field">Weathered, pocket-sized, family object</div>
+
+    <section class="panel soft">
+      <p class="label">Guided scan</p>
+      <p class="caption">Object Capture guided photos become one object observation.</p>
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <div>
+          <p class="label">12 guided photos ready</p>
+          <p class="caption">Four provider source images will be sent for multi-image 3D generation.</p>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="button primary">Start Guided Scan</div>
+        <div class="button">Choose Photos</div>
+      </div>
+    </section>
+
+    <section class="panel soft">
+      <div class="row">
+        <p class="label">Multi-image 3D route</p>
+        <div class="route">multi_image</div>
+      </div>
+      <p class="caption">Capture is ready for Meshy multi-image routing or the local deterministic demo path.</p>
+    </section>
+
+    <div class="section-title">Context Capsule</div>
+    <div class="field">Current theme: grief turning into navigation</div>
+    <div class="field">Desired tone: solemn but playable</div>
+
+    <section class="panel">
+      <p class="label">Context Capsule Review</p>
+      <p class="caption">Approved summary only. No raw email, chat, calendar, or document body is exposed.</p>
+      <div class="approve">
+        <div class="toggle" aria-hidden="true"></div>
+        <span>Approve Capsule</span>
+      </div>
+    </section>
+
+    <section class="panel soft">
+      <div class="row">
+        <div>
+          <p class="label">Forge Readiness</p>
+          <p class="caption">Capture, context, 3D generation, and NPC Agent routing are ready.</p>
+        </div>
+        <div>
+          <div class="pill">READY</div>
+          <div class="route">local_demo</div>
+        </div>
+      </div>
+      <div class="checklist">
+        <div>Capture: 12 guided photos ready</div>
+        <div>Context: Approved capsule ready</div>
+        <div>3D Provider: Meshy route, local demo fallback</div>
+        <div>NPC Agent: OpenAI-ready runtime, local fallback</div>
+        <div>Provider keys stay backend-only. Raw capture media and private source text are not shown in Forge readiness.</div>
+      </div>
+    </section>
+
+    <button class="forge-button">Forge Myth</button>
+    <div class="footer">Ready to upload</div>
+  </main>
+</body>
+</html>
