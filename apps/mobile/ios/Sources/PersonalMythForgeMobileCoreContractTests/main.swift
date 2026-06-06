@@ -137,6 +137,11 @@ do {
     try await testArtifactAssetPreparerRejectsInvalidRemoteURI()
     try await testArtifactAssetPreparerSkipsDownloadWhenFormatMissing()
     try await testArtifactAssetPreparerTreatsCancellationAsCancelled()
+    try testArtifactHandoffActionsWaitForSession()
+    try testArtifactHandoffActionsOpenAndShareSceneAsset()
+    try testArtifactHandoffActionsShareCachedGLBNeedsConversion()
+    try testArtifactHandoffActionsOfferRetryAfterDownloadFailure()
+    try testArtifactHandoffActionsRedactUnsafeDetails()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
     try await testForgeFlowServiceUploadsCaptureThenCreatesSession()
     try await testForgeFlowServiceStopsBeforeSessionWhenUploadFails()
@@ -3040,6 +3045,115 @@ private func testArtifactAssetPreparerTreatsCancellationAsCancelled() async thro
     try expectEqual(await cache.storedFilenames(), [])
 }
 
+private func testArtifactHandoffActionsWaitForSession() throws {
+    let summary = ArtifactHandoffActionBuilder.build(session: nil, preparedAsset: nil)
+
+    try expectEqual(summary.title, "Forge an artifact first")
+    try expectEqual(summary.canOpenScene, false)
+    try expectEqual(summary.canShareCachedAsset, false)
+    try expectEqual(summary.actions.count, 1)
+    try expectEqual(summary.actions[0].kind, .waiting)
+    try expectEqual(summary.actions[0].status, .waiting)
+    try expectEqual(summary.actions[0].isEnabled, false)
+}
+
+private func testArtifactHandoffActionsOpenAndShareSceneAsset() throws {
+    let asset = generatedAsset(format: "usdz", uri: "https://cdn.example.com/relic.usdz")
+    let summary = ArtifactHandoffActionBuilder.build(
+        session: mythSession(asset: asset),
+        preparedAsset: preparedArtifactAsset(
+            asset: asset,
+            status: .cachedSceneReady,
+            cachedURL: URL(fileURLWithPath: "/tmp/pmf-assets/myth_test-meshy.usdz"),
+            sceneURL: URL(fileURLWithPath: "/tmp/pmf-assets/myth_test-meshy.usdz"),
+            statusTitle: "Cached SceneKit asset ready",
+            statusDetail: "The generated asset has been downloaded into the app cache."
+        )
+    )
+
+    try expectEqual(summary.title, "SceneKit handoff ready")
+    try expectEqual(summary.canOpenScene, true)
+    try expectEqual(summary.canShareCachedAsset, true)
+    try expectEqual(summary.actions.map(\.kind), [.openScene, .shareCachedAsset])
+    try expectEqual(summary.actions[0].isPrimary, true)
+    try expectEqual(summary.actions[0].isEnabled, true)
+    try expectEqual(summary.actions[1].title, "Share Cached Asset")
+    try expectContains(summary.actions[1].detail, "myth_test-meshy.usdz")
+    try expectNotContains(summary.actions.map(\.detail).joined(separator: " "), "/tmp/")
+}
+
+private func testArtifactHandoffActionsShareCachedGLBNeedsConversion() throws {
+    let asset = generatedAsset(format: "glb", uri: "https://cdn.example.com/relic.glb")
+    let summary = ArtifactHandoffActionBuilder.build(
+        session: mythSession(asset: asset),
+        preparedAsset: preparedArtifactAsset(
+            asset: asset,
+            status: .cachedRequiresConversion,
+            cachedURL: URL(fileURLWithPath: "/tmp/pmf-assets/myth_test-meshy.glb"),
+            sceneURL: nil,
+            statusTitle: "Cached asset needs conversion",
+            statusDetail: "The generated GLB asset is cached locally."
+        )
+    )
+
+    try expectEqual(summary.title, "Conversion required")
+    try expectEqual(summary.canOpenScene, false)
+    try expectEqual(summary.canShareCachedAsset, true)
+    try expectEqual(summary.actions.map(\.kind), [.convertRequired, .shareCachedAsset])
+    try expectEqual(summary.actions[0].status, .attention)
+    try expectEqual(summary.actions[0].isEnabled, false)
+    try expectContains(summary.actions[0].detail, "GLB/GLTF")
+    try expectEqual(summary.actions[1].isEnabled, true)
+}
+
+private func testArtifactHandoffActionsOfferRetryAfterDownloadFailure() throws {
+    let asset = generatedAsset(format: "usdz", uri: "https://cdn.example.com/relic.usdz")
+    let summary = ArtifactHandoffActionBuilder.build(
+        session: mythSession(asset: asset),
+        preparedAsset: preparedArtifactAsset(
+            asset: asset,
+            status: .downloadFailed,
+            cachedURL: nil,
+            sceneURL: nil,
+            statusTitle: "Generated asset download failed",
+            statusDetail: "The app could not cache the generated asset."
+        )
+    )
+
+    try expectEqual(summary.title, "Asset download failed")
+    try expectEqual(summary.canOpenScene, false)
+    try expectEqual(summary.canShareCachedAsset, false)
+    try expectEqual(summary.actions.count, 1)
+    try expectEqual(summary.actions[0].kind, .retryDownload)
+    try expectEqual(summary.actions[0].title, "Retry Download")
+    try expectEqual(summary.actions[0].isPrimary, true)
+    try expectEqual(summary.actions[0].isEnabled, true)
+}
+
+private func testArtifactHandoffActionsRedactUnsafeDetails() throws {
+    let asset = generatedAsset(format: "usdz", uri: "https://checkout.example.com/sk-test/relic.usdz")
+    let summary = ArtifactHandoffActionBuilder.build(
+        session: mythSession(asset: asset),
+        preparedAsset: PreparedArtifactAsset(
+            preview: ArtifactPreviewState(asset: asset, title: "Bearer sk-test /Users/zhexu"),
+            sourceURI: "Bearer sk-test /Users/zhexu checkout_url",
+            cachedURL: URL(fileURLWithPath: "/Users/zhexu/pmf-assets/sk-test.usdz"),
+            sceneURL: URL(fileURLWithPath: "/Users/zhexu/pmf-assets/sk-test.usdz"),
+            status: .cachedSceneReady,
+            statusTitle: "Cached SceneKit asset ready sk-test",
+            statusDetail: "Authorization Bearer sk-test checkout_url /Users/zhexu"
+        )
+    )
+    let text = ([summary.title, summary.detail] + summary.actions.flatMap { [$0.title, $0.detail] })
+        .joined(separator: " ")
+
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "Authorization")
+    try expectNotContains(text, "checkout_url")
+}
+
 private func sampleCaptureDraft() -> CaptureDraft {
     CaptureDraft(
         label: "old brass key",
@@ -3306,6 +3420,25 @@ private func generatedAsset(
         prompt: "a brass key relic",
         moderationStatus: "approved",
         variants: variants
+    )
+}
+
+private func preparedArtifactAsset(
+    asset: GeneratedAsset,
+    status: PreparedArtifactAssetStatus,
+    cachedURL: URL?,
+    sceneURL: URL?,
+    statusTitle: String,
+    statusDetail: String
+) -> PreparedArtifactAsset {
+    PreparedArtifactAsset(
+        preview: ArtifactPreviewState(asset: asset, title: "The Key That Remembered"),
+        sourceURI: asset.uri,
+        cachedURL: cachedURL,
+        sceneURL: sceneURL,
+        status: status,
+        statusTitle: statusTitle,
+        statusDetail: statusDetail
     )
 }
 

@@ -2037,3 +2037,30 @@ Static evidence lives at:
 docs/superpowers/verification/p0.73-mobile-context-capsule-review.html
 docs/superpowers/verification/assets/p0.73-mobile-context-capsule-review-390x844.png
 ```
+
+P0.74 adds mobile `Artifact Handoff` actions beneath the 3D preview. The iPhone
+app now turns prepared generated-asset state into explicit rows for SceneKit
+preview readiness, cached asset sharing, GLB/GLTF conversion requirements, and
+download retry.
+
+The action builder is pure Swift mobile core code, so it can be contract-tested
+without a simulator or live Meshy call. Display strings redact provider secrets,
+checkout fields, and full local paths; share uses the cached app-sandbox URL
+only when the existing asset preparer has produced one.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py -q
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.74-mobile-artifact-actions.html
+docs/superpowers/verification/assets/p0.74-mobile-artifact-actions-390x844.png
+```

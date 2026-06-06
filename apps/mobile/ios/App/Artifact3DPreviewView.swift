@@ -42,6 +42,10 @@ struct Artifact3DPreviewView: View {
             if let session {
                 let preview = preparedAsset?.preview ?? ArtifactPreviewState(session: session)
                 let ritualScene = NPCRitualSceneBuilder.build(session: session, latestTick: latestTick)
+                let handoffSummary = ArtifactHandoffActionBuilder.build(
+                    session: session,
+                    preparedAsset: preparedAsset
+                )
 
                 SceneView(scene: Self.previewScene(for: preparedAsset, fallback: preview, ritualScene: ritualScene),
                     options: [.allowsCameraControl, .autoenablesDefaultLighting]
@@ -61,11 +65,16 @@ struct Artifact3DPreviewView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
-                Text(preparedAsset?.cachedURL?.absoluteString ?? preview.uri)
+                Text(Self.assetReferenceText(preparedAsset: preparedAsset, fallback: preview))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .textSelection(.enabled)
+                ArtifactHandoffActionsView(
+                    summary: handoffSummary,
+                    cachedURL: preparedAsset?.cachedURL,
+                    retry: retryAssetPreparation
+                )
             } else {
                 SceneView(scene: Self.placeholderScene(),
                     options: [.autoenablesDefaultLighting]
@@ -102,6 +111,15 @@ struct Artifact3DPreviewView: View {
                 return
             }
             preparedAsset = asset
+        }
+    }
+
+    private func retryAssetPreparation() {
+        guard let session else {
+            return
+        }
+        Task {
+            await prepareAsset(for: session)
         }
     }
 
@@ -200,6 +218,20 @@ struct Artifact3DPreviewView: View {
             "\(actor.name) \(actor.stance.rawValue)"
         }
         return status.isEmpty ? "waiting" : status.joined(separator: " | ")
+    }
+
+    private static func assetReferenceText(
+        preparedAsset: PreparedArtifactAsset?,
+        fallback preview: ArtifactPreviewState
+    ) -> String {
+        if let cachedURL = preparedAsset?.cachedURL {
+            let filename = cachedURL.lastPathComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+            return filename.isEmpty ? "Cached generated asset" : "Cached: \(filename)"
+        }
+        if preview.uri.lowercased().hasPrefix("file://") {
+            return "Local generated asset"
+        }
+        return preview.uri
     }
 }
 
