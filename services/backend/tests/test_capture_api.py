@@ -1,6 +1,9 @@
 import json
+from io import BytesIO
 
 from fastapi.testclient import TestClient
+from PIL import Image
+from pillow_heif import register_heif_opener
 
 from myth_forge_api.domain.models import GeneratedAsset
 from myth_forge_api.main import app
@@ -456,8 +459,8 @@ def test_create_myth_session_from_guided_scan_capture_passes_heic_images_to_3d_p
         "/v1/object-captures",
         data={"metadata_json": _guided_scan_metadata_json()},
         files=[
-            ("files", ("fox-front.heic", b"front-heic", "image/heic")),
-            ("files", ("fox-side.heif", b"side-heif", "image/heif")),
+            ("files", ("fox-front.heic", _tiny_heif_bytes(), "image/heic")),
+            ("files", ("fox-side.heif", _tiny_heif_bytes(), "image/heif")),
         ],
     )
 
@@ -484,15 +487,53 @@ def test_create_myth_session_from_guided_scan_capture_passes_heic_images_to_3d_p
         f"local-capture://{created['capture_id']}/media_1.heif",
     ]
     assert [image.content_type for image in generation_request.source_images] == [
-        "image/heic",
-        "image/heif",
+        "image/jpeg",
+        "image/jpeg",
     ]
     assert all(
-        image.data_uri.startswith(f"data:{image.content_type};base64,")
+        image.data_uri.startswith("data:image/jpeg;base64,")
         for image in generation_request.source_images
     )
     assert "front-heic" not in response.text
     assert "side-heif" not in response.text
+
+
+def test_create_myth_session_from_capture_redacts_image_preparation_error(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    store = LocalCaptureStore(root_dir=tmp_path)
+    monkeypatch.setattr("myth_forge_api.main.build_capture_store", lambda: store)
+    client = TestClient(app)
+
+    created_response = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _guided_scan_metadata_json()},
+        files=[
+            ("files", ("fox-front.heic", b"front-heic", "image/heic")),
+            ("files", ("fox-side.heif", b"side-heif", "image/heif")),
+        ],
+    )
+
+    assert created_response.status_code == 200
+    created = created_response.json()
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": created["capture_id"],
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "Could not prepare image/heic capture media for 3D generation." in detail
+    assert "front-heic" not in response.text
+    assert "side-heif" not in response.text
+    assert str(tmp_path) not in response.text
 
 
 def test_create_myth_session_from_capture_redacts_provider_error_media_details(
@@ -558,6 +599,14 @@ def test_create_myth_session_from_capture_preserves_capture_store_error_status(
     assert response.status_code == 404
     assert "fake-jpeg" not in response.text
     assert str(tmp_path) not in response.text
+
+
+def _tiny_heif_bytes() -> bytes:
+    register_heif_opener(thumbnails=False)
+    image = Image.new("RGB", (2, 2), color=(180, 80, 40))
+    buffer = BytesIO()
+    image.save(buffer, format="HEIF", quality=80)
+    return buffer.getvalue()
 
 
 def test_create_myth_session_from_capture_returns_404_for_missing_capture(

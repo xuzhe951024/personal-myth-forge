@@ -27,6 +27,10 @@ from myth_forge_api.providers.factory import (
     build_npc_director,
     build_three_d_provider,
 )
+from myth_forge_api.providers.image_preparation import (
+    ImagePreparationError,
+    prepare_provider_source_image,
+)
 from myth_forge_api.providers.npc import OpenAINPCProviderError
 from myth_forge_api.providers.readiness import build_provider_readiness
 from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDSourceAsset, ThreeDSourceImage
@@ -115,6 +119,8 @@ def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> 
         )
     except CaptureStoreError as exc:
         raise HTTPException(status_code=exc.status_code, detail=_safe_provider_error(exc)) from exc
+    except ImagePreparationError as exc:
+        raise HTTPException(status_code=422, detail=_safe_provider_error(exc)) from exc
     except (MeshyProviderError, OpenAINPCProviderError, ValueError) as exc:
         raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
 
@@ -144,11 +150,12 @@ def _capture_generation_sources(
             and item.content_type in THREE_D_SOURCE_IMAGE_CONTENT_TYPES
         ):
             payload = capture_store.read_media(capture.capture_id, item.media_id)
+            prepared = prepare_provider_source_image(payload.content_type, payload.data)
             source_images.append(
                 ThreeDSourceImage(
                     uri=payload.uri,
-                    content_type=payload.content_type,
-                    data_uri=_media_data_uri(payload.content_type, payload.data),
+                    content_type=prepared.content_type,
+                    data_uri=_media_data_uri(prepared.content_type, prepared.data),
                 )
             )
         elif item.role == "scan_asset":
