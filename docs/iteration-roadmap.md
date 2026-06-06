@@ -58,6 +58,7 @@ Bridge deliverable:
 - P0.40 consolidated final resource handoff bundle for provider keys and iOS deploy values
 - P0.41 mobile final showcase summary for capture, 3D, NPC, print, and resource readiness
 - P0.42 iOS camera capture bridge for single-photo object input
+- P0.43 quick final acceptance iOS showcase source gate
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

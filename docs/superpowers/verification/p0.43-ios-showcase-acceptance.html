@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.43 iOS Showcase Acceptance</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202421;
+      --muted: #5f665f;
+      --line: #d5dbd2;
+      --paper: #f5f7f1;
+      --panel: #ffffff;
+      --green: #2f7049;
+      --blue: #2a7189;
+      --amber: #9a6228;
+      --plum: #63537c;
+      --red: #963d38;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #dfe5de;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 10px 14px 12px;
+      background: var(--paper);
+      border-right: 1px solid #c8cec6;
+    }
+
+    header,
+    .topline,
+    .check {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    header {
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 840;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 840;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 7px;
+      font-size: 13px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .panel,
+    .check,
+    .feature {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .panel {
+      display: grid;
+      gap: 8px;
+      padding: 9px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .metric {
+      background: #eef2ee;
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .metric b {
+      display: block;
+      font-size: 17px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .metric span,
+    .subtitle,
+    .detail {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .check {
+      min-height: 35px;
+      padding: 8px;
+      font-size: 11px;
+      line-height: 1.1;
+      font-weight: 820;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 3px 7px;
+      color: #ffffff;
+      font-size: 9px;
+      line-height: 1;
+      font-weight: 860;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .pass {
+      background: var(--green);
+    }
+
+    .blocked {
+      background: var(--amber);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .feature {
+      min-height: 45px;
+      padding: 7px;
+    }
+
+    .feature b {
+      display: block;
+      font-size: 10px;
+      line-height: 1.12;
+      margin-bottom: 3px;
+    }
+
+    .feature span {
+      color: var(--muted);
+      font-size: 8.5px;
+      line-height: 1.15;
+      font-weight: 700;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 9.5px;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Final Acceptance</h1>
+      <div class="tag">P0.43</div>
+    </header>
+
+    <section>
+      <div class="topline">
+        <h2>Quick Profile</h2>
+        <span class="subtitle">source-only iOS gate added</span>
+      </div>
+      <div class="panel">
+        <div class="summary">
+          <div class="metric"><b>5</b><span>passed</span></div>
+          <div class="metric"><b>2</b><span>blocked</span></div>
+          <div class="metric"><b>0</b><span>failed</span></div>
+        </div>
+        <div class="check">provider_handoff <span class="pill pass">pass</span></div>
+        <div class="check">demo_acceptance <span class="pill pass">pass</span></div>
+        <div class="check">capture_3d_acceptance <span class="pill pass">pass</span></div>
+        <div class="check">print_quote_acceptance <span class="pill pass">pass</span></div>
+        <div class="check">ios_showcase_acceptance <span class="pill pass">pass</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>iOS Showcase Source</h2>
+      <div class="features">
+        <div class="feature"><b>Camera</b><span>Take Photo</span></div>
+        <div class="feature"><b>Guided Scan</b><span>Object Capture</span></div>
+        <div class="feature"><b>Upload</b><span>capture-to-myth</span></div>
+        <div class="feature"><b>3D Preview</b><span>SceneKit handoff</span></div>
+        <div class="feature"><b>NPC Agent</b><span>autonomy controls</span></div>
+        <div class="feature"><b>Print Quote</b><span>review action</span></div>
+        <div class="feature"><b>Providers</b><span>readiness strip</span></div>
+        <div class="feature"><b>Summary</b><span>Final Showcase</span></div>
+        <div class="feature"><b>Deploy</b><span>local config slots</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Remaining Device Gates</h2>
+      <div class="panel">
+        <div class="check">mobile_deploy_preflight <span class="pill blocked">blocked</span></div>
+        <div class="check">mobile_xcode_build <span class="pill blocked">blocked</span></div>
+        <div class="note">
+          The new iOS showcase check reads source files only. It does not run
+          Xcode, SwiftPM, simulators, provider APIs, network calls, or device
+          installs.
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
