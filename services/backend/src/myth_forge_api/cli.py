@@ -83,6 +83,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 provider_mode=args.provider_mode,
                 npc_steps=args.npc_steps,
                 require_real_core=args.require_real_core,
+                allow_live_provider_calls=args.allow_live_provider_calls,
                 output_path=args.output,
             )
         if args.command == "final-acceptance":
@@ -90,6 +91,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 profile=args.profile,
                 provider_mode=args.provider_mode,
                 require_real_core=args.require_real_core,
+                allow_live_provider_calls=args.allow_live_provider_calls,
                 npc_steps=args.npc_steps,
                 repo_root=args.repo_root,
                 output_path=args.output,
@@ -136,6 +138,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     acceptance_parser.add_argument("--npc-steps", type=_npc_steps_arg, default=3)
     acceptance_parser.add_argument("--require-real-core", action="store_true")
+    acceptance_parser.add_argument("--allow-live-provider-calls", action="store_true")
     acceptance_parser.add_argument("--output", default=None)
 
     final_acceptance_parser = subcommands.add_parser("final-acceptance")
@@ -146,6 +149,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default="local",
     )
     final_acceptance_parser.add_argument("--require-real-core", action="store_true")
+    final_acceptance_parser.add_argument("--allow-live-provider-calls", action="store_true")
     final_acceptance_parser.add_argument("--npc-steps", type=_npc_steps_arg, default=3)
     final_acceptance_parser.add_argument("--repo-root", default=None)
     final_acceptance_parser.add_argument("--output", default=None)
@@ -225,12 +229,14 @@ def _demo_acceptance(
     provider_mode: str,
     npc_steps: int,
     require_real_core: bool,
+    allow_live_provider_calls: bool,
     output_path: str | None,
 ) -> int:
     result = run_demo_acceptance(
         provider_mode=provider_mode,
         npc_steps=npc_steps,
         require_real_core=require_real_core,
+        allow_live_provider_calls=allow_live_provider_calls,
     )
     _write_json_payload(result.report, output_path)
     return result.exit_code
@@ -241,6 +247,7 @@ def _final_acceptance(
     profile: str,
     provider_mode: str,
     require_real_core: bool,
+    allow_live_provider_calls: bool,
     npc_steps: int,
     repo_root: str | None,
     output_path: str | None,
@@ -249,6 +256,7 @@ def _final_acceptance(
         profile=profile,
         provider_mode=provider_mode,
         require_real_core=require_real_core,
+        allow_live_provider_calls=allow_live_provider_calls,
         npc_steps=npc_steps,
         repo_root=repo_root,
     )

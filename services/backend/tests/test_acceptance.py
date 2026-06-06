@@ -2,7 +2,10 @@ import json
 
 from myth_forge_api.acceptance import run_demo_acceptance
 from myth_forge_api.config import Settings
+from myth_forge_api.providers.npc import LocalNPCDirector
+from myth_forge_api.providers.npc_ticks import LocalNPCTickRuntime
 from myth_forge_api.providers.three_d import MeshyProviderError
+from myth_forge_api.providers.three_d import LocalThreeDProvider
 
 
 def test_demo_acceptance_local_report_runs_bounded_ticks(tmp_path) -> None:
@@ -81,6 +84,94 @@ def test_demo_acceptance_strict_configured_mode_exits_two_before_provider_calls(
     assert result.report["core_real_ready"] is False
     assert result.report["missing_env"] == ["MESHY_API_KEY", "OPENAI_API_KEY"]
     assert result.report["error"] == "Core providers are not real-provider-ready."
+
+
+def test_demo_acceptance_configured_requires_live_provider_consent_before_calls(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    def fail_if_called(settings):
+        raise AssertionError("live providers should not be built without consent")
+
+    monkeypatch.setattr("myth_forge_api.acceptance.build_three_d_provider", fail_if_called)
+    monkeypatch.setattr("myth_forge_api.acceptance.build_npc_director", fail_if_called)
+    monkeypatch.setattr("myth_forge_api.acceptance.build_npc_tick_runtime", fail_if_called)
+
+    result = run_demo_acceptance(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-secret",
+            npc_provider="openai",
+            openai_api_key="sk-openai-secret",
+            myth_session_storage_dir=str(tmp_path / "sessions"),
+        ),
+        provider_mode="configured",
+        npc_steps=3,
+        require_real_core=True,
+    )
+
+    report_text = json.dumps(result.report)
+    assert result.exit_code == 2
+    assert result.report["status"] == "not_ready"
+    assert result.report["core_real_ready"] is True
+    assert result.report["allow_live_provider_calls"] is False
+    assert result.report["live_provider_consent_required"] is True
+    assert result.report["live_provider_kinds"] == ["three_d", "npc"]
+    assert result.report["selected_providers"] == {
+        "three_d": "meshy",
+        "npc": "openai",
+        "capture_storage": "local_filesystem",
+    }
+    assert result.report["missing_env"] == []
+    assert result.report["error"] == (
+        "Live provider calls require --allow-live-provider-calls."
+    )
+    assert "sk-meshy-secret" not in report_text
+    assert "sk-openai-secret" not in report_text
+
+
+def test_demo_acceptance_configured_allows_live_provider_calls_when_explicit(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    builder_calls: list[str] = []
+
+    def fake_three_d_provider(settings):
+        builder_calls.append(f"three_d:{settings.three_d_provider}")
+        return LocalThreeDProvider()
+
+    def fake_npc_director(settings):
+        builder_calls.append(f"npc:{settings.npc_provider}")
+        return LocalNPCDirector()
+
+    def fake_tick_runtime(settings):
+        builder_calls.append(f"tick:{settings.npc_provider}")
+        return LocalNPCTickRuntime()
+
+    monkeypatch.setattr("myth_forge_api.acceptance.build_three_d_provider", fake_three_d_provider)
+    monkeypatch.setattr("myth_forge_api.acceptance.build_npc_director", fake_npc_director)
+    monkeypatch.setattr("myth_forge_api.acceptance.build_npc_tick_runtime", fake_tick_runtime)
+
+    result = run_demo_acceptance(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-secret",
+            npc_provider="openai",
+            openai_api_key="sk-openai-secret",
+            myth_session_storage_dir=str(tmp_path / "sessions"),
+        ),
+        provider_mode="configured",
+        npc_steps=1,
+        require_real_core=True,
+        allow_live_provider_calls=True,
+    )
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "succeeded"
+    assert result.report["allow_live_provider_calls"] is True
+    assert result.report["live_provider_consent_required"] is False
+    assert result.report["live_provider_kinds"] == ["three_d", "npc"]
+    assert builder_calls == ["three_d:meshy", "npc:openai", "tick:openai"]
 
 
 class FailingThreeDProvider:

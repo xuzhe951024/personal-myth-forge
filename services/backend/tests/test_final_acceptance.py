@@ -23,6 +23,7 @@ def passing_ios_showcase_result() -> IOSShowcaseAcceptanceResult:
 
 def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path) -> None:
     commands: list[list[str]] = []
+    demo_calls: list[dict[str, object]] = []
 
     def command_runner(command: list[str], cwd: Path) -> CommandExecutionResult:
         commands.append(command)
@@ -52,13 +53,16 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
             exit_code=0,
             report={"kind": "provider_handoff_report", "core_real_ready": False},
         ),
-        demo_acceptance_runner=lambda **kwargs: DemoAcceptanceResult(
-            exit_code=0,
-            report={
-                "kind": "demo_acceptance_report",
-                "mode": kwargs["provider_mode"],
-                "status": "succeeded",
-            },
+        demo_acceptance_runner=lambda **kwargs: (
+            demo_calls.append(kwargs)
+            or DemoAcceptanceResult(
+                exit_code=0,
+                report={
+                    "kind": "demo_acceptance_report",
+                    "mode": kwargs["provider_mode"],
+                    "status": "succeeded",
+                },
+            )
         ),
         capture_3d_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
@@ -86,6 +90,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.exit_code == 2
     assert result.report["kind"] == "final_acceptance_report"
     assert result.report["profile"] == "quick"
+    assert result.report["allow_live_provider_calls"] is False
     assert result.report["overall_status"] == "blocked"
     assert result.report["summary"] == {
         "passed": 5,
@@ -123,6 +128,14 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert commands == [
         ["make", "mobile-deploy-preflight"],
         ["make", "mobile-xcode-build"],
+    ]
+    assert demo_calls == [
+        {
+            "provider_mode": "local",
+            "npc_steps": 3,
+            "require_real_core": False,
+            "allow_live_provider_calls": False,
+        }
     ]
     assert "backend_lint" not in checks
     assert "/Users/zhexu/private" not in json.dumps(result.report)
@@ -218,6 +231,103 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
     assert "local-capture://" not in report_text
     assert "treatstock-secret" not in report_text
     assert "https://pay.example/private" not in report_text
+
+
+def test_final_acceptance_passes_explicit_live_provider_consent_to_demo_runner(
+    tmp_path,
+) -> None:
+    demo_calls: list[dict[str, object]] = []
+
+    result = run_final_acceptance(
+        profile="quick",
+        provider_mode="configured",
+        require_real_core=True,
+        allow_live_provider_calls=True,
+        repo_root=tmp_path,
+        command_runner=lambda command, cwd: CommandExecutionResult(
+            exit_code=0,
+            stdout="ok",
+            stderr="",
+            elapsed_seconds=0.01,
+        ),
+        provider_handoff_runner=lambda require_core_real: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "provider_handoff_report", "core_real_ready": True},
+        ),
+        demo_acceptance_runner=lambda **kwargs: (
+            demo_calls.append(kwargs)
+            or DemoAcceptanceResult(
+                exit_code=0,
+                report={"kind": "demo_acceptance_report", "status": "succeeded"},
+            )
+        ),
+        capture_3d_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
+        ),
+        print_quote_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "print_quote_acceptance_report", "status": "succeeded"},
+        ),
+        ios_showcase_acceptance_runner=passing_ios_showcase_result,
+    )
+
+    assert result.exit_code == 0
+    assert result.report["allow_live_provider_calls"] is True
+    assert demo_calls == [
+        {
+            "provider_mode": "configured",
+            "npc_steps": 3,
+            "require_real_core": True,
+            "allow_live_provider_calls": True,
+        }
+    ]
+
+
+def test_final_acceptance_classifies_demo_consent_gate_as_blocked(tmp_path) -> None:
+    result = run_final_acceptance(
+        profile="quick",
+        provider_mode="configured",
+        require_real_core=False,
+        repo_root=tmp_path,
+        command_runner=lambda command, cwd: CommandExecutionResult(
+            exit_code=0,
+            stdout="ok",
+            stderr="",
+            elapsed_seconds=0.01,
+        ),
+        provider_handoff_runner=lambda require_core_real: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "provider_handoff_report", "core_real_ready": True},
+        ),
+        demo_acceptance_runner=lambda **kwargs: DemoAcceptanceResult(
+            exit_code=2,
+            report={
+                "kind": "demo_acceptance_report",
+                "status": "not_ready",
+                "live_provider_consent_required": True,
+                "error": "Live provider calls require --allow-live-provider-calls.",
+            },
+        ),
+        capture_3d_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
+        ),
+        print_quote_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "print_quote_acceptance_report", "status": "succeeded"},
+        ),
+        ios_showcase_acceptance_runner=passing_ios_showcase_result,
+    )
+
+    checks = {check["id"]: check for check in result.report["checks"]}
+
+    assert result.exit_code == 2
+    assert result.report["overall_status"] == "blocked"
+    assert checks["demo_acceptance"]["status"] == "blocked"
+    assert checks["demo_acceptance"]["classification"] == (
+        "blocked_by_provider_configuration"
+    )
 
 
 def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_path) -> None:

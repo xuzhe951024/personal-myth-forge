@@ -938,13 +938,16 @@ uv run python -m myth_forge_api.cli demo-acceptance \
 ```
 
 After backend `.env` contains Meshy/OpenAI selection and keys, run the strict
-configured path:
+configured path. Leaving off `--allow-live-provider-calls` is a safe dry check
+that blocks before Meshy/OpenAI calls once live providers are ready; add the
+flag only for intentional live validation:
 
 ```bash
 cd services/backend
 uv run python -m myth_forge_api.cli demo-acceptance \
   --provider-mode configured \
   --require-real-core \
+  --allow-live-provider-calls \
   --npc-steps 3 \
   --output /tmp/personal-myth-forge-demo-acceptance.json
 ```
@@ -995,9 +998,10 @@ they remain visible without being treated as code failures.
 
 Use `--profile full` to include backend lint/tests and SwiftPM project,
 contract, and app compile checks in the same report. Use
-`--provider-mode configured --require-real-core` after backend-only Meshy/OpenAI
-keys are supplied; strict mode exits before live provider calls until the core
-provider set is ready.
+`--provider-mode configured --require-real-core --allow-live-provider-calls`
+only after backend-only Meshy/OpenAI keys are supplied and you intentionally
+want the live provider validation run. Without the consent flag, configured
+mode blocks before contacting live providers.
 
 Visual evidence lives at:
 
@@ -1387,4 +1391,34 @@ Visual evidence lives at:
 ```text
 docs/superpowers/verification/p0.43-ios-showcase-acceptance.html
 docs/superpowers/verification/assets/p0.43-ios-showcase-acceptance-390x844.png
+```
+
+## P0.44 Live Provider Consent Gate
+
+P0.44 keeps mobile secrets backend-only and makes the final Meshy/OpenAI
+provider validation explicit. `demo-acceptance` and `final-acceptance` now
+default to no live provider calls. If `.env` selects ready Meshy/OpenAI
+providers, configured mode exits `2` before contacting them unless the operator
+passes `--allow-live-provider-calls`.
+
+Safe local acceptance remains:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+Intentional live provider validation is:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode configured \
+  --require-real-core \
+  --allow-live-provider-calls \
+  --output /tmp/personal-myth-forge-final-acceptance.json
 ```

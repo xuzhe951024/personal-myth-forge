@@ -769,14 +769,16 @@ uv run python -m myth_forge_api.cli demo-acceptance \
 ```
 
 After backend-only provider keys are supplied, configured strict mode uses the
-same report schema and exits `2` before provider calls until the core real
-provider set is ready:
+same report schema. Leaving off `--allow-live-provider-calls` is a safe dry
+handoff check: it exits `2` before Meshy/OpenAI calls once live providers are
+ready. Add the flag only for the intentional live provider validation run:
 
 ```bash
 cd services/backend
 uv run python -m myth_forge_api.cli demo-acceptance \
   --provider-mode configured \
   --require-real-core \
+  --allow-live-provider-calls \
   --npc-steps 3 \
   --output /tmp/personal-myth-forge-demo-acceptance.json
 ```
@@ -828,12 +830,14 @@ uv run python -m myth_forge_api.cli final-acceptance \
   --profile quick \
   --provider-mode configured \
   --require-real-core \
+  --allow-live-provider-calls \
   --output /tmp/personal-myth-forge-final-acceptance.json
 ```
 
-Strict mode exits `2` before live provider calls until the core provider set is
-real-provider-ready. Final acceptance reports redact provider secrets, bearer
-tokens, raw payload markers, data URIs, and local filesystem paths.
+Without `--allow-live-provider-calls`, strict mode exits `2` before live
+provider calls once Meshy/OpenAI are ready. Final acceptance reports redact
+provider secrets, bearer tokens, raw payload markers, data URIs, and local
+filesystem paths.
 
 Static evidence lives at:
 
@@ -1183,4 +1187,34 @@ Static evidence lives at:
 ```text
 docs/superpowers/verification/p0.43-ios-showcase-acceptance.html
 docs/superpowers/verification/assets/p0.43-ios-showcase-acceptance-390x844.png
+```
+
+P0.44 adds an explicit live-provider consent gate for acceptance commands. The
+default `demo-acceptance` and `final-acceptance` behavior remains safe for local
+and CI-style runs: even if `.env` contains Meshy/OpenAI keys, configured mode
+will not contact live providers unless `--allow-live-provider-calls` is present.
+This keeps routine verification no-cost while preserving one clear final handoff
+command for intentional live validation.
+
+Run the safe local final check:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+Run the intentional live provider check only after confirming backend-only keys
+and quota:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode configured \
+  --require-real-core \
+  --allow-live-provider-calls \
+  --output /tmp/personal-myth-forge-final-acceptance.json
 ```

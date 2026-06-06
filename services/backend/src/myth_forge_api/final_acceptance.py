@@ -136,6 +136,7 @@ def run_final_acceptance(
     profile: Profile = "quick",
     provider_mode: ProviderMode = "local",
     require_real_core: bool = False,
+    allow_live_provider_calls: bool = False,
     npc_steps: int = 3,
     repo_root: str | Path | None = None,
     command_runner: CommandRunner | None = None,
@@ -183,6 +184,7 @@ def run_final_acceptance(
                 provider_mode=provider_mode,
                 npc_steps=npc_steps,
                 require_real_core=require_real_core,
+                allow_live_provider_calls=allow_live_provider_calls,
             ),
             require_real_core=require_real_core,
         )
@@ -229,6 +231,7 @@ def run_final_acceptance(
         "profile": profile,
         "provider_mode": provider_mode,
         "require_real_core": require_real_core,
+        "allow_live_provider_calls": allow_live_provider_calls,
         "overall_status": overall_status,
         "summary": summary,
         "checks": checks,
@@ -306,6 +309,8 @@ def _classify_inline_result(
 ) -> tuple[str, str]:
     if exit_code == 0:
         return "passed", "ready"
+    if exit_code == 2 and check_id == "demo_acceptance":
+        return "blocked", "blocked_by_provider_configuration"
     if (
         exit_code == 2
         and require_real_core
