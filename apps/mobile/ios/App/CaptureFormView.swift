@@ -1,4 +1,5 @@
 import PersonalMythForgeMobileCore
+import PhotosUI
 import SwiftUI
 
 struct CaptureFormView: View {
@@ -8,7 +9,13 @@ struct CaptureFormView: View {
     @Binding var currentTheme: String
     @Binding var desiredTone: String
     @Binding var selectedCaptureMode: CaptureMode
+    @Binding var selectedSinglePhotoItem: PhotosPickerItem?
+    @Binding var selectedPhotoItems: [PhotosPickerItem]
     let phase: ForgeFlowPhase
+    let mediaSummaryTitle: String
+    let mediaSummaryDetail: String
+    let captureInputError: String?
+    let isMediaReadyForUpload: Bool
     let chooseCapture: () -> Void
     let forgeMyth: () -> Void
 
@@ -43,6 +50,31 @@ struct CaptureFormView: View {
             .background(.thinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(mediaSummaryTitle)
+                            .font(.subheadline.weight(.semibold))
+                        Text(mediaSummaryDetail)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+
+                captureInputControls
+
+                if let captureInputError {
+                    Text(captureInputError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
             if selectedCaptureMode == .arkitScan {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Scan readiness")
@@ -61,15 +93,46 @@ struct CaptureFormView: View {
             TextField("Current theme", text: $currentTheme)
             TextField("Desired tone", text: $desiredTone)
 
-            Button(captureActionTitle, action: chooseCapture)
-            .buttonStyle(.bordered)
-
             Button("Forge Myth", action: forgeMyth)
-            .buttonStyle(.borderedProminent)
+                .buttonStyle(.borderedProminent)
+                .disabled(!isMediaReadyForUpload)
 
             Text(statusText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var captureInputControls: some View {
+        switch selectedCaptureMode {
+        case .singlePhoto:
+            PhotosPicker(selection: $selectedSinglePhotoItem, matching: .images) {
+                Label("Choose Photo", systemImage: "photo")
+            }
+            .buttonStyle(.bordered)
+        case .photoSet:
+            PhotosPicker(selection: $selectedPhotoItems, maxSelectionCount: 12, matching: .images) {
+                Label("Choose Photos", systemImage: "photo.on.rectangle")
+            }
+            .buttonStyle(.bordered)
+        case .manualUpload:
+            Button(action: chooseCapture) {
+                Label("Choose File", systemImage: "doc")
+            }
+            .buttonStyle(.bordered)
+        case .arkitScan:
+            HStack {
+                Button(action: chooseCapture) {
+                    Label("Choose Scan", systemImage: "cube")
+                }
+                .buttonStyle(.bordered)
+
+                PhotosPicker(selection: $selectedPhotoItems, maxSelectionCount: 11, matching: .images) {
+                    Label("Add References", systemImage: "photo.stack")
+                }
+                .buttonStyle(.bordered)
+            }
         }
     }
 
@@ -96,19 +159,6 @@ struct CaptureFormView: View {
             return "Imported media becomes the object observation."
         case .arkitScan:
             return "A scan asset and references become the object observation."
-        }
-    }
-
-    private var captureActionTitle: String {
-        switch selectedCaptureMode {
-        case .singlePhoto:
-            return "Choose Photo"
-        case .photoSet:
-            return "Choose Photos"
-        case .manualUpload:
-            return "Choose File"
-        case .arkitScan:
-            return "Choose Scan"
         }
     }
 

@@ -187,3 +187,17 @@ This is still no-simulator evidence. Real media picking, ARKit scanning, public
 or storage-backed media delivery, multi-image/scan remesh, real provider-key
 runs, and iOS 3D rendering remain later work. Provider API keys stay on the
 backend.
+
+P0.12 adds the iOS source-level device media input bridge. `ForgeRootView` now
+uses PhotosPicker for photo input and fileImporter for manual/scan files,
+loading selected media into `CaptureMediaSelection` and then into the existing
+`ForgeFlowService` path. Static source-level evidence lives at:
+
+```text
+docs/superpowers/verification/p0.12-ios-device-media-input.html
+docs/superpowers/verification/assets/p0.12-ios-device-media-input-390x844.png
+```
+
+This remains no-simulator evidence. Live camera capture, ARKit mesh capture
+runtime, full simulator/device deployment, and iOS 3D rendering are still
+separate work.

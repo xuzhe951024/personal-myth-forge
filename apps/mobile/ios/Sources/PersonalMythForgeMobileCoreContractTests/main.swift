@@ -20,6 +20,10 @@ do {
     try testCaptureDraftBuildsARKitScanPayload()
     try testCaptureDraftRejectsInvalidMedia()
     try testCaptureDraftRejectsOversizedMedia()
+    try testCaptureMediaSelectionSummarizesSinglePhoto()
+    try testCaptureMediaSelectionRequiresPhotoSetCount()
+    try testCaptureMediaSelectionBuildsARKitDraft()
+    try testCaptureMediaSelectionClearsWhenModeChanges()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
     try await testForgeFlowServiceUploadsCaptureThenCreatesSession()
     try await testForgeFlowServiceStopsBeforeSessionWhenUploadFails()
@@ -451,6 +455,74 @@ private func testCaptureDraftRejectsOversizedMedia() throws {
         ),
         .mediaTooLarge(limit + 1, limit)
     )
+}
+
+private func testCaptureMediaSelectionSummarizesSinglePhoto() throws {
+    let selection = CaptureMediaSelection(
+        mode: .singlePhoto,
+        media: [captureMedia(filename: "key.jpg", contentType: "image/jpeg", kind: .image)]
+    )
+
+    try expectTrue(selection.isReadyForUpload)
+    try expectEqual(selection.imageCount, 1)
+    try expectEqual(selection.scanAssetCount, 0)
+    try expectEqual(selection.summary.title, "1 photo selected")
+    try expectContains(selection.summary.detail, "key.jpg")
+}
+
+private func testCaptureMediaSelectionRequiresPhotoSetCount() throws {
+    let onePhoto = CaptureMediaSelection(
+        mode: .photoSet,
+        media: [captureMedia(filename: "front.jpg", contentType: "image/jpeg", kind: .image)]
+    )
+    let twoPhotos = CaptureMediaSelection(
+        mode: .photoSet,
+        media: [
+            captureMedia(filename: "front.jpg", contentType: "image/jpeg", kind: .image),
+            captureMedia(filename: "side.png", contentType: "image/png", kind: .image),
+        ]
+    )
+
+    try expectFalse(onePhoto.isReadyForUpload)
+    try expectTrue(twoPhotos.isReadyForUpload)
+    try expectEqual(twoPhotos.summary.title, "2 photos selected")
+}
+
+private func testCaptureMediaSelectionBuildsARKitDraft() throws {
+    let selection = CaptureMediaSelection(
+        mode: .arkitScan,
+        media: [
+            captureMedia(filename: "idol.glb", contentType: "model/gltf-binary", kind: .scanAsset),
+            captureMedia(filename: "reference.jpg", contentType: "image/jpeg", kind: .image),
+        ]
+    )
+
+    let draft = selection.captureDraft(
+        label: "small idol",
+        materialsText: "stone",
+        visualNotes: "rough mesh",
+        source: "phone_capture"
+    )
+    let payload = try draft.validatedUploadPayload()
+
+    try expectTrue(selection.isReadyForUpload)
+    try expectEqual(selection.scanAssetCount, 1)
+    try expectEqual(selection.imageCount, 1)
+    try expectEqual(payload.metadata.captureMode, "arkit_scan")
+    try expectEqual(payload.uploads.map(\.contentType), ["model/gltf-binary", "image/jpeg"])
+}
+
+private func testCaptureMediaSelectionClearsWhenModeChanges() throws {
+    let selection = CaptureMediaSelection(
+        mode: .singlePhoto,
+        media: [captureMedia(filename: "key.jpg", contentType: "image/jpeg", kind: .image)]
+    )
+
+    let changed = selection.changingMode(to: .manualUpload)
+
+    try expectEqual(changed.mode, .manualUpload)
+    try expectEqual(changed.media.count, 0)
+    try expectFalse(changed.isReadyForUpload)
 }
 
 private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
