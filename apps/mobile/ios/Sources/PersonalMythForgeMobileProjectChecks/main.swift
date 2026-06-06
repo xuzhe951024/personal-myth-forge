@@ -16,6 +16,7 @@ do {
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
+    let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
     try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
@@ -163,6 +164,26 @@ do {
     try requireContains(artifact3DPreviewView, "SCNScene", "SceneKit scene construction")
     try requireContains(artifact3DPreviewView, "SCNCylinder", "artifact pedestal geometry")
     try requireContains(artifact3DPreviewView, "SCNTorus", "myth artifact proxy geometry")
+    try requireContains(artifactAssetPreparation, "ArtifactAssetPreparer", "asset preparation service")
+    try requireContains(artifactAssetPreparation, "FileSystemArtifactAssetCache", "asset cache implementation")
+    try requireContains(
+        artifactAssetPreparation,
+        "URLSessionArtifactAssetDownloader",
+        "asset downloader implementation"
+    )
+    try requireContains(artifact3DPreviewView, "ArtifactAssetPreparer.live()", "live asset preparer wiring")
+    try requireContains(
+        artifact3DPreviewView,
+        ".task(id: session?.sessionId)",
+        "session-scoped asset preparation task"
+    )
+    try requireContains(artifact3DPreviewView, "PreparedArtifactAsset", "prepared asset state")
+    try requireContains(artifact3DPreviewView, "SCNScene(url:", "local SceneKit asset loading")
+    try requireContains(
+        artifact3DPreviewView,
+        "guard !Task.isCancelled else",
+        "cancelled asset preparation does not overwrite preview state"
+    )
 
     try scanForMobileSecrets(in: [appRoot, coreRoot], additionalFiles: [packageFile, projectFile, plistFile])
 

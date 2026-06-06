@@ -283,3 +283,35 @@ Remaining gaps after P0.14 are actual generated asset download/cache/import,
 GLB runtime conversion or USDZ handoff, full Xcode simulator/device deployment,
 live ARKit mesh capture, richer 3D village rendering, and real provider-key
 runs.
+
+## P0.15 Generated Asset Handoff
+
+P0.15 adds a tested local handoff path for backend-provided generated assets.
+`ArtifactAssetPreparer` downloads remote HTTP(S) generated asset URIs, writes
+them through an app-local cache abstraction, and returns a `PreparedArtifactAsset`
+with `sceneURL` populated for SceneKit-loadable formats. GLB/GLTF assets are
+cached but explicitly marked as conversion-required.
+
+`Artifact3DPreviewView` now starts asset preparation when a ready myth session
+appears. If the prepared asset has a local `sceneURL`, the view attempts
+`SCNScene(url:)`; otherwise it keeps the P0.14 proxy geometry and displays the
+handoff status.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.15-ios-generated-asset-handoff.html
+docs/superpowers/verification/assets/p0.15-ios-generated-asset-handoff-390x844.png
+```
+
+Remaining gaps after P0.15 are provider-side USDZ export or GLB-to-USDZ
+conversion, runtime GLB import, full Xcode simulator/device deployment, live
+ARKit mesh capture, richer 3D village rendering, and real provider-key runs.

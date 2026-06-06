@@ -246,3 +246,27 @@ docs/superpowers/verification/assets/p0.14-ios-3d-artifact-preview-390x844.png
 This is still not a real provider asset download/cache/import path, GLB runtime
 conversion, simulator/device deployment, live ARKit mesh capture, or the richer
 3D village scene.
+
+P0.15 adds the mobile generated asset handoff layer. `ArtifactAssetPreparer`
+downloads backend-provided HTTP(S) generated asset URIs, stores them in an
+app-local cache, and returns a local SceneKit URL for directly loadable formats
+such as USDZ. `Artifact3DPreviewView` uses that prepared asset and attempts
+`SCNScene(url:)` before falling back to the proxy artifact.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.15-ios-generated-asset-handoff.html
+docs/superpowers/verification/assets/p0.15-ios-generated-asset-handoff-390x844.png
+```
+
+This still does not solve provider-side USDZ export, GLB runtime conversion,
+simulator/device deployment, live ARKit mesh capture, or Unity village import.

@@ -20,6 +20,13 @@ private func artifactSceneColor(red: CGFloat, green: CGFloat, blue: CGFloat, alp
 
 struct Artifact3DPreviewView: View {
     let session: MythSession?
+    private let preparer: ArtifactAssetPreparer
+    @State private var preparedAsset: PreparedArtifactAsset?
+
+    init(session: MythSession?, preparer: ArtifactAssetPreparer = ArtifactAssetPreparer.live()) {
+        self.session = session
+        self.preparer = preparer
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -27,23 +34,23 @@ struct Artifact3DPreviewView: View {
                 .font(.headline)
 
             if let session {
-                let preview = ArtifactPreviewState(session: session)
+                let preview = preparedAsset?.preview ?? ArtifactPreviewState(session: session)
 
-                SceneView(scene: Self.previewScene(for: preview),
+                SceneView(scene: Self.previewScene(for: preparedAsset, fallback: preview),
                     options: [.allowsCameraControl, .autoenablesDefaultLighting]
                 )
                 .frame(height: 220)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-                Text(preview.statusTitle)
+                Text(preparedAsset?.statusTitle ?? preview.statusTitle)
                     .font(.subheadline.weight(.semibold))
-                Text(preview.statusDetail)
+                Text(preparedAsset?.statusDetail ?? preview.statusDetail)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Text("\(preview.providerLabel) \(preview.formatLabel)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text(preview.uri)
+                Text(preparedAsset?.cachedURL?.absoluteString ?? preview.uri)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -60,9 +67,42 @@ struct Artifact3DPreviewView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .task(id: session?.sessionId) {
+            guard let session else {
+                await MainActor.run {
+                    preparedAsset = nil
+                }
+                return
+            }
+            await prepareAsset(for: session)
+        }
     }
 
-    private static func previewScene(for preview: ArtifactPreviewState) -> SCNScene {
+    private func prepareAsset(for session: MythSession) async {
+        await MainActor.run {
+            preparedAsset = nil
+        }
+        let asset = await preparer.prepare(session: session)
+        guard !Task.isCancelled else {
+            return
+        }
+        await MainActor.run {
+            guard !Task.isCancelled else {
+                return
+            }
+            preparedAsset = asset
+        }
+    }
+
+    private static func previewScene(
+        for preparedAsset: PreparedArtifactAsset?,
+        fallback preview: ArtifactPreviewState
+    ) -> SCNScene {
+        if let sceneURL = preparedAsset?.sceneURL,
+           let scene = try? SCNScene(url: sceneURL, options: nil) {
+            return scene
+        }
+
         let scene = placeholderScene()
         let titleNode = SCNNode()
         titleNode.name = preview.title
