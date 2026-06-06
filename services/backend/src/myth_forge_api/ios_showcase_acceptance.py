@@ -178,6 +178,41 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_forge_readiness_summary",
+        label="Mobile Forge readiness summary",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeReadinessSummary.swift",
+                "ForgeReadinessSummaryBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeReadinessSummary.swift",
+                "routeLabel",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeReadinessSummary.swift",
+                "canForge",
+            ),
+            SourceRequirement("apps/mobile/ios/App/CaptureFormView.swift", "Forge Readiness"),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "forgeReadinessSummary.routeLabel",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "ForgeReadinessSummaryBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "forgeReadinessSummary: forgeReadinessSummary",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testForgeReadinessMarksLocalDemoReady",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="three_d_preview",
         label="3D preview",
         requirements=(

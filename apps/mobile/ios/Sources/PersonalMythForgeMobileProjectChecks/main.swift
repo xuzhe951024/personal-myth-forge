@@ -70,6 +70,7 @@ do {
         coreRoot.appendingPathComponent("FinalLaunchMobileSummary.swift")
     )
     let contextCapsuleReview = try readText(coreRoot.appendingPathComponent("ContextCapsuleReview.swift"))
+    let forgeReadinessSummary = try readText(coreRoot.appendingPathComponent("ForgeReadinessSummary.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
     let arkitScanPackageBuilder = try readText(coreRoot.appendingPathComponent("ARKitScanPackageBuilder.swift"))
     let captureGenerationReadiness = try readText(
@@ -360,6 +361,17 @@ do {
     try requireContains(captureFormView, "generationReadinessDetail", "capture generation readiness detail")
     try requireContains(captureFormView, "isContextCapsuleApproved", "capture form context approval binding")
     try requireContains(captureFormView, "ContextCapsuleReviewView(", "capture form context review wiring")
+    try requireContains(captureFormView, "Forge Readiness", "capture form forge readiness panel")
+    try requireContains(
+        captureFormView,
+        "forgeReadinessSummary.routeLabel",
+        "capture form forge readiness route display"
+    )
+    try requireContains(
+        captureFormView,
+        "forgeReadinessSummary.privacyNotes",
+        "capture form forge readiness privacy notes"
+    )
     try requireContains(
         captureFormView,
         "contextCapsuleReview.status == .ready",
@@ -401,6 +413,17 @@ do {
     try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
     try requireContains(forgeRootView, "isContextCapsuleApproved", "context capsule approval state")
     try requireContains(forgeRootView, "ContextCapsuleReviewBuilder.build", "context capsule review builder wiring")
+    try requireContains(forgeRootView, "forgeReadinessSummary", "forge readiness root summary property")
+    try requireContains(
+        forgeRootView,
+        "ForgeReadinessSummaryBuilder.build",
+        "forge readiness root builder wiring"
+    )
+    try requireContains(
+        forgeRootView,
+        "forgeReadinessSummary: forgeReadinessSummary",
+        "forge readiness capture form handoff"
+    )
     try requireContains(forgeRootView, "isContextCapsuleApproved = false", "context approval reset")
     try requireContains(forgeRootView, "guard isContextCapsuleApproved else", "forge context approval guard")
     try requireContains(forgeRootView, "isCameraCapturePresented", "camera sheet root state")
@@ -661,6 +684,11 @@ do {
     try requireContains(contextCapsuleReview, "ContextCapsuleReviewStatus", "context capsule review status")
     try requireContains(contextCapsuleReview, "No raw email", "context capsule raw source privacy note")
     try requireContains(contextCapsuleReview, "sanitize", "context capsule review redaction")
+    try requireContains(forgeReadinessSummary, "ForgeReadinessSummaryBuilder", "forge readiness builder")
+    try requireContains(forgeReadinessSummary, "ForgeReadinessSummaryStatus", "forge readiness status")
+    try requireContains(forgeReadinessSummary, "routeLabel", "forge readiness route label")
+    try requireContains(forgeReadinessSummary, "canForge", "forge readiness forge gate")
+    try requireContains(forgeReadinessSummary, "sanitize", "forge readiness redaction")
     try requireContains(
         forgeRootView,
         ".onChange(of: selectedCaptureMode) { mode in",
@@ -926,6 +954,11 @@ do {
         contractTests,
         "testNPCAgentTickSummaryShowsLatestTickResolution",
         "npc agent tick summary contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testForgeReadinessMarksLocalDemoReady",
+        "forge readiness local demo contract test"
     )
     try requireContains(project, "NPCAgentModeView.swift", "npc agent mode Xcode file reference")
     try requireContains(demoScriptView, "ShowcaseAutopilotPlan", "demo script autopilot input")

@@ -104,6 +104,7 @@ struct ForgeRootView: View {
                         generationReadinessRouteLabel: captureGenerationReadiness.route.displayLabel,
                         generationReadinessDetail: captureGenerationReadiness.detail,
                         contextCapsuleReview: contextCapsuleReview,
+                        forgeReadinessSummary: forgeReadinessSummary,
                         captureInputError: captureInputError,
                         isMediaReadyForUpload: mediaSelection.isReadyForUpload,
                         chooseCapture: chooseCapture,
@@ -586,6 +587,16 @@ struct ForgeRootView: View {
             currentTheme: currentTheme,
             desiredTone: desiredTone,
             isApproved: isContextCapsuleApproved
+        )
+    }
+
+    private var forgeReadinessSummary: ForgeReadinessSummary {
+        ForgeReadinessSummaryBuilder.build(
+            captureGenerationReadiness: captureGenerationReadiness,
+            contextCapsuleReview: contextCapsuleReview,
+            providerReadiness: providerReadiness,
+            providerReadinessError: providerReadinessError,
+            npcAgentModeSummary: npcAgentModeSummary
         )
     }
 

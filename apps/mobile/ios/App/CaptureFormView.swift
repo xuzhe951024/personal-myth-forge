@@ -19,6 +19,7 @@ struct CaptureFormView: View {
     let generationReadinessRouteLabel: String
     let generationReadinessDetail: String
     let contextCapsuleReview: ContextCapsuleReview
+    let forgeReadinessSummary: ForgeReadinessSummary
     let captureInputError: String?
     let isMediaReadyForUpload: Bool
     let chooseCapture: () -> Void
@@ -109,6 +110,8 @@ struct CaptureFormView: View {
                 isApproved: $isContextCapsuleApproved
             )
 
+            forgeReadinessPanel
+
             Button("Forge Myth", action: forgeMyth)
                 .buttonStyle(.borderedProminent)
                 .disabled(!(isMediaReadyForUpload && contextCapsuleReview.status == .ready))
@@ -117,6 +120,53 @@ struct CaptureFormView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private var forgeReadinessPanel: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Forge Readiness")
+                        .font(.subheadline.weight(.semibold))
+                    Text(forgeReadinessSummary.detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                }
+                Spacer(minLength: 8)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(forgeReadinessBadge)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(forgeReadinessColor)
+                    Text(forgeReadinessSummary.routeLabel)
+                        .font(.caption.monospaced().weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+
+            if !forgeReadinessSummary.rows.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(forgeReadinessSummary.rows, id: \.self) { row in
+                        Text(row)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                }
+            }
+
+            if !forgeReadinessSummary.privacyNotes.isEmpty {
+                Text(forgeReadinessSummary.privacyNotes.joined(separator: " "))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     @ViewBuilder
@@ -230,6 +280,28 @@ struct CaptureFormView: View {
             return "Ready for review"
         case .failed:
             return "Needs attention"
+        }
+    }
+
+    private var forgeReadinessBadge: String {
+        switch forgeReadinessSummary.status {
+        case .waiting:
+            return "WAIT"
+        case .ready:
+            return "READY"
+        case .needsAttention:
+            return "CHECK"
+        }
+    }
+
+    private var forgeReadinessColor: Color {
+        switch forgeReadinessSummary.status {
+        case .waiting:
+            return .secondary
+        case .ready:
+            return .green
+        case .needsAttention:
+            return .orange
         }
     }
 }

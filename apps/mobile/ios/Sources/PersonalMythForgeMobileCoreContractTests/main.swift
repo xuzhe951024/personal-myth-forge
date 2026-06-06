@@ -39,6 +39,12 @@ do {
     try testContextCapsuleReviewWaitsForApproval()
     try testContextCapsuleReviewMarksApprovedSummaryReady()
     try testContextCapsuleReviewRedactsUnsafeText()
+    try testForgeReadinessWaitsForCapture()
+    try testForgeReadinessWaitsForContextApproval()
+    try testForgeReadinessMarksLocalDemoReady()
+    try testForgeReadinessMarksProviderErrorNeedsAttention()
+    try testForgeReadinessMarksMissingConfiguredProviders()
+    try testForgeReadinessRedactsUnsafeText()
     try testDevicePreflightBlocksLoopbackBackendURL()
     try testDevicePreflightWaitsForUncheckedBackendHealth()
     try testDevicePreflightMarksBackendHealthChecking()
@@ -1081,6 +1087,152 @@ private func testContextCapsuleReviewRedactsUnsafeText() throws {
     try expectNotContains(text, "local-capture://")
     try expectNotContains(text, "checkout")
     try expectNotContains(text, "Bearer")
+}
+
+private func testForgeReadinessWaitsForCapture() throws {
+    let summary = ForgeReadinessSummaryBuilder.build(
+        captureGenerationReadiness: CaptureGenerationReadinessBuilder.build(
+            selection: CaptureMediaSelection(mode: .guidedScan),
+            providerReadiness: localDemoProviderReadiness(),
+            providerReadinessError: nil
+        ),
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        npcAgentModeSummary: localDemoNPCAgentModeSummary()
+    )
+
+    try expectEqual(summary.status, .waiting)
+    try expectEqual(summary.canForge, false)
+    try expectEqual(summary.routeLabel, "waiting")
+    try expectContains(summary.title, "Forge waiting")
+    try expectContains(summary.rows.joined(separator: " "), "Capture")
+}
+
+private func testForgeReadinessWaitsForContextApproval() throws {
+    let summary = ForgeReadinessSummaryBuilder.build(
+        captureGenerationReadiness: readyCaptureGenerationReadiness(),
+        contextCapsuleReview: ContextCapsuleReviewBuilder.build(
+            currentTheme: "deadline pressure",
+            desiredTone: "tender, strange",
+            isApproved: false
+        ),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        npcAgentModeSummary: localDemoNPCAgentModeSummary()
+    )
+
+    try expectEqual(summary.status, .waiting)
+    try expectEqual(summary.canForge, false)
+    try expectEqual(summary.routeLabel, "waiting")
+    try expectContains(summary.rows.joined(separator: " "), "Context")
+    try expectContains(summary.detail, "Approve")
+}
+
+private func testForgeReadinessMarksLocalDemoReady() throws {
+    let summary = ForgeReadinessSummaryBuilder.build(
+        captureGenerationReadiness: readyCaptureGenerationReadiness(),
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        npcAgentModeSummary: localDemoNPCAgentModeSummary()
+    )
+
+    try expectEqual(summary.status, .ready)
+    try expectEqual(summary.canForge, true)
+    try expectEqual(summary.routeLabel, "local_demo")
+    try expectContains(summary.title, "Forge ready")
+    try expectContains(summary.rows.joined(separator: " "), "3D")
+    try expectContains(summary.rows.joined(separator: " "), "NPC Agent")
+    try expectContains(summary.privacyNotes.joined(separator: " "), "backend-only")
+}
+
+private func testForgeReadinessMarksProviderErrorNeedsAttention() throws {
+    let summary = ForgeReadinessSummaryBuilder.build(
+        captureGenerationReadiness: readyCaptureGenerationReadiness(),
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        providerReadiness: nil,
+        providerReadinessError: "Backend preflight is not reachable yet.",
+        npcAgentModeSummary: localDemoNPCAgentModeSummary()
+    )
+
+    try expectEqual(summary.status, .needsAttention)
+    try expectEqual(summary.canForge, false)
+    try expectEqual(summary.routeLabel, "needs_attention")
+    try expectContains(summary.detail, "not reachable")
+}
+
+private func testForgeReadinessMarksMissingConfiguredProviders() throws {
+    let readiness = ProviderReadinessResponse(
+        overallDemoReady: false,
+        overallRealReady: false,
+        providers: [
+            ProviderReadinessItem(
+                kind: "three_d",
+                selectedProvider: "meshy",
+                status: "missing_configuration",
+                isDemoReady: false,
+                isRealProviderReady: false,
+                missingEnv: ["MESHY_API_KEY"]
+            ),
+            ProviderReadinessItem(
+                kind: "npc",
+                selectedProvider: "openai",
+                status: "missing_configuration",
+                isDemoReady: false,
+                isRealProviderReady: false,
+                missingEnv: ["OPENAI_API_KEY"]
+            ),
+        ]
+    )
+
+    let summary = ForgeReadinessSummaryBuilder.build(
+        captureGenerationReadiness: readyCaptureGenerationReadiness(providerReadiness: readiness),
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        providerReadiness: readiness,
+        providerReadinessError: nil,
+        npcAgentModeSummary: missingOpenAINPCAgentModeSummary()
+    )
+
+    try expectEqual(summary.status, .needsAttention)
+    try expectEqual(summary.canForge, false)
+    try expectEqual(summary.routeLabel, "needs_attention")
+    try expectContains(summary.detail, "MESHY_API_KEY")
+    try expectContains(summary.detail, "OPENAI_API_KEY")
+}
+
+private func testForgeReadinessRedactsUnsafeText() throws {
+    let summary = ForgeReadinessSummaryBuilder.build(
+        captureGenerationReadiness: readyCaptureGenerationReadiness(),
+        contextCapsuleReview: approvedContextCapsuleReview(),
+        providerReadiness: ProviderReadinessResponse(
+            overallDemoReady: false,
+            overallRealReady: false,
+            providers: [
+                ProviderReadinessItem(
+                    kind: "three_d",
+                    selectedProvider: "meshy sk-test",
+                    status: "Authorization Bearer token /Users/zhexu",
+                    isDemoReady: false,
+                    isRealProviderReady: false,
+                    missingEnv: ["MESHY_API_KEY", "sk-test"]
+                ),
+            ]
+        ),
+        providerReadinessError: "Authorization Bearer token sk-test /Users/zhexu file:///tmp/private local-capture://cap checkout_url",
+        npcAgentModeSummary: localDemoNPCAgentModeSummary()
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.status, .needsAttention)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "Authorization")
 }
 
 private func testDevicePreflightBlocksLoopbackBackendURL() throws {
@@ -3900,6 +4052,52 @@ private func readyGuidedScanSelection() -> CaptureMediaSelection {
             captureMedia(filename: "scan_002.jpg", contentType: "image/jpeg", kind: .image),
             captureMedia(filename: "scan_003.jpg", contentType: "image/jpeg", kind: .image),
         ]
+    )
+}
+
+private func readyCaptureGenerationReadiness(
+    providerReadiness: ProviderReadinessResponse? = localDemoProviderReadiness(),
+    providerReadinessError: String? = nil
+) -> CaptureGenerationReadiness {
+    CaptureGenerationReadinessBuilder.build(
+        selection: readyGuidedScanSelection(),
+        providerReadiness: providerReadiness,
+        providerReadinessError: providerReadinessError
+    )
+}
+
+private func approvedContextCapsuleReview() -> ContextCapsuleReview {
+    ContextCapsuleReviewBuilder.build(
+        currentTheme: "deadline pressure",
+        desiredTone: "tender, strange",
+        isApproved: true
+    )
+}
+
+private func localDemoNPCAgentModeSummary() -> NPCAgentModeSummary {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcAgentRuntime = "local_agent_runtime"
+    session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+    return NPCAgentModeSummaryBuilder.build(
+        session: session,
+        latestTick: nil,
+        tickHistoryCount: 0,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+}
+
+private func missingOpenAINPCAgentModeSummary() -> NPCAgentModeSummary {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcDirector = "openai"
+    session.npcAgentRuntime = "local_agent_runtime"
+    session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+    return NPCAgentModeSummaryBuilder.build(
+        session: session,
+        latestTick: nil,
+        tickHistoryCount: 0,
+        providerReadiness: missingOpenAINPCProviderReadiness(),
+        providerReadinessError: nil
     )
 }
 
