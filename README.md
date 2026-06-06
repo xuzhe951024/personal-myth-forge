@@ -2150,3 +2150,32 @@ Static evidence lives at:
 docs/superpowers/verification/p0.77-final-operator-handoff.html
 docs/superpowers/verification/assets/p0.77-final-operator-handoff-390x844.png
 ```
+
+P0.78 adds a mobile final launch mode handoff. `PMF_FINAL_LAUNCH_MODE` now lives
+in the final resource bundle and iOS deployment config, defaults to `local`, and
+is exposed to the app through `PMFFinalLaunchMode`.
+
+The iPhone Final Launch surface has a segmented `Local` / `Configured` control.
+Switching it reloads `/v1/final-demo-launch` with the selected mode, so an
+operator can inspect the no-key local demo lane or the configured provider/key
+lane from the phone. This remains read-only: the app does not run Mac commands,
+trigger Xcode, accept Apple licenses, mutate global state, or call
+Meshy/OpenAI/Treatstock by switching modes.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_final_resources_preflight.py tests/test_final_resource_apply_script.py tests/test_ios_showcase_acceptance.py tests/test_mobile_final_launch_readiness_acceptance.py -q
+cd ../..
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.78-mobile-final-launch-mode.html
+docs/superpowers/verification/assets/p0.78-mobile-final-launch-mode-390x844.png
+```

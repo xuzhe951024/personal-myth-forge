@@ -26,6 +26,7 @@ IOS_TEMPLATE = """// Copy this file to Deployment.local.xcconfig for local deplo
 DEVELOPMENT_TEAM = YOUR_TEAM_ID
 PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge
 PMF_BACKEND_BASE_URL = http://192.168.1.10:8080
+PMF_FINAL_LAUNCH_MODE = local
 """
 
 GITIGNORE_TEMPLATE = """.env
@@ -56,6 +57,7 @@ SCULPTEO_API_KEY=
 DEVELOPMENT_TEAM=
 PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge
 PMF_BACKEND_BASE_URL=http://192.168.1.10:8080
+PMF_FINAL_LAUNCH_MODE=local
 """
 
 FINAL_RESOURCE_APPLY_TEMPLATE = """#!/usr/bin/env sh
@@ -112,6 +114,10 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.report["ios_template"]["missing_keys"] == []
     assert "OPENAI_API_KEY" in result.report["backend_template"]["required_keys"]
     assert "PMF_BACKEND_BASE_URL" in result.report["ios_template"]["required_keys"]
+    assert "PMF_FINAL_LAUNCH_MODE" in result.report["ios_template"]["required_keys"]
+    assert "PMF_FINAL_LAUNCH_MODE" in result.report["final_resource_apply"][
+        "required_keys"
+    ]
 
     ignored = {
         item["path"]: item

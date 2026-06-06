@@ -59,6 +59,7 @@ sculpteo_key=""
 team=""
 bundle_id=""
 backend_url=""
+final_launch_mode="local"
 capture_storage_dir=""
 myth_session_storage_dir=""
 
@@ -87,6 +88,7 @@ while IFS= read -r line || [ -n "$line" ]; do
     DEVELOPMENT_TEAM) team="$value" ;;
     PRODUCT_BUNDLE_IDENTIFIER) bundle_id="$value" ;;
     PMF_BACKEND_BASE_URL) backend_url="$value" ;;
+    PMF_FINAL_LAUNCH_MODE) final_launch_mode="$value" ;;
     CAPTURE_STORAGE_DIR) capture_storage_dir="$value" ;;
     MYTH_SESSION_STORAGE_DIR) myth_session_storage_dir="$value" ;;
     *)
@@ -127,6 +129,15 @@ case "$print_provider" in
     ;;
 esac
 
+final_launch_mode=$(printf '%s' "$final_launch_mode" | tr '[:upper:]' '[:lower:]')
+case "$final_launch_mode" in
+  local|configured) ;;
+  *)
+    printf '%s\n' "Unsupported PMF_FINAL_LAUNCH_MODE in final resources: $final_launch_mode" >&2
+    missing=1
+    ;;
+esac
+
 if [ "$print_provider" = "treatstock" ] && [ -z "$treatstock_key" ]; then
   printf '%s\n' "TREATSTOCK_API_KEY is required when PRINT_PROVIDER=treatstock." >&2
   missing=1
@@ -157,6 +168,7 @@ MYTH_SESSION_STORAGE_DIR="$myth_session_storage_dir" \
 DEVELOPMENT_TEAM="$team" \
 PRODUCT_BUNDLE_IDENTIFIER="$bundle_id" \
 PMF_BACKEND_BASE_URL="$backend_url" \
+PMF_FINAL_LAUNCH_MODE="$final_launch_mode" \
   sh "$IOS_WRITER"
 
 printf '%s\n' "Final resources applied."

@@ -2069,3 +2069,33 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.77-final-operator-handoff.html
 docs/superpowers/verification/assets/p0.77-final-operator-handoff-390x844.png
 ```
+
+## P0.78 Mobile Final Launch Mode
+
+The final launch panel now has a segmented `Local` / `Configured` mode control.
+The default comes from `PMF_FINAL_LAUNCH_MODE` in the project-local iOS
+deployment config and is exposed through `PMFFinalLaunchMode` in `Info.plist`.
+
+`Local` keeps the no-key iPhone showcase lane visible. `Configured` reloads
+`/v1/final-demo-launch?mode=configured` so the operator can inspect provider
+resource readiness, final acceptance handoff, and consent-gated live-provider
+steps after keys have been applied. The control is read-only: changing it does
+not run commands, call live providers, deploy to the device, or mutate the Mac.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_final_resources_preflight.py tests/test_final_resource_apply_script.py tests/test_ios_showcase_acceptance.py tests/test_mobile_final_launch_readiness_acceptance.py -q
+cd ../..
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.78-mobile-final-launch-mode.html
+docs/superpowers/verification/assets/p0.78-mobile-final-launch-mode-390x844.png
+```

@@ -348,6 +348,58 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_final_launch_mode",
+        label="Mobile final launch mode",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalLaunchMode",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "displayLabel",
+            ),
+            SourceRequirement("apps/mobile/ios/App/AppConfiguration.swift", "PMFFinalLaunchMode"),
+            SourceRequirement("apps/mobile/ios/App/AppConfiguration.swift", "FinalLaunchMode.safe"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "finalLaunchMode"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                'Picker("Final launch mode"',
+            ),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "FinalLaunchMode.allCases"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "loadFinalDemoLaunch(mode: finalLaunchMode)",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "getFinalDemoLaunch(mode: mode.rawValue)",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                ".onChange(of: finalLaunchMode)",
+            ),
+            SourceRequirement("apps/mobile/ios/App/Info.plist", "PMFFinalLaunchMode"),
+            SourceRequirement("apps/mobile/ios/App/Info.plist", "$(PMF_FINAL_LAUNCH_MODE)"),
+            SourceRequirement(
+                "apps/mobile/ios/Config/Deployment.xcconfig",
+                "PMF_FINAL_LAUNCH_MODE",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Config/Deployment.local.xcconfig.example",
+                "PMF_FINAL_LAUNCH_MODE",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchModeDefaultsToLocalForUnsafeValues",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testGetConfiguredFinalDemoLaunchBuildsGETRequest",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="device_preflight",
         label="Device preflight",
         requirements=(

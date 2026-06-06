@@ -96,6 +96,32 @@ def test_apply_requires_treatstock_key_when_treatstock_is_selected(
     assert not ios_local_config_path(script_repo).exists()
 
 
+def test_apply_blocks_unsupported_final_launch_mode_without_writing_outputs(
+    script_repo: Path,
+) -> None:
+    resources = write_resources(script_repo, FULL_RESOURCES + "PMF_FINAL_LAUNCH_MODE=live\n")
+
+    result = run_apply(script_repo, "--resources-file", str(resources))
+
+    assert result.returncode == 2
+    assert "Unsupported PMF_FINAL_LAUNCH_MODE in final resources: live" in result.stderr
+    assert not backend_env_path(script_repo).exists()
+    assert not ios_local_config_path(script_repo).exists()
+
+
+def test_apply_writes_final_launch_mode_to_ios_config(script_repo: Path) -> None:
+    resources = write_resources(
+        script_repo,
+        FULL_RESOURCES + "PMF_FINAL_LAUNCH_MODE=configured\n",
+    )
+
+    result = run_apply(script_repo, "--resources-file", str(resources))
+
+    assert result.returncode == 0
+    ios_text = ios_local_config_path(script_repo).read_text(encoding="utf-8")
+    assert "PMF_FINAL_LAUNCH_MODE = configured" in ios_text
+
+
 def test_apply_writes_backend_and_ios_configs_with_redacted_output(
     script_repo: Path,
 ) -> None:

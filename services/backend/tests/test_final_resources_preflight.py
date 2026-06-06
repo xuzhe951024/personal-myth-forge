@@ -121,6 +121,53 @@ def test_preflight_requires_treatstock_key_when_treatstock_selected(
     assert items["TREATSTOCK_API_KEY"]["required"] is True
 
 
+def test_preflight_accepts_configured_final_launch_mode(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES + "PMF_FINAL_LAUNCH_MODE=configured\n",
+    )
+
+    result = build_final_resources_preflight_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    items = {item["id"]: item for item in result.report["items"]}
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
+    assert result.report["unknown_keys"] == []
+    assert "PMF_FINAL_LAUNCH_MODE" in items
+    assert items["PMF_FINAL_LAUNCH_MODE"]["status"] == "ready"
+    assert items["PMF_FINAL_LAUNCH_MODE"]["required"] is False
+    assert items["PMF_FINAL_LAUNCH_MODE"]["configured"] is True
+    assert items["PMF_FINAL_LAUNCH_MODE"]["normalized_value"] == "configured"
+
+
+def test_preflight_blocks_unsupported_final_launch_mode(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES + "PMF_FINAL_LAUNCH_MODE=live\n",
+    )
+
+    result = build_final_resources_preflight_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    items = {item["id"]: item for item in result.report["items"]}
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert result.report["unknown_keys"] == []
+    assert "PMF_FINAL_LAUNCH_MODE" in items
+    assert items["PMF_FINAL_LAUNCH_MODE"]["status"] == "blocked"
+    assert items["PMF_FINAL_LAUNCH_MODE"]["classification"] == "unsupported_value"
+    assert "set PMF_FINAL_LAUNCH_MODE to local or configured" in result.report[
+        "operator_actions"
+    ]
+
+
 def test_preflight_marks_valid_local_print_resources_ready_and_redacted(
     tmp_path: Path,
 ) -> None:

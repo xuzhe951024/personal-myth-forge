@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.78 Mobile Final Launch Mode</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e8edf0;
+      color: #172026;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: 100vw;
+      max-width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 18px 14px 24px;
+      background: #fbfcfd;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      border: 1px solid #98a4ad;
+      border-radius: 8px;
+      padding: 4px 7px;
+      color: #42515c;
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .stage {
+      height: 108px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(43, 167, 149, .24), transparent 44%),
+        linear-gradient(145deg, #24343c, #15262d);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #2d4653;
+    }
+
+    .artifact {
+      position: absolute;
+      left: 26px;
+      top: 22px;
+      width: 70px;
+      height: 64px;
+      border-radius: 8px;
+      background: linear-gradient(145deg, #d5b464, #756141);
+      transform: rotate(-8deg);
+      box-shadow: 0 16px 24px rgba(0, 0, 0, .22);
+    }
+
+    .artifact::before,
+    .artifact::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: #f1d68a;
+    }
+
+    .artifact::before {
+      width: 28px;
+      height: 28px;
+      left: 9px;
+      top: 9px;
+      border: 6px solid #7d6a48;
+    }
+
+    .artifact::after {
+      width: 9px;
+      height: 34px;
+      right: 18px;
+      bottom: 6px;
+      border-radius: 5px;
+    }
+
+    .mode {
+      position: absolute;
+      right: 20px;
+      top: 26px;
+      width: 174px;
+      padding: 4px;
+      border-radius: 8px;
+      background: #e8eef2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      border: 1px solid rgba(255, 255, 255, .42);
+    }
+
+    .mode span {
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 760;
+      color: #465762;
+    }
+
+    .mode .active {
+      color: #0c5f55;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .16);
+    }
+
+    .panel {
+      border: 1px solid #d8e0e5;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(20, 31, 40, 0.04);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.25;
+      font-weight: 730;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 2px 0 0;
+      color: #5d6d78;
+      font-size: 11px;
+      line-height: 1.34;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border-radius: 7px;
+      padding: 4px 7px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #117d69;
+      background: #e8f5f2;
+    }
+
+    .badge.waiting {
+      color: #a05b16;
+      background: #fff1dc;
+    }
+
+    .badge.blocked {
+      color: #b33232;
+      background: #ffe8e8;
+    }
+
+    .line {
+      padding-top: 7px;
+      border-top: 1px solid #edf1f3;
+      color: #344551;
+      font-size: 11px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .line + .line {
+      margin-top: 6px;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #596b77;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <h1>Final Launch Mode</h1>
+      <div class="chip">P0.78</div>
+    </div>
+
+    <section class="stage" aria-label="iPhone final launch mode control">
+      <div class="artifact"></div>
+      <div class="mode">
+        <span>Local</span>
+        <span class="active">Configured</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Configured Readiness</h2>
+          <p>Phone reloads the same final launch report with configured mode.</p>
+        </div>
+        <div class="badge waiting">PARTIAL</div>
+      </div>
+      <div class="line mono">GET /v1/final-demo-launch?mode=configured</div>
+      <div class="line">Provider readiness, final resources, final acceptance, and handoff rows stay visible without running Mac commands.</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Resource Handoff</h2>
+          <p>Mode is provisioned with the final resource bundle.</p>
+        </div>
+        <div class="badge">READY</div>
+      </div>
+      <div class="line mono">PMF_FINAL_LAUNCH_MODE = configured</div>
+      <div class="line mono">PMFFinalLaunchMode = $(PMF_FINAL_LAUNCH_MODE)</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Safety</h2>
+          <p>Changing mode is a read-only query, not an execution path.</p>
+        </div>
+        <div class="badge blocked">GUARDED</div>
+      </div>
+      <div class="line">unsupported modes block in resource preflight and default to local in the app</div>
+      <div class="line">provider_calls=false xcode_commands=false global_mutation=false</div>
+    </section>
+  </main>
+</body>
+</html>

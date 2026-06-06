@@ -35,6 +35,7 @@ class MobileFinalLaunchReadinessAcceptanceResult:
 EndpointGetter = Callable[[str], EndpointProbeResponse]
 
 PMF_MODELS_PATH = "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift"
+APP_CONFIGURATION_PATH = "apps/mobile/ios/App/AppConfiguration.swift"
 API_CLIENT_PATH = (
     "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift"
 )
@@ -94,6 +95,30 @@ SOURCE_REQUIREMENTS = (
         "FinalResourcesPreflightSummary",
     ),
     SourceRequirement(
+        "model_final_launch_mode",
+        "Final launch mode model",
+        PMF_MODELS_PATH,
+        "FinalLaunchMode",
+    ),
+    SourceRequirement(
+        "model_final_launch_mode_display",
+        "Final launch mode display label",
+        PMF_MODELS_PATH,
+        "displayLabel",
+    ),
+    SourceRequirement(
+        "app_configuration_final_launch_mode",
+        "App configuration final launch mode",
+        APP_CONFIGURATION_PATH,
+        "PMFFinalLaunchMode",
+    ),
+    SourceRequirement(
+        "app_configuration_final_launch_mode_safe",
+        "Safe app configuration final launch mode",
+        APP_CONFIGURATION_PATH,
+        "FinalLaunchMode.safe",
+    ),
+    SourceRequirement(
         "api_client_method",
         "Final launch API client method",
         API_CLIENT_PATH,
@@ -130,10 +155,40 @@ SOURCE_REQUIREMENTS = (
         "loadFinalDemoLaunch",
     ),
     SourceRequirement(
-        "root_view_local_mode",
-        "Root view local final launch call",
+        "root_view_mode_state",
+        "Root view final launch mode state",
         FORGE_ROOT_VIEW_PATH,
-        'getFinalDemoLaunch(mode: "local")',
+        "finalLaunchMode",
+    ),
+    SourceRequirement(
+        "root_view_mode_picker",
+        "Root view final launch mode picker",
+        FORGE_ROOT_VIEW_PATH,
+        'Picker("Final launch mode"',
+    ),
+    SourceRequirement(
+        "root_view_mode_options",
+        "Root view final launch mode options",
+        FORGE_ROOT_VIEW_PATH,
+        "FinalLaunchMode.allCases",
+    ),
+    SourceRequirement(
+        "root_view_configured_mode",
+        "Root view configured final launch call",
+        FORGE_ROOT_VIEW_PATH,
+        "getFinalDemoLaunch(mode: mode.rawValue)",
+    ),
+    SourceRequirement(
+        "root_view_configured_initial_load",
+        "Root view configured initial final launch load",
+        FORGE_ROOT_VIEW_PATH,
+        "loadFinalDemoLaunch(mode: finalLaunchMode)",
+    ),
+    SourceRequirement(
+        "root_view_mode_reload",
+        "Root view final launch mode reload",
+        FORGE_ROOT_VIEW_PATH,
+        ".onChange(of: finalLaunchMode)",
     ),
     SourceRequirement(
         "root_view_preflight_handoff",
