@@ -17,6 +17,7 @@ struct CaptureFormView: View {
     let captureInputError: String?
     let isMediaReadyForUpload: Bool
     let chooseCapture: () -> Void
+    let takePhoto: () -> Void
     let startGuidedScan: () -> Void
     let forgeMyth: () -> Void
 
@@ -108,10 +109,17 @@ struct CaptureFormView: View {
     private var captureInputControls: some View {
         switch selectedCaptureMode {
         case .singlePhoto:
-            PhotosPicker(selection: $selectedSinglePhotoItem, matching: .images) {
-                Label("Choose Photo", systemImage: "photo")
+            HStack {
+                Button(action: takePhoto) {
+                    Label("Take Photo", systemImage: "camera")
+                }
+                .buttonStyle(.borderedProminent)
+
+                PhotosPicker(selection: $selectedSinglePhotoItem, matching: .images) {
+                    Label("Choose Photo", systemImage: "photo")
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
         case .photoSet:
             PhotosPicker(selection: $selectedPhotoItems, maxSelectionCount: 12, matching: .images) {
                 Label("Choose Photos", systemImage: "photo.on.rectangle")

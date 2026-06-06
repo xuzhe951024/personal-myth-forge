@@ -33,6 +33,7 @@ struct ForgeRootView: View {
     @State private var selectedSinglePhotoItem: PhotosPickerItem?
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var isFileImporterPresented = false
+    @State private var isCameraCapturePresented = false
     @State private var isGuidedScanPresented = false
     @State private var captureInputError: String?
 
@@ -86,6 +87,7 @@ struct ForgeRootView: View {
                         captureInputError: captureInputError,
                         isMediaReadyForUpload: mediaSelection.isReadyForUpload,
                         chooseCapture: chooseCapture,
+                        takePhoto: takePhoto,
                         startGuidedScan: startGuidedScan,
                         forgeMyth: forgeMyth
                     )
@@ -151,6 +153,21 @@ struct ForgeRootView: View {
                 Task {
                     await loadImportedFiles(result)
                 }
+            }
+            .sheet(isPresented: $isCameraCapturePresented) {
+                CameraCaptureView(
+                    onCapture: { data in
+                        isCameraCapturePresented = false
+                        loadCameraPhoto(data)
+                    },
+                    onFailure: {
+                        isCameraCapturePresented = false
+                        handleCameraPhotoFailure()
+                    },
+                    onCancel: {
+                        isCameraCapturePresented = false
+                    }
+                )
             }
             .sheet(isPresented: $isGuidedScanPresented) {
                 GuidedScanCaptureView(
@@ -234,6 +251,26 @@ struct ForgeRootView: View {
 
     private func chooseCapture() {
         isFileImporterPresented = true
+    }
+
+    private func takePhoto() {
+        selectedCaptureMode = .singlePhoto
+        captureInputError = nil
+        isCameraCapturePresented = true
+    }
+
+    private func loadCameraPhoto(_ data: Data) {
+        guard selectedCaptureMode == .singlePhoto else {
+            return
+        }
+        mediaSelection = CameraCaptureMediaBuilder.singlePhotoSelection(jpegData: data)
+        selectedSinglePhotoItem = nil
+        selectedPhotoItems = []
+        captureInputError = nil
+    }
+
+    private func handleCameraPhotoFailure() {
+        captureInputError = "Could not prepare captured photo."
     }
 
     private func startGuidedScan() {
