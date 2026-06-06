@@ -36,7 +36,9 @@ do {
     let providerReadinessView = try readText(appRoot.appendingPathComponent("ProviderReadinessView.swift"))
     let npcReactionsView = try readText(appRoot.appendingPathComponent("NPCReactionsView.swift"))
     let npcTickView = try readText(appRoot.appendingPathComponent("NPCTickView.swift"))
+    let demoSnapshotStatusView = try readText(appRoot.appendingPathComponent("DemoSnapshotStatusView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
+    let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
 
@@ -150,6 +152,7 @@ do {
         "WorldResolutionView.swift",
         "NPCReactionsView.swift",
         "NPCTickView.swift",
+        "DemoSnapshotStatusView.swift",
     ] {
         try requireContains(project, file, "Xcode project file reference")
     }
@@ -176,6 +179,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000011 /* NPCTickView.swift in Sources */,",
         "npc tick Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000012 /* DemoSnapshotStatusView.swift in Sources */,",
+        "demo snapshot status Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -235,6 +244,12 @@ do {
     try requireContains(forgeRootView, "latestNPCTick", "npc tick root state")
     try requireContains(forgeRootView, "createNPCAgentTick", "npc tick API call")
     try requireContains(forgeRootView, "NPCTickView(", "npc tick view wiring")
+    try requireContains(forgeRootView, "demoSnapshotStore", "demo snapshot store app state")
+    try requireContains(forgeRootView, "restoreDemoRunSnapshot", "demo snapshot restore app path")
+    try requireContains(forgeRootView, "saveDemoRunSnapshot", "demo snapshot save app path")
+    try requireContains(forgeRootView, "clearDemoRunSnapshot", "demo snapshot clear app path")
+    try requireContains(forgeRootView, "npcTickHistory", "npc tick history app state")
+    try requireContains(forgeRootView, "DemoSnapshotStatusView(", "demo snapshot status view wiring")
     try requireContains(forgeRootView, "ForgeFlowService", "forge flow service source wiring")
     try requireContains(forgeRootView, "forgeService.forge", "forge flow service call")
     try requireContains(forgeRootView, "getProviderReadiness()", "provider readiness API load")
@@ -372,16 +387,25 @@ do {
     try requireContains(pmfModels, "variants: [GeneratedAssetVariant]", "generated asset variants")
     try requireContains(pmfModels, "NPCAgentTrace", "npc agent trace model")
     try requireContains(pmfModels, "npcAgentTraces: [NPCAgentTrace]", "npc agent traces model")
+    try requireContains(demoRunSnapshot, "DemoRunSnapshot", "demo run snapshot model")
+    try requireContains(demoRunSnapshot, "maximumStoredTicks = 12", "demo snapshot tick cap")
+    try requireContains(demoRunSnapshot, "DemoRunSnapshotFileStore", "demo snapshot file store")
+    try requireContains(demoRunSnapshot, ".applicationSupportDirectory", "demo snapshot application support storage")
+    try requireContains(demoRunSnapshot, ".atomic", "demo snapshot atomic write")
     try requireContains(npcReactionsView, "npcAgentRuntime", "npc agent runtime display")
     try requireContains(npcReactionsView, "npcAgentTraces", "npc agent trace display")
     try requireContains(npcReactionsView, "proposedAction", "npc proposed action display")
     try requireContains(npcTickView, "NPCAgentTick", "npc tick model usage")
     try requireContains(npcTickView, "Advance Village", "npc tick action label")
+    try requireContains(npcTickView, "tickHistoryCount", "npc tick history count input")
     try requireContains(npcTickView, "agentRuntime", "npc tick runtime display")
     try requireContains(npcTickView, "acceptedActions", "npc tick accepted actions")
     try requireContains(npcTickView, "rejectedActions", "npc tick rejected actions")
     try requireContains(npcTickView, "visibleChanges", "npc tick visible changes")
     try requireNotContains(npcTickView, "sk-", "npc tick secret sample")
+    try requireContains(demoSnapshotStatusView, "Restored Demo Run", "demo snapshot restored label")
+    try requireContains(demoSnapshotStatusView, "Clear", "demo snapshot clear action")
+    try requireNotContains(demoSnapshotStatusView, "file://", "demo snapshot no local path display")
     try requireContains(
         artifactAssetPreparation,
         "preferredSceneVariant",

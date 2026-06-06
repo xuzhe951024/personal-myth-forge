@@ -7,11 +7,14 @@ import UniformTypeIdentifiers
 struct ForgeRootView: View {
     private let apiClient: PersonalMythForgeAPIClient
     private let forgeService: ForgeFlowService
+    private let demoSnapshotStore: DemoRunSnapshotFileStore
 
     @State private var state = ForgeFlowState()
     @State private var providerReadiness: ProviderReadinessResponse?
     @State private var providerReadinessError: String?
-    @State private var latestNPCTick: NPCAgentTick?
+    @State private var restoredSnapshot: DemoRunSnapshot?
+    @State private var npcTickHistory: [NPCAgentTick] = []
+    @State private var snapshotStatusText: String?
     @State private var npcTickError: String?
     @State private var isAdvancingNPCTick = false
     @State private var objectLabel = "old brass key"
@@ -30,16 +33,25 @@ struct ForgeRootView: View {
     init(
         apiClient: PersonalMythForgeAPIClient = PersonalMythForgeAPIClient(
             baseURL: AppConfiguration.backendBaseURL
-        )
+        ),
+        demoSnapshotStore: DemoRunSnapshotFileStore = .live()
     ) {
         self.apiClient = apiClient
         self.forgeService = ForgeFlowService(api: apiClient)
+        self.demoSnapshotStore = demoSnapshotStore
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    DemoSnapshotStatusView(
+                        restoredTitle: restoredSnapshot?.session.mythSeed.title,
+                        savedAt: restoredSnapshot?.savedAt,
+                        tickCount: npcTickHistory.count,
+                        statusText: snapshotStatusText,
+                        clearSnapshot: clearDemoRunSnapshot
+                    )
                     ProviderReadinessView(readiness: providerReadiness, errorMessage: providerReadinessError)
                     CaptureFormView(
                         objectLabel: $objectLabel,
@@ -65,6 +77,7 @@ struct ForgeRootView: View {
                     NPCTickView(
                         session: readySession,
                         tick: latestNPCTick,
+                        tickHistoryCount: npcTickHistory.count,
                         isLoading: isAdvancingNPCTick,
                         errorMessage: npcTickError,
                         advanceVillage: advanceNPCTick
@@ -74,6 +87,7 @@ struct ForgeRootView: View {
             }
             .navigationTitle("Personal Myth Forge")
             .task {
+                restoreDemoRunSnapshot()
                 await loadProviderReadiness()
             }
             .onChange(of: selectedCaptureMode) { mode in
@@ -138,6 +152,49 @@ struct ForgeRootView: View {
         }
     }
 
+    private func restoreDemoRunSnapshot() {
+        do {
+            guard let snapshot = try demoSnapshotStore.load() else {
+                return
+            }
+            state = ForgeFlowReducer.reduce(state: state, event: .sessionCreated(snapshot.session))
+            npcTickHistory = snapshot.npcTicks
+            restoredSnapshot = snapshot
+            snapshotStatusText = "Loaded local demo state. No raw capture media was restored."
+        } catch {
+            snapshotStatusText = "Could not load local demo state."
+        }
+    }
+
+    private func saveDemoRunSnapshot(session: MythSession, ticks: [NPCAgentTick]) {
+        let snapshot = DemoRunSnapshot(
+            savedAt: currentSnapshotTimestamp(),
+            session: session,
+            npcTicks: ticks
+        )
+        do {
+            try demoSnapshotStore.save(snapshot)
+            restoredSnapshot = snapshot
+            snapshotStatusText = "Saved local demo state."
+        } catch {
+            snapshotStatusText = "Could not save local demo state."
+        }
+    }
+
+    private func clearDemoRunSnapshot() {
+        do {
+            try demoSnapshotStore.clear()
+            restoredSnapshot = nil
+            npcTickHistory = []
+            snapshotStatusText = "Cleared local demo state."
+            if readySession != nil {
+                state = ForgeFlowReducer.reduce(state: state, event: .reset)
+            }
+        } catch {
+            snapshotStatusText = "Could not clear local demo state."
+        }
+    }
+
     private func chooseCapture() {
         isFileImporterPresented = true
     }
@@ -149,7 +206,9 @@ struct ForgeRootView: View {
     }
 
     private func forgeMyth() {
-        latestNPCTick = nil
+        npcTickHistory = []
+        restoredSnapshot = nil
+        snapshotStatusText = nil
         npcTickError = nil
         let draft = mediaSelection.captureDraft(
             label: objectLabel,
@@ -172,6 +231,9 @@ struct ForgeRootView: View {
                 }
             }
             state = finalState
+            if case let .ready(session) = finalState.phase {
+                saveDemoRunSnapshot(session: session, ticks: [])
+            }
         }
     }
 
@@ -193,7 +255,13 @@ struct ForgeRootView: View {
                     recentEvents: recentEvents
                 )
                 await MainActor.run {
-                    latestNPCTick = tick
+                    let updatedTicks = DemoRunSnapshot(
+                        savedAt: currentSnapshotTimestamp(),
+                        session: session,
+                        npcTicks: npcTickHistory + [tick]
+                    ).npcTicks
+                    npcTickHistory = updatedTicks
+                    saveDemoRunSnapshot(session: session, ticks: updatedTicks)
                     isAdvancingNPCTick = false
                     npcTickError = nil
                 }
@@ -211,6 +279,14 @@ struct ForgeRootView: View {
             return session
         }
         return nil
+    }
+
+    private var latestNPCTick: NPCAgentTick? {
+        npcTickHistory.last
+    }
+
+    private func currentSnapshotTimestamp() -> String {
+        ISO8601DateFormatter().string(from: Date())
     }
 
     private var allowedImportContentTypes: [UTType] {

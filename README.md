@@ -626,3 +626,31 @@ docs/superpowers/verification/assets/p0.25-ios-deploy-config-390x844.png
 P0.25 does not create an Apple developer team, commit provisioning values, store
 provider keys in the app, install to a real device, mutate global Xcode settings,
 or bypass the Apple SDK license gate.
+
+P0.26 adds local mobile demo continuity. The iOS app now saves the latest
+showable `MythSession` and local NPC tick history to an Application Support JSON
+snapshot. On relaunch, the app restores the generated relic, NPC/world response,
+and saved tick count into the existing review UI.
+
+The snapshot stores only structured session and tick metadata returned by the
+backend. It does not store raw photos, scan binaries, PhotosPicker state, local
+file URLs, provider keys, bearer tokens, or raw personal source documents. The
+restored run can be cleared from the app UI.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.26-mobile-demo-snapshot.html
+docs/superpowers/verification/assets/p0.26-mobile-demo-snapshot-390x844.png
+```
+
+P0.26 does not add server-side NPC memory, background autonomous loops, print
+fulfillment, live provider-key runs, or real device installation.

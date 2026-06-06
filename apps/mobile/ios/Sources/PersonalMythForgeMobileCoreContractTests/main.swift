@@ -7,6 +7,9 @@ do {
     try testDecodesMythSessionWithoutGeneratedAssetVariants()
     try testDecodesMythSessionWithoutNPCAgentTraceFields()
     try testDecodesNPCAgentTickPayload()
+    try testDemoRunSnapshotKeepsMatchingTicksSortedAndBounded()
+    try testDemoRunSnapshotEncodesSnakeCaseJSONWithoutRawMediaOrSecrets()
+    try testDemoRunSnapshotFileStoreSavesLoadsOverwritesAndClears()
     try testDecodesProviderReadinessPayload()
     try testCaptureIDValidation()
     try testMultipartBodyIncludesMetadataAndFileWithoutLocalPaths()
@@ -185,6 +188,71 @@ private func testDecodesNPCAgentTickPayload() throws {
     try expectEqual(tick.npcAgentTraces[0].proposedAction, "invite_neighbors_to_witness")
     try expectEqual(tick.npcReactions[0].emotion, "awe")
     try expectEqual(tick.worldResolution.acceptedActions[0].status, "accepted")
+}
+
+private func testDemoRunSnapshotKeepsMatchingTicksSortedAndBounded() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let ticks = (0..<16).map { index in
+        npcTick(sessionId: index == 3 ? "other_session" : session.sessionId, tickIndex: index)
+    }.reversed()
+
+    let snapshot = DemoRunSnapshot(savedAt: "2026-06-06T12:00:00Z", session: session, npcTicks: Array(ticks))
+
+    try expectEqual(snapshot.schemaVersion, DemoRunSnapshot.currentSchemaVersion)
+    try expectEqual(snapshot.npcTicks.count, DemoRunSnapshot.maximumStoredTicks)
+    try expectEqual(snapshot.npcTicks.map(\.sessionId).filter { $0 != session.sessionId }, [])
+    try expectEqual(snapshot.npcTicks.map(\.tickIndex), Array(4...15))
+    try expectEqual(snapshot.latestTick?.tickIndex, 15)
+}
+
+private func testDemoRunSnapshotEncodesSnakeCaseJSONWithoutRawMediaOrSecrets() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let snapshot = DemoRunSnapshot(
+        savedAt: "2026-06-06T12:00:00Z",
+        session: session,
+        npcTicks: [npcTick(sessionId: session.sessionId, tickIndex: 1)]
+    )
+
+    let data = try PMFJSON.encoder.encode(snapshot)
+    let body = String(decoding: data, as: UTF8.self)
+
+    try expectContains(body, #""schema_version":1"#)
+    try expectContains(body, #""npc_ticks":"#)
+    try expectNotContains(body, "raw-photo-bytes")
+    try expectNotContains(body, "Authorization=Bearer")
+    try expectNotContains(body, "api_key=")
+    try expectNotContains(body, "file:///")
+
+    let decoded = try PMFJSON.decoder.decode(DemoRunSnapshot.self, from: data)
+    try expectEqual(decoded, snapshot)
+}
+
+private func testDemoRunSnapshotFileStoreSavesLoadsOverwritesAndClears() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let temporaryDirectory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("pmf-demo-snapshot-\(UUID().uuidString)", isDirectory: true)
+    let store = DemoRunSnapshotFileStore(
+        snapshotURL: temporaryDirectory.appendingPathComponent("demo-run-snapshot.json")
+    )
+    defer {
+        try? FileManager.default.removeItem(at: temporaryDirectory)
+    }
+
+    try expectTrue(try store.load() == nil)
+
+    let first = DemoRunSnapshot(savedAt: "2026-06-06T12:00:00Z", session: session)
+    try store.save(first)
+    try expectEqual(try store.load(), first)
+
+    let second = first.appending(
+        npcTick(sessionId: session.sessionId, tickIndex: 1),
+        savedAt: "2026-06-06T12:01:00Z"
+    )
+    try store.save(second)
+    try expectEqual(try store.load(), second)
+
+    try store.clear()
+    try expectTrue(try store.load() == nil)
 }
 
 private func testDecodesProviderReadinessPayload() throws {
@@ -1404,6 +1472,41 @@ private func mythSession(asset: GeneratedAsset) -> MythSession {
             requiresUserApproval: true,
             approvalReason: "review",
             printabilityNotes: []
+        )
+    )
+}
+
+private func npcTick(sessionId: String, tickIndex: Int) -> NPCAgentTick {
+    NPCAgentTick(
+        sessionId: sessionId,
+        tickIndex: tickIndex,
+        agentRuntime: "local_tick_runtime",
+        npcAgentTraces: [
+            NPCAgentTrace(
+                npcId: "mara",
+                name: "Mara",
+                belief: "The relic remembers prior runs.",
+                intention: "Keep the ritual continuous.",
+                proposedAction: "move closer to the relic",
+                rationale: "A restored village should not feel reset.",
+                confidence: 0.82
+            )
+        ],
+        npcReactions: [],
+        worldResolution: WorldResolution(
+            arbitrator: "local_world_arbitrator",
+            summary: "The village preserves continuity.",
+            acceptedActions: [
+                ResolvedNPCAction(
+                    npcId: "mara",
+                    action: "move closer to the relic",
+                    status: "accepted",
+                    reason: "Safe visible action"
+                )
+            ],
+            rejectedActions: [],
+            worldStateDelta: ["tick_index": .int(tickIndex)],
+            visibleChanges: ["Mara marks restored tick \(tickIndex)."]
         )
     )
 }
