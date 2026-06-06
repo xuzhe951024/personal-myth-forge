@@ -14,6 +14,10 @@ from myth_forge_api.capture_acceptance import (
     run_capture_3d_acceptance,
 )
 from myth_forge_api.config import load_settings
+from myth_forge_api.ios_showcase_acceptance import (
+    IOSShowcaseAcceptanceResult,
+    run_ios_showcase_acceptance,
+)
 from myth_forge_api.print_acceptance import (
     PrintQuoteAcceptanceResult,
     run_print_quote_acceptance,
@@ -63,6 +67,7 @@ ProviderHandoffRunner = Callable[[bool], InlineCheckResult]
 DemoAcceptanceRunner = Callable[..., DemoAcceptanceResult]
 Capture3DAcceptanceRunner = Callable[[], Capture3DAcceptanceResult | InlineCheckResult]
 PrintQuoteAcceptanceRunner = Callable[[], PrintQuoteAcceptanceResult | InlineCheckResult]
+IOSShowcaseAcceptanceRunner = Callable[[], IOSShowcaseAcceptanceResult | InlineCheckResult]
 
 
 FULL_REGRESSION_COMMANDS = [
@@ -138,6 +143,7 @@ def run_final_acceptance(
     demo_acceptance_runner: DemoAcceptanceRunner | None = None,
     capture_3d_acceptance_runner: Capture3DAcceptanceRunner | None = None,
     print_quote_acceptance_runner: PrintQuoteAcceptanceRunner | None = None,
+    ios_showcase_acceptance_runner: IOSShowcaseAcceptanceRunner | None = None,
 ) -> FinalAcceptanceResult:
     if profile not in ("quick", "full"):
         raise ValueError(f"Unsupported final acceptance profile: {profile}")
@@ -154,6 +160,10 @@ def run_final_acceptance(
     )
     selected_print_quote_acceptance_runner = (
         print_quote_acceptance_runner or run_print_quote_acceptance
+    )
+    selected_ios_showcase_acceptance_runner = (
+        ios_showcase_acceptance_runner
+        or (lambda: run_ios_showcase_acceptance(repo_root=selected_repo_root))
     )
 
     checks: list[dict[str, Any]] = []
@@ -190,6 +200,14 @@ def run_final_acceptance(
             check_id="print_quote_acceptance",
             label="Print quote acceptance",
             runner=selected_print_quote_acceptance_runner,
+            require_real_core=False,
+        )
+    )
+    checks.append(
+        _run_inline_check(
+            check_id="ios_showcase_acceptance",
+            label="iOS showcase source acceptance",
+            runner=selected_ios_showcase_acceptance_runner,
             require_real_core=False,
         )
     )
@@ -244,7 +262,8 @@ def _run_inline_check(
         InlineCheckResult
         | DemoAcceptanceResult
         | Capture3DAcceptanceResult
-        | PrintQuoteAcceptanceResult,
+        | PrintQuoteAcceptanceResult
+        | IOSShowcaseAcceptanceResult,
     ],
     require_real_core: bool,
 ) -> dict[str, Any]:
