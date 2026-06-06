@@ -34,6 +34,10 @@ def test_local_three_d_provider_returns_reviewable_game_asset() -> None:
     assert asset.provider == "local_stub"
     assert asset.format == "glb"
     assert asset.uri == "local://generated-assets/myth_test.glb"
+    assert asset.variants[1].role == "ios_scene_asset"
+    assert asset.variants[1].format == "dae"
+    assert asset.variants[1].uri == "local://generated-assets/myth_test.dae"
+    assert asset.variants[1].is_scene_loadable is True
     assert "source_images=1" in asset.prompt
     assert "source_assets=1" in asset.prompt
     assert asset.moderation_status == "needs_review"

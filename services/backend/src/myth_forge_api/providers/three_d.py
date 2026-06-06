@@ -52,7 +52,7 @@ class LocalThreeDProvider:
 
     def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
         glb_uri = f"local://generated-assets/{request.session_id}.glb"
-        usdz_uri = f"local://generated-assets/{request.session_id}.usdz"
+        scene_uri = f"local://generated-assets/{request.session_id}.dae"
         return GeneratedAsset(
             kind="game_asset",
             provider=self.provider_name,
@@ -69,8 +69,8 @@ class LocalThreeDProvider:
                 ),
                 GeneratedAssetVariant(
                     role="ios_scene_asset",
-                    format="usdz",
-                    uri=usdz_uri,
+                    format="dae",
+                    uri=scene_uri,
                     is_scene_loadable=True,
                 ),
             ],
