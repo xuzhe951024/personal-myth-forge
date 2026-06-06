@@ -383,3 +383,43 @@ docs/superpowers/verification/assets/p0.17-npc-agent-runtime-390x844.png
 Remaining gaps after P0.17 are long-term NPC memory, multi-turn runtime ticks,
 Unity movement/action execution, voice NPCs, full Xcode simulator/device
 deployment, and live ARKit mesh capture.
+
+## P0.18 Xcode iOS Build Gate
+
+P0.18 adds the first repeatable Xcode project build command for the checked-in
+iOS app target:
+
+```bash
+make mobile-xcode-build
+```
+
+The script behind that target uses `PersonalMythForge.xcodeproj`, the shared
+`PersonalMythForge` scheme, `generic/platform=iOS`, local DerivedData under
+`apps/mobile/ios/.build/xcode-derived-data`, and `CODE_SIGNING_ALLOWED=NO` plus
+`CODE_SIGNING_REQUIRED=NO`. It uses `DEVELOPER_DIR` only as a per-command
+environment variable and falls back to `/Applications/Xcode.app/Contents/Developer`.
+
+This remains a build gate, not deployment. It does not run `xcode-select`, accept
+the Apple SDK license, launch a simulator, install to a device, archive, or set
+up signing. On this machine, the command currently reaches Xcode but is blocked
+until the Apple SDK license is accepted in Terminal.
+
+Run the full local source gates with:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make mobile-xcode-build
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.18-xcode-ios-build-gate.html
+docs/superpowers/verification/assets/p0.18-xcode-ios-build-gate-390x844.png
+```
+
+Remaining gaps after P0.18 are simulator/device installation, signing,
+long-running device capture testing, live ARKit mesh capture, richer Unity
+movement/action execution, and real provider-key runs.

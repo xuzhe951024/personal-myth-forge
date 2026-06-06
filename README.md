@@ -335,3 +335,26 @@ docs/superpowers/verification/assets/p0.17-npc-agent-runtime-390x844.png
 This still does not solve long-term NPC memory, multi-turn agent ticking, Unity
 movement execution, voice NPCs, simulator/device deployment, or live ARKit mesh
 capture.
+
+P0.18 adds a no-global-pollution Xcode iOS build gate for the checked-in app
+project. The command uses the shared `PersonalMythForge` scheme, a generic iOS
+destination, repo-local DerivedData, and disabled signing flags:
+
+```bash
+make mobile-xcode-build
+```
+
+On a fresh Xcode install, this command may stop at Apple's SDK license gate until
+the user accepts the license in Terminal. The repository does not run
+`xcode-select`, accept licenses, launch simulators, install to devices, archive,
+or configure signing.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.18-xcode-ios-build-gate.html
+docs/superpowers/verification/assets/p0.18-xcode-ios-build-gate-390x844.png
+```
+
+This still does not solve simulator/device installation, signing, live ARKit mesh
+capture, Unity movement execution, or real provider-key runs.
