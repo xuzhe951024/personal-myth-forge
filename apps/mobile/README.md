@@ -1350,3 +1350,41 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.42-ios-camera-capture-bridge.html
 docs/superpowers/verification/assets/p0.42-ios-camera-capture-bridge-390x844.png
 ```
+
+## P0.43 iOS Showcase Acceptance
+
+P0.43 adds a backend-side source acceptance check named
+`ios_showcase_acceptance`. It is included in
+`final-acceptance --profile quick` and verifies that the checked-in iOS source
+still contains the complete minimal showcase surface:
+
+- `Take Photo` camera capture
+- guided Object Capture scan entry
+- capture upload and myth session creation
+- SceneKit/asset handoff preview
+- NPC agent advance/autonomy controls
+- print quote review
+- provider readiness display
+- final showcase summary
+- project-local deploy config and camera permission strings
+
+This check only reads repository files. It does not run SwiftPM, Xcode,
+simulators, devices, provider APIs, or network calls. The full profile and
+separate Swift checks still provide compile evidence, while final device
+acceptance still requires local signing, LAN backend configuration, Apple SDK
+license acceptance, and a real iPhone run.
+
+Expected quick final acceptance on a local no-key checkout:
+
+```text
+passed=5, blocked=2, failed=0
+```
+
+The blocked checks remain `mobile_deploy_preflight` and `mobile_xcode_build`.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.43-ios-showcase-acceptance.html
+docs/superpowers/verification/assets/p0.43-ios-showcase-acceptance-390x844.png
+```

@@ -7,6 +7,18 @@ from myth_forge_api.final_acceptance import (
     InlineCheckResult,
     run_final_acceptance,
 )
+from myth_forge_api.ios_showcase_acceptance import IOSShowcaseAcceptanceResult
+
+
+def passing_ios_showcase_result() -> IOSShowcaseAcceptanceResult:
+    return IOSShowcaseAcceptanceResult(
+        exit_code=0,
+        report={
+            "kind": "ios_showcase_acceptance_report",
+            "status": "succeeded",
+            "summary": {"passed": 9, "failed": 0},
+        },
+    )
 
 
 def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path) -> None:
@@ -68,6 +80,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
                 "estimated_price_cents": 1600,
             },
         ),
+        ios_showcase_acceptance_runner=passing_ios_showcase_result,
     )
 
     assert result.exit_code == 2
@@ -75,7 +88,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.report["profile"] == "quick"
     assert result.report["overall_status"] == "blocked"
     assert result.report["summary"] == {
-        "passed": 4,
+        "passed": 5,
         "blocked": 2,
         "failed": 0,
         "skipped": 0,
@@ -86,6 +99,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
         "demo_acceptance",
         "capture_3d_acceptance",
         "print_quote_acceptance",
+        "ios_showcase_acceptance",
         "mobile_deploy_preflight",
         "mobile_xcode_build",
     ]
@@ -95,6 +109,11 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert checks["capture_3d_acceptance"]["report"]["source_image_count"] == 3
     assert checks["print_quote_acceptance"]["status"] == "passed"
     assert checks["print_quote_acceptance"]["report"]["quote_status"] == "draft_quote"
+    assert checks["ios_showcase_acceptance"]["status"] == "passed"
+    assert checks["ios_showcase_acceptance"]["report"]["summary"] == {
+        "passed": 9,
+        "failed": 0,
+    }
     assert checks["mobile_deploy_preflight"]["status"] == "blocked"
     assert checks["mobile_deploy_preflight"]["classification"] == (
         "blocked_by_local_ios_deploy_config"
@@ -168,6 +187,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
                 ),
             },
         ),
+        ios_showcase_acceptance_runner=passing_ios_showcase_result,
     )
 
     report_text = json.dumps(result.report)
@@ -185,6 +205,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
     )
     assert checks["capture_3d_acceptance"]["status"] == "passed"
     assert checks["print_quote_acceptance"]["status"] == "passed"
+    assert checks["ios_showcase_acceptance"]["status"] == "passed"
     assert command_calls == 2
     assert "sk-meshy-secret" not in report_text
     assert "sk-openai-secret" not in report_text
@@ -238,6 +259,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
                 "estimated_price_cents": 1600,
             },
         ),
+        ios_showcase_acceptance_runner=passing_ios_showcase_result,
     )
 
     check_ids = [check["id"] for check in result.report["checks"]]
@@ -245,7 +267,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
     assert result.exit_code == 0
     assert result.report["overall_status"] == "passed"
     assert result.report["summary"] == {
-        "passed": 11,
+        "passed": 12,
         "blocked": 0,
         "failed": 0,
         "skipped": 0,
@@ -255,6 +277,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
         "demo_acceptance",
         "capture_3d_acceptance",
         "print_quote_acceptance",
+        "ios_showcase_acceptance",
         "backend_lint",
         "backend_test",
         "swift_project_checks",

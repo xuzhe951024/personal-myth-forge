@@ -1146,3 +1146,41 @@ Static evidence lives at:
 docs/superpowers/verification/p0.42-ios-camera-capture-bridge.html
 docs/superpowers/verification/assets/p0.42-ios-camera-capture-bridge-390x844.png
 ```
+
+P0.43 adds a source-only iOS showcase acceptance gate to the final acceptance
+report. `final-acceptance --profile quick` now includes
+`ios_showcase_acceptance`, which reads checked-in source/project files and
+verifies that the mobile showcase still includes:
+
+- camera capture
+- guided scan
+- capture upload
+- 3D preview
+- NPC agent controls
+- print quote review
+- provider readiness
+- final showcase summary
+- deploy configuration slots
+
+The check does not run Xcode, SwiftPM, simulators, devices, provider APIs, or
+network calls. It is not a replacement for the full Swift compile/profile checks
+or real iPhone validation. On the default local checkout, quick final acceptance
+now expects `passed=5`, `blocked=2`, `failed=0`; the blocked checks remain iOS
+deploy preflight and Xcode build gate.
+
+Run:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --output /tmp/personal-myth-forge-final-acceptance.json
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.43-ios-showcase-acceptance.html
+docs/superpowers/verification/assets/p0.43-ios-showcase-acceptance-390x844.png
+```
