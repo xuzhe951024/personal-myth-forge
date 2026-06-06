@@ -72,6 +72,7 @@ Bridge deliverable:
 - P0.54 command-line iOS deploy preflight backend health check
 - P0.55 project-local writer for ignored iOS deploy config handoff
 - P0.56 project-local writer for ignored backend Meshy/OpenAI env handoff
+- P0.57 SwiftPM ARKit scan package bridge from exported scan model plus references into `arkit_scan`
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

@@ -95,6 +95,13 @@ do {
     try testGuidedScanPhotoSetBuilderRejectsTooFewImages()
     try testGuidedScanPhotoSetBuilderRejectsUnsupportedContentType()
     try testGuidedScanPhotoSetBuilderRejectsOversizedMedia()
+    try testARKitScanPackageBuilderBuildsReadySelection()
+    try testARKitScanPackageBuilderNormalizesAndSortsReferences()
+    try testARKitScanPackageBuilderTruncatesReferencesToEleven()
+    try testARKitScanPackageBuilderRejectsUnsupportedScan()
+    try testARKitScanPackageBuilderRejectsUnsupportedReference()
+    try testARKitScanPackageBuilderRejectsOversizedScan()
+    try testARKitScanPackageBuilderRejectsOversizedReference()
     try testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset()
     try testArtifactPreviewStateMarksLocalUSDZAsSceneLoadable()
     try testArtifactPreviewStateHandlesMissingURI()
@@ -2035,6 +2042,147 @@ private func testGuidedScanPhotoSetBuilderRejectsOversizedMedia() throws {
     )
 }
 
+private func testARKitScanPackageBuilderBuildsReadySelection() throws {
+    let selection = try ARKitScanPackageBuilder.selection(
+        scanExport: ARKitScanExportFile(
+            filename: "scan.glb",
+            contentType: "model/gltf-binary",
+            data: Data([1, 2, 3])
+        ),
+        referenceImages: [
+            ARKitScanReferenceImageFile(filename: "b.jpg", contentType: "image/jpeg", data: Data([4])),
+            ARKitScanReferenceImageFile(filename: "a.png", contentType: "image/png", data: Data([5])),
+        ]
+    )
+
+    try expectEqual(selection.mode, .arkitScan)
+    try expectTrue(selection.isReadyForUpload)
+    try expectEqual(selection.media.count, 3)
+    try expectEqual(selection.media[0].kind, .scanAsset)
+    try expectEqual(selection.media[0].originalFilename, "scan.glb")
+    try expectEqual(selection.media[1].originalFilename, "a.png")
+    try expectEqual(selection.media[2].originalFilename, "b.jpg")
+}
+
+private func testARKitScanPackageBuilderNormalizesAndSortsReferences() throws {
+    let selection = try ARKitScanPackageBuilder.selection(
+        scanExport: ARKitScanExportFile(
+            filename: "scan.usdz",
+            contentType: " MODEL/VND.USDZ+ZIP ",
+            data: Data([1])
+        ),
+        referenceImages: [
+            ARKitScanReferenceImageFile(
+                filename: "reference_10.HEIC",
+                contentType: " IMAGE/HEIC ",
+                data: Data([2])
+            ),
+            ARKitScanReferenceImageFile(
+                filename: "reference_02.jpg",
+                contentType: " IMAGE/JPEG ",
+                data: Data([3])
+            ),
+        ]
+    )
+
+    try expectEqual(selection.media[0].contentType, "model/vnd.usdz+zip")
+    try expectEqual(selection.media[1].contentType, "image/jpeg")
+    try expectEqual(selection.media[2].contentType, "image/heic")
+}
+
+private func testARKitScanPackageBuilderTruncatesReferencesToEleven() throws {
+    let references = (0..<14).map { index in
+        ARKitScanReferenceImageFile(
+            filename: String(format: "ref_%02d.jpg", index),
+            contentType: "image/jpeg",
+            data: Data([UInt8(index)])
+        )
+    }
+
+    let selection = try ARKitScanPackageBuilder.selection(
+        scanExport: ARKitScanExportFile(
+            filename: "scan.bin",
+            contentType: "application/octet-stream",
+            data: Data([1])
+        ),
+        referenceImages: references
+    )
+
+    try expectEqual(selection.media.count, 12)
+    try expectEqual(selection.media.filter { $0.kind == .image }.count, 11)
+    try expectEqual(selection.media[0].kind, .scanAsset)
+}
+
+private func testARKitScanPackageBuilderRejectsUnsupportedScan() throws {
+    try expectThrows(ARKitScanPackageBuilderError.unsupportedScanContentType("model/obj")) {
+        _ = try ARKitScanPackageBuilder.selection(
+            scanExport: ARKitScanExportFile(
+                filename: "scan.obj",
+                contentType: "model/obj",
+                data: Data([1])
+            ),
+            referenceImages: []
+        )
+    }
+}
+
+private func testARKitScanPackageBuilderRejectsUnsupportedReference() throws {
+    try expectThrows(ARKitScanPackageBuilderError.unsupportedReferenceContentType("image/gif")) {
+        _ = try ARKitScanPackageBuilder.selection(
+            scanExport: ARKitScanExportFile(
+                filename: "scan.glb",
+                contentType: "model/gltf-binary",
+                data: Data([1])
+            ),
+            referenceImages: [
+                ARKitScanReferenceImageFile(filename: "ref.gif", contentType: "image/gif", data: Data([2])),
+            ]
+        )
+    }
+}
+
+private func testARKitScanPackageBuilderRejectsOversizedScan() throws {
+    let oversizedBytes = CaptureDraft.maxFileBytes + 1
+
+    try expectThrows(ARKitScanPackageBuilderError.scanTooLarge(oversizedBytes, CaptureDraft.maxFileBytes)) {
+        _ = try ARKitScanPackageBuilder.selection(
+            scanExport: ARKitScanExportFile(
+                filename: "scan.glb",
+                contentType: "model/gltf-binary",
+                data: Data(repeating: 1, count: oversizedBytes)
+            ),
+            referenceImages: []
+        )
+    }
+}
+
+private func testARKitScanPackageBuilderRejectsOversizedReference() throws {
+    let oversizedBytes = CaptureDraft.maxFileBytes + 1
+
+    try expectThrows(
+        ARKitScanPackageBuilderError.referenceTooLarge(
+            "ref.jpg",
+            oversizedBytes,
+            CaptureDraft.maxFileBytes
+        )
+    ) {
+        _ = try ARKitScanPackageBuilder.selection(
+            scanExport: ARKitScanExportFile(
+                filename: "scan.glb",
+                contentType: "model/gltf-binary",
+                data: Data([1])
+            ),
+            referenceImages: [
+                ARKitScanReferenceImageFile(
+                    filename: "ref.jpg",
+                    contentType: "image/jpeg",
+                    data: Data(repeating: 1, count: oversizedBytes)
+                ),
+            ]
+        )
+    }
+}
+
 private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
     let metadata = sampleMetadata()
     let context = sampleContext()
@@ -2950,6 +3098,22 @@ private func expectGuidedScanPhotoSetBuilderError(
     } catch let error as GuidedScanPhotoSetBuilderError {
         try expectEqual(error, expected)
     }
+}
+
+private func expectThrows<E: Error & Equatable>(
+    _ expected: E,
+    _ operation: () throws -> Void
+) throws {
+    do {
+        try operation()
+    } catch let error as E {
+        try expectEqual(error, expected)
+        return
+    } catch {
+        throw ContractTestError.expectationFailed("Expected \(expected), got \(error)")
+    }
+
+    throw ContractTestError.expectationFailed("Expected \(expected), got no error")
 }
 
 private func sourceFile(_ name: String, in directory: URL) throws -> String {
