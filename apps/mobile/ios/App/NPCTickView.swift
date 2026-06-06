@@ -4,6 +4,7 @@ import SwiftUI
 struct NPCTickView: View {
     let session: MythSession?
     let tick: NPCAgentTick?
+    let tickHistoryCount: Int
     let isLoading: Bool
     let errorMessage: String?
     let advanceVillage: () -> Void
@@ -19,6 +20,12 @@ struct NPCTickView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+            }
+
+            if tickHistoryCount > 0 {
+                Text("\(tickHistoryCount) local ticks saved")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
             }
 
             Button(action: advanceVillage) {
