@@ -37,6 +37,7 @@ do {
     let npcReactionsView = try readText(appRoot.appendingPathComponent("NPCReactionsView.swift"))
     let npcTickView = try readText(appRoot.appendingPathComponent("NPCTickView.swift"))
     let demoSnapshotStatusView = try readText(appRoot.appendingPathComponent("DemoSnapshotStatusView.swift"))
+    let printQuoteReviewView = try readText(appRoot.appendingPathComponent("PrintQuoteReviewView.swift"))
     let pmfModels = try readText(coreRoot.appendingPathComponent("PMFModels.swift"))
     let mythSessionID = try readText(coreRoot.appendingPathComponent("MythSessionID.swift"))
     let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
@@ -155,6 +156,7 @@ do {
         "NPCReactionsView.swift",
         "NPCTickView.swift",
         "DemoSnapshotStatusView.swift",
+        "PrintQuoteReviewView.swift",
     ] {
         try requireContains(project, file, "Xcode project file reference")
     }
@@ -187,6 +189,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000012 /* DemoSnapshotStatusView.swift in Sources */,",
         "demo snapshot status Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000013 /* PrintQuoteReviewView.swift in Sources */,",
+        "print quote review Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -244,6 +252,12 @@ do {
     try requireContains(forgeRootView, "isGuidedScanPresented", "guided scan sheet state")
     try requireContains(forgeRootView, "providerReadiness", "provider readiness root state")
     try requireContains(forgeRootView, "latestNPCTick", "npc tick root state")
+    try requireContains(forgeRootView, "printQuote", "print quote root state")
+    try requireContains(forgeRootView, "isLoadingPrintQuote", "print quote loading state")
+    try requireContains(forgeRootView, "printQuoteError", "print quote error state")
+    try requireContains(forgeRootView, "PrintQuoteReviewView(", "print quote review view wiring")
+    try requireContains(forgeRootView, "createPrintQuote", "print quote API call")
+    try requireContains(forgeRootView, "clearPrintQuoteState", "stale print quote clearing")
     try requireContains(forgeRootView, "createNPCAgentTick", "npc tick API call")
     try requireContains(
         forgeRootView,
@@ -497,6 +511,14 @@ do {
         "demo snapshot backend sync progress indicator"
     )
     try requireNotContains(demoSnapshotStatusView, "file://", "demo snapshot no local path display")
+    try requireContains(printQuoteReviewView, "PrintQuote", "print quote model use")
+    try requireContains(printQuoteReviewView, "Get Quote", "print quote button label")
+    try requireContains(printQuoteReviewView, "Quoting...", "print quote loading label")
+    try requireContains(printQuoteReviewView, "requiresUserApproval", "print quote approval display")
+    try requireContains(printQuoteReviewView, "estimatedPriceCents", "print quote price display")
+    try requireContains(printQuoteReviewView, "quote.checkoutUrl == nil", "checkout action withheld")
+    try requireNotContains(printQuoteReviewView, "OpenURLAction", "no checkout URL opening")
+    try requireNotContains(printQuoteReviewView, "sk-", "no provider secret sample")
     try requireContains(
         artifactAssetPreparation,
         "preferredSceneVariant",

@@ -14,6 +14,8 @@ do {
     try testDemoRunSnapshotEncodesSnakeCaseJSONWithoutRawMediaOrSecrets()
     try testDemoRunSnapshotFileStoreSavesLoadsOverwritesAndClears()
     try testDecodesProviderReadinessPayload()
+    try testDecodesPrintQuotePayload()
+    try testEncodesPrintQuoteRequestAsSnakeCase()
     try testCaptureIDValidation()
     try testMythSessionIDValidation()
     try testDemoRunSnapshotBuildsFromBackendHistory()
@@ -26,6 +28,8 @@ do {
     try await testHTTPStatusErrorSanitizesSecretsAndTruncatesBody()
     try await testGetProviderReadinessBuildsGETRequest()
     try await testGetProviderReadinessSanitizesHTTPErrorBody()
+    try await testCreatePrintQuoteBuildsJSONRequest()
+    try await testCreatePrintQuoteSanitizesCheckoutHTTPErrorBody()
     try await testGetMythSessionBuildsGETRequest()
     try await testGetMythSessionHistoryBuildsGETRequest()
     try await testAdvanceMythSessionHistoryBuildsPOSTRequest()
@@ -413,6 +417,62 @@ private func testDecodesProviderReadinessPayload() throws {
     try expectEqual(readiness.providers[1].missingEnv, ["OPENAI_API_KEY"])
 }
 
+private func testDecodesPrintQuotePayload() throws {
+    let data = Data(
+        """
+        {
+          "kind": "print_quote",
+          "provider": "local_stub",
+          "status": "draft_quote",
+          "source_asset_uri": "local://generated-assets/myth_test.glb",
+          "print_candidate_uri": "local://print-candidates/myth_test.3mf",
+          "currency": "USD",
+          "estimated_price_cents": 1600,
+          "estimated_production_days": 5,
+          "estimated_shipping_days": 6,
+          "checkout_url": null,
+          "requires_user_approval": true,
+          "approval_reason": "Draft quote must be reviewed.",
+          "quote_notes": ["material=standard_resin", "local quote stub"]
+        }
+        """.utf8
+    )
+
+    let quote = try PMFJSON.decoder.decode(PrintQuote.self, from: data)
+
+    try expectEqual(quote.kind, "print_quote")
+    try expectEqual(quote.provider, "local_stub")
+    try expectEqual(quote.status, "draft_quote")
+    try expectEqual(quote.currency, "USD")
+    try expectEqual(quote.estimatedPriceCents, 1600)
+    try expectEqual(quote.estimatedProductionDays, 5)
+    try expectEqual(quote.estimatedShippingDays, 6)
+    try expectEqual(quote.checkoutUrl, nil)
+    try expectEqual(quote.requiresUserApproval, true)
+    try expectEqual(quote.quoteNotes.count, 2)
+}
+
+private func testEncodesPrintQuoteRequestAsSnakeCase() throws {
+    let request = PrintQuoteRequest(
+        printCandidate: samplePrintCandidate(),
+        quantity: 1,
+        material: "standard_resin",
+        finish: "matte",
+        shipToCountry: "US"
+    )
+
+    let body = String(decoding: try PMFJSON.encoder.encode(request), as: UTF8.self)
+
+    try expectContains(body, "\"print_candidate\":{")
+    try expectContains(body, "\"source_asset_uri\":\"local:\\/\\/generated-assets\\/myth_test.glb\"")
+    try expectContains(body, "\"ship_to_country\":\"US\"")
+    try expectContains(body, "\"quantity\":1")
+    try expectContains(body, "\"material\":\"standard_resin\"")
+    try expectContains(body, "\"finish\":\"matte\"")
+    try expectNotContains(body, "sourceAssetUri")
+    try expectNotContains(body, "shipToCountry")
+}
+
 private func testCaptureIDValidation() throws {
     try expectTrue(CaptureID.isValid("cap_0123456789abcdef"))
     try expectFalse(CaptureID.isValid("cap_example"))
@@ -640,6 +700,77 @@ private func testGetProviderReadinessSanitizesHTTPErrorBody() async throws {
         try expectFalse(sanitizedBody.contains(secret))
         try expectContains(sanitizedBody, "Authorization=Bearer [redacted]")
         try expectContains(sanitizedBody, "api_key=[redacted]")
+    }
+}
+
+private func testCreatePrintQuoteBuildsJSONRequest() async throws {
+    let responseData = Data(
+        """
+        {
+          "kind": "print_quote",
+          "provider": "local_stub",
+          "status": "draft_quote",
+          "source_asset_uri": "local://generated-assets/myth_test.glb",
+          "print_candidate_uri": "local://print-candidates/myth_test.3mf",
+          "currency": "USD",
+          "estimated_price_cents": 1600,
+          "estimated_production_days": 5,
+          "estimated_shipping_days": 6,
+          "checkout_url": null,
+          "requires_user_approval": true,
+          "approval_reason": "Draft quote must be reviewed.",
+          "quote_notes": ["local quote stub"]
+        }
+        """.utf8
+    )
+    let transport = RecordingTransport(responses: [HTTPResponse(statusCode: 200, data: responseData)])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    let quote = try await client.createPrintQuote(
+        printCandidate: samplePrintCandidate(),
+        quantity: 1,
+        material: "standard_resin",
+        finish: "matte",
+        shipToCountry: "US"
+    )
+
+    try expectEqual(quote.estimatedPriceCents, 1600)
+    let request = try require(transport.requests.first, "missing print quote request")
+    try expectEqual(request.httpMethod, "POST")
+    try expectEqual(request.url?.path, "/v1/print-quotes")
+    try expectEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
+    let body = String(decoding: request.httpBody ?? Data(), as: UTF8.self)
+    try expectContains(body, "\"print_candidate\":{")
+    try expectContains(body, "\"uri\":\"local:\\/\\/print-candidates\\/myth_test.3mf\"")
+    try expectContains(body, "\"ship_to_country\":\"US\"")
+    try expectNotContains(body, "api_key")
+    try expectNotContains(body, "checkout_url")
+}
+
+private func testCreatePrintQuoteSanitizesCheckoutHTTPErrorBody() async throws {
+    let body = "api_key=treatstock-secret checkout_url=https://pay.example/private token=print-secret"
+    let transport = RecordingTransport(
+        responses: [HTTPResponse(statusCode: 502, data: Data(body.utf8))]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    do {
+        _ = try await client.createPrintQuote(printCandidate: samplePrintCandidate())
+        throw ContractTestError.expectationFailed("Expected print quote HTTP status error")
+    } catch let ForgeFlowError.httpStatus(status, sanitizedBody) {
+        try expectEqual(status, 502)
+        try expectContains(sanitizedBody, "api_key=[redacted]")
+        try expectContains(sanitizedBody, "checkout_url=[redacted]")
+        try expectContains(sanitizedBody, "token=[redacted]")
+        try expectNotContains(sanitizedBody, "treatstock-secret")
+        try expectNotContains(sanitizedBody, "https://pay.example/private")
+        try expectNotContains(sanitizedBody, "print-secret")
     }
 }
 
@@ -1662,6 +1793,19 @@ private func sampleContext() -> ContextCapsule {
         currentTheme: "deadline pressure",
         desiredTone: "tender, strange",
         recentMilestone: "finished a difficult project draft"
+    )
+}
+
+private func samplePrintCandidate() -> PrintCandidate {
+    PrintCandidate(
+        kind: "print_asset",
+        sourceAssetUri: "local://generated-assets/myth_test.glb",
+        provider: "local_stub",
+        format: "3mf",
+        uri: "local://print-candidates/myth_test.3mf",
+        requiresUserApproval: true,
+        approvalReason: "review before fulfillment",
+        printabilityNotes: ["stable base", "repair thin parts"]
     )
 }
 

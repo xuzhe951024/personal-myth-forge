@@ -178,6 +178,27 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
         return try await send(request, decoding: ProviderReadinessResponse.self)
     }
 
+    public func createPrintQuote(
+        printCandidate: PrintCandidate,
+        quantity: Int = 1,
+        material: String = "standard_resin",
+        finish: String = "matte",
+        shipToCountry: String = "US"
+    ) async throws -> PrintQuote {
+        let body = PrintQuoteRequest(
+            printCandidate: printCandidate,
+            quantity: quantity,
+            material: material,
+            finish: finish,
+            shipToCountry: shipToCountry
+        )
+        var request = URLRequest(url: endpoint("/v1/print-quotes"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try encodeJSONBody(body)
+        return try await send(request, decoding: PrintQuote.self)
+    }
+
     public func createNPCAgentTick(
         session: MythSession,
         tickIndex: Int,
@@ -270,6 +291,20 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
             in: body,
             pattern: #"((?:api[_-]?key|token|secret)\s*[:=]\s*)[^\s,;]+"#
         )
+        body = replacingMatches(
+            in: body,
+            pattern: #"(checkout_url\s*[:=]\s*)[^\s,;]+"#
+        )
+        body = replacingMatches(
+            in: body,
+            pattern: #"https?://pay\.[^\s,;]+"#,
+            replacement: "[redacted]"
+        )
+        body = replacingMatches(
+            in: body,
+            pattern: #"https?://checkout\.[^\s,;]+"#,
+            replacement: "[redacted]"
+        )
 
         if body.count > Self.maxHTTPErrorBodyCharacters {
             return "\(body.prefix(Self.maxHTTPErrorBodyCharacters))...[truncated]"
@@ -277,7 +312,11 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
         return body
     }
 
-    private func replacingMatches(in value: String, pattern: String) -> String {
+    private func replacingMatches(
+        in value: String,
+        pattern: String,
+        replacement: String = "$1[redacted]"
+    ) -> String {
         guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
             return value
         }
@@ -286,7 +325,7 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
             in: value,
             options: [],
             range: range,
-            withTemplate: "$1[redacted]"
+            withTemplate: replacement
         )
     }
 }

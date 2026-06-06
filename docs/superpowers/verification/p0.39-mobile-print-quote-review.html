@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.39 Mobile Print Quote Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #232522;
+      --muted: #5d665f;
+      --line: #d8ddd5;
+      --paper: #f7f9f4;
+      --panel: #ffffff;
+      --green: #31704b;
+      --blue: #276f8a;
+      --amber: #9a6127;
+      --plum: #66517a;
+      --red: #8b3f39;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e3e9e2;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 10px 15px 12px;
+      background: var(--paper);
+      border-left: 1px solid #cbd3cc;
+      border-right: 1px solid #cbd3cc;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      padding: 1px 0 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.08;
+      font-weight: 830;
+    }
+
+    .tag {
+      color: var(--plum);
+      font-size: 12px;
+      font-weight: 830;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      line-height: 1.15;
+      font-weight: 800;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .metric,
+    .row,
+    .gate,
+    .quote-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px;
+    }
+
+    .label {
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.18;
+      font-weight: 790;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 860;
+    }
+
+    .green {
+      color: var(--green);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .amber {
+      color: var(--amber);
+    }
+
+    .rows {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .row-key {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 780;
+      text-transform: uppercase;
+    }
+
+    .row-value {
+      font-size: 12px;
+      line-height: 1.22;
+      font-weight: 780;
+      overflow-wrap: anywhere;
+    }
+
+    .quote-panel {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .quote-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .quote-title {
+      font-size: 13px;
+      line-height: 1.18;
+      font-weight: 820;
+    }
+
+    .price {
+      color: var(--green);
+      font-size: 17px;
+      line-height: 1;
+      font-weight: 860;
+      white-space: nowrap;
+    }
+
+    .button {
+      display: inline-flex;
+      justify-content: center;
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      background: var(--plum);
+      color: white;
+      font-size: 12px;
+      font-weight: 830;
+    }
+
+    .gate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .gate-title {
+      color: var(--amber);
+      font-size: 11px;
+      line-height: 1.15;
+      font-weight: 820;
+    }
+
+    .gate-copy {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.18;
+    }
+
+    .safety {
+      color: var(--red);
+      font-weight: 830;
+    }
+
+    code {
+      color: var(--plum);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>Mobile Print Quote Review</h1>
+      <div class="tag">P0.39</div>
+    </header>
+
+    <section>
+      <h2>Final Acceptance</h2>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">passed</div>
+          <div class="value green">4</div>
+        </div>
+        <div class="metric">
+          <div class="label">blocked</div>
+          <div class="value amber">2</div>
+        </div>
+        <div class="metric">
+          <div class="label">failed</div>
+          <div class="value blue">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Mobile Handoff</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">view</div>
+          <div class="row-value"><code>PrintQuoteReviewView</code> renders after a myth session is ready.</div>
+        </div>
+        <div class="row">
+          <div class="row-key">call</div>
+          <div class="row-value"><code>POST /v1/print-quotes</code> from <code>createPrintQuote</code>.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Print Quote Panel</h2>
+      <div class="quote-panel">
+        <div class="quote-top">
+          <div class="quote-title">3MF print candidate</div>
+          <div class="price">USD 16.00</div>
+        </div>
+        <div class="button">Get Quote</div>
+        <div class="row-value"><code>draft_quote</code>, five production days plus six shipping days.</div>
+        <div class="row-value">User approval required before third-party fulfillment.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Review Safety</h2>
+      <div class="rows">
+        <div class="row">
+          <div class="row-key">checkout</div>
+          <div class="row-value"><span class="safety">No</span> checkout opening, payment action, or order submission.</div>
+        </div>
+        <div class="row">
+          <div class="row-key">secret</div>
+          <div class="row-value"><span class="safety">No</span> provider keys or payment links in mobile error text.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Remaining Gates</h2>
+      <div class="gate-grid">
+        <div class="gate">
+          <div class="gate-title">Treatstock</div>
+          <div class="gate-copy">Live quote adapter remains intentionally not implemented.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">Sculpteo</div>
+          <div class="gate-copy">Key slot exists; no live order handoff yet.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">Device</div>
+          <div class="gate-copy">Real iPhone validation waits on signing and LAN URL.</div>
+        </div>
+        <div class="gate">
+          <div class="gate-title">Xcode</div>
+          <div class="gate-copy">Apple SDK license gate remains local to this machine.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
