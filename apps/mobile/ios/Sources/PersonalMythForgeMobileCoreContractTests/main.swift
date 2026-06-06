@@ -33,6 +33,9 @@ do {
     try testDevicePreflightKeepsLoopbackBlockedWithReachableHealth()
     try testDevicePreflightWaitsForProviderReadiness()
     try testDevicePreflightBlocksAndRedactsProviderError()
+    try testDevicePreflightWaitsForFinalLaunchReport()
+    try testDevicePreflightMapsFinalLaunchPartialToWaiting()
+    try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testDevicePreflightMarksLocalDemoReady()
     try testDevicePreflightMarksSavedNPCHistoryReady()
     try testDemoScriptStartsWithCapture()
@@ -787,6 +790,47 @@ private func testDevicePreflightBlocksAndRedactsProviderError() throws {
 
     try expectEqual(summary.overallStatus, .blocked)
     try expectEqual(summary.item(id: "providers")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
+private func testDevicePreflightWaitsForFinalLaunchReport() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: nil,
+        finalDemoLaunchError: nil
+    )
+
+    try expectEqual(summary.overallStatus, .waiting)
+    try expectEqual(summary.item(id: "final_launch")?.status, .waiting)
+    try expectContains(summary.item(id: "final_launch")?.detail ?? "", "launch")
+}
+
+private func testDevicePreflightMapsFinalLaunchPartialToWaiting() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(overallStatus: "partial")
+    )
+
+    try expectEqual(summary.item(id: "final_launch")?.status, .waiting)
+    try expectContains(summary.item(id: "final_launch")?.detail ?? "", "partial")
+}
+
+private func testDevicePreflightBlocksAndRedactsFinalLaunchError() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: nil,
+        finalDemoLaunchError: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "final_launch")?.status, .blocked)
     try expectContains(text, "[withheld]")
     try expectNotContains(text, "sk-test")
     try expectNotContains(text, "/Users/")
@@ -2864,6 +2908,8 @@ private func devicePreflightSummary(
     backendHealthProbe: BackendHealthProbe? = nil,
     providerReadiness: ProviderReadinessResponse? = localDemoProviderReadiness(),
     providerReadinessError: String? = nil,
+    finalDemoLaunch: FinalDemoLaunchReport? = finalDemoLaunchReport(overallStatus: "ready"),
+    finalDemoLaunchError: String? = nil,
     finalShowcaseSummary: FinalShowcaseSummary = finalShowcaseSummary(),
     savedNPCTickCount: Int = 0
 ) -> DevicePreflightSummary {
@@ -2872,8 +2918,17 @@ private func devicePreflightSummary(
         backendHealthProbe: backendHealthProbe,
         providerReadiness: providerReadiness,
         providerReadinessError: providerReadinessError,
+        finalDemoLaunch: finalDemoLaunch,
+        finalDemoLaunchError: finalDemoLaunchError,
         finalShowcaseSummary: finalShowcaseSummary,
         savedNPCTickCount: savedNPCTickCount
+    )
+}
+
+private func finalDemoLaunchReport(overallStatus: String = "partial") -> FinalDemoLaunchReport {
+    try! PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(overallStatus: overallStatus)
     )
 }
 
