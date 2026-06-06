@@ -42,6 +42,7 @@ do {
     let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
+    let apiClient = try readText(coreRoot.appendingPathComponent("PersonalMythForgeAPIClient.swift"))
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
     try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
@@ -244,6 +245,31 @@ do {
     try requireContains(forgeRootView, "providerReadiness", "provider readiness root state")
     try requireContains(forgeRootView, "latestNPCTick", "npc tick root state")
     try requireContains(forgeRootView, "createNPCAgentTick", "npc tick API call")
+    try requireContains(
+        forgeRootView,
+        "advanceBackendNPCTick",
+        "server-owned npc tick app path"
+    )
+    try requireContains(
+        forgeRootView,
+        "advanceStatelessNPCTick",
+        "stateless npc tick fallback app path"
+    )
+    try requireContains(
+        forgeRootView,
+        "advanceMythSessionHistory",
+        "server-owned npc history API call"
+    )
+    try requireContains(
+        forgeRootView,
+        "applyBackendHistory(history)",
+        "server-owned npc history application"
+    )
+    try requireContains(
+        forgeRootView,
+        "MythSessionID.isValid(session.sessionId)",
+        "server-owned npc tick id guard"
+    )
     try requireContains(forgeRootView, "NPCTickView(", "npc tick view wiring")
     try requireContains(forgeRootView, "demoSnapshotStore", "demo snapshot store app state")
     try requireContains(forgeRootView, "restoreDemoRunSnapshot", "demo snapshot restore app path")
@@ -401,6 +427,16 @@ do {
     try requireContains(pmfModels, "npcAgentTraces: [NPCAgentTrace]", "npc agent traces model")
     try requireContains(mythSessionID, "MythSessionID", "myth session id validator")
     try requireContains(mythSessionID, "myth_", "myth session id prefix")
+    try requireContains(
+        apiClient,
+        "advanceMythSessionHistory",
+        "server-owned npc history client method"
+    )
+    try requireContains(
+        apiClient,
+        "/v1/myth-sessions/\\(sessionId)/npc-ticks",
+        "server-owned npc history endpoint"
+    )
     try requireContains(demoRunSnapshot, "DemoRunSnapshot", "demo run snapshot model")
     try requireContains(demoRunSnapshot, "maximumStoredTicks = 12", "demo snapshot tick cap")
     try requireContains(demoRunSnapshot, "DemoRunSnapshotFileStore", "demo snapshot file store")
