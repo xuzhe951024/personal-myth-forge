@@ -216,6 +216,32 @@ def test_local_print_candidate_url_is_served_from_session() -> None:
     assert download_response.content.startswith(b"PK")
 
 
+def test_final_demo_launch_endpoint_returns_sanitized_local_report() -> None:
+    client = TestClient(app)
+
+    response = client.get("/v1/final-demo-launch?mode=local")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["kind"] == "final_demo_launch_report"
+    assert payload["mode"] == "local"
+    assert payload["live_call_policy"]["live_calls_by_default"] is False
+    assert "make backend-device-demo" in payload["commands"]
+    assert "sk-" not in response.text
+    assert "Authorization" not in response.text
+    assert "data:image" not in response.text
+    assert "checkout_url" not in response.text
+    assert "/Users/" not in response.text
+
+
+def test_final_demo_launch_endpoint_rejects_invalid_mode() -> None:
+    client = TestClient(app)
+
+    response = client.get("/v1/final-demo-launch?mode=live")
+
+    assert response.status_code == 422
+
+
 def test_demo_route_serves_mobile_first_shell() -> None:
     client = TestClient(app)
 
