@@ -66,11 +66,24 @@ do {
     try requireContains(captureFormView, "Scan readiness", "scan readiness app shell source")
     try requireContains(captureFormView, "chooseCapture", "capture button closure")
     try requireContains(captureFormView, "forgeMyth", "forge button closure")
+    try requireContains(captureFormView, "PhotosPicker", "photo picker app shell source")
     try requireNotContains(captureFormView, "Future Xcode target wires", "capture button no-op comment")
     try requireNotContains(captureFormView, "Future Xcode target triggers", "forge button no-op comment")
     try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
     try requireContains(forgeRootView, "ForgeFlowService", "forge flow service source wiring")
     try requireContains(forgeRootView, "forgeService.forge", "forge flow service call")
+    try requireContains(forgeRootView, "fileImporter", "file importer app shell source")
+    try requireContains(forgeRootView, "loadTransferable(type: Data.self)", "photo data loading source")
+    try requireContains(forgeRootView, "UTType", "file content type source")
+    try requireContains(forgeRootView, "CaptureMediaSelection", "capture media selection source")
+    try requireContains(
+        forgeRootView,
+        "startAccessingSecurityScopedResource",
+        "security scoped file access"
+    )
+    try requireNotContains(forgeRootView, "sampleMedia", "sample media fallback")
+    try requireNotContains(forgeRootView, "sample-image", "sample image bytes")
+    try requireNotContains(forgeRootView, "scan-glb", "sample scan bytes")
 
     try scanForMobileSecrets(in: [appRoot, coreRoot], additionalFiles: [packageFile, projectFile, plistFile])
 
