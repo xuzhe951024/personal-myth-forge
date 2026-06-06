@@ -29,6 +29,11 @@ do {
     try testNPCAgentTickSummaryShowsLatestTickResolution()
     try testNPCAgentTickSummaryShowsAutonomyRunning()
     try testNPCAgentTickSummaryRedactsUnsafeText()
+    try testNPCAgentActionGateDisablesWithoutSession()
+    try testNPCAgentActionGateEnablesLocalDemoActions()
+    try testNPCAgentActionGateDisablesMissingOpenAISetup()
+    try testNPCAgentActionGateDisablesWhileAutonomyRuns()
+    try testNPCAgentActionGateRedactsUnsafeDetail()
     try testDecodesPrintQuotePayload()
     try testFinalShowcaseSummaryWaitsBeforeSession()
     try testFinalShowcaseSummaryReadyForLocalDemo()
@@ -880,6 +885,115 @@ private func testNPCAgentTickSummaryRedactsUnsafeText() throws {
     try expectNotContains(text, "local-capture://")
     try expectNotContains(text, "checkout")
     try expectNotContains(text, "Bearer")
+}
+
+private func testNPCAgentActionGateDisablesWithoutSession() throws {
+    let gate = NPCAgentActionGateBuilder.build(
+        session: nil,
+        npcAgentModeSummary: NPCAgentModeSummaryBuilder.build(
+            session: nil,
+            latestTick: nil,
+            tickHistoryCount: 0,
+            providerReadiness: nil,
+            providerReadinessError: nil
+        ),
+        npcAgentTickSummary: NPCAgentTickSummaryBuilder.build(
+            session: nil,
+            latestTick: nil,
+            tickHistoryCount: 0,
+            isAdvancingTick: false,
+            isRunningAutonomy: false,
+            errorMessage: nil
+        ),
+        isAdvancingTick: false,
+        isRunningAutonomy: false
+    )
+
+    try expectEqual(gate.canAdvanceVillage, false)
+    try expectEqual(gate.canRunAutonomy, false)
+    try expectEqual(gate.disabledReason, "session_required")
+    try expectContains(gate.detail, "Forge")
+}
+
+private func testNPCAgentActionGateEnablesLocalDemoActions() throws {
+    let session = localAgentSession()
+    let gate = NPCAgentActionGateBuilder.build(
+        session: session,
+        npcAgentModeSummary: localDemoNPCAgentModeSummary(session: session),
+        npcAgentTickSummary: npcAgentTickSummary(session: session),
+        isAdvancingTick: false,
+        isRunningAutonomy: false
+    )
+
+    try expectEqual(gate.canAdvanceVillage, true)
+    try expectEqual(gate.canRunAutonomy, true)
+    try expectEqual(gate.disabledReason, nil)
+    try expectContains(gate.detail, "local")
+}
+
+private func testNPCAgentActionGateDisablesMissingOpenAISetup() throws {
+    let session = localAgentSession()
+    let gate = NPCAgentActionGateBuilder.build(
+        session: session,
+        npcAgentModeSummary: missingOpenAINPCAgentModeSummary(session: session),
+        npcAgentTickSummary: npcAgentTickSummary(session: session),
+        isAdvancingTick: false,
+        isRunningAutonomy: false
+    )
+
+    try expectEqual(gate.canAdvanceVillage, false)
+    try expectEqual(gate.canRunAutonomy, false)
+    try expectEqual(gate.disabledReason, "npc_setup_required")
+    try expectContains(gate.detail, "OPENAI_API_KEY")
+}
+
+private func testNPCAgentActionGateDisablesWhileAutonomyRuns() throws {
+    let session = localAgentSession()
+    let gate = NPCAgentActionGateBuilder.build(
+        session: session,
+        npcAgentModeSummary: localDemoNPCAgentModeSummary(session: session),
+        npcAgentTickSummary: npcAgentTickSummary(session: session, isRunningAutonomy: true),
+        isAdvancingTick: false,
+        isRunningAutonomy: true
+    )
+
+    try expectEqual(gate.canAdvanceVillage, false)
+    try expectEqual(gate.canRunAutonomy, false)
+    try expectEqual(gate.disabledReason, "npc_action_running")
+    try expectContains(gate.detail, "Running")
+}
+
+private func testNPCAgentActionGateRedactsUnsafeDetail() throws {
+    let session = localAgentSession()
+    let summary = NPCAgentModeSummary(
+        status: .needsSetup,
+        title: "NPC setup needed",
+        detail: "Authorization Bearer token sk-test /Users/zhexu file:///tmp/private local-capture://cap checkout_url",
+        providerLabel: "openai",
+        runtimeLabel: "openai",
+        traceCount: 1,
+        tickHistoryCount: 0,
+        missingEnv: ["OPENAI_API_KEY"],
+        privacyNotes: []
+    )
+    let gate = NPCAgentActionGateBuilder.build(
+        session: session,
+        npcAgentModeSummary: summary,
+        npcAgentTickSummary: npcAgentTickSummary(session: session),
+        isAdvancingTick: false,
+        isRunningAutonomy: false
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(gate), as: UTF8.self)
+
+    try expectEqual(gate.canRunAutonomy, false)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "Authorization")
 }
 
 private func testDecodesPrintQuotePayload() throws {
@@ -4181,6 +4295,10 @@ private func localDemoNPCAgentModeSummary() -> NPCAgentModeSummary {
     var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
     session.npcAgentRuntime = "local_agent_runtime"
     session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+    return localDemoNPCAgentModeSummary(session: session)
+}
+
+private func localDemoNPCAgentModeSummary(session: MythSession) -> NPCAgentModeSummary {
     return NPCAgentModeSummaryBuilder.build(
         session: session,
         latestTick: nil,
@@ -4195,6 +4313,10 @@ private func missingOpenAINPCAgentModeSummary() -> NPCAgentModeSummary {
     session.npcDirector = "openai"
     session.npcAgentRuntime = "local_agent_runtime"
     session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+    return missingOpenAINPCAgentModeSummary(session: session)
+}
+
+private func missingOpenAINPCAgentModeSummary(session: MythSession) -> NPCAgentModeSummary {
     return NPCAgentModeSummaryBuilder.build(
         session: session,
         latestTick: nil,
@@ -4202,6 +4324,29 @@ private func missingOpenAINPCAgentModeSummary() -> NPCAgentModeSummary {
         providerReadiness: missingOpenAINPCProviderReadiness(),
         providerReadinessError: nil
     )
+}
+
+private func npcAgentTickSummary(
+    session: MythSession,
+    isAdvancingTick: Bool = false,
+    isRunningAutonomy: Bool = false,
+    errorMessage: String? = nil
+) -> NPCAgentTickSummary {
+    NPCAgentTickSummaryBuilder.build(
+        session: session,
+        latestTick: nil,
+        tickHistoryCount: 0,
+        isAdvancingTick: isAdvancingTick,
+        isRunningAutonomy: isRunningAutonomy,
+        errorMessage: errorMessage
+    )
+}
+
+private func localAgentSession() -> MythSession {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcAgentRuntime = "local_agent_runtime"
+    session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+    return session
 }
 
 private func finalShowcaseSummary(
