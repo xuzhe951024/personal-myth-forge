@@ -27,6 +27,7 @@
 		10A000000000000000000018 /* FinalLaunchStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000019 /* FinalLaunchStatusView.swift */; };
 		10A000000000000000000019 /* ContextCapsuleReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000020 /* ContextCapsuleReviewView.swift */; };
 		10A000000000000000000020 /* ArtifactHandoffActionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000021 /* ArtifactHandoffActionsView.swift */; };
+		10A000000000000000000021 /* NPCAgentModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000022 /* NPCAgentModeView.swift */; };
 		10A000000000000000000201 /* PersonalMythForgeMobileCore in Frameworks */ = {isa = PBXBuildFile; productRef = 10K000000000000000000001 /* PersonalMythForgeMobileCore */; };
 /* End PBXBuildFile section */
 
@@ -52,6 +53,7 @@
 		10B000000000000000000019 /* FinalLaunchStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinalLaunchStatusView.swift; sourceTree = "<group>"; };
 		10B000000000000000000020 /* ContextCapsuleReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextCapsuleReviewView.swift; sourceTree = "<group>"; };
 		10B000000000000000000021 /* ArtifactHandoffActionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtifactHandoffActionsView.swift; sourceTree = "<group>"; };
+		10B000000000000000000022 /* NPCAgentModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NPCAgentModeView.swift; sourceTree = "<group>"; };
 		10B000000000000000000101 /* PMFJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFJSON.swift; sourceTree = "<group>"; };
 		10B000000000000000000102 /* PMFModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFModels.swift; sourceTree = "<group>"; };
 		10B000000000000000000103 /* CaptureID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureID.swift; sourceTree = "<group>"; };
@@ -99,6 +101,7 @@
 				10B000000000000000000005 /* WorldResolutionView.swift */,
 				10B000000000000000000006 /* NPCReactionsView.swift */,
 				10B000000000000000000012 /* NPCTickView.swift */,
+				10B000000000000000000022 /* NPCAgentModeView.swift */,
 				10B000000000000000000013 /* DemoSnapshotStatusView.swift */,
 				10B000000000000000000014 /* PrintQuoteReviewView.swift */,
 				10B000000000000000000015 /* FinalShowcaseSummaryView.swift */,
@@ -227,6 +230,7 @@
 				10A000000000000000000018 /* FinalLaunchStatusView.swift in Sources */,
 				10A000000000000000000019 /* ContextCapsuleReviewView.swift in Sources */,
 				10A000000000000000000020 /* ArtifactHandoffActionsView.swift in Sources */,
+				10A000000000000000000021 /* NPCAgentModeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
