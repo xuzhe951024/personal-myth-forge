@@ -25,6 +25,14 @@ public struct DemoRunSnapshot: Codable, Equatable, Sendable {
         self.npcTicks = Self.normalizedTicks(npcTicks, sessionId: session.sessionId)
     }
 
+    public init(history: MythSessionHistory, savedAt: String) {
+        self.init(
+            savedAt: savedAt,
+            session: history.session,
+            npcTicks: history.npcTicks
+        )
+    }
+
     public func appending(_ tick: NPCAgentTick, savedAt: String) -> DemoRunSnapshot {
         DemoRunSnapshot(
             schemaVersion: schemaVersion,

@@ -13,6 +13,8 @@ do {
     try testDemoRunSnapshotFileStoreSavesLoadsOverwritesAndClears()
     try testDecodesProviderReadinessPayload()
     try testCaptureIDValidation()
+    try testMythSessionIDValidation()
+    try testDemoRunSnapshotBuildsFromBackendHistory()
     try testMultipartBodyIncludesMetadataAndFileWithoutLocalPaths()
     try testMultipartBuilderSanitizesHeaderValues()
     try await testUploadObjectCaptureBuildsMultipartRequest()
@@ -228,6 +230,27 @@ private func testDemoRunSnapshotKeepsMatchingTicksSortedAndBounded() throws {
     try expectEqual(snapshot.latestTick?.tickIndex, 15)
 }
 
+private func testDemoRunSnapshotBuildsFromBackendHistory() throws {
+    let session = try backendHistorySession()
+    let ticks = (1...18).map { index in
+        npcTick(sessionId: index == 3 ? "other_session" : session.sessionId, tickIndex: index)
+    }.reversed()
+    let history = MythSessionHistory(
+        sessionId: session.sessionId,
+        session: session,
+        npcTicks: Array(ticks),
+        updatedAt: "2026-06-06T12:00:00+00:00"
+    )
+
+    let snapshot = DemoRunSnapshot(history: history, savedAt: "2026-06-06T12:01:00Z")
+
+    try expectEqual(snapshot.savedAt, "2026-06-06T12:01:00Z")
+    try expectEqual(snapshot.session, session)
+    try expectEqual(snapshot.npcTicks.count, DemoRunSnapshot.maximumStoredTicks)
+    try expectEqual(snapshot.npcTicks.map(\.sessionId).filter { $0 != session.sessionId }, [])
+    try expectEqual(snapshot.npcTicks.map(\.tickIndex), Array(7...18))
+}
+
 private func testDemoRunSnapshotEncodesSnakeCaseJSONWithoutRawMediaOrSecrets() throws {
     let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
     let snapshot = DemoRunSnapshot(
@@ -327,6 +350,14 @@ private func testCaptureIDValidation() throws {
     try expectFalse(CaptureID.isValid("cap_example"))
     try expectFalse(CaptureID.isValid(".."))
     try expectFalse(CaptureID.isValid("cap_0123456789abcdeg"))
+}
+
+private func testMythSessionIDValidation() throws {
+    try expectTrue(MythSessionID.isValid("myth_0123456789abcdef"))
+    try expectFalse(MythSessionID.isValid("myth_test"))
+    try expectFalse(MythSessionID.isValid("../myth_0123456789abcdef"))
+    try expectFalse(MythSessionID.isValid("myth_0123456789abcdeg"))
+    try expectFalse(MythSessionID.isValid("session_cap_ba02a3816bd145b4"))
 }
 
 private func testMultipartBodyIncludesMetadataAndFileWithoutLocalPaths() throws {

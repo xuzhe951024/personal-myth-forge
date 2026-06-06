@@ -15,6 +15,8 @@ struct ForgeRootView: View {
     @State private var restoredSnapshot: DemoRunSnapshot?
     @State private var npcTickHistory: [NPCAgentTick] = []
     @State private var snapshotStatusText: String?
+    @State private var backendHistoryStatusText: String?
+    @State private var isSyncingBackendHistory = false
     @State private var npcTickError: String?
     @State private var isAdvancingNPCTick = false
     @State private var objectLabel = "old brass key"
@@ -50,6 +52,8 @@ struct ForgeRootView: View {
                         savedAt: restoredSnapshot?.savedAt,
                         tickCount: npcTickHistory.count,
                         statusText: snapshotStatusText,
+                        backendHistoryStatusText: backendHistoryStatusText,
+                        isSyncingBackendHistory: isSyncingBackendHistory,
                         clearSnapshot: clearDemoRunSnapshot
                     )
                     ProviderReadinessView(readiness: providerReadiness, errorMessage: providerReadinessError)
@@ -87,7 +91,10 @@ struct ForgeRootView: View {
             }
             .navigationTitle("Personal Myth Forge")
             .task {
-                restoreDemoRunSnapshot()
+                let restoredSessionId = restoreDemoRunSnapshot()
+                if let restoredSessionId {
+                    await syncBackendHistory(for: restoredSessionId)
+                }
                 await loadProviderReadiness()
             }
             .onChange(of: selectedCaptureMode) { mode in
@@ -152,17 +159,20 @@ struct ForgeRootView: View {
         }
     }
 
-    private func restoreDemoRunSnapshot() {
+    @discardableResult
+    private func restoreDemoRunSnapshot() -> String? {
         do {
             guard let snapshot = try demoSnapshotStore.load() else {
-                return
+                return nil
             }
             state = ForgeFlowReducer.reduce(state: state, event: .sessionCreated(snapshot.session))
             npcTickHistory = snapshot.npcTicks
             restoredSnapshot = snapshot
             snapshotStatusText = "Loaded local demo state. No raw capture media was restored."
+            return snapshot.session.sessionId
         } catch {
             snapshotStatusText = "Could not load local demo state."
+            return nil
         }
     }
 
@@ -187,6 +197,8 @@ struct ForgeRootView: View {
             restoredSnapshot = nil
             npcTickHistory = []
             snapshotStatusText = "Cleared local demo state."
+            backendHistoryStatusText = nil
+            isSyncingBackendHistory = false
             if readySession != nil {
                 state = ForgeFlowReducer.reduce(state: state, event: .reset)
             }
@@ -209,6 +221,8 @@ struct ForgeRootView: View {
         npcTickHistory = []
         restoredSnapshot = nil
         snapshotStatusText = nil
+        backendHistoryStatusText = nil
+        isSyncingBackendHistory = false
         npcTickError = nil
         let draft = mediaSelection.captureDraft(
             label: objectLabel,
@@ -283,6 +297,49 @@ struct ForgeRootView: View {
 
     private var latestNPCTick: NPCAgentTick? {
         npcTickHistory.last
+    }
+
+    private func syncBackendHistory(for sessionId: String) async {
+        guard MythSessionID.isValid(sessionId) else {
+            await MainActor.run {
+                backendHistoryStatusText = "Backend history is unavailable for this legacy demo session."
+            }
+            return
+        }
+
+        await MainActor.run {
+            isSyncingBackendHistory = true
+            backendHistoryStatusText = nil
+        }
+
+        do {
+            let history = try await apiClient.getMythSessionHistory(sessionId: sessionId)
+            await MainActor.run {
+                let restoredTickCount = applyBackendHistory(history)
+                isSyncingBackendHistory = false
+                backendHistoryStatusText = "Backend history synced. \(restoredTickCount) NPC ticks restored."
+            }
+        } catch {
+            await MainActor.run {
+                isSyncingBackendHistory = false
+                backendHistoryStatusText = "Backend history not reachable; using local demo state."
+            }
+        }
+    }
+
+    @discardableResult
+    private func applyBackendHistory(_ history: MythSessionHistory) -> Int {
+        let snapshot = DemoRunSnapshot(history: history, savedAt: currentSnapshotTimestamp())
+        state = ForgeFlowReducer.reduce(state: state, event: .sessionCreated(snapshot.session))
+        npcTickHistory = snapshot.npcTicks
+        restoredSnapshot = snapshot
+        do {
+            try demoSnapshotStore.save(snapshot)
+            snapshotStatusText = "Updated local demo state from backend history."
+        } catch {
+            snapshotStatusText = "Could not save backend history locally."
+        }
+        return snapshot.npcTicks.count
     }
 
     private func currentSnapshotTimestamp() -> String {

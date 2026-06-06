@@ -187,8 +187,7 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
     }
 
     private func validateMythSessionId(_ sessionId: String) throws {
-        let pattern = #"^myth_[0-9a-f]{16}$"#
-        if sessionId.range(of: pattern, options: .regularExpression) == nil {
+        if !MythSessionID.isValid(sessionId) {
             throw ForgeFlowError.invalidMythSessionID(sessionId)
         }
     }

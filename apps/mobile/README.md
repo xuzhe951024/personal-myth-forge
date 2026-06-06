@@ -793,3 +793,44 @@ Remaining gaps after P0.27 are production account memory, background autonomous
 NPC loops, server-authoritative world simulation, accepting the Apple SDK
 license on this machine, real device installation, real provider-key runs, Unity
 movement execution, and print fulfillment.
+
+## P0.28 Mobile Backend History Sync
+
+P0.28 connects the P0.27 backend history contract to the app's restored demo
+surface. `ForgeRootView` now restores the local `DemoRunSnapshot` immediately,
+then non-blockingly calls backend history for valid `myth_<16 hex>` session ids:
+
+```http
+GET /v1/myth-sessions/{session_id}/history
+```
+
+When backend history is available, the app replaces the visible ready session
+and NPC tick history with the backend record and refreshes the local snapshot.
+When the backend is unavailable, the app keeps the local restored run visible
+and shows a compact fallback status.
+
+The Swift core adds `MythSessionID` so session id validation is shared by the
+API client and app source. `DemoRunSnapshot(history:savedAt:)` converts backend
+history into the compact local snapshot format.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.28-mobile-backend-history-sync.html
+docs/superpowers/verification/assets/p0.28-mobile-backend-history-sync-390x844.png
+```
+
+Remaining gaps after P0.28 are production account sync, server-authoritative
+autonomous NPC memory, background tick loops, accepting the Apple SDK license on
+this machine, real device installation, real provider-key runs, Unity movement
+execution, and print fulfillment.

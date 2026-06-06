@@ -681,3 +681,25 @@ Static evidence lives at:
 docs/superpowers/verification/p0.27-backend-session-history.html
 docs/superpowers/verification/assets/p0.27-backend-session-history-390x844.png
 ```
+
+P0.28 wires backend history into the visible iOS restore flow. On launch, the
+app still restores the local `DemoRunSnapshot` first so a demo remains visible
+offline. If that restored session id matches the backend `myth_<16 hex>`
+contract, the app then calls:
+
+```http
+GET /v1/myth-sessions/{session_id}/history
+```
+
+Successful sync replaces the visible ready session and NPC tick history with
+backend history, then refreshes the local snapshot. Failed sync leaves the
+local restored run visible and shows a non-blocking fallback status. Provider
+keys, raw media, local file URLs, and raw personal source documents remain out
+of the mobile app.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.28-mobile-backend-history-sync.html
+docs/superpowers/verification/assets/p0.28-mobile-backend-history-sync-390x844.png
+```
