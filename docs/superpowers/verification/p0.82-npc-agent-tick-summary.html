@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.82 NPC Agent Tick Summary</title>
+  <style>
+    :root {
+      --paper: #f3f1ea;
+      --panel: #ffffff;
+      --ink: #1f242b;
+      --muted: #65707d;
+      --line: #dde3ea;
+      --green: #177347;
+      --blue: #2f6690;
+      --coral: #b45548;
+      --gold: #9b6b18;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: 390px;
+      max-width: 390px;
+      min-height: 844px;
+      padding: 18px 12px 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border: 1px solid #91b99d;
+      border-radius: 6px;
+      color: var(--green);
+      background: #edf8f0;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .panel {
+      margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 8px 22px rgba(34, 30, 22, 0.08);
+    }
+
+    .headline {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.42;
+      overflow-wrap: anywhere;
+    }
+
+    .summary {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #dce8df;
+      border-radius: 8px;
+      background: #f7fbf7;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 62px minmax(0, 1fr);
+      gap: 8px;
+      align-items: baseline;
+      margin-bottom: 5px;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .metric .value {
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .rows {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 8px;
+    }
+
+    .rows li {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .privacy {
+      margin-top: 9px;
+      color: #596573;
+      font-size: 10.5px;
+      line-height: 1.36;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .button {
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .primary {
+      color: #fff;
+      background: var(--blue);
+    }
+
+    .secondary {
+      color: var(--blue);
+      border: 1px solid #b7c9d8;
+      background: #eff6fb;
+    }
+
+    .trace {
+      margin-top: 9px;
+      padding: 10px;
+      border: 1px solid #eaded8;
+      border-radius: 8px;
+      background: #fffaf7;
+    }
+
+    .trace-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .name {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .confidence {
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .action {
+      margin: 5px 0 0;
+      color: var(--coral);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .world {
+      margin-top: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .world div {
+      padding: 8px;
+      border-radius: 7px;
+      background: #f4f6f8;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <h1>P0.82 NPC Agent</h1>
+      <div class="chip">TICK SUMMARY</div>
+    </div>
+
+    <section class="panel" aria-label="NPC agent tick summary">
+      <div class="headline">
+        <h2>Next Village Tick</h2>
+        <span class="badge">READY</span>
+      </div>
+      <p class="copy">The latest autonomous tick has been resolved by the world arbitrator.</p>
+
+      <div class="summary">
+        <div class="headline">
+          <h2>NPC Agent tick resolved</h2>
+          <span class="badge">READY</span>
+        </div>
+        <p class="copy">The ritual shifts around the relic.</p>
+
+        <div class="metric">
+          <div class="label">Runtime</div>
+          <div class="value">local_tick_runtime</div>
+        </div>
+        <div class="metric">
+          <div class="label">Tick</div>
+          <div class="value">tick 2</div>
+        </div>
+        <div class="metric">
+          <div class="label">Decision</div>
+          <div class="value">1 accepted / 1 rejected</div>
+        </div>
+
+        <ul class="rows">
+          <li>Agent traces: 3</li>
+          <li>Accepted actions: 1</li>
+          <li>Rejected actions: 1</li>
+          <li>Visible changes: 2</li>
+          <li>Saved ticks: 2</li>
+        </ul>
+
+        <p class="privacy">
+          NPC Agent summaries use approved myth session context only. Provider keys, raw capture media, and private source text stay hidden.
+        </p>
+      </div>
+
+      <div class="actions">
+        <div class="button primary">Advance Village</div>
+        <div class="button secondary">Run Autonomy</div>
+      </div>
+
+      <article class="trace">
+        <div class="trace-head">
+          <span class="name">Mara</span>
+          <span class="confidence">82%</span>
+        </div>
+        <p class="copy">Intention: turn awe into shared witness.</p>
+        <p class="action">invite neighbors to witness</p>
+        <p class="copy">Mara makes the relic public without exposing raw personal context.</p>
+      </article>
+
+      <article class="trace">
+        <div class="trace-head">
+          <span class="name">Ior</span>
+          <span class="confidence">72%</span>
+        </div>
+        <p class="copy">Intention: slow the ritual before belief hardens.</p>
+        <p class="action">argue about the relic</p>
+      </article>
+
+      <div class="world">
+        <div>Accepted: invite neighbors to witness - safe visible action</div>
+        <div>Rejected: argue about the relic - too much doubt for this tick</div>
+        <div>Visible: Mara steps forward. Ior circles wide.</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

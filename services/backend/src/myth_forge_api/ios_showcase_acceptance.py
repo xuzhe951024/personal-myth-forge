@@ -286,6 +286,38 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_npc_agent_tick_summary",
+        label="Mobile NPC agent tick summary",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentTickSummary.swift",
+                "NPCAgentTickSummaryBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentTickSummary.swift",
+                "decisionLabel",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCAgentTickSummary.swift",
+                "privacyNotes",
+            ),
+            SourceRequirement("apps/mobile/ios/App/NPCTickView.swift", "let summary: NPCAgentTickSummary"),
+            SourceRequirement("apps/mobile/ios/App/NPCTickView.swift", "summary.decisionLabel"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "NPCAgentTickSummaryBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "summary: npcAgentTickSummary",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testNPCAgentTickSummaryShowsLatestTickResolution",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="print_quote",
         label="Print quote",
         requirements=(

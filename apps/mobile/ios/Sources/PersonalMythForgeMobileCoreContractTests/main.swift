@@ -24,6 +24,11 @@ do {
     try testNPCAgentModeShowsMissingOpenAIKey()
     try testNPCAgentModeUsesLatestTickRuntime()
     try testNPCAgentModeRedactsUnsafeText()
+    try testNPCAgentTickSummaryWaitsBeforeSession()
+    try testNPCAgentTickSummaryShowsInitialSessionTraces()
+    try testNPCAgentTickSummaryShowsLatestTickResolution()
+    try testNPCAgentTickSummaryShowsAutonomyRunning()
+    try testNPCAgentTickSummaryRedactsUnsafeText()
     try testDecodesPrintQuotePayload()
     try testFinalShowcaseSummaryWaitsBeforeSession()
     try testFinalShowcaseSummaryReadyForLocalDemo()
@@ -737,6 +742,133 @@ private func testNPCAgentModeRedactsUnsafeText() throws {
     try expectNotContains(text, "Authorization")
     try expectNotContains(text, "checkout_url")
     try expectNotContains(text, "file:///")
+}
+
+private func testNPCAgentTickSummaryWaitsBeforeSession() throws {
+    let summary = NPCAgentTickSummaryBuilder.build(
+        session: nil,
+        latestTick: nil,
+        tickHistoryCount: 0,
+        isAdvancingTick: false,
+        isRunningAutonomy: false,
+        errorMessage: nil
+    )
+
+    try expectEqual(summary.status, .waiting)
+    try expectEqual(summary.tickLabel, "not started")
+    try expectEqual(summary.runtimeLabel, "not started")
+    try expectContains(summary.detail, "Forge")
+    try expectContains(summary.privacyNotes.joined(separator: " "), "approved myth session")
+}
+
+private func testNPCAgentTickSummaryShowsInitialSessionTraces() throws {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcAgentRuntime = "local_agent_runtime"
+    session.npcAgentTraces = [
+        sampleNPCAgentTrace(npcId: "mara"),
+        sampleNPCAgentTrace(npcId: "ior"),
+        sampleNPCAgentTrace(npcId: "senn"),
+    ]
+
+    let summary = NPCAgentTickSummaryBuilder.build(
+        session: session,
+        latestTick: nil,
+        tickHistoryCount: 0,
+        isAdvancingTick: false,
+        isRunningAutonomy: false,
+        errorMessage: nil
+    )
+
+    try expectEqual(summary.status, .ready)
+    try expectEqual(summary.tickLabel, "initial")
+    try expectEqual(summary.runtimeLabel, "local_agent_runtime")
+    try expectContains(summary.title, "Initial NPC Agent traces")
+    try expectContains(summary.decisionLabel, "3 initial traces")
+    try expectContains(summary.rows.joined(separator: " "), "Saved ticks: 0")
+}
+
+private func testNPCAgentTickSummaryShowsLatestTickResolution() throws {
+    let session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    let tick = ritualTick(sessionId: session.sessionId, tickIndex: 2)
+
+    let summary = NPCAgentTickSummaryBuilder.build(
+        session: session,
+        latestTick: tick,
+        tickHistoryCount: 2,
+        isAdvancingTick: false,
+        isRunningAutonomy: false,
+        errorMessage: nil
+    )
+
+    try expectEqual(summary.status, .ready)
+    try expectEqual(summary.tickLabel, "tick 2")
+    try expectEqual(summary.runtimeLabel, "local_tick_runtime")
+    try expectContains(summary.title, "NPC Agent tick resolved")
+    try expectContains(summary.decisionLabel, "1 accepted")
+    try expectContains(summary.decisionLabel, "1 rejected")
+    try expectContains(summary.rows.joined(separator: " "), "Agent traces: 3")
+    try expectContains(summary.rows.joined(separator: " "), "Visible changes: 2")
+    try expectContains(summary.rows.joined(separator: " "), "Saved ticks: 2")
+}
+
+private func testNPCAgentTickSummaryShowsAutonomyRunning() throws {
+    let session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    let tick = npcTick(sessionId: session.sessionId, tickIndex: 4)
+
+    let summary = NPCAgentTickSummaryBuilder.build(
+        session: session,
+        latestTick: tick,
+        tickHistoryCount: 4,
+        isAdvancingTick: false,
+        isRunningAutonomy: true,
+        errorMessage: nil
+    )
+
+    try expectEqual(summary.status, .running)
+    try expectContains(summary.title, "running")
+    try expectContains(summary.detail, "3-step")
+    try expectEqual(summary.tickLabel, "tick 4")
+    try expectEqual(summary.runtimeLabel, "local_tick_runtime")
+}
+
+private func testNPCAgentTickSummaryRedactsUnsafeText() throws {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.npcAgentRuntime = "local_agent_runtime sk-test /Users/zhexu"
+    session.npcAgentTraces = [
+        NPCAgentTrace(
+            npcId: "mara",
+            name: "Mara",
+            belief: "sk-test /Users/zhexu/private",
+            intention: "Bearer token",
+            proposedAction: "open file:///tmp/private",
+            rationale: "local-capture://cap/media checkout_url",
+            confidence: 0.82
+        ),
+    ]
+    let tick = ritualTick(
+        sessionId: session.sessionId,
+        tickIndex: 5,
+        unsafeSuffix: " sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+    )
+
+    let summary = NPCAgentTickSummaryBuilder.build(
+        session: session,
+        latestTick: tick,
+        tickHistoryCount: 5,
+        isAdvancingTick: false,
+        isRunningAutonomy: false,
+        errorMessage: "Authorization Bearer token sk-test /Users/zhexu checkout_url file:///tmp/private"
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.status, .needsAttention)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
 }
 
 private func testDecodesPrintQuotePayload() throws {

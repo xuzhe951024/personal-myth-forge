@@ -4,6 +4,7 @@ import SwiftUI
 struct NPCTickView: View {
     let session: MythSession?
     let tick: NPCAgentTick?
+    let summary: NPCAgentTickSummary
     let tickHistoryCount: Int
     let isLoading: Bool
     let isRunningAutonomy: Bool
@@ -23,6 +24,8 @@ struct NPCTickView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            agentSummary
 
             if tickHistoryCount > 0 {
                 Text("\(tickHistoryCount) local ticks saved")
@@ -119,6 +122,92 @@ struct NPCTickView: View {
                     }
                 }
             }
+        }
+    }
+
+    private var agentSummary: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(summary.title)
+                        .font(.subheadline.weight(.semibold))
+                    Text(summary.detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                }
+                Spacer(minLength: 8)
+                Text(statusBadge)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(statusColor)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                summaryMetric("Runtime", summary.runtimeLabel)
+                summaryMetric("Tick", summary.tickLabel)
+                summaryMetric("Decision", summary.decisionLabel)
+            }
+
+            if !summary.rows.isEmpty {
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(summary.rows, id: \.self) { row in
+                        Text(row)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                }
+            }
+
+            if !summary.privacyNotes.isEmpty {
+                Text(summary.privacyNotes.joined(separator: " "))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private func summaryMetric(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(label)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 58, alignment: .leading)
+            Text(value)
+                .font(.caption.weight(.semibold))
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var statusBadge: String {
+        switch summary.status {
+        case .waiting:
+            return "WAIT"
+        case .running:
+            return "RUN"
+        case .ready:
+            return "READY"
+        case .needsAttention:
+            return "CHECK"
+        }
+    }
+
+    private var statusColor: Color {
+        switch summary.status {
+        case .waiting:
+            return .secondary
+        case .running:
+            return .blue
+        case .ready:
+            return .green
+        case .needsAttention:
+            return .orange
         }
     }
 
