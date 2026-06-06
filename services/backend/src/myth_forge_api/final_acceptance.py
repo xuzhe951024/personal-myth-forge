@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any, Callable, Literal
 
 from myth_forge_api.acceptance import DemoAcceptanceResult, ProviderMode, run_demo_acceptance
+from myth_forge_api.arkit_scan_generation_acceptance import (
+    ARKitScanGenerationAcceptanceResult,
+    run_arkit_scan_generation_acceptance,
+)
 from myth_forge_api.capture_acceptance import (
     Capture3DAcceptanceResult,
     run_capture_3d_acceptance,
@@ -90,6 +94,10 @@ CommandRunner = Callable[[list[str], Path], CommandExecutionResult]
 ProviderHandoffRunner = Callable[[bool], InlineCheckResult]
 DemoAcceptanceRunner = Callable[..., DemoAcceptanceResult]
 Capture3DAcceptanceRunner = Callable[[], Capture3DAcceptanceResult | InlineCheckResult]
+ARKitScanGenerationAcceptanceRunner = Callable[
+    [],
+    ARKitScanGenerationAcceptanceResult | InlineCheckResult,
+]
 PrintQuoteAcceptanceRunner = Callable[[], PrintQuoteAcceptanceResult | InlineCheckResult]
 IOSShowcaseAcceptanceRunner = Callable[[], IOSShowcaseAcceptanceResult | InlineCheckResult]
 IOSBackendHandoffAcceptanceRunner = Callable[
@@ -191,6 +199,9 @@ def run_final_acceptance(
     provider_handoff_runner: ProviderHandoffRunner | None = None,
     demo_acceptance_runner: DemoAcceptanceRunner | None = None,
     capture_3d_acceptance_runner: Capture3DAcceptanceRunner | None = None,
+    arkit_scan_generation_acceptance_runner: (
+        ARKitScanGenerationAcceptanceRunner | None
+    ) = None,
     print_quote_acceptance_runner: PrintQuoteAcceptanceRunner | None = None,
     ios_showcase_acceptance_runner: IOSShowcaseAcceptanceRunner | None = None,
     ios_backend_handoff_acceptance_runner: IOSBackendHandoffAcceptanceRunner | None = None,
@@ -214,6 +225,9 @@ def run_final_acceptance(
     selected_demo_acceptance_runner = demo_acceptance_runner or run_demo_acceptance
     selected_capture_3d_acceptance_runner = (
         capture_3d_acceptance_runner or run_capture_3d_acceptance
+    )
+    selected_arkit_scan_generation_acceptance_runner = (
+        arkit_scan_generation_acceptance_runner or run_arkit_scan_generation_acceptance
     )
     selected_print_quote_acceptance_runner = (
         print_quote_acceptance_runner or run_print_quote_acceptance
@@ -285,6 +299,14 @@ def run_final_acceptance(
             check_id="capture_3d_acceptance",
             label="Capture-to-3D acceptance",
             runner=selected_capture_3d_acceptance_runner,
+            require_real_core=False,
+        )
+    )
+    checks.append(
+        _run_inline_check(
+            check_id="arkit_scan_generation_acceptance",
+            label="ARKit scan generation acceptance",
+            runner=selected_arkit_scan_generation_acceptance_runner,
             require_real_core=False,
         )
     )
@@ -396,6 +418,7 @@ def _run_inline_check(
         InlineCheckResult
         | DemoAcceptanceResult
         | Capture3DAcceptanceResult
+        | ARKitScanGenerationAcceptanceResult
         | PrintQuoteAcceptanceResult
         | IOSShowcaseAcceptanceResult
         | IOSBackendHandoffAcceptanceResult

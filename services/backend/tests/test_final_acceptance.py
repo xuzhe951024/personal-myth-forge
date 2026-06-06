@@ -90,6 +90,31 @@ def passing_npc_agent_provider_result() -> InlineCheckResult:
     )
 
 
+def passing_arkit_scan_generation_result() -> InlineCheckResult:
+    return InlineCheckResult(
+        exit_code=0,
+        report={
+            "kind": "arkit_scan_generation_acceptance_report",
+            "status": "succeeded",
+            "summary": {"passed": 6, "failed": 0},
+            "capture": {
+                "capture_mode": "arkit_scan",
+                "reference_image_count": 2,
+                "scan_asset_count": 1,
+            },
+            "generation_request": {
+                "source_image_count": 2,
+                "source_asset_count": 1,
+            },
+            "generation_provenance": {
+                "input_mode": "multi_image",
+                "source_asset_count": 1,
+                "raw_sources_included": False,
+            },
+        },
+    )
+
+
 def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path) -> None:
     commands: list[list[str]] = []
     demo_calls: list[dict[str, object]] = []
@@ -144,6 +169,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
                 "generation_provenance": {"input_mode": "multi_image"},
             },
         ),
+        arkit_scan_generation_acceptance_runner=passing_arkit_scan_generation_result,
         print_quote_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={
@@ -170,7 +196,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.report["allow_live_provider_calls"] is False
     assert result.report["overall_status"] == "blocked"
     assert result.report["summary"] == {
-        "passed": 11,
+        "passed": 12,
         "blocked": 2,
         "failed": 0,
         "skipped": 0,
@@ -181,6 +207,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
         "demo_acceptance",
         "npc_agent_provider_acceptance",
         "capture_3d_acceptance",
+        "arkit_scan_generation_acceptance",
         "print_quote_acceptance",
         "ios_showcase_acceptance",
         "ios_backend_handoff_acceptance",
@@ -200,6 +227,16 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     }
     assert checks["capture_3d_acceptance"]["status"] == "passed"
     assert checks["capture_3d_acceptance"]["report"]["source_image_count"] == 3
+    assert checks["arkit_scan_generation_acceptance"]["status"] == "passed"
+    assert checks["arkit_scan_generation_acceptance"]["report"]["summary"] == {
+        "passed": 6,
+        "failed": 0,
+    }
+    assert checks["arkit_scan_generation_acceptance"]["report"]["capture"] == {
+        "capture_mode": "arkit_scan",
+        "reference_image_count": 2,
+        "scan_asset_count": 1,
+    }
     assert checks["print_quote_acceptance"]["status"] == "passed"
     assert checks["print_quote_acceptance"]["report"]["quote_status"] == "draft_quote"
     assert checks["ios_showcase_acceptance"]["status"] == "passed"
@@ -288,6 +325,7 @@ def test_final_acceptance_classifies_mobile_backend_health_blocker(tmp_path) -> 
             exit_code=0,
             report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
         ),
+        arkit_scan_generation_acceptance_runner=passing_arkit_scan_generation_result,
         print_quote_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={"kind": "print_quote_acceptance_report", "status": "succeeded"},
@@ -362,6 +400,19 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
                 ),
             },
         ),
+        arkit_scan_generation_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={
+                "kind": "arkit_scan_generation_acceptance_report",
+                "status": "succeeded",
+                "error": (
+                    "data:image/jpeg;base64,AAAA "
+                    "local-capture://cap_0123456789abcdef/media_1.jpg "
+                    "/tmp/personal-myth-forge/arkit.glb "
+                    "Authorization=Bearer arkit-secret"
+                ),
+            },
+        ),
         print_quote_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={
@@ -399,6 +450,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
     )
     assert checks["npc_agent_provider_acceptance"]["status"] == "passed"
     assert checks["capture_3d_acceptance"]["status"] == "passed"
+    assert checks["arkit_scan_generation_acceptance"]["status"] == "passed"
     assert checks["print_quote_acceptance"]["status"] == "passed"
     assert checks["ios_showcase_acceptance"]["status"] == "passed"
     assert checks["resource_template_acceptance"]["status"] == "passed"
@@ -415,6 +467,7 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
     assert "/Users/zhexu/Codex/personal-myth-forge" not in report_text
     assert "capture-secret" not in report_text
     assert "local-capture://" not in report_text
+    assert "arkit-secret" not in report_text
     assert "treatstock-secret" not in report_text
     assert "https://pay.example/private" not in report_text
 
@@ -452,6 +505,7 @@ def test_final_acceptance_passes_explicit_live_provider_consent_to_demo_runner(
             exit_code=0,
             report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
         ),
+        arkit_scan_generation_acceptance_runner=passing_arkit_scan_generation_result,
         print_quote_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={"kind": "print_quote_acceptance_report", "status": "succeeded"},
@@ -508,6 +562,7 @@ def test_final_acceptance_classifies_demo_consent_gate_as_blocked(tmp_path) -> N
             exit_code=0,
             report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
         ),
+        arkit_scan_generation_acceptance_runner=passing_arkit_scan_generation_result,
         print_quote_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={"kind": "print_quote_acceptance_report", "status": "succeeded"},
@@ -562,6 +617,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
                 "source_image_count": 3,
             },
         ),
+        arkit_scan_generation_acceptance_runner=passing_arkit_scan_generation_result,
         print_quote_acceptance_runner=lambda: InlineCheckResult(
             exit_code=0,
             report={
@@ -587,7 +643,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
     assert result.exit_code == 0
     assert result.report["overall_status"] == "passed"
     assert result.report["summary"] == {
-        "passed": 18,
+        "passed": 19,
         "blocked": 0,
         "failed": 0,
         "skipped": 0,
@@ -597,6 +653,7 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
         "demo_acceptance",
         "npc_agent_provider_acceptance",
         "capture_3d_acceptance",
+        "arkit_scan_generation_acceptance",
         "print_quote_acceptance",
         "ios_showcase_acceptance",
         "ios_backend_handoff_acceptance",

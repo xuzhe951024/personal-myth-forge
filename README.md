@@ -1842,3 +1842,34 @@ Static evidence lives at:
 docs/superpowers/verification/p0.66-unified-resource-apply.html
 docs/superpowers/verification/assets/p0.66-unified-resource-apply-390x844.png
 ```
+
+P0.67 adds an ARKit/Object Capture scan generation acceptance gate. The existing
+`capture_3d_acceptance` gate proves guided-scan reference images reach the 3D
+provider request; the new `arkit_scan_generation_acceptance` gate covers the
+Object Capture path by storing a synthetic `arkit_scan` package with one GLB scan
+asset plus two reference images, building backend generation sources, and
+running the normal myth-session pipeline with a recording local 3D provider.
+
+Run:
+
+```bash
+cd services/backend
+uv run pytest tests/test_arkit_scan_generation_acceptance.py \
+  tests/test_final_acceptance.py -q
+uv run python -m myth_forge_api.cli final-acceptance \
+  --profile quick \
+  --provider-mode local \
+  --repo-root ../.. \
+  --output .local/final-acceptance-p0.67.json
+```
+
+On this machine the quick final acceptance should report `12 passed, 2 blocked,
+0 failed`. The new gate is local-only by default, does not call Meshy, and
+reports only counts, content types, provenance, and safety flags.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.67-arkit-scan-generation-acceptance.html
+docs/superpowers/verification/assets/p0.67-arkit-scan-generation-acceptance-390x844.png
+```
