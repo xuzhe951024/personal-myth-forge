@@ -85,6 +85,9 @@ struct ForgeRootView: View {
                         phase: state.phase,
                         mediaSummaryTitle: mediaSelection.summary.title,
                         mediaSummaryDetail: mediaSelection.summary.detail,
+                        generationReadinessTitle: captureGenerationReadiness.title,
+                        generationReadinessRouteLabel: captureGenerationReadiness.route.displayLabel,
+                        generationReadinessDetail: captureGenerationReadiness.detail,
                         captureInputError: captureInputError,
                         isMediaReadyForUpload: mediaSelection.isReadyForUpload,
                         chooseCapture: chooseCapture,
@@ -497,6 +500,14 @@ struct ForgeRootView: View {
             session: readySession,
             npcTickHistoryCount: npcTickHistory.count,
             printQuote: printQuote,
+            providerReadiness: providerReadiness,
+            providerReadinessError: providerReadinessError
+        )
+    }
+
+    private var captureGenerationReadiness: CaptureGenerationReadiness {
+        CaptureGenerationReadinessBuilder.build(
+            selection: mediaSelection,
             providerReadiness: providerReadiness,
             providerReadinessError: providerReadinessError
         )

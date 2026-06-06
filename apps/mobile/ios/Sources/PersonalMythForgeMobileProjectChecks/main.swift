@@ -57,6 +57,9 @@ do {
     let devicePreflight = try readText(coreRoot.appendingPathComponent("DevicePreflight.swift"))
     let guidedScanPhotoSetBuilder = try readText(coreRoot.appendingPathComponent("GuidedScanPhotoSetBuilder.swift"))
     let arkitScanPackageBuilder = try readText(coreRoot.appendingPathComponent("ARKitScanPackageBuilder.swift"))
+    let captureGenerationReadiness = try readText(
+        coreRoot.appendingPathComponent("CaptureGenerationReadiness.swift")
+    )
     let apiClient = try readText(coreRoot.appendingPathComponent("PersonalMythForgeAPIClient.swift"))
     let contractTests = try readText(
         iosRoot.appendingPathComponent("Sources/PersonalMythForgeMobileCoreContractTests/main.swift")
@@ -316,7 +319,9 @@ do {
         expected: true
     )
     try requireContains(captureFormView, "CaptureMode", "capture mode app shell source")
-    try requireContains(captureFormView, "Scan readiness", "scan readiness app shell source")
+    try requireContains(captureFormView, "generationReadinessTitle", "capture generation readiness title")
+    try requireContains(captureFormView, "generationReadinessRouteLabel", "capture generation readiness route label")
+    try requireContains(captureFormView, "generationReadinessDetail", "capture generation readiness detail")
     try requireContains(captureFormView, "chooseCapture", "capture button closure")
     try requireContains(captureFormView, "let takePhoto: () -> Void", "camera action form input")
     try requireContains(captureFormView, "Take Photo", "single photo camera action")
@@ -362,6 +367,16 @@ do {
     try requireContains(forgeRootView, "printQuoteError", "print quote error state")
     try requireContains(forgeRootView, "FinalShowcaseSummaryView(", "final showcase summary view wiring")
     try requireContains(forgeRootView, "FinalShowcaseSummaryBuilder.build", "final showcase summary builder wiring")
+    try requireContains(
+        forgeRootView,
+        "CaptureGenerationReadinessBuilder.build",
+        "capture generation readiness root wiring"
+    )
+    try requireContains(
+        forgeRootView,
+        "captureGenerationReadiness.route.displayLabel",
+        "capture generation readiness route label wiring"
+    )
     try requireContains(forgeRootView, "DevicePreflightSummaryBuilder.build", "device preflight summary wiring")
     try requireContains(forgeRootView, "DevicePreflightView(summary:", "device preflight view wiring")
     try requireContains(forgeRootView, "backendHealthProbe", "backend health probe root state")
@@ -623,6 +638,26 @@ do {
         arkitScanPackageBuilder,
         "CaptureMediaSelection(mode: .arkitScan",
         "ARKit scan selection output"
+    )
+    try requireContains(
+        captureGenerationReadiness,
+        "CaptureGenerationReadinessBuilder",
+        "capture generation readiness builder"
+    )
+    try requireContains(
+        captureGenerationReadiness,
+        "maximumProviderSourceImages = 4",
+        "Meshy multi-image source cap"
+    )
+    try requireContains(
+        captureGenerationReadiness,
+        "CaptureGenerationRoute",
+        "capture generation route model"
+    )
+    try requireContains(
+        captureGenerationReadiness,
+        "displayLabel",
+        "capture generation route display label"
     )
     try requireContains(
         contractTests,

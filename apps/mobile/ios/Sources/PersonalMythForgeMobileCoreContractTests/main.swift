@@ -102,6 +102,11 @@ do {
     try testARKitScanPackageBuilderRejectsUnsupportedReference()
     try testARKitScanPackageBuilderRejectsOversizedScan()
     try testARKitScanPackageBuilderRejectsOversizedReference()
+    try testCaptureGenerationReadinessWaitsForGuidedScanPhotos()
+    try testCaptureGenerationReadinessMarksGuidedScanMultiImageRoute()
+    try testCaptureGenerationReadinessMarksARKitScanAssetRoute()
+    try testCaptureGenerationReadinessMarksMissingThreeDProvider()
+    try testCaptureGenerationReadinessRedactsProviderErrors()
     try testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset()
     try testArtifactPreviewStateMarksLocalUSDZAsSceneLoadable()
     try testArtifactPreviewStateHandlesMissingURI()
@@ -2183,6 +2188,102 @@ private func testARKitScanPackageBuilderRejectsOversizedReference() throws {
     }
 }
 
+private func testCaptureGenerationReadinessWaitsForGuidedScanPhotos() throws {
+    let selection = CaptureMediaSelection(
+        mode: .guidedScan,
+        media: [
+            captureMedia(filename: "scan_001.jpg", contentType: "image/jpeg", kind: .image),
+        ]
+    )
+
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: selection,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(readiness.status, .waiting)
+    try expectEqual(readiness.route, .waiting)
+    try expectEqual(readiness.title, "Guided scan needs photos")
+    try expectContains(readiness.detail, "2 photos")
+}
+
+private func testCaptureGenerationReadinessMarksGuidedScanMultiImageRoute() throws {
+    let selection = CaptureMediaSelection(
+        mode: .guidedScan,
+        media: (0..<6).map { index in
+            captureMedia(filename: "scan_\(index).jpg", contentType: "image/jpeg", kind: .image)
+        }
+    )
+
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: selection,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(readiness.status, .ready)
+    try expectEqual(readiness.route, .multiImage)
+    try expectEqual(readiness.route.displayLabel, "multi_image")
+    try expectEqual(readiness.sourceCount, 6)
+    try expectEqual(readiness.selectedProviderSourceCount, 4)
+    try expectEqual(readiness.title, "Guided scan ready for 3D")
+    try expectContains(readiness.detail, "6 photos")
+    try expectContains(readiness.detail, "Meshy")
+}
+
+private func testCaptureGenerationReadinessMarksARKitScanAssetRoute() throws {
+    let selection = try ARKitScanPackageBuilder.selection(
+        scanExport: ARKitScanExportFile(
+            filename: "idol.glb",
+            contentType: "model/gltf-binary",
+            data: Data([1])
+        ),
+        referenceImages: [
+            ARKitScanReferenceImageFile(filename: "front.jpg", contentType: "image/jpeg", data: Data([2])),
+            ARKitScanReferenceImageFile(filename: "side.png", contentType: "image/png", data: Data([3])),
+        ]
+    )
+
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: selection,
+        providerReadiness: realThreeDProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(readiness.status, .ready)
+    try expectEqual(readiness.route, .scanAsset)
+    try expectEqual(readiness.route.displayLabel, "scan_asset")
+    try expectEqual(readiness.sourceCount, 3)
+    try expectEqual(readiness.selectedProviderSourceCount, 1)
+    try expectEqual(readiness.title, "Scan package ready for 3D")
+    try expectContains(readiness.detail, "1 scan asset + 2 references")
+    try expectContains(readiness.detail, "Real 3D provider ready")
+}
+
+private func testCaptureGenerationReadinessMarksMissingThreeDProvider() throws {
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: readyGuidedScanSelection(),
+        providerReadiness: missingThreeDProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(readiness.status, .needsAttention)
+    try expectEqual(readiness.route, .multiImage)
+    try expectContains(readiness.detail, "MESHY_API_KEY")
+}
+
+private func testCaptureGenerationReadinessRedactsProviderErrors() throws {
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: readyGuidedScanSelection(),
+        providerReadiness: nil,
+        providerReadinessError: "sk-secret /Users/zhexu/private"
+    )
+
+    try expectEqual(readiness.status, .needsAttention)
+    try expectEqual(readiness.detail, "[withheld]")
+}
+
 private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
     let metadata = sampleMetadata()
     let context = sampleContext()
@@ -2714,6 +2815,39 @@ private func localDemoProviderReadiness() -> ProviderReadinessResponse {
                 status: "local_agent_runtime",
                 isDemoReady: true,
                 isRealProviderReady: false
+            ),
+        ]
+    )
+}
+
+private func realThreeDProviderReadiness() -> ProviderReadinessResponse {
+    ProviderReadinessResponse(
+        overallDemoReady: true,
+        overallRealReady: true,
+        providers: [
+            ProviderReadinessItem(
+                kind: "three_d",
+                selectedProvider: "meshy",
+                status: "ready",
+                isDemoReady: true,
+                isRealProviderReady: true
+            ),
+        ]
+    )
+}
+
+private func missingThreeDProviderReadiness() -> ProviderReadinessResponse {
+    ProviderReadinessResponse(
+        overallDemoReady: false,
+        overallRealReady: false,
+        providers: [
+            ProviderReadinessItem(
+                kind: "three_d",
+                selectedProvider: "meshy",
+                status: "missing_configuration",
+                isDemoReady: false,
+                isRealProviderReady: false,
+                missingEnv: ["MESHY_API_KEY"]
             ),
         ]
     )

@@ -1708,3 +1708,36 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.58-arkit-showcase-acceptance.html
 docs/superpowers/verification/assets/p0.58-arkit-showcase-acceptance-390x844.png
 ```
+
+## P0.59 Capture Generation Readiness
+
+P0.59 adds `CaptureGenerationReadinessBuilder` to the SwiftPM mobile core and
+wires it into the capture form. The form no longer displays fixed scan hints
+such as `2+ photos` or `mesh + reference`; it shows the actual generation route
+that will be handed to the backend:
+
+- `multi_image` for ready guided scans and photo sets, capped at four prepared
+  provider images for Meshy.
+- `scan_asset` for ARKit scan packages and uploaded scan files.
+- `single_image` for one-photo routes.
+- `waiting` or `needsAttention` when media or provider setup is not ready.
+
+The summary also merges backend provider readiness into the mobile capture
+panel. Local demos stay available without provider keys, while live 3D runs
+clearly call out `MESHY_API_KEY` when Meshy is selected but not configured.
+Provider errors are redacted before display.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.59-capture-generation-readiness.html
+docs/superpowers/verification/assets/p0.59-capture-generation-readiness-390x844.png
+```
