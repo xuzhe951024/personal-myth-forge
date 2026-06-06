@@ -1,0 +1,9 @@
+// Shared iOS deployment defaults. Machine-specific values belong in
+// Deployment.local.xcconfig, which is ignored by git.
+
+PRODUCT_BUNDLE_IDENTIFIER = com.personalmythforge.app
+DEVELOPMENT_TEAM =
+CODE_SIGN_STYLE = Automatic
+PMF_BACKEND_BASE_URL = http://127.0.0.1:8080
+
+#include? "Deployment.local.xcconfig"

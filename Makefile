@@ -19,3 +19,8 @@ backend-generate-local:
 
 mobile-xcode-build:
 	apps/mobile/ios/scripts/xcode_build_gate.sh
+
+.PHONY: mobile-deploy-preflight
+
+mobile-deploy-preflight:
+	apps/mobile/ios/scripts/deploy_preflight.sh

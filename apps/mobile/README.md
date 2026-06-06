@@ -655,3 +655,61 @@ docs/superpowers/verification/assets/p0.24-provider-handoff-smoke-390x844.png
 Remaining gaps after P0.24 are live provider-key runs, real device validation,
 signing, Unity movement execution, persistent tick history, print fulfillment,
 and Apple SDK license acceptance on this machine.
+
+## P0.25 iOS Deploy Config
+
+P0.25 moves device deployment inputs into project-local Xcode configuration
+files. The app target uses:
+
+```text
+apps/mobile/ios/Config/Deployment.xcconfig
+```
+
+for shared defaults, including `PRODUCT_BUNDLE_IDENTIFIER`,
+`CODE_SIGN_STYLE = Automatic`, and `PMF_BACKEND_BASE_URL`. The real local device
+values stay in the ignored file:
+
+```text
+apps/mobile/ios/Config/Deployment.local.xcconfig
+```
+
+Create it from the example:
+
+```bash
+cp apps/mobile/ios/Config/Deployment.local.xcconfig.example \
+  apps/mobile/ios/Config/Deployment.local.xcconfig
+```
+
+Then set:
+
+- `DEVELOPMENT_TEAM` to the Apple Team ID for local signing.
+- `PRODUCT_BUNDLE_IDENTIFIER` to a unique bundle id owned by that team.
+- `PMF_BACKEND_BASE_URL` to a Mac/LAN URL reachable from iPhone, such as
+  `http://192.168.1.10:8080`.
+
+Run:
+
+```bash
+make mobile-deploy-preflight
+```
+
+Without local values, this intentionally exits `2` and reports the missing Team
+ID plus the loopback backend URL. After the local config is filled, it prints
+the bundle id and backend URL without exposing secrets.
+
+After Apple's SDK license is accepted outside Codex, run:
+
+```bash
+make mobile-xcode-build
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.25-ios-deploy-config.html
+docs/superpowers/verification/assets/p0.25-ios-deploy-config-390x844.png
+```
+
+Remaining gaps after P0.25 are accepting the Apple SDK license on this machine,
+real device installation, real Meshy/OpenAI key runs, Unity movement execution,
+persistent tick history, and print fulfillment.

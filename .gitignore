@@ -22,3 +22,4 @@ build/
 storage/
 services/backend/.local/
 apps/mobile/ios/.build/
+apps/mobile/ios/Config/Deployment.local.xcconfig

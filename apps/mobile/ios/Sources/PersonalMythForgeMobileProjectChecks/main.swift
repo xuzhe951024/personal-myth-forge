@@ -9,16 +9,24 @@ do {
     let projectFile = iosRoot.appendingPathComponent("PersonalMythForge.xcodeproj/project.pbxproj")
     let plistFile = appRoot.appendingPathComponent("Info.plist")
     let xcodeBuildGateScriptFile = iosRoot.appendingPathComponent("scripts/xcode_build_gate.sh")
+    let deployPreflightScriptFile = iosRoot.appendingPathComponent("scripts/deploy_preflight.sh")
+    let deployConfigFile = iosRoot.appendingPathComponent("Config/Deployment.xcconfig")
+    let deployLocalExampleFile = iosRoot.appendingPathComponent("Config/Deployment.local.xcconfig.example")
     let sharedSchemeFile = iosRoot.appendingPathComponent(
         "PersonalMythForge.xcodeproj/xcshareddata/xcschemes/PersonalMythForge.xcscheme"
     )
+    let gitignoreFile = repositoryRoot.appendingPathComponent(".gitignore")
     let makefileFile = repositoryRoot.appendingPathComponent("Makefile")
 
     let packageManifest = try readText(packageFile)
     let project = try readText(projectFile)
     let plist = try readPropertyList(plistFile)
     let xcodeBuildGateScript = try readText(xcodeBuildGateScriptFile)
+    let deployPreflightScript = try readText(deployPreflightScriptFile)
+    let deployConfig = try readText(deployConfigFile)
+    let deployLocalExample = try readText(deployLocalExampleFile)
     let sharedScheme = try readText(sharedSchemeFile)
+    let gitignore = try readText(gitignoreFile)
     let makefile = try readText(makefileFile)
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
@@ -60,6 +68,19 @@ do {
     try requireContains(project, "productName = PersonalMythForgeMobileCore", "core package product dependency")
     try requireContains(project, "packageProductDependencies", "target package dependency list")
     try requireContains(project, "PersonalMythForgeMobileCore in Frameworks", "linked core product")
+    try requireContains(gitignore, "apps/mobile/ios/Config/Deployment.local.xcconfig", "ignored local iOS deployment config")
+    try requireContains(deployConfig, "PRODUCT_BUNDLE_IDENTIFIER = com.personalmythforge.app", "deployment bundle id default")
+    try requireContains(deployConfig, "DEVELOPMENT_TEAM =", "deployment team slot")
+    try requireContains(deployConfig, "CODE_SIGN_STYLE = Automatic", "automatic signing style")
+    try requireContains(deployConfig, "PMF_BACKEND_BASE_URL = http://127.0.0.1:8080", "local backend default")
+    try requireContains(deployConfig, #"#include? "Deployment.local.xcconfig""#, "optional local deployment include")
+    try requireContains(deployLocalExample, "DEVELOPMENT_TEAM = YOUR_TEAM_ID", "local deployment team example")
+    try requireContains(deployLocalExample, "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge", "local bundle id example")
+    try requireContains(deployLocalExample, "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080", "device backend URL example")
+    try requireContains(project, "Deployment.xcconfig", "deployment xcconfig project reference")
+    try requireContains(project, "baseConfigurationReference = 10B000000000000000000301", "target deployment base configuration")
+    try requireNotContains(project, "DEVELOPMENT_TEAM = \"\";", "empty team in target build settings")
+    try requireNotContains(project, "PRODUCT_BUNDLE_IDENTIFIER = com.personalmythforge.app;", "inline bundle id in target build settings")
     try requireContains(xcodeBuildGateScript, "DEVELOPER_DIR", "Xcode gate per-command developer dir")
     try requireContains(
         xcodeBuildGateScript,
@@ -82,6 +103,14 @@ do {
     )
     try requireContains(xcodeBuildGateScript, #"exec "$XCODEBUILD""#, "Xcode gate calls configured xcodebuild")
     try requireNotContains(xcodeBuildGateScript, "xcode-select", "Xcode gate global developer dir mutation")
+    try requireContains(deployPreflightScript, "Deployment.local.xcconfig", "deploy preflight local config")
+    try requireContains(deployPreflightScript, "DEVELOPMENT_TEAM", "deploy preflight team check")
+    try requireContains(deployPreflightScript, "PRODUCT_BUNDLE_IDENTIFIER", "deploy preflight bundle check")
+    try requireContains(deployPreflightScript, "PMF_BACKEND_BASE_URL", "deploy preflight backend URL check")
+    try requireContains(deployPreflightScript, "127.0.0.1", "deploy preflight loopback guard")
+    try requireNotContains(deployPreflightScript, "sudo", "deploy preflight no sudo")
+    try requireNotContains(deployPreflightScript, "xcode-select", "deploy preflight no global developer mutation")
+    try requireNotContains(deployPreflightScript, "xcodebuild -license", "deploy preflight no license mutation")
     try requireContains(
         sharedScheme,
         #"BlueprintIdentifier = "10E000000000000000000001""#,
@@ -100,6 +129,13 @@ do {
         makefile,
         "apps/mobile/ios/scripts/xcode_build_gate.sh",
         "mobile Xcode Make target script"
+    )
+    try requireContains(makefile, ".PHONY: mobile-deploy-preflight", "mobile deploy preflight phony target")
+    try requireContains(makefile, "mobile-deploy-preflight:", "mobile deploy preflight target")
+    try requireContains(
+        makefile,
+        "apps/mobile/ios/scripts/deploy_preflight.sh",
+        "mobile deploy preflight script"
     )
 
     for file in [
@@ -154,7 +190,7 @@ do {
 
     try requirePlistString(plist, key: "CFBundleDisplayName", expected: "Personal Myth Forge")
     try requirePlistString(plist, key: "CFBundleIdentifier", expected: "$(PRODUCT_BUNDLE_IDENTIFIER)")
-    try requirePlistString(plist, key: "PMFBackendBaseURL", expected: "http://127.0.0.1:8080")
+    try requirePlistString(plist, key: "PMFBackendBaseURL", expected: "$(PMF_BACKEND_BASE_URL)")
     try requirePlistText(plist, key: "NSCameraUsageDescription")
     try requirePlistText(plist, key: "NSPhotoLibraryUsageDescription")
     try requirePlistText(plist, key: "NSPhotoLibraryAddUsageDescription")

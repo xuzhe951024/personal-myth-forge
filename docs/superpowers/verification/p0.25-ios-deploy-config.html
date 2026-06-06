@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.25 iOS Deploy Config</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202522;
+      --muted: #65706c;
+      --line: #d7ddd7;
+      --paper: #fbfcf8;
+      --panel: #ffffff;
+      --green: #5b7d62;
+      --blue: #356d95;
+      --amber: #a66e24;
+      --red: #a34e3a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #edf1ea;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 14px 16px 16px;
+      background: var(--paper);
+      border-left: 1px solid #d5ddd4;
+      border-right: 1px solid #d5ddd4;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      padding: 6px 0 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.06;
+      font-weight: 760;
+    }
+
+    .tag {
+      color: var(--red);
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric,
+    .path,
+    .command {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 730;
+      margin-bottom: 5px;
+    }
+
+    .value {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .ok {
+      color: var(--green);
+    }
+
+    .warn {
+      color: var(--amber);
+    }
+
+    .path {
+      margin-bottom: 6px;
+    }
+
+    .path-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 14px;
+      font-weight: 760;
+    }
+
+    .pill {
+      border-radius: 6px;
+      padding: 4px 7px;
+      background: #e7f0e3;
+      color: #315c38;
+      font-size: 10px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .pill.warn {
+      background: #f6ecd8;
+      color: #7b531c;
+    }
+
+    .detail {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.32;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    code {
+      color: var(--blue);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+
+    .command {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header>
+      <h1>iOS Deploy Config</h1>
+      <div class="tag">P0.25</div>
+    </header>
+
+    <section>
+      <h2>Preflight State</h2>
+      <div class="grid">
+        <div class="metric">
+          <div class="label">without local config</div>
+          <div class="value warn">exit 2</div>
+        </div>
+        <div class="metric">
+          <div class="label">with local values</div>
+          <div class="value ok">pass</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Config Boundary</h2>
+      <div class="path">
+        <div class="path-title">
+          <span>Deployment.xcconfig</span>
+          <span class="pill">tracked</span>
+        </div>
+        <div class="detail">Shared bundle id default, automatic signing style, and backend URL slot.</div>
+      </div>
+      <div class="path">
+        <div class="path-title">
+          <span>Deployment.local.xcconfig</span>
+          <span class="pill warn">ignored</span>
+        </div>
+        <div class="detail">Apple Team ID, unique bundle id, and iPhone-reachable backend URL stay local.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Device URL Rule</h2>
+      <ul>
+        <li>Local dev default remains <code>http://127.0.0.1:8080</code>.</li>
+        <li>iPhone deploy needs a LAN URL such as <code>http://192.168.1.10:8080</code>.</li>
+        <li>The app reads <code>PMFBackendBaseURL</code> from <code>$(PMF_BACKEND_BASE_URL)</code>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Commands</h2>
+      <div class="command"><code>make mobile-deploy-preflight</code></div>
+      <div class="command"><code>make mobile-xcode-build</code></div>
+    </section>
+
+    <section>
+      <h2>Safety</h2>
+      <ul>
+        <li>No provider keys in iOS.</li>
+        <li>No committed Team ID or provisioning profile.</li>
+        <li>No <code>xcode-select</code> or global Xcode mutation.</li>
+        <li>SDK license remains an external gate.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
