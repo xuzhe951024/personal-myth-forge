@@ -38,6 +38,7 @@ do {
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
+    let artifactHandoffActionsView = try readText(appRoot.appendingPathComponent("ArtifactHandoffActionsView.swift"))
     let guidedScanCaptureView = try readText(appRoot.appendingPathComponent("GuidedScanCaptureView.swift"))
     let providerReadinessView = try readText(appRoot.appendingPathComponent("ProviderReadinessView.swift"))
     let npcReactionsView = try readText(appRoot.appendingPathComponent("NPCReactionsView.swift"))
@@ -54,6 +55,7 @@ do {
     let mythSessionID = try readText(coreRoot.appendingPathComponent("MythSessionID.swift"))
     let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
+    let artifactHandoffActions = try readText(coreRoot.appendingPathComponent("ArtifactHandoffActions.swift"))
     let npcRitualScene = try readText(coreRoot.appendingPathComponent("NPCRitualScene.swift"))
     let showcaseAutopilot = try readText(coreRoot.appendingPathComponent("ShowcaseAutopilot.swift"))
     let devicePreflight = try readText(coreRoot.appendingPathComponent("DevicePreflight.swift"))
@@ -695,6 +697,27 @@ do {
     try requireContains(artifact3DPreviewView, "NPC ritual", "NPC ritual scene status copy")
     try requireContains(npcRitualScene, "NPCRitualSceneBuilder", "NPC ritual scene model builder")
     try requireContains(artifactAssetPreparation, "ArtifactAssetPreparer", "asset preparation service")
+    try requireContains(artifactHandoffActions, "ArtifactHandoffActionBuilder", "artifact action builder")
+    try requireContains(artifactHandoffActions, "ArtifactHandoffActionSummary", "artifact action summary")
+    try requireContains(artifactHandoffActionsView, "Artifact Handoff", "artifact action panel title")
+    try requireContains(artifactHandoffActionsView, "ShareLink", "cached asset share action")
+    try requireContains(artifactHandoffActionsView, "Retry Download", "retry download action")
+    try requireContains(
+        artifact3DPreviewView,
+        "ArtifactHandoffActionBuilder.build",
+        "artifact action summary wiring"
+    )
+    try requireContains(
+        artifact3DPreviewView,
+        "ArtifactHandoffActionsView(",
+        "artifact action panel wiring"
+    )
+    try requireNotContains(
+        artifact3DPreviewView,
+        "cachedURL?.absoluteString",
+        "artifact preview avoids full local cached paths"
+    )
+    try requireContains(project, "ArtifactHandoffActionsView.swift", "artifact action Xcode file reference")
     try requireContains(guidedScanPhotoSetBuilder, "GuidedScanPhotoSetBuilder", "guided scan importer")
     try requireContains(
         guidedScanPhotoSetBuilder,

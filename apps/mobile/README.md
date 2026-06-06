@@ -1951,3 +1951,31 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.73-mobile-context-capsule-review.html
 docs/superpowers/verification/assets/p0.73-mobile-context-capsule-review-390x844.png
 ```
+
+## P0.74 Mobile Artifact Handoff Actions
+
+The 3D artifact preview now includes an `Artifact Handoff` panel. It shows
+whether the prepared generated asset is already feeding SceneKit, can be shared
+from the app cache, still needs GLB/GLTF conversion, or should be retried after
+a failed download.
+
+The panel does not expose provider keys, raw capture media, checkout URLs, or
+full local filesystem paths. It consumes only the sanitized
+`PreparedArtifactAsset` state already created by the mobile asset preparer.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+cd services/backend
+uv run pytest tests/test_ios_showcase_acceptance.py -q
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.74-mobile-artifact-actions.html
+docs/superpowers/verification/assets/p0.74-mobile-artifact-actions-390x844.png
+```

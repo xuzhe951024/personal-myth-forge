@@ -193,6 +193,32 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_artifact_actions",
+        label="Mobile artifact actions",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactHandoffActions.swift",
+                "ArtifactHandoffActionBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ArtifactHandoffActionsView.swift",
+                "Artifact Handoff",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ArtifactHandoffActionsView.swift",
+                "ShareLink",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/Artifact3DPreviewView.swift",
+                "ArtifactHandoffActionsView(",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testArtifactHandoffActionsOpenAndShareSceneAsset",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="npc_ritual_scene",
         label="NPC ritual scene",
         requirements=(
