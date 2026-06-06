@@ -118,6 +118,7 @@ struct ForgeRootView: View {
                     NPCTickView(
                         session: readySession,
                         tick: latestNPCTick,
+                        summary: npcAgentTickSummary,
                         tickHistoryCount: npcTickHistory.count,
                         isLoading: isAdvancingNPCTick,
                         isRunningAutonomy: isRunningAutonomy,
@@ -547,6 +548,17 @@ struct ForgeRootView: View {
             tickHistoryCount: npcTickHistory.count,
             providerReadiness: providerReadiness,
             providerReadinessError: providerReadinessError
+        )
+    }
+
+    private var npcAgentTickSummary: NPCAgentTickSummary {
+        NPCAgentTickSummaryBuilder.build(
+            session: readySession,
+            latestTick: latestNPCTick,
+            tickHistoryCount: npcTickHistory.count,
+            isAdvancingTick: isAdvancingNPCTick,
+            isRunningAutonomy: isRunningAutonomy,
+            errorMessage: npcTickError
         )
     }
 

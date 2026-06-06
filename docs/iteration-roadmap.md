@@ -97,6 +97,7 @@ Bridge deliverable:
 - P0.79 iOS deploy preflight gate for local/configured final launch mode
 - P0.80 iPhone Final Launch mode and live-call policy summary rows
 - P0.81 iPhone 3D generation provenance summary for scan/photo-to-3D handoff
+- P0.82 iPhone NPC Agent tick summary for latest autonomous world-resolution handoff
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
