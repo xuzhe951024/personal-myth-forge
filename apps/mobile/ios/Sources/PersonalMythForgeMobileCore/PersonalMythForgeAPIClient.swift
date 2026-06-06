@@ -152,6 +152,13 @@ public final class PersonalMythForgeAPIClient: ForgeFlowAPI, @unchecked Sendable
         return try await send(request, decoding: MythSessionHistory.self)
     }
 
+    public func advanceMythSessionHistory(sessionId: String) async throws -> MythSessionHistory {
+        try validateMythSessionId(sessionId)
+        var request = URLRequest(url: endpoint("/v1/myth-sessions/\(sessionId)/npc-ticks"))
+        request.httpMethod = "POST"
+        return try await send(request, decoding: MythSessionHistory.self)
+    }
+
     public func getProviderReadiness() async throws -> ProviderReadinessResponse {
         var request = URLRequest(url: endpoint("/v1/provider-readiness"))
         request.httpMethod = "GET"
