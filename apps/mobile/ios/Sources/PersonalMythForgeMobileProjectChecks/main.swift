@@ -9,6 +9,7 @@ do {
     let projectFile = iosRoot.appendingPathComponent("PersonalMythForge.xcodeproj/project.pbxproj")
     let plistFile = appRoot.appendingPathComponent("Info.plist")
     let xcodeBuildGateScriptFile = iosRoot.appendingPathComponent("scripts/xcode_build_gate.sh")
+    let deployPreflightScriptFile = iosRoot.appendingPathComponent("scripts/deploy_preflight.sh")
     let deployConfigFile = iosRoot.appendingPathComponent("Config/Deployment.xcconfig")
     let deployLocalExampleFile = iosRoot.appendingPathComponent("Config/Deployment.local.xcconfig.example")
     let sharedSchemeFile = iosRoot.appendingPathComponent(
@@ -21,6 +22,7 @@ do {
     let project = try readText(projectFile)
     let plist = try readPropertyList(plistFile)
     let xcodeBuildGateScript = try readText(xcodeBuildGateScriptFile)
+    let deployPreflightScript = try readText(deployPreflightScriptFile)
     let deployConfig = try readText(deployConfigFile)
     let deployLocalExample = try readText(deployLocalExampleFile)
     let sharedScheme = try readText(sharedSchemeFile)
@@ -101,6 +103,14 @@ do {
     )
     try requireContains(xcodeBuildGateScript, #"exec "$XCODEBUILD""#, "Xcode gate calls configured xcodebuild")
     try requireNotContains(xcodeBuildGateScript, "xcode-select", "Xcode gate global developer dir mutation")
+    try requireContains(deployPreflightScript, "Deployment.local.xcconfig", "deploy preflight local config")
+    try requireContains(deployPreflightScript, "DEVELOPMENT_TEAM", "deploy preflight team check")
+    try requireContains(deployPreflightScript, "PRODUCT_BUNDLE_IDENTIFIER", "deploy preflight bundle check")
+    try requireContains(deployPreflightScript, "PMF_BACKEND_BASE_URL", "deploy preflight backend URL check")
+    try requireContains(deployPreflightScript, "127.0.0.1", "deploy preflight loopback guard")
+    try requireNotContains(deployPreflightScript, "sudo", "deploy preflight no sudo")
+    try requireNotContains(deployPreflightScript, "xcode-select", "deploy preflight no global developer mutation")
+    try requireNotContains(deployPreflightScript, "xcodebuild -license", "deploy preflight no license mutation")
     try requireContains(
         sharedScheme,
         #"BlueprintIdentifier = "10E000000000000000000001""#,
@@ -119,6 +129,13 @@ do {
         makefile,
         "apps/mobile/ios/scripts/xcode_build_gate.sh",
         "mobile Xcode Make target script"
+    )
+    try requireContains(makefile, ".PHONY: mobile-deploy-preflight", "mobile deploy preflight phony target")
+    try requireContains(makefile, "mobile-deploy-preflight:", "mobile deploy preflight target")
+    try requireContains(
+        makefile,
+        "apps/mobile/ios/scripts/deploy_preflight.sh",
+        "mobile deploy preflight script"
     )
 
     for file in [
