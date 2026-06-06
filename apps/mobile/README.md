@@ -834,3 +834,45 @@ Remaining gaps after P0.28 are production account sync, server-authoritative
 autonomous NPC memory, background tick loops, accepting the Apple SDK license on
 this machine, real device installation, real provider-key runs, Unity movement
 execution, and print fulfillment.
+
+## P0.29 Server-Owned NPC Advance
+
+P0.29 moves the primary NPC advance path from client-supplied session payloads
+to backend-owned stored history. The backend now exposes:
+
+```http
+POST /v1/myth-sessions/{session_id}/npc-ticks
+```
+
+The endpoint loads the saved `MythSessionHistory`, computes the next tick index
+from stored ticks, derives recent events from the latest stored world changes,
+runs the configured NPC tick runtime, appends the new tick, and returns updated
+history.
+
+`PersonalMythForgeAPIClient.advanceMythSessionHistory(sessionId:)` calls this
+endpoint. `ForgeRootView` prefers it for valid backend session ids and applies
+the returned history with the same `applyBackendHistory(_:)` path used by app
+restore. The stateless `POST /v1/npc-ticks` call remains as a fallback for
+legacy/non-backend session ids.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.29-server-owned-npc-advance.html
+docs/superpowers/verification/assets/p0.29-server-owned-npc-advance-390x844.png
+```
+
+Remaining gaps after P0.29 are true background autonomous NPC loops, production
+account memory, accepting the Apple SDK license on this machine, real device
+installation, real Meshy/OpenAI key runs, Unity movement execution, and print
+fulfillment.

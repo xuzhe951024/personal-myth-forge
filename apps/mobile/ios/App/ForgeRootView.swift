@@ -257,33 +257,58 @@ struct ForgeRootView: View {
         }
         isAdvancingNPCTick = true
         npcTickError = nil
+
+        Task {
+            if MythSessionID.isValid(session.sessionId) {
+                await advanceBackendNPCTick(session: session)
+            } else {
+                await advanceStatelessNPCTick(session: session)
+            }
+        }
+    }
+
+    private func advanceBackendNPCTick(session: MythSession) async {
+        do {
+            let history = try await apiClient.advanceMythSessionHistory(sessionId: session.sessionId)
+            await MainActor.run {
+                _ = applyBackendHistory(history)
+                isAdvancingNPCTick = false
+                npcTickError = nil
+            }
+        } catch {
+            await MainActor.run {
+                isAdvancingNPCTick = false
+                npcTickError = "Server history advance is not reachable yet."
+            }
+        }
+    }
+
+    private func advanceStatelessNPCTick(session: MythSession) async {
         let nextTickIndex = (latestNPCTick?.tickIndex ?? 0) + 1
         let recentEvents = latestNPCTick?.worldResolution.visibleChanges
             ?? session.worldResolution.visibleChanges
 
-        Task {
-            do {
-                let tick = try await apiClient.createNPCAgentTick(
+        do {
+            let tick = try await apiClient.createNPCAgentTick(
+                session: session,
+                tickIndex: nextTickIndex,
+                recentEvents: recentEvents
+            )
+            await MainActor.run {
+                let updatedTicks = DemoRunSnapshot(
+                    savedAt: currentSnapshotTimestamp(),
                     session: session,
-                    tickIndex: nextTickIndex,
-                    recentEvents: recentEvents
-                )
-                await MainActor.run {
-                    let updatedTicks = DemoRunSnapshot(
-                        savedAt: currentSnapshotTimestamp(),
-                        session: session,
-                        npcTicks: npcTickHistory + [tick]
-                    ).npcTicks
-                    npcTickHistory = updatedTicks
-                    saveDemoRunSnapshot(session: session, ticks: updatedTicks)
-                    isAdvancingNPCTick = false
-                    npcTickError = nil
-                }
-            } catch {
-                await MainActor.run {
-                    isAdvancingNPCTick = false
-                    npcTickError = "NPC tick is not reachable yet."
-                }
+                    npcTicks: npcTickHistory + [tick]
+                ).npcTicks
+                npcTickHistory = updatedTicks
+                saveDemoRunSnapshot(session: session, ticks: updatedTicks)
+                isAdvancingNPCTick = false
+                npcTickError = nil
+            }
+        } catch {
+            await MainActor.run {
+                isAdvancingNPCTick = false
+                npcTickError = "NPC tick is not reachable yet."
             }
         }
     }

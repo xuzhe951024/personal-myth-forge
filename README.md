@@ -703,3 +703,28 @@ Static evidence lives at:
 docs/superpowers/verification/p0.28-mobile-backend-history-sync.html
 docs/superpowers/verification/assets/p0.28-mobile-backend-history-sync-390x844.png
 ```
+
+P0.29 makes stored backend history the primary NPC advance path. For sessions
+that already exist in the local myth session store, the backend now exposes:
+
+```http
+POST /v1/myth-sessions/{session_id}/npc-ticks
+```
+
+The endpoint loads `MythSessionHistory`, derives the next tick index and recent
+events from backend-owned tick history, runs the configured NPC tick runtime,
+appends the new tick, and returns updated `MythSessionHistory`. The older
+stateless `POST /v1/npc-ticks` endpoint remains available for compatibility.
+
+The iOS app now prefers the session-scoped endpoint for valid `myth_<16 hex>`
+session ids and applies the returned history through the existing backend
+history restore path. If the server-owned advance path is unavailable, the
+current visible demo state remains on screen. Provider keys and raw media still
+stay backend-only.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.29-server-owned-npc-advance.html
+docs/superpowers/verification/assets/p0.29-server-owned-npc-advance-390x844.png
+```

@@ -178,6 +178,40 @@ def create_npc_tick(request: NPCAgentTickRequest) -> NPCAgentTick:
         raise HTTPException(status_code=422, detail=_safe_provider_error(exc)) from exc
 
 
+@app.post("/v1/myth-sessions/{session_id}/npc-ticks", response_model=MythSessionHistory)
+def advance_myth_session_npc_tick(
+    session_id: str = PathParam(..., pattern=SESSION_ID_PATTERN),
+) -> MythSessionHistory:
+    store = build_myth_session_store()
+    history = store.get_history(session_id)
+    if history is None:
+        raise HTTPException(status_code=404, detail="Myth session not found.")
+    try:
+        request = NPCAgentTickRequest(
+            session=history.session,
+            tick_index=_next_history_tick_index(history),
+            recent_events=_history_recent_events(history),
+        )
+        tick = build_npc_tick_runtime().generate_tick(request)
+        return store.append_tick(history.session, tick)
+    except OpenAINPCProviderError as exc:
+        raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=_safe_provider_error(exc)) from exc
+
+
+def _next_history_tick_index(history: MythSessionHistory) -> int:
+    if not history.npc_ticks:
+        return 1
+    return max(tick.tick_index for tick in history.npc_ticks) + 1
+
+
+def _history_recent_events(history: MythSessionHistory) -> list[str]:
+    if history.npc_ticks:
+        return history.npc_ticks[-1].world_resolution.visible_changes
+    return history.session.world_resolution.visible_changes
+
+
 def _capture_generation_sources(
     capture: ObjectCapture,
     capture_store: CaptureStore,

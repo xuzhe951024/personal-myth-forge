@@ -26,6 +26,8 @@ do {
     try await testGetProviderReadinessSanitizesHTTPErrorBody()
     try await testGetMythSessionBuildsGETRequest()
     try await testGetMythSessionHistoryBuildsGETRequest()
+    try await testAdvanceMythSessionHistoryBuildsPOSTRequest()
+    try await testAdvanceMythSessionHistoryRejectsInvalidIDBeforeNetwork()
     try await testInvalidMythSessionIDFailsBeforeNetwork()
     try await testCreateNPCAgentTickBuildsJSONRequest()
     try await testCreateNPCAgentTickSanitizesHTTPErrorBody()
@@ -615,6 +617,45 @@ private func testGetMythSessionHistoryBuildsGETRequest() async throws {
     try expectEqual(request.httpMethod, "GET")
     try expectEqual(request.url?.path, "/v1/myth-sessions/\(session.sessionId)/history")
     try expectEqual(request.httpBody, nil)
+}
+
+private func testAdvanceMythSessionHistoryBuildsPOSTRequest() async throws {
+    let session = try backendHistorySession()
+    let history = MythSessionHistory(
+        sessionId: session.sessionId,
+        session: session,
+        npcTicks: [npcTick(sessionId: session.sessionId, tickIndex: 1)],
+        updatedAt: "2026-06-06T12:05:00+00:00"
+    )
+    let data = try PMFJSON.encoder.encode(history)
+    let transport = RecordingTransport(responses: [HTTPResponse(statusCode: 200, data: data)])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    let decoded = try await client.advanceMythSessionHistory(sessionId: session.sessionId)
+
+    try expectEqual(decoded, history)
+    let request = try require(transport.requests.first, "missing advance history request")
+    try expectEqual(request.httpMethod, "POST")
+    try expectEqual(request.url?.path, "/v1/myth-sessions/\(session.sessionId)/npc-ticks")
+    try expectTrue(request.httpBody == nil)
+}
+
+private func testAdvanceMythSessionHistoryRejectsInvalidIDBeforeNetwork() async throws {
+    let transport = RecordingTransport(responses: [])
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://127.0.0.1:8080")!,
+        transport: transport
+    )
+
+    do {
+        _ = try await client.advanceMythSessionHistory(sessionId: "../myth_0123456789abcdef")
+        throw ContractTestError.expectationFailed("Expected invalid myth session id error")
+    } catch ForgeFlowError.invalidMythSessionID("../myth_0123456789abcdef") {
+        try expectEqual(transport.requests.count, 0)
+    }
 }
 
 private func testInvalidMythSessionIDFailsBeforeNetwork() async throws {

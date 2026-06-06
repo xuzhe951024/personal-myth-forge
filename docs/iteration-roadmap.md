@@ -44,6 +44,7 @@ Bridge deliverable:
 - P0.26 local mobile demo snapshot for restored myth sessions and NPC tick history
 - P0.27 backend local session history with session/tick JSON recovery and mobile GET contract
 - P0.28 mobile backend history sync that refreshes restored demo runs from backend history
+- P0.29 server-owned NPC advance endpoint that appends and returns stored history
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
