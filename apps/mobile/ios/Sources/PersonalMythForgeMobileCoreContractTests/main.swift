@@ -17,14 +17,18 @@ do {
     try await testUploadObjectCaptureUsesGeneratedFilenamesWithoutLocalPaths()
     try await testUploadObjectCaptureRejectsUnsafeContentTypeBeforeNetwork()
     try await testUploadObjectCaptureBuildsARKitScanMultipartRequest()
+    try testCaptureModeIncludesGuidedScan()
     try testCaptureDraftBuildsSinglePhotoPayload()
     try testCaptureDraftBuildsPhotoSetPayload()
     try testCaptureDraftBuildsARKitScanPayload()
+    try testCaptureDraftBuildsGuidedScanPayload()
     try testCaptureDraftRejectsInvalidMedia()
+    try testCaptureDraftRejectsInvalidGuidedScanMedia()
     try testCaptureDraftRejectsOversizedMedia()
     try testCaptureMediaSelectionSummarizesSinglePhoto()
     try testCaptureMediaSelectionRequiresPhotoSetCount()
     try testCaptureMediaSelectionBuildsARKitDraft()
+    try testCaptureMediaSelectionSummarizesGuidedScan()
     try testCaptureMediaSelectionClearsWhenModeChanges()
     try testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset()
     try testArtifactPreviewStateMarksLocalUSDZAsSceneLoadable()
@@ -383,6 +387,11 @@ private func testUploadObjectCaptureBuildsARKitScanMultipartRequest() async thro
     try expectNotContains(body, "idol mesh.glb")
 }
 
+private func testCaptureModeIncludesGuidedScan() throws {
+    try expectEqual(CaptureMode.guidedScan.rawValue, "guided_scan")
+    try expectTrue(CaptureMode.allCases.contains(.guidedScan))
+}
+
 private func testCaptureDraftBuildsSinglePhotoPayload() throws {
     let draft = CaptureDraft(
         label: " old brass key ",
@@ -447,6 +456,26 @@ private func testCaptureDraftBuildsARKitScanPayload() throws {
     try expectEqual(payload.uploads[1].contentType, "image/jpeg")
 }
 
+private func testCaptureDraftBuildsGuidedScanPayload() throws {
+    let draft = CaptureDraft(
+        label: "wooden fox",
+        materialsText: "wood, paint",
+        visualNotes: "guided scan image set",
+        source: "phone_capture",
+        mode: .guidedScan,
+        media: [
+            captureMedia(filename: "front.jpg", contentType: "image/jpeg", kind: .image),
+            captureMedia(filename: "side.png", contentType: "image/png", kind: .image),
+        ]
+    )
+
+    let payload = try draft.validatedUploadPayload()
+
+    try expectEqual(payload.metadata.captureMode, "guided_scan")
+    try expectEqual(payload.uploads.count, 2)
+    try expectEqual(payload.uploads.map(\.contentType), ["image/jpeg", "image/png"])
+}
+
 private func testCaptureDraftRejectsInvalidMedia() throws {
     try expectCaptureDraftError(
         CaptureDraft(
@@ -491,6 +520,33 @@ private func testCaptureDraftRejectsInvalidMedia() throws {
             media: [captureMedia(filename: "key.txt", contentType: "text/plain", kind: .image)]
         ),
         .unsupportedContentType("text/plain")
+    )
+}
+
+private func testCaptureDraftRejectsInvalidGuidedScanMedia() throws {
+    try expectCaptureDraftError(
+        CaptureDraft(
+            label: "wooden fox",
+            materialsText: "",
+            visualNotes: "",
+            source: "phone_capture",
+            mode: .guidedScan,
+            media: [captureMedia(filename: "front.jpg", contentType: "image/jpeg", kind: .image)]
+        ),
+        .invalidMediaCount(.guidedScan, 1)
+    )
+    try expectCaptureDraftError(
+        CaptureDraft(
+            label: "wooden fox",
+            materialsText: "",
+            visualNotes: "",
+            source: "phone_capture",
+            mode: .guidedScan,
+            media: [
+                captureMedia(filename: "fox.glb", contentType: "model/gltf-binary", kind: .scanAsset)
+            ]
+        ),
+        .invalidMediaCount(.guidedScan, 1)
     )
 }
 
@@ -569,6 +625,29 @@ private func testCaptureMediaSelectionBuildsARKitDraft() throws {
     try expectEqual(selection.imageCount, 1)
     try expectEqual(payload.metadata.captureMode, "arkit_scan")
     try expectEqual(payload.uploads.map(\.contentType), ["model/gltf-binary", "image/jpeg"])
+}
+
+private func testCaptureMediaSelectionSummarizesGuidedScan() throws {
+    let emptySelection = CaptureMediaSelection(mode: .guidedScan)
+    let onePhoto = CaptureMediaSelection(
+        mode: .guidedScan,
+        media: [captureMedia(filename: "front.jpg", contentType: "image/jpeg", kind: .image)]
+    )
+    let twoPhotos = CaptureMediaSelection(
+        mode: .guidedScan,
+        media: [
+            captureMedia(filename: "front.jpg", contentType: "image/jpeg", kind: .image),
+            captureMedia(filename: "side.png", contentType: "image/png", kind: .image),
+        ]
+    )
+
+    try expectFalse(emptySelection.isReadyForUpload)
+    try expectEqual(emptySelection.summary.title, "Choose guided scan photos")
+    try expectEqual(emptySelection.summary.detail, "Choose at least 2 guided scan photos")
+    try expectFalse(onePhoto.isReadyForUpload)
+    try expectTrue(twoPhotos.isReadyForUpload)
+    try expectEqual(twoPhotos.summary.title, "2 guided scan photos selected")
+    try expectContains(twoPhotos.summary.detail, "front.jpg")
 }
 
 private func testCaptureMediaSelectionClearsWhenModeChanges() throws {

@@ -5,6 +5,13 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 CAPTURE_ID_PATTERN = r"^cap_[0-9a-f]{16}$"
+CaptureMode = Literal[
+    "single_photo",
+    "photo_set",
+    "manual_upload",
+    "arkit_scan",
+    "guided_scan",
+]
 
 
 class ObjectObservation(BaseModel):
@@ -28,7 +35,7 @@ class ObjectCaptureMetadata(BaseModel):
     label: str = Field(min_length=1)
     materials: list[str] = Field(default_factory=list)
     source: str = Field(min_length=1)
-    capture_mode: Literal["single_photo", "photo_set", "manual_upload", "arkit_scan"]
+    capture_mode: CaptureMode
     visual_notes: str | None = None
 
     def to_object_observation(self) -> ObjectObservation:
@@ -53,7 +60,7 @@ class ObjectCapture(BaseModel):
     capture_id: str = Field(pattern=CAPTURE_ID_PATTERN)
     status: Literal["ready", "blocked", "processing"]
     source: str
-    capture_mode: Literal["single_photo", "photo_set", "manual_upload", "arkit_scan"]
+    capture_mode: CaptureMode
     object_observation: ObjectObservation
     media_items: list[CaptureMediaItem]
     created_at: str
