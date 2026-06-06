@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from myth_forge_api.domain.arbitration import LocalWorldArbitrator
 from myth_forge_api.domain.models import (
     GeneratedAsset,
+    NPCAutonomyRunRequest,
     NPCAgentTick,
     NPCAgentTickRequest,
     NPCReaction,
@@ -308,6 +309,101 @@ def test_advance_stored_myth_session_endpoint_sanitizes_provider_failure(
     assert "raw=private" not in response.text
 
 
+def test_npc_autonomy_run_request_defaults_to_three_steps() -> None:
+    request = NPCAutonomyRunRequest()
+
+    assert request.step_count == 3
+
+
+@pytest.mark.parametrize("step_count", [0, 4])
+def test_npc_autonomy_run_request_rejects_out_of_range_steps(step_count: int) -> None:
+    with pytest.raises(ValueError):
+        NPCAutonomyRunRequest(step_count=step_count)
+
+
+def test_autonomy_run_endpoint_appends_bounded_ticks_and_returns_summary(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    session = _session()
+    store.save_session(session)
+    client = TestClient(app)
+
+    response = client.post(
+        f"/v1/myth-sessions/{session.session_id}/autonomy-runs",
+        json={"step_count": 3},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["session_id"] == session.session_id
+    assert payload["requested_steps"] == 3
+    assert payload["completed_steps"] == 3
+    assert payload["started_tick_index"] == 1
+    assert payload["completed_tick_index"] == 3
+    assert payload["agent_runtime"] == "local_tick_runtime"
+    assert [tick["tick_index"] for tick in payload["history"]["npc_ticks"]] == [1, 2, 3]
+
+
+def test_autonomy_run_endpoint_uses_updated_history_between_steps(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    runtime = RecordingNPCTickRuntime()
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    monkeypatch.setattr("myth_forge_api.main.build_npc_tick_runtime", lambda: runtime)
+    session = _session()
+    store.save_session(session)
+    client = TestClient(app)
+
+    response = client.post(
+        f"/v1/myth-sessions/{session.session_id}/autonomy-runs",
+        json={"step_count": 2},
+    )
+
+    assert response.status_code == 200
+    assert [request.tick_index for request in runtime.requests] == [1, 2]
+    assert runtime.requests[0].recent_events == session.world_resolution.visible_changes
+    assert runtime.requests[1].recent_events == runtime.generated_visible_changes[0]
+    assert [tick["tick_index"] for tick in response.json()["history"]["npc_ticks"]] == [1, 2]
+
+
+def test_autonomy_run_endpoint_returns_404_for_unknown_session(monkeypatch, tmp_path) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/myth-sessions/myth_0123456789abcdef/autonomy-runs",
+        json={"step_count": 1},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Myth session not found."
+
+
+def test_autonomy_run_endpoint_sanitizes_provider_failure(monkeypatch, tmp_path) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    session = _session()
+    store.save_session(session)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    monkeypatch.setattr("myth_forge_api.main.build_npc_tick_runtime", lambda: RaisingNPCTickRuntime())
+    client = TestClient(app)
+
+    response = client.post(
+        f"/v1/myth-sessions/{session.session_id}/autonomy-runs",
+        json={"step_count": 2},
+    )
+
+    assert response.status_code == 502
+    assert "test-secret" not in response.text
+    assert "Authorization" not in response.text
+    assert "raw=private" not in response.text
+
+
 def _session():
     return create_demo_myth_session(
         object_observation={
@@ -349,11 +445,21 @@ class RecordingNPCTickRuntime:
 
     def __init__(self) -> None:
         self.requests: list[NPCAgentTickRequest] = []
+        self.generated_visible_changes: list[list[str]] = []
 
     def generate_tick(self, request: NPCAgentTickRequest) -> NPCAgentTick:
         self.requests.append(request)
         tick = LocalNPCTickRuntime().generate_tick(request)
-        return tick.model_copy(update={"agent_runtime": self.runtime_name})
+        visible_changes = [f"recorded tick {request.tick_index}"]
+        self.generated_visible_changes.append(visible_changes)
+        return tick.model_copy(
+            update={
+                "agent_runtime": self.runtime_name,
+                "world_resolution": tick.world_resolution.model_copy(
+                    update={"visible_changes": visible_changes}
+                ),
+            }
+        )
 
 
 class RaisingNPCTickRuntime:

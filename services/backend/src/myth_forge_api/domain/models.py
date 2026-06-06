@@ -218,3 +218,17 @@ class MythSessionHistory(BaseModel):
     session: MythSession
     npc_ticks: list[NPCAgentTick] = Field(default_factory=list)
     updated_at: str
+
+
+class NPCAutonomyRunRequest(BaseModel):
+    step_count: int = Field(default=3, ge=1, le=3)
+
+
+class NPCAutonomyRun(BaseModel):
+    session_id: str = Field(pattern=SESSION_ID_PATTERN)
+    requested_steps: int = Field(ge=1, le=3)
+    completed_steps: int = Field(ge=1, le=3)
+    started_tick_index: int = Field(ge=1)
+    completed_tick_index: int = Field(ge=1)
+    agent_runtime: str
+    history: MythSessionHistory
