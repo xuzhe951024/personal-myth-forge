@@ -69,6 +69,7 @@ do {
     try requireContains(captureFormView, "PhotosPicker", "photo picker app shell source")
     try requireNotContains(captureFormView, "Future Xcode target wires", "capture button no-op comment")
     try requireNotContains(captureFormView, "Future Xcode target triggers", "forge button no-op comment")
+    try requireNotContains(captureFormView, "captureActionTitle", "unused sample-era capture title")
     try requireContains(forgeRootView, "selectedCaptureMode", "capture mode root state")
     try requireContains(forgeRootView, "ForgeFlowService", "forge flow service source wiring")
     try requireContains(forgeRootView, "forgeService.forge", "forge flow service call")

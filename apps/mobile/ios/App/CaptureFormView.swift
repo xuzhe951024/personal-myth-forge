@@ -160,19 +160,6 @@ struct CaptureFormView: View {
         }
     }
 
-    private var captureActionTitle: String {
-        switch selectedCaptureMode {
-        case .singlePhoto:
-            return "Choose Photo"
-        case .photoSet:
-            return "Choose Photos"
-        case .manualUpload:
-            return "Choose File"
-        case .arkitScan:
-            return "Choose Scan"
-        }
-    }
-
     private func captureModeLabel(for mode: CaptureMode) -> String {
         switch mode {
         case .singlePhoto:
