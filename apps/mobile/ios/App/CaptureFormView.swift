@@ -14,6 +14,9 @@ struct CaptureFormView: View {
     let phase: ForgeFlowPhase
     let mediaSummaryTitle: String
     let mediaSummaryDetail: String
+    let generationReadinessTitle: String
+    let generationReadinessRouteLabel: String
+    let generationReadinessDetail: String
     let captureInputError: String?
     let isMediaReadyForUpload: Bool
     let chooseCapture: () -> Void
@@ -78,11 +81,16 @@ struct CaptureFormView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
 
             if selectedCaptureMode == .arkitScan || selectedCaptureMode == .guidedScan {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(scanReadinessTitle)
-                        .font(.subheadline.weight(.semibold))
-                    Spacer()
-                    Text(scanReadinessDetail)
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(generationReadinessTitle)
+                            .font(.subheadline.weight(.semibold))
+                        Spacer()
+                        Text(generationReadinessRouteLabel)
+                            .font(.caption.monospaced().weight(.semibold))
+                            .foregroundStyle(.green)
+                    }
+                    Text(generationReadinessDetail)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -199,24 +207,6 @@ struct CaptureFormView: View {
             return "File"
         case .arkitScan:
             return "Mesh"
-        }
-    }
-
-    private var scanReadinessTitle: String {
-        switch selectedCaptureMode {
-        case .guidedScan:
-            return "Guided scan readiness"
-        default:
-            return "Scan readiness"
-        }
-    }
-
-    private var scanReadinessDetail: String {
-        switch selectedCaptureMode {
-        case .guidedScan:
-            return "2+ photos"
-        default:
-            return "mesh + reference"
         }
     }
 

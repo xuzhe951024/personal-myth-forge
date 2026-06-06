@@ -1606,3 +1606,30 @@ Static evidence lives at:
 docs/superpowers/verification/p0.58-arkit-showcase-acceptance.html
 docs/superpowers/verification/assets/p0.58-arkit-showcase-acceptance-390x844.png
 ```
+
+P0.59 replaces the mobile form's static scan readiness copy with a
+SwiftPM-tested `CaptureGenerationReadinessBuilder`. The app now summarizes the
+actual 3D generation route for capture media:
+
+- guided scans with enough photos show the `multi_image` path, total photo
+  count, and the provider cap of four prepared images.
+- ARKit scan packages show the `scan_asset` path with scan asset plus reference
+  counts.
+- provider readiness is folded into the same mobile summary, including
+  local-demo-only Meshy key guidance, missing `MESHY_API_KEY`, and redacted
+  backend readiness errors.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.59-capture-generation-readiness.html
+docs/superpowers/verification/assets/p0.59-capture-generation-readiness-390x844.png
+```

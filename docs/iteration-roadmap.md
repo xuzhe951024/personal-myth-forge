@@ -74,6 +74,7 @@ Bridge deliverable:
 - P0.56 project-local writer for ignored backend Meshy/OpenAI env handoff
 - P0.57 SwiftPM ARKit scan package bridge from exported scan model plus references into `arkit_scan`
 - P0.58 final acceptance source gate for the ARKit scan package bridge
+- P0.59 mobile-core capture generation readiness summary for guided scan, ARKit scan, and provider setup
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

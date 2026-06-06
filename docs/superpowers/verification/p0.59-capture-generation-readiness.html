@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.59 Capture Generation Readiness</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f6f2;
+      --ink: #242526;
+      --muted: #686b70;
+      --line: #d8d3c8;
+      --panel: #ffffff;
+      --soft: #f0ebe1;
+      --green: #2f7d4c;
+      --gold: #b98324;
+      --red: #b94b42;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      overflow-x: hidden;
+    }
+
+    .screen {
+      width: 390px;
+      max-width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 18px 12px 24px;
+      background: linear-gradient(180deg, #fbfaf7 0%, #f2efe8 100%);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.12;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fffaf0;
+      color: #6f4b13;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .section {
+      min-width: 0;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 10px 22px rgba(36, 37, 38, 0.07);
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #fffdf8;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.25;
+      font-weight: 740;
+      letter-spacing: 0;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .field-stack {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .value {
+      min-width: 0;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px 11px;
+      background: #fbfaf7;
+      font-size: 14px;
+      line-height: 1.3;
+      color: var(--ink);
+      overflow-wrap: anywhere;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 4px;
+      padding: 4px;
+      border-radius: 8px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+    }
+
+    .segment {
+      min-width: 0;
+      min-height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .segment.active {
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: 0 1px 5px rgba(36, 37, 38, 0.12);
+    }
+
+    .capture-card {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .media-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .thumbs {
+      display: grid;
+      grid-template-columns: repeat(3, 28px);
+      gap: 4px;
+      flex: 0 0 auto;
+    }
+
+    .thumb {
+      width: 28px;
+      height: 28px;
+      border-radius: 5px;
+      border: 1px solid #c9b892;
+      background:
+        linear-gradient(135deg, rgba(185, 131, 36, 0.25), rgba(47, 125, 76, 0.22)),
+        #f7edd7;
+    }
+
+    .media-copy {
+      min-width: 0;
+    }
+
+    .media-title {
+      margin: 0 0 2px;
+      font-size: 14px;
+      line-height: 1.2;
+      font-weight: 760;
+      overflow-wrap: anywhere;
+    }
+
+    .media-detail {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .button {
+      min-width: 0;
+      min-height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 760;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      color: var(--ink);
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .button.primary {
+      border-color: #2f7d4c;
+      background: #2f7d4c;
+      color: #ffffff;
+    }
+
+    .readiness {
+      min-width: 0;
+      margin: 0 14px 14px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #b8d1bd;
+      background: #eef8f0;
+    }
+
+    .readiness-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .readiness-title {
+      min-width: 0;
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.25;
+      font-weight: 780;
+    }
+
+    .route {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #ffffff;
+      border: 1px solid #b8d1bd;
+      color: var(--green);
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 820;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .readiness-detail {
+      margin: 0;
+      color: #31583d;
+      font-size: 12.5px;
+      line-height: 1.42;
+      overflow-wrap: anywhere;
+    }
+
+    .handoff {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      min-width: 0;
+      border-radius: 7px;
+      border: 1px solid #d6c8a9;
+      background: #fffaf0;
+      padding: 9px 8px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .metric span {
+      display: block;
+      color: #6d5b37;
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .attention {
+      min-width: 0;
+      margin: 14px;
+      padding: 11px;
+      border-radius: 8px;
+      border: 1px solid #e1b9b5;
+      background: #fff4f2;
+      color: var(--red);
+      font-size: 12px;
+      line-height: 1.4;
+      font-weight: 680;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <nav class="nav">
+      <h1 class="title">Personal Myth Forge</h1>
+      <span class="badge">P0.59</span>
+    </nav>
+
+    <section class="section">
+      <header class="section-header">
+        <h2 class="section-title">Object Capture</h2>
+        <span class="status"><span class="dot"></span>Ready</span>
+      </header>
+
+      <div class="field-stack">
+        <div class="segmented" aria-label="Capture mode">
+          <div class="segment">Photo</div>
+          <div class="segment">Set</div>
+          <div class="segment active">Scan</div>
+          <div class="segment">File</div>
+          <div class="segment">Mesh</div>
+        </div>
+
+        <div class="field">
+          <span class="label">Object label</span>
+          <div class="value">old brass key</div>
+        </div>
+
+        <div class="field">
+          <span class="label">Visual notes</span>
+          <div class="value">worn teeth, circular bow, warm reflections</div>
+        </div>
+      </div>
+
+      <div class="capture-card">
+        <div class="media-row">
+          <div class="thumbs" aria-hidden="true">
+            <span class="thumb"></span>
+            <span class="thumb"></span>
+            <span class="thumb"></span>
+          </div>
+          <div class="media-copy">
+            <p class="media-title">6 guided scan photos selected</p>
+            <p class="media-detail">scan_00.jpg, scan_01.jpg, scan_02.jpg +3 more</p>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <div class="button primary">Start Guided Scan</div>
+          <div class="button">Choose Photos</div>
+        </div>
+      </div>
+
+      <div class="readiness">
+        <div class="readiness-top">
+          <p class="readiness-title">Guided scan ready for 3D</p>
+          <span class="route">multi_image</span>
+        </div>
+        <p class="readiness-detail">
+          6 photos; provider uses up to 4 prepared images. Local demo route ready;
+          Meshy key needed for live 3D.
+        </p>
+
+        <div class="handoff">
+          <div class="metric">
+            <strong>6</strong>
+            <span>source photos</span>
+          </div>
+          <div class="metric">
+            <strong>4</strong>
+            <span>provider inputs</span>
+          </div>
+          <div class="metric">
+            <strong>0</strong>
+            <span>raw keys in app</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="attention">
+        Live 3D provider setup is backend-only: configure MESHY_API_KEY before
+        switching from local demo generation.
+      </div>
+    </section>
+  </main>
+</body>
+</html>
