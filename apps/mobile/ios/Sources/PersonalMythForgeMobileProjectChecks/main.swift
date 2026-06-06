@@ -57,6 +57,9 @@ do {
     let mythSessionID = try readText(coreRoot.appendingPathComponent("MythSessionID.swift"))
     let demoRunSnapshot = try readText(coreRoot.appendingPathComponent("DemoRunSnapshot.swift"))
     let artifactAssetPreparation = try readText(coreRoot.appendingPathComponent("ArtifactAssetPreparation.swift"))
+    let artifactGenerationProvenanceSummary = try readText(
+        coreRoot.appendingPathComponent("ArtifactGenerationProvenanceSummary.swift")
+    )
     let artifactHandoffActions = try readText(coreRoot.appendingPathComponent("ArtifactHandoffActions.swift"))
     let npcAgentModeSummary = try readText(coreRoot.appendingPathComponent("NPCAgentModeSummary.swift"))
     let npcRitualScene = try readText(coreRoot.appendingPathComponent("NPCRitualScene.swift"))
@@ -754,8 +757,33 @@ do {
     )
     try requireContains(
         artifactSummaryView,
-        "selectedSourceImageCount",
-        "artifact summary selected source image count"
+        "ArtifactGenerationProvenanceSummaryBuilder.build",
+        "artifact summary provenance summary builder"
+    )
+    try requireContains(
+        artifactGenerationProvenanceSummary,
+        "ArtifactGenerationProvenanceSummaryBuilder",
+        "generation provenance summary builder"
+    )
+    try requireContains(
+        artifactGenerationProvenanceSummary,
+        "sourceAssetCount",
+        "generation provenance scan asset count"
+    )
+    try requireContains(
+        artifactGenerationProvenanceSummary,
+        "selectionReason",
+        "generation provenance selection reason"
+    )
+    try requireContains(
+        artifactGenerationProvenanceSummary,
+        "privacySummary",
+        "generation provenance privacy summary"
+    )
+    try requireContains(
+        contractTests,
+        "testArtifactGenerationProvenanceSummaryShowsScanAssets",
+        "generation provenance scan asset test"
     )
     try requireContains(artifact3DPreviewView, "import SceneKit", "SceneKit preview source")
     try requireContains(artifact3DPreviewView, "SceneView(scene:", "SwiftUI SceneKit scene view")

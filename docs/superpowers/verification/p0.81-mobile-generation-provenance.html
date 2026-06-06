@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.81 Mobile Generation Provenance</title>
+  <style>
+    :root {
+      --paper: #f1efe9;
+      --panel: #ffffff;
+      --ink: #202126;
+      --muted: #626a76;
+      --line: #d9dee7;
+      --green: #1f7a4a;
+      --blue: #285f9f;
+      --gold: #a06712;
+      --red: #b83d46;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: 390px;
+      max-width: 390px;
+      margin: 0;
+      padding: 18px 10px 26px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border: 1px solid #77a6bb;
+      border-radius: 6px;
+      color: var(--blue);
+      background: #ecf6fb;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .panel {
+      margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 8px 24px rgba(42, 34, 20, 0.08);
+    }
+
+    .artifact-title {
+      margin: 0 0 4px;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .scene {
+      height: 178px;
+      margin: 10px 0;
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #151b22 0%, #26313d 100%);
+    }
+
+    .pedestal {
+      position: absolute;
+      left: 50%;
+      bottom: 34px;
+      width: 140px;
+      height: 28px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: #aeb9c4;
+    }
+
+    .relic {
+      position: absolute;
+      left: 50%;
+      bottom: 66px;
+      width: 90px;
+      height: 90px;
+      transform: translateX(-50%) rotate(-18deg);
+      border: 12px solid #2bc2b1;
+      border-radius: 50%;
+      box-shadow: 0 0 34px rgba(43, 194, 177, 0.55);
+    }
+
+    .actor {
+      position: absolute;
+      width: 18px;
+      height: 44px;
+      bottom: 44px;
+      border-radius: 9px 9px 3px 3px;
+      background: #e0b148;
+    }
+
+    .actor.one {
+      left: 66px;
+      background: #df675a;
+    }
+
+    .actor.two {
+      right: 70px;
+      height: 36px;
+      background: #6fa6e8;
+    }
+
+    .group {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #ecf0f5;
+    }
+
+    .group h2 {
+      margin: 0 0 6px;
+      font-size: 13px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .summary-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .route {
+      flex: 0 0 auto;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .mono {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10.5px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .callout {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+    }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #a9c5d7;
+      border-radius: 6px;
+      color: var(--blue);
+      background: #edf6fb;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .icon.warn {
+      color: var(--red);
+      border-color: #e0bdc0;
+      background: #fff1f1;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <h1>P0.81 Artifact</h1>
+      <div class="chip">PROVENANCE</div>
+    </div>
+
+    <section class="panel" aria-label="Artifact summary">
+      <h2 class="artifact-title">The Key That Remembered</h2>
+      <p class="copy">A scanned object enters the myth session, becomes a 3D game asset, and receives NPC ritual markers.</p>
+
+      <div class="scene" aria-label="3D artifact preview proxy">
+        <div class="pedestal"></div>
+        <div class="relic"></div>
+        <div class="actor one"></div>
+        <div class="actor two"></div>
+      </div>
+
+      <p class="copy"><strong>Cached SceneKit asset ready</strong></p>
+      <p class="copy">meshy GLB plus iOS scene variant</p>
+      <p class="copy">NPC ritual: Archivist acting | Skeptic debating | Child watching</p>
+
+      <div class="group">
+        <h2>Generation</h2>
+        <div class="summary-row">
+          <div class="route">Multi Image</div>
+          <div class="copy">3/4 images selected, max 4, 1 scan asset</div>
+        </div>
+        <div class="mono">/openapi/v1/multi-image-to-3d</div>
+        <div class="mono">Provider selected prepared guided-scan references.</div>
+        <div class="mono">Raw source media withheld</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="callout">
+        <div class="icon">i</div>
+        <div>
+          <p class="copy"><strong>Why this matters</strong></p>
+          <p class="copy">The phone can now show which 3D route was used after forging, including scan asset participation.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="callout">
+        <div class="icon warn">!</div>
+        <div>
+          <p class="copy"><strong>Privacy boundary</strong></p>
+          <p class="copy">The summary is display-only and redacts local paths, provider secrets, payment links, and raw capture references.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

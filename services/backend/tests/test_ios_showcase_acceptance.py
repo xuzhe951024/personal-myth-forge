@@ -182,7 +182,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "ObjectCaptureSession ObjectCaptureView(session:"
         ),
         "apps/mobile/ios/App/ArtifactSummaryView.swift": (
-            "Artifact3DPreviewView(session: session, latestTick: latestTick)"
+            "Artifact3DPreviewView(session: session, latestTick: latestTick) "
+            "ArtifactGenerationProvenanceSummaryBuilder.build"
         ),
         "apps/mobile/ios/App/Artifact3DPreviewView.swift": (
             "ArtifactAssetPreparer.live() NPCRitualSceneBuilder.build addNPCRitualOverlay "
@@ -241,6 +242,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testCaptureGenerationReadinessMarksARKitScanAssetRoute "
             "testContextCapsuleReviewMarksApprovedSummaryReady "
             "testArtifactHandoffActionsOpenAndShareSceneAsset "
+            "testArtifactGenerationProvenanceSummaryShowsScanAssets "
             "testNPCAgentModeShowsOpenAIReadyRuntime "
             "testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance "
             "testFinalLaunchMobileSummaryShowsHandoffNextActions "
@@ -253,6 +255,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactAssetPreparation.swift": (
             "ArtifactAssetPreparer ios_scene_asset"
+        ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactGenerationProvenanceSummary.swift": (
+            "ArtifactGenerationProvenanceSummaryBuilder sourceAssetCount privacySummary"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactHandoffActions.swift": (
             "ArtifactHandoffActionBuilder"

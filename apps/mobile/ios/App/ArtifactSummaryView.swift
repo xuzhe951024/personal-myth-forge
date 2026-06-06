@@ -20,14 +20,18 @@ struct ArtifactSummaryView: View {
             Artifact3DPreviewView(session: session, latestTick: latestTick)
 
             if let generationProvenance = session?.generatedAsset.generationProvenance {
-                ProvenanceSummaryView(provenance: generationProvenance)
+                ProvenanceSummaryView(
+                    summary: ArtifactGenerationProvenanceSummaryBuilder.build(
+                        provenance: generationProvenance
+                    )
+                )
             }
         }
     }
 }
 
 private struct ProvenanceSummaryView: View {
-    let provenance: GeneratedAssetProvenance
+    let summary: ArtifactGenerationProvenanceSummary
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -36,22 +40,25 @@ private struct ProvenanceSummaryView: View {
                 .fontWeight(.semibold)
 
             HStack(spacing: 8) {
-                Text(inputModeLabel)
+                Text(summary.routeLabel)
                     .font(.caption)
                     .fontWeight(.semibold)
-                Text(sourceImageSummary)
+                Text(summary.sourceSummary)
                     .font(.caption)
             }
 
-            if let providerRoute = provenance.providerRoute, !providerRoute.isEmpty {
-                Text(providerRoute)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
+            Text(summary.providerRoute)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.middle)
 
-            Text(provenance.rawSourcesIncluded ? "Raw sources retained" : "Raw sources withheld")
+            Text(summary.selectionReason)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+
+            Text(summary.privacySummary)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
@@ -59,22 +66,5 @@ private struct ProvenanceSummaryView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.secondary.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-
-    private var inputModeLabel: String {
-        provenance.inputMode
-            .replacingOccurrences(of: "_", with: " ")
-            .capitalized
-    }
-
-    private var sourceImageSummary: String {
-        let selectedSourceImageCount = provenance.selectedSourceImageCount
-        if provenance.sourceImageCount == 0 {
-            return "Text prompt"
-        }
-        if let maxSourceImages = provenance.maxSourceImages {
-            return "\(selectedSourceImageCount)/\(provenance.sourceImageCount) images, max \(maxSourceImages)"
-        }
-        return "\(selectedSourceImageCount)/\(provenance.sourceImageCount) images"
     }
 }
