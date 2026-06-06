@@ -134,6 +134,24 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="device_preflight",
+        label="Device preflight",
+        requirements=(
+            SourceRequirement("apps/mobile/ios/App/DevicePreflightView.swift", "Device Preflight"),
+            SourceRequirement("apps/mobile/ios/App/DevicePreflightView.swift", "backendBaseURL"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "DevicePreflightSummaryBuilder.build"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "DevicePreflightView(summary:"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DevicePreflight.swift",
+                "DevicePreflightSummaryBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
+                "DevicePreflightView.swift",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="demo_script",
         label="Demo script",
         requirements=(

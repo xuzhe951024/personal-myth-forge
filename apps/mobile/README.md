@@ -1534,3 +1534,32 @@ swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppC
 
 `ios_showcase_acceptance` now checks `showcase_autopilot` as the twelfth source
 feature.
+
+## P0.52 Device Preflight
+
+P0.52 adds a `Device Preflight` panel immediately below `Final Showcase` in
+`ForgeRootView`. The panel uses `DevicePreflightSummaryBuilder` from the Swift
+mobile core to classify the iPhone demo handoff before an operator starts the
+showcase:
+
+- loopback backend URLs are blocked because an iPhone cannot reach them
+- private LAN backend URLs are marked ready
+- provider readiness errors or missing provider setup are surfaced without
+  provider secrets
+- the local final showcase state and saved NPC tick history are summarized
+
+The panel does not run Xcode, sign the app, mutate local developer settings, or
+make live provider calls. It is a visible checklist for the values that still
+need to be correct when the app moves from source-level verification to a
+physical iPhone.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+`ios_showcase_acceptance` now checks `device_preflight` as the thirteenth source
+feature.

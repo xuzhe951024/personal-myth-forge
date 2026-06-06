@@ -24,6 +24,12 @@ do {
     try testFinalShowcaseSummaryMarksPrintQuoteReady()
     try testFinalShowcaseSummaryMarksProviderErrorNeedsAttention()
     try testFinalShowcaseSummaryRedactsUnsafeSourceText()
+    try testDevicePreflightBlocksLoopbackBackendURL()
+    try testDevicePreflightMarksLANBackendURLReady()
+    try testDevicePreflightWaitsForProviderReadiness()
+    try testDevicePreflightBlocksAndRedactsProviderError()
+    try testDevicePreflightMarksLocalDemoReady()
+    try testDevicePreflightMarksSavedNPCHistoryReady()
     try testDemoScriptStartsWithCapture()
     try testDemoScriptMovesToForgeWhenMediaReady()
     try testDemoScriptMarksLocalDemoLoopReady()
@@ -660,6 +666,74 @@ private func testFinalShowcaseSummaryRedactsUnsafeSourceText() throws {
     try expectNotContains(text, "/Users/")
     try expectNotContains(text, "file:///")
     try expectNotContains(text, "checkout")
+}
+
+private func testDevicePreflightBlocksLoopbackBackendURL() throws {
+    let summary = devicePreflightSummary(backendBaseURL: URL(string: "http://127.0.0.1:8080")!)
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "backend_url")?.status, .blocked)
+    try expectContains(summary.item(id: "backend_url")?.detail ?? "", "iPhone")
+    try expectContains(summary.backendBaseURL, "127.0.0.1")
+}
+
+private func testDevicePreflightMarksLANBackendURLReady() throws {
+    let summary = devicePreflightSummary(backendBaseURL: URL(string: "http://192.168.1.10:8080")!)
+
+    try expectEqual(summary.item(id: "backend_url")?.status, .ready)
+    try expectContains(summary.item(id: "backend_url")?.detail ?? "", "LAN")
+}
+
+private func testDevicePreflightWaitsForProviderReadiness() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        providerReadiness: nil
+    )
+
+    try expectEqual(summary.overallStatus, .waiting)
+    try expectEqual(summary.item(id: "providers")?.status, .waiting)
+    try expectContains(summary.item(id: "providers")?.detail ?? "", "readiness")
+}
+
+private func testDevicePreflightBlocksAndRedactsProviderError() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        providerReadiness: nil,
+        providerReadinessError: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "providers")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
+private func testDevicePreflightMarksLocalDemoReady() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalSummary = finalShowcaseSummary(session: session, npcTickHistoryCount: 3)
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalShowcaseSummary: finalSummary
+    )
+
+    try expectEqual(summary.item(id: "local_demo")?.status, .ready)
+    try expectContains(summary.item(id: "local_demo")?.detail ?? "", "ready")
+}
+
+private func testDevicePreflightMarksSavedNPCHistoryReady() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        savedNPCTickCount: 2
+    )
+
+    try expectEqual(summary.item(id: "saved_history")?.status, .ready)
+    try expectContains(summary.item(id: "saved_history")?.detail ?? "", "2")
 }
 
 private func testDemoScriptStartsWithCapture() throws {
@@ -2307,6 +2381,39 @@ private func readyGuidedScanSelection() -> CaptureMediaSelection {
             captureMedia(filename: "scan_002.jpg", contentType: "image/jpeg", kind: .image),
             captureMedia(filename: "scan_003.jpg", contentType: "image/jpeg", kind: .image),
         ]
+    )
+}
+
+private func finalShowcaseSummary(
+    session: MythSession? = nil,
+    npcTickHistoryCount: Int = 0,
+    printQuote: PrintQuote? = nil,
+    providerReadiness: ProviderReadinessResponse? = localDemoProviderReadiness(),
+    providerReadinessError: String? = nil
+) -> FinalShowcaseSummary {
+    FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: npcTickHistoryCount,
+        printQuote: printQuote,
+        providerReadiness: providerReadiness,
+        providerReadinessError: providerReadinessError
+    )
+}
+
+private func devicePreflightSummary(
+    backendBaseURL: URL,
+    providerReadiness: ProviderReadinessResponse? = localDemoProviderReadiness(),
+    providerReadinessError: String? = nil,
+    finalShowcaseSummary: FinalShowcaseSummary = finalShowcaseSummary(),
+    savedNPCTickCount: Int = 0
+) -> DevicePreflightSummary {
+    DevicePreflightSummaryBuilder.build(
+        backendBaseURL: backendBaseURL,
+        providerReadiness: providerReadiness,
+        providerReadinessError: providerReadinessError,
+        finalShowcaseSummary: finalShowcaseSummary,
+        savedNPCTickCount: savedNPCTickCount
     )
 }
 
