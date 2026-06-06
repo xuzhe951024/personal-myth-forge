@@ -37,6 +37,14 @@ class CaptureUpload:
     data: bytes
 
 
+@dataclass(frozen=True)
+class CaptureMediaPayload:
+    media_id: str
+    uri: str
+    content_type: str
+    data: bytes
+
+
 class CaptureStore(Protocol):
     def save_capture(
         self,
@@ -46,6 +54,9 @@ class CaptureStore(Protocol):
         ...
 
     def get_capture(self, capture_id: str) -> ObjectCapture | None:
+        ...
+
+    def read_media(self, capture_id: str, media_id: str) -> CaptureMediaPayload:
         ...
 
 
@@ -67,6 +78,10 @@ class CaptureFileTooLargeError(CaptureStoreError):
 
 class CaptureContentTypeError(CaptureStoreError):
     status_code = 415
+
+
+class CaptureMediaNotFoundError(CaptureStoreError):
+    status_code = 404
 
 
 class LocalCaptureStore:
@@ -137,6 +152,41 @@ class LocalCaptureStore:
             return None
         data = json.loads(manifest_path.read_text(encoding="utf-8"))
         return ObjectCapture.model_validate(data)
+
+    def read_media(self, capture_id: str, media_id: str) -> CaptureMediaPayload:
+        capture = self.get_capture(capture_id)
+        if capture is None:
+            raise CaptureMediaNotFoundError(f"Capture media not found: {capture_id}/{media_id}")
+
+        item = next((item for item in capture.media_items if item.media_id == media_id), None)
+        if item is None:
+            raise CaptureMediaNotFoundError(f"Capture media not found: {capture_id}/{media_id}")
+
+        uri_prefix = f"local-capture://{capture.capture_id}/"
+        if not item.uri.startswith(uri_prefix):
+            raise CaptureMediaNotFoundError(f"Capture media not found: {capture_id}/{media_id}")
+
+        filename = item.uri.removeprefix(uri_prefix)
+        if not filename or "/" in filename or "\\" in filename:
+            raise CaptureMediaNotFoundError(f"Capture media not found: {capture_id}/{media_id}")
+
+        capture_dir = (self.root_dir / capture.capture_id).resolve()
+        media_path = (capture_dir / filename).resolve()
+        try:
+            media_path.relative_to(capture_dir)
+        except ValueError as exc:
+            raise CaptureMediaNotFoundError(
+                f"Capture media not found: {capture_id}/{media_id}"
+            ) from exc
+        if not media_path.is_file():
+            raise CaptureMediaNotFoundError(f"Capture media not found: {capture_id}/{media_id}")
+
+        return CaptureMediaPayload(
+            media_id=item.media_id,
+            uri=item.uri,
+            content_type=item.content_type,
+            data=media_path.read_bytes(),
+        )
 
     def _validate_files(self, files: list[CaptureUpload]) -> None:
         if not files:

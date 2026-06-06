@@ -12,7 +12,11 @@ from typing import Sequence
 
 from myth_forge_api.config import load_settings
 from myth_forge_api.providers.factory import build_three_d_provider
-from myth_forge_api.providers.three_d import MeshyConfigurationError, MeshyProviderError
+from myth_forge_api.providers.three_d import (
+    MeshyConfigurationError,
+    MeshyProviderError,
+    ThreeDGenerationRequest,
+)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -70,7 +74,7 @@ def _generate_asset(prompt: str, provider_name: str | None):
     if provider_name:
         settings = replace(settings, three_d_provider=provider_name)
     provider = build_three_d_provider(settings)
-    return provider.generate_game_asset(session_id=_session_id_for_prompt(prompt), prompt=prompt)
+    return provider.generate_game_asset(_generation_request_for_prompt(prompt))
 
 
 def _evaluate_3d(prompts_file: str, provider_name: str | None, output_path: str) -> int:
@@ -92,10 +96,7 @@ def _evaluate_3d(prompts_file: str, provider_name: str | None, output_path: str)
     for prompt in prompts:
         started_at = time.perf_counter()
         try:
-            asset = provider.generate_game_asset(
-                session_id=_session_id_for_prompt(prompt),
-                prompt=prompt,
-            )
+            asset = provider.generate_game_asset(_generation_request_for_prompt(prompt))
             rows.append(
                 {
                     "prompt": prompt,
@@ -145,6 +146,10 @@ def _read_prompts(prompts_file: str) -> list[str]:
 def _session_id_for_prompt(prompt: str) -> str:
     digest = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
     return f"cli_{digest[:12]}"
+
+
+def _generation_request_for_prompt(prompt: str) -> ThreeDGenerationRequest:
+    return ThreeDGenerationRequest(session_id=_session_id_for_prompt(prompt), prompt=prompt)
 
 
 def _safe_provider_error(exc: Exception) -> str:

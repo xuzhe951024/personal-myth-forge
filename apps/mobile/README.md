@@ -163,3 +163,32 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.10-ios-forge-flow.html
 docs/superpowers/verification/assets/p0.10-ios-forge-flow-390x844.png
 ```
+
+## P0.11 Capture-Aware 3D Generation
+
+P0.11 keeps the iOS surface unchanged and completes the backend/provider data
+path behind the existing from-capture flow. When the app creates a myth session
+from an uploaded capture, the backend now reads local JPEG/PNG reference media
+through the capture store, converts it into a provider-only data URI, and passes
+scan asset references alongside the myth prompt. Meshy uses Image-to-3D when an
+image source exists; prompt-only generation continues to use Text-to-3D.
+
+Run:
+
+```bash
+make backend-lint
+make backend-test
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.11-capture-aware-3d.html
+docs/superpowers/verification/assets/p0.11-capture-aware-3d-390x844.png
+```
+
+Remaining device-facing gaps are unchanged: real PhotosPicker/fileImporter
+media selection, ARKit scanning, public or storage-backed media delivery,
+multi-image/scan remesh, real provider-key runs, and iOS 3D rendering.

@@ -6,6 +6,7 @@ from myth_forge_api.domain.models import ObjectCaptureMetadata
 from myth_forge_api.providers.capture_store import (
     CaptureContentTypeError,
     CaptureFileTooLargeError,
+    CaptureMediaNotFoundError,
     CaptureUpload,
     LocalCaptureStore,
     TooManyCaptureFilesError,
@@ -45,6 +46,36 @@ def test_local_capture_store_writes_generated_names_and_manifest(tmp_path) -> No
     assert manifest_path.exists()
     assert "../../secret" not in json.dumps(json.loads(manifest_path.read_text()))
     assert store.get_capture(capture.capture_id) == capture
+
+
+def test_local_capture_store_reads_known_media_payload(tmp_path) -> None:
+    store = LocalCaptureStore(root_dir=tmp_path)
+    capture = store.save_capture(
+        metadata=_metadata(),
+        files=[CaptureUpload(filename="key.jpg", content_type="image/jpeg", data=b"fake")],
+    )
+
+    payload = store.read_media(capture.capture_id, "media_0")
+
+    assert payload.media_id == "media_0"
+    assert payload.uri == f"local-capture://{capture.capture_id}/media_0.jpg"
+    assert payload.content_type == "image/jpeg"
+    assert payload.data == b"fake"
+
+
+def test_local_capture_store_read_media_rejects_unknown_and_traversal_ids(tmp_path) -> None:
+    store = LocalCaptureStore(root_dir=tmp_path)
+    capture = store.save_capture(
+        metadata=_metadata(),
+        files=[CaptureUpload(filename="key.jpg", content_type="image/jpeg", data=b"fake")],
+    )
+
+    with pytest.raises(CaptureMediaNotFoundError):
+        store.read_media(capture.capture_id, "media_99")
+    with pytest.raises(CaptureMediaNotFoundError):
+        store.read_media(capture.capture_id, "../media_0")
+    with pytest.raises(CaptureMediaNotFoundError):
+        store.read_media("..", "media_0")
 
 
 def test_local_capture_store_rejects_too_many_files(tmp_path) -> None:

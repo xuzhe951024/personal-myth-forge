@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from myth_forge_api.domain.models import GeneratedAsset
 from myth_forge_api.main import app
 from myth_forge_api.providers.npc import OpenAINPCConfigurationError
+from myth_forge_api.providers.three_d import ThreeDGenerationRequest
 
 
 def test_create_myth_session_endpoint_returns_reviewable_session() -> None:
@@ -45,13 +46,13 @@ def test_demo_route_serves_mobile_first_shell() -> None:
 class ApiFakeThreeDProvider:
     provider_name = "api_fake"
 
-    def generate_game_asset(self, session_id: str, prompt: str) -> GeneratedAsset:
+    def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
         return GeneratedAsset(
             kind="game_asset",
             provider=self.provider_name,
             format="glb",
-            uri=f"api-fake://{session_id}.glb",
-            prompt=prompt,
+            uri=f"api-fake://{request.session_id}.glb",
+            prompt=request.prompt,
             moderation_status="needs_review",
         )
 

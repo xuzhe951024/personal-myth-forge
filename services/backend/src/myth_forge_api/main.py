@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from base64 import b64encode
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, Path as PathParam, UploadFile
@@ -18,16 +19,17 @@ from myth_forge_api.domain.models import (
     ObjectCaptureMetadata,
 )
 from myth_forge_api.domain.pipeline import create_demo_myth_session
-from myth_forge_api.providers.capture_store import CaptureStoreError, CaptureUpload
+from myth_forge_api.providers.capture_store import CaptureStore, CaptureStoreError, CaptureUpload
 from myth_forge_api.providers.factory import (
     build_capture_store,
     build_npc_director,
     build_three_d_provider,
 )
 from myth_forge_api.providers.npc import OpenAINPCProviderError
-from myth_forge_api.providers.three_d import MeshyProviderError
+from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDSourceAsset, ThreeDSourceImage
 
 DEMO_DIR = Path(__file__).parent / "demo"
+THREE_D_SOURCE_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png"}
 
 app = FastAPI(
     title="Personal Myth Forge API",
@@ -83,7 +85,8 @@ def get_object_capture(
 
 @app.post("/v1/myth-sessions/from-capture", response_model=MythSession)
 def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> MythSession:
-    capture = build_capture_store().get_capture(request.capture_id)
+    capture_store = build_capture_store()
+    capture = capture_store.get_capture(request.capture_id)
     if capture is None:
         raise HTTPException(status_code=404, detail="Object capture not found.")
     observation = capture.object_observation.model_copy(
@@ -93,12 +96,17 @@ def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> 
         }
     )
     try:
+        source_images, source_assets = _capture_generation_sources(capture, capture_store)
         return create_demo_myth_session(
             object_observation=observation,
             context_capsule=request.context_capsule,
             three_d_provider=build_three_d_provider(),
             npc_director=build_npc_director(),
+            source_images=source_images,
+            source_assets=source_assets,
         )
+    except CaptureStoreError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=_safe_provider_error(exc)) from exc
     except (MeshyProviderError, OpenAINPCProviderError, ValueError) as exc:
         raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
 
@@ -116,9 +124,46 @@ def create_myth_session(request: MythSessionRequest) -> MythSession:
         raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
 
 
+def _capture_generation_sources(
+    capture: ObjectCapture,
+    capture_store: CaptureStore,
+) -> tuple[tuple[ThreeDSourceImage, ...], tuple[ThreeDSourceAsset, ...]]:
+    source_images: list[ThreeDSourceImage] = []
+    source_assets: list[ThreeDSourceAsset] = []
+    for item in capture.media_items:
+        if (
+            item.role == "reference_image"
+            and item.content_type in THREE_D_SOURCE_IMAGE_CONTENT_TYPES
+        ):
+            payload = capture_store.read_media(capture.capture_id, item.media_id)
+            source_images.append(
+                ThreeDSourceImage(
+                    uri=payload.uri,
+                    content_type=payload.content_type,
+                    data_uri=_media_data_uri(payload.content_type, payload.data),
+                )
+            )
+        elif item.role == "scan_asset":
+            source_assets.append(
+                ThreeDSourceAsset(
+                    uri=item.uri,
+                    content_type=item.content_type,
+                )
+            )
+    return tuple(source_images), tuple(source_assets)
+
+
+def _media_data_uri(content_type: str, data: bytes) -> str:
+    encoded = b64encode(data).decode("ascii")
+    return f"data:{content_type};base64,{encoded}"
+
+
 def _safe_provider_error(exc: Exception) -> str:
     message = str(exc)
     replacements = [
+        r"data:[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=_-]+",
+        r"local-capture://[^\s,;\"']+",
+        r"(?:/[A-Za-z0-9._-]+){2,}/[^\s,;\"']+",
         r"Authorization\s*[=:]\s*Bearer\s+[A-Za-z0-9._:-]+",
         r"Bearer\s+[A-Za-z0-9._:-]+",
         r"raw=[^\s,;]+",

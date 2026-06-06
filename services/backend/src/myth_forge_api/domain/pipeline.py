@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Sequence
 from typing import Any, Mapping
 
 from myth_forge_api.domain.arbitration import LocalWorldArbitrator, WorldArbitrator
@@ -15,7 +16,13 @@ from myth_forge_api.domain.models import (
 from myth_forge_api.providers.npc import LocalNPCDirector, NPCDirector
 from myth_forge_api.providers.printing import LocalPrintProvider
 from myth_forge_api.providers.printing import PrintProvider
-from myth_forge_api.providers.three_d import LocalThreeDProvider, ThreeDProvider
+from myth_forge_api.providers.three_d import (
+    LocalThreeDProvider,
+    ThreeDGenerationRequest,
+    ThreeDProvider,
+    ThreeDSourceAsset,
+    ThreeDSourceImage,
+)
 
 
 def create_demo_myth_session(
@@ -25,6 +32,8 @@ def create_demo_myth_session(
     print_provider: PrintProvider | None = None,
     npc_director: NPCDirector | None = None,
     world_arbitrator: WorldArbitrator | None = None,
+    source_images: Sequence[ThreeDSourceImage] = (),
+    source_assets: Sequence[ThreeDSourceAsset] = (),
 ) -> MythSession:
     observation = _coerce_object_observation(object_observation)
     capsule = _coerce_context_capsule(context_capsule)
@@ -36,8 +45,12 @@ def create_demo_myth_session(
     selected_npc_director = npc_director or LocalNPCDirector()
     selected_npc_director.validate_configuration()
     generated_asset = selected_three_d_provider.generate_game_asset(
-        session_id=session_id,
-        prompt=myth_seed.generation_prompt,
+        ThreeDGenerationRequest(
+            session_id=session_id,
+            prompt=myth_seed.generation_prompt,
+            source_images=tuple(source_images),
+            source_assets=tuple(source_assets),
+        )
     )
     npc_result = selected_npc_director.generate_reactions(
         session_id=session_id,
@@ -117,10 +130,9 @@ def _create_object_card(observation: ObjectObservation) -> ObjectCard:
     )
     if capture_id:
         media_count = len(media_refs) if isinstance(media_refs, list) else 0
-        media_ref_text = ", ".join(media_refs) if isinstance(media_refs, list) else ""
         symbolic_reading += (
             f" Capture evidence: capture_id: {capture_id}; media_refs: {media_count}; "
-            f"media_ref_uris: {media_ref_text}."
+            "media_ref_uris: withheld."
         )
 
     return ObjectCard(

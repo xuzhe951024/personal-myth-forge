@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.11 Capture-Aware 3D</title>
+  <style>
+    :root {
+      --ink: #172125;
+      --muted: #5f6d72;
+      --line: #cbd8d4;
+      --paper: #f6f9f7;
+      --panel: #ffffff;
+      --green: #276f58;
+      --blue: #285f8d;
+      --gold: #9b6b21;
+      --rose: #8b4657;
+      --dark: #263235;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow-x: hidden;
+      background: #dde8e3;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .phone {
+      width: min(100%, 390px);
+      min-height: 840px;
+      overflow: hidden;
+      border: 1px solid #bdcbc6;
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 18px 44px rgba(23, 33, 37, 0.2);
+    }
+
+    header {
+      padding: 10px 14px 9px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfb;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      font-weight: 760;
+    }
+
+    .subhead {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    main {
+      padding: 9px 12px 8px;
+    }
+
+    .section {
+      margin-bottom: 8px;
+    }
+
+    .label {
+      margin: 0 0 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 720;
+      text-transform: uppercase;
+    }
+
+    .flow {
+      display: grid;
+      gap: 7px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .dot {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--green);
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .step strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .step small {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .tag {
+      padding: 5px 7px;
+      border-radius: 6px;
+      background: #e7f0ed;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .tag.blue {
+      background: #e8f0f7;
+      color: var(--blue);
+    }
+
+    .tag.gold {
+      background: #f6efe3;
+      color: var(--gold);
+    }
+
+    .tag.rose {
+      background: #f5e9ec;
+      color: var(--rose);
+    }
+
+    .provider {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .media {
+      min-height: 118px;
+      position: relative;
+      background:
+        repeating-linear-gradient(90deg, #edf4f1 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, #edf4f1 0 1px, transparent 1px 18px),
+        #fbfcfb;
+    }
+
+    .photo {
+      position: absolute;
+      left: 18px;
+      top: 15px;
+      width: 92px;
+      height: 68px;
+      border: 6px solid white;
+      border-radius: 7px;
+      background:
+        linear-gradient(145deg, #b6c9c0, #e5efe8 55%, #7b8d83);
+      box-shadow: 0 12px 24px rgba(38, 50, 53, 0.18);
+      transform: rotate(-5deg);
+    }
+
+    .photo::after {
+      content: "";
+      position: absolute;
+      left: 30px;
+      top: 14px;
+      width: 27px;
+      height: 34px;
+      border-radius: 8px 8px 14px 14px;
+      background: #8f6b43;
+      box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.28);
+    }
+
+    .mesh {
+      position: absolute;
+      right: 18px;
+      bottom: 14px;
+      width: 78px;
+      height: 72px;
+      border: 1px solid #7d8f89;
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, transparent 0 48%, rgba(40, 95, 141, 0.38) 49% 51%, transparent 52%),
+        linear-gradient(45deg, transparent 0 48%, rgba(39, 111, 88, 0.34) 49% 51%, transparent 52%),
+        #f8fbfa;
+    }
+
+    .mesh::after {
+      content: "GLB";
+      position: absolute;
+      right: 7px;
+      bottom: 6px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 840;
+    }
+
+    .panel-body {
+      padding: 8px;
+    }
+
+    .panel-body h2 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .panel-body p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.3;
+    }
+
+    .code {
+      margin-top: 8px;
+      padding: 6px;
+      border: 1px solid #d8e2df;
+      border-radius: 6px;
+      background: #f4f7f5;
+      color: var(--dark);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .check {
+      min-height: 60px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .check strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .check span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .notice {
+      padding: 6px 9px;
+      border: 1px solid #d4c095;
+      border-radius: 8px;
+      background: #fbf7ef;
+      color: #665021;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header>
+      <div class="status">
+        <span>Backend contract</span>
+        <span>P0.11</span>
+      </div>
+      <h1>Capture-Aware 3D Generation</h1>
+      <p class="subhead">From-capture sessions now pass real uploaded media into the 3D provider request.</p>
+    </header>
+
+    <main>
+      <section class="section">
+        <p class="label">Provider input path</p>
+        <div class="flow">
+          <div class="step">
+            <div class="dot">1</div>
+            <div>
+          <strong>iOS capture upload</strong>
+          <small>JPEG reference plus optional scan asset.</small>
+            </div>
+            <span class="tag">capture</span>
+          </div>
+          <div class="step">
+            <div class="dot">2</div>
+            <div>
+              <strong>Local capture store</strong>
+          <small>Safe manifest lookup and media byte read.</small>
+            </div>
+            <span class="tag blue">read_media</span>
+          </div>
+          <div class="step">
+            <div class="dot">3</div>
+            <div>
+              <strong>ThreeDGenerationRequest</strong>
+          <small>source_images and source_assets reach provider.</small>
+            </div>
+            <span class="tag gold">typed</span>
+          </div>
+          <div class="step">
+            <div class="dot">4</div>
+            <div>
+              <strong>Meshy image-to-3D</strong>
+          <small>POST /openapi/v1/image-to-3d when image exists.</small>
+            </div>
+            <span class="tag rose">GLB</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section provider">
+        <div class="panel">
+          <div class="media">
+            <div class="photo"></div>
+            <div class="mesh"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-body">
+            <h2>Provider request</h2>
+            <p>Images become data URI inputs. Scan assets remain manifest references.</p>
+            <div class="code">image_url: data:image/jpeg;base64,...<br>source_asset: local-capture://.../media_0.glb<br>output: GLB game_asset</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <p class="label">Acceptance signals</p>
+        <div class="checks">
+          <div class="check">
+            <strong>Capture media source</strong>
+            <span>source_images=1 and source_assets=1 reach the provider.</span>
+          </div>
+          <div class="check">
+            <strong>Meshy image-to-3D</strong>
+            <span>Image source skips text preview/refine and returns GLB.</span>
+          </div>
+          <div class="check">
+            <strong>Clean API response</strong>
+            <span>No data URI, raw bytes, filesystem path, or key leaks.</span>
+          </div>
+          <div class="check">
+            <strong>Prompt-only works</strong>
+            <span>Text-to-3D remains available for CLI and direct sessions.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="notice">
+          Evidence type: backend/provider-contract storyboard. Not a real Meshy run,
+          device camera test, or iOS 3D renderer screenshot.
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

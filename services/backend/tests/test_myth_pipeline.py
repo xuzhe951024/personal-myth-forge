@@ -8,20 +8,25 @@ from myth_forge_api.domain.models import (
 )
 from myth_forge_api.domain.pipeline import create_demo_myth_session
 from myth_forge_api.providers.npc import OpenAINPCConfigurationError
+from myth_forge_api.providers.three_d import (
+    ThreeDGenerationRequest,
+    ThreeDSourceAsset,
+    ThreeDSourceImage,
+)
 
 
 class RecordingThreeDProvider:
     def __init__(self) -> None:
-        self.calls: list[tuple[str, str]] = []
+        self.calls: list[ThreeDGenerationRequest] = []
 
-    def generate_game_asset(self, session_id: str, prompt: str) -> GeneratedAsset:
-        self.calls.append((session_id, prompt))
+    def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
+        self.calls.append(request)
         return GeneratedAsset(
             kind="game_asset",
             provider="recording",
             format="glb",
-            uri=f"recording://{session_id}.glb",
-            prompt=prompt,
+            uri=f"recording://{request.session_id}.glb",
+            prompt=request.prompt,
             moderation_status="needs_review",
         )
 
@@ -170,7 +175,42 @@ def test_pipeline_accepts_injected_three_d_provider() -> None:
     )
 
     assert session.generated_asset.provider == "recording"
-    assert provider.calls == [(session.session_id, session.myth_seed.generation_prompt)]
+    assert len(provider.calls) == 1
+    assert provider.calls[0].session_id == session.session_id
+    assert provider.calls[0].prompt == session.myth_seed.generation_prompt
+
+
+def test_pipeline_passes_capture_sources_to_three_d_provider() -> None:
+    provider = RecordingThreeDProvider()
+    source_image = ThreeDSourceImage(
+        uri="local-capture://cap_0123456789abcdef/media_0.jpg",
+        content_type="image/jpeg",
+        data_uri="data:image/jpeg;base64,ZmFrZQ==",
+    )
+    source_asset = ThreeDSourceAsset(
+        uri="local-capture://cap_0123456789abcdef/media_1.glb",
+        content_type="model/gltf-binary",
+    )
+
+    session = create_demo_myth_session(
+        object_observation={
+            "label": "silver spoon",
+            "materials": ["metal"],
+            "source": "manual_upload",
+        },
+        context_capsule={
+            "current_theme": "making peace with change",
+            "desired_tone": "gentle and uncanny",
+        },
+        source_images=(source_image,),
+        source_assets=(source_asset,),
+        three_d_provider=provider,
+    )
+
+    assert session.generated_asset.provider == "recording"
+    assert len(provider.calls) == 1
+    assert provider.calls[0].source_images == (source_image,)
+    assert provider.calls[0].source_assets == (source_asset,)
 
 
 def test_session_includes_world_resolution_contract() -> None:
