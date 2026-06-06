@@ -164,3 +164,26 @@ def test_demo_route_includes_capture_upload_mount_points() -> None:
     assert response.status_code == 200
     assert 'type="file"' in response.text
     assert "capture-status" in response.text
+
+
+def test_provider_readiness_endpoint_returns_safe_status(monkeypatch) -> None:
+    monkeypatch.setenv("THREE_D_PROVIDER", "meshy")
+    monkeypatch.setenv("MESHY_API_KEY", "sk-meshy-secret")
+    monkeypatch.setenv("NPC_PROVIDER", "openai")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    client = TestClient(app)
+
+    response = client.get("/v1/provider-readiness")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["overall_demo_ready"] is False
+    assert payload["overall_real_ready"] is False
+    providers = {item["kind"]: item for item in payload["providers"]}
+    assert providers["three_d"]["status"] == "ready"
+    assert providers["three_d"]["is_real_provider_ready"] is True
+    assert providers["npc"]["status"] == "missing_configuration"
+    assert providers["npc"]["missing_env"] == ["OPENAI_API_KEY"]
+    assert "MESHY_API_KEY" not in response.text
+    assert "sk-meshy-secret" not in response.text
+    assert "OPENAI_API_KEY" in response.text

@@ -150,6 +150,29 @@ class PrintCandidate(BaseModel):
     printability_notes: list[str]
 
 
+class ProviderReadinessItem(BaseModel):
+    kind: Literal["three_d", "npc", "print", "capture_storage"]
+    selected_provider: str
+    status: Literal[
+        "ready",
+        "local_stub",
+        "missing_configuration",
+        "not_implemented",
+        "unsupported",
+    ]
+    is_demo_ready: bool
+    is_real_provider_ready: bool
+    missing_env: list[str] = Field(default_factory=list)
+    capabilities: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
+
+
+class ProviderReadinessResponse(BaseModel):
+    overall_demo_ready: bool
+    overall_real_ready: bool
+    providers: list[ProviderReadinessItem]
+
+
 class MythSession(BaseModel):
     session_id: str
     status: Literal["ready_for_review", "blocked", "processing"]
