@@ -27,3 +27,8 @@ mobile-xcode-build:
 
 mobile-deploy-preflight:
 	apps/mobile/ios/scripts/deploy_preflight.sh
+
+.PHONY: mobile-write-deploy-config
+
+mobile-write-deploy-config:
+	apps/mobile/ios/scripts/write_deploy_local_config.sh

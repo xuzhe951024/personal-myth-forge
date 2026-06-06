@@ -10,6 +10,7 @@ do {
     let plistFile = appRoot.appendingPathComponent("Info.plist")
     let xcodeBuildGateScriptFile = iosRoot.appendingPathComponent("scripts/xcode_build_gate.sh")
     let deployPreflightScriptFile = iosRoot.appendingPathComponent("scripts/deploy_preflight.sh")
+    let deployConfigWriterScriptFile = iosRoot.appendingPathComponent("scripts/write_deploy_local_config.sh")
     let deployConfigFile = iosRoot.appendingPathComponent("Config/Deployment.xcconfig")
     let deployLocalExampleFile = iosRoot.appendingPathComponent("Config/Deployment.local.xcconfig.example")
     let sharedSchemeFile = iosRoot.appendingPathComponent(
@@ -23,6 +24,7 @@ do {
     let plist = try readPropertyList(plistFile)
     let xcodeBuildGateScript = try readText(xcodeBuildGateScriptFile)
     let deployPreflightScript = try readText(deployPreflightScriptFile)
+    let deployConfigWriterScript = try readText(deployConfigWriterScriptFile)
     let deployConfig = try readText(deployConfigFile)
     let deployLocalExample = try readText(deployLocalExampleFile)
     let sharedScheme = try readText(sharedSchemeFile)
@@ -155,6 +157,29 @@ do {
         "apps/mobile/ios/scripts/deploy_preflight.sh",
         "mobile deploy preflight script"
     )
+    try requireContains(makefile, ".PHONY: mobile-write-deploy-config", "mobile deploy config writer phony target")
+    try requireContains(makefile, "mobile-write-deploy-config:", "mobile deploy config writer target")
+    try requireContains(
+        makefile,
+        "apps/mobile/ios/scripts/write_deploy_local_config.sh",
+        "mobile deploy config writer script"
+    )
+    try requireContains(deployConfigWriterScript, "DEVELOPMENT_TEAM", "deploy config writer team key")
+    try requireContains(deployConfigWriterScript, "PRODUCT_BUNDLE_IDENTIFIER", "deploy config writer bundle key")
+    try requireContains(deployConfigWriterScript, "PMF_BACKEND_BASE_URL", "deploy config writer backend key")
+    try requireContains(
+        deployConfigWriterScript,
+        "Deployment.local.xcconfig must stay untracked.",
+        "deploy config writer tracked local config guard"
+    )
+    try requireContains(deployConfigWriterScript, "chmod 600", "deploy config writer local file mode")
+    try requireNotContains(deployConfigWriterScript, "sudo", "deploy config writer no sudo")
+    try requireNotContains(deployConfigWriterScript, "xcode-select", "deploy config writer no global developer mutation")
+    try requireNotContains(deployConfigWriterScript, "xcodebuild -license", "deploy config writer no license mutation")
+    try requireNotContains(deployConfigWriterScript, "security ", "deploy config writer no keychain mutation")
+    try requireNotContains(deployConfigWriterScript, "codesign", "deploy config writer no signing")
+    try requireNotContains(deployConfigWriterScript, "api.openai.com", "deploy config writer no OpenAI call")
+    try requireNotContains(deployConfigWriterScript, "api.meshy.ai", "deploy config writer no Meshy call")
 
     for file in [
         "AppConfiguration.swift",

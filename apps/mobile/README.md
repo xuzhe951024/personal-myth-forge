@@ -71,6 +71,34 @@ P0.7 and are now referenced by the P0.8 Xcode app shell. API keys and provider
 secrets must not be committed into the mobile app; use backend-side provider
 configuration instead.
 
+## Local Device Config Handoff
+
+For a physical iPhone demo, run the backend on a LAN-reachable interface:
+
+```bash
+make backend-device-demo
+```
+
+Then write the ignored local iOS deploy config from explicit values:
+
+```bash
+DEVELOPMENT_TEAM=ABCDE12345 \
+PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge \
+PMF_BACKEND_BASE_URL=http://192.168.1.10:8080 \
+make mobile-write-deploy-config
+```
+
+Validate the handoff before opening Xcode or connecting a device:
+
+```bash
+make mobile-deploy-preflight
+```
+
+The writer only creates `apps/mobile/ios/Config/Deployment.local.xcconfig`. That
+file is ignored by git, should not contain provider keys, and is guarded against
+being tracked. The preflight then checks required signing values, rejects
+loopback backend URLs for device demos, and calls `$PMF_BACKEND_BASE_URL/health`.
+
 ## P0.8 Xcode App Shell
 
 P0.8 adds:

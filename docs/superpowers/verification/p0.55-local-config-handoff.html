@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.55 Local Config Handoff</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1b2430;
+        --muted: #5b6472;
+        --line: #d7dce4;
+        --paper: #f6f7f9;
+        --panel: #ffffff;
+        --green: #047857;
+        --blue: #1d4ed8;
+        --amber: #a15c07;
+        --red: #b42318;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        background: var(--paper);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(358px, calc(100vw - 32px));
+        margin: 0 0 0 16px;
+        padding: 20px 0 28px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 23px;
+        line-height: 1.16;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 16px;
+        letter-spacing: 0;
+      }
+
+      p {
+        color: var(--muted);
+        line-height: 1.42;
+        overflow-wrap: anywhere;
+      }
+
+      header {
+        display: grid;
+        gap: 7px;
+        margin-bottom: 13px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+
+      .tile,
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .tile {
+        min-height: 82px;
+        padding: 11px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 8px;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.04;
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .ok {
+        color: var(--green);
+      }
+
+      .blue {
+        color: var(--blue);
+      }
+
+      .warn {
+        color: var(--amber);
+      }
+
+      .blocked {
+        color: var(--red);
+      }
+
+      .panel {
+        padding: 13px;
+        margin-top: 11px;
+      }
+
+      .flow {
+        display: grid;
+        gap: 8px;
+        margin-top: 11px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 24px minmax(0, 1fr);
+        gap: 9px;
+        align-items: start;
+      }
+
+      .mark {
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        color: #ffffff;
+        background: var(--blue);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .mark.ok {
+        background: var(--green);
+        color: #ffffff;
+      }
+
+      .mark.warn {
+        background: var(--amber);
+        color: #ffffff;
+      }
+
+      .code {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        background: #111827;
+        color: #e5e7eb;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+
+      .small {
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P0.55 Local Config Handoff</h1>
+        <p>Project-local writer for final iPhone demo values.</p>
+      </header>
+
+      <section class="grid" aria-label="Handoff summary">
+        <div class="tile">
+          <div class="label">Input</div>
+          <div class="value blue">Team + Bundle + LAN URL</div>
+          <p class="small">User-owned values only.</p>
+        </div>
+        <div class="tile">
+          <div class="label">Output</div>
+          <div class="value ok">Ignored xcconfig</div>
+          <p class="small">No provider keys.</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Command Path</h2>
+        <div class="code">
+          make mobile-write-deploy-config<br />
+          make mobile-deploy-preflight<br />
+          GET $PMF_BACKEND_BASE_URL/health
+        </div>
+        <div class="flow">
+          <div class="step">
+            <div class="mark">1</div>
+            <p>Explicit env vars or flags write only `Deployment.local.xcconfig`.</p>
+          </div>
+          <div class="step">
+            <div class="mark ok">2</div>
+            <p>Tracked local config, missing values, and loopback backend URLs are blocked.</p>
+          </div>
+          <div class="step">
+            <div class="mark ok">3</div>
+            <p>Existing preflight validates signing fields and backend `/health`.</p>
+          </div>
+          <div class="step">
+            <div class="mark warn">4</div>
+            <p>No Xcode selection, keychain, signing, Meshy, OpenAI, or print call runs here.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Acceptance</h2>
+        <div class="flow">
+          <div class="step">
+            <div class="mark ok">OK</div>
+            <p>Writer subprocess tests cover missing, loopback, tracked, env, flags, and preflight handoff.</p>
+          </div>
+          <div class="step">
+            <div class="mark ok">OK</div>
+            <p>SwiftPM source gate checks the script, Make target, required keys, and banned commands.</p>
+          </div>
+          <div class="step">
+            <div class="mark warn">WAIT</div>
+            <p>Real Apple signing values and device run remain final operator-provided resources.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
