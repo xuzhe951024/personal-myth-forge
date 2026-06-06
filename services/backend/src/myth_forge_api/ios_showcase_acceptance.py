@@ -287,6 +287,7 @@ FEATURES = (
                 "PMF_BACKEND_BASE_URL",
             ),
             SourceRequirement("apps/mobile/ios/App/Info.plist", "NSCameraUsageDescription"),
+            SourceRequirement("apps/mobile/ios/App/Info.plist", "NSLocalNetworkUsageDescription"),
             SourceRequirement("apps/mobile/ios/App/Info.plist", "$(PMF_BACKEND_BASE_URL)"),
         ),
     ),

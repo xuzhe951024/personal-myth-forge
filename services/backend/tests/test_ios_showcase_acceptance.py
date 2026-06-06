@@ -118,6 +118,31 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_readiness_with
     assert "data:image" not in report_text
 
 
+def test_ios_showcase_acceptance_fails_missing_local_network_usage_without_absolute_paths(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    plist_path = tmp_path / "apps/mobile/ios/App/Info.plist"
+    plist_path.write_text("NSCameraUsageDescription $(PMF_BACKEND_BASE_URL)", encoding="utf-8")
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 15, "failed": 1}
+    assert features["deploy_config"]["status"] == "failed"
+    assert {
+        "file": "apps/mobile/ios/App/Info.plist",
+        "contains": "NSLocalNetworkUsageDescription",
+    } in features["deploy_config"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+    assert "data:image" not in report_text
+
+
 def write_complete_ios_showcase_fixture(root: Path) -> None:
     files = {
         "apps/mobile/ios/App/CameraCaptureView.swift": (
@@ -157,7 +182,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/DemoScriptView.swift": (
             "Demo Script ShowcaseAutopilotPlan Button(action: runAutopilot)"
         ),
-        "apps/mobile/ios/App/Info.plist": "NSCameraUsageDescription $(PMF_BACKEND_BASE_URL)",
+        "apps/mobile/ios/App/Info.plist": (
+            "NSCameraUsageDescription NSLocalNetworkUsageDescription "
+            "$(PMF_BACKEND_BASE_URL)"
+        ),
         "apps/mobile/ios/Config/Deployment.xcconfig": "PMF_BACKEND_BASE_URL",
         "apps/mobile/ios/Config/Deployment.local.xcconfig.example": "PMF_BACKEND_BASE_URL",
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CameraCaptureMediaBuilder.swift": (
