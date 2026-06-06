@@ -27,6 +27,7 @@ do {
     try testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset()
     try testArtifactPreviewStateMarksLocalUSDZAsSceneLoadable()
     try testArtifactPreviewStateHandlesMissingURI()
+    try testArtifactPreviewStateHandlesMissingFormat()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
     try await testForgeFlowServiceUploadsCaptureThenCreatesSession()
     try await testForgeFlowServiceStopsBeforeSessionWhenUploadFails()
@@ -695,6 +696,19 @@ private func testArtifactPreviewStateHandlesMissingURI() throws {
     try expectFalse(state.isSceneLoadable)
     try expectEqual(state.formatLabel, "Unknown")
     try expectEqual(state.statusTitle, "Awaiting 3D asset")
+}
+
+private func testArtifactPreviewStateHandlesMissingFormat() throws {
+    let state = ArtifactPreviewState(
+        session: mythSession(
+            asset: generatedAsset(format: "", uri: "https://cdn.example.com/relic")
+        )
+    )
+
+    try expectFalse(state.isSceneLoadable)
+    try expectEqual(state.formatLabel, "Unknown")
+    try expectEqual(state.statusTitle, "Awaiting 3D asset format")
+    try expectContains(state.statusDetail, "format")
 }
 
 private func sampleCaptureDraft() -> CaptureDraft {

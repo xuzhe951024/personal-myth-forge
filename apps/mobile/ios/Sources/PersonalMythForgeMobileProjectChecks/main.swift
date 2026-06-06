@@ -58,9 +58,10 @@ do {
     ] {
         try requireContains(project, file, "Xcode project file reference")
     }
-    try requireContains(
+    try requirePBXSectionContains(
         project,
-        "Artifact3DPreviewView.swift in Sources",
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000008 /* Artifact3DPreviewView.swift in Sources */,",
         "3D preview Xcode source membership"
     )
     for file in [
@@ -198,6 +199,26 @@ private func requireContains(_ haystack: String, _ needle: String, _ label: Stri
 private func requireNotContains(_ haystack: String, _ needle: String, _ label: String) throws {
     if haystack.contains(needle) {
         throw ProjectCheckError.unexpectedText(label, needle)
+    }
+}
+
+private func requirePBXSectionContains(
+    _ project: String,
+    sectionName: String,
+    _ needle: String,
+    _ label: String
+) throws {
+    let beginMarker = "/* Begin \(sectionName) section */"
+    let endMarker = "/* End \(sectionName) section */"
+    guard let beginRange = project.range(of: beginMarker),
+          let endRange = project.range(of: endMarker, range: beginRange.upperBound..<project.endIndex)
+    else {
+        throw ProjectCheckError.missingText("\(label) section", beginMarker)
+    }
+
+    let section = project[beginRange.upperBound..<endRange.lowerBound]
+    if !section.contains(needle) {
+        throw ProjectCheckError.missingText(label, needle)
     }
 }
 

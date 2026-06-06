@@ -48,10 +48,16 @@ public struct ArtifactPreviewState: Equatable, Sendable {
         uri: String,
         isSceneLoadable: Bool
     ) -> (title: String, detail: String) {
-        if uri.isEmpty || format.isEmpty {
+        if uri.isEmpty {
             return (
                 "Awaiting 3D asset",
                 "The myth session has not returned a usable generated asset URI yet."
+            )
+        }
+        if format.isEmpty {
+            return (
+                "Awaiting 3D asset format",
+                "The myth session returned an asset URI, but it still needs a usable 3D format."
             )
         }
         if isSceneLoadable {
