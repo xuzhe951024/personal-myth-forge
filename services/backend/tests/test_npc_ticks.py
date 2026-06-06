@@ -16,6 +16,7 @@ from myth_forge_api.providers.npc_ticks import (
     OpenAINPCTickOutput,
     OpenAINPCTickRuntime,
 )
+from myth_forge_api.providers.session_store import LocalMythSessionStore
 
 
 def test_local_npc_tick_runtime_generates_three_agent_actions() -> None:
@@ -195,6 +196,28 @@ def test_create_npc_tick_endpoint_returns_tick_contract() -> None:
     assert payload["world_resolution"]["accepted_actions"]
     assert "data:image" not in response.text
     assert "local://generated-assets" not in response.text
+
+
+def test_create_npc_tick_endpoint_appends_backend_session_history(monkeypatch, tmp_path) -> None:
+    store = LocalMythSessionStore(tmp_path)
+    monkeypatch.setattr("myth_forge_api.main.build_myth_session_store", lambda: store)
+    session = _session()
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/npc-ticks",
+        json={
+            "session": session.model_dump(mode="json"),
+            "tick_index": 1,
+            "recent_events": ["The village debate grows louder."],
+        },
+    )
+
+    assert response.status_code == 200
+    history = store.get_history(session.session_id)
+    assert history is not None
+    assert history.session == session
+    assert [tick.tick_index for tick in history.npc_ticks] == [1]
 
 
 def _session():

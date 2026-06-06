@@ -13,8 +13,10 @@ from pydantic import ValidationError
 from myth_forge_api.config import load_settings
 from myth_forge_api.domain.models import (
     CAPTURE_ID_PATTERN,
+    SESSION_ID_PATTERN,
     MythSession,
     MythSessionFromCaptureRequest,
+    MythSessionHistory,
     MythSessionRequest,
     NPCAgentTick,
     NPCAgentTickRequest,
@@ -26,6 +28,7 @@ from myth_forge_api.domain.pipeline import create_demo_myth_session
 from myth_forge_api.providers.capture_store import CaptureStore, CaptureStoreError, CaptureUpload
 from myth_forge_api.providers.factory import (
     build_capture_store,
+    build_myth_session_store,
     build_npc_director,
     build_npc_tick_runtime,
     build_three_d_provider,
@@ -98,6 +101,24 @@ def get_object_capture(
     return capture
 
 
+@app.get("/v1/myth-sessions/{session_id}", response_model=MythSession)
+def get_myth_session(session_id: str = PathParam(..., pattern=SESSION_ID_PATTERN)) -> MythSession:
+    session = build_myth_session_store().get_session(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Myth session not found.")
+    return session
+
+
+@app.get("/v1/myth-sessions/{session_id}/history", response_model=MythSessionHistory)
+def get_myth_session_history(
+    session_id: str = PathParam(..., pattern=SESSION_ID_PATTERN),
+) -> MythSessionHistory:
+    history = build_myth_session_store().get_history(session_id)
+    if history is None:
+        raise HTTPException(status_code=404, detail="Myth session not found.")
+    return history
+
+
 @app.post("/v1/myth-sessions/from-capture", response_model=MythSession)
 def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> MythSession:
     capture_store = build_capture_store()
@@ -112,7 +133,7 @@ def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> 
     )
     try:
         source_images, source_assets = _capture_generation_sources(capture, capture_store)
-        return create_demo_myth_session(
+        session = create_demo_myth_session(
             object_observation=observation,
             context_capsule=request.context_capsule,
             three_d_provider=build_three_d_provider(),
@@ -120,6 +141,8 @@ def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> 
             source_images=source_images,
             source_assets=source_assets,
         )
+        build_myth_session_store().save_session(session)
+        return session
     except CaptureStoreError as exc:
         raise HTTPException(status_code=exc.status_code, detail=_safe_provider_error(exc)) from exc
     except ImagePreparationError as exc:
@@ -131,12 +154,14 @@ def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> 
 @app.post("/v1/myth-sessions", response_model=MythSession)
 def create_myth_session(request: MythSessionRequest) -> MythSession:
     try:
-        return create_demo_myth_session(
+        session = create_demo_myth_session(
             object_observation=request.object_observation,
             context_capsule=request.context_capsule,
             three_d_provider=build_three_d_provider(),
             npc_director=build_npc_director(),
         )
+        build_myth_session_store().save_session(session)
+        return session
     except (MeshyProviderError, OpenAINPCProviderError, ValueError) as exc:
         raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
 
@@ -144,7 +169,9 @@ def create_myth_session(request: MythSessionRequest) -> MythSession:
 @app.post("/v1/npc-ticks", response_model=NPCAgentTick)
 def create_npc_tick(request: NPCAgentTickRequest) -> NPCAgentTick:
     try:
-        return build_npc_tick_runtime().generate_tick(request)
+        tick = build_npc_tick_runtime().generate_tick(request)
+        build_myth_session_store().append_tick(request.session, tick)
+        return tick
     except OpenAINPCProviderError as exc:
         raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
     except ValueError as exc:
