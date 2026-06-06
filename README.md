@@ -392,3 +392,38 @@ On this machine `make mobile-xcode-build` still stops at the Apple SDK license
 gate. P0.19 does not claim simulator/device installation, real Object Capture
 device runtime validation, local photogrammetry reconstruction, HEIC-to-JPEG
 transcoding, or Unity village import.
+
+P0.20 adds a provider readiness preflight for the final API/key handoff. The
+backend exposes:
+
+```http
+GET /v1/provider-readiness
+```
+
+The response reports 3D, NPC, print, and capture-storage readiness without
+returning secret values. Local stubs count as demo-ready but not
+real-provider-ready; Meshy and OpenAI become real-provider-ready only when their
+backend environment variables are present. The iOS app decodes this contract and
+shows a compact readiness strip above the forge form.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+make backend-lint
+make backend-test
+make mobile-xcode-build
+```
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.20-provider-readiness.html
+docs/superpowers/verification/assets/p0.20-provider-readiness-390x844.png
+```
+
+P0.20 does not create provider keys, store secrets in the mobile app, run live
+Meshy/OpenAI calls, implement print fulfillment, or bypass the Apple SDK license
+gate.
