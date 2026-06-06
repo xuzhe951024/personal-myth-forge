@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from myth_forge_api.domain.models import GeneratedAsset
 from myth_forge_api.main import app
 from myth_forge_api.providers.capture_store import LocalCaptureStore
-from myth_forge_api.providers.three_d import ThreeDGenerationRequest
+from myth_forge_api.providers.three_d import MeshyProviderError, ThreeDGenerationRequest
 
 
 class RecordingThreeDProvider:
@@ -23,6 +23,18 @@ class RecordingThreeDProvider:
             uri=f"recording://{request.session_id}.glb",
             prompt=request.prompt,
             moderation_status="needs_review",
+        )
+
+
+class LeakingThreeDProvider:
+    provider_name = "leaking"
+
+    def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
+        raise MeshyProviderError(
+            "provider echoed image_url=data:image/jpeg;base64,ZmFrZS1qcGVn "
+            "path=/tmp/personal-myth-forge/captures/cap_0123456789abcdef/media_1.jpg "
+            "ref=local-capture://cap_0123456789abcdef/media_1.jpg "
+            "Authorization=Bearer test-secret raw=test-secret"
         )
 
 
@@ -236,12 +248,7 @@ def test_create_myth_session_from_arkit_scan_capture_includes_media_refs(
     assert payload["object_card"]["source"] == "phone_capture"
     assert "media_refs: 2" in payload["object_card"]["symbolic_reading"]
     assert "capture_id:" in payload["object_card"]["symbolic_reading"]
-    assert f"local-capture://{created['capture_id']}/media_0.glb" in payload["object_card"][
-        "symbolic_reading"
-    ]
-    assert f"local-capture://{created['capture_id']}/media_1.jpg" in payload["object_card"][
-        "symbolic_reading"
-    ]
+    assert "local-capture://" not in response.text
 
 
 def test_create_myth_session_from_capture_passes_media_sources_to_3d_provider(
@@ -303,6 +310,71 @@ def test_create_myth_session_from_capture_passes_media_sources_to_3d_provider(
     assert "ZmFrZS1qcGVn" not in response.text
     assert "fake-jpeg" not in response.text
     assert "fake-glb" not in response.text
+
+
+def test_create_myth_session_from_capture_redacts_provider_error_media_details(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    store = LocalCaptureStore(root_dir=tmp_path)
+    monkeypatch.setattr("myth_forge_api.main.build_capture_store", lambda: store)
+    monkeypatch.setattr("myth_forge_api.main.build_three_d_provider", lambda: LeakingThreeDProvider())
+    client = TestClient(app)
+    created = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _metadata_json()},
+        files={"files": ("key.jpg", b"fake-jpeg", "image/jpeg")},
+    ).json()
+
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": created["capture_id"],
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 502
+    detail = response.json()["detail"]
+    assert "[redacted]" in detail
+    assert "data:image" not in detail
+    assert "ZmFrZS1qcGVn" not in detail
+    assert "/tmp/personal-myth-forge" not in detail
+    assert "local-capture://" not in detail
+    assert "test-secret" not in detail
+    assert "Authorization" not in detail
+    assert "raw=" not in detail
+
+
+def test_create_myth_session_from_capture_preserves_capture_store_error_status(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    client = _client_with_store(tmp_path, monkeypatch)
+    created = client.post(
+        "/v1/object-captures",
+        data={"metadata_json": _metadata_json()},
+        files={"files": ("key.jpg", b"fake-jpeg", "image/jpeg")},
+    ).json()
+    (tmp_path / created["capture_id"] / "media_0.jpg").unlink()
+
+    response = client.post(
+        "/v1/myth-sessions/from-capture",
+        json={
+            "capture_id": created["capture_id"],
+            "context_capsule": {
+                "current_theme": "deadline pressure",
+                "desired_tone": "tender and strange",
+            },
+        },
+    )
+
+    assert response.status_code == 404
+    assert "fake-jpeg" not in response.text
+    assert str(tmp_path) not in response.text
 
 
 def test_create_myth_session_from_capture_returns_404_for_missing_capture(

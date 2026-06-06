@@ -130,10 +130,9 @@ def _create_object_card(observation: ObjectObservation) -> ObjectCard:
     )
     if capture_id:
         media_count = len(media_refs) if isinstance(media_refs, list) else 0
-        media_ref_text = ", ".join(media_refs) if isinstance(media_refs, list) else ""
         symbolic_reading += (
             f" Capture evidence: capture_id: {capture_id}; media_refs: {media_count}; "
-            f"media_ref_uris: {media_ref_text}."
+            "media_ref_uris: withheld."
         )
 
     return ObjectCard(

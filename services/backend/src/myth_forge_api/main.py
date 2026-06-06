@@ -105,7 +105,9 @@ def create_myth_session_from_capture(request: MythSessionFromCaptureRequest) -> 
             source_images=source_images,
             source_assets=source_assets,
         )
-    except (CaptureStoreError, MeshyProviderError, OpenAINPCProviderError, ValueError) as exc:
+    except CaptureStoreError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=_safe_provider_error(exc)) from exc
+    except (MeshyProviderError, OpenAINPCProviderError, ValueError) as exc:
         raise HTTPException(status_code=502, detail=_safe_provider_error(exc)) from exc
 
 
@@ -159,6 +161,9 @@ def _media_data_uri(content_type: str, data: bytes) -> str:
 def _safe_provider_error(exc: Exception) -> str:
     message = str(exc)
     replacements = [
+        r"data:[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=_-]+",
+        r"local-capture://[^\s,;\"']+",
+        r"(?:/[A-Za-z0-9._-]+){2,}/[^\s,;\"']+",
         r"Authorization\s*[=:]\s*Bearer\s+[A-Za-z0-9._:-]+",
         r"Bearer\s+[A-Za-z0-9._:-]+",
         r"raw=[^\s,;]+",
