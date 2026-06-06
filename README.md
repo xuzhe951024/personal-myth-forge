@@ -841,3 +841,23 @@ Static evidence lives at:
 docs/superpowers/verification/p0.32-final-acceptance-report.html
 docs/superpowers/verification/assets/p0.32-final-acceptance-report-390x844.png
 ```
+
+P0.33 routes multi-image guided scans to Meshy's Multi-Image to 3D endpoint when
+the backend has at least two prepared JPEG/PNG reference images. The Meshy
+adapter now selects provider input like this:
+
+- 2-4 supported images: `/openapi/v1/multi-image-to-3d`
+- 5+ supported images: first four images sent to `/openapi/v1/multi-image-to-3d`
+- 1 supported image: existing `/openapi/v1/image-to-3d`
+- 0 supported images: existing text-to-3D preview/refine path
+
+HEIC/HEIF guided scan photos are still converted to provider-safe JPEGs before
+the 3D provider sees them. Automated tests use `httpx.MockTransport` and do not
+make live Meshy calls or require `MESHY_API_KEY`.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.33-meshy-multi-image-guided-scan.html
+docs/superpowers/verification/assets/p0.33-meshy-multi-image-guided-scan-390x844.png
+```

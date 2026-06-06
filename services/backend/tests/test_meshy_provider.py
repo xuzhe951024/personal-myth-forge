@@ -141,6 +141,165 @@ def test_meshy_provider_uses_image_to_3d_when_source_image_exists() -> None:
     assert "mode" not in image_payload
 
 
+def test_meshy_provider_uses_multi_image_to_3d_for_guided_scan_images() -> None:
+    requests: list[httpx.Request] = []
+    responses = [
+        httpx.Response(200, json={"result": "multi-image-task-123"}),
+        httpx.Response(
+            200,
+            json={
+                "id": "multi-image-task-123",
+                "status": "SUCCEEDED",
+                "model_urls": {
+                    "glb": "https://assets.example/multi.glb",
+                    "usdz": "https://assets.example/multi.usdz",
+                },
+            },
+        ),
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return responses.pop(0)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://api.meshy.test",
+    )
+    provider = MeshyThreeDProvider(
+        api_key="test-key",
+        client=client,
+        poll_interval_seconds=0,
+        max_wait_seconds=1,
+    )
+
+    asset = provider.generate_game_asset(
+        _request(
+            source_images=(
+                _source_image("front", "image/jpeg"),
+                _source_image("side", "image/png"),
+            )
+        )
+    )
+
+    multi_payload = json.loads(requests[0].content)
+    assert asset.provider == "meshy"
+    assert asset.uri == "https://assets.example/multi.glb"
+    assert [variant.format for variant in asset.variants] == ["glb", "usdz"]
+    assert asset.variants[1].role == "ios_scene_asset"
+    assert [request.method for request in requests] == ["POST", "GET"]
+    assert [request.url.path for request in requests] == [
+        "/openapi/v1/multi-image-to-3d",
+        "/openapi/v1/multi-image-to-3d/multi-image-task-123",
+    ]
+    assert multi_payload["image_urls"] == [
+        "data:image/jpeg;base64,front",
+        "data:image/png;base64,side",
+    ]
+    assert multi_payload["target_formats"] == ["glb", "usdz"]
+    assert multi_payload["enable_pbr"] is True
+    assert multi_payload["should_texture"] is True
+    assert "image_url" not in multi_payload
+
+
+def test_meshy_provider_limits_multi_image_input_to_first_four_supported_images() -> None:
+    requests: list[httpx.Request] = []
+    responses = [
+        httpx.Response(200, json={"result": "multi-image-task-123"}),
+        httpx.Response(
+            200,
+            json={
+                "id": "multi-image-task-123",
+                "status": "SUCCEEDED",
+                "model_urls": {"glb": "https://assets.example/multi.glb"},
+            },
+        ),
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return responses.pop(0)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://api.meshy.test",
+    )
+    provider = MeshyThreeDProvider(
+        api_key="test-key",
+        client=client,
+        poll_interval_seconds=0,
+        max_wait_seconds=1,
+    )
+
+    provider.generate_game_asset(
+        _request(
+            source_images=tuple(_source_image(f"angle-{index}", "image/jpeg") for index in range(5))
+        )
+    )
+
+    multi_payload = json.loads(requests[0].content)
+    assert [request.url.path for request in requests] == [
+        "/openapi/v1/multi-image-to-3d",
+        "/openapi/v1/multi-image-to-3d/multi-image-task-123",
+    ]
+    assert multi_payload["image_urls"] == [
+        "data:image/jpeg;base64,angle-0",
+        "data:image/jpeg;base64,angle-1",
+        "data:image/jpeg;base64,angle-2",
+        "data:image/jpeg;base64,angle-3",
+    ]
+
+
+def test_meshy_provider_filters_unsupported_images_before_multi_image_routing() -> None:
+    requests: list[httpx.Request] = []
+    responses = [
+        httpx.Response(200, json={"result": "multi-image-task-123"}),
+        httpx.Response(
+            200,
+            json={
+                "id": "multi-image-task-123",
+                "status": "SUCCEEDED",
+                "model_urls": {"glb": "https://assets.example/multi.glb"},
+            },
+        ),
+    ]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return responses.pop(0)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://api.meshy.test",
+    )
+    provider = MeshyThreeDProvider(
+        api_key="test-key",
+        client=client,
+        poll_interval_seconds=0,
+        max_wait_seconds=1,
+    )
+
+    provider.generate_game_asset(
+        _request(
+            source_images=(
+                _source_image("raw-heic", "image/heic"),
+                _source_image("front", "image/jpeg"),
+                _source_image("side", "image/png"),
+            )
+        )
+    )
+
+    multi_payload = json.loads(requests[0].content)
+    assert [request.url.path for request in requests] == [
+        "/openapi/v1/multi-image-to-3d",
+        "/openapi/v1/multi-image-to-3d/multi-image-task-123",
+    ]
+    assert multi_payload["image_urls"] == [
+        "data:image/jpeg;base64,front",
+        "data:image/png;base64,side",
+    ]
+
+
 def test_meshy_provider_uses_supported_image_when_guided_scan_includes_heic() -> None:
     requests: list[httpx.Request] = []
     responses = [
@@ -364,4 +523,13 @@ def _request(
         session_id="myth_test",
         prompt="Create a shrine key.",
         source_images=source_images,
+    )
+
+
+def _source_image(name: str, content_type: str) -> ThreeDSourceImage:
+    extension = content_type.split("/")[-1]
+    return ThreeDSourceImage(
+        uri=f"local-capture://cap_0123456789abcdef/{name}.{extension}",
+        content_type=content_type,
+        data_uri=f"data:{content_type};base64,{name}",
     )

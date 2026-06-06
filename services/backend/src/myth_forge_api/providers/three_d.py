@@ -10,6 +10,7 @@ from myth_forge_api.domain.models import GeneratedAsset, GeneratedAssetVariant
 
 MESHY_GAME_ASSET_TARGET_FORMATS = ["glb", "usdz"]
 MESHY_IMAGE_TO_3D_CONTENT_TYPES = {"image/jpeg", "image/png"}
+MESHY_MULTI_IMAGE_TO_3D_MAX_IMAGES = 4
 
 
 @dataclass(frozen=True)
@@ -76,6 +77,7 @@ class MeshyThreeDProvider:
     provider_name = "meshy"
     _text_to_3d_path = "/openapi/v2/text-to-3d"
     _image_to_3d_path = "/openapi/v1/image-to-3d"
+    _multi_image_to_3d_path = "/openapi/v1/multi-image-to-3d"
 
     def __init__(
         self,
@@ -101,9 +103,11 @@ class MeshyThreeDProvider:
         )
 
     def generate_game_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
-        supported_source_image = _first_meshy_supported_source_image(request.source_images)
-        if supported_source_image:
-            return self._generate_image_asset(request, supported_source_image)
+        supported_source_images = _meshy_supported_source_images(request.source_images)
+        if len(supported_source_images) >= 2:
+            return self._generate_multi_image_asset(request, supported_source_images)
+        if len(supported_source_images) == 1:
+            return self._generate_image_asset(request, supported_source_images[0])
         return self._generate_text_asset(request)
 
     def _generate_text_asset(self, request: ThreeDGenerationRequest) -> GeneratedAsset:
@@ -145,6 +149,24 @@ class MeshyThreeDProvider:
             },
         )
         task = self._poll_task(self._image_to_3d_path, task_id)
+        return self._asset_from_task(request=request, task=task)
+
+    def _generate_multi_image_asset(
+        self,
+        request: ThreeDGenerationRequest,
+        source_images: tuple[ThreeDSourceImage, ...],
+    ) -> GeneratedAsset:
+        selected_images = source_images[:MESHY_MULTI_IMAGE_TO_3D_MAX_IMAGES]
+        task_id = self._create_task(
+            self._multi_image_to_3d_path,
+            {
+                "image_urls": [image.data_uri for image in selected_images],
+                "enable_pbr": True,
+                "should_texture": True,
+                "target_formats": MESHY_GAME_ASSET_TARGET_FORMATS,
+            },
+        )
+        task = self._poll_task(self._multi_image_to_3d_path, task_id)
         return self._asset_from_task(request=request, task=task)
 
     def _asset_from_task(
@@ -264,13 +286,14 @@ def _prompt_with_source_summary(request: ThreeDGenerationRequest) -> str:
     )
 
 
-def _first_meshy_supported_source_image(
+def _meshy_supported_source_images(
     source_images: tuple[ThreeDSourceImage, ...],
-) -> ThreeDSourceImage | None:
-    for source_image in source_images:
-        if source_image.content_type.lower() in MESHY_IMAGE_TO_3D_CONTENT_TYPES:
-            return source_image
-    return None
+) -> tuple[ThreeDSourceImage, ...]:
+    return tuple(
+        source_image
+        for source_image in source_images
+        if source_image.content_type.lower() in MESHY_IMAGE_TO_3D_CONTENT_TYPES
+    )
 
 
 def _task_error_message(data: dict[str, object]) -> str:
