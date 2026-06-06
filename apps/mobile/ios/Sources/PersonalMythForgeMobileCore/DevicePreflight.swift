@@ -46,16 +46,54 @@ public struct DevicePreflightSummary: Codable, Equatable, Sendable {
     }
 }
 
+public struct BackendHealthResponse: Codable, Equatable, Sendable {
+    public var status: String
+
+    public init(status: String) {
+        self.status = status
+    }
+
+    public var isOK: Bool {
+        status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "ok"
+    }
+}
+
+public enum BackendHealthProbeStatus: String, Codable, Equatable, Sendable {
+    case notChecked
+    case checking
+    case reachable
+    case unreachable
+}
+
+public struct BackendHealthProbe: Codable, Equatable, Sendable {
+    public var status: BackendHealthProbeStatus
+    public var detail: String
+
+    public init(status: BackendHealthProbeStatus, detail: String) {
+        self.status = status
+        self.detail = detail
+    }
+
+    public init(response: BackendHealthResponse) {
+        if response.isOK {
+            self.init(status: .reachable, detail: "Backend /health returned ok.")
+        } else {
+            self.init(status: .unreachable, detail: "Backend /health returned \(response.status).")
+        }
+    }
+}
+
 public enum DevicePreflightSummaryBuilder {
     public static func build(
         backendBaseURL: URL,
+        backendHealthProbe: BackendHealthProbe? = nil,
         providerReadiness: ProviderReadinessResponse?,
         providerReadinessError: String?,
         finalShowcaseSummary: FinalShowcaseSummary,
         savedNPCTickCount: Int
     ) -> DevicePreflightSummary {
         let items = [
-            backendItem(backendBaseURL),
+            backendItem(backendBaseURL, healthProbe: backendHealthProbe),
             providerItem(readiness: providerReadiness, error: providerReadinessError),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
@@ -74,7 +112,7 @@ public enum DevicePreflightSummaryBuilder {
         )
     }
 
-    private static func backendItem(_ url: URL) -> DevicePreflightItem {
+    private static func backendItem(_ url: URL, healthProbe: BackendHealthProbe?) -> DevicePreflightItem {
         let host = url.host?.lowercased() ?? ""
         if isLoopback(host) {
             return item(
@@ -84,10 +122,19 @@ public enum DevicePreflightSummaryBuilder {
                 "Loopback is not reachable from iPhone; use the Mac LAN URL."
             )
         }
-        if isPrivateLAN(host) {
-            return item("backend_url", "Backend URL", .ready, "LAN backend URL is ready for iPhone.")
+        guard let healthProbe else {
+            return item("backend_url", "Backend URL", .waiting, "Check Backend before iPhone demo.")
         }
-        return item("backend_url", "Backend URL", .waiting, "Confirm this backend URL is reachable from iPhone.")
+        switch healthProbe.status {
+        case .notChecked:
+            return item("backend_url", "Backend URL", .waiting, "Check Backend before iPhone demo.")
+        case .checking:
+            return item("backend_url", "Backend URL", .waiting, healthProbe.detail)
+        case .reachable:
+            return item("backend_url", "Backend URL", .ready, healthProbe.detail)
+        case .unreachable:
+            return item("backend_url", "Backend URL", .blocked, healthProbe.detail)
+        }
     }
 
     private static func providerItem(
@@ -161,17 +208,6 @@ public enum DevicePreflightSummaryBuilder {
 
     private static func isLoopback(_ host: String) -> Bool {
         host == "127.0.0.1" || host == "localhost" || host == "::1"
-    }
-
-    private static func isPrivateLAN(_ host: String) -> Bool {
-        if host.hasPrefix("10.") || host.hasPrefix("192.168.") {
-            return true
-        }
-        let parts = host.split(separator: ".").compactMap { Int($0) }
-        guard parts.count == 4 else {
-            return false
-        }
-        return parts[0] == 172 && (16...31).contains(parts[1])
     }
 
     private static func sanitize(_ value: String) -> String {

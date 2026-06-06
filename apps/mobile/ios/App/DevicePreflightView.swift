@@ -3,10 +3,12 @@ import SwiftUI
 
 struct DevicePreflightView: View {
     let summary: DevicePreflightSummary
+    let isCheckingBackend: Bool
+    let checkBackend: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Device Preflight")
                         .font(.headline)
@@ -19,6 +21,13 @@ struct DevicePreflightView: View {
                 Text(statusBadge)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(statusColor)
+                Button(action: checkBackend) {
+                    Text(isCheckingBackend ? "Checking" : "Check")
+                        .lineLimit(1)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(isCheckingBackend)
             }
 
             Text(summary.backendBaseURL)

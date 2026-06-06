@@ -296,6 +296,10 @@ do {
     try requireContains(forgeRootView, "FinalShowcaseSummaryBuilder.build", "final showcase summary builder wiring")
     try requireContains(forgeRootView, "DevicePreflightSummaryBuilder.build", "device preflight summary wiring")
     try requireContains(forgeRootView, "DevicePreflightView(summary:", "device preflight view wiring")
+    try requireContains(forgeRootView, "backendHealthProbe", "backend health probe root state")
+    try requireContains(forgeRootView, "isCheckingBackendHealth", "backend health loading state")
+    try requireContains(forgeRootView, "getBackendHealth()", "backend health API call")
+    try requireContains(forgeRootView, "checkBackendHealth", "backend health action")
     try requireBefore(
         forgeRootView,
         "FinalShowcaseSummaryView(",
@@ -402,7 +406,11 @@ do {
     try requireContains(finalShowcaseSummaryView, "privacyNotes", "final showcase privacy note rendering")
     try requireContains(devicePreflightView, "Device Preflight", "device preflight title")
     try requireContains(devicePreflightView, "backendBaseURL", "device preflight backend URL")
+    try requireContains(devicePreflightView, "checkBackend", "device preflight check action")
+    try requireContains(devicePreflightView, "Check", "device preflight check button")
     try requireContains(devicePreflight, "DevicePreflightSummaryBuilder", "device preflight core builder")
+    try requireContains(devicePreflight, "BackendHealthProbe", "backend health probe core type")
+    try requireContains(apiClient, "getBackendHealth", "backend health API client method")
     try requireContains(
         forgeRootView,
         ".onChange(of: selectedCaptureMode) { mode in",

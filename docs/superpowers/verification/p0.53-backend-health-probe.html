@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.53 Backend Health Probe</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172033;
+        --muted: #667085;
+        --line: #d0d5dd;
+        --paper: #f7f8fb;
+        --panel: #ffffff;
+        --green: #047857;
+        --red: #b42318;
+        --blue: #2563eb;
+        --amber: #b45309;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        color: var(--ink);
+        background: var(--paper);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(358px, calc(100vw - 32px));
+        margin: 0 0 0 16px;
+        padding: 20px 0 30px;
+      }
+
+      header {
+        display: grid;
+        gap: 7px;
+        margin-bottom: 14px;
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        font-size: 23px;
+        line-height: 1.15;
+      }
+
+      h2 {
+        font-size: 16px;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.42;
+        overflow-wrap: anywhere;
+      }
+
+      .tile,
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .tile {
+        min-height: 82px;
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 9px;
+        font-size: 23px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .ok {
+        color: var(--green);
+      }
+
+      .blocked {
+        color: var(--red);
+      }
+
+      .panel {
+        padding: 14px;
+        margin-top: 12px;
+      }
+
+      .panel-head {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .panel-head > *,
+      .row > *,
+      .check > * {
+        min-width: 0;
+      }
+
+      .badge {
+        color: var(--green);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .button {
+        min-width: 56px;
+        padding: 5px 8px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .url {
+        margin-top: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .rows {
+        display: grid;
+        gap: 7px;
+        margin-top: 12px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 12px 68px minmax(0, 1fr);
+        gap: 8px;
+        align-items: baseline;
+        padding-top: 7px;
+        border-top: 1px solid #eaecf0;
+      }
+
+      .row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        transform: translateY(-1px);
+      }
+
+      .dot.ready {
+        background: var(--green);
+      }
+
+      .dot.waiting {
+        background: #98a2b3;
+      }
+
+      .dot.blocked {
+        background: var(--red);
+      }
+
+      .copy {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      .note {
+        margin-top: 12px;
+        font-size: 12px;
+      }
+
+      .checks {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .check {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 8px;
+      }
+
+      .mark {
+        color: var(--blue);
+        font-weight: 800;
+      }
+
+      .warn {
+        color: var(--amber);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>P0.53 Backend Health Probe</h1>
+        <p>Manual backend reachability check for the iPhone demo.</p>
+      </header>
+
+      <section class="tile" aria-label="iOS source gate">
+        <div class="label">iOS Source Gate</div>
+        <div class="value ok">14 / 14</div>
+        <p>Health probe source is checked in.</p>
+      </section>
+
+      <section class="tile" aria-label="Final acceptance">
+        <div class="label">Final Acceptance</div>
+        <div class="value blocked">9 pass, 2 blocked</div>
+        <p>Only local iOS blockers remain.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Device Preflight</h2>
+            <p>Device demo preflight ready.</p>
+          </div>
+          <div class="badge">READY</div>
+          <div class="button">Check</div>
+        </div>
+        <div class="url">http://192.168.1.10:8080</div>
+
+        <div class="rows" aria-label="Device preflight rows">
+          <div class="row">
+            <div class="dot ready"></div>
+            <div class="label">Backend</div>
+            <div class="copy">Backend /health returned ok.</div>
+          </div>
+          <div class="row">
+            <div class="dot ready"></div>
+            <div class="label">Providers</div>
+            <div class="copy">Local demo providers ready.</div>
+          </div>
+          <div class="row">
+            <div class="dot ready"></div>
+            <div class="label">Local Demo</div>
+            <div class="copy">Final showcase state is ready.</div>
+          </div>
+          <div class="row">
+            <div class="dot ready"></div>
+            <div class="label">Saved NPCs</div>
+            <div class="copy">3 saved NPC ticks.</div>
+          </div>
+        </div>
+
+        <p class="note">The check is manual. It does not poll, sign, or call provider APIs.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Probe States</h2>
+        <div class="checks">
+          <div class="check">
+            <div class="mark">OK</div>
+            <p>Unchecked LAN URL waits for the operator to tap Check.</p>
+          </div>
+          <div class="check">
+            <div class="mark">OK</div>
+            <p>Loopback remains blocked for physical iPhone demos.</p>
+          </div>
+          <div class="check">
+            <div class="mark warn">WAIT</div>
+            <p>Real device run still needs local signing and Apple SDK license acceptance.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

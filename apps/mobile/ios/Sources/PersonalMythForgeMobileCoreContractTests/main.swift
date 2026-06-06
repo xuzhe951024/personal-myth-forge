@@ -25,7 +25,12 @@ do {
     try testFinalShowcaseSummaryMarksProviderErrorNeedsAttention()
     try testFinalShowcaseSummaryRedactsUnsafeSourceText()
     try testDevicePreflightBlocksLoopbackBackendURL()
-    try testDevicePreflightMarksLANBackendURLReady()
+    try testDevicePreflightWaitsForUncheckedBackendHealth()
+    try testDevicePreflightMarksBackendHealthChecking()
+    try testDevicePreflightMarksReachableBackendHealthReady()
+    try testDevicePreflightBlocksUnreachableBackendHealthAndRedacts()
+    try testDevicePreflightBlocksNonOKBackendHealth()
+    try testDevicePreflightKeepsLoopbackBlockedWithReachableHealth()
     try testDevicePreflightWaitsForProviderReadiness()
     try testDevicePreflightBlocksAndRedactsProviderError()
     try testDevicePreflightMarksLocalDemoReady()
@@ -54,6 +59,7 @@ do {
     try await testInvalidCaptureIDFailsBeforeNetwork()
     try await testHTTPStatusErrorIncludesStatusAndBody()
     try await testHTTPStatusErrorSanitizesSecretsAndTruncatesBody()
+    try await testGetBackendHealthBuildsGETRequest()
     try await testGetProviderReadinessBuildsGETRequest()
     try await testGetProviderReadinessSanitizesHTTPErrorBody()
     try await testCreatePrintQuoteBuildsJSONRequest()
@@ -677,11 +683,72 @@ private func testDevicePreflightBlocksLoopbackBackendURL() throws {
     try expectContains(summary.backendBaseURL, "127.0.0.1")
 }
 
-private func testDevicePreflightMarksLANBackendURLReady() throws {
+private func testDevicePreflightWaitsForUncheckedBackendHealth() throws {
     let summary = devicePreflightSummary(backendBaseURL: URL(string: "http://192.168.1.10:8080")!)
 
+    try expectEqual(summary.item(id: "backend_url")?.status, .waiting)
+    try expectContains(summary.item(id: "backend_url")?.detail ?? "", "Check Backend")
+}
+
+private func testDevicePreflightMarksBackendHealthChecking() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        backendHealthProbe: BackendHealthProbe(status: .checking, detail: "Checking backend health.")
+    )
+
+    try expectEqual(summary.item(id: "backend_url")?.status, .waiting)
+    try expectContains(summary.item(id: "backend_url")?.detail ?? "", "Checking")
+}
+
+private func testDevicePreflightMarksReachableBackendHealthReady() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        backendHealthProbe: BackendHealthProbe(status: .reachable, detail: "Backend /health returned ok."),
+        providerReadiness: localDemoProviderReadiness(),
+        finalShowcaseSummary: finalShowcaseSummary(session: session, npcTickHistoryCount: 3)
+    )
+
     try expectEqual(summary.item(id: "backend_url")?.status, .ready)
-    try expectContains(summary.item(id: "backend_url")?.detail ?? "", "LAN")
+    try expectEqual(summary.overallStatus, .ready)
+}
+
+private func testDevicePreflightBlocksUnreachableBackendHealthAndRedacts() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        backendHealthProbe: BackendHealthProbe(
+            status: .unreachable,
+            detail: "Authorization=Bearer token sk-test /Users/zhexu/file local-capture://x checkout_url"
+        )
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.item(id: "backend_url")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout_url")
+}
+
+private func testDevicePreflightBlocksNonOKBackendHealth() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        backendHealthProbe: BackendHealthProbe(response: BackendHealthResponse(status: "degraded"))
+    )
+
+    try expectEqual(summary.item(id: "backend_url")?.status, .blocked)
+    try expectContains(summary.item(id: "backend_url")?.detail ?? "", "degraded")
+}
+
+private func testDevicePreflightKeepsLoopbackBlockedWithReachableHealth() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://127.0.0.1:8080")!,
+        backendHealthProbe: BackendHealthProbe(status: .reachable, detail: "Backend /health returned ok.")
+    )
+
+    try expectEqual(summary.item(id: "backend_url")?.status, .blocked)
+    try expectContains(summary.item(id: "backend_url")?.detail ?? "", "iPhone")
 }
 
 private func testDevicePreflightWaitsForProviderReadiness() throws {
@@ -1156,6 +1223,24 @@ private func testHTTPStatusErrorSanitizesSecretsAndTruncatesBody() async throws 
         try expectContains(sanitizedBody, "[truncated]")
         try expectTrue(sanitizedBody.count <= 530)
     }
+}
+
+private func testGetBackendHealthBuildsGETRequest() async throws {
+    let transport = RecordingTransport(
+        responses: [HTTPResponse(statusCode: 200, data: Data(#"{"status":"ok"}"#.utf8))]
+    )
+    let client = PersonalMythForgeAPIClient(
+        baseURL: URL(string: "http://192.168.1.10:8080")!,
+        transport: transport
+    )
+
+    let health = try await client.getBackendHealth()
+
+    try expectEqual(health.status, "ok")
+    let request = try require(transport.requests.first, "missing backend health request")
+    try expectEqual(request.httpMethod, "GET")
+    try expectEqual(request.url?.path, "/health")
+    try expectEqual(request.httpBody, nil)
 }
 
 private func testGetProviderReadinessBuildsGETRequest() async throws {
@@ -2403,6 +2488,7 @@ private func finalShowcaseSummary(
 
 private func devicePreflightSummary(
     backendBaseURL: URL,
+    backendHealthProbe: BackendHealthProbe? = nil,
     providerReadiness: ProviderReadinessResponse? = localDemoProviderReadiness(),
     providerReadinessError: String? = nil,
     finalShowcaseSummary: FinalShowcaseSummary = finalShowcaseSummary(),
@@ -2410,6 +2496,7 @@ private func devicePreflightSummary(
 ) -> DevicePreflightSummary {
     DevicePreflightSummaryBuilder.build(
         backendBaseURL: backendBaseURL,
+        backendHealthProbe: backendHealthProbe,
         providerReadiness: providerReadiness,
         providerReadinessError: providerReadinessError,
         finalShowcaseSummary: finalShowcaseSummary,
