@@ -713,3 +713,40 @@ docs/superpowers/verification/assets/p0.25-ios-deploy-config-390x844.png
 Remaining gaps after P0.25 are accepting the Apple SDK license on this machine,
 real device installation, real Meshy/OpenAI key runs, Unity movement execution,
 persistent tick history, and print fulfillment.
+
+## P0.26 Mobile Demo Snapshot
+
+P0.26 adds local continuity for the iOS demo. After a successful forge, the app
+saves a versioned `DemoRunSnapshot` containing:
+
+- the latest `MythSession`
+- up to 12 local `NPCAgentTick` values for that session
+- the snapshot save timestamp
+
+On launch, `ForgeRootView` loads the snapshot and restores the generated relic,
+world response, NPC traces, and latest tick history into the same review UI. A
+compact `DemoSnapshotStatusView` shows the restored title, saved timestamp, tick
+count, and a clear action.
+
+The snapshot is local-only Application Support data. It does not persist raw
+capture media, scan binaries, picker state, local file URLs, provider keys,
+bearer tokens, or raw personal source documents.
+
+Run:
+
+```bash
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileProjectChecks
+swift run --package-path apps/mobile/ios PersonalMythForgeMobileCoreContractTests
+swift build --package-path apps/mobile/ios --product PersonalMythForgeMobileAppCompileCheck
+```
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.26-mobile-demo-snapshot.html
+docs/superpowers/verification/assets/p0.26-mobile-demo-snapshot-390x844.png
+```
+
+Remaining gaps after P0.26 are server-side NPC memory, autonomous background
+loops, accepting the Apple SDK license on this machine, real device installation,
+real Meshy/OpenAI key runs, Unity movement execution, and print fulfillment.

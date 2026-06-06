@@ -41,6 +41,7 @@ Bridge deliverable:
 - P0.23 OpenAI structured-output provider path for stateless NPC agent ticks
 - P0.24 provider handoff smoke report for backend-only Meshy/OpenAI key provisioning
 - P0.25 project-local iOS deploy config and preflight for Team ID, bundle id, and device backend URL
+- P0.26 local mobile demo snapshot for restored myth sessions and NPC tick history
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
