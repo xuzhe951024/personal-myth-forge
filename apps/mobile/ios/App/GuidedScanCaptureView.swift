@@ -183,8 +183,8 @@ private struct GuidedObjectCaptureSessionView: View {
     }
 
     private func finishScan() {
+        statusText = "Finishing scan"
         session.finish()
-        completeScanIfReady()
     }
 
     private func completeScanIfReady() {
