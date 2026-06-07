@@ -201,6 +201,10 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
         "failed": 0,
         "skipped": 0,
     }
+    assert result.report["operator_actions"] == [
+        "provide iOS deploy config and rerun mobile deploy preflight",
+        "resolve Xcode build gate outside the app",
+    ]
     checks = {check["id"]: check for check in result.report["checks"]}
     assert list(checks) == [
         "provider_handoff",
