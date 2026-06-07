@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.106 iOS Runbook 3D Evaluation Slot</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17211d;
+      --muted: #627069;
+      --paper: #f4f1ea;
+      --panel: #ffffff;
+      --line: #d9ded7;
+      --green: #16714b;
+      --blue: #295f98;
+      --amber: #9c681c;
+      --red: #a34038;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      margin: 0;
+      padding: 15px 13px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.32;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 5px 7px;
+      border-radius: 7px;
+      border: 1px solid rgba(41, 95, 152, 0.25);
+      background: rgba(41, 95, 152, 0.08);
+      color: var(--blue);
+      font-size: 10px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 5px 15px rgba(20, 28, 24, 0.06);
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 7px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .state {
+      padding: 4px 7px;
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .partial {
+      color: var(--amber);
+      background: rgba(156, 104, 28, 0.09);
+      border: 1px solid rgba(156, 104, 28, 0.25);
+    }
+
+    .ready {
+      color: var(--green);
+      background: rgba(22, 113, 75, 0.09);
+      border: 1px solid rgba(22, 113, 75, 0.25);
+    }
+
+    .blocked {
+      color: var(--red);
+      background: rgba(163, 64, 56, 0.09);
+      border: 1px solid rgba(163, 64, 56, 0.25);
+    }
+
+    .rows {
+      display: grid;
+      gap: 4px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 8px 122px 1fr;
+      gap: 7px;
+      align-items: start;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      margin-top: 4px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    .dot.ready-dot {
+      background: var(--green);
+    }
+
+    .dot.blocked-dot {
+      background: var(--red);
+    }
+
+    .label {
+      color: var(--ink);
+      font-size: 10.5px;
+      line-height: 1.25;
+      font-weight: 720;
+    }
+
+    .value {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.32;
+      overflow-wrap: anywhere;
+    }
+
+    .value strong {
+      color: var(--ink);
+    }
+
+    .command {
+      margin-top: 6px;
+      padding: 7px;
+      border-radius: 7px;
+      background: #fbfcfa;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.36;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      padding: 1px 2px 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>P0.106 iOS Runbook Slot</h1>
+        <div class="sub">The deploy runbook now names 3D evaluation readiness before physical iPhone handoff.</div>
+      </div>
+      <div class="badge">390 x 844</div>
+    </header>
+
+    <section>
+      <div class="top">
+        <h2>iOS Deploy Runbook</h2>
+        <div class="state partial">partial</div>
+      </div>
+      <div class="rows">
+        <div class="row">
+          <div class="dot ready-dot"></div>
+          <div class="label">backend_base_url</div>
+          <div class="value">ready required configured</div>
+        </div>
+        <div class="row">
+          <div class="dot"></div>
+          <div class="label">three_d_evaluation</div>
+          <div class="value"><strong>missing required</strong> | run local 3D evaluation with evaluate-3d</div>
+        </div>
+        <div class="row">
+          <div class="dot ready-dot"></div>
+          <div class="label">npc_agent_evaluation</div>
+          <div class="value">ready required configured</div>
+        </div>
+        <div class="row">
+          <div class="dot blocked-dot"></div>
+          <div class="label">xcode_build_gate</div>
+          <div class="value">manual local Apple SDK and signing gate</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="top">
+        <h2>Operator Action</h2>
+        <div class="state partial">next</div>
+      </div>
+      <div class="command">cd services/backend &amp;&amp; uv run python -m myth_forge_api.cli evaluate-3d --provider local --output .local/3d-evaluation-local.json</div>
+    </section>
+
+    <section>
+      <div class="top">
+        <h2>Blocked Evidence</h2>
+        <div class="state blocked">blocked</div>
+      </div>
+      <div class="rows">
+        <div class="row">
+          <div class="dot blocked-dot"></div>
+          <div class="label">three_d_evaluation</div>
+          <div class="value">blocked required three_d_evaluation_failed | [redacted]</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="top">
+        <h2>Ready Evidence</h2>
+        <div class="state ready">ready</div>
+      </div>
+      <div class="rows">
+        <div class="row">
+          <div class="dot ready-dot"></div>
+          <div class="label">three_d_evaluation</div>
+          <div class="value">20 cases, 20 scene-loadable, game and iOS scene variants covered.</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Safety check: no API keys, raw media, payment links, local paths, or personal source text are displayed. The runbook remains read-only and does not run commands.
+    </footer>
+  </main>
+</body>
+</html>

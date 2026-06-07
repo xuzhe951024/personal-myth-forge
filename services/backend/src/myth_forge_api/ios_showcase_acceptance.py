@@ -924,6 +924,14 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
+                "build_three_d_evaluation_readiness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
+                "three_d_evaluation",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
                 "IOS_DEPLOY_RUNBOOK_COMMAND",
             ),
             SourceRequirement(
@@ -942,6 +950,10 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/tests/test_ios_deploy_runbook.py",
                 "test_ios_deploy_runbook_ready_local_inputs_preserve_command_order",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_ios_deploy_runbook.py",
+                "test_ios_deploy_runbook_blocks_and_redacts_failed_3d_evaluation",
             ),
             SourceRequirement(
                 "services/backend/tests/test_final_demo_launch.py",
@@ -990,6 +1002,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsThreeDEvaluationIOSDeployRunbookSlot",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",

@@ -575,6 +575,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation "
             "testDecodesIOSDeployRunbookFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook "
+            "testFinalLaunchMobileSummaryShowsThreeDEvaluationIOSDeployRunbookSlot "
             "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook "
             "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook "
             "testDecodesResourceHandoffFromFinalLaunchPayload "
@@ -645,7 +646,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_three_d_evaluation_readiness_report LOCAL_THREE_D_EVALUATION_COMMAND"
         ),
         "services/backend/src/myth_forge_api/ios_deploy_runbook.py": (
-            "build_ios_deploy_runbook_report IOS_DEPLOY_RUNBOOK_COMMAND"
+            "build_ios_deploy_runbook_report build_three_d_evaluation_readiness_report "
+            "three_d_evaluation IOS_DEPLOY_RUNBOOK_COMMAND"
         ),
         "services/backend/src/myth_forge_api/cli.py": "ios-deploy-runbook",
         "Makefile": "ios-deploy-runbook:",
@@ -669,7 +671,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "test_three_d_evaluation_readiness_ready_report"
         ),
         "services/backend/tests/test_ios_deploy_runbook.py": (
-            "test_ios_deploy_runbook_ready_local_inputs_preserve_command_order"
+            "test_ios_deploy_runbook_ready_local_inputs_preserve_command_order "
+            "test_ios_deploy_runbook_blocks_and_redacts_failed_3d_evaluation"
         ),
         "services/backend/tests/test_final_operator_handoff.py": (
             "test_operator_handoff_includes_ios_deploy_runbook_before_deploy_preflight"

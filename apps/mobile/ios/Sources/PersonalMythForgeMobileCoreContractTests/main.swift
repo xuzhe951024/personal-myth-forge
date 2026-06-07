@@ -118,6 +118,7 @@ do {
     try testFinalLaunchMobileSummaryShowsReadyHandoff()
     try testDecodesIOSDeployRunbookFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook()
+    try testFinalLaunchMobileSummaryShowsThreeDEvaluationIOSDeployRunbookSlot()
     try testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook()
     try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook()
     try testFinalLaunchMobileSummaryMarksReadyReport()
@@ -2760,6 +2761,22 @@ private func testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook() throws {
     try expectContains(safetyText, "global_mutation=false")
 }
 
+private func testFinalLaunchMobileSummaryShowsThreeDEvaluationIOSDeployRunbookSlot() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            iosDeployRunbookStatus: "blocked",
+            iosDeployRunbookSlotStatus: "ready",
+            iosDeployRunbookThreeDSlotStatus: "missing"
+        ),
+        error: nil
+    )
+    let text = summary.deployRunbookRows.joined(separator: " ")
+
+    try expectEqual(summary.deployRunbookRows.first, "iOS deploy runbook blocked.")
+    try expectContains(text, "three_d_evaluation: missing required")
+    try expectContains(text, "run local 3D evaluation")
+}
+
 private func testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -4008,6 +4025,7 @@ private func finalDemoLaunchPayload(
     finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json",
     iosDeployRunbookStatus: String = "partial",
     iosDeployRunbookSlotStatus: String = "ready",
+    iosDeployRunbookThreeDSlotStatus: String = "ready",
     iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
     resourceHandoffStatus: String = "blocked",
@@ -4270,6 +4288,17 @@ private func finalDemoLaunchPayload(
                 "classification": "\(iosDeployRunbookSlotStatus == "ready" ? "ready" : "blocked_by_ios_deploy_config")",
                 "key": "PMF_BACKEND_BASE_URL",
                 "expected_mode": "local"
+              },
+              {
+                "id": "three_d_evaluation",
+                "label": "3D evaluation",
+                "status": "\(iosDeployRunbookThreeDSlotStatus)",
+                "required": true,
+                "source": "services/backend/.local/3d-evaluation-local.json",
+                "operator_action": "run local 3D evaluation with evaluate-3d and write services/backend/.local/3d-evaluation-local.json",
+                "configured": \(iosDeployRunbookThreeDSlotStatus == "ready" ? "true" : "false"),
+                "redacted": false,
+                "classification": "\(iosDeployRunbookThreeDSlotStatus == "ready" ? "ready" : iosDeployRunbookThreeDSlotStatus == "missing" ? "missing_required_value" : "three_d_evaluation_failed")"
               },
               {
                 "id": "development_team",
@@ -6720,6 +6749,7 @@ private func finalDemoLaunchReport(
     finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json",
     iosDeployRunbookStatus: String = "partial",
     iosDeployRunbookSlotStatus: String = "ready",
+    iosDeployRunbookThreeDSlotStatus: String = "ready",
     iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
     resourceHandoffStatus: String = "blocked",
@@ -6751,6 +6781,7 @@ private func finalDemoLaunchReport(
             finalOperatorHandoffAction: finalOperatorHandoffAction,
             iosDeployRunbookStatus: iosDeployRunbookStatus,
             iosDeployRunbookSlotStatus: iosDeployRunbookSlotStatus,
+            iosDeployRunbookThreeDSlotStatus: iosDeployRunbookThreeDSlotStatus,
             iosDeployRunbookAction: iosDeployRunbookAction,
             iosDeployRunbookCommand: iosDeployRunbookCommand,
             resourceHandoffStatus: resourceHandoffStatus,

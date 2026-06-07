@@ -23,8 +23,12 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert slots["development_team"]["status"] == "missing"
     assert slots["backend_base_url"]["status"] == "missing"
     assert slots["local_final_acceptance"]["status"] == "missing"
+    assert slots["three_d_evaluation"]["status"] == "missing"
     assert slots["npc_agent_evaluation"]["status"] == "missing"
     assert "copy services/backend/final-resources.env.example" in " ".join(
+        report["operator_actions"]
+    )
+    assert "run local 3D evaluation with evaluate-3d" in " ".join(
         report["operator_actions"]
     )
     assert report["safety"] == {
@@ -47,6 +51,7 @@ def test_ios_deploy_runbook_ready_local_inputs_preserve_command_order(
     _write_deploy_config(repo_root)
     _write_final_resources(repo_root)
     _write_final_acceptance(repo_root, status="passed")
+    _write_three_d_evaluation(repo_root, status="passed")
     _write_npc_evaluation(repo_root, status="passed")
 
     report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
@@ -56,6 +61,8 @@ def test_ios_deploy_runbook_ready_local_inputs_preserve_command_order(
     assert report["status"] == "partial"
     assert slots["development_team"]["status"] == "ready"
     assert slots["backend_base_url"]["status"] == "ready"
+    assert slots["three_d_evaluation"]["status"] == "ready"
+    assert "3D evaluation is ready" not in " ".join(report["operator_actions"])
     assert commands[:4] == [
         "make final-resources-preflight",
         "make final-apply-resources",
@@ -74,6 +81,7 @@ def test_ios_deploy_runbook_configured_mode_includes_live_acceptance_consent(
     _write_deploy_config(repo_root, final_launch_mode="configured")
     _write_final_resources(repo_root)
     _write_final_acceptance(repo_root, status="passed")
+    _write_three_d_evaluation(repo_root, status="passed")
     _write_npc_evaluation(repo_root, status="passed")
 
     report = build_ios_deploy_runbook_report(mode="configured", repo_root=repo_root)
@@ -83,6 +91,39 @@ def test_ios_deploy_runbook_configured_mode_includes_live_acceptance_consent(
     assert commands["configured_final_acceptance"]["requires_consent"] is True
     assert "--allow-live-provider-calls" in commands["configured_final_acceptance"]["command"]
     assert "live provider cost review" in " ".join(report["operator_actions"])
+
+
+def test_ios_deploy_runbook_blocks_and_redacts_failed_3d_evaluation(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+    _write_deploy_config(repo_root)
+    _write_final_resources(repo_root)
+    _write_final_acceptance(repo_root, status="passed")
+    _write_three_d_evaluation(
+        repo_root,
+        status="failed",
+        error=(
+            "Meshy failed Authorization=Bearer test-secret raw_context: private "
+            + f"file://{tmp_path}/private.glb /Users/zhexu/private"
+        ),
+    )
+    _write_npc_evaluation(repo_root, status="passed")
+
+    report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
+    report_text = json.dumps(report)
+    slots = {slot["id"]: slot for slot in report["input_slots"]}
+
+    assert report["status"] == "blocked"
+    assert slots["three_d_evaluation"]["status"] == "blocked"
+    assert "rerun local 3D evaluation and review failed cases" in " ".join(
+        report["operator_actions"]
+    )
+    assert "test-secret" not in report_text
+    assert "raw_context:" not in report_text
+    assert "file://" not in report_text
+    assert "/Users/" not in report_text
+    assert "Bearer" not in report_text
 
 
 def test_ios_deploy_runbook_cli_writes_output(tmp_path: Path) -> None:
@@ -173,6 +214,63 @@ def _write_final_acceptance(repo_root: Path, *, status: str) -> None:
                 "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
                 "checks": [
                     {"id": "provider_handoff", "label": "Provider handoff", "status": status}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_three_d_evaluation(
+    repo_root: Path,
+    *,
+    status: str,
+    error: str = "3D evaluation case failed.",
+) -> None:
+    succeeded = 20 if status == "passed" else 0
+    failed = 0 if status == "passed" else 20
+    evaluation = repo_root / "services/backend/.local/3d-evaluation-local.json"
+    evaluation.parent.mkdir(parents=True, exist_ok=True)
+    evaluation.write_text(
+        json.dumps(
+            {
+                "kind": "three_d_evaluation_report",
+                "suite": "default-v0",
+                "provider": "local",
+                "total_cases": 20,
+                "succeeded": succeeded,
+                "failed": failed,
+                "coverage": {
+                    "input_modes": {
+                        "text_prompt": succeeded,
+                        "single_image": 0,
+                        "multi_image": 0,
+                    },
+                    "variant_roles": {
+                        "game_asset": succeeded,
+                        "ios_scene_asset": succeeded,
+                    },
+                    "scene_loadable_cases": succeeded,
+                },
+                "cases": [
+                    {
+                        "id": "case-1",
+                        "status": status,
+                        "generated_asset": {
+                            "provider": "local",
+                            "format": "glb",
+                            "uri": "local://generated-assets/case-1.glb",
+                            "variants": [
+                                {"role": "game_asset", "format": "glb"},
+                                {
+                                    "role": "ios_scene_asset",
+                                    "format": "dae",
+                                    "is_scene_loadable": True,
+                                },
+                            ],
+                        },
+                        "error": error if status != "passed" else None,
+                    }
                 ],
             }
         ),
