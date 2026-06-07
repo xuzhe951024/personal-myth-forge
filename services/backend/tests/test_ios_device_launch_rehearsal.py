@@ -96,9 +96,65 @@ def test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_m
     assert result.report["summary"]["partial"] >= 1
     assert result.report["summary"]["missing"] == 0
     assert result.report["summary"]["blocked"] == 0
-    assert result.report["operator_actions"][0] == "run make ios-device-launch-rehearsal"
+    assert result.report["operator_actions"][0] == "continue with make backend-device-demo"
+    assert (
+        result.report["operator_actions"][1]
+        == "run make mobile-deploy-preflight after backend is running"
+    )
+    assert "run make ios-device-launch-rehearsal" not in result.report["operator_actions"]
     assert "configured" in report_text
     assert str(tmp_path) not in report_text
+
+
+def test_ios_device_launch_rehearsal_routes_blocked_saved_report_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True)
+    _write_local_rehearsal_reports(local_dir)
+    _write_json(
+        local_dir / "final-configured-preflight.json",
+        {
+            "kind": "final_configured_preflight_report",
+            "status": "blocked",
+            "operator_actions": [
+                "fill services/backend/.local/final-resources.env",
+                "run make final-resource-apply-preview",
+            ],
+        },
+    )
+    _write_json(
+        local_dir / "final-handoff-index.json",
+        {"kind": "final_handoff_index_report", "status": "ready"},
+    )
+    _write_json(
+        local_dir / "ios-device-launch-certificate.json",
+        {
+            "kind": "ios_device_launch_certificate_report",
+            "status": "ready",
+            "mode": "local",
+            "summary": {"ready": 4, "manual": 0, "live": 0, "partial": 0},
+            "safety": {
+                "provider_calls": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+            },
+        },
+    )
+
+    result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert result.report["operator_actions"][0] == (
+        "final_configured_preflight: fill services/backend/.local/final-resources.env"
+    )
+    assert "run make ios-device-launch-rehearsal" not in result.report["operator_actions"]
+    assert (
+        "final_configured_preflight: run make final-resource-apply-preview"
+        in result.report["operator_actions"]
+    )
 
 
 def test_ios_device_launch_rehearsal_preserves_final_handoff_source_freshness(
