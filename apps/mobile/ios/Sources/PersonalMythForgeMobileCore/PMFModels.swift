@@ -1798,6 +1798,144 @@ public struct LiveProviderEvidenceReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct PrintFulfillmentReadinessSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var partial: Int
+    public var blocked: Int
+
+    public init(ready: Int, partial: Int, blocked: Int) {
+        self.ready = ready
+        self.partial = partial
+        self.blocked = blocked
+    }
+}
+
+public struct PrintFulfillmentReadinessCheck: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var evidence: [String]
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case label
+        case status
+        case classification
+        case command
+        case detail
+        case evidence
+    }
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        evidence: [String]
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.evidence = evidence
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.label = try container.decode(String.self, forKey: .label)
+        self.status = try container.decode(String.self, forKey: .status)
+        self.classification = try container.decodeIfPresent(String.self, forKey: .classification)
+        self.command = try container.decode(String.self, forKey: .command)
+        self.detail = try container.decodeIfPresent(String.self, forKey: .detail) ?? ""
+        self.evidence = try container.decodeIfPresent([String].self, forKey: .evidence) ?? []
+    }
+}
+
+public struct PrintFulfillmentReadinessSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+    public var providerSecretsInReport: Bool
+    public var rawPrivateContextInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        liveProviderCalls: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        globalMutation: Bool,
+        xcodeOrSigning: Bool,
+        keychainWrites: Bool,
+        providerSecretsInReport: Bool,
+        rawPrivateContextInReport: Bool,
+        rawMediaInReport: Bool,
+        paymentLinksInReport: Bool,
+        localPathsInReport: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.globalMutation = globalMutation
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawPrivateContextInReport = rawPrivateContextInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.localPathsInReport = localPathsInReport
+    }
+}
+
+public struct PrintFulfillmentReadinessReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: PrintFulfillmentReadinessSummary
+    public var checks: [PrintFulfillmentReadinessCheck]
+    public var firstBlocker: PrintFulfillmentReadinessCheck?
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var safety: PrintFulfillmentReadinessSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: PrintFulfillmentReadinessSummary,
+        checks: [PrintFulfillmentReadinessCheck],
+        firstBlocker: PrintFulfillmentReadinessCheck? = nil,
+        operatorActions: [String],
+        commands: [String],
+        safety: PrintFulfillmentReadinessSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.checks = checks
+        self.firstBlocker = firstBlocker
+        self.operatorActions = operatorActions
+        self.commands = commands
+        self.safety = safety
+    }
+}
+
 public struct FinalShowcaseReadinessSummary: Codable, Equatable, Sendable {
     public var ready: Int
     public var partial: Int
@@ -1930,6 +2068,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
     public var visualRegressionReadiness: VisualRegressionReadinessReport?
     public var liveProviderEvidence: LiveProviderEvidenceReport?
+    public var printFulfillmentReadiness: PrintFulfillmentReadinessReport?
     public var finalShowcaseReadiness: FinalShowcaseReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
     public var iosDeployRunbook: IOSDeployRunbookReport?
@@ -1953,6 +2092,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
         visualRegressionReadiness: VisualRegressionReadinessReport? = nil,
         liveProviderEvidence: LiveProviderEvidenceReport? = nil,
+        printFulfillmentReadiness: PrintFulfillmentReadinessReport? = nil,
         finalShowcaseReadiness: FinalShowcaseReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
         iosDeployRunbook: IOSDeployRunbookReport? = nil,
@@ -1975,6 +2115,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
         self.visualRegressionReadiness = visualRegressionReadiness
         self.liveProviderEvidence = liveProviderEvidence
+        self.printFulfillmentReadiness = printFulfillmentReadiness
         self.finalShowcaseReadiness = finalShowcaseReadiness
         self.finalOperatorHandoff = finalOperatorHandoff
         self.iosDeployRunbook = iosDeployRunbook

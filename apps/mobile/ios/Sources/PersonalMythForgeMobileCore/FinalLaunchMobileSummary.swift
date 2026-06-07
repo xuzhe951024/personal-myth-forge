@@ -37,6 +37,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var npcEvaluationRows: [String]
     public var visualRegressionRows: [String]
     public var liveProviderEvidenceRows: [String]
+    public var printFulfillmentReadinessRows: [String]
     public var showcaseReadinessRows: [String]
     public var deployRunbookRows: [String]
     public var deployRunbookCommandRows: [String]
@@ -63,6 +64,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         npcEvaluationRows: [String] = [],
         visualRegressionRows: [String] = [],
         liveProviderEvidenceRows: [String] = [],
+        printFulfillmentReadinessRows: [String] = [],
         showcaseReadinessRows: [String] = [],
         deployRunbookRows: [String] = [],
         deployRunbookCommandRows: [String] = [],
@@ -88,6 +90,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.npcEvaluationRows = npcEvaluationRows
         self.visualRegressionRows = visualRegressionRows
         self.liveProviderEvidenceRows = liveProviderEvidenceRows
+        self.printFulfillmentReadinessRows = printFulfillmentReadinessRows
         self.showcaseReadinessRows = showcaseReadinessRows
         self.deployRunbookRows = deployRunbookRows
         self.deployRunbookCommandRows = deployRunbookCommandRows
@@ -160,6 +163,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             visualRegressionRows: visualRegressionRows(from: report.visualRegressionReadiness),
             liveProviderEvidenceRows: liveProviderEvidenceRows(
                 from: report.liveProviderEvidence
+            ),
+            printFulfillmentReadinessRows: printFulfillmentReadinessRows(
+                from: report.printFulfillmentReadiness
             ),
             showcaseReadinessRows: showcaseReadinessRows(
                 from: report.finalShowcaseReadiness
@@ -521,6 +527,40 @@ public enum FinalLaunchMobileSummaryBuilder {
         parts.append("| \(slot.command)")
         if let detail = slot.detail, !detail.isEmpty {
             parts.append("| \(detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func printFulfillmentReadinessRows(
+        from readiness: PrintFulfillmentReadinessReport?
+    ) -> [String] {
+        guard let readiness else {
+            return ["Print fulfillment readiness has not loaded."]
+        }
+        var rows = [
+            "Print fulfillment \(sanitize(readiness.status)): ready \(readiness.summary.ready), partial \(readiness.summary.partial), blocked \(readiness.summary.blocked)."
+        ]
+        if readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" {
+            if let blocker = readiness.firstBlocker {
+                rows.append(printFulfillmentReadinessCheckRow(blocker))
+            } else if let check = readiness.checks.first(where: { status(from: $0.status) != .ready }) {
+                rows.append(printFulfillmentReadinessCheckRow(check))
+            }
+            rows.append(contentsOf: readiness.operatorActions.prefix(2).map(sanitize))
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func printFulfillmentReadinessCheckRow(
+        _ check: PrintFulfillmentReadinessCheck
+    ) -> String {
+        var parts = ["\(check.id): \(check.status)"]
+        if let classification = check.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        parts.append("| \(check.command)")
+        if !check.detail.isEmpty {
+            parts.append("| \(check.detail)")
         }
         return sanitize(parts.joined(separator: " "))
     }

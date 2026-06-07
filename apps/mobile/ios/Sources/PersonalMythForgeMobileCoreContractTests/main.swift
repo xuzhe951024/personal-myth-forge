@@ -120,6 +120,9 @@ do {
     try testFinalLaunchMobileSummaryShowsMissingLiveProviderEvidence()
     try testFinalLaunchMobileSummaryShowsBlockedLiveProviderEvidence()
     try testFinalLaunchMobileSummaryRedactsUnsafeLiveProviderEvidence()
+    try testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness()
+    try testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness()
     try testDecodesFinalShowcaseReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness()
     try testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness()
@@ -2805,6 +2808,64 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeLiveProviderEvidence() thr
     try expectNotContains(text, "Bearer")
 }
 
+private func testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(printFulfillmentReadinessStatus: "partial")
+    )
+
+    let readiness = try require(
+        report.printFulfillmentReadiness,
+        "missing print fulfillment readiness"
+    )
+    try expectEqual(readiness.kind, "print_fulfillment_readiness_report")
+    try expectEqual(readiness.status, "partial")
+    try expectEqual(readiness.summary.ready, 4)
+    try expectEqual(readiness.summary.partial, 1)
+    try expectEqual(readiness.checks.first?.id, "print_quote_acceptance")
+    try expectEqual(readiness.firstBlocker?.id, "configured_treatstock_quote")
+    try expectFalse(readiness.safety.commandsRun)
+    try expectFalse(readiness.safety.liveProviderCalls)
+    try expectFalse(readiness.safety.paymentLinksInReport)
+}
+
+private func testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(printFulfillmentReadinessStatus: "partial"),
+        error: nil
+    )
+    let text = summary.printFulfillmentReadinessRows.joined(separator: " ")
+
+    try expectContains(text, "Print fulfillment partial: ready 4, partial 1, blocked 0.")
+    try expectContains(text, "configured_treatstock_quote: partial")
+    try expectContains(text, "make print-fulfillment-readiness")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness() throws {
+    let report = finalDemoLaunchReport(
+        printFulfillmentReadinessStatus: "blocked",
+        printFulfillmentReadinessBlockerDetail: (
+            "sk-test /Users/zhexu/private file:///tmp/private "
+            + "local-capture://cap checkout_url https://checkout.example/order "
+            + "https://pay.example Bearer token"
+        ),
+        printFulfillmentReadinessAction: (
+            "make print-fulfillment-readiness sk-test /Users/zhexu/private"
+        )
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "pay.example")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4405,6 +4466,9 @@ private func finalDemoLaunchPayload(
     visualRegressionAction: String = "run make visual-regression-local",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
+    printFulfillmentReadinessStatus: String = "partial",
+    printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
+    printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
@@ -4436,6 +4500,8 @@ private func finalDemoLaunchPayload(
 ) -> Data {
     let liveEvidenceReady = liveProviderEvidenceStatus == "ready"
     let liveEvidenceBlocked = liveProviderEvidenceStatus == "blocked"
+    let printReadinessReady = printFulfillmentReadinessStatus == "ready"
+    let printReadinessBlocked = printFulfillmentReadinessStatus == "blocked"
     let liveEvidenceFirstID = liveEvidenceBlocked ? "three_d_evaluation_configured" : "provider_handoff"
     let liveEvidenceFirstLabel = liveEvidenceBlocked ? "Configured 3D evaluation" : "Provider handoff"
     let liveEvidenceFirstStatus = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "blocked" : "missing"
@@ -4459,6 +4525,25 @@ private func finalDemoLaunchPayload(
         : liveEvidenceBlocked
             ? #"{"ready": 4, "missing": 0, "blocked": 1, "partial": 0, "requires_live_provider_consent": 3}"#
             : #"{"ready": 0, "missing": 5, "blocked": 0, "partial": 0, "requires_live_provider_consent": 3}"#
+    let printReadinessFirstStatus = printReadinessReady ? "ready" : printReadinessBlocked ? "blocked" : "partial"
+    let printReadinessFirstClassification = printReadinessReady
+        ? "draft_quote_requires_user_approval"
+        : printReadinessBlocked ? "missing_user_approval_gate" : "missing_configured_treatstock_quote"
+    let printReadinessFirstBlockerJSON = printReadinessReady ? "null" : """
+    {
+      "id": "configured_treatstock_quote",
+      "label": "Configured Treatstock quote",
+      "status": "\(printReadinessFirstStatus)",
+      "classification": "\(printReadinessFirstClassification)",
+      "command": "make print-fulfillment-readiness",
+      "detail": "\(printFulfillmentReadinessBlockerDetail)"
+    }
+    """
+    let printReadinessSummaryJSON = printReadinessReady
+        ? #"{"ready": 5, "partial": 0, "blocked": 0}"#
+        : printReadinessBlocked
+            ? #"{"ready": 4, "partial": 0, "blocked": 1}"#
+            : #"{"ready": 4, "partial": 1, "blocked": 0}"#
     return Data(
         """
         {
@@ -4687,6 +4772,49 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "local_paths_in_report": false,
               "payment_links_in_report": false
+            }
+          },
+          "print_fulfillment_readiness": {
+            "kind": "print_fulfillment_readiness_report",
+            "status": "\(printFulfillmentReadinessStatus)",
+            "summary": \(printReadinessSummaryJSON),
+            "checks": [
+              {
+                "id": "print_quote_acceptance",
+                "label": "Local print quote acceptance",
+                "status": "ready",
+                "classification": "local_draft_quote_ready",
+                "command": "cd services/backend && uv run pytest tests/test_print_acceptance.py",
+                "detail": "Deterministic local print candidate and draft quote are ready.",
+                "evidence": ["provider:local_stub", "format:3mf"]
+              },
+              {
+                "id": "configured_treatstock_quote",
+                "label": "Configured Treatstock quote",
+                "status": "\(printReadinessFirstStatus)",
+                "classification": "\(printReadinessFirstClassification)",
+                "command": "make print-fulfillment-readiness",
+                "detail": "\(printFulfillmentReadinessBlockerDetail)",
+                "evidence": ["provider:treatstock"]
+              }
+            ],
+            "first_blocker": \(printReadinessFirstBlockerJSON),
+            "operator_actions": \(printReadinessReady ? #"[]"# : "[\"\(printFulfillmentReadinessAction)\"]"),
+            "commands": ["make print-fulfillment-readiness"],
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
+              "provider_secrets_in_report": false,
+              "raw_private_context_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false
             }
           },
           "final_showcase_readiness": {
@@ -7464,6 +7592,9 @@ private func finalDemoLaunchReport(
     visualRegressionAction: String = "run make visual-regression-local",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
+    printFulfillmentReadinessStatus: String = "partial",
+    printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
+    printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
@@ -7517,6 +7648,9 @@ private func finalDemoLaunchReport(
             visualRegressionAction: visualRegressionAction,
             liveProviderEvidenceStatus: liveProviderEvidenceStatus,
             liveProviderEvidenceBlockerDetail: liveProviderEvidenceBlockerDetail,
+            printFulfillmentReadinessStatus: printFulfillmentReadinessStatus,
+            printFulfillmentReadinessBlockerDetail: printFulfillmentReadinessBlockerDetail,
+            printFulfillmentReadinessAction: printFulfillmentReadinessAction,
             finalShowcaseReadinessStatus: finalShowcaseReadinessStatus,
             finalShowcaseReadinessFirstBlockerDetail: finalShowcaseReadinessFirstBlockerDetail,
             finalShowcaseReadinessAction: finalShowcaseReadinessAction,
