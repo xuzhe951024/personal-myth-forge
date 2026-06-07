@@ -173,6 +173,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "DevicePreflightSummaryBuilder.build DevicePreflightView(summary: "
             "getBackendHealth() checkBackendHealth backendHealthProbe "
             "DemoScriptBuilder.build ArtifactSummaryView(session: readySession, latestTick: latestNPCTick) "
+            "finalLaunchSummary: finalLaunchMobileSummary "
             "ShowcaseAutopilotPlanner.plan runShowcaseAutopilot "
             "finalLaunchMode Picker(\"Final launch mode\" FinalLaunchMode.allCases "
             "loadFinalDemoLaunch(mode: finalLaunchMode) getFinalDemoLaunch(mode: mode.rawValue) "
@@ -260,6 +261,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testForgeActionGateEnablesLocalDemoForge "
             "testArtifactHandoffActionsOpenAndShareSceneAsset "
             "testArtifactGenerationProvenanceSummaryShowsScanAssets "
+            "testDemoScriptShowsBlockedFinalLaunch "
+            "testShowcaseAutopilotBlocksOnFinalLaunchBlocker "
             "testNPCAgentModeShowsOpenAIReadyRuntime "
             "testNPCAgentTickSummaryShowsLatestTickResolution "
             "testNPCAgentActionGateEnablesLocalDemoActions "
@@ -292,10 +295,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             'NPCAgentActionGateBuilder canRunAutonomy disabledReason autonomyTitle: "Run Autonomy"'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift": (
-            "DemoScriptBuilder"
+            "DemoScriptBuilder final_launch FinalLaunchMobileSummary"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ShowcaseAutopilot.swift": (
-            "ShowcaseAutopilotPlanner"
+            'ShowcaseAutopilotPlanner script.step(id: "final_launch")'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DevicePreflight.swift": (
             "DevicePreflightSummaryBuilder BackendHealthProbe"

@@ -93,12 +93,17 @@ do {
     try testDemoScriptMarksLocalDemoLoopReady()
     try testDemoScriptBlocksOnProviderReadinessError()
     try testDemoScriptRedactsUnsafeDetail()
+    try testDemoScriptShowsBlockedFinalLaunch()
+    try testDemoScriptCompletesWithReadyFinalLaunch()
+    try testDemoScriptRedactsUnsafeFinalLaunchDetail()
     try testShowcaseAutopilotBlocksUntilCaptureReady()
     try testShowcaseAutopilotPlansForgeWhenCaptureReady()
     try testShowcaseAutopilotPlansBackendAutonomyForReadySession()
     try testShowcaseAutopilotPlansLegacyTickAdvanceForLegacySession()
     try testShowcaseAutopilotPlansPrintQuoteAfterNPCAutonomy()
     try testShowcaseAutopilotCompletesWhenQuoteAndResourcesReady()
+    try testShowcaseAutopilotBlocksOnFinalLaunchBlocker()
+    try testShowcaseAutopilotCompletesWhenFinalLaunchReady()
     try testShowcaseAutopilotDisablesWhileBusy()
     try testShowcaseAutopilotRedactsUnsafeText()
     try testEncodesPrintQuoteRequestAsSnakeCase()
@@ -1967,6 +1972,93 @@ private func testDemoScriptRedactsUnsafeDetail() throws {
     try expectNotContains(text, "checkout")
 }
 
+private func testDemoScriptShowsBlockedFinalLaunch() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalAcceptanceStatus: "blocked"
+        ),
+        error: nil
+    )
+
+    let script = DemoScriptBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+
+    try expectEqual(script.step(id: "final_launch")?.status, .blocked)
+    try expectContains(script.step(id: "final_launch")?.detail ?? "", "blocked")
+    try expectContains(script.nextAction, "final launch")
+}
+
+private func testDemoScriptCompletesWithReadyFinalLaunch() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let script = DemoScriptBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+
+    try expectEqual(script.step(id: "final_launch")?.status, .complete)
+    try expectEqual(script.nextAction, "Final launch is ready.")
+}
+
+private func testDemoScriptRedactsUnsafeFinalLaunchDetail() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch blocked",
+        subtitle: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
+        phaseRows: [],
+        resourceActions: [],
+        acceptanceRows: [],
+        handoffRows: [],
+        commandRows: [],
+        notes: []
+    )
+
+    let script = DemoScriptBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(script), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testShowcaseAutopilotBlocksUntilCaptureReady() throws {
     let script = demoScript(captureSelection: CaptureMediaSelection(mode: .singlePhoto))
 
@@ -2037,6 +2129,65 @@ private func testShowcaseAutopilotCompletesWhenQuoteAndResourcesReady() throws {
     try expectEqual(plan.buttonTitle, "Ready")
     try expectFalse(plan.isExecutable)
     try expectContains(plan.detail, "ready")
+}
+
+private func testShowcaseAutopilotBlocksOnFinalLaunchBlocker() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        finalLaunchSummary: FinalLaunchMobileSummaryBuilder.build(
+            report: finalDemoLaunchReport(
+                overallStatus: "blocked",
+                finalAcceptanceStatus: "blocked"
+            ),
+            error: nil
+        )
+    )
+
+    let plan = autopilotPlan(
+        script: script,
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote
+    )
+
+    try expectEqual(plan.action, .blocked)
+    try expectEqual(plan.buttonTitle, "Check Launch")
+    try expectFalse(plan.isExecutable)
+    try expectContains(plan.detail, "final launch")
+}
+
+private func testShowcaseAutopilotCompletesWhenFinalLaunchReady() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        finalLaunchSummary: FinalLaunchMobileSummaryBuilder.build(
+            report: finalDemoLaunchReport(
+                overallStatus: "ready",
+                finalResourcesStatus: "ready",
+                finalAcceptanceStatus: "ready",
+                finalOperatorHandoffStatus: "ready"
+            ),
+            error: nil
+        )
+    )
+
+    let plan = autopilotPlan(
+        script: script,
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote
+    )
+
+    try expectEqual(plan.action, .complete)
+    try expectEqual(plan.buttonTitle, "Ready")
+    try expectContains(plan.detail, "Final launch")
 }
 
 private func testShowcaseAutopilotDisablesWhileBusy() throws {
@@ -4421,7 +4572,8 @@ private func demoScript(
     npcTickHistoryCount: Int = 0,
     printQuote: PrintQuote? = nil,
     providerReadiness: ProviderReadinessResponse? = localDemoProviderReadiness(),
-    providerReadinessError: String? = nil
+    providerReadinessError: String? = nil,
+    finalLaunchSummary: FinalLaunchMobileSummary? = nil
 ) -> DemoScript {
     DemoScriptBuilder.build(
         captureSelection: captureSelection,
@@ -4429,7 +4581,8 @@ private func demoScript(
         npcTickHistoryCount: npcTickHistoryCount,
         printQuote: printQuote,
         providerReadiness: providerReadiness,
-        providerReadinessError: providerReadinessError
+        providerReadinessError: providerReadinessError,
+        finalLaunchSummary: finalLaunchSummary
     )
 }
 

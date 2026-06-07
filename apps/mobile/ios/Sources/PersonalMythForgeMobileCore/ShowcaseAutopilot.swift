@@ -84,6 +84,23 @@ public enum ShowcaseAutopilotPlanner {
         guard providerReadiness.overallDemoReady else {
             return blocked("Check Resources", missingProviderDetail(providerReadiness))
         }
+        if let launchStep = script.step(id: "final_launch") {
+            switch launchStep.status {
+            case .complete:
+                return ShowcaseAutopilotPlan(
+                    action: .complete,
+                    buttonTitle: "Ready",
+                    detail: "Final launch is ready.",
+                    isExecutable: false
+                )
+            case .blocked:
+                return blocked("Check Launch", "Review final launch blockers: \(launchStep.detail)")
+            case .waiting:
+                return waiting("Check Launch", "Load final launch readiness: \(launchStep.detail)")
+            case .current, .optional:
+                return waiting("Check Launch", "Review final launch readiness: \(launchStep.detail)")
+            }
+        }
         return ShowcaseAutopilotPlan(
             action: .complete,
             buttonTitle: "Ready",
