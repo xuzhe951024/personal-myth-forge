@@ -127,6 +127,9 @@ do {
     try testFinalLaunchMobileSummaryShowsMissingLiveProviderEvidence()
     try testFinalLaunchMobileSummaryShowsBlockedLiveProviderEvidence()
     try testFinalLaunchMobileSummaryRedactsUnsafeLiveProviderEvidence()
+    try testDecodesConfiguredEvidencePlanFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan()
+    try testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan()
     try testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness()
     try testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness()
@@ -2977,6 +2980,64 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeLiveProviderEvidence() thr
     try expectNotContains(text, "Bearer")
 }
 
+private func testDecodesConfiguredEvidencePlanFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(configuredEvidencePlanStatus: "blocked")
+    )
+
+    let plan = try require(
+        report.finalConfiguredEvidencePlan,
+        "missing configured evidence plan"
+    )
+    try expectEqual(plan.kind, "final_configured_evidence_plan_report")
+    try expectEqual(plan.status, "blocked")
+    try expectEqual(plan.summary.steps, 6)
+    try expectEqual(plan.summary.consentRequired, 2)
+    try expectEqual(plan.steps.first?.id, "three_d_evaluation_configured")
+    try expectEqual(
+        plan.stepsById["three_d_evaluation_configured"]?.requiresLiveProviderConsent,
+        true
+    )
+    try expectFalse(plan.liveCallPolicy.liveCallsByDefault)
+    try expectFalse(plan.safety.commandsRun)
+    try expectFalse(plan.safety.liveProviderCalls)
+}
+
+private func testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(configuredEvidencePlanStatus: "blocked"),
+        error: nil
+    )
+    let text = summary.configuredEvidencePlanRows.joined(separator: " ")
+
+    try expectContains(text, "Configured evidence blocked: steps 6, ready 3, blocked 2, consent 2.")
+    try expectContains(text, "three_d_evaluation_configured: blocked")
+    try expectContains(text, "requires MESHY_API_KEY")
+    try expectContains(text, "Consent flag: PMF_ALLOW_LIVE_PROVIDER_CALLS")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan() throws {
+    let report = finalDemoLaunchReport(
+        configuredEvidencePlanStatus: "blocked",
+        configuredEvidencePlanBlockerDetail: (
+            "sk-test /Users/zhexu/private file:///tmp/private "
+            + "local-capture://cap checkout_url https://pay.example Bearer token"
+        )
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "pay.example")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4683,6 +4744,8 @@ private func finalDemoLaunchPayload(
     visualRegressionAction: String = "run make visual-regression-local",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
+    configuredEvidencePlanStatus: String = "blocked",
+    configuredEvidencePlanBlockerDetail: String = "Configured 3D evidence requires MESHY_API_KEY and live provider consent.",
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
     printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
@@ -4760,6 +4823,14 @@ private func finalDemoLaunchPayload(
         : liveEvidenceBlocked
             ? #"{"ready": 4, "missing": 0, "blocked": 1, "partial": 0, "requires_live_provider_consent": 3}"#
             : #"{"ready": 0, "missing": 5, "blocked": 0, "partial": 0, "requires_live_provider_consent": 3}"#
+    let configuredEvidencePlanReady = configuredEvidencePlanStatus == "ready"
+    let configuredEvidencePlanStepStatus = configuredEvidencePlanReady ? "ready" : "blocked"
+    let configuredEvidencePlanSummaryJSON = configuredEvidencePlanReady
+        ? #"{"steps": 6, "ready": 6, "ready_to_run": 0, "blocked": 0, "consent_required": 2, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
+        : #"{"steps": 6, "ready": 3, "ready_to_run": 1, "blocked": 2, "consent_required": 2, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
+    let configuredEvidencePlanOperatorActionsJSON = configuredEvidencePlanReady
+        ? #"[]"#
+        : #"["provide MESHY_API_KEY in services/backend/.env", "rerun configured 3D evidence after consent"]"#
     let printReadinessFirstStatus = printReadinessReady ? "ready" : printReadinessBlocked ? "blocked" : "partial"
     let printReadinessFirstClassification = printReadinessReady
         ? "draft_quote_requires_user_approval"
@@ -5471,6 +5542,73 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "local_paths_in_report": false,
               "payment_links_in_report": false
+            }
+          },
+          "final_configured_evidence_plan": {
+            "kind": "final_configured_evidence_plan_report",
+            "status": "\(configuredEvidencePlanStatus)",
+            "summary": \(configuredEvidencePlanSummaryJSON),
+            "steps": [
+              {
+                "id": "three_d_evaluation_configured",
+                "label": "Configured 3D evaluation",
+                "status": "\(configuredEvidencePlanStepStatus)",
+                "command": "cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider meshy --suite default-v0 --output .local/3d-evaluation-configured.json",
+                "requires_live_provider_consent": true,
+                "may_call_live_provider": true,
+                "cost_risk": true,
+                "repo_local_write": true,
+                "would_write_backend_env": false,
+                "would_write_ios_deploy_config": false,
+                "blocked_by": \(configuredEvidencePlanReady ? "[]" : #"["MESHY_API_KEY", "PMF_ALLOW_LIVE_PROVIDER_CALLS"]"#),
+                "evidence_status": "\(configuredEvidencePlanStepStatus)",
+                "evidence_path": "services/backend/.local/3d-evaluation-configured.json",
+                "evidence_detail": "\(configuredEvidencePlanBlockerDetail)"
+              }
+            ],
+            "steps_by_id": {
+              "three_d_evaluation_configured": {
+                "id": "three_d_evaluation_configured",
+                "label": "Configured 3D evaluation",
+                "status": "\(configuredEvidencePlanStepStatus)",
+                "command": "cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider meshy --suite default-v0 --output .local/3d-evaluation-configured.json",
+                "requires_live_provider_consent": true,
+                "may_call_live_provider": true,
+                "cost_risk": true,
+                "repo_local_write": true,
+                "would_write_backend_env": false,
+                "would_write_ios_deploy_config": false,
+                "blocked_by": \(configuredEvidencePlanReady ? "[]" : #"["MESHY_API_KEY", "PMF_ALLOW_LIVE_PROVIDER_CALLS"]"#),
+                "evidence_status": "\(configuredEvidencePlanStepStatus)",
+                "evidence_path": "services/backend/.local/3d-evaluation-configured.json",
+                "evidence_detail": "\(configuredEvidencePlanBlockerDetail)"
+              }
+            },
+            "operator_actions": \(configuredEvidencePlanOperatorActionsJSON),
+            "commands": [
+              "make final-configured-evidence-plan",
+              "make live-provider-evidence"
+            ],
+            "live_call_policy": {
+              "live_calls_by_default": false,
+              "allow_live_provider_calls": false,
+              "consent_flag": "PMF_ALLOW_LIVE_PROVIDER_CALLS",
+              "consent_required_for": ["three_d_evaluation_configured", "print_quote_configured"]
+            },
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
+              "provider_secrets_in_report": false,
+              "raw_private_context_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false
             }
           },
           "print_fulfillment_readiness": {
@@ -8291,6 +8429,8 @@ private func finalDemoLaunchReport(
     visualRegressionAction: String = "run make visual-regression-local",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
+    configuredEvidencePlanStatus: String = "blocked",
+    configuredEvidencePlanBlockerDetail: String = "Configured 3D evidence requires MESHY_API_KEY and live provider consent.",
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
     printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
@@ -8351,6 +8491,8 @@ private func finalDemoLaunchReport(
             visualRegressionAction: visualRegressionAction,
             liveProviderEvidenceStatus: liveProviderEvidenceStatus,
             liveProviderEvidenceBlockerDetail: liveProviderEvidenceBlockerDetail,
+            configuredEvidencePlanStatus: configuredEvidencePlanStatus,
+            configuredEvidencePlanBlockerDetail: configuredEvidencePlanBlockerDetail,
             printFulfillmentReadinessStatus: printFulfillmentReadinessStatus,
             printFulfillmentReadinessBlockerDetail: printFulfillmentReadinessBlockerDetail,
             printFulfillmentReadinessAction: printFulfillmentReadinessAction,

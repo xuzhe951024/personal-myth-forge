@@ -60,6 +60,7 @@ def build_final_demo_launch_report(
     mode: LaunchMode,
     settings: Settings | None = None,
     repo_root: Path | str | None = None,
+    include_configured_evidence_plan: bool = True,
 ) -> FinalDemoLaunchResult:
     if mode not in ("local", "configured"):
         raise ValueError(f"Unsupported final demo launch mode: {mode}")
@@ -97,6 +98,16 @@ def build_final_demo_launch_report(
     live_provider_evidence = build_live_provider_evidence_report(
         repo_root=selected_repo_root,
     ).report
+    final_configured_evidence_plan: dict[str, Any] | None = None
+    if include_configured_evidence_plan:
+        from myth_forge_api.final_configured_evidence_plan import (
+            build_final_configured_evidence_plan_report,
+        )
+
+        final_configured_evidence_plan = build_final_configured_evidence_plan_report(
+            settings=selected_settings,
+            repo_root=selected_repo_root,
+        ).report
     print_fulfillment_readiness = build_print_fulfillment_readiness_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
@@ -177,6 +188,8 @@ def build_final_demo_launch_report(
             "live_provider_calls_by_default": False,
         },
     }
+    if final_configured_evidence_plan is not None:
+        report["final_configured_evidence_plan"] = final_configured_evidence_plan
     sanitized = _sanitize_report(report, selected_repo_root)
     return FinalDemoLaunchResult(
         exit_code=_exit_code(mode=mode, summary=phase_summary),

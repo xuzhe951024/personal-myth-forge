@@ -469,6 +469,29 @@ def test_final_demo_launch_embeds_live_provider_evidence(
     assert evidence["safety"]["commands_run"] is False
 
 
+def test_final_demo_launch_embeds_configured_evidence_plan(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="configured",
+    )
+
+    plan = result.report["final_configured_evidence_plan"]
+
+    assert plan["kind"] == "final_configured_evidence_plan_report"
+    assert plan["status"] == "blocked"
+    assert plan["steps_by_id"]["three_d_evaluation_configured"][
+        "requires_live_provider_consent"
+    ] is True
+    assert plan["live_call_policy"]["live_calls_by_default"] is False
+    assert plan["safety"]["commands_run"] is False
+    assert plan["safety"]["live_provider_calls"] is False
+
+
 def test_final_demo_launch_embeds_final_showcase_readiness(tmp_path: Path) -> None:
     repo_root = _write_deploy_config(tmp_path)
 

@@ -40,6 +40,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var npcEvaluationRows: [String]
     public var visualRegressionRows: [String]
     public var liveProviderEvidenceRows: [String]
+    public var configuredEvidencePlanRows: [String]
     public var printFulfillmentReadinessRows: [String]
     public var showcaseReadinessRows: [String]
     public var deployRunbookRows: [String]
@@ -70,6 +71,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         npcEvaluationRows: [String] = [],
         visualRegressionRows: [String] = [],
         liveProviderEvidenceRows: [String] = [],
+        configuredEvidencePlanRows: [String] = [],
         printFulfillmentReadinessRows: [String] = [],
         showcaseReadinessRows: [String] = [],
         deployRunbookRows: [String] = [],
@@ -99,6 +101,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.npcEvaluationRows = npcEvaluationRows
         self.visualRegressionRows = visualRegressionRows
         self.liveProviderEvidenceRows = liveProviderEvidenceRows
+        self.configuredEvidencePlanRows = configuredEvidencePlanRows
         self.printFulfillmentReadinessRows = printFulfillmentReadinessRows
         self.showcaseReadinessRows = showcaseReadinessRows
         self.deployRunbookRows = deployRunbookRows
@@ -179,6 +182,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             visualRegressionRows: visualRegressionRows(from: report.visualRegressionReadiness),
             liveProviderEvidenceRows: liveProviderEvidenceRows(
                 from: report.liveProviderEvidence
+            ),
+            configuredEvidencePlanRows: configuredEvidencePlanRows(
+                from: report.finalConfiguredEvidencePlan
             ),
             printFulfillmentReadinessRows: printFulfillmentReadinessRows(
                 from: report.printFulfillmentReadiness
@@ -662,6 +668,44 @@ public enum FinalLaunchMobileSummaryBuilder {
         }
         parts.append("| \(slot.command)")
         if let detail = slot.detail, !detail.isEmpty {
+            parts.append("| \(detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func configuredEvidencePlanRows(
+        from plan: FinalConfiguredEvidencePlanReport?
+    ) -> [String] {
+        guard let plan else {
+            return ["Configured evidence plan has not loaded."]
+        }
+        var rows = [
+            "Configured evidence \(sanitize(plan.status)): steps \(plan.summary.steps), ready \(plan.summary.ready), blocked \(plan.summary.blocked), consent \(plan.summary.consentRequired).",
+            "Live steps \(plan.summary.liveProviderSteps), cost steps \(plan.summary.costSteps), repo writes \(plan.summary.repoLocalWriteSteps).",
+        ]
+        if plan.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" {
+            if let step = plan.steps.first(where: { status(from: $0.status) != .ready }) {
+                rows.append(configuredEvidencePlanStepRow(step))
+            }
+            rows.append(contentsOf: plan.operatorActions.prefix(2).map(sanitize))
+        }
+        rows.append(
+            "Consent flag: \(sanitize(plan.liveCallPolicy.consentFlag)); live calls by default \(yesNo(plan.liveCallPolicy.liveCallsByDefault))."
+        )
+        rows.append(
+            "Safety: commands_run=\(flag(plan.safety.commandsRun)) live_calls=\(flag(plan.safety.liveProviderCalls))."
+        )
+        return rows.map(sanitize)
+    }
+
+    private static func configuredEvidencePlanStepRow(
+        _ step: FinalConfiguredEvidencePlanStep
+    ) -> String {
+        var parts = ["\(step.id): \(step.status)", "| \(step.command)"]
+        if !step.blockedBy.isEmpty {
+            parts.append("| blocked by \(step.blockedBy.joined(separator: ", "))")
+        }
+        if let detail = step.evidenceDetail, !detail.isEmpty {
             parts.append("| \(detail)")
         }
         return sanitize(parts.joined(separator: " "))

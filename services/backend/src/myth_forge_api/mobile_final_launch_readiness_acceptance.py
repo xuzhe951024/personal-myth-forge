@@ -155,6 +155,18 @@ SOURCE_REQUIREMENTS = (
         "liveProviderEvidence",
     ),
     SourceRequirement(
+        "model_configured_evidence_plan",
+        "Final configured evidence plan model",
+        PMF_MODELS_PATH,
+        "FinalConfiguredEvidencePlanReport",
+    ),
+    SourceRequirement(
+        "model_configured_evidence_plan_field",
+        "Final launch configured evidence plan field",
+        PMF_MODELS_PATH,
+        "finalConfiguredEvidencePlan",
+    ),
+    SourceRequirement(
         "model_resource_handoff",
         "Resource handoff report model",
         PMF_MODELS_PATH,
@@ -329,6 +341,12 @@ SOURCE_REQUIREMENTS = (
         "liveProviderEvidenceRows",
     ),
     SourceRequirement(
+        "mobile_summary_configured_evidence_plan_rows",
+        "Mobile final launch configured evidence plan rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "configuredEvidencePlanRows",
+    ),
+    SourceRequirement(
         "mobile_summary_resource_handoff_rows",
         "Mobile final launch resource handoff rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -405,6 +423,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch live evidence section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Live Evidence",
+    ),
+    SourceRequirement(
+        "mobile_status_view_configured_evidence",
+        "Mobile final launch configured evidence section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Configured Evidence",
     ),
     SourceRequirement(
         "mobile_status_view_resource_handoff",
@@ -615,6 +639,24 @@ SOURCE_REQUIREMENTS = (
         "Contract test decodes live provider evidence",
         CORE_CONTRACT_TESTS_PATH,
         "testDecodesLiveProviderEvidenceFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_configured_evidence_plan_decode",
+        "Contract test decodes configured evidence plan",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesConfiguredEvidencePlanFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_configured_evidence_plan_summary",
+        "Contract test renders configured evidence plan",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan",
+    ),
+    SourceRequirement(
+        "contract_configured_evidence_plan_redaction",
+        "Contract test redacts configured evidence plan",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan",
     ),
     SourceRequirement(
         "contract_resource_handoff_decode",

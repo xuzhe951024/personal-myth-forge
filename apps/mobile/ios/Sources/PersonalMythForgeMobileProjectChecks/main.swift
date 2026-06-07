@@ -1327,6 +1327,11 @@ do {
     )
     try requireContains(
         pmfModels,
+        "FinalConfiguredEvidencePlanReport",
+        "final configured evidence plan model"
+    )
+    try requireContains(
+        pmfModels,
         "ThreeDEvaluationReadinessInputModes",
         "3D evaluation input mode coverage model"
     )
@@ -1350,6 +1355,11 @@ do {
         pmfModels,
         "visualRegressionReadiness",
         "final demo launch visual regression readiness field"
+    )
+    try requireContains(
+        pmfModels,
+        "finalConfiguredEvidencePlan",
+        "final demo launch configured evidence plan field"
     )
     try requireContains(
         pmfModels,
@@ -1680,6 +1690,21 @@ do {
         "Visual regression ready:",
         "final launch visual regression ready copy"
     )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "configuredEvidencePlanRows",
+        "final launch configured evidence plan rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "from: report.finalConfiguredEvidencePlan",
+        "final launch configured evidence plan row builder"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Configured evidence",
+        "final launch configured evidence plan copy"
+    )
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
     try requireContains(
         threeDEvaluationReadiness,
@@ -1740,6 +1765,21 @@ do {
         finalDemoLaunch,
         "visual_regression_readiness",
         "final demo launch embeds visual regression readiness"
+    )
+    try requireContains(
+        finalDemoLaunch,
+        "build_final_configured_evidence_plan_report",
+        "final demo launch configured evidence plan builder"
+    )
+    try requireContains(
+        finalDemoLaunch,
+        "include_configured_evidence_plan",
+        "final demo launch configured evidence plan recursion guard"
+    )
+    try requireContains(
+        finalDemoLaunch,
+        "final_configured_evidence_plan",
+        "final demo launch embeds configured evidence plan"
     )
     try requireContains(
         finalOperatorHandoff,
@@ -1836,6 +1876,11 @@ do {
         "test_final_demo_launch_embeds_ios_deploy_runbook",
         "final demo launch iOS deploy runbook test"
     )
+    try requireContains(
+        finalDemoLaunchTests,
+        "test_final_demo_launch_embeds_configured_evidence_plan",
+        "final demo launch configured evidence plan test"
+    )
     try requireContains(finalLaunchStatusView, "Launch Receipt", "final launch receipt section")
     try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")
     try requireContains(finalLaunchStatusView, "Resource Requirements", "final launch resource requirements section")
@@ -1844,6 +1889,7 @@ do {
     try requireContains(finalLaunchStatusView, "iOS Resources", "final launch iOS resources section")
     try requireContains(finalLaunchStatusView, "3D Evaluation", "final launch 3D evaluation section")
     try requireContains(finalLaunchStatusView, "Visual Regression", "final launch visual regression section")
+    try requireContains(finalLaunchStatusView, "Configured Evidence", "final launch configured evidence section")
     try requireContains(finalLaunchStatusView, "NPC Evaluation", "final launch NPC evaluation section")
     try requireContains(
         contractTests,
@@ -1914,6 +1960,21 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsBlockedVisualRegression",
         "visual regression blocked summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesConfiguredEvidencePlanFromFinalLaunchPayload",
+        "configured evidence plan decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan",
+        "configured evidence plan summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan",
+        "configured evidence plan redaction test"
     )
     try requireContains(
         contractTests,

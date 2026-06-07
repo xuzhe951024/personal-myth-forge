@@ -49,6 +49,7 @@ def build_final_configured_preflight_report(
         mode="configured",
         settings=selected_settings,
         repo_root=selected_repo_root,
+        include_configured_evidence_plan=False,
     ).report
     configured_ios_deploy_runbook = build_ios_deploy_runbook_report(
         mode="configured",

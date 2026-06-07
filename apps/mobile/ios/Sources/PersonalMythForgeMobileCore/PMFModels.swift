@@ -2362,6 +2362,188 @@ public struct LiveProviderEvidenceReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalConfiguredEvidencePlanSummary: Codable, Equatable, Sendable {
+    public var steps: Int
+    public var ready: Int
+    public var readyToRun: Int
+    public var blocked: Int
+    public var consentRequired: Int
+    public var liveProviderSteps: Int
+    public var costSteps: Int
+    public var repoLocalWriteSteps: Int
+    public var commandsRun: Int
+
+    public init(
+        steps: Int,
+        ready: Int,
+        readyToRun: Int,
+        blocked: Int,
+        consentRequired: Int,
+        liveProviderSteps: Int,
+        costSteps: Int,
+        repoLocalWriteSteps: Int,
+        commandsRun: Int
+    ) {
+        self.steps = steps
+        self.ready = ready
+        self.readyToRun = readyToRun
+        self.blocked = blocked
+        self.consentRequired = consentRequired
+        self.liveProviderSteps = liveProviderSteps
+        self.costSteps = costSteps
+        self.repoLocalWriteSteps = repoLocalWriteSteps
+        self.commandsRun = commandsRun
+    }
+}
+
+public struct FinalConfiguredEvidencePlanStep: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var command: String
+    public var requiresLiveProviderConsent: Bool
+    public var mayCallLiveProvider: Bool
+    public var costRisk: Bool
+    public var repoLocalWrite: Bool
+    public var wouldWriteBackendEnv: Bool
+    public var wouldWriteIosDeployConfig: Bool
+    public var blockedBy: [String]
+    public var evidenceStatus: String?
+    public var evidencePath: String?
+    public var evidenceDetail: String?
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        command: String,
+        requiresLiveProviderConsent: Bool,
+        mayCallLiveProvider: Bool,
+        costRisk: Bool,
+        repoLocalWrite: Bool,
+        wouldWriteBackendEnv: Bool,
+        wouldWriteIosDeployConfig: Bool,
+        blockedBy: [String],
+        evidenceStatus: String? = nil,
+        evidencePath: String? = nil,
+        evidenceDetail: String? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.command = command
+        self.requiresLiveProviderConsent = requiresLiveProviderConsent
+        self.mayCallLiveProvider = mayCallLiveProvider
+        self.costRisk = costRisk
+        self.repoLocalWrite = repoLocalWrite
+        self.wouldWriteBackendEnv = wouldWriteBackendEnv
+        self.wouldWriteIosDeployConfig = wouldWriteIosDeployConfig
+        self.blockedBy = blockedBy
+        self.evidenceStatus = evidenceStatus
+        self.evidencePath = evidencePath
+        self.evidenceDetail = evidenceDetail
+    }
+}
+
+public struct FinalConfiguredEvidencePlanLiveCallPolicy: Codable, Equatable, Sendable {
+    public var liveCallsByDefault: Bool
+    public var allowLiveProviderCalls: Bool
+    public var consentFlag: String
+    public var consentRequiredFor: [String]
+
+    public init(
+        liveCallsByDefault: Bool,
+        allowLiveProviderCalls: Bool,
+        consentFlag: String,
+        consentRequiredFor: [String]
+    ) {
+        self.liveCallsByDefault = liveCallsByDefault
+        self.allowLiveProviderCalls = allowLiveProviderCalls
+        self.consentFlag = consentFlag
+        self.consentRequiredFor = consentRequiredFor
+    }
+}
+
+public struct FinalConfiguredEvidencePlanSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+    public var providerSecretsInReport: Bool
+    public var rawPrivateContextInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        liveProviderCalls: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        globalMutation: Bool,
+        xcodeOrSigning: Bool,
+        keychainWrites: Bool,
+        providerSecretsInReport: Bool,
+        rawPrivateContextInReport: Bool,
+        rawMediaInReport: Bool,
+        paymentLinksInReport: Bool,
+        localPathsInReport: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.globalMutation = globalMutation
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawPrivateContextInReport = rawPrivateContextInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.localPathsInReport = localPathsInReport
+    }
+}
+
+public struct FinalConfiguredEvidencePlanReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: FinalConfiguredEvidencePlanSummary
+    public var steps: [FinalConfiguredEvidencePlanStep]
+    public var stepsById: [String: FinalConfiguredEvidencePlanStep]
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var liveCallPolicy: FinalConfiguredEvidencePlanLiveCallPolicy
+    public var safety: FinalConfiguredEvidencePlanSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: FinalConfiguredEvidencePlanSummary,
+        steps: [FinalConfiguredEvidencePlanStep],
+        stepsById: [String: FinalConfiguredEvidencePlanStep],
+        operatorActions: [String],
+        commands: [String],
+        liveCallPolicy: FinalConfiguredEvidencePlanLiveCallPolicy,
+        safety: FinalConfiguredEvidencePlanSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.steps = steps
+        self.stepsById = stepsById
+        self.operatorActions = operatorActions
+        self.commands = commands
+        self.liveCallPolicy = liveCallPolicy
+        self.safety = safety
+    }
+}
+
 public struct PrintFulfillmentReadinessSummary: Codable, Equatable, Sendable {
     public var ready: Int
     public var partial: Int
@@ -2635,6 +2817,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
     public var visualRegressionReadiness: VisualRegressionReadinessReport?
     public var liveProviderEvidence: LiveProviderEvidenceReport?
+    public var finalConfiguredEvidencePlan: FinalConfiguredEvidencePlanReport?
     public var printFulfillmentReadiness: PrintFulfillmentReadinessReport?
     public var finalShowcaseReadiness: FinalShowcaseReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
@@ -2662,6 +2845,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
         visualRegressionReadiness: VisualRegressionReadinessReport? = nil,
         liveProviderEvidence: LiveProviderEvidenceReport? = nil,
+        finalConfiguredEvidencePlan: FinalConfiguredEvidencePlanReport? = nil,
         printFulfillmentReadiness: PrintFulfillmentReadinessReport? = nil,
         finalShowcaseReadiness: FinalShowcaseReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
@@ -2688,6 +2872,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
         self.visualRegressionReadiness = visualRegressionReadiness
         self.liveProviderEvidence = liveProviderEvidence
+        self.finalConfiguredEvidencePlan = finalConfiguredEvidencePlan
         self.printFulfillmentReadiness = printFulfillmentReadiness
         self.finalShowcaseReadiness = finalShowcaseReadiness
         self.finalOperatorHandoff = finalOperatorHandoff

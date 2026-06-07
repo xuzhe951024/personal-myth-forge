@@ -53,9 +53,16 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_visual_regression_decode" in requirement_ids
     assert "model_live_provider_evidence" in requirement_ids
     assert "model_live_provider_evidence_field" in requirement_ids
+    assert "model_configured_evidence_plan" in requirement_ids
+    assert "model_configured_evidence_plan_field" in requirement_ids
     assert "mobile_summary_live_provider_evidence_rows" in requirement_ids
+    assert "mobile_summary_configured_evidence_plan_rows" in requirement_ids
     assert "mobile_status_view_live_evidence" in requirement_ids
+    assert "mobile_status_view_configured_evidence" in requirement_ids
     assert "contract_live_provider_evidence_decode" in requirement_ids
+    assert "contract_configured_evidence_plan_decode" in requirement_ids
+    assert "contract_configured_evidence_plan_summary" in requirement_ids
+    assert "contract_configured_evidence_plan_redaction" in requirement_ids
     assert result.report["safety"] == {
         "global_mutation": False,
         "live_provider_calls_by_default": False,
@@ -145,6 +152,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "visualRegressionReadiness",
                 "LiveProviderEvidenceReport",
                 "liveProviderEvidence",
+                "FinalConfiguredEvidencePlanReport",
+                "finalConfiguredEvidencePlan",
                 "ResourceHandoffReport",
                 "resourceReport",
             ]
@@ -191,6 +200,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "launchRehearsalRows",
                 "visualRegressionRows",
                 "liveProviderEvidenceRows",
+                "configuredEvidencePlanRows",
                 "rehearsalFreshnessRow",
                 "Freshness:",
                 "resourceHandoffRows",
@@ -209,6 +219,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Launch Rehearsal",
                 "Visual Regression",
                 "Live Evidence",
+                "Configured Evidence",
                 "Resource Handoff",
                 "Backend Resources",
                 "iOS Resources",
@@ -255,6 +266,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryShowsBlockedVisualRegression",
                 "testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression",
                 "testDecodesLiveProviderEvidenceFromFinalLaunchPayload",
+                "testDecodesConfiguredEvidencePlanFromFinalLaunchPayload",
+                "testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan",
+                "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan",
                 "testDecodesResourceHandoffFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsMissingResourceHandoff",
                 "testFinalLaunchMobileSummaryShowsReadyResourceHandoff",
