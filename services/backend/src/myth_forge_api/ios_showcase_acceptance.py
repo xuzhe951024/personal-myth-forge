@@ -710,11 +710,31 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift",
+                "npc_evaluation",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift",
+                "npcEvaluationStep",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift",
                 "FinalLaunchMobileSummary",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testDemoScriptShowsBlockedFinalLaunch",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDemoScriptWaitsForMissingNPCEvaluation",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDemoScriptBlocksAndRedactsFailedNPCEvaluation",
             ),
             SourceRequirement(
                 "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
@@ -739,8 +759,20 @@ FEATURES = (
                 'script.step(id: "final_launch")',
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ShowcaseAutopilot.swift",
+                'script.step(id: "npc_evaluation")',
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testShowcaseAutopilotBlocksOnFinalLaunchBlocker",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testShowcaseAutopilotWaitsForMissingNPCEvaluation",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testShowcaseAutopilotBlocksOnFailedNPCEvaluation",
             ),
         ),
     ),

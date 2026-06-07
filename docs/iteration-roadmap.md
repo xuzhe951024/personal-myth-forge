@@ -107,6 +107,7 @@ Bridge deliverable:
 - P0.89 final acceptance freshness guard for stale saved readiness reports
 - P0.90 NPC Agent evaluation suite for local and future OpenAI quality handoff
 - P0.91 iPhone Final Launch NPC Agent evaluation readiness rows
+- P0.92 iPhone Demo Script gate for NPC Agent evaluation readiness
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

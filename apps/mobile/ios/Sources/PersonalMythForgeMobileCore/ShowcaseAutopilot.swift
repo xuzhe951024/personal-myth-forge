@@ -84,6 +84,18 @@ public enum ShowcaseAutopilotPlanner {
         guard providerReadiness.overallDemoReady else {
             return blocked("Check Resources", missingProviderDetail(providerReadiness))
         }
+        if let npcEvaluationStep = script.step(id: "npc_evaluation") {
+            switch npcEvaluationStep.status {
+            case .complete:
+                break
+            case .blocked:
+                return blocked("Check NPC Eval", "Review NPC evaluation blockers: \(npcEvaluationStep.detail)")
+            case .waiting:
+                return waiting("Check NPC Eval", "Load NPC evaluation readiness: \(npcEvaluationStep.detail)")
+            case .current, .optional:
+                return waiting("Check NPC Eval", "Review NPC evaluation readiness: \(npcEvaluationStep.detail)")
+            }
+        }
         if let launchStep = script.step(id: "final_launch") {
             switch launchStep.status {
             case .complete:

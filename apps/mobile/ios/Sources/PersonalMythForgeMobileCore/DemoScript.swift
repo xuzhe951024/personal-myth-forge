@@ -88,6 +88,7 @@ public enum DemoScriptBuilder {
         ]
 
         if let finalLaunchSummary {
+            steps.append(npcEvaluationStep(finalLaunchSummary))
             steps.append(finalLaunchStep(finalLaunchSummary))
         }
 
@@ -100,6 +101,7 @@ public enum DemoScriptBuilder {
                 npcComplete: npcComplete,
                 printQuote: printQuote,
                 resourcesStatus: resources.status,
+                npcEvaluationStatus: steps.first { $0.id == "npc_evaluation" }?.status,
                 finalLaunchStatus: steps.first { $0.id == "final_launch" }?.status
             ),
             steps: steps
@@ -211,6 +213,33 @@ public enum DemoScriptBuilder {
         )
     }
 
+    private static func npcEvaluationStep(_ summary: FinalLaunchMobileSummary) -> DemoScriptStep {
+        step(
+            "npc_evaluation",
+            "NPC Evaluation",
+            npcEvaluationStatus(summary.npcEvaluationRows),
+            npcEvaluationDetail(summary.npcEvaluationRows)
+        )
+    }
+
+    private static func npcEvaluationStatus(_ rows: [String]) -> DemoScriptStepStatus {
+        let text = rows.joined(separator: " ").lowercased()
+        if rows.first?.hasPrefix("NPC Agent evaluation ready:") == true {
+            return .complete
+        }
+        if text.contains("blocked")
+            || text.contains("failed")
+            || text.contains("npc_agent_evaluation_failed")
+        {
+            return .blocked
+        }
+        return .waiting
+    }
+
+    private static func npcEvaluationDetail(_ rows: [String]) -> String {
+        rows.first ?? "NPC evaluation readiness has not loaded."
+    }
+
     private static func finalLaunchStatus(_ status: FinalLaunchMobileStatus) -> DemoScriptStepStatus {
         switch status {
         case .ready:
@@ -237,6 +266,7 @@ public enum DemoScriptBuilder {
         npcComplete: Bool,
         printQuote: PrintQuote?,
         resourcesStatus: DemoScriptStepStatus,
+        npcEvaluationStatus: DemoScriptStepStatus?,
         finalLaunchStatus: DemoScriptStepStatus?
     ) -> String {
         if !captureReady {
@@ -259,6 +289,18 @@ public enum DemoScriptBuilder {
         }
         if resourcesStatus == .waiting {
             return "Check backend resources."
+        }
+        if let npcEvaluationStatus {
+            switch npcEvaluationStatus {
+            case .complete:
+                break
+            case .blocked:
+                return "Review NPC evaluation blockers."
+            case .waiting:
+                return "Load NPC evaluation readiness."
+            case .current, .optional:
+                return "Review NPC evaluation readiness."
+            }
         }
         if let finalLaunchStatus {
             switch finalLaunchStatus {
