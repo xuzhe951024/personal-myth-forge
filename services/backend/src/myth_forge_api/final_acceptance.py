@@ -387,6 +387,7 @@ def run_final_acceptance(
         "allow_live_provider_calls": allow_live_provider_calls,
         "overall_status": overall_status,
         "summary": summary,
+        "operator_actions": _operator_actions(checks),
         "checks": checks,
         "timings": {"total_elapsed_seconds": round(time.perf_counter() - started_at, 4)},
         "safety": _safety_summary(),
@@ -606,6 +607,52 @@ def _summary(checks: list[dict[str, Any]]) -> dict[str, int]:
         "failed": sum(1 for check in checks if check["status"] == "failed"),
         "skipped": sum(1 for check in checks if check["status"] == "skipped"),
     }
+
+
+def _operator_actions(checks: list[dict[str, Any]]) -> list[str]:
+    actions: list[str] = []
+    for check in checks:
+        status = str(check.get("status", ""))
+        if status not in {"blocked", "failed"}:
+            continue
+        check_id = str(check.get("id", "check"))
+        classification = str(check.get("classification", ""))
+        label = str(check.get("label", check_id))
+        if (
+            check_id == "mobile_deploy_preflight"
+            and classification == "blocked_by_local_ios_backend_health"
+        ):
+            actions.append("start backend-device-demo and rerun mobile deploy preflight")
+        elif check_id == "mobile_deploy_preflight":
+            actions.append("provide iOS deploy config and rerun mobile deploy preflight")
+        elif check_id == "mobile_xcode_build":
+            actions.append("resolve Xcode build gate outside the app")
+        elif classification == "blocked_by_provider_configuration":
+            actions.append(
+                "provide backend provider keys in "
+                "services/backend/.local/final-resources.env and rerun final acceptance"
+            )
+        elif status == "failed":
+            actions.append(f"fix {check_id}: {label}")
+        else:
+            command = check.get("command")
+            if isinstance(command, list) and command:
+                joined_command = " ".join(str(part) for part in command)
+                actions.append(f"unblock {check_id}: {joined_command}")
+            else:
+                actions.append(f"unblock {check_id}: {label}")
+    return _dedupe(actions)[:6]
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        deduped.append(value)
+    return deduped
 
 
 def _overall_status(summary: dict[str, int]) -> str:

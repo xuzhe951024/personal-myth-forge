@@ -221,6 +221,69 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
     )
 
 
+def test_ios_device_launch_rehearsal_routes_final_acceptance_source_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True)
+    _write_local_rehearsal_reports(local_dir)
+    _write_json(
+        local_dir / "final-acceptance-local.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 2, "failed": 0},
+            "operator_actions": [
+                "provide iOS deploy config and rerun mobile deploy preflight",
+                "resolve Xcode build gate outside the app",
+            ],
+        },
+    )
+    _write_json(
+        local_dir / "final-configured-preflight.json",
+        {"kind": "final_configured_preflight_report", "status": "ready"},
+    )
+    _write_json(
+        local_dir / "final-handoff-index.json",
+        {"kind": "final_handoff_index_report", "status": "ready"},
+    )
+    _write_json(
+        local_dir / "ios-device-launch-certificate.json",
+        {
+            "kind": "ios_device_launch_certificate_report",
+            "status": "ready",
+            "mode": "local",
+            "summary": {"ready": 4, "manual": 0, "live": 0, "partial": 0},
+            "safety": {
+                "provider_calls": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+            },
+        },
+    )
+
+    result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
+    sequence = {step["id"]: step for step in result.report["sequence"]}
+
+    assert result.exit_code == 2
+    assert sequence["final_rehearsal_local"]["operator_actions"][:2] == [
+        (
+            "final_acceptance_local: provide iOS deploy config and rerun "
+            "mobile deploy preflight"
+        ),
+        "final_acceptance_local: resolve Xcode build gate outside the app",
+    ]
+    assert result.report["operator_actions"][0] == (
+        "final_rehearsal_local: final_acceptance_local: provide iOS deploy "
+        "config and rerun mobile deploy preflight"
+    )
+    assert (
+        "final_rehearsal_local: review final_acceptance_local: make final-acceptance-local"
+        not in result.report["operator_actions"]
+    )
+
+
 def test_ios_device_launch_rehearsal_preserves_final_handoff_source_freshness(
     tmp_path: Path,
 ) -> None:
