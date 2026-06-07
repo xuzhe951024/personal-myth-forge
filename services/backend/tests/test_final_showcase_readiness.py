@@ -109,6 +109,43 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     )
 
 
+def test_final_showcase_readiness_promotes_nested_operator_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression_blocked(repo_root)
+    _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_ios_device_launch_rehearsal_with_actions(repo_root)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert result.exit_code == 2
+    assert actions[0] == "final_rehearsal_local: final_acceptance_local: action 1"
+    assert "final_handoff_index: run make final-configured-preflight" in actions
+    assert "ios_device_launch_certificate: run make final-handoff-index" in actions
+    assert (
+        "run make live-provider-evidence after configured provider evidence files are refreshed"
+        in actions
+    )
+    assert "make print-fulfillment-readiness" in actions
+    assert (
+        "copy services/backend/final-resources.env.example to "
+        "services/backend/.local/final-resources.env"
+    ) in actions
+    assert "provide iOS deploy config and rerun mobile deploy preflight" in actions
+    assert "rerun make visual-regression-local and review failed artifacts" in actions
+    assert "make final-showcase-readiness" in actions
+    assert len(actions) <= 32
+    assert actions.count("make print-fulfillment-readiness") == 1
+
+
 def test_final_showcase_readiness_sanitizes_secrets_paths_and_private_context(
     tmp_path: Path,
 ) -> None:
@@ -382,6 +419,24 @@ def _write_visual_regression(repo_root: Path) -> None:
     )
 
 
+def _write_visual_regression_blocked(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/visual-regression-local.json",
+        {
+            "kind": "visual_regression_report",
+            "status": "failed",
+            "summary": {"passed": 9, "failed": 1},
+            "artifacts": [
+                {
+                    "id": "p0.136_final_showcase_action_ledger",
+                    "status": "failed",
+                    "detail": "Action ledger visual evidence is stale.",
+                }
+            ],
+        },
+    )
+
+
 def _write_final_acceptance_ready(repo_root: Path) -> None:
     _write_json(
         repo_root / "services/backend/.local/final-acceptance-local.json",
@@ -390,6 +445,72 @@ def _write_final_acceptance_ready(repo_root: Path) -> None:
             "overall_status": "passed",
             "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
             "checks": [],
+        },
+    )
+
+
+def _write_final_acceptance_blocked_with_actions(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/final-acceptance-local.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": "mobile_deploy_preflight",
+                    "label": "Mobile deploy preflight",
+                    "status": "blocked",
+                    "classification": "blocked_by_local_ios_deploy_config",
+                    "command": ["make", "mobile-deploy-preflight"],
+                    "detail": "iOS deploy config is missing.",
+                }
+            ],
+        },
+    )
+
+
+def _write_ios_device_launch_rehearsal_with_actions(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/ios-device-launch-rehearsal.json",
+        {
+            "kind": "ios_device_launch_rehearsal_report",
+            "status": "blocked",
+            "summary": {
+                "ready": 0,
+                "missing": 0,
+                "blocked": 1,
+                "partial": 0,
+                "manual": 0,
+                "live": 0,
+            },
+            "sequence": [],
+            "operator_actions": [
+                "final_rehearsal_local: final_acceptance_local: action 1",
+                "final_rehearsal_local: final_acceptance_local: action 2",
+                "final_rehearsal_local: ios_deploy_runbook_local: action 1",
+                "final_rehearsal_local: ios_deploy_runbook_local: action 2",
+                "final_configured_preflight: action 1",
+                "final_configured_preflight: action 2",
+                "final_handoff_index: run make final-rehearsal-local",
+                "final_handoff_index: run make final-configured-preflight",
+                "ios_device_launch_certificate: run make final-handoff-index",
+                "ios_device_launch_certificate: provide iOS deploy config",
+            ],
+            "commands": ["make ios-device-launch-rehearsal"],
+            "safety": {
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "raw_media_in_report": False,
+                "payment_links_in_report": False,
+                "local_paths_in_report": False,
+            },
         },
     )
 
