@@ -11,6 +11,9 @@ from myth_forge_api.final_acceptance_readiness import (
     LOCAL_FINAL_ACCEPTANCE_COMMAND,
     build_final_acceptance_readiness_report,
 )
+from myth_forge_api.final_resource_apply_preview import (
+    build_final_resource_apply_preview_report,
+)
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
@@ -67,6 +70,9 @@ def build_final_demo_launch_report(
         repo_root=selected_repo_root,
     ).report
     final_resource_requirements = build_final_resource_requirements_report(
+        repo_root=selected_repo_root,
+    ).report
+    final_resource_apply_preview = build_final_resource_apply_preview_report(
         repo_root=selected_repo_root,
     ).report
     final_acceptance_readiness = build_final_acceptance_readiness_report(
@@ -127,6 +133,7 @@ def build_final_demo_launch_report(
         "phase_summary": phase_summary,
         "final_resources_preflight": final_resources_preflight,
         "final_resource_requirements": final_resource_requirements,
+        "final_resource_apply_preview": final_resource_apply_preview,
         "final_acceptance_readiness": final_acceptance_readiness,
         "three_d_evaluation_readiness": three_d_evaluation_readiness,
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,
@@ -362,6 +369,7 @@ def _commands(mode: LaunchMode) -> list[str]:
         return [
             "make final-resource-requirements",
             "make final-resources-preflight",
+            "make final-resource-apply-preview",
             "make final-apply-resources",
             "make visual-regression-local",
             "make live-provider-evidence",
@@ -379,6 +387,7 @@ def _commands(mode: LaunchMode) -> list[str]:
     return [
         "make final-resource-requirements",
         "make final-resources-preflight",
+        "make final-resource-apply-preview",
         "make final-apply-resources",
         "make visual-regression-local",
         "make live-provider-evidence",
