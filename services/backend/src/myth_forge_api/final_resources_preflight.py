@@ -77,9 +77,7 @@ def build_final_resources_preflight_report(
             "items": [],
             "unknown_keys": [],
             "malformed_lines": [],
-            "operator_actions": [
-                f"copy services/backend/final-resources.env.example to {resources_label}",
-            ],
+            "operator_actions": ["run make final-resource-init"],
             "safety": _safety(),
         }
         return FinalResourcesPreflightResult(exit_code=2, report=report)

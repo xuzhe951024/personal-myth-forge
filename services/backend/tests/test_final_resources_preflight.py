@@ -41,6 +41,7 @@ def test_preflight_reports_missing_default_file_without_local_path_leak(
         "exists": False,
     }
     assert result.report["summary"]["missing"] >= 1
+    assert result.report["operator_actions"] == ["run make final-resource-init"]
     assert str(tmp_path) not in report_text
     assert result.report["safety"] == {
         "provider_secrets_in_report": False,

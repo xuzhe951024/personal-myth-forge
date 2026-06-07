@@ -358,10 +358,7 @@ def _operator_actions(
 ) -> list[str]:
     actions: list[str] = []
     if preflight_report.get("status") == "missing":
-        actions.append(
-            "copy services/backend/final-resources.env.example to "
-            "services/backend/.local/final-resources.env"
-        )
+        actions.append("run make final-resource-init")
     for requirement in requirements:
         if requirement["status"] == "blocked" and requirement["id"] == "PMF_BACKEND_BASE_URL":
             actions.append("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")

@@ -115,10 +115,7 @@ def _input_slots(
                     DEFAULT_RESOURCES_PATH.as_posix(),
                 )
             ),
-            action=(
-                "copy services/backend/final-resources.env.example to "
-                "services/backend/.local/final-resources.env"
-            ),
+            action="run make final-resource-init",
         ),
         _slot(
             slot_id="final_resource_apply_preview",

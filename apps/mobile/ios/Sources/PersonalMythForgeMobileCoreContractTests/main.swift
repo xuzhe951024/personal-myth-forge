@@ -2036,7 +2036,7 @@ private func testDevicePreflightMapsMissingFinalResourcesPreflightToWaiting() th
         finalDemoLaunch: finalDemoLaunchReport(
             overallStatus: "partial",
             finalResourcesStatus: "missing",
-            finalResourcesAction: "copy services/backend/final-resources.env.example"
+            finalResourcesAction: "run make final-resource-init"
         )
     )
 
@@ -2321,7 +2321,7 @@ private func testFinalLaunchMobileSummaryBuildsPartialOperatorStatus() throws {
         report: finalDemoLaunchReport(
             overallStatus: "partial",
             finalResourcesStatus: "missing",
-            finalResourcesAction: "copy services/backend/final-resources.env.example"
+            finalResourcesAction: "run make final-resource-init"
         ),
         error: nil
     )
@@ -2333,7 +2333,7 @@ private func testFinalLaunchMobileSummaryBuildsPartialOperatorStatus() throws {
     try expectEqual(summary.phaseRows.first?.status, .ready)
     try expectContains(summary.phaseRows.first?.detail ?? "", "make backend-device-demo")
     try expectContains(summary.phaseRows.last?.detail ?? "", "Launch report partial")
-    try expectContains(summary.resourceActions.first ?? "", "copy services/backend/final-resources.env.example")
+    try expectContains(summary.resourceActions.first ?? "", "run make final-resource-init")
     try expectContains(summary.commandRows.first ?? "", "make backend-device-demo")
     try expectContains(summary.notes.joined(separator: " "), "read-only")
 }
@@ -3076,7 +3076,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
                 "final_handoff_index: run make final-configured-preflight",
                 "ios_device_launch_certificate: run make final-handoff-index",
                 "run make live-provider-evidence after configured provider evidence files are refreshed",
-                "copy services/backend/final-resources.env.example to services/backend/.local/final-resources.env",
+                "run make final-resource-init",
                 "make final-showcase-readiness",
                 "extra action that should stay hidden",
             ]
@@ -3089,7 +3089,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
     try expectContains(text, "final_handoff_index: run make final-configured-preflight")
     try expectContains(text, "ios_device_launch_certificate: run make final-handoff-index")
     try expectContains(text, "run make live-provider-evidence")
-    try expectContains(text, "final-resources.env.example")
+    try expectContains(text, "run make final-resource-init")
     try expectContains(text, "make final-showcase-readiness")
     try expectNotContains(text, "extra action that should stay hidden")
     try expectEqual(summary.showcaseReadinessRows.count, 8)
@@ -4666,7 +4666,7 @@ private func finalDemoLaunchPayload(
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     finalResourcesStatus: String = "missing",
-    finalResourcesAction: String = "copy services/backend/final-resources.env.example",
+    finalResourcesAction: String = "run make final-resource-init",
     finalResourcesItemsJSON: String = "[]",
     finalAcceptanceStatus: String = "missing",
     finalAcceptanceFreshnessStatus: String = "fresh",
@@ -5055,7 +5055,7 @@ private func finalDemoLaunchPayload(
               }
             },
             "operator_actions": [
-              "copy services/backend/final-resources.env.example to services/backend/.local/final-resources.env"
+              "run make final-resource-init"
             ],
             "commands": [
               "make final-resource-apply-preview",
@@ -8274,7 +8274,7 @@ private func finalDemoLaunchReport(
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     finalResourcesStatus: String = "ready",
-    finalResourcesAction: String = "copy services/backend/final-resources.env.example",
+    finalResourcesAction: String = "run make final-resource-init",
     finalResourcesItemsJSON: String = "[]",
     finalAcceptanceStatus: String = "missing",
     finalAcceptanceFreshnessStatus: String = "fresh",

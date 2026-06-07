@@ -44,6 +44,7 @@ def test_apply_preview_reports_missing_resources_without_writing_outputs(
     assert targets["ios_deploy_config"]["status"] == "missing"
     assert "make final-resource-apply-preview" in result.report["commands"]
     assert "make final-apply-resources" in result.report["commands"]
+    assert result.report["operator_actions"][0] == "run make final-resource-init"
     assert result.report["safety"] == {
         "provider_secrets_in_report": False,
         "local_paths_in_report": False,

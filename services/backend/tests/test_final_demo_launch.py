@@ -283,10 +283,7 @@ def test_final_demo_launch_embeds_saved_final_acceptance_readiness(
     assert handoff_steps["mobile_deploy_preflight"]["status"] == "blocked"
     assert handoff_steps["mobile_deploy_preflight"]["source"] == "final_acceptance_readiness"
     assert handoff["next_actions"][:2] == [
-        (
-            "copy services/backend/final-resources.env.example to "
-            "services/backend/.local/final-resources.env"
-        ),
+        "run make final-resource-init",
         "start backend-device-demo and rerun mobile deploy preflight",
     ]
     assert "run Xcode build gate manually on the Mac: make mobile-xcode-build" in handoff[

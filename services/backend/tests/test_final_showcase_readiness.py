@@ -135,10 +135,7 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
         in actions
     )
     assert "make print-fulfillment-readiness" in actions
-    assert (
-        "copy services/backend/final-resources.env.example to "
-        "services/backend/.local/final-resources.env"
-    ) in actions
+    assert "run make final-resource-init" in actions
     assert "provide iOS deploy config and rerun mobile deploy preflight" in actions
     assert "rerun make visual-regression-local and review failed artifacts" in actions
     assert "make final-showcase-readiness" in actions

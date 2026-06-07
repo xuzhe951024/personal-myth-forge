@@ -26,9 +26,7 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert slots["local_final_acceptance"]["status"] == "missing"
     assert slots["three_d_evaluation"]["status"] == "missing"
     assert slots["npc_agent_evaluation"]["status"] == "missing"
-    assert "copy services/backend/final-resources.env.example" in " ".join(
-        report["operator_actions"]
-    )
+    assert "run make final-resource-init" in " ".join(report["operator_actions"])
     assert "run make final-resource-apply-preview before applying resources" in " ".join(
         report["operator_actions"]
     )

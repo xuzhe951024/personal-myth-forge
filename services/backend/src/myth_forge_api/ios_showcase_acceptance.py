@@ -753,8 +753,25 @@ FEATURES = (
                 "final_resource_requirements_report",
             ),
             SourceRequirement(
+                "services/backend/scripts/init_final_resources.sh",
+                "final-resources.env initialized",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/init_final_resources.sh",
+                "make final-resource-init",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/init_final_resources.sh",
+                "must stay untracked",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/cli.py",
                 "final-resource-requirements",
+            ),
+            SourceRequirement("Makefile", "final-resource-init:"),
+            SourceRequirement(
+                "Makefile",
+                "scripts/init_final_resources.sh",
             ),
             SourceRequirement("Makefile", "final-resource-requirements:"),
             SourceRequirement(

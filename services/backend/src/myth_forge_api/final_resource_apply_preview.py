@@ -258,10 +258,7 @@ def _operator_actions(
     if status == "ready":
         actions.append("review preview, then run make final-apply-resources")
     elif preflight_report.get("status") == "missing":
-        actions.append(
-            "copy services/backend/final-resources.env.example to "
-            "services/backend/.local/final-resources.env"
-        )
+        actions.append("run make final-resource-init")
     for target in targets:
         for slot_id in target["blocked_by"]:
             if slot_id == "PMF_BACKEND_BASE_URL":
