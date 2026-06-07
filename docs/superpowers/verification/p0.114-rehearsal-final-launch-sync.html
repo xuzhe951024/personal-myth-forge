@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.114 Rehearsal Final Launch Sync</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f5f1;
+      --panel: #ffffff;
+      --ink: #18201d;
+      --muted: #65706b;
+      --line: #d8ded8;
+      --green: #1d7550;
+      --amber: #946014;
+      --blue: #2d5f83;
+      --red: #a73c3c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .screen {
+      min-height: 844px;
+      padding: 18px 14px 14px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 780;
+    }
+
+    .mode {
+      border: 1px solid #c9d5ce;
+      border-radius: 8px;
+      padding: 5px 8px;
+      color: var(--blue);
+      background: #edf4f0;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(27, 40, 34, 0.08);
+      padding: 12px;
+    }
+
+    .header {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .header-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .header h2 {
+      font-size: 16px;
+      font-weight: 760;
+      margin-bottom: 3px;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      border-radius: 8px;
+      padding: 4px 7px;
+      color: var(--green);
+      background: #e8f3ec;
+      border: 1px solid #c7ddcf;
+      font-size: 11px;
+      font-weight: 820;
+      white-space: nowrap;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 8px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfb;
+      padding: 9px;
+    }
+
+    .index {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      background: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .step h3 {
+      font-size: 13px;
+      font-weight: 780;
+      margin-bottom: 3px;
+    }
+
+    .step p {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    code {
+      display: block;
+      color: #26302b;
+      background: #eff2ef;
+      border: 1px solid #d9dfd8;
+      border-radius: 6px;
+      padding: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .section {
+      border-top: 1px solid var(--line);
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+
+    .section h3 {
+      font-size: 12px;
+      font-weight: 780;
+      margin-bottom: 7px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 8px 1fr;
+      gap: 7px;
+      align-items: start;
+      color: var(--muted);
+      font-size: 11px;
+      margin: 5px 0;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: var(--green);
+    }
+
+    .dot.warn {
+      background: var(--amber);
+    }
+
+    .dot.blocked {
+      background: var(--red);
+    }
+
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <div class="topbar">
+      <h1>Final Launch</h1>
+      <div class="mode">P0.114</div>
+    </div>
+
+    <section class="card" aria-label="Rehearsal final launch sync evidence">
+      <div class="header">
+        <div class="header-main">
+          <h2>Rehearsal Sync</h2>
+          <p>one Mac command leaves the phone payload current</p>
+        </div>
+        <div class="badge">SYNCED</div>
+      </div>
+
+      <div class="timeline" aria-label="safe report order">
+        <div class="step">
+          <div class="index">1</div>
+          <div>
+            <h3>Run safe rehearsal</h3>
+            <p>refresh local reports, handoff index, certificate, then rehearsal</p>
+            <code>make ios-device-launch-rehearsal</code>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="index">2</div>
+          <div>
+            <h3>Write rehearsal report</h3>
+            <p>the Mac-side evidence packet records blocked/ready launch state</p>
+            <code>services/backend/.local/ios-device-launch-rehearsal.json</code>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="index">3</div>
+          <div>
+            <h3>Sync final launch payload</h3>
+            <p>post-rehearsal final launch local mode rewrites the phone source</p>
+            <code>final-demo-launch --mode local --output .local/final-demo-launch-local.json</code>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="index">4</div>
+          <div>
+            <h3>Phone reads latest state</h3>
+            <p>the iPhone panel decodes the refreshed readiness block</p>
+            <code>Final Launch Status / Launch Rehearsal</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Source Gates</h3>
+        <div class="row"><span class="dot"></span><span>wrapper includes `final launch rehearsal sync`</span></div>
+        <div class="row"><span class="dot"></span><span>sync command uses `final-demo-launch --mode local`</span></div>
+        <div class="row"><span class="dot"></span><span>final launch sync comes after the rehearsal CLI call</span></div>
+      </div>
+
+      <div class="section">
+        <h3>Safety</h3>
+        <div class="row"><span class="dot"></span><span>no provider calls, config writes, server starts, or Xcode actions</span></div>
+        <div class="row"><span class="dot warn"></span><span>exit 2 remains accepted when a usable blocked report is written</span></div>
+        <div class="row"><span class="dot blocked"></span><span>exit 1 still fails before claiming usable launch evidence</span></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

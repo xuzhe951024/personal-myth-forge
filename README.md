@@ -194,7 +194,10 @@ each step. The wrapper still does not call live providers, apply resources,
 write backend/iOS config, start servers, run deploy preflight, run Xcode, touch
 signing/keychain, accept Apple licenses, or mutate global machine state. Use it
 before the final iPhone operator pass when you want the complete ignored JSON
-evidence set regenerated in one command.
+evidence set regenerated in one command. P0.114 also ends this wrapper by
+rewriting `services/backend/.local/final-demo-launch-local.json` after the
+rehearsal report is written, so the iPhone `Launch Rehearsal` panel reads the
+newest saved rehearsal readiness without a separate final launch refresh.
 
 The same sanitized launch status is available to the iPhone app:
 
@@ -209,8 +212,12 @@ history checks. P0.113 also embeds
 `services/backend/.local/ios-device-launch-rehearsal.json` report, and the
 iPhone Final Launch panel renders it under `Launch Rehearsal` so the operator
 can see whether the safe Mac-side evidence refresh is missing, blocked, partial,
-or ready. The endpoint does not write config files, start servers, run the
-rehearsal command, call live providers, or expose secret values.
+or ready. P0.114 keeps the saved local launch payload synchronized by making
+`make ios-device-launch-rehearsal` rewrite
+`services/backend/.local/final-demo-launch-local.json` after
+`services/backend/.local/ios-device-launch-rehearsal.json`. The endpoint does
+not write config files, start servers, run the rehearsal command, call live
+providers, or expose secret values.
 
 Upload a local object capture, then create a myth session from that capture:
 
