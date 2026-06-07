@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.97 Mobile Final Showcase Launch Digest</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #eef2f6;
+      color: #17202a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: #eef2f6;
+    }
+
+    .screen {
+      width: 390px;
+      min-height: 844px;
+      padding: 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(238, 242, 246, 0.94)),
+        #eef2f6;
+    }
+
+    .title {
+      margin: 2px 0 12px;
+      font-size: 24px;
+      line-height: 1.12;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .card {
+      width: 100%;
+      border: 1px solid rgba(43, 55, 70, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 10px 22px rgba(37, 49, 63, 0.08);
+      padding: 10px;
+    }
+
+    .card + .card {
+      margin-top: 12px;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .kicker {
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .sub {
+      margin-top: 1px;
+      font-size: 12px;
+      line-height: 1.25;
+      color: #657385;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 800;
+      color: #a05a00;
+      padding-top: 3px;
+    }
+
+    .artifact {
+      margin: 4px 0 8px;
+      font-size: 15px;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+
+    .rows {
+      display: grid;
+      gap: 6px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 10px 70px minmax(0, 1fr);
+      column-gap: 8px;
+      align-items: start;
+      min-height: 22px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: #8b97a6;
+    }
+
+    .dot.ready {
+      background: #2d9b5f;
+    }
+
+    .dot.wait {
+      background: #8b97a6;
+    }
+
+    .dot.check {
+      background: #c77700;
+    }
+
+    .label {
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: #243142;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .detail {
+      font-size: 11px;
+      line-height: 1.25;
+      color: #667383;
+      overflow-wrap: anywhere;
+    }
+
+    .privacy {
+      margin-top: 8px;
+      font-size: 10.5px;
+      line-height: 1.25;
+      color: #7a8795;
+    }
+
+    .section-title {
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 700;
+      margin: 0 0 7px;
+    }
+
+    .line {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      padding: 3px 0;
+      font-size: 11px;
+      line-height: 1.25;
+      color: #657385;
+    }
+
+    .mark {
+      flex: 0 0 auto;
+      width: 14px;
+      font-size: 11px;
+      line-height: 1.25;
+      font-weight: 800;
+      color: #c77700;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <h1 class="title">Personal Myth Forge</h1>
+
+    <section class="card">
+      <div class="top">
+        <div>
+          <div class="kicker">Final Showcase</div>
+          <div class="sub">Needs attention before demo</div>
+        </div>
+        <div class="badge">CHECK</div>
+      </div>
+
+      <div class="artifact">The Key That Remembered</div>
+
+      <div class="rows">
+        <div class="row">
+          <span class="dot ready"></span>
+          <span class="label">Capture</span>
+          <span class="detail">3 guided scan photos ready.</span>
+        </div>
+        <div class="row">
+          <span class="dot ready"></span>
+          <span class="label">3D Asset</span>
+          <span class="detail">local_stub GLB via multi_image.</span>
+        </div>
+        <div class="row">
+          <span class="dot ready"></span>
+          <span class="label">NPC Agent</span>
+          <span class="detail">local_agent_runtime, 3 saved ticks.</span>
+        </div>
+        <div class="row">
+          <span class="dot ready"></span>
+          <span class="label">Print</span>
+          <span class="detail">USD 16.00 draft_quote.</span>
+        </div>
+        <div class="row">
+          <span class="dot ready"></span>
+          <span class="label">Resources</span>
+          <span class="detail">local demo providers ready.</span>
+        </div>
+        <div class="row">
+          <span class="dot ready"></span>
+          <span class="label">NPC Eval</span>
+          <span class="detail">NPC Agent evaluation ready: 6 cases, 12 ticks.</span>
+        </div>
+        <div class="row">
+          <span class="dot check"></span>
+          <span class="label">Handoff</span>
+          <span class="detail">Provide local iOS deploy config before physical device run.</span>
+        </div>
+        <div class="row">
+          <span class="dot check"></span>
+          <span class="label">Launch</span>
+          <span class="detail">Final launch blocked: iOS deploy preflight needs local config.</span>
+        </div>
+      </div>
+
+      <div class="privacy">
+        Raw capture media stays out of the summary. Provider keys remain backend-only. Checkout links and local file paths are withheld.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">Demo Script</h2>
+      <div class="line">
+        <span class="mark">!</span>
+        <span>Review final launch blockers before handing the phone to a tester.</span>
+      </div>
+      <div class="line">
+        <span class="mark">*</span>
+        <span>Capture, forge, SceneKit handoff, NPC autonomy, and print quote are complete.</span>
+      </div>
+      <div class="line">
+        <span class="mark">!</span>
+        <span>Known external blockers: deploy config and Apple SDK license.</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -572,7 +572,8 @@ struct ForgeRootView: View {
             npcTickHistoryCount: npcTickHistory.count,
             printQuote: printQuote,
             providerReadiness: providerReadiness,
-            providerReadinessError: providerReadinessError
+            providerReadinessError: providerReadinessError,
+            finalLaunchSummary: finalLaunchMobileSummary
         )
     }
 

@@ -433,6 +433,54 @@ FEATURES = (
         requirements=(
             SourceRequirement("apps/mobile/ios/App/FinalShowcaseSummaryView.swift", "Final Showcase"),
             SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "FinalShowcaseSummaryBuilder"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "finalLaunchSummary: finalLaunchMobileSummary",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                "finalLaunchSummary: FinalLaunchMobileSummary?",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                "npcEvaluationStage",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                "operatorHandoffStage",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                "finalLaunchStage",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                '"npc_evaluation"',
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                '"operator_handoff"',
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                '"final_launch"',
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalShowcaseSummaryRedactsUnsafeFinalLaunchDigest",
+            ),
         ),
     ),
     FeatureRequirement(
