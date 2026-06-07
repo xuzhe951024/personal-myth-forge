@@ -1088,6 +1088,8 @@ do {
     try requireContains(demoScriptView, "ShowcaseAutopilotPlan", "demo script autopilot input")
     try requireContains(demoScriptView, "Button(action: runAutopilot)", "demo script autopilot button")
     try requireContains(demoScript, "final_launch", "demo script final launch step")
+    try requireContains(demoScript, "npc_evaluation", "demo script NPC evaluation step")
+    try requireContains(demoScript, "npcEvaluationStep", "demo script NPC evaluation builder")
     try requireContains(demoScript, "FinalLaunchMobileSummary", "demo script final launch summary input")
     try requireContains(showcaseAutopilot, "ShowcaseAutopilotPlanner", "showcase autopilot core planner")
     try requireContains(
@@ -1096,14 +1098,44 @@ do {
         "autopilot final launch step handling"
     )
     try requireContains(
+        showcaseAutopilot,
+        #"script.step(id: "npc_evaluation")"#,
+        "autopilot NPC evaluation step handling"
+    )
+    try requireContains(
         contractTests,
         "testDemoScriptShowsBlockedFinalLaunch",
         "demo script final launch contract test"
     )
     try requireContains(
         contractTests,
+        "testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch",
+        "demo script ready NPC evaluation contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDemoScriptWaitsForMissingNPCEvaluation",
+        "demo script missing NPC evaluation contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDemoScriptBlocksAndRedactsFailedNPCEvaluation",
+        "demo script blocked NPC evaluation contract test"
+    )
+    try requireContains(
+        contractTests,
         "testShowcaseAutopilotBlocksOnFinalLaunchBlocker",
         "autopilot final launch contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testShowcaseAutopilotWaitsForMissingNPCEvaluation",
+        "autopilot missing NPC evaluation contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testShowcaseAutopilotBlocksOnFailedNPCEvaluation",
+        "autopilot blocked NPC evaluation contract test"
     )
     try requireContains(demoSnapshotStatusView, "Restored Demo Run", "demo snapshot restored label")
     try requireContains(demoSnapshotStatusView, "Clear", "demo snapshot clear action")

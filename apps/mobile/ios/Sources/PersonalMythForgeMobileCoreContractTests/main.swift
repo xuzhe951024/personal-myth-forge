@@ -110,6 +110,9 @@ do {
     try testDemoScriptShowsBlockedFinalLaunch()
     try testDemoScriptCompletesWithReadyFinalLaunch()
     try testDemoScriptRedactsUnsafeFinalLaunchDetail()
+    try testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch()
+    try testDemoScriptWaitsForMissingNPCEvaluation()
+    try testDemoScriptBlocksAndRedactsFailedNPCEvaluation()
     try testShowcaseAutopilotBlocksUntilCaptureReady()
     try testShowcaseAutopilotPlansForgeWhenCaptureReady()
     try testShowcaseAutopilotPlansBackendAutonomyForReadySession()
@@ -118,6 +121,8 @@ do {
     try testShowcaseAutopilotCompletesWhenQuoteAndResourcesReady()
     try testShowcaseAutopilotBlocksOnFinalLaunchBlocker()
     try testShowcaseAutopilotCompletesWhenFinalLaunchReady()
+    try testShowcaseAutopilotWaitsForMissingNPCEvaluation()
+    try testShowcaseAutopilotBlocksOnFailedNPCEvaluation()
     try testShowcaseAutopilotDisablesWhileBusy()
     try testShowcaseAutopilotRedactsUnsafeText()
     try testEncodesPrintQuoteRequestAsSnakeCase()
@@ -2239,7 +2244,8 @@ private func testDemoScriptShowsBlockedFinalLaunch() throws {
     let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
             overallStatus: "blocked",
-            finalAcceptanceStatus: "blocked"
+            finalAcceptanceStatus: "blocked",
+            npcEvaluationStatus: "ready"
         ),
         error: nil
     )
@@ -2267,6 +2273,7 @@ private func testDemoScriptCompletesWithReadyFinalLaunch() throws {
             overallStatus: "ready",
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
+            npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready"
         ),
         error: nil
@@ -2318,6 +2325,85 @@ private func testDemoScriptRedactsUnsafeFinalLaunchDetail() throws {
     try expectNotContains(text, "local-capture://")
     try expectNotContains(text, "checkout")
     try expectNotContains(text, "Bearer")
+}
+
+private func testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        finalLaunchSummary: finalLaunch
+    )
+    let npcIndex = try require(script.steps.map(\.id).firstIndex(of: "npc_evaluation"), "missing npc evaluation step")
+    let launchIndex = try require(script.steps.map(\.id).firstIndex(of: "final_launch"), "missing final launch step")
+
+    try expectEqual(script.step(id: "npc_evaluation")?.status, .complete)
+    try expectContains(script.step(id: "npc_evaluation")?.detail ?? "", "6 cases")
+    try expectTrue(npcIndex < launchIndex)
+}
+
+private func testDemoScriptWaitsForMissingNPCEvaluation() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            npcEvaluationStatus: "missing",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        finalLaunchSummary: finalLaunch
+    )
+
+    try expectEqual(script.step(id: "npc_evaluation")?.status, .waiting)
+    try expectContains(script.nextAction, "NPC evaluation")
+}
+
+private func testDemoScriptBlocksAndRedactsFailedNPCEvaluation() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            npcEvaluationStatus: "blocked",
+            npcEvaluationBlockerDetail: "failed Authorization=Bearer test-secret private_message: raw",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        finalLaunchSummary: finalLaunch
+    )
+    let detail = script.step(id: "npc_evaluation")?.detail ?? ""
+
+    try expectEqual(script.step(id: "npc_evaluation")?.status, .blocked)
+    try expectContains(detail, "[withheld]")
+    try expectNotContains(detail, "test-secret")
+    try expectNotContains(detail, "private_message:")
 }
 
 private func testShowcaseAutopilotBlocksUntilCaptureReady() throws {
@@ -2402,7 +2488,8 @@ private func testShowcaseAutopilotBlocksOnFinalLaunchBlocker() throws {
         finalLaunchSummary: FinalLaunchMobileSummaryBuilder.build(
             report: finalDemoLaunchReport(
                 overallStatus: "blocked",
-                finalAcceptanceStatus: "blocked"
+                finalAcceptanceStatus: "blocked",
+                npcEvaluationStatus: "ready"
             ),
             error: nil
         )
@@ -2433,6 +2520,7 @@ private func testShowcaseAutopilotCompletesWhenFinalLaunchReady() throws {
                 overallStatus: "ready",
                 finalResourcesStatus: "ready",
                 finalAcceptanceStatus: "ready",
+                npcEvaluationStatus: "ready",
                 finalOperatorHandoffStatus: "ready"
             ),
             error: nil
@@ -2449,6 +2537,67 @@ private func testShowcaseAutopilotCompletesWhenFinalLaunchReady() throws {
     try expectEqual(plan.action, .complete)
     try expectEqual(plan.buttonTitle, "Ready")
     try expectContains(plan.detail, "Final launch")
+}
+
+private func testShowcaseAutopilotWaitsForMissingNPCEvaluation() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        finalLaunchSummary: FinalLaunchMobileSummaryBuilder.build(
+            report: finalDemoLaunchReport(
+                overallStatus: "ready",
+                finalResourcesStatus: "ready",
+                finalAcceptanceStatus: "ready",
+                npcEvaluationStatus: "missing",
+                finalOperatorHandoffStatus: "ready"
+            ),
+            error: nil
+        )
+    )
+
+    let plan = autopilotPlan(
+        script: script,
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote
+    )
+
+    try expectEqual(plan.action, .waiting)
+    try expectEqual(plan.buttonTitle, "Check NPC Eval")
+    try expectContains(plan.detail, "NPC evaluation")
+}
+
+private func testShowcaseAutopilotBlocksOnFailedNPCEvaluation() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        finalLaunchSummary: FinalLaunchMobileSummaryBuilder.build(
+            report: finalDemoLaunchReport(
+                overallStatus: "ready",
+                finalResourcesStatus: "ready",
+                finalAcceptanceStatus: "ready",
+                npcEvaluationStatus: "blocked",
+                finalOperatorHandoffStatus: "ready"
+            ),
+            error: nil
+        )
+    )
+
+    let plan = autopilotPlan(
+        script: script,
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote
+    )
+
+    try expectEqual(plan.action, .blocked)
+    try expectEqual(plan.buttonTitle, "Check NPC Eval")
 }
 
 private func testShowcaseAutopilotDisablesWhileBusy() throws {

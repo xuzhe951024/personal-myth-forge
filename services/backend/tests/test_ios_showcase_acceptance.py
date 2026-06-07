@@ -264,7 +264,12 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testArtifactHandoffActionsOpenAndShareSceneAsset "
             "testArtifactGenerationProvenanceSummaryShowsScanAssets "
             "testDemoScriptShowsBlockedFinalLaunch "
+            "testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch "
+            "testDemoScriptWaitsForMissingNPCEvaluation "
+            "testDemoScriptBlocksAndRedactsFailedNPCEvaluation "
             "testShowcaseAutopilotBlocksOnFinalLaunchBlocker "
+            "testShowcaseAutopilotWaitsForMissingNPCEvaluation "
+            "testShowcaseAutopilotBlocksOnFailedNPCEvaluation "
             "testNPCAgentModeShowsOpenAIReadyRuntime "
             "testNPCAgentTickSummaryShowsLatestTickResolution "
             "testNPCAgentActionGateEnablesLocalDemoActions "
@@ -305,10 +310,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             'NPCAgentActionGateBuilder canRunAutonomy disabledReason autonomyTitle: "Run Autonomy"'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift": (
-            "DemoScriptBuilder final_launch FinalLaunchMobileSummary"
+            "DemoScriptBuilder final_launch npc_evaluation npcEvaluationStep FinalLaunchMobileSummary"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ShowcaseAutopilot.swift": (
-            'ShowcaseAutopilotPlanner script.step(id: "final_launch")'
+            'ShowcaseAutopilotPlanner script.step(id: "final_launch") '
+            'script.step(id: "npc_evaluation")'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DevicePreflight.swift": (
             "DevicePreflightSummaryBuilder BackendHealthProbe"
