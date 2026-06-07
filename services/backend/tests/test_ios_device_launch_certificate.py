@@ -30,6 +30,11 @@ def test_ios_device_launch_certificate_blocks_missing_inputs_without_leaks(
     assert "make ios-device-launch-certificate" in result.report["commands"]
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
+    assert result.report["operator_actions"][:3] == [
+        "run make final-handoff-index",
+        "provide iOS deploy config and rerun mobile deploy preflight",
+        "run make ios-deploy-runbook-local",
+    ]
     assert result.report["safety"]["provider_calls"] is False
     assert result.report["safety"]["commands_run"] is False
     assert result.report["safety"]["xcode_or_signing"] is False

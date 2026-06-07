@@ -91,6 +91,7 @@ def build_final_handoff_index_report(
         "lanes_by_id": {lane["id"]: lane for lane in lanes},
         "source_reports": source_reports,
         "freshness_summary": _freshness_summary(source_reports),
+        "operator_actions": _operator_actions(lanes),
         "operator_sequence": _operator_sequence(lanes),
         "commands": _commands(),
         "safety": _safety(),
@@ -391,6 +392,40 @@ def _summary(lanes: list[dict[str, Any]]) -> dict[str, int]:
         status: sum(1 for lane in lanes if lane["status"] == status)
         for status in statuses
     }
+
+
+def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
+    actions: list[str] = []
+    for lane in lanes:
+        status = str(lane.get("status", ""))
+        if status not in {"missing", "blocked", "manual", "live"}:
+            continue
+        lane_id = str(lane.get("id", "lane"))
+        command = str(lane.get("command", ""))
+        if lane_id == "local_rehearsal":
+            actions.append("run make final-rehearsal-local")
+        elif lane_id == "configured_preflight":
+            actions.append("run make final-configured-preflight")
+        elif lane_id == "device_deploy":
+            actions.append("run make mobile-deploy-preflight after backend is running")
+        elif lane_id == "live_acceptance":
+            actions.append("run configured final acceptance after live provider cost review")
+        elif command:
+            actions.append(f"run {command}")
+        else:
+            actions.append(f"unblock {lane_id}")
+    return _dedupe(actions)[:6]
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        deduped.append(value)
+    return deduped
 
 
 def _combined_lane_status(statuses: list[str]) -> str:

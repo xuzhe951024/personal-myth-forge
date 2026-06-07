@@ -32,6 +32,10 @@ def test_final_handoff_index_blocks_missing_reports_without_leaks(
     assert "make final-configured-preflight" in result.report["commands"]
     assert "make final-handoff-index" in result.report["commands"]
     assert "--allow-live-provider-calls" in " ".join(result.report["commands"])
+    assert result.report["operator_actions"][:2] == [
+        "run make final-rehearsal-local",
+        "run make final-configured-preflight",
+    ]
     assert result.report["safety"]["provider_calls"] is False
     assert result.report["safety"]["commands_run"] is False
     assert result.report["safety"]["writes_backend_env"] is False
