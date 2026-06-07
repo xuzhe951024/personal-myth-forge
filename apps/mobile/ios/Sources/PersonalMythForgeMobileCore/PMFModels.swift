@@ -799,10 +799,36 @@ public struct FinalAcceptanceReadinessSafety: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalAcceptanceFreshness: Codable, Equatable, Sendable {
+    public var status: String
+    public var classification: String
+    public var checkedAgainst: String
+    public var sourceModifiedAt: String?
+    public var currentRevision: String?
+    public var currentRevisionCommittedAt: String?
+
+    public init(
+        status: String,
+        classification: String,
+        checkedAgainst: String,
+        sourceModifiedAt: String? = nil,
+        currentRevision: String? = nil,
+        currentRevisionCommittedAt: String? = nil
+    ) {
+        self.status = status
+        self.classification = classification
+        self.checkedAgainst = checkedAgainst
+        self.sourceModifiedAt = sourceModifiedAt
+        self.currentRevision = currentRevision
+        self.currentRevisionCommittedAt = currentRevisionCommittedAt
+    }
+}
+
 public struct FinalAcceptanceReadinessReport: Codable, Equatable, Sendable {
     public var kind: String
     public var status: String
     public var sourceFile: FinalAcceptanceSourceFile
+    public var freshness: FinalAcceptanceFreshness?
     public var summary: FinalAcceptanceReadinessSummary
     public var blockers: [FinalAcceptanceBlocker]
     public var operatorActions: [String]
@@ -812,6 +838,7 @@ public struct FinalAcceptanceReadinessReport: Codable, Equatable, Sendable {
         kind: String,
         status: String,
         sourceFile: FinalAcceptanceSourceFile,
+        freshness: FinalAcceptanceFreshness? = nil,
         summary: FinalAcceptanceReadinessSummary,
         blockers: [FinalAcceptanceBlocker],
         operatorActions: [String],
@@ -820,6 +847,7 @@ public struct FinalAcceptanceReadinessReport: Codable, Equatable, Sendable {
         self.kind = kind
         self.status = status
         self.sourceFile = sourceFile
+        self.freshness = freshness
         self.summary = summary
         self.blockers = blockers
         self.operatorActions = operatorActions

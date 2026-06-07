@@ -273,6 +273,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsMissingResourceChecklist "
             "testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt "
             "testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt "
+            "testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload "
+            "testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness "
             "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
             "testGetConfiguredFinalDemoLaunchBuildsGETRequest "
             "testFinalLaunchMobileSummaryShowsConfiguredModePolicy"
@@ -310,15 +312,15 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift": (
             "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff "
-            "FinalLaunchMode displayLabel FinalResourcesPreflightItem "
-            "items: [FinalResourcesPreflightItem]"
+            "FinalLaunchMode displayLabel FinalResourcesPreflightItem FinalAcceptanceFreshness "
+            "items: [FinalResourcesPreflightItem] freshness: FinalAcceptanceFreshness?"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
             "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows "
-            "launchReceiptRows firstBlockerReceiptRow"
+            "launchReceiptRows firstBlockerReceiptRow freshness.status == \"stale\""
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
-            "build_final_acceptance_readiness_report"
+            "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness"
         ),
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
             "build_final_operator_handoff_report"

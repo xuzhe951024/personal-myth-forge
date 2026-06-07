@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.89 Final Acceptance Freshness</title>
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #edf2f6;
+      color: #17212b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f8fafb 0%, #e6edf3 100%);
+    }
+
+    .phone {
+      width: 488px;
+      min-height: 844px;
+      padding: 18px 16px 24px;
+      background: #f9fbfc;
+      overflow: hidden;
+      transform: scale(0.8);
+      transform-origin: top left;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      height: 20px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      font-weight: 850;
+      color: #24313c;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .mode {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border-radius: 8px;
+      border: 1px solid #c4d0db;
+      background: #ffffff;
+      color: #344553;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .panel {
+      border-radius: 8px;
+      border: 1px solid #d4dfe8;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      margin: 0 0 2px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #1e2a34;
+    }
+
+    .caption {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #647684;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 4px 7px;
+      border-radius: 7px;
+      background: #fff0d6;
+      color: #9a5b00;
+      font-size: 10px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .group {
+      margin-top: 10px;
+    }
+
+    .group-title {
+      margin: 0 0 5px;
+      font-size: 12px;
+      font-weight: 850;
+      color: #25323d;
+    }
+
+    .lines {
+      display: grid;
+      gap: 5px;
+    }
+
+    .line {
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      gap: 7px;
+      align-items: start;
+      min-height: 20px;
+      font-size: 11px;
+      line-height: 1.32;
+      color: #5f7080;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      margin-top: 4px;
+      border-radius: 50%;
+      background: #d18700;
+    }
+
+    .dot.ready {
+      background: #25804a;
+    }
+
+    .dot.blocked {
+      background: #b94135;
+    }
+
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      overflow-wrap: anywhere;
+    }
+
+    .warning {
+      color: #995b00;
+    }
+
+    .blocked-text {
+      color: #9f3329;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="P0.89 iPhone final acceptance freshness">
+    <div class="status">
+      <span>9:41</span>
+      <span>5G 100%</span>
+    </div>
+
+    <div class="header">
+      <h1>Personal Myth Forge</h1>
+      <div class="mode">Local</div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="title">Final Launch Status</p>
+          <p class="caption">mode local; ready 4, missing 1, blocked 1, manual 3</p>
+        </div>
+        <div class="badge">BLOCKED</div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">Launch Receipt</p>
+        <div class="lines">
+          <div class="line">
+            <span class="dot blocked"></span>
+            <span class="code blocked-text">Receipt: local launch blocked.</span>
+          </div>
+          <div class="line">
+            <span class="dot blocked"></span>
+            <span class="code blocked-text">Acceptance: stale_report; rerun final acceptance for current revision.</span>
+          </div>
+          <div class="line">
+            <span class="dot blocked"></span>
+            <span class="code blocked-text">First blocker: final_acceptance_freshness blocked stale_report</span>
+          </div>
+          <div class="line">
+            <span class="dot"></span>
+            <span class="code warning">Live providers: consent required for configured acceptance.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">Acceptance</p>
+        <div class="lines">
+          <div class="line">
+            <span class="dot blocked"></span>
+            <span class="code blocked-text">Final acceptance freshness stale_report; rerun local final acceptance.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">Resource Checklist</p>
+        <div class="lines">
+          <div class="line">
+            <span class="dot ready"></span>
+            <span class="code">Required final resources ready.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">Next</p>
+        <div class="lines">
+          <div class="line">
+            <span class="dot"></span>
+            <span class="code">regenerate final acceptance report for the current git revision</span>
+          </div>
+          <div class="line">
+            <span class="dot"></span>
+            <span class="code">rerun final demo launch after the saved report is fresh</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <p class="group-title">Commands</p>
+        <div class="lines">
+          <div class="line">
+            <span class="dot ready"></span>
+            <span class="code">uv run python -m myth_forge_api.cli final-acceptance --profile quick</span>
+          </div>
+          <div class="line">
+            <span class="dot ready"></span>
+            <span class="code">make final-demo-launch</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

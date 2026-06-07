@@ -255,6 +255,8 @@ def test_final_demo_launch_embeds_saved_final_acceptance_readiness(
     assert readiness["operator_actions"] == [
         "start backend-device-demo and rerun mobile deploy preflight"
     ]
+    assert readiness["freshness"]["status"] in {"fresh", "unknown"}
+    assert readiness["freshness"]["classification"] in {"fresh_report", "git_unavailable"}
     handoff = result.report["final_operator_handoff"]
     handoff_steps = {step["id"]: step for step in handoff["steps"]}
     assert handoff["status"] == "blocked"

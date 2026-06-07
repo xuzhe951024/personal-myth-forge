@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+from datetime import datetime
 from pathlib import Path
 
 from myth_forge_api.final_acceptance_readiness import (
@@ -24,6 +27,14 @@ def test_final_acceptance_readiness_missing_file_without_running_commands(
         "failed": 0,
         "skipped": 0,
     }
+    assert result.report["freshness"] == {
+        "status": "unknown",
+        "classification": "source_missing",
+        "checked_against": "git_head",
+        "source_modified_at": None,
+        "current_revision": None,
+        "current_revision_committed_at": None,
+    }
     assert result.report["blockers"] == []
     assert result.report["operator_actions"] == [
         "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
@@ -37,6 +48,92 @@ def test_final_acceptance_readiness_missing_file_without_running_commands(
         "payment_links_in_report": False,
         "local_paths_in_report": False,
     }
+
+
+def test_final_acceptance_readiness_marks_saved_report_fresh_against_git_head(
+    tmp_path: Path,
+) -> None:
+    repo_root = _init_git_repo(
+        tmp_path,
+        committed_at="2026-06-06T12:00:00+00:00",
+    )
+    report_path = _write_final_acceptance_report(
+        repo_root,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "passed",
+            "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
+            "checks": [
+                {"id": "provider_handoff", "label": "Provider handoff", "status": "passed"},
+            ],
+        },
+    )
+    _set_mtime(report_path, "2026-06-06T12:05:00+00:00")
+
+    result = build_final_acceptance_readiness_report(repo_root=repo_root)
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
+    assert result.report["freshness"]["status"] == "fresh"
+    assert result.report["freshness"]["classification"] == "fresh_report"
+    assert result.report["freshness"]["current_revision"]
+
+
+def test_final_acceptance_readiness_blocks_stale_saved_report_against_git_head(
+    tmp_path: Path,
+) -> None:
+    repo_root = _init_git_repo(
+        tmp_path,
+        committed_at="2026-06-06T12:10:00+00:00",
+    )
+    report_path = _write_final_acceptance_report(
+        repo_root,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "passed",
+            "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
+            "checks": [
+                {"id": "provider_handoff", "label": "Provider handoff", "status": "passed"},
+            ],
+        },
+    )
+    _set_mtime(report_path, "2026-06-06T12:00:00+00:00")
+
+    result = build_final_acceptance_readiness_report(repo_root=repo_root)
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert result.report["freshness"]["status"] == "stale"
+    assert result.report["freshness"]["classification"] == "stale_report"
+    assert result.report["blockers"][0]["id"] == "final_acceptance_freshness"
+    assert result.report["blockers"][0]["classification"] == "stale_report"
+    assert result.report["operator_actions"][0] == (
+        "regenerate services/backend/.local/final-acceptance-local.json "
+        "for the current git revision"
+    )
+
+
+def test_final_acceptance_readiness_marks_freshness_unknown_without_git(
+    tmp_path: Path,
+) -> None:
+    _write_final_acceptance_report(
+        tmp_path,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "passed",
+            "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
+            "checks": [
+                {"id": "provider_handoff", "label": "Provider handoff", "status": "passed"},
+            ],
+        },
+    )
+
+    result = build_final_acceptance_readiness_report(repo_root=tmp_path)
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
+    assert result.report["freshness"]["status"] == "unknown"
+    assert result.report["freshness"]["classification"] == "git_unavailable"
 
 
 def test_final_acceptance_readiness_blocks_from_saved_report_without_unsafe_text(
@@ -169,7 +266,53 @@ def test_final_acceptance_readiness_blocks_malformed_file_safely(tmp_path: Path)
     assert "/Users/" not in report_text
 
 
-def _write_final_acceptance_report(repo_root: Path, report: dict[str, object]) -> None:
+def _init_git_repo(tmp_path: Path, *, committed_at: str) -> Path:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    subprocess.run(
+        ["git", "init"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    (repo_root / "README.md").write_text("freshness fixture\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "add", "README.md"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "GIT_AUTHOR_NAME": "Test",
+            "GIT_AUTHOR_EMAIL": "test@example.com",
+            "GIT_COMMITTER_NAME": "Test",
+            "GIT_COMMITTER_EMAIL": "test@example.com",
+            "GIT_AUTHOR_DATE": committed_at,
+            "GIT_COMMITTER_DATE": committed_at,
+        }
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "fixture"],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    return repo_root
+
+
+def _set_mtime(path: Path, iso_timestamp: str) -> None:
+    timestamp = datetime.fromisoformat(iso_timestamp).timestamp()
+    os.utime(path, (timestamp, timestamp))
+
+
+def _write_final_acceptance_report(repo_root: Path, report: dict[str, object]) -> Path:
     report_path = repo_root / "services/backend/.local/final-acceptance-local.json"
     report_path.parent.mkdir(parents=True)
     report_path.write_text(json.dumps(report), encoding="utf-8")
+    return report_path
