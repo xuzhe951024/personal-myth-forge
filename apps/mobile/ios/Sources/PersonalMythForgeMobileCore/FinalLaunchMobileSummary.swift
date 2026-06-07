@@ -844,9 +844,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             let attentionRows = attention.prefix(3).map(launchRehearsalSequenceRow)
             if attentionRows.isEmpty {
                 rows.append(contentsOf: readiness.operatorActions.prefix(3).map(sanitize))
-            } else if let action = readiness.operatorActions.first {
+            } else {
                 rows.append(contentsOf: attentionRows)
-                rows.append(sanitize(action))
+                rows.append(contentsOf: readiness.operatorActions.prefix(3).map(sanitize))
             }
         default:
             if let action = readiness.operatorActions.first {

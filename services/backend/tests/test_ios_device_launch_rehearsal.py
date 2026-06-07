@@ -498,6 +498,35 @@ def test_ios_device_launch_rehearsal_readiness_preserves_final_handoff_source_fr
     assert row["freshness_classification"] == "stale_report"
 
 
+def test_ios_device_launch_rehearsal_readiness_preserves_bounded_operator_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["operator_actions"] = [f"action {index}" for index in range(1, 14)]
+    payload["operator_actions"][10] = (
+        "final_handoff_index: run make final-configured-preflight"
+    )
+    payload["operator_actions"][11] = (
+        "ios_device_launch_certificate: run make final-handoff-index"
+    )
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+
+    assert result.exit_code == 2
+    assert len(result.report["operator_actions"]) == 12
+    assert (
+        "final_handoff_index: run make final-configured-preflight"
+        in result.report["operator_actions"]
+    )
+    assert (
+        "ios_device_launch_certificate: run make final-handoff-index"
+        in result.report["operator_actions"]
+    )
+
+
 def _write_local_rehearsal_reports(local_dir: Path) -> None:
     _write_json(
         local_dir / "3d-evaluation-local.json",
