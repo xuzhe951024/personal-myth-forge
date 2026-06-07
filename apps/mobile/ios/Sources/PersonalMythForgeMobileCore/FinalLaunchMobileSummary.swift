@@ -716,9 +716,28 @@ public enum FinalLaunchMobileSummaryBuilder {
             } else if let capability = readiness.capabilities.first(where: { status(from: $0.status) != .ready }) {
                 rows.append(showcaseReadinessCapabilityRow(capability))
             }
-            rows.append(contentsOf: readiness.operatorActions.prefix(2).map(sanitize))
+            rows.append(contentsOf: showcaseReadinessActionRows(readiness.operatorActions))
         }
         return rows.map(sanitize)
+    }
+
+    private static func showcaseReadinessActionRows(_ actions: [String]) -> [String] {
+        let priorityFragments = [
+            "final_handoff_index:",
+            "ios_device_launch_certificate:",
+            "live-provider",
+            "live_provider",
+            "final-resource",
+            "final_resource",
+            "final-showcase",
+            "final_showcase",
+        ]
+        var selected = Array(actions.prefix(1))
+        selected.append(contentsOf: actions.filter { action in
+            let lowered = action.lowercased()
+            return priorityFragments.contains { lowered.contains($0) }
+        })
+        return deduped(selected).prefix(6).map(sanitize)
     }
 
     private static func showcaseReadinessCapabilityRow(
@@ -733,6 +752,17 @@ public enum FinalLaunchMobileSummaryBuilder {
             parts.append("| \(capability.detail)")
         }
         return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func deduped(_ values: [String]) -> [String] {
+        var seen = Set<String>()
+        var rows: [String] = []
+        for value in values where !value.isEmpty {
+            if seen.insert(value).inserted {
+                rows.append(value)
+            }
+        }
+        return rows
     }
 
     private static func handoffRows(from handoff: FinalOperatorHandoffReport?) -> [String] {
