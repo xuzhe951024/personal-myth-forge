@@ -115,6 +115,11 @@ do {
     try testFinalLaunchMobileSummaryShowsBlockedVisualRegression()
     try testFinalLaunchMobileSummaryShowsStaleVisualRegressionFreshness()
     try testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression()
+    try testDecodesLiveProviderEvidenceFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsReadyLiveProviderEvidence()
+    try testFinalLaunchMobileSummaryShowsMissingLiveProviderEvidence()
+    try testFinalLaunchMobileSummaryShowsBlockedLiveProviderEvidence()
+    try testFinalLaunchMobileSummaryRedactsUnsafeLiveProviderEvidence()
     try testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation()
     try testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation()
@@ -2721,6 +2726,82 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression() throws 
     try expectNotContains(text, "Bearer")
 }
 
+private func testDecodesLiveProviderEvidenceFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(liveProviderEvidenceStatus: "missing")
+    )
+
+    let evidence = try require(
+        report.liveProviderEvidence,
+        "missing live provider evidence"
+    )
+    try expectEqual(evidence.kind, "live_provider_evidence_report")
+    try expectEqual(evidence.status, "missing")
+    try expectEqual(evidence.summary.missing, 5)
+    try expectEqual(evidence.summary.requiresLiveProviderConsent, 3)
+    try expectEqual(evidence.evidence.first?.id, "provider_handoff")
+    try expectFalse(evidence.safety.commandsRun)
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyLiveProviderEvidence() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(liveProviderEvidenceStatus: "ready"),
+        error: nil
+    )
+    let text = summary.liveProviderEvidenceRows.joined(separator: " ")
+
+    try expectContains(text, "Live evidence ready: ready 5, missing 0, blocked 0, partial 0.")
+    try expectContains(text, "Live provider consent commands: 3.")
+}
+
+private func testFinalLaunchMobileSummaryShowsMissingLiveProviderEvidence() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(liveProviderEvidenceStatus: "missing"),
+        error: nil
+    )
+    let text = summary.liveProviderEvidenceRows.joined(separator: " ")
+
+    try expectContains(text, "Live evidence missing: ready 0, missing 5, blocked 0, partial 0.")
+    try expectContains(text, "provider_handoff: missing")
+    try expectContains(text, "make live-provider-evidence")
+}
+
+private func testFinalLaunchMobileSummaryShowsBlockedLiveProviderEvidence() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            liveProviderEvidenceStatus: "blocked",
+            liveProviderEvidenceBlockerDetail: "Meshy live evaluation failed"
+        ),
+        error: nil
+    )
+    let text = summary.liveProviderEvidenceRows.joined(separator: " ")
+
+    try expectContains(text, "three_d_evaluation_configured: blocked report_not_ready")
+    try expectContains(text, "Meshy live evaluation failed")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeLiveProviderEvidence() throws {
+    let report = finalDemoLaunchReport(
+        liveProviderEvidenceStatus: "blocked",
+        liveProviderEvidenceBlockerDetail: (
+            "sk-test /Users/zhexu/private file:///tmp/private "
+            + "local-capture://cap checkout_url https://pay.example Bearer token"
+        )
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "pay.example")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4266,6 +4347,8 @@ private func finalDemoLaunchPayload(
     visualRegressionBlockerClassification: String = "visual_regression_failed",
     visualRegressionBlockerDetail: String = "Visual regression report contains failed artifacts.",
     visualRegressionAction: String = "run make visual-regression-local",
+    liveProviderEvidenceStatus: String = "missing",
+    liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -4292,7 +4375,32 @@ private func finalDemoLaunchPayload(
     resourceHandoffAction: String = "provide MESHY_API_KEY",
     resourceHandoffDestination: String = "services/backend/.env"
 ) -> Data {
-    Data(
+    let liveEvidenceReady = liveProviderEvidenceStatus == "ready"
+    let liveEvidenceBlocked = liveProviderEvidenceStatus == "blocked"
+    let liveEvidenceFirstID = liveEvidenceBlocked ? "three_d_evaluation_configured" : "provider_handoff"
+    let liveEvidenceFirstLabel = liveEvidenceBlocked ? "Configured 3D evaluation" : "Provider handoff"
+    let liveEvidenceFirstStatus = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "blocked" : "missing"
+    let liveEvidenceFirstClassification = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "report_not_ready" : "missing_report"
+    let liveEvidenceCommand = liveEvidenceBlocked
+        ? "cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider meshy --suite default-v0 --output .local/3d-evaluation-configured.json"
+        : "make live-provider-evidence"
+    let liveEvidenceFirstBlockerJSON = liveEvidenceReady ? "null" : """
+    {
+      "id": "\(liveEvidenceFirstID)",
+      "label": "\(liveEvidenceFirstLabel)",
+      "status": "\(liveEvidenceFirstStatus)",
+      "classification": "\(liveEvidenceFirstClassification)",
+      "command": "\(liveEvidenceCommand)",
+      "detail": "\(liveProviderEvidenceBlockerDetail)",
+      "requires_live_provider_consent": \(liveEvidenceBlocked ? "true" : "false")
+    }
+    """
+    let liveEvidenceSummaryJSON = liveEvidenceReady
+        ? #"{"ready": 5, "missing": 0, "blocked": 0, "partial": 0, "requires_live_provider_consent": 3}"#
+        : liveEvidenceBlocked
+            ? #"{"ready": 4, "missing": 0, "blocked": 1, "partial": 0, "requires_live_provider_consent": 3}"#
+            : #"{"ready": 0, "missing": 5, "blocked": 0, "partial": 0, "requires_live_provider_consent": 3}"#
+    return Data(
         """
         {
           "kind": "final_demo_launch_report",
@@ -4494,6 +4602,32 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "payment_links_in_report": false,
               "local_paths_in_report": false
+            }
+          },
+          "live_provider_evidence": {
+            "kind": "live_provider_evidence_report",
+            "status": "\(liveProviderEvidenceStatus)",
+            "summary": \(liveEvidenceSummaryJSON),
+            "first_blocker": \(liveEvidenceFirstBlockerJSON),
+            "evidence": [
+              {
+                "id": "\(liveEvidenceFirstID)",
+                "label": "\(liveEvidenceFirstLabel)",
+                "status": "\(liveEvidenceFirstStatus)",
+                "classification": "\(liveEvidenceFirstClassification)",
+                "command": "\(liveEvidenceCommand)",
+                "detail": "\(liveProviderEvidenceBlockerDetail)",
+                "requires_live_provider_consent": \(liveEvidenceBlocked ? "true" : "false")
+              }
+            ],
+            "operator_actions": \(liveEvidenceReady ? #"[]"# : #"["run make live-provider-evidence after configured provider evidence files are refreshed"]"#),
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "provider_secrets_in_report": false,
+              "raw_media_in_report": false,
+              "local_paths_in_report": false,
+              "payment_links_in_report": false
             }
           },
           "npc_agent_evaluation_readiness": {
@@ -7206,6 +7340,8 @@ private func finalDemoLaunchReport(
     visualRegressionBlockerClassification: String = "visual_regression_failed",
     visualRegressionBlockerDetail: String = "Visual regression report contains failed artifacts.",
     visualRegressionAction: String = "run make visual-regression-local",
+    liveProviderEvidenceStatus: String = "missing",
+    liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -7254,6 +7390,8 @@ private func finalDemoLaunchReport(
             visualRegressionBlockerClassification: visualRegressionBlockerClassification,
             visualRegressionBlockerDetail: visualRegressionBlockerDetail,
             visualRegressionAction: visualRegressionAction,
+            liveProviderEvidenceStatus: liveProviderEvidenceStatus,
+            liveProviderEvidenceBlockerDetail: liveProviderEvidenceBlockerDetail,
             npcEvaluationStatus: npcEvaluationStatus,
             npcEvaluationBlockerClassification: npcEvaluationBlockerClassification,
             npcEvaluationBlockerDetail: npcEvaluationBlockerDetail,

@@ -36,6 +36,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var threeDEvaluationRows: [String]
     public var npcEvaluationRows: [String]
     public var visualRegressionRows: [String]
+    public var liveProviderEvidenceRows: [String]
     public var deployRunbookRows: [String]
     public var deployRunbookCommandRows: [String]
     public var deployRunbookSafetyRows: [String]
@@ -60,6 +61,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         threeDEvaluationRows: [String] = [],
         npcEvaluationRows: [String] = [],
         visualRegressionRows: [String] = [],
+        liveProviderEvidenceRows: [String] = [],
         deployRunbookRows: [String] = [],
         deployRunbookCommandRows: [String] = [],
         deployRunbookSafetyRows: [String] = [],
@@ -83,6 +85,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.threeDEvaluationRows = threeDEvaluationRows
         self.npcEvaluationRows = npcEvaluationRows
         self.visualRegressionRows = visualRegressionRows
+        self.liveProviderEvidenceRows = liveProviderEvidenceRows
         self.deployRunbookRows = deployRunbookRows
         self.deployRunbookCommandRows = deployRunbookCommandRows
         self.deployRunbookSafetyRows = deployRunbookSafetyRows
@@ -152,6 +155,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             threeDEvaluationRows: threeDEvaluationRows(from: report.threeDEvaluationReadiness),
             npcEvaluationRows: npcEvaluationRows(from: report.npcAgentEvaluationReadiness),
             visualRegressionRows: visualRegressionRows(from: report.visualRegressionReadiness),
+            liveProviderEvidenceRows: liveProviderEvidenceRows(
+                from: report.liveProviderEvidence
+            ),
             deployRunbookRows: deployRunbookRows(from: report.iosDeployRunbook),
             deployRunbookCommandRows: deployRunbookCommandRows(from: report.iosDeployRunbook),
             deployRunbookSafetyRows: deployRunbookSafetyRows(from: report.iosDeployRunbook),
@@ -478,6 +484,39 @@ public enum FinalLaunchMobileSummaryBuilder {
             rows.append("Visual regression \(sanitize(readiness.status)).")
         }
         return rows.map(sanitize)
+    }
+
+    private static func liveProviderEvidenceRows(
+        from evidence: LiveProviderEvidenceReport?
+    ) -> [String] {
+        guard let evidence else {
+            return ["Live provider evidence has not loaded."]
+        }
+        var rows = [
+            "Live evidence \(sanitize(evidence.status)): ready \(evidence.summary.ready), missing \(evidence.summary.missing), blocked \(evidence.summary.blocked), partial \(evidence.summary.partial).",
+            "Live provider consent commands: \(evidence.summary.requiresLiveProviderConsent).",
+        ]
+        if evidence.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" {
+            if let blocker = evidence.firstBlocker {
+                rows.append(liveProviderEvidenceSlotRow(blocker))
+            } else if let slot = evidence.evidence.first(where: { status(from: $0.status) != .ready }) {
+                rows.append(liveProviderEvidenceSlotRow(slot))
+            }
+            rows.append(contentsOf: evidence.operatorActions.prefix(2).map(sanitize))
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func liveProviderEvidenceSlotRow(_ slot: LiveProviderEvidenceSlot) -> String {
+        var parts = ["\(slot.id): \(slot.status)"]
+        if let classification = slot.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        parts.append("| \(slot.command)")
+        if let detail = slot.detail, !detail.isEmpty {
+            parts.append("| \(detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
     }
 
     private static func handoffRows(from handoff: FinalOperatorHandoffReport?) -> [String] {

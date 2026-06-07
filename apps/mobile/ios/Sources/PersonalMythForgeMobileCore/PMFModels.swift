@@ -1695,6 +1695,109 @@ public struct ResourceHandoffReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct LiveProviderEvidenceSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var partial: Int
+    public var requiresLiveProviderConsent: Int
+
+    public init(
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        partial: Int,
+        requiresLiveProviderConsent: Int
+    ) {
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.partial = partial
+        self.requiresLiveProviderConsent = requiresLiveProviderConsent
+    }
+}
+
+public struct LiveProviderEvidenceSlot: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String?
+    public var requiresLiveProviderConsent: Bool
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String? = nil,
+        requiresLiveProviderConsent: Bool
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.requiresLiveProviderConsent = requiresLiveProviderConsent
+    }
+}
+
+public struct LiveProviderEvidenceSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var providerSecretsInReport: Bool
+    public var rawMediaInReport: Bool
+    public var localPathsInReport: Bool
+    public var paymentLinksInReport: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        providerSecretsInReport: Bool,
+        rawMediaInReport: Bool,
+        localPathsInReport: Bool,
+        paymentLinksInReport: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.localPathsInReport = localPathsInReport
+        self.paymentLinksInReport = paymentLinksInReport
+    }
+}
+
+public struct LiveProviderEvidenceReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: LiveProviderEvidenceSummary
+    public var firstBlocker: LiveProviderEvidenceSlot?
+    public var evidence: [LiveProviderEvidenceSlot]
+    public var operatorActions: [String]
+    public var safety: LiveProviderEvidenceSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: LiveProviderEvidenceSummary,
+        firstBlocker: LiveProviderEvidenceSlot? = nil,
+        evidence: [LiveProviderEvidenceSlot],
+        operatorActions: [String],
+        safety: LiveProviderEvidenceSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.firstBlocker = firstBlocker
+        self.evidence = evidence
+        self.operatorActions = operatorActions
+        self.safety = safety
+    }
+}
+
 public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
@@ -1706,6 +1809,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
     public var visualRegressionReadiness: VisualRegressionReadinessReport?
+    public var liveProviderEvidence: LiveProviderEvidenceReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
     public var iosDeployRunbook: IOSDeployRunbookReport?
     public var iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport?
@@ -1727,6 +1831,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
         visualRegressionReadiness: VisualRegressionReadinessReport? = nil,
+        liveProviderEvidence: LiveProviderEvidenceReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
         iosDeployRunbook: IOSDeployRunbookReport? = nil,
         iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport? = nil,
@@ -1747,6 +1852,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.threeDEvaluationReadiness = threeDEvaluationReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
         self.visualRegressionReadiness = visualRegressionReadiness
+        self.liveProviderEvidence = liveProviderEvidence
         self.finalOperatorHandoff = finalOperatorHandoff
         self.iosDeployRunbook = iosDeployRunbook
         self.iosDeviceLaunchRehearsalReadiness = iosDeviceLaunchRehearsalReadiness
