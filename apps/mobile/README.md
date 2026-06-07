@@ -2281,3 +2281,14 @@ preview is ready.
 The app still does not run the command sequence or receive provider secrets.
 Xcode, signing, Apple SDK license state, and device installation remain
 operator-run gates.
+
+## P0.128 Final External Action Ledger
+
+The backend final launch payload now includes `final_external_action_ledger`.
+This is not a new iPhone UI panel yet; it is a sanitized payload field that
+separates resource inputs, safe local writes, live provider cost actions,
+global Mac/Xcode actions, and device runtime actions for final demo handoff.
+
+The app still receives no provider secrets and does not run cost-bearing or
+global machine actions. Use `make final-external-action-ledger` on the backend
+to inspect the same ledger as a local JSON report.
