@@ -19,6 +19,10 @@ struct ArtifactSummaryView: View {
 
             Artifact3DPreviewView(session: session, latestTick: latestTick)
 
+            GenerationResultReceiptView(
+                receipt: GenerationResultReceiptBuilder.build(session: session)
+            )
+
             if let generationProvenance = session?.generatedAsset.generationProvenance {
                 ProvenanceSummaryView(
                     summary: ArtifactGenerationProvenanceSummaryBuilder.build(

@@ -33,6 +33,7 @@
 		10A000000000000000000024 /* LiveProviderConsentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000025 /* LiveProviderConsentView.swift */; };
 		10A000000000000000000025 /* PrintFulfillmentReceiptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000026 /* PrintFulfillmentReceiptView.swift */; };
 		10A000000000000000000026 /* ThreeDGenerationInputReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000027 /* ThreeDGenerationInputReviewView.swift */; };
+		10A000000000000000000027 /* GenerationResultReceiptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B000000000000000000028 /* GenerationResultReceiptView.swift */; };
 		10A000000000000000000201 /* PersonalMythForgeMobileCore in Frameworks */ = {isa = PBXBuildFile; productRef = 10K000000000000000000001 /* PersonalMythForgeMobileCore */; };
 /* End PBXBuildFile section */
 
@@ -64,6 +65,7 @@
 		10B000000000000000000025 /* LiveProviderConsentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveProviderConsentView.swift; sourceTree = "<group>"; };
 		10B000000000000000000026 /* PrintFulfillmentReceiptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintFulfillmentReceiptView.swift; sourceTree = "<group>"; };
 		10B000000000000000000027 /* ThreeDGenerationInputReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeDGenerationInputReviewView.swift; sourceTree = "<group>"; };
+		10B000000000000000000028 /* GenerationResultReceiptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationResultReceiptView.swift; sourceTree = "<group>"; };
 		10B000000000000000000101 /* PMFJSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFJSON.swift; sourceTree = "<group>"; };
 		10B000000000000000000102 /* PMFModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PMFModels.swift; sourceTree = "<group>"; };
 		10B000000000000000000103 /* CaptureID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureID.swift; sourceTree = "<group>"; };
@@ -108,6 +110,7 @@
 				10B000000000000000000025 /* LiveProviderConsentView.swift */,
 				10B000000000000000000026 /* PrintFulfillmentReceiptView.swift */,
 				10B000000000000000000027 /* ThreeDGenerationInputReviewView.swift */,
+				10B000000000000000000028 /* GenerationResultReceiptView.swift */,
 				10B000000000000000000004 /* ArtifactSummaryView.swift */,
 				10B000000000000000000009 /* Artifact3DPreviewView.swift */,
 				10B000000000000000000021 /* ArtifactHandoffActionsView.swift */,
@@ -251,6 +254,7 @@
 				10A000000000000000000024 /* LiveProviderConsentView.swift in Sources */,
 				10A000000000000000000025 /* PrintFulfillmentReceiptView.swift in Sources */,
 				10A000000000000000000026 /* ThreeDGenerationInputReviewView.swift in Sources */,
+				10A000000000000000000027 /* GenerationResultReceiptView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

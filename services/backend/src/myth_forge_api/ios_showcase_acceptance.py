@@ -259,6 +259,41 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_generation_result_receipt",
+        label="Mobile generation result receipt",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/GenerationResultReceipt.swift",
+                "GenerationResultReceiptBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/GenerationResultReceipt.swift",
+                "Raw provider URIs and prompts withheld.",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/GenerationResultReceipt.swift",
+                "scene-loadable iOS asset",
+            ),
+            SourceRequirement("apps/mobile/ios/App/GenerationResultReceiptView.swift", "3D Generation Result"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ArtifactSummaryView.swift",
+                "GenerationResultReceiptBuilder.build(session: session)",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
+                "GenerationResultReceiptView.swift",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testGenerationResultReceiptShowsCompleteForgeResult",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testGenerationResultReceiptRedactsUnsafeText",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="live_provider_consent_interface",
         label="Live provider consent interface",
         requirements=(

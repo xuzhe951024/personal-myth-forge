@@ -224,6 +224,10 @@ do {
     try testForgeProgressReceiptShowsMythSessionRunningAfterCaptureUpload()
     try testForgeProgressReceiptShowsReadyProviderAndNPCRuntime()
     try testForgeProgressReceiptRedactsUnsafeFailure()
+    try testGenerationResultReceiptWaitsForForge()
+    try testGenerationResultReceiptShowsCompleteForgeResult()
+    try testGenerationResultReceiptRequiresIOSSceneVariant()
+    try testGenerationResultReceiptRedactsUnsafeText()
     try testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset()
     try testArtifactGenerationProvenanceSummaryShowsMultiImageRoute()
     try testArtifactGenerationProvenanceSummaryShowsScanAssets()
@@ -5307,6 +5311,164 @@ private func testForgeProgressReceiptRedactsUnsafeFailure() throws {
     try expectNotContains(text, "local-capture://")
     try expectNotContains(text, "checkout")
     try expectNotContains(text, "private_message:")
+}
+
+private func testGenerationResultReceiptWaitsForForge() throws {
+    let receipt = GenerationResultReceiptBuilder.build(session: nil)
+
+    try expectEqual(receipt.status, .waiting)
+    try expectEqual(receipt.canPresentResult, false)
+    try expectContains(receipt.title, "Generation result waiting")
+    try expectContains(receipt.detail, "Forge a myth session")
+    try expectContains(receipt.row(id: "game_asset")?.detail ?? "", "No game asset")
+}
+
+private func testGenerationResultReceiptShowsCompleteForgeResult() throws {
+    var session = mythSession(
+        asset: generatedAsset(
+            format: "glb",
+            uri: "https://cdn.example.com/relic.glb",
+            variants: [
+                GeneratedAssetVariant(
+                    role: "game_asset",
+                    format: "glb",
+                    uri: "https://cdn.example.com/relic.glb",
+                    isSceneLoadable: false
+                ),
+                GeneratedAssetVariant(
+                    role: "ios_scene_asset",
+                    format: "dae",
+                    uri: "https://cdn.example.com/relic.dae",
+                    isSceneLoadable: true
+                ),
+            ]
+        )
+    )
+    session.generatedAsset.provider = "meshy"
+    session.generatedAsset.generationProvenance = GeneratedAssetProvenance(
+        inputMode: "multi_image",
+        providerRoute: "/openapi/v1/multi-image-to-3d",
+        sourceImageCount: 9,
+        selectedSourceImageCount: 4,
+        sourceAssetCount: 0,
+        maxSourceImages: 4,
+        selectionReason: "selected 4/9 guided scan sources",
+        rawSourcesIncluded: false
+    )
+    session.printCandidate = PrintCandidate(
+        kind: "print_asset",
+        sourceAssetUri: "https://cdn.example.com/relic.glb",
+        provider: "local",
+        format: "3mf",
+        uri: "local://print-candidates/relic.3mf",
+        requiresUserApproval: true,
+        approvalReason: "review before third-party print handoff",
+        printabilityNotes: ["Base stabilized."]
+    )
+    session.npcAgentRuntime = "openai_structured_runtime"
+    session.npcAgentTraces = [
+        sampleNPCAgentTrace(npcId: "mara"),
+        sampleNPCAgentTrace(npcId: "ior"),
+        sampleNPCAgentTrace(npcId: "senn"),
+    ]
+
+    let receipt = GenerationResultReceiptBuilder.build(session: session)
+
+    try expectEqual(receipt.status, .ready)
+    try expectEqual(receipt.canPresentResult, true)
+    try expectContains(receipt.title, "Generation result ready")
+    try expectContains(receipt.detail, "myth_test")
+    try expectContains(receipt.row(id: "game_asset")?.detail ?? "", "meshy glb")
+    try expectContains(receipt.row(id: "game_asset")?.detail ?? "", "multi_image")
+    try expectContains(receipt.row(id: "ios_scene")?.detail ?? "", "dae scene-loadable")
+    try expectContains(receipt.row(id: "print_candidate")?.detail ?? "", "3mf")
+    try expectContains(receipt.row(id: "print_candidate")?.detail ?? "", "approval required")
+    try expectContains(receipt.row(id: "npc_agent")?.detail ?? "", "openai_structured_runtime")
+    try expectContains(receipt.row(id: "npc_agent")?.detail ?? "", "3 traces")
+    try expectContains(receipt.privacyNotes.joined(separator: " "), "Raw provider URIs and prompts withheld")
+}
+
+private func testGenerationResultReceiptRequiresIOSSceneVariant() throws {
+    var session = mythSession(
+        asset: generatedAsset(
+            format: "glb",
+            uri: "https://cdn.example.com/relic.glb",
+            variants: [
+                GeneratedAssetVariant(
+                    role: "game_asset",
+                    format: "glb",
+                    uri: "https://cdn.example.com/relic.glb",
+                    isSceneLoadable: false
+                ),
+            ]
+        )
+    )
+    session.npcAgentRuntime = "local_agent_runtime"
+    session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+
+    let receipt = GenerationResultReceiptBuilder.build(session: session)
+
+    try expectEqual(receipt.status, .needsAttention)
+    try expectEqual(receipt.canPresentResult, false)
+    try expectContains(receipt.title, "Generation result needs attention")
+    try expectContains(receipt.row(id: "ios_scene")?.detail ?? "", "missing scene-loadable iOS asset")
+}
+
+private func testGenerationResultReceiptRedactsUnsafeText() throws {
+    var session = mythSession(
+        asset: generatedAsset(
+            format: "glb",
+            uri: "file:///Users/zhexu/private/relic.glb",
+            variants: [
+                GeneratedAssetVariant(
+                    role: "ios_scene_asset",
+                    format: "dae",
+                    uri: "local-capture://cap/private.dae",
+                    isSceneLoadable: true
+                ),
+            ]
+        )
+    )
+    session.sessionId = "myth_test sk-test"
+    session.generatedAsset.provider = "Bearer provider-token"
+    session.generatedAsset.prompt = "secret prompt /Users/zhexu/photo.jpg data:image/png;base64,AAAA api_key=secret"
+    session.generatedAsset.generationProvenance = GeneratedAssetProvenance(
+        inputMode: "single_image",
+        providerRoute: "checkout_url=https://pay.example/relic",
+        sourceImageCount: 1,
+        selectedSourceImageCount: 1,
+        sourceAssetCount: 0,
+        maxSourceImages: 4,
+        selectionReason: "file:///tmp/private local-capture://cap",
+        rawSourcesIncluded: false
+    )
+    session.printCandidate = PrintCandidate(
+        kind: "print_asset",
+        sourceAssetUri: "file:///tmp/private.glb",
+        provider: "local",
+        format: "stl",
+        uri: "https://checkout.example.com/order",
+        requiresUserApproval: true,
+        approvalReason: "payment_link https://pay.example sk-test",
+        printabilityNotes: ["private /Users/zhexu"]
+    )
+    session.npcAgentRuntime = "openai Bearer runtime-token"
+    session.npcAgentTraces = [sampleNPCAgentTrace(npcId: "mara")]
+
+    let receipt = GenerationResultReceiptBuilder.build(session: session)
+    let text = String(decoding: try PMFJSON.encoder.encode(receipt), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "data:image")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "pay.example")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key=secret")
+    try expectNotContains(text, "payment_link")
 }
 
 private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
