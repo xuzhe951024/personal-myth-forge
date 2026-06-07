@@ -998,6 +998,115 @@ public struct ThreeDEvaluationReadinessReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct VisualRegressionReadinessSummary: Codable, Equatable, Sendable {
+    public var passed: Int
+    public var failed: Int
+
+    public init(passed: Int, failed: Int) {
+        self.passed = passed
+        self.failed = failed
+    }
+}
+
+public struct VisualRegressionReadinessArtifact: Codable, Equatable, Sendable {
+    public var id: String
+    public var status: String
+    public var htmlPath: String?
+    public var pngPath: String?
+    public var notesPath: String?
+
+    public init(
+        id: String,
+        status: String,
+        htmlPath: String? = nil,
+        pngPath: String? = nil,
+        notesPath: String? = nil
+    ) {
+        self.id = id
+        self.status = status
+        self.htmlPath = htmlPath
+        self.pngPath = pngPath
+        self.notesPath = notesPath
+    }
+}
+
+public struct VisualRegressionReadinessSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+    public var providerSecretsInReport: Bool
+    public var rawPrivateContextInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        liveProviderCalls: Bool,
+        globalMutation: Bool,
+        xcodeOrSigning: Bool,
+        keychainWrites: Bool,
+        providerSecretsInReport: Bool,
+        rawPrivateContextInReport: Bool,
+        rawMediaInReport: Bool,
+        paymentLinksInReport: Bool,
+        localPathsInReport: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.globalMutation = globalMutation
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawPrivateContextInReport = rawPrivateContextInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.localPathsInReport = localPathsInReport
+    }
+}
+
+public struct VisualRegressionReadinessReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var sourceFile: FinalAcceptanceSourceFile
+    public var freshness: FinalAcceptanceFreshness?
+    public var summary: VisualRegressionReadinessSummary
+    public var artifacts: [VisualRegressionReadinessArtifact]
+    public var blockers: [ThreeDEvaluationReadinessBlocker]
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var safety: VisualRegressionReadinessSafety
+
+    public init(
+        kind: String,
+        status: String,
+        sourceFile: FinalAcceptanceSourceFile,
+        freshness: FinalAcceptanceFreshness? = nil,
+        summary: VisualRegressionReadinessSummary,
+        artifacts: [VisualRegressionReadinessArtifact],
+        blockers: [ThreeDEvaluationReadinessBlocker] = [],
+        operatorActions: [String],
+        commands: [String],
+        safety: VisualRegressionReadinessSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.sourceFile = sourceFile
+        self.freshness = freshness
+        self.summary = summary
+        self.artifacts = artifacts
+        self.blockers = blockers
+        self.operatorActions = operatorActions
+        self.commands = commands
+        self.safety = safety
+    }
+}
+
 public struct NPCAgentEvaluationReadinessCoverage: Codable, Equatable, Sendable {
     public var expectedNpcSets: Int
     public var traceSets: Int
@@ -1596,6 +1705,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
     public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
+    public var visualRegressionReadiness: VisualRegressionReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
     public var iosDeployRunbook: IOSDeployRunbookReport?
     public var iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport?
@@ -1616,6 +1726,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
         threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
+        visualRegressionReadiness: VisualRegressionReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
         iosDeployRunbook: IOSDeployRunbookReport? = nil,
         iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport? = nil,
@@ -1635,6 +1746,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
         self.threeDEvaluationReadiness = threeDEvaluationReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
+        self.visualRegressionReadiness = visualRegressionReadiness
         self.finalOperatorHandoff = finalOperatorHandoff
         self.iosDeployRunbook = iosDeployRunbook
         self.iosDeviceLaunchRehearsalReadiness = iosDeviceLaunchRehearsalReadiness
