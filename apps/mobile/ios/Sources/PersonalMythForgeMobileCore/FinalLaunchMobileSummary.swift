@@ -26,6 +26,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var subtitle: String
     public var phaseRows: [FinalLaunchMobilePhaseRow]
     public var modePolicyRows: [String]
+    public var resourceChecklistRows: [String]
     public var resourceActions: [String]
     public var acceptanceRows: [String]
     public var handoffRows: [String]
@@ -38,6 +39,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         subtitle: String,
         phaseRows: [FinalLaunchMobilePhaseRow],
         modePolicyRows: [String] = [],
+        resourceChecklistRows: [String] = [],
         resourceActions: [String],
         acceptanceRows: [String] = [],
         handoffRows: [String] = [],
@@ -49,6 +51,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.subtitle = subtitle
         self.phaseRows = phaseRows
         self.modePolicyRows = modePolicyRows
+        self.resourceChecklistRows = resourceChecklistRows
         self.resourceActions = resourceActions
         self.acceptanceRows = acceptanceRows
         self.handoffRows = handoffRows
@@ -104,6 +107,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             subtitle: summaryText(report.summary, mode: report.mode),
             phaseRows: Array(phaseRows.prefix(4)),
             modePolicyRows: modePolicyRows(from: report),
+            resourceChecklistRows: resourceChecklistRows(from: report.finalResourcesPreflight),
             resourceActions: resourceActions(from: report.finalResourcesPreflight),
             acceptanceRows: acceptanceRows(from: report.finalAcceptanceReadiness),
             handoffRows: handoffRows(from: report.finalOperatorHandoff),
@@ -161,6 +165,36 @@ public enum FinalLaunchMobileSummaryBuilder {
             parts.append(note)
         }
         return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func resourceChecklistRows(from preflight: FinalResourcesPreflightReport?) -> [String] {
+        guard let preflight else {
+            return ["Final resources checklist has not loaded."]
+        }
+        let attention = preflight.items.filter { item in
+            (item.status == "missing" && item.required) || item.status == "blocked"
+        }
+        if !attention.isEmpty {
+            return attention.prefix(5).map(resourceChecklistRow)
+        }
+        if preflight.status == "ready" {
+            return ["Required final resources ready."]
+        }
+        if preflight.items.isEmpty {
+            return ["Final resources checklist is empty."]
+        }
+        return preflight.items.prefix(3).map(resourceChecklistRow)
+    }
+
+    private static func resourceChecklistRow(_ item: FinalResourcesPreflightItem) -> String {
+        var parts = ["\(item.id): \(item.status)"]
+        parts.append(item.required ? "required" : "optional")
+        if let classification = item.classification, !classification.isEmpty {
+            parts.append(classification)
+        } else if let normalizedValue = item.normalizedValue, !normalizedValue.isEmpty {
+            parts.append(normalizedValue)
+        }
+        return sanitize(parts.joined(separator: " "))
     }
 
     private static func resourceActions(from preflight: FinalResourcesPreflightReport?) -> [String] {

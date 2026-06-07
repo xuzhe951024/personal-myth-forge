@@ -669,11 +669,40 @@ public struct FinalResourcesPreflightSummary: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalResourcesPreflightItem: Codable, Equatable, Sendable {
+    public var id: String
+    public var status: String
+    public var required: Bool
+    public var configured: Bool
+    public var redacted: Bool
+    public var classification: String?
+    public var normalizedValue: String?
+
+    public init(
+        id: String,
+        status: String,
+        required: Bool,
+        configured: Bool,
+        redacted: Bool,
+        classification: String? = nil,
+        normalizedValue: String? = nil
+    ) {
+        self.id = id
+        self.status = status
+        self.required = required
+        self.configured = configured
+        self.redacted = redacted
+        self.classification = classification
+        self.normalizedValue = normalizedValue
+    }
+}
+
 public struct FinalResourcesPreflightReport: Codable, Equatable, Sendable {
     public var kind: String
     public var status: String
     public var resourcesFile: FinalResourcesFileStatus
     public var summary: FinalResourcesPreflightSummary
+    public var items: [FinalResourcesPreflightItem]
     public var operatorActions: [String]
 
     public init(
@@ -681,12 +710,14 @@ public struct FinalResourcesPreflightReport: Codable, Equatable, Sendable {
         status: String,
         resourcesFile: FinalResourcesFileStatus,
         summary: FinalResourcesPreflightSummary,
+        items: [FinalResourcesPreflightItem] = [],
         operatorActions: [String] = []
     ) {
         self.kind = kind
         self.status = status
         self.resourcesFile = resourcesFile
         self.summary = summary
+        self.items = items
         self.operatorActions = operatorActions
     }
 }
