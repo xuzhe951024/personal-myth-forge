@@ -73,6 +73,20 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     }
 
 
+def test_ios_showcase_acceptance_passes_current_repo_source_gates() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = run_ios_showcase_acceptance(repo_root=repo_root)
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "succeeded"
+    assert result.report["summary"] == {"passed": 47, "failed": 0}
+    assert all(
+        item["status"] == "passed"
+        for item in result.report["required_features"]
+    )
+
+
 def test_ios_showcase_acceptance_allows_external_action_ledger_builder_linebreak(
     tmp_path,
 ) -> None:
