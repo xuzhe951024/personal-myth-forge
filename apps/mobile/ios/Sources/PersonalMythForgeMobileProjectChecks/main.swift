@@ -113,6 +113,12 @@ do {
     let finalDemoLaunchTests = try readText(
         repositoryRoot.appendingPathComponent("services/backend/tests/test_final_demo_launch.py")
     )
+    let threeDEvaluationReadiness = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/three_d_evaluation_readiness.py")
+    )
+    let threeDEvaluationReadinessTests = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/tests/test_three_d_evaluation_readiness.py")
+    )
     let iosDeployRunbook = try readText(
         repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/ios_deploy_runbook.py")
     )
@@ -900,6 +906,16 @@ do {
         "NPCAgentEvaluationReadinessReport",
         "NPC Agent evaluation readiness model"
     )
+    try requireContains(
+        pmfModels,
+        "ThreeDEvaluationReadinessReport",
+        "3D evaluation readiness model"
+    )
+    try requireContains(
+        pmfModels,
+        "ThreeDEvaluationReadinessInputModes",
+        "3D evaluation input mode coverage model"
+    )
     try requireContains(pmfModels, "FinalAcceptanceFreshness", "final acceptance freshness model")
     try requireContains(
         pmfModels,
@@ -910,6 +926,11 @@ do {
         pmfModels,
         "finalAcceptanceReadiness",
         "final demo launch final acceptance readiness field"
+    )
+    try requireContains(
+        pmfModels,
+        "threeDEvaluationReadiness",
+        "final demo launch 3D evaluation readiness field"
     )
     try requireContains(
         pmfModels,
@@ -1147,6 +1168,12 @@ do {
         "final launch iOS resource handoff rows"
     )
     try requireContains(finalLaunchMobileSummary, "acceptanceRows", "final launch summary acceptance rows")
+    try requireContains(finalLaunchMobileSummary, "threeDEvaluationRows", "final launch summary 3D evaluation rows")
+    try requireContains(
+        finalLaunchMobileSummary,
+        "threeDEvaluationRows(from:",
+        "final launch summary 3D evaluation row builder"
+    )
     try requireContains(finalLaunchMobileSummary, "npcEvaluationRows", "final launch summary NPC evaluation rows")
     try requireContains(
         finalLaunchMobileSummary,
@@ -1170,6 +1197,36 @@ do {
         "final launch iOS deploy runbook row builder"
     )
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
+    try requireContains(
+        threeDEvaluationReadiness,
+        "build_three_d_evaluation_readiness_report",
+        "3D evaluation readiness report builder"
+    )
+    try requireContains(
+        threeDEvaluationReadiness,
+        "LOCAL_THREE_D_EVALUATION_COMMAND",
+        "3D evaluation readiness local command"
+    )
+    try requireContains(
+        threeDEvaluationReadinessTests,
+        "test_three_d_evaluation_readiness_ready_report",
+        "3D evaluation readiness ready report test"
+    )
+    try requireContains(
+        finalOperatorHandoff,
+        "three_d_evaluation",
+        "final operator handoff 3D evaluation step"
+    )
+    try requireContains(
+        finalOperatorHandoff,
+        "LOCAL_THREE_D_EVALUATION_COMMAND",
+        "final operator handoff 3D evaluation command"
+    )
+    try requireContains(
+        finalDemoLaunch,
+        "three_d_evaluation_readiness=three_d_evaluation_readiness",
+        "final demo launch passes 3D evaluation readiness to handoff"
+    )
     try requireContains(
         finalOperatorHandoff,
         "npc_agent_evaluation",
@@ -1212,6 +1269,16 @@ do {
     )
     try requireContains(
         finalDemoLaunchTests,
+        "test_final_demo_launch_embeds_three_d_evaluation_readiness",
+        "final demo launch 3D evaluation readiness test"
+    )
+    try requireContains(
+        finalDemoLaunchTests,
+        "test_final_demo_launch_operator_handoff_includes_three_d_evaluation_step",
+        "final demo launch 3D evaluation handoff test"
+    )
+    try requireContains(
+        finalDemoLaunchTests,
         "test_final_demo_launch_operator_handoff_includes_npc_evaluation_step",
         "final demo launch NPC evaluation handoff test"
     )
@@ -1225,6 +1292,7 @@ do {
     try requireContains(finalLaunchStatusView, "Resource Handoff", "final launch resource handoff section")
     try requireContains(finalLaunchStatusView, "Backend Resources", "final launch backend resources section")
     try requireContains(finalLaunchStatusView, "iOS Resources", "final launch iOS resources section")
+    try requireContains(finalLaunchStatusView, "3D Evaluation", "final launch 3D evaluation section")
     try requireContains(finalLaunchStatusView, "NPC Evaluation", "final launch NPC evaluation section")
     try requireContains(
         contractTests,
@@ -1245,6 +1313,21 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness",
         "final acceptance stale freshness summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesThreeDEvaluationReadinessFromFinalLaunchPayload",
+        "3D evaluation readiness decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsReadyThreeDEvaluation",
+        "3D evaluation ready summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsBlockedThreeDEvaluation",
+        "3D evaluation blocked summary test"
     )
     try requireContains(
         contractTests,

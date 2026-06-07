@@ -104,6 +104,9 @@ do {
     try testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness()
     try testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance()
     try testFinalLaunchMobileSummaryShowsReadyFinalAcceptance()
+    try testDecodesThreeDEvaluationReadinessFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsReadyThreeDEvaluation()
+    try testFinalLaunchMobileSummaryShowsBlockedThreeDEvaluation()
     try testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation()
     try testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation()
@@ -2441,6 +2444,63 @@ private func testFinalLaunchMobileSummaryShowsReadyFinalAcceptance() throws {
     try expectEqual(summary.acceptanceRows.first, "Final acceptance ready.")
 }
 
+private func testDecodesThreeDEvaluationReadinessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(threeDEvaluationStatus: "ready")
+    )
+
+    let readiness = try require(
+        report.threeDEvaluationReadiness,
+        "missing 3D evaluation readiness"
+    )
+    try expectEqual(readiness.kind, "three_d_evaluation_readiness_report")
+    try expectEqual(readiness.status, "ready")
+    try expectEqual(readiness.summary.succeeded, 20)
+    try expectEqual(readiness.summary.failed, 0)
+    try expectEqual(readiness.coverage.inputModes.textPrompt, 20)
+    try expectEqual(readiness.coverage.variantRoles["ios_scene_asset"], 20)
+    try expectEqual(readiness.coverage.sceneLoadableCases, 20)
+    try expectFalse(readiness.safety.commandsRun)
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyThreeDEvaluation() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(threeDEvaluationStatus: "ready"),
+        error: nil
+    )
+
+    try expectEqual(
+        summary.threeDEvaluationRows.first,
+        "3D evaluation ready: 20 cases, 20 scene-loadable."
+    )
+    try expectContains(summary.threeDEvaluationRows[1], "20 text")
+    try expectContains(summary.threeDEvaluationRows[1], "ios_scene_asset 20")
+}
+
+private func testFinalLaunchMobileSummaryShowsBlockedThreeDEvaluation() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            threeDEvaluationStatus: "blocked",
+            threeDEvaluationBlockerDetail: (
+                "Meshy failed Authorization=Bearer test-secret raw_context: private "
+                + "file:///Users/example/private.png data:image/png;base64,abc123 checkout_url"
+            )
+        ),
+        error: nil
+    )
+    let text = summary.threeDEvaluationRows.joined(separator: " ")
+
+    try expectContains(text, "three_d_evaluation_failed")
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "test-secret")
+    try expectNotContains(text, "raw_context:")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "data:image")
+    try expectNotContains(text, "checkout_url")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -3666,6 +3726,9 @@ private func finalDemoLaunchPayload(
     finalAcceptanceFreshnessStatus: String = "fresh",
     finalAcceptanceFreshnessClassification: String = "fresh_report",
     finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
+    threeDEvaluationStatus: String = "missing",
+    threeDEvaluationBlockerClassification: String = "three_d_evaluation_failed",
+    threeDEvaluationBlockerDetail: String = "3D evaluation report contains failed cases.",
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -3779,6 +3842,52 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "payment_links_in_report": false,
               "local_paths_in_report": false
+            }
+          },
+          "three_d_evaluation_readiness": {
+            "kind": "three_d_evaluation_readiness_report",
+            "status": "\(threeDEvaluationStatus)",
+            "source_file": {
+              "path": "services/backend/.local/3d-evaluation-local.json",
+              "exists": \(threeDEvaluationStatus == "missing" ? "false" : "true")
+            },
+            "summary": {
+              "total_cases": \(threeDEvaluationStatus == "missing" ? "0" : "20"),
+              "succeeded": \(threeDEvaluationStatus == "ready" ? "20" : "0"),
+              "failed": \(threeDEvaluationStatus == "blocked" ? "1" : "0")
+            },
+            "coverage": {
+              "input_modes": {
+                "text_prompt": \(threeDEvaluationStatus == "ready" ? "20" : "0"),
+                "single_image": 0,
+                "multi_image": 0,
+                "unknown": 0
+              },
+              "variant_roles": \(threeDEvaluationStatus == "ready" ? #"{"game_asset": 20, "ios_scene_asset": 20}"# : #"{}"#),
+              "scene_loadable_cases": \(threeDEvaluationStatus == "ready" ? "20" : "0")
+            },
+            "blockers": \(threeDEvaluationStatus == "blocked" ? """
+            [
+              {
+                "id": "three_d_evaluation",
+                "label": "3D evaluation",
+                "status": "failed",
+                "classification": "\(threeDEvaluationBlockerClassification)",
+                "command": "cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider local --suite default-v0 --output .local/3d-evaluation-local.json",
+                "detail": "\(threeDEvaluationBlockerDetail)"
+              }
+            ]
+            """ : "[]"),
+            "operator_actions": \(threeDEvaluationStatus == "ready" ? #"["3D evaluation is ready"]"# : threeDEvaluationStatus == "missing" ? #"["run local 3D evaluation with evaluate-3d and write services/backend/.local/3d-evaluation-local.json"]"# : #"["rerun local 3D evaluation and review failed cases"]"#),
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "global_mutation": false,
+              "provider_secrets_in_report": false,
+              "raw_private_context_in_report": false,
+              "raw_media_in_report": false,
+              "local_paths_in_report": false,
+              "payment_links_in_report": false
             }
           },
           "npc_agent_evaluation_readiness": {
@@ -6329,6 +6438,9 @@ private func finalDemoLaunchReport(
     finalAcceptanceFreshnessStatus: String = "fresh",
     finalAcceptanceFreshnessClassification: String = "fresh_report",
     finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
+    threeDEvaluationStatus: String = "missing",
+    threeDEvaluationBlockerClassification: String = "three_d_evaluation_failed",
+    threeDEvaluationBlockerDetail: String = "3D evaluation report contains failed cases.",
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -6357,6 +6469,9 @@ private func finalDemoLaunchReport(
             finalAcceptanceFreshnessStatus: finalAcceptanceFreshnessStatus,
             finalAcceptanceFreshnessClassification: finalAcceptanceFreshnessClassification,
             finalAcceptanceBlockerDetail: finalAcceptanceBlockerDetail,
+            threeDEvaluationStatus: threeDEvaluationStatus,
+            threeDEvaluationBlockerClassification: threeDEvaluationBlockerClassification,
+            threeDEvaluationBlockerDetail: threeDEvaluationBlockerDetail,
             npcEvaluationStatus: npcEvaluationStatus,
             npcEvaluationBlockerClassification: npcEvaluationBlockerClassification,
             npcEvaluationBlockerDetail: npcEvaluationBlockerDetail,

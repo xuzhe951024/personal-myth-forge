@@ -33,6 +33,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var resourceHandoffIOSRows: [String]
     public var resourceActions: [String]
     public var acceptanceRows: [String]
+    public var threeDEvaluationRows: [String]
     public var npcEvaluationRows: [String]
     public var deployRunbookRows: [String]
     public var deployRunbookCommandRows: [String]
@@ -54,6 +55,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         resourceHandoffIOSRows: [String] = [],
         resourceActions: [String],
         acceptanceRows: [String] = [],
+        threeDEvaluationRows: [String] = [],
         npcEvaluationRows: [String] = [],
         deployRunbookRows: [String] = [],
         deployRunbookCommandRows: [String] = [],
@@ -74,6 +76,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.resourceHandoffIOSRows = resourceHandoffIOSRows
         self.resourceActions = resourceActions
         self.acceptanceRows = acceptanceRows
+        self.threeDEvaluationRows = threeDEvaluationRows
         self.npcEvaluationRows = npcEvaluationRows
         self.deployRunbookRows = deployRunbookRows
         self.deployRunbookCommandRows = deployRunbookCommandRows
@@ -140,6 +143,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             resourceHandoffIOSRows: resourceHandoffIOSRows(from: report.resourceReport),
             resourceActions: resourceActions(from: report.finalResourcesPreflight),
             acceptanceRows: acceptanceRows(from: report.finalAcceptanceReadiness),
+            threeDEvaluationRows: threeDEvaluationRows(from: report.threeDEvaluationReadiness),
             npcEvaluationRows: npcEvaluationRows(from: report.npcAgentEvaluationReadiness),
             deployRunbookRows: deployRunbookRows(from: report.iosDeployRunbook),
             deployRunbookCommandRows: deployRunbookCommandRows(from: report.iosDeployRunbook),
@@ -389,6 +393,39 @@ public enum FinalLaunchMobileSummaryBuilder {
             return ["NPC Agent evaluation blocked."]
         default:
             return ["NPC Agent evaluation \(sanitize(readiness.status))."]
+        }
+    }
+
+    private static func threeDEvaluationRows(from readiness: ThreeDEvaluationReadinessReport?) -> [String] {
+        guard let readiness else {
+            return ["3D evaluation readiness has not loaded."]
+        }
+        switch readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            let roles = readiness.coverage.variantRoles
+                .sorted { lhs, rhs in lhs.key < rhs.key }
+                .map { key, value in "\(key) \(value)" }
+                .joined(separator: ", ")
+            return [
+                "3D evaluation ready: \(readiness.summary.succeeded) cases, \(readiness.coverage.sceneLoadableCases) scene-loadable.",
+                "Coverage: \(readiness.coverage.inputModes.textPrompt) text, \(readiness.coverage.inputModes.singleImage) single-image, \(readiness.coverage.inputModes.multiImage) multi-image; roles \(roles).",
+            ].map(sanitize)
+        case "missing":
+            return ["Run local 3D evaluation to create the readiness report."]
+        case "blocked", "failed":
+            if !readiness.blockers.isEmpty {
+                return readiness.blockers.prefix(3).map { blocker in
+                    sanitize(
+                        "\(blocker.id): \(blocker.status) \(blocker.classification) | \(blocker.command) | \(blocker.detail)"
+                    )
+                }
+            }
+            if !readiness.operatorActions.isEmpty {
+                return readiness.operatorActions.prefix(3).map(sanitize)
+            }
+            return ["3D evaluation blocked."]
+        default:
+            return ["3D evaluation \(sanitize(readiness.status))."]
         }
     }
 
