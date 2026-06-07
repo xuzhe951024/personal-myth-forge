@@ -51,6 +51,11 @@ final-apply-resources:
 final-resources-preflight:
 	cd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../..
 
+.PHONY: final-resource-requirements
+
+final-resource-requirements:
+	cd services/backend && uv run python -m myth_forge_api.cli final-resource-requirements --repo-root ../.. --output .local/final-resource-requirements.json
+
 .PHONY: final-configured-preflight
 
 final-configured-preflight:
