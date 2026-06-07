@@ -12,7 +12,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_showcase_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 41, "failed": 0}
+    assert result.report["summary"] == {"passed": 42, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "camera_capture",
         "guided_scan",
@@ -35,6 +35,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
         "print_quote",
         "mobile_print_fulfillment_receipt",
         "final_print_fulfillment_readiness",
+        "final_resource_requirements_manifest",
         "provider_readiness",
         "final_showcase",
         "mobile_final_acceptance_readiness",
@@ -77,7 +78,7 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["camera_capture"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/CameraCaptureView.swift",
@@ -101,7 +102,7 @@ def test_ios_showcase_acceptance_fails_missing_final_rehearsal_script_without_ab
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["mobile_final_operator_handoff"]["status"] == "failed"
     assert {
         "file": "services/backend/scripts/write_final_acceptance_local.sh",
@@ -127,7 +128,7 @@ def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolu
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["arkit_scan_package"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
@@ -154,7 +155,7 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_readiness_with
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["capture_generation_readiness"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
@@ -181,7 +182,7 @@ def test_ios_showcase_acceptance_fails_missing_3d_generation_input_review_withou
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["mobile_3d_generation_input_review"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ThreeDGenerationInputReview.swift",
@@ -208,7 +209,7 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_receipt_withou
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["capture_generation_receipt"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReceipt.swift",
@@ -235,7 +236,7 @@ def test_ios_showcase_acceptance_fails_missing_forge_progress_receipt_without_ab
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["forge_progress_receipt"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeProgressReceipt.swift",
@@ -262,7 +263,7 @@ def test_ios_showcase_acceptance_fails_missing_generation_result_receipt_without
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["mobile_generation_result_receipt"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/GenerationResultReceipt.swift",
@@ -289,7 +290,7 @@ def test_ios_showcase_acceptance_fails_missing_live_provider_consent_without_abs
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["live_provider_consent_interface"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
@@ -316,7 +317,7 @@ def test_ios_showcase_acceptance_fails_missing_print_fulfillment_receipt_without
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["mobile_print_fulfillment_receipt"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PrintFulfillmentReceipt.swift",
@@ -343,12 +344,39 @@ def test_ios_showcase_acceptance_fails_missing_print_fulfillment_readiness_witho
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["final_print_fulfillment_readiness"]["status"] == "failed"
     assert {
         "file": "services/backend/src/myth_forge_api/print_fulfillment_readiness.py",
         "contains": "build_print_fulfillment_readiness_report",
     } in features["final_print_fulfillment_readiness"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+    assert "data:image" not in report_text
+
+
+def test_ios_showcase_acceptance_fails_missing_final_resource_requirements_without_absolute_paths(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    (
+        tmp_path
+        / "services/backend/src/myth_forge_api/final_resource_requirements.py"
+    ).unlink()
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
+    assert features["final_resource_requirements_manifest"]["status"] == "failed"
+    assert {
+        "file": "services/backend/src/myth_forge_api/final_resource_requirements.py",
+        "contains": "build_final_resource_requirements_report",
+    } in features["final_resource_requirements_manifest"]["missing"]
     assert str(tmp_path) not in report_text
     assert "/Users/" not in report_text
     assert "sk-" not in report_text
@@ -372,7 +400,7 @@ def test_ios_showcase_acceptance_fails_missing_local_network_usage_without_absol
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["deploy_config"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/Info.plist",
@@ -399,7 +427,7 @@ def test_ios_showcase_acceptance_fails_missing_3d_evaluation_readiness_without_a
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 40, "failed": 1}
+    assert result.report["summary"] == {"passed": 41, "failed": 1}
     assert features["mobile_3d_evaluation_readiness"]["status"] == "failed"
     assert {
         "file": "services/backend/src/myth_forge_api/three_d_evaluation_readiness.py",
@@ -504,7 +532,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/FinalLaunchStatusView.swift": (
             "Mode Acceptance 3D Evaluation Visual Regression Live Evidence Print Fulfillment Showcase Readiness NPC Evaluation iOS Deploy Runbook Deploy Commands Deploy Safety "
             "Launch Rehearsal Resource Handoff Backend Resources iOS Resources Next handoffRows Launch Receipt "
-            "Resource Checklist"
+            "Resource Checklist Resource Requirements resourceRequirementRows"
         ),
         "apps/mobile/ios/App/DevicePreflightView.swift": (
             "Device Preflight backendBaseURL Check checkBackend"
@@ -638,6 +666,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness "
             "testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness "
+            "testDecodesFinalResourceRequirementsFromFinalLaunchPayload "
+            "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements "
             "testDecodesFinalShowcaseReadinessFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness "
             "testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload "
@@ -711,6 +741,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "VisualRegressionReadinessReport visualRegressionReadiness "
             "LiveProviderEvidenceReport liveProviderEvidence "
             "PrintFulfillmentReadinessReport printFulfillmentReadiness "
+            "FinalResourceRequirementsReport finalResourceRequirements "
             "FinalShowcaseReadinessReport finalShowcaseReadiness "
             "NPCAgentEvaluationReadinessReport npcAgentEvaluationReadiness "
             "IOSDeployRunbookReport iosDeployRunbook "
@@ -726,6 +757,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "visualRegressionRows visualRegressionRows(from: "
             "liveProviderEvidenceRows Live evidence "
             "printFulfillmentReadinessRows Print fulfillment "
+            "resourceRequirementRows Resource requirements "
             "showcaseReadinessRows Showcase readiness "
             "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
             "launchRehearsalRows rehearsalFreshnessRow Freshness: "
@@ -762,6 +794,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_print_fulfillment_readiness_report print_fulfillment_readiness_report "
             "configured_treatstock_quote make print-fulfillment-readiness"
         ),
+        "services/backend/src/myth_forge_api/final_resource_requirements.py": (
+            "build_final_resource_requirements_report final_resource_requirements_report "
+            "FinalResourceRequirementsResult validation_commands"
+        ),
         "services/backend/src/myth_forge_api/final_showcase_readiness.py": (
             "build_final_showcase_readiness_report final_showcase_readiness_report "
             "CAPABILITY_ORDER print_fulfillment make final-showcase-readiness"
@@ -774,7 +810,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/src/myth_forge_api/cli.py": (
             "ios-deploy-runbook final-configured-preflight final-handoff-index "
             "ios-device-launch-certificate ios-device-launch-rehearsal live-provider-evidence "
-            "print-fulfillment-readiness final-showcase-readiness"
+            "print-fulfillment-readiness final-resource-requirements final-showcase-readiness"
         ),
         "Makefile": (
             "ios-deploy-runbook: backend-evaluate-3d: backend-evaluate-npc: "
@@ -782,6 +818,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "visual-regression-local: --output .local/visual-regression-local.json "
             "live-provider-evidence: .local/live-provider-evidence.json "
             "print-fulfillment-readiness: .local/print-fulfillment-readiness.json "
+            "final-resource-requirements: .local/final-resource-requirements.json "
             "final-rehearsal-local: backend-evaluate-local visual-regression-local "
             "final-configured-preflight: final-handoff-index: "
             "ios-device-launch-certificate: ios-device-launch-rehearsal: "
@@ -809,6 +846,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final_acceptance_readiness three_d_evaluation_readiness npc_agent_evaluation_readiness "
             "visual_regression_readiness live_provider_evidence "
             "print_fulfillment_readiness "
+            "final_resource_requirements "
             "final_showcase_readiness "
             "final_operator_handoff three_d_evaluation_readiness=three_d_evaluation_readiness "
             "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness ios_deploy_runbook "

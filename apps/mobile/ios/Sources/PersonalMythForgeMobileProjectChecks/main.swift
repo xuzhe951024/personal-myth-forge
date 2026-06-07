@@ -1229,6 +1229,16 @@ do {
         "resourceActions",
         "final launch status resource action rendering"
     )
+    try requireContains(
+        finalLaunchStatusView,
+        "Resource Requirements",
+        "final launch resource requirements section"
+    )
+    try requireContains(
+        finalLaunchStatusView,
+        "resourceRequirementRows",
+        "final launch resource requirements row rendering"
+    )
     try requireContains(finalLaunchStatusView, "Acceptance", "final launch acceptance section")
     try requireContains(
         finalLaunchStatusView,
@@ -1269,6 +1279,16 @@ do {
     try requireContains(pmfModels, "FinalDemoLaunchPhase", "final demo launch phase model")
     try requireContains(pmfModels, "FinalResourcesPreflightReport", "final resources preflight report model")
     try requireContains(pmfModels, "FinalResourcesFileStatus", "final resources file status model")
+    try requireContains(
+        pmfModels,
+        "FinalResourceRequirementsReport",
+        "final resource requirements report model"
+    )
+    try requireContains(
+        pmfModels,
+        "finalResourceRequirements",
+        "final demo launch final resource requirements field"
+    )
     try requireContains(
         pmfModels,
         "FinalAcceptanceReadinessReport",
@@ -1381,6 +1401,16 @@ do {
     try requireContains(finalLaunchMobileSummary, "liveCallPolicy", "final launch summary live policy mapping")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRows", "final launch resource checklist rows")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRow", "final launch resource checklist row builder")
+    try requireContains(
+        finalLaunchMobileSummary,
+        "resourceRequirementRows",
+        "final launch resource requirements rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "resourceRequirementRows(",
+        "final launch resource requirements row builder"
+    )
     try requireContains(liveProviderConsentSummary, "LiveProviderConsentSummaryBuilder", "live provider consent builder")
     try requireContains(liveProviderConsentSummary, "LiveProviderConsentStatus", "live provider consent status")
     try requireContains(liveProviderConsentSummary, "canRunConfiguredAcceptance", "live provider consent ready gate")
@@ -1782,6 +1812,7 @@ do {
     )
     try requireContains(finalLaunchStatusView, "Launch Receipt", "final launch receipt section")
     try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")
+    try requireContains(finalLaunchStatusView, "Resource Requirements", "final launch resource requirements section")
     try requireContains(finalLaunchStatusView, "Resource Handoff", "final launch resource handoff section")
     try requireContains(finalLaunchStatusView, "Backend Resources", "final launch backend resources section")
     try requireContains(finalLaunchStatusView, "iOS Resources", "final launch iOS resources section")
@@ -1802,6 +1833,16 @@ do {
         contractTests,
         "testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload",
         "final acceptance freshness decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesFinalResourceRequirementsFromFinalLaunchPayload",
+        "final resource requirements decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements",
+        "final resource requirements summary test"
     )
     try requireContains(
         contractTests,

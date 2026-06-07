@@ -2231,3 +2231,13 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.118-scene-load-proof.html
 docs/superpowers/verification/assets/p0.118-scene-load-proof-390x844.png
 ```
+
+## P0.124 Final Resource Requirements
+
+The iPhone Final Launch panel now decodes `final_resource_requirements` from
+`/v1/final-demo-launch` and renders a read-only `Resource Requirements` group.
+It shows required/missing/blocked/secret counts, the first missing or blocked
+resource rows, and the validation command for the Mac operator.
+
+The app still does not receive provider secrets, write config files, run Mac
+commands, call live providers, or mutate local signing state.

@@ -97,6 +97,8 @@ do {
     try testFinalLaunchMobileSummaryShowsMissingResourceChecklist()
     try testFinalLaunchMobileSummaryShowsReadyResourceChecklist()
     try testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist()
+    try testDecodesFinalResourceRequirementsFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsBlockedResourceRequirements()
     try testDecodesResourceHandoffFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsMissingResourceHandoff()
     try testFinalLaunchMobileSummaryShowsReadyResourceHandoff()
@@ -2408,6 +2410,57 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist() throws
     try expectNotContains(text, "api_key")
 }
 
+private func testDecodesFinalResourceRequirementsFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload()
+    )
+
+    let requirements = try require(
+        report.finalResourceRequirements,
+        "missing final resource requirements"
+    )
+
+    try expectEqual(requirements.kind, "final_resource_requirements_report")
+    try expectEqual(requirements.status, "blocked")
+    try expectEqual(requirements.summary.required, 5)
+    try expectEqual(requirements.summary.secret, 4)
+    try expectEqual(requirements.requirements.count, 2)
+    try expectEqual(requirements.requirementsById["MESHY_API_KEY"]?.secret, true)
+    try expectEqual(requirements.requirementsById["MESHY_API_KEY"]?.status, "missing")
+    try expectEqual(
+        requirements.requirementsById["MESHY_API_KEY"]?.destination,
+        "services/backend/.local/final-resources.env"
+    )
+    try expectEqual(
+        requirements.requirementsById["PMF_BACKEND_BASE_URL"]?.classification,
+        "loopback_url"
+    )
+    try expectEqual(
+        requirements.validationCommands.first,
+        "make final-resource-requirements"
+    )
+    try expectFalse(requirements.safety.providerSecretsInReport)
+    try expectFalse(requirements.safety.liveProviderCalls)
+}
+
+private func testFinalLaunchMobileSummaryShowsBlockedResourceRequirements() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(),
+        error: nil
+    )
+    let text = summary.resourceRequirementRows.joined(separator: " ")
+
+    try expectContains(text, "Resource requirements blocked")
+    try expectContains(text, "required 5")
+    try expectContains(text, "secret 4")
+    try expectContains(text, "MESHY_API_KEY")
+    try expectContains(text, "missing")
+    try expectContains(text, "PMF_BACKEND_BASE_URL")
+    try expectContains(text, "loopback_url")
+    try expectContains(text, "make final-resource-requirements")
+}
+
 private func testDecodesResourceHandoffFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4583,6 +4636,123 @@ private func finalDemoLaunchPayload(
             "unknown_keys": [],
             "malformed_lines": [],
             "operator_actions": ["\(finalResourcesAction)"],
+            "safety": {
+              "provider_secrets_in_report": false,
+              "local_paths_in_report": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "live_provider_calls": false,
+              "global_mutation": false
+            }
+          },
+          "final_resource_requirements": {
+            "kind": "final_resource_requirements_report",
+            "status": "blocked",
+            "summary": {
+              "total": 13,
+              "ready": 0,
+              "missing": 5,
+              "blocked": 1,
+              "optional": 7,
+              "required": 5,
+              "secret": 4,
+              "backend": 10,
+              "ios": 4,
+              "print": 4,
+              "validation_commands": 4
+            },
+            "requirements": [
+              {
+                "id": "MESHY_API_KEY",
+                "label": "Meshy API key",
+                "domain": "backend_provider",
+                "destination": "services/backend/.local/final-resources.env",
+                "source_template": "services/backend/final-resources.env.example",
+                "required": true,
+                "secret": true,
+                "configured": false,
+                "status": "missing",
+                "classification": "missing_required_value",
+                "unblocks": ["game_asset_3d_generation", "provider_key_handoff"],
+                "validation_command": "make final-resources-preflight",
+                "notes": "Backend-only secret for live Meshy 3D generation."
+              },
+              {
+                "id": "PMF_BACKEND_BASE_URL",
+                "label": "iPhone backend URL",
+                "domain": "ios_deploy",
+                "destination": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                "source_template": "apps/mobile/ios/Config/Deployment.local.xcconfig.example",
+                "required": true,
+                "secret": false,
+                "configured": false,
+                "status": "blocked",
+                "classification": "loopback_url",
+                "unblocks": ["ios_deployable", "capture_scanning"],
+                "validation_command": "make final-resources-preflight",
+                "notes": "Must be an iPhone-reachable LAN URL."
+              }
+            ],
+            "requirements_by_id": {
+              "MESHY_API_KEY": {
+                "id": "MESHY_API_KEY",
+                "label": "Meshy API key",
+                "domain": "backend_provider",
+                "destination": "services/backend/.local/final-resources.env",
+                "source_template": "services/backend/final-resources.env.example",
+                "required": true,
+                "secret": true,
+                "configured": false,
+                "status": "missing",
+                "classification": "missing_required_value",
+                "unblocks": ["game_asset_3d_generation", "provider_key_handoff"],
+                "validation_command": "make final-resources-preflight",
+                "notes": "Backend-only secret for live Meshy 3D generation."
+              },
+              "PMF_BACKEND_BASE_URL": {
+                "id": "PMF_BACKEND_BASE_URL",
+                "label": "iPhone backend URL",
+                "domain": "ios_deploy",
+                "destination": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                "source_template": "apps/mobile/ios/Config/Deployment.local.xcconfig.example",
+                "required": true,
+                "secret": false,
+                "configured": false,
+                "status": "blocked",
+                "classification": "loopback_url",
+                "unblocks": ["ios_deployable", "capture_scanning"],
+                "validation_command": "make final-resources-preflight",
+                "notes": "Must be an iPhone-reachable LAN URL."
+              }
+            },
+            "operator_actions": [
+              "provide MESHY_API_KEY in final-resources.env",
+              "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+            ],
+            "validation_commands": [
+              "make final-resource-requirements",
+              "make final-resources-preflight"
+            ],
+            "source_reports": {
+              "final_resources_preflight": {
+                "kind": "final_resources_preflight_report",
+                "status": "\(finalResourcesStatus)",
+                "summary": {
+                  "ready": 0,
+                  "missing": 1,
+                  "blocked": 0,
+                  "optional": 0
+                },
+                "resources_file": {
+                  "path": "services/backend/.local/final-resources.env",
+                  "exists": \(finalResourcesStatus == "missing" ? "false" : "true")
+                }
+              }
+            },
+            "resources_file": {
+              "path": "services/backend/.local/final-resources.env",
+              "exists": \(finalResourcesStatus == "missing" ? "false" : "true")
+            },
             "safety": {
               "provider_secrets_in_report": false,
               "local_paths_in_report": false,

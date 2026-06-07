@@ -28,6 +28,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var launchReceiptRows: [String]
     public var modePolicyRows: [String]
     public var resourceChecklistRows: [String]
+    public var resourceRequirementRows: [String]
     public var resourceHandoffRows: [String]
     public var resourceHandoffBackendRows: [String]
     public var resourceHandoffIOSRows: [String]
@@ -55,6 +56,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         launchReceiptRows: [String] = [],
         modePolicyRows: [String] = [],
         resourceChecklistRows: [String] = [],
+        resourceRequirementRows: [String] = [],
         resourceHandoffRows: [String] = [],
         resourceHandoffBackendRows: [String] = [],
         resourceHandoffIOSRows: [String] = [],
@@ -81,6 +83,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.launchReceiptRows = launchReceiptRows
         self.modePolicyRows = modePolicyRows
         self.resourceChecklistRows = resourceChecklistRows
+        self.resourceRequirementRows = resourceRequirementRows
         self.resourceHandoffRows = resourceHandoffRows
         self.resourceHandoffBackendRows = resourceHandoffBackendRows
         self.resourceHandoffIOSRows = resourceHandoffIOSRows
@@ -153,6 +156,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             launchReceiptRows: launchReceiptRows(from: report),
             modePolicyRows: modePolicyRows(from: report),
             resourceChecklistRows: resourceChecklistRows(from: report.finalResourcesPreflight),
+            resourceRequirementRows: resourceRequirementRows(
+                from: report.finalResourceRequirements
+            ),
             resourceHandoffRows: resourceHandoffRows(from: report.resourceReport),
             resourceHandoffBackendRows: resourceHandoffBackendRows(from: report.resourceReport),
             resourceHandoffIOSRows: resourceHandoffIOSRows(from: report.resourceReport),
@@ -309,6 +315,49 @@ public enum FinalLaunchMobileSummaryBuilder {
         } else if let normalizedValue = item.normalizedValue, !normalizedValue.isEmpty {
             parts.append(normalizedValue)
         }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func resourceRequirementRows(
+        from report: FinalResourceRequirementsReport?
+    ) -> [String] {
+        guard let report else {
+            return ["Final resource requirements manifest has not loaded."]
+        }
+        var rows = [
+            "Resource requirements \(sanitize(report.status)): required \(report.summary.required), missing \(report.summary.missing), blocked \(report.summary.blocked), secret \(report.summary.secret)."
+        ]
+        let attention = report.requirements.filter { requirement in
+            (requirement.status == "missing" && requirement.required)
+                || requirement.status == "blocked"
+        }
+        let selected = attention.isEmpty ? report.requirements : attention
+        rows.append(contentsOf: selected.prefix(3).map(resourceRequirementRow))
+        if let command = report.validationCommands.first, !command.isEmpty {
+            rows.append("Validate: \(sanitize(command))")
+        }
+        if report.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready",
+           let action = report.operatorActions.first,
+           !action.isEmpty {
+            rows.append(sanitize(action))
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func resourceRequirementRow(
+        _ requirement: FinalResourceRequirement
+    ) -> String {
+        var parts = ["\(requirement.id): \(requirement.status)"]
+        parts.append(requirement.required ? "required" : "optional")
+        if requirement.secret {
+            parts.append("secret")
+        }
+        if let classification = requirement.classification, !classification.isEmpty {
+            parts.append(classification)
+        } else if let normalizedValue = requirement.normalizedValue, !normalizedValue.isEmpty {
+            parts.append(normalizedValue)
+        }
+        parts.append("| \(requirement.validationCommand)")
         return sanitize(parts.joined(separator: " "))
     }
 
