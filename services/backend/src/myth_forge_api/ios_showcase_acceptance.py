@@ -990,6 +990,22 @@ FEATURES = (
                 "ios_device_launch_rehearsal_readiness_report",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py",
+                "_freshness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py",
+                "ios_device_launch_rehearsal_freshness",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py",
+                "stale_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py",
+                "rerun make ios-device-launch-rehearsal",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_operator_handoff.py",
                 "ios_deploy_runbook",
             ),
@@ -1046,6 +1062,14 @@ FEATURES = (
                 "launchRehearsalRows",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "rehearsalFreshnessRow",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "Freshness:",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/App/FinalLaunchStatusView.swift",
                 "iOS Deploy Runbook",
             ),
@@ -1087,11 +1111,19 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
