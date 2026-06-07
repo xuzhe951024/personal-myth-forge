@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.90 NPC Agent Evaluation</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17201b;
+      --muted: #5d6862;
+      --paper: #f7f5ef;
+      --panel: #ffffff;
+      --line: #d8ded7;
+      --green: #177245;
+      --amber: #9a681b;
+      --blue: #235c9a;
+      --red: #b23a31;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 18px 14px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 4px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 5px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border: 1px solid rgba(23, 114, 69, 0.25);
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 7px;
+      border-radius: 7px;
+      background: rgba(23, 114, 69, 0.08);
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      letter-spacing: 0;
+    }
+
+    .receipt {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .metric {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px;
+      background: #fbfcfa;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .rows {
+      display: grid;
+      gap: 6px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 9px 1fr auto;
+      align-items: center;
+      gap: 7px;
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .dot.blue {
+      background: var(--blue);
+    }
+
+    .dot.amber {
+      background: var(--amber);
+    }
+
+    .value {
+      color: var(--ink);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .case-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .case-title strong {
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .case-title span {
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .summary {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.42;
+    }
+
+    .npc-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .npc {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 7px;
+      background: #fbfcfa;
+    }
+
+    .npc strong {
+      display: block;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .npc span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+      padding: 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>NPC Agent Evaluation</h1>
+        <div class="sub">P0.90 local no-key quality handoff for OpenAI NPC Agent review.</div>
+      </div>
+      <div class="badge">PASSED</div>
+    </header>
+
+    <section>
+      <h2>Receipt</h2>
+      <div class="receipt">
+        <div class="metric">
+          <strong>6</strong>
+          <span>cases passed</span>
+        </div>
+        <div class="metric">
+          <strong>0</strong>
+          <span>cases failed</span>
+        </div>
+        <div class="metric">
+          <strong>12</strong>
+          <span>agent ticks</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Coverage</h2>
+      <div class="rows">
+        <div class="row"><i class="dot"></i><span>Expected Mara, Ior, Senn sets</span><span class="value">6/6</span></div>
+        <div class="row"><i class="dot blue"></i><span>Agent trace sets with belief and intent</span><span class="value">6/6</span></div>
+        <div class="row"><i class="dot amber"></i><span>Proposed actions visible in plans</span><span class="value">6/6</span></div>
+        <div class="row"><i class="dot"></i><span>World arbitration tick summaries</span><span class="value">12/12</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Safety</h2>
+      <div class="rows">
+        <div class="row"><i class="dot"></i><span>Raw private context in report</span><span class="value">No</span></div>
+        <div class="row"><i class="dot"></i><span>Provider secrets in report</span><span class="value">No</span></div>
+        <div class="row"><i class="dot"></i><span>Local paths or media payloads</span><span class="value">No</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>First Case</h2>
+      <div class="case-title">
+        <strong>npc_01_brass_key_dispute</strong>
+        <span>artifact conflict</span>
+      </div>
+      <p class="summary">
+        A worn brass key becomes a disputed relic. Review focus: distinct NPC
+        beliefs, visible disagreement, and safe autonomous village action.
+      </p>
+      <div class="npc-grid">
+        <div class="npc"><strong>Mara</strong><span>witness and gather</span></div>
+        <div class="npc"><strong>Ior</strong><span>guard and question</span></div>
+        <div class="npc"><strong>Senn</strong><span>name and ritualize</span></div>
+      </div>
+    </section>
+
+    <footer>
+      Static verification artifact only. No OpenAI, Meshy, Treatstock, Xcode,
+      signing, deployment, or global configuration commands were run by this page.
+    </footer>
+  </main>
+</body>
+</html>

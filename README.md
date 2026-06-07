@@ -210,6 +210,23 @@ uv run python -m myth_forge_api.cli evaluate-3d \
   --output /tmp/p0.5-3d-eval.json
 ```
 
+Run a local NPC Agent evaluation report:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli evaluate-npc \
+  --provider local \
+  --suite default-v0 \
+  --tick-steps 2 \
+  --output .local/npc-evaluation-local.json
+```
+
+P0.90 adds this `evaluate-npc` suite for final OpenAI NPC quality handoff. The
+default command is no-key and local. The report includes NPC ids, agent trace
+counts, proposed-action/plan alignment, world-arbitration counts, elapsed time,
+and manual review fields. Switching to `--provider openai` requires backend-only
+`OPENAI_API_KEY`; no OpenAI key is stored in or sent to the iOS app.
+
 ## Mobile Client Scaffold
 
 Run the P0.7 Swift mobile core contract tests:

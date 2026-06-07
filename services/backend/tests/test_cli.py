@@ -238,6 +238,64 @@ def test_cli_evaluate_3d_returns_error_without_report_when_provider_config_fails
     assert not output_file.exists()
 
 
+def test_cli_evaluate_npc_default_suite_writes_report(tmp_path) -> None:
+    output_file = tmp_path / "npc-report.json"
+
+    exit_code = main(
+        [
+            "evaluate-npc",
+            "--provider",
+            "local",
+            "--suite",
+            "default-v0",
+            "--tick-steps",
+            "2",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report_text = output_file.read_text(encoding="utf-8")
+    report = json.loads(report_text)
+    assert exit_code == 0
+    assert report["kind"] == "npc_agent_evaluation_report"
+    assert report["suite"] == "default-v0"
+    assert report["provider"] == "local"
+    assert report["tick_steps"] == 2
+    assert report["total_cases"] == 6
+    assert report["succeeded"] == 6
+    assert report["failed"] == 0
+    assert "Authorization" not in report_text
+    assert "raw_email:" not in report_text
+
+
+def test_cli_evaluate_npc_requires_suite(tmp_path) -> None:
+    output_file = tmp_path / "npc-report.json"
+
+    with pytest.raises(SystemExit):
+        main(["evaluate-npc", "--provider", "local", "--output", str(output_file)])
+
+
+def test_cli_evaluate_npc_returns_error_without_openai_key(tmp_path, monkeypatch) -> None:
+    output_file = tmp_path / "npc-report.json"
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    exit_code = main(
+        [
+            "evaluate-npc",
+            "--provider",
+            "openai",
+            "--suite",
+            "default-v0",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    assert exit_code == 1
+    assert not output_file.exists()
+
+
 class FailingThreeDProvider:
     provider_name = "failing"
 

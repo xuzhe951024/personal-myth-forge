@@ -16,12 +16,21 @@ from myth_forge_api.evaluation.three_d import (
     build_custom_prompt_cases,
     run_three_d_evaluation,
 )
+from myth_forge_api.evaluation.npc import (
+    DEFAULT_NPC_AGENT_EVALUATION_SUITE,
+    run_npc_agent_evaluation,
+)
 from myth_forge_api.final_acceptance import run_final_acceptance
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
-from myth_forge_api.providers.factory import build_three_d_provider
+from myth_forge_api.providers.factory import (
+    build_npc_director,
+    build_npc_tick_runtime,
+    build_three_d_provider,
+)
+from myth_forge_api.providers.npc import OpenAINPCProviderError
 from myth_forge_api.providers.readiness import build_provider_readiness
 from myth_forge_api.providers.three_d import (
     MeshyConfigurationError,
@@ -54,6 +63,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "evaluate-3d" and bool(args.prompts_file) == bool(args.suite):
         parser.error("evaluate-3d requires exactly one of --suite or --prompts-file.")
+    if args.command == "evaluate-npc" and not args.suite:
+        parser.error("evaluate-npc requires --suite default-v0.")
 
     try:
         if args.command == "generate-asset":
@@ -72,6 +83,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 prompts_file=args.prompts_file,
                 suite_name=args.suite,
                 provider_name=args.provider,
+                output_path=args.output,
+            )
+        if args.command == "evaluate-npc":
+            return _evaluate_npc(
+                suite_name=args.suite,
+                provider_name=args.provider,
+                tick_steps=args.tick_steps,
                 output_path=args.output,
             )
         if args.command == "provider-handoff":
@@ -144,6 +162,12 @@ def _build_parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--suite", choices=["default-v0", "guided-scan-smoke-v0"], default=None)
     evaluate_parser.add_argument("--provider", choices=["local", "meshy"], default=None)
     evaluate_parser.add_argument("--output", required=True)
+
+    npc_evaluate_parser = subcommands.add_parser("evaluate-npc")
+    npc_evaluate_parser.add_argument("--suite", choices=["default-v0"], default=None)
+    npc_evaluate_parser.add_argument("--provider", choices=["local", "openai"], default=None)
+    npc_evaluate_parser.add_argument("--tick-steps", type=_npc_steps_arg, default=2)
+    npc_evaluate_parser.add_argument("--output", required=True)
 
     handoff_parser = subcommands.add_parser("provider-handoff")
     handoff_parser.add_argument("--output", default=None)
@@ -247,6 +271,43 @@ def _evaluate_3d(
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(report, indent=2), encoding="utf-8")
     return 0
+
+
+def _evaluate_npc(
+    *,
+    suite_name: str | None,
+    provider_name: str | None,
+    tick_steps: int,
+    output_path: str,
+) -> int:
+    if suite_name != "default-v0":
+        raise ValueError("evaluate-npc requires --suite default-v0.")
+
+    settings = load_settings()
+    if provider_name:
+        settings = replace(settings, npc_provider=provider_name)
+    selected_provider = settings.npc_provider
+
+    try:
+        director = build_npc_director(settings)
+        tick_runtime = build_npc_tick_runtime(settings)
+        director.validate_configuration()
+    except (OpenAINPCProviderError, ValueError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    report = run_npc_agent_evaluation(
+        director=director,
+        tick_runtime=tick_runtime,
+        selected_provider=selected_provider,
+        suite_name=suite_name,
+        tick_steps=tick_steps,
+        cases=DEFAULT_NPC_AGENT_EVALUATION_SUITE,
+    )
+    destination = Path(output_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    return 0 if report["failed"] == 0 else 1
 
 
 def _provider_handoff(output_path: str | None, require_core_real: bool) -> int:
