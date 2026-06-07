@@ -523,6 +523,30 @@ def test_ios_device_launch_rehearsal_readiness_marks_saved_report_fresh_against_
     assert result.report["freshness"]["current_revision"]
 
 
+def test_ios_device_launch_rehearsal_readiness_resolves_relative_repo_root_from_backend_cwd(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _init_git_repo(
+        tmp_path,
+        committed_at="2026-06-07T12:00:00+00:00",
+    )
+    backend_cwd = repo_root / "services/backend"
+    backend_cwd.mkdir(parents=True, exist_ok=True)
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="ready")
+    _set_mtime(report_path, "2026-06-07T12:05:00+00:00")
+    monkeypatch.chdir(backend_cwd)
+
+    result = build_ios_device_launch_rehearsal_readiness_report(
+        repo_root=Path("../.."),
+    )
+
+    assert result.exit_code == 0
+    assert result.report["freshness"]["classification"] == "fresh_report"
+    assert result.report["freshness"]["checked_against"] == "git_product_sources"
+    assert result.report["freshness"]["current_revision"]
+
+
 def test_ios_device_launch_rehearsal_readiness_blocks_stale_saved_report_against_git_head(
     tmp_path: Path,
 ) -> None:

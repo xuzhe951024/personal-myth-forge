@@ -25,13 +25,14 @@ class GitProductSourceMetadata:
 
 
 def git_product_source_metadata(repo_root: Path) -> GitProductSourceMetadata | None:
+    resolved_repo_root = repo_root.resolve()
     try:
         revision = _git_output(
-            repo_root,
+            resolved_repo_root,
             [
                 "git",
                 "-C",
-                str(repo_root),
+                str(resolved_repo_root),
                 "log",
                 "-1",
                 "--format=%h",
@@ -40,11 +41,11 @@ def git_product_source_metadata(repo_root: Path) -> GitProductSourceMetadata | N
             ],
         )
         committed_at = _git_output(
-            repo_root,
+            resolved_repo_root,
             [
                 "git",
                 "-C",
-                str(repo_root),
+                str(resolved_repo_root),
                 "log",
                 "-1",
                 "--format=%ct",
