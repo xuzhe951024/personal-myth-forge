@@ -126,6 +126,7 @@ Bridge deliverable:
 - P0.108 project-root local final rehearsal target that writes all saved handoff JSON reports
 - P0.109 project-root configured handoff preflight packet for API/key and iOS deploy review
 - P0.110 project-root final handoff index for local rehearsal, configured preflight, deploy, and live acceptance
+- P0.111 project-root iOS device launch certificate for the final physical-iPhone operator sequence
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
