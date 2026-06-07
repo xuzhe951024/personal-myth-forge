@@ -62,6 +62,11 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES = (
     "final_handoff_index:",
     "ios_device_launch_certificate:",
 )
+LEGACY_FINAL_RESOURCE_COPY_MARKERS = (
+    "services/backend/final-resources.env.example",
+    "services/backend/.local/final-resources.env",
+)
+NORMALIZED_FINAL_RESOURCE_INIT_ACTION = "run make final-resource-init"
 
 
 @dataclass(frozen=True)
@@ -665,7 +670,17 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
     raw_actions = report.get("operator_actions")
     if not isinstance(raw_actions, list):
         return []
-    return [str(action) for action in raw_actions if isinstance(action, str) and action]
+    return [
+        _normalize_operator_action(str(action))
+        for action in raw_actions
+        if isinstance(action, str) and action
+    ]
+
+
+def _normalize_operator_action(action: str) -> str:
+    if all(marker in action for marker in LEGACY_FINAL_RESOURCE_COPY_MARKERS):
+        return NORMALIZED_FINAL_RESOURCE_INIT_ACTION
+    return action
 
 
 def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
