@@ -227,6 +227,27 @@ counts, proposed-action/plan alignment, world-arbitration counts, elapsed time,
 and manual review fields. Switching to `--provider openai` requires backend-only
 `OPENAI_API_KEY`; no OpenAI key is stored in or sent to the iOS app.
 
+P0.91 surfaces the saved NPC Agent evaluation readiness through the read-only
+`/v1/final-demo-launch` report and the iPhone `Final Launch Status` panel. The
+backend reads only `services/backend/.local/npc-evaluation-local.json`; it does
+not run `evaluate-npc`, call OpenAI/Meshy, write config files, or expose raw
+private context. To create or refresh the local readiness report:
+
+```bash
+cd services/backend
+uv run python -m myth_forge_api.cli evaluate-npc \
+  --provider local \
+  --suite default-v0 \
+  --tick-steps 2 \
+  --output .local/npc-evaluation-local.json
+```
+
+Then inspect the iPhone-facing launch readiness payload:
+
+```bash
+curl http://127.0.0.1:8080/v1/final-demo-launch?mode=local
+```
+
 ## Mobile Client Scaffold
 
 Run the P0.7 Swift mobile core contract tests:

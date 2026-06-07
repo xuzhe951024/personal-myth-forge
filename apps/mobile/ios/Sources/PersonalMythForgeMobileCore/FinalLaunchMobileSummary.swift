@@ -30,6 +30,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var resourceChecklistRows: [String]
     public var resourceActions: [String]
     public var acceptanceRows: [String]
+    public var npcEvaluationRows: [String]
     public var handoffRows: [String]
     public var commandRows: [String]
     public var notes: [String]
@@ -44,6 +45,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         resourceChecklistRows: [String] = [],
         resourceActions: [String],
         acceptanceRows: [String] = [],
+        npcEvaluationRows: [String] = [],
         handoffRows: [String] = [],
         commandRows: [String],
         notes: [String]
@@ -57,6 +59,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.resourceChecklistRows = resourceChecklistRows
         self.resourceActions = resourceActions
         self.acceptanceRows = acceptanceRows
+        self.npcEvaluationRows = npcEvaluationRows
         self.handoffRows = handoffRows
         self.commandRows = commandRows
         self.notes = notes
@@ -116,6 +119,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             resourceChecklistRows: resourceChecklistRows(from: report.finalResourcesPreflight),
             resourceActions: resourceActions(from: report.finalResourcesPreflight),
             acceptanceRows: acceptanceRows(from: report.finalAcceptanceReadiness),
+            npcEvaluationRows: npcEvaluationRows(from: report.npcAgentEvaluationReadiness),
             handoffRows: handoffRows(from: report.finalOperatorHandoff),
             commandRows: report.commands.prefix(4).map(sanitize),
             notes: baseNotes()
@@ -296,6 +300,35 @@ public enum FinalLaunchMobileSummaryBuilder {
         }
     }
 
+    private static func npcEvaluationRows(from readiness: NPCAgentEvaluationReadinessReport?) -> [String] {
+        guard let readiness else {
+            return ["NPC Agent evaluation readiness has not loaded."]
+        }
+        switch readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            return [
+                "NPC Agent evaluation ready: \(readiness.summary.succeeded) cases, \(readiness.coverage.tickStepsCompleted) ticks.",
+                "Coverage: \(readiness.coverage.traceSets) trace sets, \(readiness.coverage.worldResolutionSteps) world resolutions.",
+            ].map(sanitize)
+        case "missing":
+            return ["Run local NPC Agent evaluation to create the readiness report."]
+        case "blocked", "failed":
+            if !readiness.blockers.isEmpty {
+                return readiness.blockers.prefix(3).map { blocker in
+                    sanitize(
+                        "\(blocker.id): \(blocker.status) \(blocker.classification) | \(blocker.command) | \(blocker.detail)"
+                    )
+                }
+            }
+            if !readiness.operatorActions.isEmpty {
+                return readiness.operatorActions.prefix(3).map(sanitize)
+            }
+            return ["NPC Agent evaluation blocked."]
+        default:
+            return ["NPC Agent evaluation \(sanitize(readiness.status))."]
+        }
+    }
+
     private static func handoffRows(from handoff: FinalOperatorHandoffReport?) -> [String] {
         guard let handoff else {
             return ["Final operator handoff has not loaded."]
@@ -336,6 +369,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             #"sk-[A-Za-z0-9._-]+"#,
             #"Bearer\s+[A-Za-z0-9._~+/\-=:-]+"#,
             #"api[_-]?key\s*[=:]\s*[^\s,;"']+"#,
+            #"(private_message|raw_context|message_body)\s*:\s*[^\n]+"#,
             #"local-capture://[^\s,;"']+"#,
             #"file://[^\s,;"']+"#,
             #"/Users/[^\s,;"']+"#,

@@ -87,6 +87,9 @@ do {
     try testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness()
     try testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance()
     try testFinalLaunchMobileSummaryShowsReadyFinalAcceptance()
+    try testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation()
+    try testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation()
     try testDecodesFinalOperatorHandoffFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsHandoffNextActions()
     try testFinalLaunchMobileSummaryShowsReadyHandoff()
@@ -1944,6 +1947,56 @@ private func testFinalLaunchMobileSummaryShowsReadyFinalAcceptance() throws {
     try expectEqual(summary.acceptanceRows.first, "Final acceptance ready.")
 }
 
+private func testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(npcEvaluationStatus: "ready")
+    )
+
+    let readiness = try require(
+        report.npcAgentEvaluationReadiness,
+        "missing NPC Agent evaluation readiness"
+    )
+    try expectEqual(readiness.kind, "npc_agent_evaluation_readiness_report")
+    try expectEqual(readiness.status, "ready")
+    try expectEqual(readiness.summary.succeeded, 6)
+    try expectEqual(readiness.summary.failed, 0)
+    try expectEqual(readiness.coverage.tickStepsCompleted, 12)
+    try expectEqual(readiness.coverage.worldResolutionSteps, 12)
+    try expectFalse(readiness.safety.commandsRun)
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(npcEvaluationStatus: "ready"),
+        error: nil
+    )
+
+    try expectEqual(
+        summary.npcEvaluationRows.first,
+        "NPC Agent evaluation ready: 6 cases, 12 ticks."
+    )
+    try expectContains(summary.npcEvaluationRows[1], "6 trace sets")
+    try expectContains(summary.npcEvaluationRows[1], "12 world resolutions")
+}
+
+private func testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            npcEvaluationStatus: "blocked",
+            npcEvaluationBlockerDetail: "failed Authorization=Bearer test-secret private_message: raw"
+        ),
+        error: nil
+    )
+    let text = summary.npcEvaluationRows.joined(separator: " ")
+
+    try expectContains(text, "npc_agent_evaluation_failed")
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "test-secret")
+    try expectNotContains(text, "private_message:")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesFinalOperatorHandoffFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -2894,6 +2947,9 @@ private func finalDemoLaunchPayload(
     finalAcceptanceFreshnessStatus: String = "fresh",
     finalAcceptanceFreshnessClassification: String = "fresh_report",
     finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
+    npcEvaluationStatus: String = "missing",
+    npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
+    npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
     finalOperatorHandoffStatus: String = "missing",
     finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
 ) -> Data {
@@ -2995,6 +3051,50 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "payment_links_in_report": false,
               "local_paths_in_report": false
+            }
+          },
+          "npc_agent_evaluation_readiness": {
+            "kind": "npc_agent_evaluation_readiness_report",
+            "status": "\(npcEvaluationStatus)",
+            "source_file": {
+              "path": "services/backend/.local/npc-evaluation-local.json",
+              "exists": \(npcEvaluationStatus == "missing" ? "false" : "true")
+            },
+            "summary": {
+              "total_cases": \(npcEvaluationStatus == "missing" ? "0" : "6"),
+              "succeeded": \(npcEvaluationStatus == "ready" ? "6" : "0"),
+              "failed": \(npcEvaluationStatus == "blocked" ? "1" : "0"),
+              "tick_steps": \(npcEvaluationStatus == "missing" ? "0" : "2")
+            },
+            "coverage": {
+              "expected_npc_sets": \(npcEvaluationStatus == "ready" ? "6" : "0"),
+              "trace_sets": \(npcEvaluationStatus == "ready" ? "6" : "0"),
+              "proposed_action_plan_matches": \(npcEvaluationStatus == "ready" ? "6" : "0"),
+              "tick_steps_completed": \(npcEvaluationStatus == "ready" ? "12" : "0"),
+              "world_resolution_steps": \(npcEvaluationStatus == "ready" ? "12" : "0")
+            },
+            "blockers": \(npcEvaluationStatus == "blocked" ? """
+            [
+              {
+                "id": "npc_agent_evaluation",
+                "label": "NPC Agent evaluation",
+                "status": "failed",
+                "classification": "\(npcEvaluationBlockerClassification)",
+                "command": "cd services/backend && uv run python -m myth_forge_api.cli evaluate-npc --provider local --suite default-v0 --tick-steps 2 --output .local/npc-evaluation-local.json",
+                "detail": "\(npcEvaluationBlockerDetail)"
+              }
+            ]
+            """ : "[]"),
+            "operator_actions": \(npcEvaluationStatus == "ready" ? #"["NPC Agent evaluation is ready"]"# : npcEvaluationStatus == "missing" ? #"["run local NPC Agent evaluation with evaluate-npc and write services/backend/.local/npc-evaluation-local.json"]"# : #"["rerun local NPC Agent evaluation and review failed cases"]"#),
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "global_mutation": false,
+              "provider_secrets_in_report": false,
+              "raw_private_context_in_report": false,
+              "raw_media_in_report": false,
+              "local_paths_in_report": false,
+              "payment_links_in_report": false
             }
           },
           "final_operator_handoff": {
@@ -4836,6 +4936,9 @@ private func finalDemoLaunchReport(
     finalAcceptanceFreshnessStatus: String = "fresh",
     finalAcceptanceFreshnessClassification: String = "fresh_report",
     finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
+    npcEvaluationStatus: String = "missing",
+    npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
+    npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
     finalOperatorHandoffStatus: String = "missing",
     finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
 ) -> FinalDemoLaunchReport {
@@ -4852,6 +4955,9 @@ private func finalDemoLaunchReport(
             finalAcceptanceFreshnessStatus: finalAcceptanceFreshnessStatus,
             finalAcceptanceFreshnessClassification: finalAcceptanceFreshnessClassification,
             finalAcceptanceBlockerDetail: finalAcceptanceBlockerDetail,
+            npcEvaluationStatus: npcEvaluationStatus,
+            npcEvaluationBlockerClassification: npcEvaluationBlockerClassification,
+            npcEvaluationBlockerDetail: npcEvaluationBlockerDetail,
             finalOperatorHandoffStatus: finalOperatorHandoffStatus,
             finalOperatorHandoffAction: finalOperatorHandoffAction
         )
