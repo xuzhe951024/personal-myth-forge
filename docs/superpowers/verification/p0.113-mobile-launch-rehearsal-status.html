@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.113 Mobile Launch Rehearsal Status</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7f3;
+      --panel: #ffffff;
+      --ink: #17211b;
+      --muted: #68746d;
+      --line: #d7dfd8;
+      --ready: #1e7a4d;
+      --blocked: #b43b3b;
+      --waiting: #6f7780;
+      --accent: #2f5f83;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .screen {
+      min-height: 844px;
+      padding: 18px 14px 20px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .mode {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 5px 8px;
+      color: var(--accent);
+      background: #eef5f0;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 8px 20px rgba(28, 43, 36, 0.08);
+    }
+
+    .header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .header-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .header h2 {
+      margin: 0 0 3px;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      border-radius: 8px;
+      padding: 4px 7px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      background: #f7e9e9;
+      color: var(--blocked);
+    }
+
+    .section {
+      border-top: 1px solid var(--line);
+      padding-top: 9px;
+      margin-top: 9px;
+    }
+
+    .section h3 {
+      margin: 0 0 6px;
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .line {
+      display: grid;
+      grid-template-columns: 8px 1fr;
+      gap: 7px;
+      align-items: start;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      margin: 4px 0;
+      word-break: break-word;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: var(--waiting);
+    }
+
+    .dot.blocked {
+      background: var(--blocked);
+    }
+
+    .dot.ready {
+      background: var(--ready);
+    }
+
+    .subcard {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfb;
+    }
+
+    .subcard .badge {
+      background: #e7f3ec;
+      color: var(--ready);
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <div class="topbar">
+      <h1 class="title">Final Launch</h1>
+      <div class="mode">Local</div>
+    </div>
+
+    <section class="card" aria-label="Final Launch Status">
+      <div class="header">
+        <div class="header-main">
+          <h2>Final Launch Status</h2>
+          <p>mode local; ready 4, missing 3, blocked 1, manual 3</p>
+        </div>
+        <div class="badge">WAITING</div>
+      </div>
+
+      <div class="section">
+        <h3>iOS Deploy Runbook</h3>
+        <div class="line"><span class="dot"></span><span>iOS deploy runbook partial.</span></div>
+        <div class="line"><span class="dot blocked"></span><span>backend_base_url: blocked required blocked_by_ios_deploy_config</span></div>
+      </div>
+
+      <div class="section">
+        <h3>Deploy Safety</h3>
+        <div class="line"><span class="dot ready"></span><span>Safety: commands_run=false provider_calls=false global_mutation=false</span></div>
+        <div class="line"><span class="dot ready"></span><span>Report: secrets=false raw_media=false payment_links=false local_paths=false</span></div>
+      </div>
+
+      <div class="section">
+        <h3>Launch Rehearsal</h3>
+        <div class="line"><span class="dot blocked"></span><span>iOS launch rehearsal blocked: ready 3, blocked 1, partial 0.</span></div>
+        <div class="line"><span class="dot blocked"></span><span>final_handoff_index: blocked | make final-handoff-index | saved_report</span></div>
+        <div class="line"><span class="dot"></span><span>refresh final handoff index</span></div>
+      </div>
+
+      <div class="subcard">
+        <div class="header">
+          <div class="header-main">
+            <h2>Configured Evidence</h2>
+            <p>ready saved report after Mac-side rehearsal</p>
+          </div>
+          <div class="badge">READY</div>
+        </div>
+        <div class="section">
+          <h3>Launch Rehearsal</h3>
+          <div class="line"><span class="dot ready"></span><span>iOS launch rehearsal ready: ready 4, blocked 0, partial 0.</span></div>
+          <div class="line"><span class="dot ready"></span><span>safe evidence refreshed at services/backend/.local/ios-device-launch-rehearsal.json.</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
