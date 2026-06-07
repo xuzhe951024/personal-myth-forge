@@ -174,6 +174,18 @@ Xcode, touch signing/keychain, or write backend/iOS config files. Exit `2`
 means the index was written with remaining blockers; exit `0` means the saved
 handoff state is ready enough for the next configured operator step.
 
+`make ios-device-launch-certificate` writes
+`services/backend/.local/ios-device-launch-certificate.json` as the final
+Mac-side certificate for starting the physical iPhone sequence. It composes the
+final handoff index, current iOS deployment config, iOS deploy runbook, and final
+demo launch report into one sanitized packet with device gates, operator command
+order, and live-provider consent state. The command is read-only: it does not
+start servers, run the deploy preflight, call Meshy/OpenAI/Treatstock, run
+Xcode, touch signing/keychain, accept Apple licenses, or write backend/iOS
+config files. Exit `2` still writes a blocked certificate for review; exit `0`
+means the checkout is ready enough to begin `make backend-device-demo`,
+`make mobile-deploy-preflight`, and the manual Xcode build gate.
+
 The same sanitized launch status is available to the iPhone app:
 
 ```bash

@@ -162,6 +162,16 @@ running Xcode, touching signing/keychain, or writing backend/iOS config files.
 Exit `2` still writes a blocked index for review; exit `0` means the handoff is
 ready enough for the next configured operator step.
 
+`make ios-device-launch-certificate` writes
+`services/backend/.local/ios-device-launch-certificate.json` as the final
+Mac-side iPhone launch certificate. It composes the final handoff index, iOS
+deployment config, iOS deploy runbook, and final demo launch report into one
+sanitized device-start packet. It only reads project files and ignored reports:
+no provider calls, no server start, no deploy preflight execution, no Xcode
+build, no signing/keychain writes, no Apple license mutation, and no backend/iOS
+config writes. Exit `2` still writes a blocked certificate; exit `0` means the
+operator can proceed to the manual iPhone sequence.
+
 P0.64 exposes the same sanitized status through:
 
 ```http

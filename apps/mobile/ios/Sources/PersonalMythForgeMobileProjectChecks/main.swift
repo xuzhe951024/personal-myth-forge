@@ -33,6 +33,9 @@ do {
     let finalHandoffIndexFile = repositoryRoot.appendingPathComponent(
         "services/backend/src/myth_forge_api/final_handoff_index.py"
     )
+    let iosDeviceLaunchCertificateFile = repositoryRoot.appendingPathComponent(
+        "services/backend/src/myth_forge_api/ios_device_launch_certificate.py"
+    )
 
     let packageManifest = try readText(packageFile)
     let project = try readText(projectFile)
@@ -50,6 +53,7 @@ do {
     let makefile = try readText(makefileFile)
     let finalConfiguredPreflight = try readText(finalConfiguredPreflightFile)
     let finalHandoffIndex = try readText(finalHandoffIndexFile)
+    let iosDeviceLaunchCertificate = try readText(iosDeviceLaunchCertificateFile)
     let appConfiguration = try readText(appRoot.appendingPathComponent("AppConfiguration.swift"))
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
     let captureGenerationReceiptView = try readText(appRoot.appendingPathComponent("CaptureGenerationReceiptView.swift"))
@@ -288,6 +292,21 @@ do {
     try requireContains(makefile, "myth_forge_api.cli final-handoff-index", "final handoff index CLI target")
     try requireContains(
         makefile,
+        ".PHONY: ios-device-launch-certificate",
+        "iOS device launch certificate Make phony target"
+    )
+    try requireContains(
+        makefile,
+        "ios-device-launch-certificate:",
+        "iOS device launch certificate Make target"
+    )
+    try requireContains(
+        makefile,
+        "myth_forge_api.cli ios-device-launch-certificate",
+        "iOS device launch certificate CLI target"
+    )
+    try requireContains(
+        makefile,
         "--output .local/final-configured-preflight.json",
         "configured handoff preflight report output"
     )
@@ -295,6 +314,11 @@ do {
         makefile,
         "--output .local/final-handoff-index.json",
         "final handoff index report output"
+    )
+    try requireContains(
+        makefile,
+        "--output .local/ios-device-launch-certificate.json",
+        "iOS device launch certificate report output"
     )
     try requireContains(
         makefile,
@@ -382,6 +406,51 @@ do {
         finalHandoffIndex,
         #""writes_ios_deploy_config": False"#,
         "final handoff index no iOS config writes"
+    )
+    try requireContains(
+        iosDeviceLaunchCertificate,
+        "build_ios_device_launch_certificate_report",
+        "iOS device launch certificate report builder"
+    )
+    try requireContains(
+        iosDeviceLaunchCertificate,
+        "build_final_handoff_index_report",
+        "iOS device launch certificate final handoff composition"
+    )
+    try requireContains(
+        iosDeviceLaunchCertificate,
+        "build_ios_deploy_runbook_report",
+        "iOS device launch certificate deploy runbook composition"
+    )
+    try requireContains(
+        iosDeviceLaunchCertificate,
+        "build_final_demo_launch_report",
+        "iOS device launch certificate final launch composition"
+    )
+    try requireContains(
+        iosDeviceLaunchCertificate,
+        "device_gates",
+        "iOS device launch certificate device gates"
+    )
+    try requireContains(
+        iosDeviceLaunchCertificate,
+        "operator_sequence",
+        "iOS device launch certificate operator sequence"
+    )
+    try requireContains(
+        iosDeviceLaunchCertificate,
+        #""provider_calls": False"#,
+        "iOS device launch certificate no provider calls"
+    )
+    try requireContains(
+        iosDeviceLaunchCertificate,
+        #""xcode_or_signing": False"#,
+        "iOS device launch certificate no Xcode signing"
+    )
+    try requireContains(
+        iosDeviceLaunchCertificate,
+        #""keychain_writes": False"#,
+        "iOS device launch certificate no keychain writes"
     )
     try requireContains(finalAcceptanceLocalScript, "accepted final acceptance exit code $status", "final acceptance local accepts blocked report")
     try requireContains(finalAcceptanceLocalScript, "services/backend/.local/final-acceptance-local.json", "final acceptance local report path")

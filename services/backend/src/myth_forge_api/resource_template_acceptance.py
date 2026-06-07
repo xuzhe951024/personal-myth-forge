@@ -32,6 +32,11 @@ FINAL_CONFIGURED_PREFLIGHT_OUTPUT = ".local/final-configured-preflight.json"
 FINAL_HANDOFF_INDEX_PATH = "services/backend/src/myth_forge_api/final_handoff_index.py"
 FINAL_HANDOFF_INDEX_MAKE_TARGET = "final-handoff-index"
 FINAL_HANDOFF_INDEX_OUTPUT = ".local/final-handoff-index.json"
+IOS_DEVICE_LAUNCH_CERTIFICATE_PATH = (
+    "services/backend/src/myth_forge_api/ios_device_launch_certificate.py"
+)
+IOS_DEVICE_LAUNCH_CERTIFICATE_MAKE_TARGET = "ios-device-launch-certificate"
+IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT = ".local/ios-device-launch-certificate.json"
 CLI_PATH = "services/backend/src/myth_forge_api/cli.py"
 FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.py"
 FINAL_DEMO_LAUNCH_MAKE_TARGET = "final-demo-launch"
@@ -138,6 +143,10 @@ def run_resource_template_acceptance(
     final_handoff_index_text, final_handoff_index_exists = _read_optional_text(
         selected_repo_root / FINAL_HANDOFF_INDEX_PATH
     )
+    (
+        ios_device_launch_certificate_text,
+        ios_device_launch_certificate_exists,
+    ) = _read_optional_text(selected_repo_root / IOS_DEVICE_LAUNCH_CERTIFICATE_PATH)
     cli_text, cli_exists = _read_optional_text(selected_repo_root / CLI_PATH)
     final_demo_launch_text, final_demo_launch_exists = _read_optional_text(
         selected_repo_root / FINAL_DEMO_LAUNCH_PATH
@@ -219,6 +228,14 @@ def run_resource_template_acceptance(
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
+    ios_device_launch_certificate_checks = _ios_device_launch_certificate_checks(
+        module_text=ios_device_launch_certificate_text,
+        module_exists=ios_device_launch_certificate_exists,
+        cli_text=cli_text,
+        cli_exists=cli_exists,
+        makefile_text=makefile_text,
+        makefile_exists=makefile_exists,
+    )
     final_rehearsal_local_checks = _final_rehearsal_local_checks(
         final_acceptance_script_text=final_acceptance_local_script_text,
         final_acceptance_script_exists=final_acceptance_local_script_exists,
@@ -248,6 +265,10 @@ def run_resource_template_acceptance(
             all(final_configured_preflight_checks.values()),
         ),
         _check("final_handoff_index", all(final_handoff_index_checks.values())),
+        _check(
+            "ios_device_launch_certificate",
+            all(ios_device_launch_certificate_checks.values()),
+        ),
         _check("final_rehearsal_local", all(final_rehearsal_local_checks.values())),
     ]
     summary = {
@@ -324,6 +345,13 @@ def run_resource_template_acceptance(
             "output_path": FINAL_HANDOFF_INDEX_OUTPUT,
             "exists": final_handoff_index_exists,
             "checks": final_handoff_index_checks,
+        },
+        "ios_device_launch_certificate": {
+            "path": IOS_DEVICE_LAUNCH_CERTIFICATE_PATH,
+            "make_target": IOS_DEVICE_LAUNCH_CERTIFICATE_MAKE_TARGET,
+            "output_path": IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT,
+            "exists": ios_device_launch_certificate_exists,
+            "checks": ios_device_launch_certificate_checks,
         },
         "final_rehearsal_local": {
             "make_target": FINAL_REHEARSAL_LOCAL_MAKE_TARGET,
@@ -600,6 +628,53 @@ def _final_handoff_index_checks(
                 "source_reports",
                 "operator_sequence",
                 "lanes_by_id",
+            ]
+        ),
+        "safety_contract": all(
+            text in module_text
+            for text in [
+                '"commands_run": False',
+                '"provider_calls": False',
+                '"writes_backend_env": False',
+                '"writes_ios_deploy_config": False',
+                '"xcode_or_signing": False',
+                '"keychain_writes": False',
+            ]
+        ),
+        "no_banned_commands": not any(
+            banned in checked_text for banned in BANNED_WRITER_TEXT
+        ),
+    }
+
+
+def _ios_device_launch_certificate_checks(
+    *,
+    module_text: str,
+    module_exists: bool,
+    cli_text: str,
+    cli_exists: bool,
+    makefile_text: str,
+    makefile_exists: bool,
+) -> dict[str, bool]:
+    checked_text = "\n".join([module_text, makefile_text])
+    return {
+        "module_exists": module_exists,
+        "cli_command": cli_exists
+        and "ios-device-launch-certificate" in cli_text
+        and "build_ios_device_launch_certificate_report" in cli_text,
+        "make_target": makefile_exists
+        and IOS_DEVICE_LAUNCH_CERTIFICATE_MAKE_TARGET in makefile_text
+        and "myth_forge_api.cli ios-device-launch-certificate" in makefile_text,
+        "output_path": IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT in makefile_text,
+        "composes_device_reports": all(
+            text in module_text
+            for text in [
+                "build_final_handoff_index_report",
+                "build_ios_deploy_runbook_report",
+                "build_final_demo_launch_report",
+                "ios_device_launch_certificate_report",
+                "device_gates",
+                "operator_sequence",
             ]
         ),
         "safety_contract": all(
