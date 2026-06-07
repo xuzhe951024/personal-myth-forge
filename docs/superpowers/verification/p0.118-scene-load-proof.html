@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.118 Scene Load Proof</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: #eef2f0;
+      color: #1d2421;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: 390px;
+      min-height: 844px;
+      padding: 14px;
+      background: #f9fbfa;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.12;
+      font-weight: 780;
+      letter-spacing: 0;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      padding: 4px 8px;
+      border: 1px solid #bfc9c5;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #4b5752;
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .preview {
+      height: 176px;
+      border: 1px solid rgba(21, 32, 28, 0.18);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 50% 44%, rgba(65, 210, 191, 0.82), transparent 0 34px),
+        radial-gradient(circle at 28% 66%, rgba(240, 183, 71, 0.72), transparent 0 15px),
+        radial-gradient(circle at 72% 66%, rgba(123, 167, 232, 0.72), transparent 0 15px),
+        linear-gradient(155deg, #12191b 0%, #263b3d 58%, #6b7f75 100%);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(24, 35, 31, 0.14);
+    }
+
+    .preview::before {
+      content: "";
+      position: absolute;
+      left: 112px;
+      right: 112px;
+      bottom: 30px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(232, 236, 231, 0.82);
+    }
+
+    .preview::after {
+      content: "";
+      position: absolute;
+      left: 158px;
+      top: 48px;
+      width: 72px;
+      height: 72px;
+      border: 10px solid #42d2bf;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(66, 210, 191, 0.55);
+      transform: rotate(-18deg);
+    }
+
+    .npc {
+      position: absolute;
+      width: 16px;
+      border-radius: 9px;
+      bottom: 48px;
+    }
+
+    .npc.one {
+      left: 72px;
+      height: 48px;
+      background: #eab24d;
+    }
+
+    .npc.two {
+      right: 72px;
+      height: 40px;
+      background: #84aee8;
+    }
+
+    .npc.three {
+      left: 187px;
+      bottom: 21px;
+      height: 33px;
+      background: #90c77f;
+    }
+
+    .panel {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid rgba(32, 46, 41, 0.12);
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(25, 35, 31, 0.05);
+    }
+
+    .panel h2 {
+      margin: 0 0 3px;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin: 0;
+      color: #61706a;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .proofs {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .proof {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #edf1ef;
+    }
+
+    .proof:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      margin-top: 4px;
+      border-radius: 999px;
+      background: #77837e;
+    }
+
+    .dot.loaded {
+      background: #1c8f62;
+    }
+
+    .dot.warn {
+      background: #c17424;
+    }
+
+    .dot.fail {
+      background: #b94545;
+    }
+
+    .title {
+      font-size: 12.5px;
+      line-height: 1.25;
+      font-weight: 740;
+    }
+
+    .detail {
+      margin-top: 2px;
+      color: #65736e;
+      font-size: 10.5px;
+      line-height: 1.34;
+    }
+
+    .actions {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .action {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      min-height: 34px;
+      padding: 7px 8px;
+      border-radius: 7px;
+      background: #f1f5f3;
+      color: #26302b;
+      font-size: 11px;
+      line-height: 1.25;
+      font-weight: 720;
+    }
+
+    .button {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border-radius: 7px;
+      background: #1d2421;
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .foot {
+      margin-top: 10px;
+      color: #6d7974;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="nav">
+      <h1>Scene Load Proof</h1>
+      <div class="chip">P0.118</div>
+    </div>
+
+    <section class="preview" aria-label="3D artifact preview with NPC ritual markers">
+      <div class="npc one"></div>
+      <div class="npc two"></div>
+      <div class="npc three"></div>
+    </section>
+
+    <section class="panel">
+      <h2>3D Artifact Preview</h2>
+      <p class="sub">The iPhone shows whether the generated scene was actually parsed by SceneKit.</p>
+
+      <div class="proofs">
+        <div class="proof">
+          <div class="dot loaded"></div>
+          <div>
+            <div class="title">SceneKit load proof: Loaded</div>
+            <div class="detail">SceneKit parsed the generated scene asset and the preview can open the artifact.</div>
+          </div>
+        </div>
+
+        <div class="proof">
+          <div class="dot warn"></div>
+          <div>
+            <div class="title">SceneKit load proof: Conversion needed</div>
+            <div class="detail">Cached GLB or GLTF needs conversion before direct iPhone scene loading.</div>
+          </div>
+        </div>
+
+        <div class="proof">
+          <div class="dot fail"></div>
+          <div>
+            <div class="title">SceneKit load proof: Failed</div>
+            <div class="detail">The cached scene could not be parsed, so the preview falls back to the proxy relic.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="action">
+          <span>SceneKit load failed</span>
+          <span class="button">Retry Scene Load</span>
+        </div>
+        <div class="action">
+          <span>Share cached asset after successful parsing</span>
+          <span class="button">Share</span>
+        </div>
+      </div>
+
+      <p class="foot">Static mobile evidence only. Runtime behavior is covered by Swift contract tests, Swift source checks, backend source acceptance, and this local visual gate.</p>
+    </section>
+  </main>
+</body>
+</html>

@@ -2201,3 +2201,24 @@ Visual evidence lives at:
 docs/superpowers/verification/p0.79-deploy-preflight-launch-mode.html
 docs/superpowers/verification/assets/p0.79-deploy-preflight-launch-mode-390x844.png
 ```
+
+## P0.118 Scene Load Proof Visual Gate
+
+The repo now has a local visual regression gate for mobile showcase evidence:
+
+```bash
+make visual-regression
+```
+
+The first required artifact captures the iPhone 3D preview states added in
+P0.117: loaded SceneKit parse, conversion-needed GLB/GLTF cache, failed parse,
+and retry handoff. The gate checks the static HTML and PNG, validates `390x844`
+dimensions, requires the proof labels, and scans for provider secrets, local
+paths, checkout fields, and raw media data.
+
+Visual evidence lives at:
+
+```text
+docs/superpowers/verification/p0.118-scene-load-proof.html
+docs/superpowers/verification/assets/p0.118-scene-load-proof-390x844.png
+```
