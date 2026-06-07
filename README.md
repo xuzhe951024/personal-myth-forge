@@ -71,8 +71,7 @@ When final Meshy/OpenAI/Treatstock and iOS deploy resources are available, use
 one ignored resource file to apply the full local handoff:
 
 ```bash
-mkdir -p services/backend/.local
-cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
+make final-resource-init
 $EDITOR services/backend/.local/final-resources.env
 make final-resources-preflight
 make final-apply-resources
@@ -177,8 +176,7 @@ For the final key-backed handoff, fill the one-file resource bundle, apply it,
 then run the configured launch report:
 
 ```bash
-mkdir -p services/backend/.local
-cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
+make final-resource-init
 $EDITOR services/backend/.local/final-resources.env
 make final-resources-preflight
 make final-resource-apply-preview
@@ -2020,8 +2018,7 @@ Treatstock quote handoff, and iPhone deployment. The filled copy lives at
 Run:
 
 ```bash
-mkdir -p services/backend/.local
-cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
+make final-resource-init
 $EDITOR services/backend/.local/final-resources.env
 make final-apply-resources
 cd services/backend
