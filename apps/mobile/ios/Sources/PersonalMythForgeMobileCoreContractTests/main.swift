@@ -120,6 +120,9 @@ do {
     try testFinalLaunchMobileSummaryShowsMissingLiveProviderEvidence()
     try testFinalLaunchMobileSummaryShowsBlockedLiveProviderEvidence()
     try testFinalLaunchMobileSummaryRedactsUnsafeLiveProviderEvidence()
+    try testDecodesFinalShowcaseReadinessFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness()
+    try testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness()
     try testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation()
     try testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation()
@@ -2802,6 +2805,59 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeLiveProviderEvidence() thr
     try expectNotContains(text, "Bearer")
 }
 
+private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(finalShowcaseReadinessStatus: "partial")
+    )
+
+    let readiness = try require(
+        report.finalShowcaseReadiness,
+        "missing final showcase readiness"
+    )
+    try expectEqual(readiness.kind, "final_showcase_readiness_report")
+    try expectEqual(readiness.status, "partial")
+    try expectEqual(readiness.summary.partial, 3)
+    try expectEqual(readiness.capabilities.first?.id, "ios_deployable")
+    try expectEqual(readiness.firstBlocker?.id, "ios_deployable")
+    try expectFalse(readiness.safety.commandsRun)
+    try expectFalse(readiness.safety.liveProviderCalls)
+}
+
+private func testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(finalShowcaseReadinessStatus: "partial"),
+        error: nil
+    )
+    let text = summary.showcaseReadinessRows.joined(separator: " ")
+
+    try expectContains(text, "Showcase readiness partial: ready 5, partial 3, blocked 0.")
+    try expectContains(text, "ios_deployable: partial")
+    try expectContains(text, "make ios-device-launch-rehearsal")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness() throws {
+    let report = finalDemoLaunchReport(
+        finalShowcaseReadinessStatus: "blocked",
+        finalShowcaseReadinessFirstBlockerDetail: (
+            "sk-test /Users/zhexu/private file:///tmp/private "
+            + "local-capture://cap checkout_url https://pay.example Bearer token"
+        ),
+        finalShowcaseReadinessAction: "make final-showcase-readiness sk-test /Users/zhexu/private"
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "pay.example")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4349,6 +4405,9 @@ private func finalDemoLaunchPayload(
     visualRegressionAction: String = "run make visual-regression-local",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
+    finalShowcaseReadinessStatus: String = "partial",
+    finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
+    finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -4628,6 +4687,69 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "local_paths_in_report": false,
               "payment_links_in_report": false
+            }
+          },
+          "final_showcase_readiness": {
+            "kind": "final_showcase_readiness_report",
+            "status": "\(finalShowcaseReadinessStatus)",
+            "summary": {
+              "ready": \(finalShowcaseReadinessStatus == "ready" ? "8" : "5"),
+              "partial": \(finalShowcaseReadinessStatus == "partial" ? "3" : "0"),
+              "blocked": \(finalShowcaseReadinessStatus == "blocked" ? "1" : "0")
+            },
+            "capabilities": [
+              {
+                "id": "ios_deployable",
+                "label": "iOS deployable",
+                "status": "\(finalShowcaseReadinessStatus == "ready" ? "ready" : finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+                "classification": "ios_deploy_evidence",
+                "required": true,
+                "evidence": ["ios_deploy_runbook:partial", "ios_device_launch_rehearsal_readiness:missing"],
+                "command": "make ios-device-launch-rehearsal",
+                "detail": "\(finalShowcaseReadinessFirstBlockerDetail)"
+              },
+              {
+                "id": "capture_scanning",
+                "label": "Capture and scanning",
+                "status": "ready",
+                "classification": "source_acceptance_passed",
+                "required": true,
+                "evidence": ["source_features:6"],
+                "command": "cd services/backend && uv run pytest tests/test_ios_showcase_acceptance.py",
+                "detail": "iOS source acceptance covers camera, guided scan, ARKit scan, and capture-to-3D review."
+              }
+            ],
+            "first_blocker": \(finalShowcaseReadinessStatus == "ready" ? "null" : """
+            {
+              "id": "ios_deployable",
+              "label": "iOS deployable",
+              "status": "\(finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+              "classification": "ios_deploy_evidence",
+              "required": true,
+              "evidence": ["ios_deploy_runbook:partial"],
+              "command": "make ios-device-launch-rehearsal",
+              "detail": "\(finalShowcaseReadinessFirstBlockerDetail)"
+            }
+            """),
+            "operator_actions": ["\(finalShowcaseReadinessAction)"],
+            "commands": [
+              "make final-rehearsal-local",
+              "make final-showcase-readiness"
+            ],
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
+              "provider_secrets_in_report": false,
+              "raw_private_context_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false
             }
           },
           "npc_agent_evaluation_readiness": {
@@ -7342,6 +7464,9 @@ private func finalDemoLaunchReport(
     visualRegressionAction: String = "run make visual-regression-local",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
+    finalShowcaseReadinessStatus: String = "partial",
+    finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
+    finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -7392,6 +7517,9 @@ private func finalDemoLaunchReport(
             visualRegressionAction: visualRegressionAction,
             liveProviderEvidenceStatus: liveProviderEvidenceStatus,
             liveProviderEvidenceBlockerDetail: liveProviderEvidenceBlockerDetail,
+            finalShowcaseReadinessStatus: finalShowcaseReadinessStatus,
+            finalShowcaseReadinessFirstBlockerDetail: finalShowcaseReadinessFirstBlockerDetail,
+            finalShowcaseReadinessAction: finalShowcaseReadinessAction,
             npcEvaluationStatus: npcEvaluationStatus,
             npcEvaluationBlockerClassification: npcEvaluationBlockerClassification,
             npcEvaluationBlockerDetail: npcEvaluationBlockerDetail,

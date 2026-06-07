@@ -37,6 +37,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var npcEvaluationRows: [String]
     public var visualRegressionRows: [String]
     public var liveProviderEvidenceRows: [String]
+    public var showcaseReadinessRows: [String]
     public var deployRunbookRows: [String]
     public var deployRunbookCommandRows: [String]
     public var deployRunbookSafetyRows: [String]
@@ -62,6 +63,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         npcEvaluationRows: [String] = [],
         visualRegressionRows: [String] = [],
         liveProviderEvidenceRows: [String] = [],
+        showcaseReadinessRows: [String] = [],
         deployRunbookRows: [String] = [],
         deployRunbookCommandRows: [String] = [],
         deployRunbookSafetyRows: [String] = [],
@@ -86,6 +88,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.npcEvaluationRows = npcEvaluationRows
         self.visualRegressionRows = visualRegressionRows
         self.liveProviderEvidenceRows = liveProviderEvidenceRows
+        self.showcaseReadinessRows = showcaseReadinessRows
         self.deployRunbookRows = deployRunbookRows
         self.deployRunbookCommandRows = deployRunbookCommandRows
         self.deployRunbookSafetyRows = deployRunbookSafetyRows
@@ -157,6 +160,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             visualRegressionRows: visualRegressionRows(from: report.visualRegressionReadiness),
             liveProviderEvidenceRows: liveProviderEvidenceRows(
                 from: report.liveProviderEvidence
+            ),
+            showcaseReadinessRows: showcaseReadinessRows(
+                from: report.finalShowcaseReadiness
             ),
             deployRunbookRows: deployRunbookRows(from: report.iosDeployRunbook),
             deployRunbookCommandRows: deployRunbookCommandRows(from: report.iosDeployRunbook),
@@ -515,6 +521,40 @@ public enum FinalLaunchMobileSummaryBuilder {
         parts.append("| \(slot.command)")
         if let detail = slot.detail, !detail.isEmpty {
             parts.append("| \(detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func showcaseReadinessRows(
+        from readiness: FinalShowcaseReadinessReport?
+    ) -> [String] {
+        guard let readiness else {
+            return ["Showcase readiness has not loaded."]
+        }
+        var rows = [
+            "Showcase readiness \(sanitize(readiness.status)): ready \(readiness.summary.ready), partial \(readiness.summary.partial), blocked \(readiness.summary.blocked)."
+        ]
+        if readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" {
+            if let blocker = readiness.firstBlocker {
+                rows.append(showcaseReadinessCapabilityRow(blocker))
+            } else if let capability = readiness.capabilities.first(where: { status(from: $0.status) != .ready }) {
+                rows.append(showcaseReadinessCapabilityRow(capability))
+            }
+            rows.append(contentsOf: readiness.operatorActions.prefix(2).map(sanitize))
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func showcaseReadinessCapabilityRow(
+        _ capability: FinalShowcaseReadinessCapability
+    ) -> String {
+        var parts = ["\(capability.id): \(capability.status)"]
+        if let classification = capability.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        parts.append("| \(capability.command)")
+        if !capability.detail.isEmpty {
+            parts.append("| \(capability.detail)")
         }
         return sanitize(parts.joined(separator: " "))
     }
