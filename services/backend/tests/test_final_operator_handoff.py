@@ -48,7 +48,10 @@ def test_operator_handoff_blocks_missing_resources_and_acceptance_without_runnin
             "copy services/backend/final-resources.env.example to "
             "services/backend/.local/final-resources.env"
         ),
-        "run local final acceptance and write services/backend/.local/final-acceptance-local.json",
+        (
+            "run make final-acceptance-local to write "
+            "services/backend/.local/final-acceptance-local.json"
+        ),
     ]
     assert report["safety"] == {
         "commands_run": False,
@@ -255,7 +258,7 @@ def test_operator_handoff_includes_ios_deploy_runbook_before_deploy_preflight(
     step_ids = [step["id"] for step in report["steps"]]
 
     assert steps["ios_deploy_runbook"]["status"] == "partial"
-    assert "ios-deploy-runbook" in steps["ios_deploy_runbook"]["command"]
+    assert steps["ios_deploy_runbook"]["command"] == "make ios-deploy-runbook-local"
     assert step_ids.index("npc_agent_evaluation") < step_ids.index(
         "ios_deploy_runbook"
     )
@@ -324,7 +327,10 @@ def _missing_acceptance_report() -> dict[str, object]:
         "summary": {"passed": 0, "blocked": 0, "failed": 0, "skipped": 0},
         "blockers": [],
         "operator_actions": [
-            "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
+            (
+                "run make final-acceptance-local to write "
+                "services/backend/.local/final-acceptance-local.json"
+            )
         ],
         "safety": {
             "commands_run": False,
@@ -591,10 +597,7 @@ def _local_launch_phases(
         _phase(
             "local_final_acceptance",
             "ready",
-            (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-acceptance --profile quick --provider-mode local --repo-root ../.."
-            ),
+            "make final-acceptance-local",
         ),
         _phase(
             "configured_final_acceptance",
@@ -622,10 +625,7 @@ def _configured_launch_phases() -> list[dict[str, object]]:
         _phase(
             "local_final_acceptance",
             "ready",
-            (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-acceptance --profile quick --provider-mode local --repo-root ../.."
-            ),
+            "make final-acceptance-local",
         ),
         _phase(
             "configured_final_acceptance",

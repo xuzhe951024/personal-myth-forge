@@ -14,6 +14,12 @@ do {
     let backendEnvWriterScriptFile = repositoryRoot.appendingPathComponent(
         "services/backend/scripts/write_backend_env.sh"
     )
+    let finalAcceptanceLocalScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_final_acceptance_local.sh"
+    )
+    let iosDeployRunbookLocalScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_ios_deploy_runbook_local.sh"
+    )
     let deployConfigFile = iosRoot.appendingPathComponent("Config/Deployment.xcconfig")
     let deployLocalExampleFile = iosRoot.appendingPathComponent("Config/Deployment.local.xcconfig.example")
     let sharedSchemeFile = iosRoot.appendingPathComponent(
@@ -29,6 +35,8 @@ do {
     let deployPreflightScript = try readText(deployPreflightScriptFile)
     let deployConfigWriterScript = try readText(deployConfigWriterScriptFile)
     let backendEnvWriterScript = try readText(backendEnvWriterScriptFile)
+    let finalAcceptanceLocalScript = try readText(finalAcceptanceLocalScriptFile)
+    let iosDeployRunbookLocalScript = try readText(iosDeployRunbookLocalScriptFile)
     let deployConfig = try readText(deployConfigFile)
     let deployLocalExample = try readText(deployLocalExampleFile)
     let sharedScheme = try readText(sharedSchemeFile)
@@ -107,6 +115,9 @@ do {
     let finalOperatorHandoff = try readText(
         repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/final_operator_handoff.py")
     )
+    let finalAcceptanceReadiness = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/final_acceptance_readiness.py")
+    )
     let finalDemoLaunch = try readText(
         repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/final_demo_launch.py")
     )
@@ -130,6 +141,9 @@ do {
     )
     let iosDeployRunbookTests = try readText(
         repositoryRoot.appendingPathComponent("services/backend/tests/test_ios_deploy_runbook.py")
+    )
+    let finalRehearsalScriptsTests = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/tests/test_final_rehearsal_scripts.py")
     )
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
@@ -256,12 +270,56 @@ do {
     )
     try requireContains(makefile, ".PHONY: ios-deploy-runbook", "iOS deploy runbook Make phony target")
     try requireContains(makefile, "ios-deploy-runbook:", "iOS deploy runbook Make target")
+    try requireContains(makefile, "ios-deploy-runbook-local:", "iOS deploy runbook local wrapper target")
     try requireContains(makefile, "myth_forge_api.cli ios-deploy-runbook", "iOS deploy runbook CLI target")
+    try requireContains(
+        makefile,
+        "services/backend/scripts/write_ios_deploy_runbook_local.sh",
+        "iOS deploy runbook local wrapper script"
+    )
+    try requireContains(makefile, "final-acceptance-local:", "final acceptance local wrapper target")
+    try requireContains(
+        makefile,
+        "services/backend/scripts/write_final_acceptance_local.sh",
+        "final acceptance local wrapper script"
+    )
+    try requireContains(
+        makefile,
+        "final-rehearsal-local: backend-evaluate-local final-acceptance-local final-demo-launch ios-deploy-runbook-local",
+        "final rehearsal local target order"
+    )
     try requireContains(makefile, "backend-evaluate-3d:", "backend 3D evaluation Make target")
     try requireContains(makefile, "backend-evaluate-npc:", "backend NPC evaluation Make target")
     try requireContains(makefile, "backend-evaluate-local:", "combined backend local evaluation Make target")
     try requireContains(makefile, "--output .local/3d-evaluation-local.json", "3D evaluation local report output")
     try requireContains(makefile, "--output .local/npc-evaluation-local.json", "NPC evaluation local report output")
+    try requireContains(makefile, "--output .local/final-demo-launch-local.json", "final demo launch local report output")
+    try requireContains(finalAcceptanceLocalScript, "accepted final acceptance exit code $status", "final acceptance local accepts blocked report")
+    try requireContains(finalAcceptanceLocalScript, "services/backend/.local/final-acceptance-local.json", "final acceptance local report path")
+    try requireContains(iosDeployRunbookLocalScript, "accepted iOS deploy runbook exit code $status", "iOS deploy runbook local accepts blocked report")
+    try requireContains(iosDeployRunbookLocalScript, "services/backend/.local/ios-deploy-runbook-local.json", "iOS deploy runbook local report path")
+    try requireNotContains(finalAcceptanceLocalScript, "sudo", "final acceptance local wrapper no sudo")
+    try requireNotContains(iosDeployRunbookLocalScript, "sudo", "iOS deploy runbook local wrapper no sudo")
+    try requireContains(
+        finalAcceptanceReadiness,
+        #"LOCAL_FINAL_ACCEPTANCE_COMMAND = "make final-acceptance-local""#,
+        "final acceptance readiness canonical Make target"
+    )
+    try requireContains(
+        iosDeployRunbook,
+        "LOCAL_FINAL_ACCEPTANCE_COMMAND",
+        "iOS deploy runbook uses canonical final acceptance command"
+    )
+    try requireContains(
+        finalDemoLaunch,
+        "LOCAL_FINAL_ACCEPTANCE_COMMAND",
+        "final demo launch uses canonical final acceptance command"
+    )
+    try requireContains(
+        finalRehearsalScriptsTests,
+        "test_final_rehearsal_make_targets_dry_run_expected_order",
+        "final rehearsal Make target order test"
+    )
     try requireContains(deployConfigWriterScript, "DEVELOPMENT_TEAM", "deploy config writer team key")
     try requireContains(deployConfigWriterScript, "PRODUCT_BUNDLE_IDENTIFIER", "deploy config writer bundle key")
     try requireContains(deployConfigWriterScript, "PMF_BACKEND_BASE_URL", "deploy config writer backend key")

@@ -946,6 +946,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
+                "LOCAL_FINAL_ACCEPTANCE_COMMAND",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
                 "three_d_evaluation",
             ),
             SourceRequirement(
@@ -957,9 +961,18 @@ FEATURES = (
                 "ios-deploy-runbook",
             ),
             SourceRequirement("Makefile", "ios-deploy-runbook:"),
+            SourceRequirement("Makefile", "ios-deploy-runbook-local:"),
             SourceRequirement("Makefile", "backend-evaluate-3d:"),
             SourceRequirement("Makefile", "backend-evaluate-npc:"),
             SourceRequirement("Makefile", "backend-evaluate-local:"),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_deploy_runbook_local.sh",
+                "accepted iOS deploy runbook exit code $status",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_deploy_runbook_local.sh",
+                "services/backend/.local/ios-deploy-runbook-local.json",
+            ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "ios_deploy_runbook",
@@ -975,6 +988,10 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/tests/test_ios_deploy_runbook.py",
                 "test_ios_deploy_runbook_blocks_and_redacts_failed_3d_evaluation",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_rehearsal_scripts.py",
+                "test_write_ios_deploy_runbook_local_accepts_blocked_report_exit_code",
             ),
             SourceRequirement(
                 "services/backend/tests/test_final_demo_launch.py",
@@ -1095,6 +1112,10 @@ FEATURES = (
                 "build_final_operator_handoff_report",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_acceptance_readiness.py",
+                'LOCAL_FINAL_ACCEPTANCE_COMMAND = "make final-acceptance-local"',
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_operator_handoff.py",
                 "npc_agent_evaluation",
             ),
@@ -1106,8 +1127,18 @@ FEATURES = (
                 "services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py",
                 "make backend-evaluate-npc",
             ),
+            SourceRequirement("Makefile", "final-acceptance-local:"),
+            SourceRequirement("Makefile", "final-rehearsal-local:"),
             SourceRequirement("Makefile", "backend-evaluate-npc:"),
             SourceRequirement("Makefile", "backend-evaluate-local:"),
+            SourceRequirement(
+                "services/backend/scripts/write_final_acceptance_local.sh",
+                "accepted final acceptance exit code $status",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_acceptance_local.sh",
+                "services/backend/.local/final-acceptance-local.json",
+            ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_operator_handoff",
@@ -1136,6 +1167,10 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/tests/test_final_demo_launch.py",
                 "test_final_demo_launch_operator_handoff_includes_npc_evaluation_step",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_rehearsal_scripts.py",
+                "test_final_rehearsal_make_targets_dry_run_expected_order",
             ),
         ),
     ),

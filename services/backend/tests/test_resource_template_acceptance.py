@@ -69,18 +69,52 @@ sh services/backend/scripts/write_backend_env.sh
 sh apps/mobile/ios/scripts/write_deploy_local_config.sh
 """
 
+FINAL_ACCEPTANCE_LOCAL_SCRIPT = """#!/usr/bin/env sh
+set -eu
+set +e
+uv run python -m myth_forge_api.cli final-acceptance --output .local/final-acceptance-local.json
+status=$?
+set -e
+if [ "$status" -eq 0 ] || [ "$status" -eq 2 ]; then
+  printf '%s\\n' "accepted final acceptance exit code $status"
+  exit 0
+fi
+exit "$status"
+"""
+
+IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT = """#!/usr/bin/env sh
+set -eu
+set +e
+uv run python -m myth_forge_api.cli ios-deploy-runbook --output .local/ios-deploy-runbook-local.json
+status=$?
+set -e
+if [ "$status" -eq 0 ] || [ "$status" -eq 2 ]; then
+  printf '%s\\n' "accepted iOS deploy runbook exit code $status"
+  exit 0
+fi
+exit "$status"
+"""
+
 MAKEFILE_TEMPLATE = """.PHONY: backend-write-provider-env
 backend-write-provider-env:
 \t@services/backend/scripts/write_backend_env.sh
-.PHONY: final-demo-launch
+.PHONY: final-acceptance-local final-demo-launch final-rehearsal-local
+final-acceptance-local:
+\t@services/backend/scripts/write_final_acceptance_local.sh
 final-demo-launch:
-\tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../..
+\tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../.. --output .local/final-demo-launch-local.json
 .PHONY: final-apply-resources
 final-apply-resources:
 \t@services/backend/scripts/apply_final_resources.sh
 .PHONY: final-resources-preflight
 final-resources-preflight:
 \tcd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../..
+.PHONY: ios-deploy-runbook ios-deploy-runbook-local
+ios-deploy-runbook:
+\tcd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
+ios-deploy-runbook-local:
+\t@services/backend/scripts/write_ios_deploy_runbook_local.sh
+final-rehearsal-local: backend-evaluate-local final-acceptance-local final-demo-launch ios-deploy-runbook-local
 """
 
 CLI_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
@@ -109,7 +143,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.exit_code == 0
     assert result.report["kind"] == "resource_template_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 11, "failed": 0}
+    assert result.report["summary"] == {"passed": 12, "failed": 0}
     assert result.report["backend_template"]["missing_keys"] == []
     assert result.report["ios_template"]["missing_keys"] == []
     assert "OPENAI_API_KEY" in result.report["backend_template"]["required_keys"]
@@ -159,8 +193,21 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.report["final_demo_launch"]["checks"]["module_exists"] is True
     assert result.report["final_demo_launch"]["checks"]["cli_command"] is True
     assert result.report["final_demo_launch"]["checks"]["make_target"] is True
+    assert result.report["final_demo_launch"]["checks"]["local_output_path"] is True
     assert result.report["final_demo_launch"]["checks"]["uses_resource_handoff"] is True
     assert result.report["final_demo_launch"]["checks"]["no_banned_commands"] is True
+    assert result.report["final_rehearsal_local"]["make_target"] == (
+        "final-rehearsal-local"
+    )
+    assert result.report["final_rehearsal_local"]["checks"] == {
+        "final_acceptance_script_exists": True,
+        "ios_deploy_runbook_script_exists": True,
+        "final_acceptance_accepts_blocked_report": True,
+        "ios_deploy_runbook_accepts_blocked_report": True,
+        "make_targets": True,
+        "local_output_paths": True,
+        "no_banned_commands": True,
+    }
     assert result.report["final_resource_apply"]["path"] == (
         "services/backend/scripts/apply_final_resources.sh"
     )
@@ -271,6 +318,8 @@ def _write_repo(
     backend_writer: str = BACKEND_WRITER_TEMPLATE,
     final_resource_template: str = FINAL_RESOURCE_TEMPLATE,
     final_resource_apply: str = FINAL_RESOURCE_APPLY_TEMPLATE,
+    final_acceptance_local_script: str = FINAL_ACCEPTANCE_LOCAL_SCRIPT,
+    ios_deploy_runbook_local_script: str = IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT,
     final_resources_preflight: str = FINAL_RESOURCES_PREFLIGHT_TEMPLATE,
     makefile: str = MAKEFILE_TEMPLATE,
 ) -> Path:
@@ -289,6 +338,16 @@ def _write_repo(
     )
     (repo_root / "services/backend/scripts/apply_final_resources.sh").write_text(
         final_resource_apply,
+        encoding="utf-8",
+    )
+    (repo_root / "services/backend/scripts/write_final_acceptance_local.sh").write_text(
+        final_acceptance_local_script,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/scripts/write_ios_deploy_runbook_local.sh"
+    ).write_text(
+        ios_deploy_runbook_local_script,
         encoding="utf-8",
     )
     (repo_root / "services/backend/final-resources.env.example").write_text(

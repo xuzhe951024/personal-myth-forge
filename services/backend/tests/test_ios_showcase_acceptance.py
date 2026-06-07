@@ -80,6 +80,29 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
     assert "data:image" not in report_text
 
 
+def test_ios_showcase_acceptance_fails_missing_final_rehearsal_script_without_absolute_paths(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    (tmp_path / "services/backend/scripts/write_final_acceptance_local.sh").unlink()
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 31, "failed": 1}
+    assert features["mobile_final_operator_handoff"]["status"] == "failed"
+    assert {
+        "file": "services/backend/scripts/write_final_acceptance_local.sh",
+        "contains": "accepted final acceptance exit code $status",
+    } in features["mobile_final_operator_handoff"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+
+
 def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolute_paths(
     tmp_path,
 ) -> None:
@@ -637,7 +660,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "resourceHandoffRows resourceHandoffBackendRows resourceHandoffIOSRows"
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
-            "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness"
+            "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness "
+            'LOCAL_FINAL_ACCEPTANCE_COMMAND = "make final-acceptance-local"'
         ),
         "services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py": (
             "build_npc_agent_evaluation_readiness_report make backend-evaluate-npc"
@@ -649,12 +673,21 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/src/myth_forge_api/ios_deploy_runbook.py": (
             "build_ios_deploy_runbook_report build_three_d_evaluation_readiness_report "
             "LOCAL_THREE_D_EVALUATION_COMMAND LOCAL_NPC_EVALUATION_COMMAND "
-            "three_d_evaluation IOS_DEPLOY_RUNBOOK_COMMAND"
+            "LOCAL_FINAL_ACCEPTANCE_COMMAND three_d_evaluation IOS_DEPLOY_RUNBOOK_COMMAND"
         ),
         "services/backend/src/myth_forge_api/cli.py": "ios-deploy-runbook",
         "Makefile": (
             "ios-deploy-runbook: backend-evaluate-3d: backend-evaluate-npc: "
-            "backend-evaluate-local:"
+            "backend-evaluate-local: final-acceptance-local: ios-deploy-runbook-local: "
+            "final-rehearsal-local: --output .local/final-demo-launch-local.json"
+        ),
+        "services/backend/scripts/write_final_acceptance_local.sh": (
+            "accepted final acceptance exit code $status "
+            "services/backend/.local/final-acceptance-local.json"
+        ),
+        "services/backend/scripts/write_ios_deploy_runbook_local.sh": (
+            "accepted iOS deploy runbook exit code $status "
+            "services/backend/.local/ios-deploy-runbook-local.json"
         ),
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
             "three_d_evaluation LOCAL_THREE_D_EVALUATION_COMMAND "
@@ -684,6 +717,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/tests/test_final_operator_handoff.py": (
             "test_operator_handoff_includes_ios_deploy_runbook_before_deploy_preflight"
+        ),
+        "services/backend/tests/test_final_rehearsal_scripts.py": (
+            "test_write_final_acceptance_local_accepts_blocked_report_exit_code "
+            "test_write_ios_deploy_runbook_local_accepts_blocked_report_exit_code "
+            "test_final_rehearsal_make_targets_dry_run_expected_order"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift": (
             "getBackendHealth getFinalDemoLaunch"

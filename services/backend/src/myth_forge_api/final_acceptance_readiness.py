@@ -9,11 +9,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_ACCEPTANCE_PATH = Path("services/backend/.local/final-acceptance-local.json")
-LOCAL_FINAL_ACCEPTANCE_COMMAND = (
-    "cd services/backend && uv run python -m myth_forge_api.cli "
-    "final-acceptance --profile quick --provider-mode local --repo-root ../.. "
-    "--output .local/final-acceptance-local.json"
-)
+LOCAL_FINAL_ACCEPTANCE_COMMAND = "make final-acceptance-local"
 
 
 @dataclass(frozen=True)
@@ -51,7 +47,7 @@ def build_final_acceptance_readiness_report(
             summary=_empty_summary(),
             blockers=[],
             operator_actions=[
-                "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
+                "run make final-acceptance-local to write services/backend/.local/final-acceptance-local.json"
             ],
         )
         return FinalAcceptanceReadinessResult(exit_code=2, report=report)
@@ -130,7 +126,7 @@ def _invalid_report(
             }
         ],
         operator_actions=[
-            "regenerate services/backend/.local/final-acceptance-local.json"
+            "rerun make final-acceptance-local to regenerate services/backend/.local/final-acceptance-local.json"
         ],
     )
 
@@ -333,8 +329,8 @@ def _operator_actions(*, status: str, blockers: list[dict[str, Any]]) -> list[st
             actions.append("start backend-device-demo and rerun mobile deploy preflight")
         elif blocker_id == "final_acceptance_freshness":
             actions.append(
-                "regenerate services/backend/.local/final-acceptance-local.json "
-                "for the current git revision"
+                "rerun make final-acceptance-local to regenerate "
+                "services/backend/.local/final-acceptance-local.json for the current git revision"
             )
         elif blocker_id == "mobile_deploy_preflight":
             actions.append("provide iOS deploy config and rerun mobile deploy preflight")

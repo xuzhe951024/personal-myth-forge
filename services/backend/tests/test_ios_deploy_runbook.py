@@ -28,6 +28,7 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert "copy services/backend/final-resources.env.example" in " ".join(
         report["operator_actions"]
     )
+    assert "run make final-acceptance-local" in " ".join(report["operator_actions"])
     assert "run make backend-evaluate-3d" in " ".join(report["operator_actions"])
     assert "run make backend-evaluate-npc" in " ".join(report["operator_actions"])
     assert "run local 3D evaluation with evaluate-3d" not in report_text

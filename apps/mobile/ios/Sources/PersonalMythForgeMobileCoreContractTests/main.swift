@@ -4022,7 +4022,7 @@ private func finalDemoLaunchPayload(
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
     finalOperatorHandoffStatus: String = "missing",
-    finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json",
+    finalOperatorHandoffAction: String = "run make final-acceptance-local to write services/backend/.local/final-acceptance-local.json",
     iosDeployRunbookStatus: String = "partial",
     iosDeployRunbookSlotStatus: String = "ready",
     iosDeployRunbookThreeDSlotStatus: String = "ready",
@@ -4123,7 +4123,7 @@ private func finalDemoLaunchPayload(
               }
             ]
             """ : "[]"),
-            "operator_actions": \(finalAcceptanceStatus == "ready" ? #"["final acceptance is ready"]"# : finalAcceptanceStatus == "missing" ? #"["run local final acceptance and write services/backend/.local/final-acceptance-local.json"]"# : #"["provide iOS deploy config and rerun mobile deploy preflight", "resolve Xcode build gate outside the app"]"#),
+            "operator_actions": \(finalAcceptanceStatus == "ready" ? #"["final acceptance is ready"]"# : finalAcceptanceStatus == "missing" ? #"["run make final-acceptance-local to write services/backend/.local/final-acceptance-local.json"]"# : #"["provide iOS deploy config and rerun mobile deploy preflight", "resolve Xcode build gate outside the app"]"#),
             "safety": {
               "commands_run": false,
               "provider_calls": false,
@@ -4242,7 +4242,7 @@ private func finalDemoLaunchPayload(
                 "id": "local_final_acceptance",
                 "label": "Run local final acceptance",
                 "status": "\(finalOperatorHandoffStatus)",
-                "command": "cd services/backend && uv run python -m myth_forge_api.cli final-acceptance --profile quick --provider-mode local --repo-root ../.. --output .local/final-acceptance-local.json",
+                "command": "make final-acceptance-local",
                 "required_for": "no-key deterministic smoke acceptance",
                 "source": "final_acceptance_readiness",
                 "notes": ["\(finalOperatorHandoffAction)"],
@@ -6746,7 +6746,7 @@ private func finalDemoLaunchReport(
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
     finalOperatorHandoffStatus: String = "missing",
-    finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json",
+    finalOperatorHandoffAction: String = "run make final-acceptance-local to write services/backend/.local/final-acceptance-local.json",
     iosDeployRunbookStatus: String = "partial",
     iosDeployRunbookSlotStatus: String = "ready",
     iosDeployRunbookThreeDSlotStatus: String = "ready",
