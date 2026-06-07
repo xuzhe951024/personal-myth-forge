@@ -130,6 +130,49 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="capture_generation_receipt",
+        label="Capture generation receipt",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReceipt.swift",
+                "CaptureGenerationReceiptBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReceipt.swift",
+                "Capture-to-3D proof missing",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReceipt.swift",
+                "raw sources",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReceipt.swift",
+                "Raw capture media withheld.",
+            ),
+            SourceRequirement("apps/mobile/ios/App/CaptureGenerationReceiptView.swift", "Capture-to-3D"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "CaptureGenerationReceiptView(receipt: captureGenerationReceipt)",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "capture: state.capture",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
+                "CaptureGenerationReceiptView.swift",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testCaptureGenerationReceiptShowsReadyGuidedScanGeneration",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testCaptureGenerationReceiptRedactsUnsafeText",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="capture_upload",
         label="Capture upload",
         requirements=(

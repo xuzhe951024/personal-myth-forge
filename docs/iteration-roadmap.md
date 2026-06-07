@@ -113,6 +113,7 @@ Bridge deliverable:
 - P0.95 iPhone Final Launch panel for iOS deploy runbook details
 - P0.96 iPhone Final Launch resource handoff overview for backend and iOS slots
 - P0.97 iPhone Final Showcase launch digest for NPC evaluation, operator handoff, and final launch state
+- P0.98 iPhone capture-to-generation receipt for scan/photo source proof
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

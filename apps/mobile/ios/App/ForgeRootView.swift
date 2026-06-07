@@ -113,6 +113,7 @@ struct ForgeRootView: View {
                         startGuidedScan: startGuidedScan,
                         forgeMyth: forgeMyth
                     )
+                    CaptureGenerationReceiptView(receipt: captureGenerationReceipt)
                     ArtifactSummaryView(session: readySession, latestTick: latestNPCTick)
                     WorldResolutionView(session: readySession)
                     NPCReactionsView(session: readySession)
@@ -582,6 +583,14 @@ struct ForgeRootView: View {
             selection: mediaSelection,
             providerReadiness: providerReadiness,
             providerReadinessError: providerReadinessError
+        )
+    }
+
+    private var captureGenerationReceipt: CaptureGenerationReceipt {
+        CaptureGenerationReceiptBuilder.build(
+            capture: state.capture,
+            session: readySession,
+            captureGenerationReadiness: captureGenerationReadiness
         )
     }
 

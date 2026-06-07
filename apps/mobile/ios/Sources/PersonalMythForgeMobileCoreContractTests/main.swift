@@ -200,6 +200,11 @@ do {
     try testCaptureGenerationReadinessMarksARKitScanAssetRoute()
     try testCaptureGenerationReadinessMarksMissingThreeDProvider()
     try testCaptureGenerationReadinessRedactsProviderErrors()
+    try testCaptureGenerationReceiptWaitsBeforeCapture()
+    try testCaptureGenerationReceiptShowsUploadedCaptureBeforeSession()
+    try testCaptureGenerationReceiptShowsReadyGuidedScanGeneration()
+    try testCaptureGenerationReceiptFlagsMissingProvenance()
+    try testCaptureGenerationReceiptRedactsUnsafeText()
     try testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset()
     try testArtifactGenerationProvenanceSummaryShowsMultiImageRoute()
     try testArtifactGenerationProvenanceSummaryShowsScanAssets()
@@ -4709,6 +4714,108 @@ private func testCaptureGenerationReadinessRedactsProviderErrors() throws {
     try expectEqual(readiness.detail, "[withheld]")
 }
 
+private func testCaptureGenerationReceiptWaitsBeforeCapture() throws {
+    let receipt = CaptureGenerationReceiptBuilder.build(
+        capture: nil,
+        session: nil,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+
+    try expectEqual(receipt.status, .waiting)
+    try expectContains(receipt.title, "Capture waiting")
+    try expectContains(receipt.detail, "Guided scan ready")
+    try expectContains(receipt.rows.joined(separator: " "), "multi_image")
+}
+
+private func testCaptureGenerationReceiptShowsUploadedCaptureBeforeSession() throws {
+    let receipt = CaptureGenerationReceiptBuilder.build(
+        capture: guidedScanObjectCapture(),
+        session: nil,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+    let text = receipt.rows.joined(separator: " ")
+
+    try expectEqual(receipt.status, .waiting)
+    try expectContains(receipt.title, "Capture uploaded")
+    try expectContains(text, "cap_ba02a3816bd145b4")
+    try expectContains(text, "guided_scan")
+    try expectContains(text, "reference_image 3")
+    try expectContains(receipt.detail, "waiting for myth session")
+}
+
+private func testCaptureGenerationReceiptShowsReadyGuidedScanGeneration() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let receipt = CaptureGenerationReceiptBuilder.build(
+        capture: guidedScanObjectCapture(),
+        session: session,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+    let text = receipt.rows.joined(separator: " ")
+
+    try expectEqual(receipt.status, .ready)
+    try expectContains(receipt.title, "Capture-to-3D ready")
+    try expectContains(text, "cap_ba02a3816bd145b4")
+    try expectContains(text, "guided_scan")
+    try expectContains(text, "provider local_stub")
+    try expectContains(text, "input multi_image")
+    try expectContains(text, "source images 3")
+    try expectContains(text, "source assets 0")
+    try expectContains(text, "selected 3/3")
+    try expectContains(text, "/openapi/v1/multi-image-to-3d")
+    try expectContains(receipt.privacyNotes.joined(separator: " "), "Raw capture media withheld")
+}
+
+private func testCaptureGenerationReceiptFlagsMissingProvenance() throws {
+    var session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    session.generatedAsset.generationProvenance = nil
+
+    let receipt = CaptureGenerationReceiptBuilder.build(
+        capture: guidedScanObjectCapture(),
+        session: session,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+
+    try expectEqual(receipt.status, .needsAttention)
+    try expectContains(receipt.title, "Capture-to-3D proof missing")
+    try expectContains(receipt.detail, "Generation provenance has not loaded")
+}
+
+private func testCaptureGenerationReceiptRedactsUnsafeText() throws {
+    var capture = guidedScanObjectCapture()
+    capture.captureId = "cap_ba02a3816bd145b4 /Users/zhexu/private"
+    capture.source = "local-capture://cap_ba02a3816bd145b4/media_0.jpg"
+    capture.mediaItems[0].uri = "local-capture://cap_ba02a3816bd145b4/media_0.jpg"
+    var session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    session.generatedAsset.provider = "sk-test"
+    session.generatedAsset.generationProvenance = GeneratedAssetProvenance(
+        inputMode: "multi_image",
+        providerRoute: "Bearer secret /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url=https://pay.example/private",
+        sourceImageCount: 3,
+        selectedSourceImageCount: 2,
+        sourceAssetCount: 0,
+        maxSourceImages: 4,
+        selectionReason: "api_key=secret private_message: raw",
+        rawSourcesIncluded: false
+    )
+
+    let receipt = CaptureGenerationReceiptBuilder.build(
+        capture: capture,
+        session: session,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(receipt), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
+    try expectNotContains(text, "private_message:")
+}
+
 private func testForgeFlowReducerTransitionsThroughReadyAndReset() throws {
     let metadata = sampleMetadata()
     let context = sampleContext()
@@ -5323,6 +5430,43 @@ private func readyGuidedScanSelection() -> CaptureMediaSelection {
             captureMedia(filename: "scan_002.jpg", contentType: "image/jpeg", kind: .image),
             captureMedia(filename: "scan_003.jpg", contentType: "image/jpeg", kind: .image),
         ]
+    )
+}
+
+private func guidedScanObjectCapture() -> ObjectCapture {
+    ObjectCapture(
+        captureId: "cap_ba02a3816bd145b4",
+        status: "ready",
+        source: "phone_capture",
+        captureMode: "guided_scan",
+        objectObservation: ObjectObservation(
+            label: "old brass key",
+            materials: ["metal", "brass"],
+            source: "phone_capture",
+            visualNotes: "worn teeth"
+        ),
+        mediaItems: [
+            captureMediaItem(id: "media_0", role: "reference_image", contentType: "image/jpeg"),
+            captureMediaItem(id: "media_1", role: "reference_image", contentType: "image/jpeg"),
+            captureMediaItem(id: "media_2", role: "reference_image", contentType: "image/png"),
+        ],
+        createdAt: "2026-06-05T00:00:00+00:00"
+    )
+}
+
+private func captureMediaItem(
+    id: String,
+    role: String,
+    contentType: String,
+    byteSize: Int = 9
+) -> CaptureMediaItem {
+    CaptureMediaItem(
+        mediaId: id,
+        role: role,
+        contentType: contentType,
+        byteSize: byteSize,
+        uri: "local-capture://cap_ba02a3816bd145b4/\(id).jpg",
+        moderationStatus: "needs_review"
     )
 }
 
