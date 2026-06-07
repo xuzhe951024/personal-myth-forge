@@ -9,6 +9,7 @@ from myth_forge_api.final_configured_preflight import FinalConfiguredPreflightRe
 from myth_forge_api.final_handoff_index import FinalHandoffIndexResult
 from myth_forge_api.final_showcase_readiness import FinalShowcaseReadinessResult
 from myth_forge_api.final_acceptance import FinalAcceptanceResult
+from myth_forge_api.print_fulfillment_readiness import PrintFulfillmentReadinessResult
 from myth_forge_api.resource_template_acceptance import ResourceTemplateAcceptanceResult
 from myth_forge_api.cli import main
 from myth_forge_api.providers.three_d import (
@@ -796,6 +797,50 @@ def test_cli_final_showcase_readiness_writes_report_and_returns_result_code(
     assert calls == [{"repo_root": tmp_path}]
     assert report["kind"] == "final_showcase_readiness_report"
     assert report["status"] == "blocked"
+
+
+def test_cli_print_fulfillment_readiness_writes_report_and_returns_result_code(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "print-fulfillment-readiness.json"
+    calls = []
+
+    def fake_build_print_fulfillment_readiness_report(**kwargs):
+        calls.append(kwargs)
+        return PrintFulfillmentReadinessResult(
+            exit_code=2,
+            report={
+                "kind": "print_fulfillment_readiness_report",
+                "status": "partial",
+                "summary": {"ready": 4, "partial": 1, "blocked": 0},
+                "checks": [],
+                "operator_actions": ["save configured Treatstock quote evidence"],
+                "commands": ["make print-fulfillment-readiness"],
+                "safety": {"commands_run": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_print_fulfillment_readiness_report",
+        fake_build_print_fulfillment_readiness_report,
+    )
+
+    exit_code = main(
+        [
+            "print-fulfillment-readiness",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 2
+    assert calls == [{"repo_root": tmp_path}]
+    assert report["kind"] == "print_fulfillment_readiness_report"
+    assert report["status"] == "partial"
 
 
 def test_cli_demo_acceptance_writes_report(tmp_path, monkeypatch) -> None:

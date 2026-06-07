@@ -32,6 +32,9 @@ from myth_forge_api.final_resources_preflight import (
 from myth_forge_api.final_showcase_readiness import (
     build_final_showcase_readiness_report,
 )
+from myth_forge_api.print_fulfillment_readiness import (
+    build_print_fulfillment_readiness_report,
+)
 from myth_forge_api.live_provider_evidence import (
     build_live_provider_evidence_report,
 )
@@ -145,6 +148,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if args.command == "final-showcase-readiness":
             return _final_showcase_readiness(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
+        if args.command == "print-fulfillment-readiness":
+            return _print_fulfillment_readiness(
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
@@ -267,6 +275,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     final_showcase_readiness_parser.add_argument("--repo-root", default=None)
     final_showcase_readiness_parser.add_argument("--output", default=None)
+
+    print_fulfillment_readiness_parser = subcommands.add_parser(
+        "print-fulfillment-readiness"
+    )
+    print_fulfillment_readiness_parser.add_argument("--repo-root", default=None)
+    print_fulfillment_readiness_parser.add_argument("--output", default=None)
 
     live_provider_evidence_parser = subcommands.add_parser("live-provider-evidence")
     live_provider_evidence_parser.add_argument("--repo-root", default=None)
@@ -494,6 +508,18 @@ def _final_showcase_readiness(
     output_path: str | None,
 ) -> int:
     result = build_final_showcase_readiness_report(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _print_fulfillment_readiness(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = build_print_fulfillment_readiness_report(
         repo_root=Path(repo_root) if repo_root else None,
     )
     _write_json_payload(result.report, output_path)
