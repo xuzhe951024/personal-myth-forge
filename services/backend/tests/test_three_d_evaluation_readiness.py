@@ -23,7 +23,7 @@ def test_three_d_evaluation_readiness_missing_file_without_running_commands(
     assert result.report["coverage"]["variant_roles"] == {}
     assert result.report["coverage"]["scene_loadable_cases"] == 0
     assert result.report["blockers"] == []
-    assert "evaluate-3d" in result.report["operator_actions"][0]
+    assert "make backend-evaluate-3d" in result.report["operator_actions"][0]
     assert result.report["safety"]["commands_run"] is False
     assert result.report["safety"]["provider_calls"] is False
 
@@ -58,7 +58,7 @@ def test_three_d_evaluation_readiness_blocks_invalid_json(tmp_path: Path) -> Non
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["blockers"][0]["classification"] == "unreadable_report"
-    assert "evaluate-3d" in result.report["blockers"][0]["command"]
+    assert result.report["blockers"][0]["command"] == "make backend-evaluate-3d"
 
 
 def test_three_d_evaluation_readiness_blocks_failed_report_and_redacts(
@@ -85,6 +85,8 @@ def test_three_d_evaluation_readiness_blocks_failed_report_and_redacts(
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["blockers"][0]["classification"] == "three_d_evaluation_failed"
+    assert result.report["blockers"][0]["command"] == "make backend-evaluate-3d"
+    assert "rerun make backend-evaluate-3d" in result.report["operator_actions"][0]
     assert "[redacted]" in report_text or "[withheld]" in report_text
     assert "test-secret" not in report_text
     assert "raw_context:" not in report_text

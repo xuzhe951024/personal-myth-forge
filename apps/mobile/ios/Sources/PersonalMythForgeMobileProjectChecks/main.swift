@@ -119,6 +119,12 @@ do {
     let threeDEvaluationReadinessTests = try readText(
         repositoryRoot.appendingPathComponent("services/backend/tests/test_three_d_evaluation_readiness.py")
     )
+    let npcAgentEvaluationReadiness = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py")
+    )
+    let evaluationMakeTargetsTests = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/tests/test_evaluation_make_targets.py")
+    )
     let iosDeployRunbook = try readText(
         repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/ios_deploy_runbook.py")
     )
@@ -251,6 +257,11 @@ do {
     try requireContains(makefile, ".PHONY: ios-deploy-runbook", "iOS deploy runbook Make phony target")
     try requireContains(makefile, "ios-deploy-runbook:", "iOS deploy runbook Make target")
     try requireContains(makefile, "myth_forge_api.cli ios-deploy-runbook", "iOS deploy runbook CLI target")
+    try requireContains(makefile, "backend-evaluate-3d:", "backend 3D evaluation Make target")
+    try requireContains(makefile, "backend-evaluate-npc:", "backend NPC evaluation Make target")
+    try requireContains(makefile, "backend-evaluate-local:", "combined backend local evaluation Make target")
+    try requireContains(makefile, "--output .local/3d-evaluation-local.json", "3D evaluation local report output")
+    try requireContains(makefile, "--output .local/npc-evaluation-local.json", "NPC evaluation local report output")
     try requireContains(deployConfigWriterScript, "DEVELOPMENT_TEAM", "deploy config writer team key")
     try requireContains(deployConfigWriterScript, "PRODUCT_BUNDLE_IDENTIFIER", "deploy config writer bundle key")
     try requireContains(deployConfigWriterScript, "PMF_BACKEND_BASE_URL", "deploy config writer backend key")
@@ -1225,9 +1236,19 @@ do {
         "3D evaluation readiness local command"
     )
     try requireContains(
+        threeDEvaluationReadiness,
+        "make backend-evaluate-3d",
+        "3D evaluation readiness Make command"
+    )
+    try requireContains(
         threeDEvaluationReadinessTests,
         "test_three_d_evaluation_readiness_ready_report",
         "3D evaluation readiness ready report test"
+    )
+    try requireContains(
+        evaluationMakeTargetsTests,
+        "test_evaluation_make_targets_dry_run_expected_local_commands",
+        "evaluation Make target dry-run test"
     )
     try requireContains(
         finalOperatorHandoff,
@@ -1255,6 +1276,11 @@ do {
         "final operator handoff NPC evaluation command"
     )
     try requireContains(
+        npcAgentEvaluationReadiness,
+        "make backend-evaluate-npc",
+        "NPC evaluation readiness Make command"
+    )
+    try requireContains(
         finalDemoLaunch,
         "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness",
         "final demo launch passes NPC evaluation readiness to handoff"
@@ -1268,6 +1294,16 @@ do {
         iosDeployRunbook,
         "build_three_d_evaluation_readiness_report",
         "iOS deploy runbook 3D evaluation readiness input"
+    )
+    try requireContains(
+        iosDeployRunbook,
+        "LOCAL_THREE_D_EVALUATION_COMMAND",
+        "iOS deploy runbook 3D evaluation Make command"
+    )
+    try requireContains(
+        iosDeployRunbook,
+        "LOCAL_NPC_EVALUATION_COMMAND",
+        "iOS deploy runbook NPC evaluation Make command"
     )
     try requireContains(
         iosDeployRunbook,

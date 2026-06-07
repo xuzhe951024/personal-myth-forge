@@ -450,7 +450,7 @@ def _missing_three_d_evaluation_readiness() -> dict[str, object]:
         "blockers": [],
         "operator_actions": [
             (
-                "run local 3D evaluation with evaluate-3d and write "
+                "run make backend-evaluate-3d to write "
                 "services/backend/.local/3d-evaluation-local.json"
             )
         ],
@@ -499,7 +499,7 @@ def _missing_npc_evaluation_readiness() -> dict[str, object]:
         "blockers": [],
         "operator_actions": [
             (
-                "run local NPC Agent evaluation with evaluate-npc and write "
+                "run make backend-evaluate-npc to write "
                 "services/backend/.local/npc-evaluation-local.json"
             )
         ],
@@ -521,17 +521,14 @@ def _blocked_npc_evaluation_readiness() -> dict[str, object]:
             "label": "NPC Agent evaluation",
             "status": "failed",
             "classification": "npc_agent_evaluation_failed",
-            "command": (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "evaluate-npc --provider local"
-            ),
+            "command": "make backend-evaluate-npc",
             "detail": (
                 "failed Authorization=Bearer test-secret private_message: raw "
                 "file:///Users/example/private.txt"
             ),
         }
     ]
-    readiness["operator_actions"] = ["rerun local NPC Agent evaluation and review failed cases"]
+    readiness["operator_actions"] = ["rerun make backend-evaluate-npc and review failed cases"]
     return readiness
 
 

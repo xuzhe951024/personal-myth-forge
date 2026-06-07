@@ -28,9 +28,10 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert "copy services/backend/final-resources.env.example" in " ".join(
         report["operator_actions"]
     )
-    assert "run local 3D evaluation with evaluate-3d" in " ".join(
-        report["operator_actions"]
-    )
+    assert "run make backend-evaluate-3d" in " ".join(report["operator_actions"])
+    assert "run make backend-evaluate-npc" in " ".join(report["operator_actions"])
+    assert "run local 3D evaluation with evaluate-3d" not in report_text
+    assert "run local NPC Agent evaluation with evaluate-npc" not in report_text
     assert report["safety"] == {
         "commands_run": False,
         "provider_calls": False,
@@ -116,9 +117,11 @@ def test_ios_deploy_runbook_blocks_and_redacts_failed_3d_evaluation(
 
     assert report["status"] == "blocked"
     assert slots["three_d_evaluation"]["status"] == "blocked"
-    assert "rerun local 3D evaluation and review failed cases" in " ".join(
+    assert "rerun make backend-evaluate-3d and review failed cases" in " ".join(
         report["operator_actions"]
     )
+    assert "rerun local 3D evaluation" not in report_text
+    assert "run local 3D evaluation with evaluate-3d" not in report_text
     assert "test-secret" not in report_text
     assert "raw_context:" not in report_text
     assert "file://" not in report_text

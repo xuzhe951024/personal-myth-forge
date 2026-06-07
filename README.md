@@ -210,16 +210,17 @@ uv run python -m myth_forge_api.cli evaluate-3d \
   --output /tmp/p0.5-3d-eval.json
 ```
 
-Run a local NPC Agent evaluation report:
+Run the final no-key local evaluation reports from the project root:
 
 ```bash
-cd services/backend
-uv run python -m myth_forge_api.cli evaluate-npc \
-  --provider local \
-  --suite default-v0 \
-  --tick-steps 2 \
-  --output .local/npc-evaluation-local.json
+make backend-evaluate-3d
+make backend-evaluate-npc
+make backend-evaluate-local
 ```
+
+The first two targets write `services/backend/.local/3d-evaluation-local.json`
+and `services/backend/.local/npc-evaluation-local.json`; the combined target
+runs both in that order.
 
 P0.90 adds this `evaluate-npc` suite for final OpenAI NPC quality handoff. The
 default command is no-key and local. The report includes NPC ids, agent trace
@@ -234,12 +235,7 @@ not run `evaluate-npc`, call OpenAI/Meshy, write config files, or expose raw
 private context. To create or refresh the local readiness report:
 
 ```bash
-cd services/backend
-uv run python -m myth_forge_api.cli evaluate-npc \
-  --provider local \
-  --suite default-v0 \
-  --tick-steps 2 \
-  --output .local/npc-evaluation-local.json
+make backend-evaluate-npc
 ```
 
 Then inspect the iPhone-facing launch readiness payload:
@@ -1035,7 +1031,13 @@ docs/superpowers/verification/assets/p0.34-generation-provenance-contract-390x84
 ```
 
 P0.35 adds a canonical 20-case 3D provider evaluation suite for the final
-Meshy quality handoff. It extends `evaluate-3d` with:
+Meshy quality handoff. The project-root no-key readiness command is:
+
+```bash
+make backend-evaluate-3d
+```
+
+The underlying CLI still supports custom output paths and live provider runs:
 
 ```bash
 cd services/backend

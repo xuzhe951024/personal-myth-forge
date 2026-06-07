@@ -7,11 +7,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_NPC_EVALUATION_PATH = Path("services/backend/.local/npc-evaluation-local.json")
-LOCAL_NPC_EVALUATION_COMMAND = (
-    "cd services/backend && uv run python -m myth_forge_api.cli evaluate-npc "
-    "--provider local --suite default-v0 --tick-steps 2 "
-    "--output .local/npc-evaluation-local.json"
-)
+LOCAL_NPC_EVALUATION_COMMAND = "make backend-evaluate-npc"
 
 
 @dataclass(frozen=True)
@@ -46,7 +42,7 @@ def build_npc_agent_evaluation_readiness_report(
                 coverage=_empty_coverage(),
                 blockers=[],
                 operator_actions=[
-                    "run local NPC Agent evaluation with evaluate-npc and write "
+                    "run make backend-evaluate-npc to write "
                     "services/backend/.local/npc-evaluation-local.json"
                 ],
             ),
@@ -92,7 +88,7 @@ def build_npc_agent_evaluation_readiness_report(
                 coverage=coverage,
                 blockers=[blocker],
                 operator_actions=[
-                    "rerun local NPC Agent evaluation and review failed cases"
+                    "rerun make backend-evaluate-npc and review failed cases"
                 ],
             ),
         )
@@ -137,7 +133,8 @@ def _blocked_result(
                 }
             ],
             operator_actions=[
-                "regenerate services/backend/.local/npc-evaluation-local.json"
+                "rerun make backend-evaluate-npc to regenerate "
+                "services/backend/.local/npc-evaluation-local.json"
             ],
         ),
     )

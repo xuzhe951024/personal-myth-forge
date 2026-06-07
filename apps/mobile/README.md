@@ -1154,7 +1154,13 @@ P0.35 is backend-first but directly supports the final iPhone demo handoff. It
 adds a fixed `default-v0` suite of 20 non-private 3D generation cases so Meshy
 quality can be evaluated consistently once backend-only keys are provided.
 
-Run the no-key local suite:
+Run the final no-key local 3D evaluation report from the project root:
+
+```bash
+make backend-evaluate-3d
+```
+
+The underlying CLI still supports custom output paths and live provider runs:
 
 ```bash
 cd services/backend
