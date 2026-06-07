@@ -111,6 +111,12 @@ public enum ArtifactHandoffActionBuilder {
             return conversionRequiredSummary(preparedAsset)
         case .downloadFailed:
             return retrySummary()
+        case .sceneLoadFailed:
+            return retrySummary(
+                title: "SceneKit load failed",
+                detail: "The generated artifact was cached, but SceneKit could not parse it for preview.",
+                actionTitle: "Retry Scene Load"
+            )
         case .unsupportedURI:
             return blockedSummary(
                 title: "Unsupported asset URI",
@@ -196,14 +202,18 @@ public enum ArtifactHandoffActionBuilder {
         )
     }
 
-    private static func retrySummary() -> ArtifactHandoffActionSummary {
+    private static func retrySummary(
+        title: String = "Asset download failed",
+        detail: String = "The app could not cache the generated artifact for local preview.",
+        actionTitle: String = "Retry Download"
+    ) -> ArtifactHandoffActionSummary {
         summary(
-            title: "Asset download failed",
-            detail: "The app could not cache the generated artifact for local preview.",
+            title: title,
+            detail: detail,
             actions: [
                 action(
                     kind: .retryDownload,
-                    title: "Retry Download",
+                    title: actionTitle,
                     detail: "Try preparing the generated artifact again.",
                     status: .attention,
                     isEnabled: true,

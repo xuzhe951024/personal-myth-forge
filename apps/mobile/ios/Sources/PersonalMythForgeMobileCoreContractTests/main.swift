@@ -265,10 +265,15 @@ do {
     try await testArtifactAssetPreparerRejectsInvalidRemoteURI()
     try await testArtifactAssetPreparerSkipsDownloadWhenFormatMissing()
     try await testArtifactAssetPreparerTreatsCancellationAsCancelled()
+    try testArtifactSceneLoadProofWaitsForPreparedAsset()
+    try testArtifactSceneLoadProofMarksLoadedScene()
+    try testArtifactSceneLoadProofMarksConversionRequired()
+    try testArtifactSceneLoadProofRedactsFailedSceneLoad()
     try testArtifactHandoffActionsWaitForSession()
     try testArtifactHandoffActionsOpenAndShareSceneAsset()
     try testArtifactHandoffActionsShareCachedGLBNeedsConversion()
     try testArtifactHandoffActionsOfferRetryAfterDownloadFailure()
+    try testArtifactHandoffActionsOfferRetryAfterSceneLoadFailure()
     try testArtifactHandoffActionsRedactUnsafeDetails()
     try testForgeFlowReducerTransitionsThroughReadyAndReset()
     try await testForgeFlowServiceUploadsCaptureThenCreatesSession()
@@ -6526,6 +6531,74 @@ private func testArtifactAssetPreparerTreatsCancellationAsCancelled() async thro
     try expectEqual(await cache.storedFilenames(), [])
 }
 
+private func testArtifactSceneLoadProofWaitsForPreparedAsset() throws {
+    let proof = ArtifactSceneLoadProofBuilder.build(preparedAsset: nil, sceneLoadError: nil)
+
+    try expectEqual(proof.status, .waiting)
+    try expectFalse(proof.canOpenScene)
+    try expectContains(proof.detail, "preparing")
+}
+
+private func testArtifactSceneLoadProofMarksLoadedScene() throws {
+    let asset = generatedAsset(format: "dae", uri: "https://cdn.example.com/relic.dae")
+    let proof = ArtifactSceneLoadProofBuilder.build(
+        preparedAsset: preparedArtifactAsset(
+            asset: asset,
+            status: .cachedSceneReady,
+            cachedURL: URL(fileURLWithPath: "/tmp/pmf-assets/relic.dae"),
+            sceneURL: URL(fileURLWithPath: "/tmp/pmf-assets/relic.dae"),
+            statusTitle: "Cached SceneKit asset ready",
+            statusDetail: "SceneKit file cached."
+        ),
+        sceneLoadError: nil
+    )
+
+    try expectEqual(proof.status, .loaded)
+    try expectTrue(proof.canOpenScene)
+    try expectContains(proof.title, "Loaded")
+}
+
+private func testArtifactSceneLoadProofMarksConversionRequired() throws {
+    let asset = generatedAsset(format: "glb", uri: "https://cdn.example.com/relic.glb")
+    let proof = ArtifactSceneLoadProofBuilder.build(
+        preparedAsset: preparedArtifactAsset(
+            asset: asset,
+            status: .cachedRequiresConversion,
+            cachedURL: URL(fileURLWithPath: "/tmp/pmf-assets/relic.glb"),
+            sceneURL: nil,
+            statusTitle: "Cached asset needs conversion",
+            statusDetail: "GLB cached."
+        ),
+        sceneLoadError: nil
+    )
+
+    try expectEqual(proof.status, .conversionRequired)
+    try expectFalse(proof.canOpenScene)
+}
+
+private func testArtifactSceneLoadProofRedactsFailedSceneLoad() throws {
+    let asset = generatedAsset(format: "dae", uri: "https://cdn.example.com/relic.dae")
+    let proof = ArtifactSceneLoadProofBuilder.build(
+        preparedAsset: preparedArtifactAsset(
+            asset: asset,
+            status: .sceneLoadFailed,
+            cachedURL: URL(fileURLWithPath: "/Users/zhexu/private/relic.dae"),
+            sceneURL: nil,
+            statusTitle: "SceneKit load failed sk-test",
+            statusDetail: "Failed at file:///Users/zhexu/private/relic.dae"
+        ),
+        sceneLoadError: "Authorization Bearer sk-test file:///Users/zhexu/private/relic.dae"
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(proof), as: UTF8.self)
+
+    try expectEqual(proof.status, .failed)
+    try expectFalse(proof.canOpenScene)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "/Users/")
+}
+
 private func testArtifactHandoffActionsWaitForSession() throws {
     let summary = ArtifactHandoffActionBuilder.build(session: nil, preparedAsset: nil)
 
@@ -6608,6 +6681,25 @@ private func testArtifactHandoffActionsOfferRetryAfterDownloadFailure() throws {
     try expectEqual(summary.actions[0].kind, .retryDownload)
     try expectEqual(summary.actions[0].title, "Retry Download")
     try expectEqual(summary.actions[0].isPrimary, true)
+    try expectEqual(summary.actions[0].isEnabled, true)
+}
+
+private func testArtifactHandoffActionsOfferRetryAfterSceneLoadFailure() throws {
+    let asset = generatedAsset(format: "dae", uri: "https://cdn.example.com/relic.dae")
+    let summary = ArtifactHandoffActionBuilder.build(
+        session: mythSession(asset: asset),
+        preparedAsset: preparedArtifactAsset(
+            asset: asset,
+            status: .sceneLoadFailed,
+            cachedURL: URL(fileURLWithPath: "/tmp/pmf-assets/relic.dae"),
+            sceneURL: nil,
+            statusTitle: "SceneKit load failed",
+            statusDetail: "SceneKit could not parse the cached file."
+        )
+    )
+
+    try expectEqual(summary.title, "SceneKit load failed")
+    try expectEqual(summary.actions.map(\.kind), [.retryDownload])
     try expectEqual(summary.actions[0].isEnabled, true)
 }
 
