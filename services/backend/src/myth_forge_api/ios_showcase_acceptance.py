@@ -216,6 +216,53 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="live_provider_consent_interface",
+        label="Live provider consent interface",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
+                "LiveProviderConsentSummaryBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
+                "canRunConfiguredAcceptance",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
+                "no live calls by default",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
+                "Provider keys remain backend-only.",
+            ),
+            SourceRequirement("apps/mobile/ios/App/LiveProviderConsentView.swift", "Live Provider Consent"),
+            SourceRequirement(
+                "apps/mobile/ios/App/LiveProviderConsentView.swift",
+                "summary.consentFlag",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "LiveProviderConsentView(summary: liveProviderConsentSummary)",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "LiveProviderConsentSummaryBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
+                "LiveProviderConsentView.swift",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testLiveProviderConsentSummaryShowsReadyConfiguredConsent",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testLiveProviderConsentSummaryRedactsUnsafeText",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="capture_upload",
         label="Capture upload",
         requirements=(

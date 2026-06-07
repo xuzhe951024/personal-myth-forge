@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.100 Live Provider Consent</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #f4f5f2;
+      color: #1f2522;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(244, 245, 242, 0.96), rgba(235, 238, 232, 0.98)),
+        #f4f5f2;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 18px 14px 28px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .nav h1 {
+      margin: 0;
+      min-width: 0;
+      font-size: 20px;
+      font-weight: 720;
+      letter-spacing: 0;
+    }
+
+    .mode {
+      padding: 3px 8px;
+      border: 1px solid #cfd5cf;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #47524d;
+      background: #fff;
+      white-space: nowrap;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(45, 58, 50, 0.12);
+      background: rgba(255, 255, 255, 0.84);
+      box-shadow: 0 8px 22px rgba(31, 37, 34, 0.08);
+    }
+
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .header > div:first-child {
+      min-width: 0;
+    }
+
+    .kicker {
+      margin: 0;
+      font-size: 11px;
+      color: #69736f;
+      font-weight: 650;
+    }
+
+    .title {
+      margin: 1px 0 0;
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 12px;
+      line-height: 1.35;
+      color: #69736f;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0;
+      padding: 3px 0;
+      white-space: nowrap;
+    }
+
+    .blocked {
+      color: #b53a2d;
+    }
+
+    .ready {
+      color: #1f7a54;
+    }
+
+    .waiting {
+      color: #59635f;
+    }
+
+    .rows {
+      display: grid;
+      gap: 7px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 10px 92px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      margin-top: 5px;
+      background: #8a928d;
+    }
+
+    .dot.blocked {
+      background: #c34a3a;
+    }
+
+    .dot.ready {
+      background: #2a8c62;
+    }
+
+    .dot.waiting {
+      background: #8a928d;
+    }
+
+    .label {
+      font-size: 12px;
+      line-height: 1.25;
+      font-weight: 720;
+      color: #33403a;
+    }
+
+    .detail {
+      min-width: 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #66706b;
+      overflow-wrap: anywhere;
+    }
+
+    .flag {
+      margin-top: 9px;
+      padding: 7px 8px;
+      border-radius: 7px;
+      background: #eef1ee;
+      color: #48544e;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+
+    .notes {
+      margin: 9px 0 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #68736e;
+    }
+
+    .compact {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mini {
+      min-height: 84px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #202823;
+      color: #eef3ee;
+    }
+
+    .mini strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .mini span {
+      display: block;
+      margin-top: 5px;
+      font-size: 11px;
+      line-height: 1.25;
+      color: #c7d2ca;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <div class="nav">
+      <h1>Personal Myth Forge</h1>
+      <div class="mode">Configured</div>
+    </div>
+
+    <section class="stack">
+      <article class="panel">
+        <div class="header">
+          <div>
+            <p class="kicker">Final Launch</p>
+            <p class="title">Configured launch blocked</p>
+            <p class="subtitle">mode configured; ready 4, missing 3, blocked 1, manual 3</p>
+          </div>
+          <div class="badge blocked">BLOCKED</div>
+        </div>
+        <div class="rows">
+          <div class="row">
+            <span class="dot blocked"></span>
+            <span class="label">Resources</span>
+            <span class="detail">MESHY_API_KEY and OPENAI_API_KEY still need backend-only values.</span>
+          </div>
+          <div class="row">
+            <span class="dot waiting"></span>
+            <span class="label">Mode</span>
+            <span class="detail">Live calls by default: no. Configured acceptance needs consent.</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="header">
+          <div>
+            <p class="kicker">Provider Safety</p>
+            <p class="title">Live Provider Consent</p>
+            <p class="subtitle">Configured provider handoff is not ready for live acceptance.</p>
+          </div>
+          <div class="badge blocked">BLOCKED</div>
+        </div>
+        <div class="rows">
+          <div class="row">
+            <span class="dot blocked"></span>
+            <span class="label">Providers</span>
+            <span class="detail">Missing MESHY_API_KEY, OPENAI_API_KEY.</span>
+          </div>
+          <div class="row">
+            <span class="dot waiting"></span>
+            <span class="label">Live-call policy</span>
+            <span class="detail">configured acceptance consent required via --allow-live-provider-calls; no live calls by default.</span>
+          </div>
+          <div class="row">
+            <span class="dot blocked"></span>
+            <span class="label">Final resources</span>
+            <span class="detail">Final resources blocked: required values missing.</span>
+          </div>
+          <div class="row">
+            <span class="dot blocked"></span>
+            <span class="label">Resource handoff</span>
+            <span class="detail">Resource handoff blocked: ready 2, missing 4, blocked 1.</span>
+          </div>
+        </div>
+        <div class="flag">--allow-live-provider-calls</div>
+        <p class="notes">Provider keys remain backend-only. The iPhone does not call live providers by default.</p>
+      </article>
+
+      <article class="panel">
+        <div class="header">
+          <div>
+            <p class="kicker">Provider Safety</p>
+            <p class="title">Live Provider Consent</p>
+            <p class="subtitle">Configured providers are ready; pass the consent flag on the Mac before live acceptance.</p>
+          </div>
+          <div class="badge ready">READY</div>
+        </div>
+        <div class="rows">
+          <div class="row">
+            <span class="dot ready"></span>
+            <span class="label">Providers</span>
+            <span class="detail">Meshy 3D ready; OpenAI NPC ready; Treatstock print ready.</span>
+          </div>
+          <div class="row">
+            <span class="dot waiting"></span>
+            <span class="label">Live-call policy</span>
+            <span class="detail">configured acceptance consent required via --allow-live-provider-calls; no live calls by default.</span>
+          </div>
+          <div class="row">
+            <span class="dot ready"></span>
+            <span class="label">Final resources</span>
+            <span class="detail">Final resources ready.</span>
+          </div>
+          <div class="row">
+            <span class="dot ready"></span>
+            <span class="label">Resource handoff</span>
+            <span class="detail">Resource handoff ready.</span>
+          </div>
+        </div>
+        <p class="notes">Use --allow-live-provider-calls on the Mac for configured acceptance.</p>
+      </article>
+
+      <div class="compact">
+        <div class="mini">
+          <strong>3D</strong>
+          <span>Meshy ready for image and multi-image generation.</span>
+        </div>
+        <div class="mini">
+          <strong>NPC</strong>
+          <span>OpenAI Agent runtime is configured through backend env only.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

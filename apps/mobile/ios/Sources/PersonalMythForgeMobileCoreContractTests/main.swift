@@ -80,6 +80,10 @@ do {
     try testFinalLaunchMobileSummaryShowsResourceBlockerReceipt()
     try testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt()
     try testFinalLaunchMobileSummaryRedactsUnsafeLaunchReceipt()
+    try testLiveProviderConsentSummaryWaitsForProviderReadiness()
+    try testLiveProviderConsentSummaryBlocksMissingConfiguredProviders()
+    try testLiveProviderConsentSummaryShowsReadyConfiguredConsent()
+    try testLiveProviderConsentSummaryRedactsUnsafeText()
     try testFinalLaunchMobileSummaryBuildsPartialOperatorStatus()
     try testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsMissingResourceChecklist()
@@ -1907,6 +1911,126 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeLaunchReceipt() throws {
     try expectNotContains(text, "local-capture://")
     try expectNotContains(text, "checkout")
     try expectNotContains(text, "Bearer")
+}
+
+private func testLiveProviderConsentSummaryWaitsForProviderReadiness() throws {
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: nil,
+        providerReadinessError: nil,
+        finalLaunchReport: nil,
+        finalLaunchError: nil
+    )
+
+    try expectEqual(summary.status, .waiting)
+    try expectEqual(summary.canRunConfiguredAcceptance, false)
+    try expectContains(summary.title, "waiting")
+    try expectContains(summary.subtitle, "provider readiness")
+    try expectContains(summary.rows.map(\.id).joined(separator: " "), "providers")
+    try expectContains(summary.privacyNotes.joined(separator: " "), "backend-only")
+}
+
+private func testLiveProviderConsentSummaryBlocksMissingConfiguredProviders() throws {
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: missingProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchReport: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "blocked",
+            finalResourcesStatus: "blocked",
+            finalResourcesItemsJSON: blockedFinalResourceItemsJSON(),
+            resourceHandoffStatus: "blocked",
+            resourceHandoffBackendStatus: "missing",
+            resourceHandoffIOSStatus: "blocked",
+            resourceHandoffAction: "provide MESHY_API_KEY"
+        ),
+        finalLaunchError: nil
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.status, .blocked)
+    try expectEqual(summary.canRunConfiguredAcceptance, false)
+    try expectEqual(summary.consentFlag, "--allow-live-provider-calls")
+    try expectContains(text, "MESHY_API_KEY")
+    try expectContains(text, "OPENAI_API_KEY")
+    try expectContains(text, "consent required")
+    try expectContains(text, "no live calls by default")
+    try expectContains(text, "Resource handoff blocked")
+}
+
+private func testLiveProviderConsentSummaryShowsReadyConfiguredConsent() throws {
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: readyConfiguredProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchReport: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
+            finalAcceptanceStatus: "ready",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready",
+            resourceHandoffAction: "final resource handoff ready"
+        ),
+        finalLaunchError: nil
+    )
+    let rowText = summary.rows.map { "\($0.label) \($0.detail)" }.joined(separator: " ")
+
+    try expectEqual(summary.status, .ready)
+    try expectEqual(summary.canRunConfiguredAcceptance, true)
+    try expectEqual(summary.consentFlag, "--allow-live-provider-calls")
+    try expectContains(summary.title, "ready")
+    try expectContains(rowText, "Meshy")
+    try expectContains(rowText, "OpenAI")
+    try expectContains(rowText, "print")
+    try expectContains(rowText, "Final resources ready")
+    try expectContains(summary.privacyNotes.joined(separator: " "), "does not call live providers by default")
+}
+
+private func testLiveProviderConsentSummaryRedactsUnsafeText() throws {
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: ProviderReadinessResponse(
+            overallDemoReady: false,
+            overallRealReady: false,
+            providers: [
+                ProviderReadinessItem(
+                    kind: "three_d",
+                    selectedProvider: "meshy sk-test",
+                    status: "Authorization Bearer token /Users/zhexu",
+                    isDemoReady: false,
+                    isRealProviderReady: false,
+                    missingEnv: ["MESHY_API_KEY", "api_key=secret"],
+                    notes: ["raw_context: private message local-capture://cap"]
+                ),
+            ]
+        ),
+        providerReadinessError: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
+        finalLaunchReport: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "blocked",
+            finalResourcesStatus: "blocked",
+            finalResourcesAction: "api_key=secret checkout_url=https://pay.example/private",
+            resourceHandoffAction: "provide sk-test /Users/zhexu/private"
+        ),
+        finalLaunchError: "Bearer sk-test /tmp/private checkout_url"
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "/tmp/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "Authorization")
+    try expectNotContains(text, "raw_context")
+    try expectNotContains(text, "api_key")
 }
 
 private func testFinalLaunchMobileSummaryBuildsPartialOperatorStatus() throws {
@@ -5970,6 +6094,39 @@ private func missingProviderReadiness() -> ProviderReadinessResponse {
                 isDemoReady: false,
                 isRealProviderReady: false,
                 missingEnv: ["OPENAI_API_KEY"]
+            ),
+        ]
+    )
+}
+
+private func readyConfiguredProviderReadiness() -> ProviderReadinessResponse {
+    ProviderReadinessResponse(
+        overallDemoReady: true,
+        overallRealReady: true,
+        providers: [
+            ProviderReadinessItem(
+                kind: "three_d",
+                selectedProvider: "meshy",
+                status: "ready",
+                isDemoReady: true,
+                isRealProviderReady: true,
+                capabilities: ["text_to_3d", "image_to_3d", "multi_image_to_3d"]
+            ),
+            ProviderReadinessItem(
+                kind: "npc",
+                selectedProvider: "openai",
+                status: "ready",
+                isDemoReady: true,
+                isRealProviderReady: true,
+                capabilities: ["structured_agent_traces", "structured_agent_ticks"]
+            ),
+            ProviderReadinessItem(
+                kind: "print",
+                selectedProvider: "treatstock",
+                status: "ready",
+                isDemoReady: true,
+                isRealProviderReady: true,
+                capabilities: ["quote", "order_handoff"]
             ),
         ]
     )

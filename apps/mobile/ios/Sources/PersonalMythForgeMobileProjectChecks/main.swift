@@ -38,6 +38,7 @@ do {
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
     let captureGenerationReceiptView = try readText(appRoot.appendingPathComponent("CaptureGenerationReceiptView.swift"))
     let forgeProgressReceiptView = try readText(appRoot.appendingPathComponent("ForgeProgressReceiptView.swift"))
+    let liveProviderConsentView = try readText(appRoot.appendingPathComponent("LiveProviderConsentView.swift"))
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
@@ -72,6 +73,9 @@ do {
     let finalShowcaseSummary = try readText(coreRoot.appendingPathComponent("FinalShowcaseSummary.swift"))
     let finalLaunchMobileSummary = try readText(
         coreRoot.appendingPathComponent("FinalLaunchMobileSummary.swift")
+    )
+    let liveProviderConsentSummary = try readText(
+        coreRoot.appendingPathComponent("LiveProviderConsentSummary.swift")
     )
     let contextCapsuleReview = try readText(coreRoot.appendingPathComponent("ContextCapsuleReview.swift"))
     let forgeReadinessSummary = try readText(coreRoot.appendingPathComponent("ForgeReadinessSummary.swift"))
@@ -275,6 +279,7 @@ do {
         "CaptureFormView.swift",
         "CaptureGenerationReceiptView.swift",
         "ForgeProgressReceiptView.swift",
+        "LiveProviderConsentView.swift",
         "ArtifactSummaryView.swift",
         "Artifact3DPreviewView.swift",
         "GuidedScanCaptureView.swift",
@@ -369,6 +374,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000023 /* ForgeProgressReceiptView.swift in Sources */,",
         "forge progress receipt Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000024 /* LiveProviderConsentView.swift in Sources */,",
+        "live provider consent Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -556,6 +567,16 @@ do {
         forgeRootView,
         "FinalLaunchMobileSummaryBuilder.build",
         "final launch mobile summary root wiring"
+    )
+    try requireContains(
+        forgeRootView,
+        "LiveProviderConsentView(summary: liveProviderConsentSummary)",
+        "live provider consent view wiring"
+    )
+    try requireContains(
+        forgeRootView,
+        "LiveProviderConsentSummaryBuilder.build",
+        "live provider consent summary root wiring"
     )
     try requireContains(forgeRootView, "finalDemoLaunch", "final demo launch root state")
     try requireContains(forgeRootView, "finalLaunchMode", "final launch mode root state")
@@ -852,6 +873,15 @@ do {
     try requireContains(finalLaunchMobileSummary, "liveCallPolicy", "final launch summary live policy mapping")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRows", "final launch resource checklist rows")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRow", "final launch resource checklist row builder")
+    try requireContains(liveProviderConsentSummary, "LiveProviderConsentSummaryBuilder", "live provider consent builder")
+    try requireContains(liveProviderConsentSummary, "LiveProviderConsentStatus", "live provider consent status")
+    try requireContains(liveProviderConsentSummary, "canRunConfiguredAcceptance", "live provider consent ready gate")
+    try requireContains(liveProviderConsentSummary, "no live calls by default", "live provider no-default-call policy")
+    try requireContains(liveProviderConsentSummary, "Provider keys remain backend-only.", "live provider secret boundary")
+    try requireContains(liveProviderConsentSummary, "sanitize", "live provider consent redaction")
+    try requireContains(liveProviderConsentView, "Live Provider Consent", "live provider consent view title")
+    try requireContains(liveProviderConsentView, "summary.consentFlag", "live provider consent flag rendering")
+    try requireContains(liveProviderConsentView, "summary.privacyNotes", "live provider consent privacy rendering")
     try requireContains(finalLaunchMobileSummary, "resourceHandoffRows", "final launch resource handoff rows")
     try requireContains(
         finalLaunchMobileSummary,
@@ -1027,6 +1057,26 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsMissingResourceChecklist",
         "final resources checklist summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testLiveProviderConsentSummaryWaitsForProviderReadiness",
+        "live provider consent waiting test"
+    )
+    try requireContains(
+        contractTests,
+        "testLiveProviderConsentSummaryBlocksMissingConfiguredProviders",
+        "live provider consent blocked test"
+    )
+    try requireContains(
+        contractTests,
+        "testLiveProviderConsentSummaryShowsReadyConfiguredConsent",
+        "live provider consent ready test"
+    )
+    try requireContains(
+        contractTests,
+        "testLiveProviderConsentSummaryRedactsUnsafeText",
+        "live provider consent redaction test"
     )
     try requireContains(
         finalLaunchMobileSummary,

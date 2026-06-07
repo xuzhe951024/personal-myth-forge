@@ -81,6 +81,7 @@ struct ForgeRootView: View {
                     }
                     .pickerStyle(.segmented)
                     FinalLaunchStatusView(summary: finalLaunchMobileSummary)
+                    LiveProviderConsentView(summary: liveProviderConsentSummary)
                     DemoScriptView(
                         script: demoScript,
                         autopilotPlan: showcaseAutopilotPlan,
@@ -655,6 +656,15 @@ struct ForgeRootView: View {
         FinalLaunchMobileSummaryBuilder.build(
             report: finalDemoLaunch,
             error: finalDemoLaunchError
+        )
+    }
+
+    private var liveProviderConsentSummary: LiveProviderConsentSummary {
+        LiveProviderConsentSummaryBuilder.build(
+            providerReadiness: providerReadiness,
+            providerReadinessError: providerReadinessError,
+            finalLaunchReport: finalDemoLaunch,
+            finalLaunchError: finalDemoLaunchError
         )
     }
 
