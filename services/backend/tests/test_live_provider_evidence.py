@@ -137,6 +137,37 @@ def test_live_provider_evidence_marks_partial_configured_launch_report(
     assert evidence["final_demo_launch_configured"]["status"] == "partial"
 
 
+def test_live_provider_evidence_cli_writes_report(tmp_path: Path) -> None:
+    output = tmp_path / "live-provider-evidence.json"
+
+    from myth_forge_api.cli import main
+
+    exit_code = main(
+        [
+            "live-provider-evidence",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output),
+        ]
+    )
+
+    assert exit_code == 2
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["kind"] == "live_provider_evidence_report"
+    assert payload["status"] == "missing"
+
+
+def test_live_provider_evidence_makefile_target() -> None:
+    makefile = (Path(__file__).resolve().parents[3] / "Makefile").read_text(
+        encoding="utf-8"
+    )
+
+    assert "live-provider-evidence:" in makefile
+    assert "myth_forge_api.cli live-provider-evidence" in makefile
+    assert ".local/live-provider-evidence.json" in makefile
+
+
 def _write_ready_evidence(repo_root: Path) -> None:
     _write_json(
         repo_root / "services/backend/.local/provider-handoff.json",
