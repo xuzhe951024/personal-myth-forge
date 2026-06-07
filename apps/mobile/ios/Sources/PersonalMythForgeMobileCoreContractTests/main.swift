@@ -2994,6 +2994,7 @@ private func testDecodesConfiguredEvidencePlanFromFinalLaunchPayload() throws {
     try expectEqual(plan.status, "blocked")
     try expectEqual(plan.summary.steps, 6)
     try expectEqual(plan.summary.consentRequired, 2)
+    try expectEqual(plan.summary.plannedConsentSteps, 3)
     try expectEqual(plan.steps.first?.id, "three_d_evaluation_configured")
     try expectEqual(
         plan.stepsById["three_d_evaluation_configured"]?.requiresLiveProviderConsent,
@@ -3011,7 +3012,10 @@ private func testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan() throws {
     )
     let text = summary.configuredEvidencePlanRows.joined(separator: " ")
 
-    try expectContains(text, "Configured evidence blocked: steps 6, ready 3, blocked 2, consent 2.")
+    try expectContains(
+        text,
+        "Configured evidence blocked: steps 6, ready 3, blocked 2, consent now 2, planned 3."
+    )
     try expectContains(text, "three_d_evaluation_configured: blocked")
     try expectContains(text, "requires MESHY_API_KEY")
     try expectContains(text, "Consent flag: PMF_ALLOW_LIVE_PROVIDER_CALLS")
@@ -4826,8 +4830,8 @@ private func finalDemoLaunchPayload(
     let configuredEvidencePlanReady = configuredEvidencePlanStatus == "ready"
     let configuredEvidencePlanStepStatus = configuredEvidencePlanReady ? "ready" : "blocked"
     let configuredEvidencePlanSummaryJSON = configuredEvidencePlanReady
-        ? #"{"steps": 6, "ready": 6, "ready_to_run": 0, "blocked": 0, "consent_required": 2, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
-        : #"{"steps": 6, "ready": 3, "ready_to_run": 1, "blocked": 2, "consent_required": 2, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
+        ? #"{"steps": 6, "ready": 6, "ready_to_run": 0, "blocked": 0, "consent_required": 2, "planned_consent_steps": 3, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
+        : #"{"steps": 6, "ready": 3, "ready_to_run": 1, "blocked": 2, "consent_required": 2, "planned_consent_steps": 3, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
     let configuredEvidencePlanOperatorActionsJSON = configuredEvidencePlanReady
         ? #"[]"#
         : #"["provide MESHY_API_KEY in services/backend/.env", "rerun configured 3D evidence after consent"]"#

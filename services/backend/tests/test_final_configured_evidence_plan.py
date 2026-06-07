@@ -27,6 +27,8 @@ def test_configured_evidence_plan_blocks_missing_resources_without_running_comma
         "requires_live_provider_consent"
     ] is True
     assert report["summary"]["commands_run"] == 0
+    assert report["summary"]["consent_required"] == 0
+    assert report["summary"]["planned_consent_steps"] == 3
     assert report["summary"]["live_provider_steps"] == 3
     assert report["safety"]["commands_run"] is False
     assert report["safety"]["live_provider_calls"] is False
@@ -55,6 +57,7 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
     assert report["status"] == "consent_required"
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["consent_required"] >= 3
+    assert report["summary"]["planned_consent_steps"] == 3
     assert steps["final_resource_fill_guide"]["status"] == "ready"
     assert steps["final_resource_apply_preview"]["status"] == "ready"
     assert steps["final_apply_resources"]["status"] == "ready_to_run"
@@ -91,6 +94,7 @@ def test_configured_evidence_plan_marks_live_steps_ready_to_run_with_consent(
     assert report["status"] == "ready_to_run"
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["consent_required"] == 0
+    assert report["summary"]["planned_consent_steps"] == 3
     assert steps["three_d_evaluation_configured"]["status"] == "ready_to_run"
     assert steps["npc_evaluation_configured"]["status"] == "ready_to_run"
     assert steps["final_acceptance_configured"]["status"] == "ready_to_run"
@@ -119,6 +123,7 @@ def test_configured_evidence_plan_is_ready_with_configured_evidence(
     assert report["summary"]["ready"] == report["summary"]["steps"]
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["consent_required"] == 0
+    assert report["summary"]["planned_consent_steps"] == 0
     assert steps["provider_handoff"]["status"] == "ready"
     assert steps["three_d_evaluation_configured"]["status"] == "ready"
     assert steps["npc_evaluation_configured"]["status"] == "ready"

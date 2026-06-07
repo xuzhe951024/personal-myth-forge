@@ -55,12 +55,15 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "model_live_provider_evidence_field" in requirement_ids
     assert "model_configured_evidence_plan" in requirement_ids
     assert "model_configured_evidence_plan_field" in requirement_ids
+    assert "model_configured_evidence_plan_planned_consent" in requirement_ids
     assert "mobile_summary_live_provider_evidence_rows" in requirement_ids
     assert "mobile_summary_configured_evidence_plan_rows" in requirement_ids
+    assert "mobile_summary_configured_evidence_plan_planned_consent" in requirement_ids
     assert "mobile_status_view_live_evidence" in requirement_ids
     assert "mobile_status_view_configured_evidence" in requirement_ids
     assert "contract_live_provider_evidence_decode" in requirement_ids
     assert "contract_configured_evidence_plan_decode" in requirement_ids
+    assert "contract_configured_evidence_plan_planned_consent" in requirement_ids
     assert "contract_configured_evidence_plan_summary" in requirement_ids
     assert "contract_configured_evidence_plan_redaction" in requirement_ids
     assert result.report["safety"] == {
@@ -154,6 +157,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "liveProviderEvidence",
                 "FinalConfiguredEvidencePlanReport",
                 "finalConfiguredEvidencePlan",
+                "plannedConsentSteps",
                 "ResourceHandoffReport",
                 "resourceReport",
             ]
@@ -201,6 +205,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "visualRegressionRows",
                 "liveProviderEvidenceRows",
                 "configuredEvidencePlanRows",
+                "consent now",
                 "rehearsalFreshnessRow",
                 "Freshness:",
                 "resourceHandoffRows",
@@ -267,6 +272,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression",
                 "testDecodesLiveProviderEvidenceFromFinalLaunchPayload",
                 "testDecodesConfiguredEvidencePlanFromFinalLaunchPayload",
+                "planned_consent_steps",
                 "testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan",
                 "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan",
                 "testDecodesResourceHandoffFromFinalLaunchPayload",

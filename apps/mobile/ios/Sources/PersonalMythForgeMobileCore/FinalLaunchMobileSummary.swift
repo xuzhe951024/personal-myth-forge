@@ -680,7 +680,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             return ["Configured evidence plan has not loaded."]
         }
         var rows = [
-            "Configured evidence \(sanitize(plan.status)): steps \(plan.summary.steps), ready \(plan.summary.ready), blocked \(plan.summary.blocked), consent \(plan.summary.consentRequired).",
+            "Configured evidence \(sanitize(plan.status)): steps \(plan.summary.steps), ready \(plan.summary.ready), blocked \(plan.summary.blocked), consent now \(plan.summary.consentRequired), planned \(plan.summary.plannedConsentSteps).",
             "Live steps \(plan.summary.liveProviderSteps), cost steps \(plan.summary.costSteps), repo writes \(plan.summary.repoLocalWriteSteps).",
         ]
         if plan.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" {

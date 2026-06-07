@@ -2368,6 +2368,7 @@ public struct FinalConfiguredEvidencePlanSummary: Codable, Equatable, Sendable {
     public var readyToRun: Int
     public var blocked: Int
     public var consentRequired: Int
+    public var plannedConsentSteps: Int
     public var liveProviderSteps: Int
     public var costSteps: Int
     public var repoLocalWriteSteps: Int
@@ -2379,6 +2380,7 @@ public struct FinalConfiguredEvidencePlanSummary: Codable, Equatable, Sendable {
         readyToRun: Int,
         blocked: Int,
         consentRequired: Int,
+        plannedConsentSteps: Int,
         liveProviderSteps: Int,
         costSteps: Int,
         repoLocalWriteSteps: Int,
@@ -2389,6 +2391,7 @@ public struct FinalConfiguredEvidencePlanSummary: Codable, Equatable, Sendable {
         self.readyToRun = readyToRun
         self.blocked = blocked
         self.consentRequired = consentRequired
+        self.plannedConsentSteps = plannedConsentSteps
         self.liveProviderSteps = liveProviderSteps
         self.costSteps = costSteps
         self.repoLocalWriteSteps = repoLocalWriteSteps

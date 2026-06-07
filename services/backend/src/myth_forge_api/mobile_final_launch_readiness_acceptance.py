@@ -167,6 +167,12 @@ SOURCE_REQUIREMENTS = (
         "finalConfiguredEvidencePlan",
     ),
     SourceRequirement(
+        "model_configured_evidence_plan_planned_consent",
+        "Final configured evidence planned consent field",
+        PMF_MODELS_PATH,
+        "plannedConsentSteps",
+    ),
+    SourceRequirement(
         "model_resource_handoff",
         "Resource handoff report model",
         PMF_MODELS_PATH,
@@ -345,6 +351,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch configured evidence plan rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
         "configuredEvidencePlanRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_configured_evidence_plan_planned_consent",
+        "Mobile final launch configured evidence planned consent copy",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "consent now",
     ),
     SourceRequirement(
         "mobile_summary_resource_handoff_rows",
@@ -645,6 +657,12 @@ SOURCE_REQUIREMENTS = (
         "Contract test decodes configured evidence plan",
         CORE_CONTRACT_TESTS_PATH,
         "testDecodesConfiguredEvidencePlanFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_configured_evidence_plan_planned_consent",
+        "Contract fixture includes configured evidence planned consent",
+        CORE_CONTRACT_TESTS_PATH,
+        "planned_consent_steps",
     ),
     SourceRequirement(
         "contract_configured_evidence_plan_summary",

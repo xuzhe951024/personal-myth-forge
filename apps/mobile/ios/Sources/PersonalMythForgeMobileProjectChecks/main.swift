@@ -1332,6 +1332,11 @@ do {
     )
     try requireContains(
         pmfModels,
+        "plannedConsentSteps",
+        "final configured evidence planned consent model field"
+    )
+    try requireContains(
+        pmfModels,
         "ThreeDEvaluationReadinessInputModes",
         "3D evaluation input mode coverage model"
     )
@@ -1704,6 +1709,16 @@ do {
         finalLaunchMobileSummary,
         "Configured evidence",
         "final launch configured evidence plan copy"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "consent now",
+        "final launch configured evidence current consent copy"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "plannedConsentSteps",
+        "final launch configured evidence planned consent row"
     )
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
     try requireContains(

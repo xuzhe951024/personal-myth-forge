@@ -347,6 +347,11 @@ def _summary(steps: list[dict[str, Any]]) -> dict[str, int]:
         "ready_to_run": statuses.count("ready_to_run"),
         "blocked": statuses.count("blocked"),
         "consent_required": statuses.count("consent_required"),
+        "planned_consent_steps": sum(
+            1
+            for step in steps
+            if step["requires_live_provider_consent"] and step["status"] != "ready"
+        ),
         "live_provider_steps": sum(1 for step in steps if step["may_call_live_provider"]),
         "cost_steps": sum(1 for step in steps if step["cost_risk"]),
         "repo_local_write_steps": sum(1 for step in steps if step["repo_local_write"]),
