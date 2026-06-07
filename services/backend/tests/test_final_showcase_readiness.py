@@ -143,6 +143,26 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert actions.count("make print-fulfillment-readiness") == 1
 
 
+def test_final_showcase_readiness_surfaces_final_resource_repair_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_final_resources(
+        repo_root,
+        bundle_identifier="com.example.personalmythforge",
+        backend_base_url="http://192.168.1.10:8080",
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    assert result.exit_code == 2
+    assert result.report["evidence"]["final_resource_apply_preview"]["status"] == "blocked"
+    assert "run make final-resource-repair" in result.report["operator_actions"]
+
+
 def test_final_showcase_readiness_normalizes_legacy_final_resource_copy_action(
     tmp_path: Path,
 ) -> None:
@@ -361,7 +381,12 @@ def _write_capture_source_acceptance(repo_root: Path) -> None:
     )
 
 
-def _write_final_resources(repo_root: Path) -> None:
+def _write_final_resources(
+    repo_root: Path,
+    *,
+    bundle_identifier: str = "com.zhexu.personalmythforge.dev",
+    backend_base_url: str = "http://10.0.0.24:8080",
+) -> None:
     _write_text(
         repo_root / "services/backend/.local/final-resources.env",
         "\n".join(
@@ -370,8 +395,8 @@ def _write_final_resources(repo_root: Path) -> None:
                 "OPENAI_API_KEY=sk-openai-test",
                 "PRINT_PROVIDER=local",
                 "DEVELOPMENT_TEAM=TEAM12345",
-                "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
-                "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+                f"PRODUCT_BUNDLE_IDENTIFIER={bundle_identifier}",
+                f"PMF_BACKEND_BASE_URL={backend_base_url}",
                 "PMF_FINAL_LAUNCH_MODE=local",
             ]
         ),

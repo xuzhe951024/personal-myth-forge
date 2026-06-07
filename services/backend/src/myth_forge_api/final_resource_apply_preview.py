@@ -7,6 +7,7 @@ from typing import Any
 from myth_forge_api.final_resource_requirements import (
     build_final_resource_requirements_report,
 )
+from myth_forge_api.final_resource_repair import build_final_resource_repair_report
 from myth_forge_api.final_resources_preflight import (
     DEFAULT_RESOURCES_PATH,
     SECRET_KEYS,
@@ -18,10 +19,14 @@ IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
 BACKEND_WRITER = "services/backend/scripts/write_backend_env.sh"
 IOS_WRITER = "apps/mobile/ios/scripts/write_deploy_local_config.sh"
 
-COMMANDS = [
+BASE_COMMANDS = [
     "make final-resource-apply-preview",
     "make final-resources-preflight",
     "make final-apply-resources",
+]
+REPAIR_COMMANDS = [
+    "make final-resource-repair-preview",
+    "make final-resource-repair",
 ]
 
 BACKEND_SLOTS = {
@@ -71,7 +76,13 @@ def build_final_resource_apply_preview_report(
         repo_root=selected_repo_root,
         resources_file=selected_resources_file,
     )
+    repair_result = build_final_resource_repair_report(
+        repo_root=selected_repo_root,
+        resources_file=selected_resources_file,
+        apply=False,
+    )
     preflight_report = preflight_result.report
+    repair_report = repair_result.report
     preflight_items = {
         item["id"]: item for item in preflight_report.get("items", [])
     }
@@ -123,12 +134,14 @@ def build_final_resource_apply_preview_report(
         "operator_actions": _operator_actions(
             status=status,
             preflight_report=preflight_report,
+            repair_report=repair_report,
             targets=targets,
         ),
-        "commands": COMMANDS,
+        "commands": _commands(repair_report),
         "source_reports": {
             "final_resources_preflight": _source_summary(preflight_report),
             "final_resource_requirements": _source_summary(requirements_result.report),
+            "final_resource_repair": _source_summary(repair_report),
         },
         "safety": _safety(),
     }
@@ -252,9 +265,12 @@ def _operator_actions(
     *,
     status: str,
     preflight_report: dict[str, Any],
+    repair_report: dict[str, Any],
     targets: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
+    if repair_report.get("status") == "repairable":
+        actions.append("run make final-resource-repair")
     if status == "ready":
         actions.append("review preview, then run make final-apply-resources")
     elif preflight_report.get("status") == "missing":
@@ -268,6 +284,12 @@ def _operator_actions(
     actions.extend(str(action) for action in preflight_report.get("operator_actions", []))
     actions.append("rerun make final-resource-apply-preview before applying resources")
     return _dedupe(actions)
+
+
+def _commands(repair_report: dict[str, Any]) -> list[str]:
+    if repair_report.get("status") == "repairable":
+        return [*REPAIR_COMMANDS, *BASE_COMMANDS]
+    return BASE_COMMANDS
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:

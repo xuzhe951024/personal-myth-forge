@@ -22,6 +22,8 @@ from myth_forge_api.print_fulfillment_readiness import (
 OPERATOR_SEQUENCE = [
     "make final-resource-requirements",
     "make final-resources-preflight",
+    "make final-resource-repair-preview",
+    "make final-resource-repair",
     "make final-resource-apply-preview",
     "make final-apply-resources",
     "make backend-device-demo",
@@ -83,6 +85,7 @@ def build_final_external_action_ledger_report(
         "source_reports": {
             "final_resource_requirements": _source_summary(requirements),
             "final_resource_apply_preview": _source_summary(apply_preview),
+            "final_resource_repair": _repair_source_summary(apply_preview),
             "live_provider_evidence": _source_summary(live_provider_evidence),
             "print_fulfillment_readiness": _source_summary(print_fulfillment),
             "ios_deploy_runbook": _source_summary(ios_deploy_runbook),
@@ -174,7 +177,11 @@ def _resource_action(requirement: dict[str, Any]) -> dict[str, Any]:
 def _safe_local_write_actions(apply_preview: dict[str, Any]) -> list[dict[str, Any]]:
     preview_status = _normalized_status(str(apply_preview.get("status", "missing")))
     apply_status = "ready" if preview_status == "ready" else "blocked"
+    repair_action = _final_resource_repair_action(
+        _repair_source_summary(apply_preview),
+    )
     return [
+        repair_action,
         _action(
             action_id="preview_final_resource_apply",
             group_id="safe_local_writes",
@@ -200,6 +207,66 @@ def _safe_local_write_actions(apply_preview: dict[str, Any]) -> list[dict[str, A
             writes_repo_local_files=True,
         ),
     ]
+
+
+def _final_resource_repair_action(repair_source: dict[str, Any]) -> dict[str, Any]:
+    repair_status = str(repair_source.get("status", "missing"))
+    if repair_status == "repairable":
+        return _action(
+            action_id="repair_final_resources",
+            group_id="safe_local_writes",
+            label="Repair final resources",
+            status="blocked",
+            command="make final-resource-repair",
+            detail="Clear stale final resource placeholders before preview/apply.",
+            safe_local_write=True,
+            writes_repo_local_files=True,
+            classification="placeholder_value",
+        )
+    if repair_status == "missing":
+        return _action(
+            action_id="repair_final_resources",
+            group_id="safe_local_writes",
+            label="Repair final resources",
+            status="missing",
+            command="make final-resource-init",
+            detail="Create the ignored final resources file before repair can run.",
+            safe_local_write=True,
+            writes_repo_local_files=True,
+            classification="missing_final_resources",
+        )
+    if repair_status == "blocked":
+        return _action(
+            action_id="repair_final_resources",
+            group_id="safe_local_writes",
+            label="Repair final resources",
+            status="blocked",
+            command="make final-resource-repair-preview",
+            detail="Review the blocked repair report before changing final resources.",
+            safe_local_write=True,
+            classification="repair_blocked",
+        )
+    if repair_status in {"ready", "repaired"}:
+        return _action(
+            action_id="repair_final_resources",
+            group_id="safe_local_writes",
+            label="Repair final resources",
+            status="ready",
+            command="make final-resource-repair-preview",
+            detail="No stale final resource placeholders need repair.",
+            safe_local_write=True,
+            classification="no_repair_needed",
+        )
+    return _action(
+        action_id="repair_final_resources",
+        group_id="safe_local_writes",
+        label="Repair final resources",
+        status="blocked",
+        command="make final-resource-repair-preview",
+        detail="Refresh the repair preview because repair status is unavailable.",
+        safe_local_write=True,
+        classification="repair_status_unknown",
+    )
 
 
 def _live_provider_cost_actions(
@@ -513,6 +580,23 @@ def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
         "kind": report.get("kind", "unknown"),
         "status": report.get("status") or report.get("overall_status") or "unknown",
         "summary": report.get("summary", {}),
+    }
+
+
+def _repair_source_summary(apply_preview: dict[str, Any]) -> dict[str, Any]:
+    source_reports = apply_preview.get("source_reports", {})
+    if isinstance(source_reports, dict):
+        repair_source = source_reports.get("final_resource_repair", {})
+        if isinstance(repair_source, dict):
+            return {
+                "kind": repair_source.get("kind", "final_resource_repair_report"),
+                "status": repair_source.get("status", "unknown"),
+                "summary": repair_source.get("summary", {}),
+            }
+    return {
+        "kind": "final_resource_repair_report",
+        "status": "unknown",
+        "summary": {},
     }
 
 

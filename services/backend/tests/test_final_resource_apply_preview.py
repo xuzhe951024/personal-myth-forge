@@ -149,6 +149,78 @@ def test_apply_preview_blocks_example_bundle_identifier_placeholder_without_writ
     assert not ios_local_config_path(repo_root).exists()
 
 
+def test_apply_preview_routes_repairable_placeholders_to_repair_workflow(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+            "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
+        ).replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+        ),
+    )
+
+    result = build_final_resource_apply_preview_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    report = result.report
+    report_text = json.dumps(report)
+    commands = report["commands"]
+
+    assert result.exit_code == 2
+    assert report["status"] == "blocked"
+    assert report["source_reports"]["final_resource_repair"]["status"] == "repairable"
+    assert "make final-resource-repair-preview" in commands
+    assert "make final-resource-repair" in commands
+    assert commands.index("make final-resource-repair-preview") < commands.index(
+        "make final-resource-apply-preview"
+    )
+    assert commands.index("make final-resource-repair") < commands.index(
+        "make final-resource-apply-preview"
+    )
+    assert report["operator_actions"][0] == "run make final-resource-repair"
+    assert "meshy-secret-test" not in report_text
+    assert "sk-openai-test" not in report_text
+    assert "192.168.1.10" not in report_text
+    assert str(tmp_path) not in report_text
+    assert not backend_env_path(repo_root).exists()
+    assert not ios_local_config_path(repo_root).exists()
+
+
+def test_apply_preview_does_not_route_missing_values_to_repair_workflow(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+            "PRODUCT_BUNDLE_IDENTIFIER=",
+        ).replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=",
+        ),
+    )
+
+    result = build_final_resource_apply_preview_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    report = result.report
+
+    assert result.exit_code == 2
+    assert report["status"] == "blocked"
+    assert report["source_reports"]["final_resource_repair"]["status"] == "ready"
+    assert "make final-resource-repair-preview" not in report["commands"]
+    assert "make final-resource-repair" not in report["commands"]
+    assert "run make final-resource-repair" not in report["operator_actions"]
+
+
 def test_apply_preview_requires_treatstock_key_when_provider_selected(
     tmp_path: Path,
 ) -> None:

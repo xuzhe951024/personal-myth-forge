@@ -63,6 +63,8 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert actions["preview_final_resource_apply"]["command"] == (
         "make final-resource-apply-preview"
     )
+    assert actions["repair_final_resources"]["status"] == "missing"
+    assert actions["repair_final_resources"]["command"] == "make final-resource-init"
     assert actions["apply_final_resources"]["status"] == "blocked"
     assert actions["apply_final_resources"]["writes_repo_local_files"] is True
     assert actions["run_live_provider_evidence"]["status"] == "live"
@@ -74,14 +76,17 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert report["summary"]["secret"] >= 3
     assert report["summary"]["requires_cost_consent"] >= 3
     assert report["summary"]["requires_user_confirmation"] >= 3
-    assert report["operator_sequence"][:4] == [
+    assert report["operator_sequence"][:6] == [
         "make final-resource-requirements",
         "make final-resources-preflight",
+        "make final-resource-repair-preview",
+        "make final-resource-repair",
         "make final-resource-apply-preview",
         "make final-apply-resources",
     ]
     assert report["source_reports"]["final_resource_requirements"]["status"] == "blocked"
     assert report["source_reports"]["final_resource_apply_preview"]["status"] == "missing"
+    assert report["source_reports"]["final_resource_repair"]["status"] == "missing"
     assert report["source_reports"]["live_provider_evidence"]["status"] == "missing"
     assert report["safety"] == {
         "commands_run": False,
@@ -142,6 +147,54 @@ def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
     assert "10.0.0.24" not in report_text
+    assert str(tmp_path) not in report_text
+
+
+def test_external_action_ledger_routes_repairable_final_resources_before_apply(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+            "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
+        ).replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+        ),
+    )
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    report = result.report
+    report_text = json.dumps(report)
+    actions = report["actions_by_id"]
+    repair_action = actions["repair_final_resources"]
+
+    assert result.exit_code == 2
+    assert report["status"] == "blocked"
+    assert report["source_reports"]["final_resource_repair"]["status"] == "repairable"
+    assert repair_action["status"] == "blocked"
+    assert repair_action["command"] == "make final-resource-repair"
+    assert repair_action["safe_local_write"] is True
+    assert repair_action["writes_repo_local_files"] is True
+    assert repair_action["classification"] == "placeholder_value"
+    assert report["operator_sequence"][:5] == [
+        "make final-resource-requirements",
+        "make final-resources-preflight",
+        "make final-resource-repair-preview",
+        "make final-resource-repair",
+        "make final-resource-apply-preview",
+    ]
+    assert "unblock repair_final_resources: make final-resource-repair" in report[
+        "operator_actions"
+    ]
+    assert "meshy-secret-test" not in report_text
+    assert "sk-openai-test" not in report_text
+    assert "192.168.1.10" not in report_text
     assert str(tmp_path) not in report_text
 
 

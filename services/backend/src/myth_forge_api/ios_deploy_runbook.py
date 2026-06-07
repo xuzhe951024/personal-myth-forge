@@ -75,6 +75,7 @@ def build_ios_deploy_runbook_report(
             mode=mode,
             input_slots=input_slots,
             final_resources=final_resources,
+            final_resource_apply_preview=final_resource_apply_preview,
             final_acceptance=final_acceptance,
             three_d_evaluation=three_d_evaluation,
             npc_evaluation=npc_evaluation,
@@ -401,6 +402,7 @@ def _operator_actions(
     mode: LaunchMode,
     input_slots: list[dict[str, Any]],
     final_resources: dict[str, Any],
+    final_resource_apply_preview: dict[str, Any],
     final_acceptance: dict[str, Any],
     three_d_evaluation: dict[str, Any],
     npc_evaluation: dict[str, Any],
@@ -408,6 +410,7 @@ def _operator_actions(
 ) -> list[str]:
     actions: list[str] = []
     actions.extend(_string_list(final_resources.get("operator_actions")))
+    actions.extend(_selected_apply_preview_actions(final_resource_apply_preview))
     actions.extend(
         action
         for action in _string_list(final_acceptance.get("operator_actions"))
@@ -437,6 +440,12 @@ def _operator_actions(
         if step["status"] == "manual" and step["id"] == "xcode_build_gate":
             actions.append("run Xcode build gate manually on the Mac: make mobile-xcode-build")
     return _dedupe(actions)
+
+
+def _selected_apply_preview_actions(report: dict[str, Any]) -> list[str]:
+    if report.get("status") == "ready":
+        return []
+    return _string_list(report.get("operator_actions"))
 
 
 def _overall_status(
