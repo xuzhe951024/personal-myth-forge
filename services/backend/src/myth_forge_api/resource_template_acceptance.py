@@ -684,6 +684,15 @@ def _final_handoff_index_checks(
                 "lanes_by_id",
             ]
         ),
+        "source_freshness": all(
+            text in module_text
+            for text in [
+                "_freshness_report",
+                "_freshness_summary",
+                "stale_report",
+                "checked_against",
+            ]
+        ),
         "safety_contract": all(
             text in module_text
             for text in [
@@ -833,6 +842,14 @@ def _ios_device_launch_rehearsal_checks(
                 "ios_device_launch_rehearsal_freshness",
                 "stale_report",
                 "rerun make ios-device-launch-rehearsal",
+            ]
+        ),
+        "source_freshness_propagation": all(
+            text in checked_text
+            for text in [
+                "freshness_summary",
+                "freshness_status",
+                "freshness_classification",
             ]
         ),
         "no_banned_commands": not any(

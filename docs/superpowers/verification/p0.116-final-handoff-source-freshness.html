@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.116 Final Handoff Source Freshness</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7f8;
+      --ink: #172026;
+      --muted: #61707a;
+      --line: #d9e0e4;
+      --panel: #ffffff;
+      --blocked: #b42318;
+      --ready: #197b50;
+      --warn: #9a5b13;
+      --accent: #245f73;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 18px 14px 24px;
+      background: linear-gradient(180deg, #eef3f5 0%, #f8fafb 44%, #f5f7f8 100%);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 4px 2px 18px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .title {
+      margin: 0 0 12px;
+      font-size: 22px;
+      font-weight: 720;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 10px 24px rgba(26, 42, 52, 0.08);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .header h2 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .header p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      color: var(--blocked);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 9px 96px 1fr;
+      align-items: start;
+      gap: 8px;
+      padding: 7px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      background: var(--ready);
+    }
+
+    .dot.blocked {
+      background: var(--blocked);
+    }
+
+    .phase strong {
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .phase span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .group {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .group h3 {
+      margin: 0 0 6px;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .line {
+      margin: 4px 0;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .line.warn {
+      color: var(--warn);
+    }
+
+    .line.blocked {
+      color: var(--blocked);
+    }
+
+    .command {
+      margin-top: 14px;
+      padding: 10px;
+      border: 1px solid #cdd8dd;
+      border-radius: 8px;
+      background: #f9fbfb;
+      color: var(--accent);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="P0.116 mobile final launch evidence">
+    <div class="topbar">
+      <span>9:41</span>
+      <span>Personal Myth Forge</span>
+    </div>
+
+    <h1 class="title">Final Launch</h1>
+    <p class="subtitle">Local rehearsal evidence is readable on the iPhone before the physical device pass.</p>
+
+    <section class="panel">
+      <div class="header">
+        <div>
+          <h2>Final Launch Status</h2>
+          <p>mode local; ready 4, missing 1, blocked 1, manual 2</p>
+        </div>
+        <div class="badge">BLOCKED</div>
+      </div>
+
+      <div class="phase">
+        <span class="dot"></span>
+        <strong>Backend LAN</strong>
+        <span>make backend-device-demo | does not change signing</span>
+      </div>
+      <div class="phase">
+        <span class="dot blocked"></span>
+        <strong>Rehearsal</strong>
+        <span>make ios-device-launch-rehearsal | stale indexed source</span>
+      </div>
+      <div class="phase">
+        <span class="dot"></span>
+        <strong>Resources</strong>
+        <span>final resources preflight ready for local mode</span>
+      </div>
+
+      <div class="group">
+        <h3>Launch Rehearsal</h3>
+        <p class="line blocked">iOS launch rehearsal blocked: ready 3, blocked 1, partial 0.</p>
+        <p class="line">Freshness: fresh_report</p>
+        <p class="line warn">Source freshness: 4 fresh, 1 stale, 0 unknown.</p>
+        <p class="line blocked">final_handoff_index: blocked | make final-handoff-index | stale_report</p>
+        <p class="line">rerun make ios-device-launch-rehearsal</p>
+      </div>
+
+      <div class="group">
+        <h3>Safety</h3>
+        <p class="line">commands_run=false provider_calls=false global_mutation=false</p>
+        <p class="line">secrets=false raw_media=false payment_links=false local_paths=false</p>
+      </div>
+
+      <div class="command">Next: refresh local evidence, then start backend LAN server for iPhone review.</div>
+    </section>
+  </main>
+</body>
+</html>
