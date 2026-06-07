@@ -36,6 +36,12 @@ do {
     let iosDeviceLaunchCertificateFile = repositoryRoot.appendingPathComponent(
         "services/backend/src/myth_forge_api/ios_device_launch_certificate.py"
     )
+    let iosDeviceLaunchRehearsalFile = repositoryRoot.appendingPathComponent(
+        "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py"
+    )
+    let iosDeviceLaunchRehearsalScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_ios_device_launch_rehearsal.sh"
+    )
 
     let packageManifest = try readText(packageFile)
     let project = try readText(projectFile)
@@ -54,6 +60,10 @@ do {
     let finalConfiguredPreflight = try readText(finalConfiguredPreflightFile)
     let finalHandoffIndex = try readText(finalHandoffIndexFile)
     let iosDeviceLaunchCertificate = try readText(iosDeviceLaunchCertificateFile)
+    let iosDeviceLaunchRehearsal = try readText(iosDeviceLaunchRehearsalFile)
+    let iosDeviceLaunchRehearsalScript = try readText(
+        iosDeviceLaunchRehearsalScriptFile
+    )
     let appConfiguration = try readText(appRoot.appendingPathComponent("AppConfiguration.swift"))
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
     let captureGenerationReceiptView = try readText(appRoot.appendingPathComponent("CaptureGenerationReceiptView.swift"))
@@ -322,6 +332,21 @@ do {
     )
     try requireContains(
         makefile,
+        ".PHONY: ios-device-launch-rehearsal",
+        "iOS device launch rehearsal Make phony target"
+    )
+    try requireContains(
+        makefile,
+        "ios-device-launch-rehearsal:",
+        "iOS device launch rehearsal Make target"
+    )
+    try requireContains(
+        makefile,
+        "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+        "iOS device launch rehearsal wrapper script"
+    )
+    try requireContains(
+        makefile,
         "services/backend/scripts/write_ios_deploy_runbook_local.sh",
         "iOS deploy runbook local wrapper script"
     )
@@ -451,6 +476,76 @@ do {
         iosDeviceLaunchCertificate,
         #""keychain_writes": False"#,
         "iOS device launch certificate no keychain writes"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsal,
+        "build_ios_device_launch_rehearsal_report",
+        "iOS device launch rehearsal report builder"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsal,
+        "LOCAL_REPORT_SOURCES",
+        "iOS device launch rehearsal local source reports"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsal,
+        "REHEARSAL_REPORT_SOURCES",
+        "iOS device launch rehearsal source reports"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsal,
+        "ios_device_launch_rehearsal_report",
+        "iOS device launch rehearsal report kind"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsal,
+        "operator_actions",
+        "iOS device launch rehearsal operator actions"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsal,
+        #""provider_calls": False"#,
+        "iOS device launch rehearsal no provider calls"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsal,
+        #""xcode_or_signing": False"#,
+        "iOS device launch rehearsal no Xcode signing"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsal,
+        #""keychain_writes": False"#,
+        "iOS device launch rehearsal no keychain writes"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
+        "run_report_command",
+        "iOS device launch rehearsal accepted exit wrapper"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
+        "final-configured-preflight",
+        "iOS device launch rehearsal configured preflight command"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
+        "final-handoff-index",
+        "iOS device launch rehearsal final handoff command"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
+        "ios-device-launch-certificate",
+        "iOS device launch rehearsal certificate command"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
+        "ios-device-launch-rehearsal",
+        "iOS device launch rehearsal summary command"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
+        "services/backend/.local/ios-device-launch-rehearsal.json",
+        "iOS device launch rehearsal report path"
     )
     try requireContains(finalAcceptanceLocalScript, "accepted final acceptance exit code $status", "final acceptance local accepts blocked report")
     try requireContains(finalAcceptanceLocalScript, "services/backend/.local/final-acceptance-local.json", "final acceptance local report path")

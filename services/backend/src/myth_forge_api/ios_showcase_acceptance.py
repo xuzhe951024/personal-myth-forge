@@ -1344,6 +1344,101 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="ios_device_launch_rehearsal",
+        label="iOS device launch rehearsal",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "build_ios_device_launch_rehearsal_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "ios_device_launch_rehearsal_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "LOCAL_REPORT_SOURCES",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "REHEARSAL_REPORT_SOURCES",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "final_configured_preflight",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "final_handoff_index",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "ios_device_launch_certificate",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "operator_actions",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                '"provider_calls": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                '"xcode_or_signing": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                '"keychain_writes": False',
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "run_report_command",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "accepted $label exit code",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "final-configured-preflight",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "final-handoff-index",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "ios-device-launch-certificate",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "ios-device-launch-rehearsal",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "services/backend/.local/ios-device-launch-rehearsal.json",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "ios-device-launch-rehearsal",
+            ),
+            SourceRequirement("Makefile", "ios-device-launch-rehearsal:"),
+            SourceRequirement(
+                "Makefile",
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_ios_device_launch_rehearsal.py",
+                "test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_manual_gates",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_ios_device_launch_rehearsal.py",
+                "test_ios_device_launch_rehearsal_cli_writes_report_and_makefile_target",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="mobile_final_launch_mode",
         label="Mobile final launch mode",
         requirements=(

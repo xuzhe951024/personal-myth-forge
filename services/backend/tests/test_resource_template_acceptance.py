@@ -95,6 +95,20 @@ fi
 exit "$status"
 """
 
+IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT = """#!/usr/bin/env sh
+set -eu
+run_report_command() { :; }
+if [ "$status" -eq 0 ] || [ "$status" -eq 2 ]; then
+  printf '%s\\n' "accepted $label exit code $status"
+fi
+make final-rehearsal-local
+uv run python -m myth_forge_api.cli final-configured-preflight --output .local/final-configured-preflight.json
+uv run python -m myth_forge_api.cli final-handoff-index --output .local/final-handoff-index.json
+uv run python -m myth_forge_api.cli ios-device-launch-certificate --output .local/ios-device-launch-certificate.json
+uv run python -m myth_forge_api.cli ios-device-launch-rehearsal --output .local/ios-device-launch-rehearsal.json
+printf '%s\\n' "services/backend/.local/ios-device-launch-rehearsal.json"
+"""
+
 MAKEFILE_TEMPLATE = """.PHONY: backend-write-provider-env
 backend-write-provider-env:
 \t@services/backend/scripts/write_backend_env.sh
@@ -118,6 +132,9 @@ final-handoff-index:
 .PHONY: ios-device-launch-certificate
 ios-device-launch-certificate:
 \tcd services/backend && uv run python -m myth_forge_api.cli ios-device-launch-certificate --repo-root ../.. --output .local/ios-device-launch-certificate.json
+.PHONY: ios-device-launch-rehearsal
+ios-device-launch-rehearsal:
+\t@services/backend/scripts/write_ios_device_launch_rehearsal.sh
 .PHONY: ios-deploy-runbook ios-deploy-runbook-local
 ios-deploy-runbook:
 \tcd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
@@ -131,9 +148,11 @@ from myth_forge_api.final_configured_preflight import build_final_configured_pre
 from myth_forge_api.final_handoff_index import build_final_handoff_index_report
 from myth_forge_api.final_resources_preflight import build_final_resources_preflight_report
 from myth_forge_api.ios_device_launch_certificate import build_ios_device_launch_certificate_report
+from myth_forge_api.ios_device_launch_rehearsal import build_ios_device_launch_rehearsal_report
 subcommands.add_parser("final-configured-preflight")
 subcommands.add_parser("final-handoff-index")
 subcommands.add_parser("ios-device-launch-certificate")
+subcommands.add_parser("ios-device-launch-rehearsal")
 subcommands.add_parser("final-demo-launch")
 subcommands.add_parser("final-resources-preflight")
 """
@@ -213,6 +232,28 @@ def build_ios_device_launch_certificate_report():
     }
 """
 
+IOS_DEVICE_LAUNCH_REHEARSAL_TEMPLATE = """LOCAL_REPORT_SOURCES = []
+REHEARSAL_REPORT_SOURCES = ["final_configured_preflight", "final_handoff_index", "ios_device_launch_certificate"]
+
+def build_ios_device_launch_rehearsal_report():
+    return {
+        "kind": "ios_device_launch_rehearsal_report",
+        "sequence": [],
+        "operator_actions": [],
+        "commands": ["make ios-device-launch-rehearsal"],
+        "safety": {
+            "report_builder_commands_run": False,
+            "make_wrapper_runs_commands": True,
+            "writes_ignored_reports": True,
+            "provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+        },
+    }
+"""
+
 
 def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) -> None:
     repo_root = _write_repo(tmp_path)
@@ -222,7 +263,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.exit_code == 0
     assert result.report["kind"] == "resource_template_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 15, "failed": 0}
+    assert result.report["summary"] == {"passed": 16, "failed": 0}
     assert result.report["backend_template"]["missing_keys"] == []
     assert result.report["ios_template"]["missing_keys"] == []
     assert "OPENAI_API_KEY" in result.report["backend_template"]["required_keys"]
@@ -369,6 +410,29 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         "safety_contract": True,
         "no_banned_commands": True,
     }
+    assert result.report["ios_device_launch_rehearsal"]["path"] == (
+        "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py"
+    )
+    assert result.report["ios_device_launch_rehearsal"]["script_path"] == (
+        "services/backend/scripts/write_ios_device_launch_rehearsal.sh"
+    )
+    assert result.report["ios_device_launch_rehearsal"]["make_target"] == (
+        "ios-device-launch-rehearsal"
+    )
+    assert result.report["ios_device_launch_rehearsal"]["output_path"] == (
+        ".local/ios-device-launch-rehearsal.json"
+    )
+    assert result.report["ios_device_launch_rehearsal"]["checks"] == {
+        "module_exists": True,
+        "script_exists": True,
+        "cli_command": True,
+        "make_target": True,
+        "output_path": True,
+        "composes_rehearsal_reports": True,
+        "safety_contract": True,
+        "script_accepts_blocked_reports": True,
+        "no_banned_commands": True,
+    }
 
 
 def test_resource_template_acceptance_fails_missing_backend_key(tmp_path: Path) -> None:
@@ -453,10 +517,12 @@ def _write_repo(
     final_resource_apply: str = FINAL_RESOURCE_APPLY_TEMPLATE,
     final_acceptance_local_script: str = FINAL_ACCEPTANCE_LOCAL_SCRIPT,
     ios_deploy_runbook_local_script: str = IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT,
+    ios_device_launch_rehearsal_script: str = IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT,
     final_resources_preflight: str = FINAL_RESOURCES_PREFLIGHT_TEMPLATE,
     final_configured_preflight: str = FINAL_CONFIGURED_PREFLIGHT_TEMPLATE,
     final_handoff_index: str = FINAL_HANDOFF_INDEX_TEMPLATE,
     ios_device_launch_certificate: str = IOS_DEVICE_LAUNCH_CERTIFICATE_TEMPLATE,
+    ios_device_launch_rehearsal: str = IOS_DEVICE_LAUNCH_REHEARSAL_TEMPLATE,
     makefile: str = MAKEFILE_TEMPLATE,
 ) -> Path:
     repo_root = tmp_path / "repo"
@@ -484,6 +550,12 @@ def _write_repo(
         repo_root / "services/backend/scripts/write_ios_deploy_runbook_local.sh"
     ).write_text(
         ios_deploy_runbook_local_script,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/scripts/write_ios_device_launch_rehearsal.sh"
+    ).write_text(
+        ios_device_launch_rehearsal_script,
         encoding="utf-8",
     )
     (repo_root / "services/backend/final-resources.env.example").write_text(
@@ -521,6 +593,12 @@ def _write_repo(
         repo_root / "services/backend/src/myth_forge_api/ios_device_launch_certificate.py"
     ).write_text(
         ios_device_launch_certificate,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py"
+    ).write_text(
+        ios_device_launch_rehearsal,
         encoding="utf-8",
     )
     (repo_root / "Makefile").write_text(makefile, encoding="utf-8")
