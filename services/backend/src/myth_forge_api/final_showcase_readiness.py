@@ -25,6 +25,7 @@ from myth_forge_api.live_provider_evidence import build_live_provider_evidence_r
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
+from myth_forge_api.operator_actions import normalize_operator_action
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
 )
@@ -62,11 +63,6 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES = (
     "final_handoff_index:",
     "ios_device_launch_certificate:",
 )
-LEGACY_FINAL_RESOURCE_COPY_MARKERS = (
-    "services/backend/final-resources.env.example",
-    "services/backend/.local/final-resources.env",
-)
-NORMALIZED_FINAL_RESOURCE_INIT_ACTION = "run make final-resource-init"
 
 
 @dataclass(frozen=True)
@@ -671,16 +667,10 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
     if not isinstance(raw_actions, list):
         return []
     return [
-        _normalize_operator_action(str(action))
+        normalize_operator_action(str(action))
         for action in raw_actions
         if isinstance(action, str) and action
     ]
-
-
-def _normalize_operator_action(action: str) -> str:
-    if all(marker in action for marker in LEGACY_FINAL_RESOURCE_COPY_MARKERS):
-        return NORMALIZED_FINAL_RESOURCE_INIT_ACTION
-    return action
 
 
 def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:

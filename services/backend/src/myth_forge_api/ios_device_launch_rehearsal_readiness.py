@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.operator_actions import normalize_operator_action
 from myth_forge_api.source_freshness import (
     freshness_payload,
     git_product_source_metadata,
@@ -242,7 +243,11 @@ def _operator_actions(
 ) -> list[str]:
     if freshness is not None and freshness["status"] == "stale":
         existing_actions = (
-            [str(action) for action in raw_actions if isinstance(action, str) and action]
+            [
+                normalize_operator_action(str(action))
+                for action in raw_actions
+                if isinstance(action, str) and action
+            ]
             if isinstance(raw_actions, list)
             else []
         )
@@ -251,7 +256,11 @@ def _operator_actions(
         )[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
     if not isinstance(raw_actions, list):
         return [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
-    actions = [str(action) for action in raw_actions if isinstance(action, str) and action]
+    actions = [
+        normalize_operator_action(str(action))
+        for action in raw_actions
+        if isinstance(action, str) and action
+    ]
     return (
         _dedupe(actions)[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
         or [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]

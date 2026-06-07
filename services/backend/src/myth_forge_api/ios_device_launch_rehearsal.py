@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.operator_actions import normalize_operator_action
+
 LOCAL_REPORT_SOURCES = [
     {
         "id": "three_d_evaluation",
@@ -144,7 +146,10 @@ def _local_rehearsal_operator_actions(
             continue
         nested_actions = source.get("operator_actions")
         if isinstance(nested_actions, list) and nested_actions:
-            actions.extend(f"{source['id']}: {action}" for action in nested_actions)
+            actions.extend(
+                normalize_operator_action(f"{source['id']}: {action}")
+                for action in nested_actions
+            )
         else:
             actions.append(f"review {source['id']}: {source['command']}")
         if len(actions) >= 6:
@@ -278,7 +283,10 @@ def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
             continue
         nested_actions = step.get("operator_actions")
         if isinstance(nested_actions, list) and nested_actions:
-            actions.extend(f"{step['id']}: {action}" for action in nested_actions)
+            actions.extend(
+                normalize_operator_action(f"{step['id']}: {action}")
+                for action in nested_actions
+            )
         else:
             actions.append(f"review {step['id']}: {step['command']}")
     if actions:
@@ -383,7 +391,9 @@ def _bounded_operator_actions(raw_actions: Any, *, repo_root: Path) -> list[str]
     actions: list[str] = []
     for action in raw_actions:
         if isinstance(action, str):
-            actions.append(_clean_action(action, repo_root=repo_root))
+            actions.append(
+                normalize_operator_action(_clean_action(action, repo_root=repo_root))
+            )
         if len(actions) == 4:
             break
     return [action for action in actions if action]

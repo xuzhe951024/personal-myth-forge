@@ -221,6 +221,78 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
     )
 
 
+def test_ios_device_launch_rehearsal_normalizes_legacy_final_resource_copy_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True)
+    _write_local_rehearsal_reports(local_dir)
+    _write_json(
+        local_dir / "ios-deploy-runbook-local.json",
+        {
+            "kind": "ios_deploy_runbook_report",
+            "mode": "local",
+            "status": "blocked",
+            "operator_actions": [
+                (
+                    "copy services/backend/final-resources.env.example to "
+                    "services/backend/.local/final-resources.env"
+                ),
+                "provide iOS deploy config and rerun mobile deploy preflight",
+            ],
+        },
+    )
+    _write_json(
+        local_dir / "final-configured-preflight.json",
+        {
+            "kind": "final_configured_preflight_report",
+            "status": "blocked",
+            "operator_actions": [
+                (
+                    "copy services/backend/final-resources.env.example to "
+                    "services/backend/.local/final-resources.env"
+                ),
+                "make final-apply-resources",
+            ],
+        },
+    )
+    _write_json(
+        local_dir / "final-handoff-index.json",
+        {"kind": "final_handoff_index_report", "status": "ready"},
+    )
+    _write_json(
+        local_dir / "ios-device-launch-certificate.json",
+        {
+            "kind": "ios_device_launch_certificate_report",
+            "status": "ready",
+            "mode": "local",
+            "summary": {"ready": 4, "manual": 0, "live": 0, "partial": 0},
+            "safety": {
+                "provider_calls": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+            },
+        },
+    )
+
+    result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
+    report_text = json.dumps(result.report)
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert "run make final-resource-init" in result.report["operator_actions"]
+    assert "services/backend/final-resources.env.example" not in report_text
+    assert (
+        "final_rehearsal_local: ios_deploy_runbook_local: provide iOS deploy "
+        "config and rerun mobile deploy preflight"
+    ) in result.report["operator_actions"]
+    assert (
+        "final_configured_preflight: make final-apply-resources"
+        in result.report["operator_actions"]
+    )
+
+
 def test_ios_device_launch_rehearsal_routes_final_acceptance_source_actions(
     tmp_path: Path,
 ) -> None:
@@ -567,6 +639,35 @@ def test_ios_device_launch_rehearsal_readiness_preserves_bounded_operator_action
         in result.report["operator_actions"]
     )
     assert "future_launch_group: optional action 4" not in result.report["operator_actions"]
+
+
+def test_ios_device_launch_rehearsal_readiness_normalizes_legacy_copy_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["operator_actions"] = [
+        (
+            "final_configured_preflight: copy "
+            "services/backend/final-resources.env.example to "
+            "services/backend/.local/final-resources.env"
+        ),
+        "final_handoff_index: run make final-configured-preflight",
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    report_text = json.dumps(result.report)
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert "run make final-resource-init" in result.report["operator_actions"]
+    assert "services/backend/final-resources.env.example" not in report_text
+    assert (
+        "final_handoff_index: run make final-configured-preflight"
+        in result.report["operator_actions"]
+    )
 
 
 def _write_local_rehearsal_reports(local_dir: Path) -> None:
