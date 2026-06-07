@@ -14,13 +14,14 @@ def test_npc_agent_provider_acceptance_passes_complete_fixture(tmp_path: Path) -
     assert result.exit_code == 0
     assert result.report["kind"] == "npc_agent_provider_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 7, "failed": 0}
+    assert result.report["summary"] == {"passed": 8, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "openai_director_structured_output",
         "openai_tick_structured_output",
         "provider_factory_wiring",
         "provider_readiness_contract",
         "resource_handoff_contract",
+        "npc_agent_evaluation_contract",
         "backend_docs_contract",
         "mobile_docs_contract",
     ]
@@ -49,7 +50,7 @@ def test_npc_agent_provider_acceptance_fails_missing_backend_key_docs_safely(
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 6, "failed": 1}
+    assert result.report["summary"] == {"passed": 7, "failed": 1}
     assert features["backend_docs_contract"]["status"] == "failed"
     assert {
         "file": "README.md",
@@ -90,10 +91,17 @@ def write_complete_npc_agent_provider_fixture(repo_root: Path) -> None:
             "NPC_PROVIDER OPENAI_API_KEY AI Agent NPC traces and ticks "
             "Backend-only key; mobile sees only generated NPC state."
         ),
+        "services/backend/src/myth_forge_api/cli.py": "evaluate-npc",
+        "services/backend/src/myth_forge_api/evaluation/npc.py": (
+            "run_npc_agent_evaluation DEFAULT_NPC_AGENT_EVALUATION_SUITE "
+            "npc_agent_evaluation_report"
+        ),
         "README.md": (
             "NPC_PROVIDER=openai OPENAI_API_KEY OpenAINPCDirector "
-            "OpenAINPCTickRuntime no OpenAI key is stored in or sent to the iOS app"
+            "OpenAINPCTickRuntime no OpenAI key is stored in or sent to the iOS app "
+            "evaluate-npc"
         ),
+        "docs/iteration-roadmap.md": "P0.90 NPC Agent evaluation suite",
         "apps/mobile/README.md": (
             "P0.23 OpenAI NPC Tick Provider NPC_PROVIDER=openai "
             "openai_tick_structured_runtime no provider keys"

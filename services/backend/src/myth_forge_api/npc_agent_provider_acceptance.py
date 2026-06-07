@@ -136,6 +136,30 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="npc_agent_evaluation_contract",
+        label="NPC Agent evaluation handoff",
+        requirements=(
+            SourceRequirement("services/backend/src/myth_forge_api/cli.py", "evaluate-npc"),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/evaluation/npc.py",
+                "run_npc_agent_evaluation",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/evaluation/npc.py",
+                "DEFAULT_NPC_AGENT_EVALUATION_SUITE",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/evaluation/npc.py",
+                "npc_agent_evaluation_report",
+            ),
+            SourceRequirement("README.md", "evaluate-npc"),
+            SourceRequirement(
+                "docs/iteration-roadmap.md",
+                "P0.90 NPC Agent evaluation suite",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="backend_docs_contract",
         label="Backend OpenAI NPC docs",
         requirements=(
