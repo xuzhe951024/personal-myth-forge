@@ -2473,3 +2473,24 @@ writer scripts, calls providers, runs Xcode, touches signing/keychain state, or
 returns raw secrets. `/v1/final-demo-launch` embeds it as
 `final_resource_apply_preview`, and the iPhone Final Launch panel renders it
 under `Apply Preview`.
+
+## P0.126 Showcase Apply Preview Ledger
+
+The final showcase readiness ledger now includes the apply preview as
+first-class evidence:
+
+```bash
+make final-showcase-readiness
+cat services/backend/.local/final-showcase-readiness.json
+```
+
+The `provider_key_handoff` capability now records
+`final_resource_apply_preview:<status>` in its evidence and points to
+`make final-resource-apply-preview` while local resource application is still
+unsafe. Once final resources, apply preview, and resource handoff are ready, the
+same capability advances to `make live-provider-evidence` until live Meshy,
+OpenAI, and print evidence are proven.
+
+This remains read-only. It does not write `.env`, write iOS deploy config,
+run shell writers, call live providers, run Xcode, or touch signing/keychain
+state.

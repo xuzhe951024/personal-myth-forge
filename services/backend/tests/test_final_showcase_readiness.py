@@ -41,6 +41,17 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
     assert result.report["capabilities_by_id"]["print_fulfillment"][
         "status"
     ] == "blocked"
+    provider_handoff = result.report["capabilities_by_id"]["provider_key_handoff"]
+    assert result.report["evidence"]["final_resource_apply_preview"]["kind"] == (
+        "final_resource_apply_preview_report"
+    )
+    assert result.report["evidence"]["final_resource_apply_preview"]["status"] == "missing"
+    assert provider_handoff["command"] == "make final-resource-apply-preview"
+    assert "final_resource_apply_preview:missing" in provider_handoff["evidence"]
+    assert any(
+        action == "make final-resource-apply-preview"
+        for action in result.report["operator_actions"]
+    )
     assert result.report["first_blocker"]["id"] == "ios_deployable"
     assert "make final-rehearsal-local" in result.report["commands"]
     assert "make final-showcase-readiness" in result.report["commands"]
@@ -86,6 +97,9 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     assert rows["print_fulfillment"]["status"] == "partial"
     assert rows["print_fulfillment"]["classification"] == "missing_configured_treatstock_quote"
     assert rows["provider_key_handoff"]["status"] == "partial"
+    assert result.report["evidence"]["final_resource_apply_preview"]["status"] == "ready"
+    assert "final_resource_apply_preview:ready" in rows["provider_key_handoff"]["evidence"]
+    assert rows["provider_key_handoff"]["command"] == "make live-provider-evidence"
     assert rows["functional_regression"]["status"] == "ready"
     assert rows["visual_regression"]["status"] == "ready"
     assert result.report["first_blocker"]["id"] == "ios_deployable"

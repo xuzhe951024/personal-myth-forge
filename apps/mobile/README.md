@@ -2257,3 +2257,15 @@ make final-resource-apply-preview
 This is only a preview of `make final-apply-resources`. The app still does not
 receive provider secrets, write local config files, run Mac writer scripts, call
 live providers, run Xcode, or mutate signing state.
+
+## P0.126 Showcase Apply Preview Ledger
+
+The iPhone Final Launch panel already decodes `final_showcase_readiness`; the
+backend now feeds that ledger with `final_resource_apply_preview` evidence. In
+the existing `Showcase Readiness` group, the provider/key handoff row can now
+show the dry-run apply preview status and the next safe Mac command before any
+resource writer is run.
+
+The mobile app still only receives sanitized readiness metadata. Provider keys,
+resource files, writer execution, live provider calls, Xcode, and signing state
+remain backend/operator responsibilities.
