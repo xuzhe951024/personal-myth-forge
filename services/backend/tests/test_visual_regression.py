@@ -6,6 +6,7 @@ from pathlib import Path
 
 from myth_forge_api.cli import main
 from myth_forge_api.visual_regression import (
+    DEFAULT_VISUAL_ARTIFACTS,
     VisualArtifactSpec,
     check_visual_artifacts,
     png_dimensions,
@@ -17,6 +18,47 @@ def test_png_dimensions_reads_png_header(tmp_path: Path) -> None:
     png.write_bytes(_png_header(390, 844))
 
     assert png_dimensions(png) == (390, 844)
+
+
+def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
+    assert [spec.id for spec in DEFAULT_VISUAL_ARTIFACTS] == [
+        "p0.12_ios_device_media_input",
+        "p0.19_guided_scan_entry",
+        "p0.98_capture_generation_receipt",
+        "p0.103_generation_result_receipt",
+        "p0.118_scene_load_proof",
+        "p0.82_npc_agent_tick_summary",
+        "p0.101_print_fulfillment_receipt",
+        "p0.100_live_provider_consent",
+        "p0.112_ios_device_launch_rehearsal",
+        "p0.119_visual_regression_handoff",
+    ]
+    assert all((spec.width, spec.height) == (390, 844) for spec in DEFAULT_VISUAL_ARTIFACTS)
+    required_text = " ".join(
+        token for spec in DEFAULT_VISUAL_ARTIFACTS for token in spec.required_text
+    )
+    assert "PhotosPicker" in required_text
+    assert "Start Guided Scan" in required_text
+    assert "Capture-to-3D" in required_text
+    assert "3D Generation Result" in required_text
+    assert "SceneKit load proof: Loaded" in required_text
+    assert "NPC Agent tick resolved" in required_text
+    assert "Print Fulfillment" in required_text
+    assert "Live Provider Consent" in required_text
+    assert "iOS Device Launch Rehearsal" in required_text
+    assert "Visual Regression" in required_text
+
+
+def test_visual_regression_default_passes_checked_in_showcase_artifacts() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = check_visual_artifacts(repo_root)
+
+    assert result.exit_code == 0
+    assert result.report["summary"] == {"passed": 10, "failed": 0}
+    assert [artifact["id"] for artifact in result.report["artifacts"]] == [
+        spec.id for spec in DEFAULT_VISUAL_ARTIFACTS
+    ]
 
 
 def test_visual_regression_passes_valid_artifact(tmp_path: Path) -> None:
@@ -98,16 +140,8 @@ def test_visual_regression_fails_and_redacts_unsafe_notes(tmp_path: Path) -> Non
     assert result.report["artifacts"][0]["checks"]["unsafe_text"]["status"] == "failed"
 
 
-def test_visual_regression_cli_writes_report(tmp_path: Path, monkeypatch) -> None:
-    _write_artifact(
-        tmp_path,
-        html=(
-            "SceneKit load proof: Loaded\n"
-            "SceneKit load proof: Conversion needed\n"
-            "SceneKit load proof: Failed\n"
-            "Retry Scene Load"
-        ),
-    )
+def test_visual_regression_cli_writes_showcase_report(tmp_path: Path, monkeypatch) -> None:
+    _write_default_artifacts(tmp_path)
     output = tmp_path / "report.json"
     monkeypatch.chdir(tmp_path)
 
@@ -123,6 +157,7 @@ def test_visual_regression_cli_writes_report(tmp_path: Path, monkeypatch) -> Non
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["kind"] == "visual_regression_report"
     assert report["status"] == "passed"
+    assert report["summary"] == {"passed": 10, "failed": 0}
 
 
 def _spec() -> VisualArtifactSpec:
@@ -154,6 +189,20 @@ def _write_artifact(tmp_path: Path, *, html: str, width: int = 390, height: int 
     assets.mkdir(parents=True)
     (verification / "p0.118-scene-load-proof.html").write_text(html, encoding="utf-8")
     (assets / "p0.118-scene-load-proof-390x844.png").write_bytes(_png_header(width, height))
+
+
+def _write_default_artifacts(tmp_path: Path) -> None:
+    for spec in DEFAULT_VISUAL_ARTIFACTS:
+        html_file = tmp_path / spec.html_path
+        png_file = tmp_path / spec.png_path
+        html_file.parent.mkdir(parents=True, exist_ok=True)
+        png_file.parent.mkdir(parents=True, exist_ok=True)
+        html_file.write_text("\n".join(spec.required_text), encoding="utf-8")
+        png_file.write_bytes(_png_header(spec.width, spec.height))
+        if spec.notes_path:
+            notes_file = tmp_path / spec.notes_path
+            notes_file.parent.mkdir(parents=True, exist_ok=True)
+            notes_file.write_text(f"{spec.id} visual regression notes", encoding="utf-8")
 
 
 def _png_header(width: int, height: int) -> bytes:
