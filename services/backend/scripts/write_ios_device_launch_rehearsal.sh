@@ -55,4 +55,13 @@ run_report_command "iOS device launch rehearsal" sh -c '
     --output .local/ios-device-launch-rehearsal.json
 '
 
+run_report_command "final launch rehearsal sync" sh -c '
+  cd services/backend &&
+  uv run python -m myth_forge_api.cli final-demo-launch \
+    --mode local \
+    --repo-root ../.. \
+    --output .local/final-demo-launch-local.json
+'
+
 printf '%s\n' "wrote services/backend/.local/ios-device-launch-rehearsal.json"
+printf '%s\n' "wrote services/backend/.local/final-demo-launch-local.json"
