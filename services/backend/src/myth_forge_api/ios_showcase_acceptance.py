@@ -10,6 +10,7 @@ from typing import Any
 class SourceRequirement:
     file: str
     contains: str
+    all_contains: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -2313,7 +2314,11 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
-                "externalActionLedgerRows(from:",
+                "externalActionLedgerRows && from: report.finalExternalActionLedger",
+                (
+                    "externalActionLedgerRows",
+                    "from: report.finalExternalActionLedger",
+                ),
             ),
             SourceRequirement(
                 "apps/mobile/ios/App/FinalLaunchStatusView.swift",
@@ -2381,10 +2386,11 @@ def _evaluate_feature(root: Path, feature: FeatureRequirement) -> dict[str, Any]
     evidence: list[str] = []
     missing: list[dict[str, str]] = []
     for requirement in feature.requirements:
-        if _contains(root / requirement.file, requirement.contains):
-            evidence.append(f"{requirement.file}::{requirement.contains}")
+        requirement_evidence = _requirement_evidence(requirement)
+        if _matches_requirement(root / requirement.file, requirement):
+            evidence.append(f"{requirement.file}::{requirement_evidence}")
         else:
-            missing.append({"file": requirement.file, "contains": requirement.contains})
+            missing.append({"file": requirement.file, "contains": requirement_evidence})
     return {
         "id": feature.id,
         "label": feature.label,
@@ -2394,11 +2400,20 @@ def _evaluate_feature(root: Path, feature: FeatureRequirement) -> dict[str, Any]
     }
 
 
-def _contains(path: Path, expected: str) -> bool:
+def _matches_requirement(path: Path, requirement: SourceRequirement) -> bool:
     try:
-        return expected in path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8")
     except OSError:
         return False
+    if requirement.all_contains:
+        return all(token in text for token in requirement.all_contains)
+    return requirement.contains in text
+
+
+def _requirement_evidence(requirement: SourceRequirement) -> str:
+    if requirement.all_contains:
+        return " && ".join(requirement.all_contains)
+    return requirement.contains
 
 
 def _sanitize_report(report: dict[str, Any]) -> dict[str, Any]:

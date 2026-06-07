@@ -73,6 +73,31 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     }
 
 
+def test_ios_showcase_acceptance_allows_external_action_ledger_builder_linebreak(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    summary_path = (
+        tmp_path
+        / "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift"
+    )
+    summary_text = summary_path.read_text()
+    summary_text = summary_text.replace(
+        "externalActionLedgerRows externalActionLedgerRows(from: "
+        "report.finalExternalActionLedger ",
+        "externalActionLedgerRows "
+        "externalActionLedgerRows(\n"
+        "    from: report.finalExternalActionLedger\n"
+        ") ",
+    )
+    summary_path.write_text(summary_text)
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+
+    assert result.exit_code == 0
+    assert result.report["summary"] == {"passed": 47, "failed": 0}
+
+
 def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp_path) -> None:
     write_complete_ios_showcase_fixture(tmp_path)
     (tmp_path / "apps/mobile/ios/App/CameraCaptureView.swift").unlink()
@@ -800,6 +825,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "resourceRequirementRows Resource requirements "
             "applyPreviewRows Apply preview "
             "externalActionLedgerRows externalActionLedgerRows(from: "
+            "report.finalExternalActionLedger "
             "showcaseReadinessRows Showcase readiness "
             "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
             "launchRehearsalRows rehearsalFreshnessRow Freshness: "
