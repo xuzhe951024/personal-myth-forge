@@ -1329,6 +1329,11 @@ do {
     )
     try requireContains(
         pmfModels,
+        "freshness: FinalAcceptanceFreshness?",
+        "iOS device launch rehearsal freshness field"
+    )
+    try requireContains(
+        pmfModels,
         "ResourceHandoffReport",
         "resource handoff model"
     )
@@ -1568,6 +1573,16 @@ do {
     )
     try requireContains(
         finalLaunchMobileSummary,
+        "rehearsalFreshnessRow",
+        "final launch iOS device launch rehearsal freshness row builder"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Freshness:",
+        "final launch iOS device launch rehearsal freshness row copy"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
         "deployRunbookRows(from:",
         "final launch iOS deploy runbook row builder"
     )
@@ -1791,6 +1806,11 @@ do {
     )
     try requireContains(
         contractTests,
+        "testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload",
+        "iOS launch rehearsal freshness decode test"
+    )
+    try requireContains(
+        contractTests,
         "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal",
         "iOS launch rehearsal blocked summary test"
     )
@@ -1798,6 +1818,11 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal",
         "iOS launch rehearsal ready summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness",
+        "iOS launch rehearsal stale freshness summary test"
     )
     try requireContains(
         contractTests,

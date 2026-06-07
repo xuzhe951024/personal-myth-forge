@@ -40,6 +40,9 @@ IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT = ".local/ios-device-launch-certificate.jso
 IOS_DEVICE_LAUNCH_REHEARSAL_PATH = (
     "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py"
 )
+IOS_DEVICE_LAUNCH_REHEARSAL_READINESS_PATH = (
+    "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py"
+)
 IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT_PATH = (
     "services/backend/scripts/write_ios_device_launch_rehearsal.sh"
 )
@@ -160,6 +163,12 @@ def run_resource_template_acceptance(
         ios_device_launch_rehearsal_exists,
     ) = _read_optional_text(selected_repo_root / IOS_DEVICE_LAUNCH_REHEARSAL_PATH)
     (
+        ios_device_launch_rehearsal_readiness_text,
+        ios_device_launch_rehearsal_readiness_exists,
+    ) = _read_optional_text(
+        selected_repo_root / IOS_DEVICE_LAUNCH_REHEARSAL_READINESS_PATH
+    )
+    (
         ios_device_launch_rehearsal_script_text,
         ios_device_launch_rehearsal_script_exists,
     ) = _read_optional_text(
@@ -257,6 +266,8 @@ def run_resource_template_acceptance(
     ios_device_launch_rehearsal_checks = _ios_device_launch_rehearsal_checks(
         module_text=ios_device_launch_rehearsal_text,
         module_exists=ios_device_launch_rehearsal_exists,
+        readiness_text=ios_device_launch_rehearsal_readiness_text,
+        readiness_exists=ios_device_launch_rehearsal_readiness_exists,
         script_text=ios_device_launch_rehearsal_script_text,
         script_exists=ios_device_launch_rehearsal_script_exists,
         cli_text=cli_text,
@@ -387,10 +398,12 @@ def run_resource_template_acceptance(
         },
         "ios_device_launch_rehearsal": {
             "path": IOS_DEVICE_LAUNCH_REHEARSAL_PATH,
+            "readiness_path": IOS_DEVICE_LAUNCH_REHEARSAL_READINESS_PATH,
             "script_path": IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT_PATH,
             "make_target": IOS_DEVICE_LAUNCH_REHEARSAL_MAKE_TARGET,
             "output_path": IOS_DEVICE_LAUNCH_REHEARSAL_OUTPUT,
             "exists": ios_device_launch_rehearsal_exists,
+            "readiness_exists": ios_device_launch_rehearsal_readiness_exists,
             "script_exists": ios_device_launch_rehearsal_script_exists,
             "checks": ios_device_launch_rehearsal_checks,
         },
@@ -739,6 +752,8 @@ def _ios_device_launch_rehearsal_checks(
     *,
     module_text: str,
     module_exists: bool,
+    readiness_text: str,
+    readiness_exists: bool,
     script_text: str,
     script_exists: bool,
     cli_text: str,
@@ -746,13 +761,14 @@ def _ios_device_launch_rehearsal_checks(
     makefile_text: str,
     makefile_exists: bool,
 ) -> dict[str, bool]:
-    checked_text = "\n".join([module_text, script_text, makefile_text])
+    checked_text = "\n".join([module_text, readiness_text, script_text, makefile_text])
     rehearsal_command_index = script_text.find(
         "myth_forge_api.cli ios-device-launch-rehearsal"
     )
     final_launch_sync_index = script_text.find("myth_forge_api.cli final-demo-launch")
     return {
         "module_exists": module_exists,
+        "readiness_exists": readiness_exists,
         "script_exists": script_exists,
         "cli_command": cli_exists
         and "ios-device-launch-rehearsal" in cli_text
@@ -809,6 +825,16 @@ def _ios_device_launch_rehearsal_checks(
         )
         and rehearsal_command_index >= 0
         and final_launch_sync_index > rehearsal_command_index,
+        "readiness_freshness": all(
+            text in readiness_text
+            for text in [
+                "freshness",
+                "_freshness_report",
+                "ios_device_launch_rehearsal_freshness",
+                "stale_report",
+                "rerun make ios-device-launch-rehearsal",
+            ]
+        ),
         "no_banned_commands": not any(
             banned in checked_text for banned in BANNED_WRITER_TEXT
         ),

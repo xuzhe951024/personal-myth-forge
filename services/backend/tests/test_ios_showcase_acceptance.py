@@ -606,8 +606,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook "
             "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook "
             "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload "
+            "testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal "
             "testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal "
+            "testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness "
             "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal "
             "testDecodesResourceHandoffFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsMissingResourceHandoff "
@@ -666,7 +668,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "launchReceiptRows firstBlockerReceiptRow freshness.status == \"stale\" "
             "threeDEvaluationRows threeDEvaluationRows(from: "
             "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
-            "launchRehearsalRows resourceHandoffRows resourceHandoffBackendRows resourceHandoffIOSRows"
+            "launchRehearsalRows rehearsalFreshnessRow Freshness: "
+            "resourceHandoffRows resourceHandoffBackendRows resourceHandoffIOSRows"
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
             "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness "
@@ -720,7 +723,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py": (
             "build_ios_device_launch_rehearsal_readiness_report "
-            "ios_device_launch_rehearsal_readiness_report"
+            "ios_device_launch_rehearsal_readiness_report _freshness_report "
+            "ios_device_launch_rehearsal_freshness stale_report "
+            "rerun make ios-device-launch-rehearsal"
         ),
         "services/backend/src/myth_forge_api/final_configured_preflight.py": (
             "build_final_configured_preflight_report final_configured_preflight_report "

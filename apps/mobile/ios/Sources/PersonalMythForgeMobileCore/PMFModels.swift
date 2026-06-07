@@ -1440,6 +1440,7 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
     public var kind: String
     public var status: String
     public var sourceFile: FinalAcceptanceSourceFile
+    public var freshness: FinalAcceptanceFreshness?
     public var summary: IOSDeviceLaunchRehearsalReadinessSummary
     public var sequence: [IOSDeviceLaunchRehearsalSequenceRow]
     public var blockers: [ThreeDEvaluationReadinessBlocker]
@@ -1451,6 +1452,7 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
         kind: String,
         status: String,
         sourceFile: FinalAcceptanceSourceFile,
+        freshness: FinalAcceptanceFreshness? = nil,
         summary: IOSDeviceLaunchRehearsalReadinessSummary,
         sequence: [IOSDeviceLaunchRehearsalSequenceRow],
         blockers: [ThreeDEvaluationReadinessBlocker] = [],
@@ -1461,6 +1463,7 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
         self.kind = kind
         self.status = status
         self.sourceFile = sourceFile
+        self.freshness = freshness
         self.summary = summary
         self.sequence = sequence
         self.blockers = blockers

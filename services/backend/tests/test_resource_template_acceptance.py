@@ -258,6 +258,19 @@ def build_ios_device_launch_rehearsal_report():
     }
 """
 
+IOS_DEVICE_LAUNCH_REHEARSAL_READINESS_TEMPLATE = """
+def build_ios_device_launch_rehearsal_readiness_report():
+    return {
+        "kind": "ios_device_launch_rehearsal_readiness_report",
+        "freshness": _freshness_report(),
+        "blockers": [{"id": "ios_device_launch_rehearsal_freshness", "classification": "stale_report"}],
+        "operator_actions": ["rerun make ios-device-launch-rehearsal"],
+    }
+
+def _freshness_report():
+    return {"classification": "stale_report"}
+"""
+
 
 def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) -> None:
     repo_root = _write_repo(tmp_path)
@@ -417,6 +430,9 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.report["ios_device_launch_rehearsal"]["path"] == (
         "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py"
     )
+    assert result.report["ios_device_launch_rehearsal"]["readiness_path"] == (
+        "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py"
+    )
     assert result.report["ios_device_launch_rehearsal"]["script_path"] == (
         "services/backend/scripts/write_ios_device_launch_rehearsal.sh"
     )
@@ -428,6 +444,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     )
     assert result.report["ios_device_launch_rehearsal"]["checks"] == {
         "module_exists": True,
+        "readiness_exists": True,
         "script_exists": True,
         "cli_command": True,
         "make_target": True,
@@ -436,6 +453,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         "safety_contract": True,
         "script_accepts_blocked_reports": True,
         "syncs_final_launch_after_rehearsal": True,
+        "readiness_freshness": True,
         "no_banned_commands": True,
     }
 
@@ -528,6 +546,9 @@ def _write_repo(
     final_handoff_index: str = FINAL_HANDOFF_INDEX_TEMPLATE,
     ios_device_launch_certificate: str = IOS_DEVICE_LAUNCH_CERTIFICATE_TEMPLATE,
     ios_device_launch_rehearsal: str = IOS_DEVICE_LAUNCH_REHEARSAL_TEMPLATE,
+    ios_device_launch_rehearsal_readiness: str = (
+        IOS_DEVICE_LAUNCH_REHEARSAL_READINESS_TEMPLATE
+    ),
     makefile: str = MAKEFILE_TEMPLATE,
 ) -> Path:
     repo_root = tmp_path / "repo"
@@ -604,6 +625,13 @@ def _write_repo(
         repo_root / "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py"
     ).write_text(
         ios_device_launch_rehearsal,
+        encoding="utf-8",
+    )
+    (
+        repo_root
+        / "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py"
+    ).write_text(
+        ios_device_launch_rehearsal_readiness,
         encoding="utf-8",
     )
     (repo_root / "Makefile").write_text(makefile, encoding="utf-8")

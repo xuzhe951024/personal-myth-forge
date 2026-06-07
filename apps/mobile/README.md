@@ -182,6 +182,9 @@ change global developer settings. P0.114 finishes by rewriting
 `services/backend/.local/final-demo-launch-local.json` after
 `services/backend/.local/ios-device-launch-rehearsal.json`, so the phone's
 read-only `Launch Rehearsal` group reflects the newest Mac-side rehearsal run.
+P0.115 adds a freshness row to that group. If the saved rehearsal report is
+older than the current git revision, the row shows `stale_report` and the final
+launch payload tells the operator to rerun `make ios-device-launch-rehearsal`.
 
 P0.64 exposes the same sanitized status through:
 
@@ -197,7 +200,9 @@ see the final launch lane state directly on the phone. P0.113 decodes the saved
 app never runs Mac commands, starts servers, calls providers, applies resources,
 or touches Xcode/signing state. P0.114 keeps that payload fresh after the
 one-command Mac rehearsal by syncing `final-demo-launch-local.json` at the end
-of `make ios-device-launch-rehearsal`.
+of `make ios-device-launch-rehearsal`. P0.115 makes stale saved rehearsal
+evidence visible in the same read-only group through
+`ios_device_launch_rehearsal_readiness.freshness`.
 
 ## P0.8 Xcode App Shell
 

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +12,10 @@ DEFAULT_IOS_DEVICE_LAUNCH_REHEARSAL_PATH = Path(
     "services/backend/.local/ios-device-launch-rehearsal.json"
 )
 IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND = "make ios-device-launch-rehearsal"
+IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION = (
+    "rerun make ios-device-launch-rehearsal to regenerate "
+    "services/backend/.local/ios-device-launch-rehearsal.json for the current git revision"
+)
 
 
 @dataclass(frozen=True)
@@ -33,6 +39,11 @@ def build_ios_device_launch_rehearsal_readiness_report(
         "path": _path_label(path=selected_rehearsal_file, repo_root=selected_repo_root),
         "exists": selected_rehearsal_file.exists(),
     }
+    freshness = _freshness_report(
+        repo_root=selected_repo_root,
+        rehearsal_file=selected_rehearsal_file,
+        source_exists=selected_rehearsal_file.exists(),
+    )
     if not selected_rehearsal_file.exists():
         return IOSDeviceLaunchRehearsalReadinessResult(
             exit_code=2,
@@ -40,6 +51,7 @@ def build_ios_device_launch_rehearsal_readiness_report(
                 repo_root=selected_repo_root,
                 status="missing",
                 source_file=source_file,
+                freshness=freshness,
                 summary=_empty_summary(),
                 sequence=[],
                 operator_actions=[f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"],
@@ -55,6 +67,7 @@ def build_ios_device_launch_rehearsal_readiness_report(
         return _blocked_result(
             repo_root=selected_repo_root,
             source_file=source_file,
+            freshness=freshness,
             classification="unreadable_report",
             detail="Saved iOS device launch rehearsal report is not valid JSON.",
         )
@@ -63,6 +76,7 @@ def build_ios_device_launch_rehearsal_readiness_report(
         return _blocked_result(
             repo_root=selected_repo_root,
             source_file=source_file,
+            freshness=freshness,
             classification="invalid_report_shape",
             detail="Saved iOS device launch rehearsal report must be a JSON object.",
         )
@@ -71,20 +85,29 @@ def build_ios_device_launch_rehearsal_readiness_report(
         return _blocked_result(
             repo_root=selected_repo_root,
             source_file=source_file,
+            freshness=freshness,
             classification="wrong_report_kind",
             detail="Saved report is not an ios_device_launch_rehearsal_report.",
         )
 
     status = _normalized_status(str(saved_report.get("status", "blocked")))
+    blockers: list[dict[str, Any]] = []
+    if freshness["status"] == "stale":
+        status = "blocked"
+        blockers.append(_freshness_blocker(freshness))
     report = _base_report(
         repo_root=selected_repo_root,
         status=status,
         source_file=source_file,
+        freshness=freshness,
         summary=_summary(saved_report.get("summary")),
         sequence=_sequence(saved_report.get("sequence")),
-        operator_actions=_operator_actions(saved_report.get("operator_actions")),
+        operator_actions=_operator_actions(
+            saved_report.get("operator_actions"),
+            freshness=freshness,
+        ),
         commands=_commands(saved_report.get("commands")),
-        blockers=[],
+        blockers=blockers,
         saved_safety=saved_report.get("safety"),
     )
     return IOSDeviceLaunchRehearsalReadinessResult(
@@ -97,6 +120,7 @@ def _blocked_result(
     *,
     repo_root: Path,
     source_file: dict[str, Any],
+    freshness: dict[str, Any],
     classification: str,
     detail: str,
 ) -> IOSDeviceLaunchRehearsalReadinessResult:
@@ -106,6 +130,7 @@ def _blocked_result(
             repo_root=repo_root,
             status="blocked",
             source_file=source_file,
+            freshness=freshness,
             summary=_empty_summary(),
             sequence=[],
             operator_actions=[f"rerun {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"],
@@ -130,6 +155,7 @@ def _base_report(
     repo_root: Path,
     status: str,
     source_file: dict[str, Any],
+    freshness: dict[str, Any],
     summary: dict[str, int],
     sequence: list[dict[str, Any]],
     operator_actions: list[str],
@@ -141,6 +167,7 @@ def _base_report(
         "kind": "ios_device_launch_rehearsal_readiness_report",
         "status": status,
         "source_file": source_file,
+        "freshness": freshness,
         "summary": summary,
         "sequence": sequence,
         "blockers": blockers,
@@ -194,7 +221,18 @@ def _sequence(raw_sequence: Any) -> list[dict[str, Any]]:
     return rows[:8]
 
 
-def _operator_actions(raw_actions: Any) -> list[str]:
+def _operator_actions(
+    raw_actions: Any,
+    *,
+    freshness: dict[str, Any] | None = None,
+) -> list[str]:
+    if freshness is not None and freshness["status"] == "stale":
+        existing_actions = (
+            [str(action) for action in raw_actions if isinstance(action, str) and action]
+            if isinstance(raw_actions, list)
+            else []
+        )
+        return _dedupe([IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION, *existing_actions])[:5]
     if not isinstance(raw_actions, list):
         return [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
     actions = [str(action) for action in raw_actions if isinstance(action, str) and action]
@@ -254,6 +292,112 @@ def _non_negative_int(value: Any) -> int:
 
 def _bool(value: Any) -> bool:
     return value is True
+
+
+def _freshness_report(
+    *,
+    repo_root: Path,
+    rehearsal_file: Path,
+    source_exists: bool,
+) -> dict[str, Any]:
+    if not source_exists:
+        return _freshness_payload(
+            status="unknown",
+            classification="source_missing",
+            source_modified_at=None,
+            git_metadata=None,
+        )
+    source_modified_at = rehearsal_file.stat().st_mtime
+    git_metadata = _git_head_metadata(repo_root)
+    if git_metadata is None:
+        return _freshness_payload(
+            status="unknown",
+            classification="git_unavailable",
+            source_modified_at=source_modified_at,
+            git_metadata=None,
+        )
+    freshness_status = (
+        "stale"
+        if source_modified_at < git_metadata["committed_at_epoch"]
+        else "fresh"
+    )
+    return _freshness_payload(
+        status=freshness_status,
+        classification="stale_report" if freshness_status == "stale" else "fresh_report",
+        source_modified_at=source_modified_at,
+        git_metadata=git_metadata,
+    )
+
+
+def _git_head_metadata(repo_root: Path) -> dict[str, Any] | None:
+    try:
+        revision = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--short", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        ).stdout.strip()
+        committed_at = subprocess.run(
+            ["git", "-C", str(repo_root), "log", "-1", "--format=%ct", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        ).stdout.strip()
+    except (subprocess.SubprocessError, OSError):
+        return None
+    try:
+        committed_at_epoch = float(committed_at)
+    except ValueError:
+        return None
+    return {
+        "revision": revision or None,
+        "committed_at_epoch": committed_at_epoch,
+    }
+
+
+def _freshness_payload(
+    *,
+    status: str,
+    classification: str,
+    source_modified_at: float | None,
+    git_metadata: dict[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "classification": classification,
+        "checked_against": "git_head",
+        "source_modified_at": _iso_timestamp(source_modified_at),
+        "current_revision": None if git_metadata is None else git_metadata["revision"],
+        "current_revision_committed_at": None
+        if git_metadata is None
+        else _iso_timestamp(git_metadata["committed_at_epoch"]),
+    }
+
+
+def _iso_timestamp(epoch: float | None) -> str | None:
+    if epoch is None:
+        return None
+    return (
+        datetime.fromtimestamp(epoch, tz=timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
+def _freshness_blocker(freshness: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": "ios_device_launch_rehearsal_freshness",
+        "label": "iOS device launch rehearsal freshness",
+        "status": "blocked",
+        "classification": str(freshness["classification"]),
+        "command": IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND,
+        "detail": (
+            "Saved iOS device launch rehearsal report is older than the current "
+            "git revision."
+        ),
+    }
 
 
 def _path_label(*, path: Path, repo_root: Path) -> str:

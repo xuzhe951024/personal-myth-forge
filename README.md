@@ -197,7 +197,11 @@ before the final iPhone operator pass when you want the complete ignored JSON
 evidence set regenerated in one command. P0.114 also ends this wrapper by
 rewriting `services/backend/.local/final-demo-launch-local.json` after the
 rehearsal report is written, so the iPhone `Launch Rehearsal` panel reads the
-newest saved rehearsal readiness without a separate final launch refresh.
+newest saved rehearsal readiness without a separate final launch refresh. P0.115
+adds a git-HEAD freshness guard: if the saved rehearsal JSON is older than the
+current revision, the embedded readiness becomes blocked with
+`ios_device_launch_rehearsal_freshness` and tells the operator to rerun
+`make ios-device-launch-rehearsal`.
 
 The same sanitized launch status is available to the iPhone app:
 
@@ -215,8 +219,10 @@ can see whether the safe Mac-side evidence refresh is missing, blocked, partial,
 or ready. P0.114 keeps the saved local launch payload synchronized by making
 `make ios-device-launch-rehearsal` rewrite
 `services/backend/.local/final-demo-launch-local.json` after
-`services/backend/.local/ios-device-launch-rehearsal.json`. The endpoint does
-not write config files, start servers, run the rehearsal command, call live
+`services/backend/.local/ios-device-launch-rehearsal.json`. P0.115 also embeds
+`ios_device_launch_rehearsal_readiness.freshness`, so stale saved rehearsal
+evidence is visible on the iPhone before the final operator pass. The endpoint
+does not write config files, start servers, run the rehearsal command, call live
 providers, or expose secret values.
 
 Upload a local object capture, then create a myth session from that capture:
