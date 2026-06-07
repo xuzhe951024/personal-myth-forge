@@ -101,6 +101,9 @@ do {
     try testFinalLaunchMobileSummaryShowsBlockedResourceRequirements()
     try testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsResourceApplyPreview()
+    try testDecodesFinalExternalActionLedgerFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsExternalActionLedger()
+    try testFinalLaunchMobileSummaryRedactsUnsafeExternalActionLedger()
     try testDecodesResourceHandoffFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsMissingResourceHandoff()
     try testFinalLaunchMobileSummaryShowsReadyResourceHandoff()
@@ -2507,6 +2510,71 @@ private func testFinalLaunchMobileSummaryShowsResourceApplyPreview() throws {
     try expectContains(text, "make final-resource-apply-preview")
 }
 
+private func testDecodesFinalExternalActionLedgerFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload()
+    )
+
+    let ledger = try require(
+        report.finalExternalActionLedger,
+        "missing final external action ledger"
+    )
+
+    try expectEqual(ledger.kind, "final_external_action_ledger_report")
+    try expectEqual(ledger.status, "blocked")
+    try expectEqual(ledger.summary.groups, 5)
+    try expectEqual(ledger.summary.actions, 27)
+    try expectEqual(ledger.summary.requiresCostConsent, 5)
+    try expectEqual(ledger.actionGroups.first?.id, "resource_inputs")
+    try expectEqual(ledger.actionGroups.first?.summary.missing, 5)
+    try expectEqual(ledger.actionsById["provide_MESHY_API_KEY"]?.secret, true)
+    try expectEqual(ledger.actionsById["run_xcode_build_gate"]?.global, true)
+    try expectEqual(ledger.operatorSequence.first, "make final-resource-requirements")
+    try expectFalse(ledger.safety.commandsRun)
+    try expectFalse(ledger.safety.globalMutation)
+    try expectTrue(ledger.safety.requiresCostConsentForLiveActions)
+}
+
+private func testFinalLaunchMobileSummaryShowsExternalActionLedger() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(),
+        error: nil
+    )
+    let text = summary.externalActionLedgerRows.joined(separator: " ")
+
+    try expectContains(text, "External actions blocked")
+    try expectContains(text, "groups 5")
+    try expectContains(text, "resource_inputs: blocked")
+    try expectContains(text, "global_machine_actions: manual")
+    try expectContains(text, "live cost consent true")
+    try expectContains(text, "make final-resource-requirements")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeExternalActionLedger() throws {
+    let report = finalDemoLaunchReport(
+        externalActionLedgerCommand: (
+            "make final-external-action-ledger sk-test /Users/zhexu/private "
+                + "file:///tmp/private local-capture://cap checkout_url Bearer token"
+        ),
+        externalActionLedgerDetail: (
+            "api_key=secret private_message: raw words https://checkout.example/pay"
+        )
+    )
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = summary.externalActionLedgerRows.joined(separator: " ")
+
+    try expectFalse(text.contains("sk-test"))
+    try expectFalse(text.contains("/Users/"))
+    try expectFalse(text.contains("file:///"))
+    try expectFalse(text.contains("local-capture://"))
+    try expectFalse(text.contains("checkout_url"))
+    try expectFalse(text.contains("api_key=secret"))
+    try expectFalse(text.contains("private_message"))
+    try expectContains(text, "[withheld]")
+}
+
 private func testDecodesResourceHandoffFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4595,7 +4663,9 @@ private func finalDemoLaunchPayload(
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
     resourceHandoffAction: String = "provide MESHY_API_KEY",
-    resourceHandoffDestination: String = "services/backend/.env"
+    resourceHandoffDestination: String = "services/backend/.env",
+    externalActionLedgerCommand: String = "make final-external-action-ledger",
+    externalActionLedgerDetail: String = "Inspect external action blockers."
 ) -> Data {
     let liveEvidenceReady = liveProviderEvidenceStatus == "ready"
     let liveEvidenceBlocked = liveProviderEvidenceStatus == "blocked"
@@ -4956,6 +5026,203 @@ private func finalDemoLaunchPayload(
               "live_provider_calls": false,
               "global_mutation": false,
               "xcode_or_signing": false
+            }
+          },
+          "final_external_action_ledger": {
+            "kind": "final_external_action_ledger_report",
+            "status": "blocked",
+            "summary": {
+              "groups": 5,
+              "actions": 27,
+              "ready": 0,
+              "missing": 6,
+              "blocked": 3,
+              "manual": 5,
+              "live": 5,
+              "partial": 0,
+              "optional": 8,
+              "secret": 4,
+              "requires_user_confirmation": 3,
+              "requires_cost_consent": 5,
+              "global": 3,
+              "safe_local_write": 2,
+              "live_provider_call": 5
+            },
+            "action_groups": [
+              {
+                "id": "resource_inputs",
+                "label": "Resource inputs",
+                "status": "blocked",
+                "summary": {
+                  "actions": 13,
+                  "ready": 0,
+                  "missing": 5,
+                  "blocked": 1,
+                  "manual": 0,
+                  "live": 0,
+                  "partial": 0,
+                  "optional": 7,
+                  "secret": 4,
+                  "requires_user_confirmation": 0,
+                  "requires_cost_consent": 0
+                },
+                "actions": [
+                  {
+                    "id": "provide_MESHY_API_KEY",
+                    "group_id": "resource_inputs",
+                    "label": "Meshy API key",
+                    "status": "missing",
+                    "command": "make final-resources-preflight",
+                    "detail": "Backend-only secret for live Meshy 3D generation.",
+                    "required": true,
+                    "secret": true,
+                    "requires_user_input": true,
+                    "requires_user_confirmation": false,
+                    "requires_cost_consent": false,
+                    "global": false,
+                    "xcode_or_signing": false,
+                    "live_provider_call": false,
+                    "safe_local_write": false,
+                    "writes_repo_local_files": false
+                  }
+                ]
+              },
+              {
+                "id": "live_provider_costs",
+                "label": "Live provider costs",
+                "status": "live",
+                "summary": {
+                  "actions": 5,
+                  "ready": 0,
+                  "missing": 0,
+                  "blocked": 0,
+                  "manual": 0,
+                  "live": 5,
+                  "partial": 0,
+                  "optional": 0,
+                  "secret": 0,
+                  "requires_user_confirmation": 0,
+                  "requires_cost_consent": 5
+                },
+                "actions": [
+                  {
+                    "id": "run_live_provider_evidence",
+                    "group_id": "live_provider_costs",
+                    "label": "Refresh live provider evidence",
+                    "status": "live",
+                    "command": "\(externalActionLedgerCommand)",
+                    "detail": "\(externalActionLedgerDetail)",
+                    "required": true,
+                    "secret": false,
+                    "requires_user_input": false,
+                    "requires_user_confirmation": false,
+                    "requires_cost_consent": true,
+                    "global": false,
+                    "xcode_or_signing": false,
+                    "live_provider_call": true,
+                    "safe_local_write": false,
+                    "writes_repo_local_files": false
+                  }
+                ]
+              },
+              {
+                "id": "global_machine_actions",
+                "label": "Global machine actions",
+                "status": "manual",
+                "summary": {
+                  "actions": 3,
+                  "ready": 0,
+                  "missing": 0,
+                  "blocked": 0,
+                  "manual": 3,
+                  "live": 0,
+                  "partial": 0,
+                  "optional": 0,
+                  "secret": 0,
+                  "requires_user_confirmation": 3,
+                  "requires_cost_consent": 0
+                },
+                "actions": [
+                  {
+                    "id": "run_xcode_build_gate",
+                    "group_id": "global_machine_actions",
+                    "label": "Run Xcode build gate",
+                    "status": "manual",
+                    "command": "make mobile-xcode-build",
+                    "detail": "May invoke Xcode signing and Apple SDK global state.",
+                    "required": true,
+                    "secret": false,
+                    "requires_user_input": false,
+                    "requires_user_confirmation": true,
+                    "requires_cost_consent": false,
+                    "global": true,
+                    "xcode_or_signing": true,
+                    "live_provider_call": false,
+                    "safe_local_write": false,
+                    "writes_repo_local_files": false
+                  }
+                ]
+              }
+            ],
+            "actions_by_id": {
+              "provide_MESHY_API_KEY": {
+                "id": "provide_MESHY_API_KEY",
+                "group_id": "resource_inputs",
+                "label": "Meshy API key",
+                "status": "missing",
+                "command": "make final-resources-preflight",
+                "detail": "Backend-only secret for live Meshy 3D generation.",
+                "required": true,
+                "secret": true,
+                "requires_user_input": true,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": false,
+                "global": false,
+                "xcode_or_signing": false,
+                "live_provider_call": false,
+                "safe_local_write": false,
+                "writes_repo_local_files": false
+              },
+              "run_xcode_build_gate": {
+                "id": "run_xcode_build_gate",
+                "group_id": "global_machine_actions",
+                "label": "Run Xcode build gate",
+                "status": "manual",
+                "command": "make mobile-xcode-build",
+                "detail": "May invoke Xcode signing and Apple SDK global state.",
+                "required": true,
+                "secret": false,
+                "requires_user_input": false,
+                "requires_user_confirmation": true,
+                "requires_cost_consent": false,
+                "global": true,
+                "xcode_or_signing": true,
+                "live_provider_call": false,
+                "safe_local_write": false,
+                "writes_repo_local_files": false
+              }
+            },
+            "operator_sequence": [
+              "make final-resource-requirements",
+              "\(externalActionLedgerCommand)"
+            ],
+            "operator_actions": [
+              "\(externalActionLedgerDetail)"
+            ],
+            "safety": {
+              "commands_run": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "runs_shell_writers": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
+              "provider_secrets_in_report": false,
+              "local_paths_in_report": false,
+              "requires_user_confirmation_for_global_actions": true,
+              "requires_cost_consent_for_live_actions": true
             }
           },
           "final_acceptance_readiness": {
@@ -7988,7 +8255,9 @@ private func finalDemoLaunchReport(
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
     resourceHandoffAction: String = "provide MESHY_API_KEY",
-    resourceHandoffDestination: String = "services/backend/.env"
+    resourceHandoffDestination: String = "services/backend/.env",
+    externalActionLedgerCommand: String = "make final-external-action-ledger",
+    externalActionLedgerDetail: String = "Inspect external action blockers."
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -8044,7 +8313,9 @@ private func finalDemoLaunchReport(
             resourceHandoffBackendStatus: resourceHandoffBackendStatus,
             resourceHandoffIOSStatus: resourceHandoffIOSStatus,
             resourceHandoffAction: resourceHandoffAction,
-            resourceHandoffDestination: resourceHandoffDestination
+            resourceHandoffDestination: resourceHandoffDestination,
+            externalActionLedgerCommand: externalActionLedgerCommand,
+            externalActionLedgerDetail: externalActionLedgerDetail
         )
     )
 }

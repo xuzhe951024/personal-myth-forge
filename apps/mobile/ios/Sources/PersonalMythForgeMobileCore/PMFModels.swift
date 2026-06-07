@@ -1034,6 +1034,258 @@ public struct FinalResourceApplyPreviewReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalExternalActionLedgerSummary: Codable, Equatable, Sendable {
+    public var groups: Int
+    public var actions: Int
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var manual: Int
+    public var live: Int
+    public var partial: Int
+    public var optional: Int
+    public var secret: Int
+    public var requiresUserConfirmation: Int
+    public var requiresCostConsent: Int
+    public var global: Int
+    public var safeLocalWrite: Int
+    public var liveProviderCall: Int
+
+    public init(
+        groups: Int,
+        actions: Int,
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        manual: Int,
+        live: Int,
+        partial: Int,
+        optional: Int,
+        secret: Int,
+        requiresUserConfirmation: Int,
+        requiresCostConsent: Int,
+        global: Int,
+        safeLocalWrite: Int,
+        liveProviderCall: Int
+    ) {
+        self.groups = groups
+        self.actions = actions
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.manual = manual
+        self.live = live
+        self.partial = partial
+        self.optional = optional
+        self.secret = secret
+        self.requiresUserConfirmation = requiresUserConfirmation
+        self.requiresCostConsent = requiresCostConsent
+        self.global = global
+        self.safeLocalWrite = safeLocalWrite
+        self.liveProviderCall = liveProviderCall
+    }
+}
+
+public struct FinalExternalActionLedgerAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var groupId: String
+    public var label: String
+    public var status: String
+    public var command: String
+    public var detail: String
+    public var required: Bool
+    public var secret: Bool
+    public var requiresUserInput: Bool
+    public var requiresUserConfirmation: Bool
+    public var requiresCostConsent: Bool
+    public var global: Bool
+    public var xcodeOrSigning: Bool
+    public var liveProviderCall: Bool
+    public var safeLocalWrite: Bool
+    public var writesRepoLocalFiles: Bool
+    public var destination: String?
+    public var classification: String?
+
+    public init(
+        id: String,
+        groupId: String,
+        label: String,
+        status: String,
+        command: String,
+        detail: String,
+        required: Bool,
+        secret: Bool,
+        requiresUserInput: Bool,
+        requiresUserConfirmation: Bool,
+        requiresCostConsent: Bool,
+        global: Bool,
+        xcodeOrSigning: Bool,
+        liveProviderCall: Bool,
+        safeLocalWrite: Bool,
+        writesRepoLocalFiles: Bool,
+        destination: String? = nil,
+        classification: String? = nil
+    ) {
+        self.id = id
+        self.groupId = groupId
+        self.label = label
+        self.status = status
+        self.command = command
+        self.detail = detail
+        self.required = required
+        self.secret = secret
+        self.requiresUserInput = requiresUserInput
+        self.requiresUserConfirmation = requiresUserConfirmation
+        self.requiresCostConsent = requiresCostConsent
+        self.global = global
+        self.xcodeOrSigning = xcodeOrSigning
+        self.liveProviderCall = liveProviderCall
+        self.safeLocalWrite = safeLocalWrite
+        self.writesRepoLocalFiles = writesRepoLocalFiles
+        self.destination = destination
+        self.classification = classification
+    }
+}
+
+public struct FinalExternalActionLedgerActionGroup: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var summary: FinalExternalActionLedgerGroupSummary
+    public var actions: [FinalExternalActionLedgerAction]
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        summary: FinalExternalActionLedgerGroupSummary,
+        actions: [FinalExternalActionLedgerAction]
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.summary = summary
+        self.actions = actions
+    }
+}
+
+public struct FinalExternalActionLedgerGroupSummary: Codable, Equatable, Sendable {
+    public var actions: Int
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var manual: Int
+    public var live: Int
+    public var partial: Int
+    public var optional: Int
+    public var secret: Int
+    public var requiresUserConfirmation: Int
+    public var requiresCostConsent: Int
+
+    public init(
+        actions: Int,
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        manual: Int,
+        live: Int,
+        partial: Int,
+        optional: Int,
+        secret: Int,
+        requiresUserConfirmation: Int,
+        requiresCostConsent: Int
+    ) {
+        self.actions = actions
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.manual = manual
+        self.live = live
+        self.partial = partial
+        self.optional = optional
+        self.secret = secret
+        self.requiresUserConfirmation = requiresUserConfirmation
+        self.requiresCostConsent = requiresCostConsent
+    }
+}
+
+public struct FinalExternalActionLedgerSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var runsShellWriters: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+    public var providerSecretsInReport: Bool
+    public var localPathsInReport: Bool
+    public var requiresUserConfirmationForGlobalActions: Bool
+    public var requiresCostConsentForLiveActions: Bool
+
+    public init(
+        commandsRun: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        runsShellWriters: Bool,
+        providerCalls: Bool,
+        liveProviderCalls: Bool,
+        globalMutation: Bool,
+        xcodeOrSigning: Bool,
+        keychainWrites: Bool,
+        providerSecretsInReport: Bool,
+        localPathsInReport: Bool,
+        requiresUserConfirmationForGlobalActions: Bool,
+        requiresCostConsentForLiveActions: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.runsShellWriters = runsShellWriters
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.globalMutation = globalMutation
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+        self.providerSecretsInReport = providerSecretsInReport
+        self.localPathsInReport = localPathsInReport
+        self.requiresUserConfirmationForGlobalActions = requiresUserConfirmationForGlobalActions
+        self.requiresCostConsentForLiveActions = requiresCostConsentForLiveActions
+    }
+}
+
+public struct FinalExternalActionLedgerReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: FinalExternalActionLedgerSummary
+    public var actionGroups: [FinalExternalActionLedgerActionGroup]
+    public var actionsById: [String: FinalExternalActionLedgerAction]
+    public var operatorSequence: [String]
+    public var operatorActions: [String]
+    public var safety: FinalExternalActionLedgerSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: FinalExternalActionLedgerSummary,
+        actionGroups: [FinalExternalActionLedgerActionGroup],
+        actionsById: [String: FinalExternalActionLedgerAction],
+        operatorSequence: [String],
+        operatorActions: [String] = [],
+        safety: FinalExternalActionLedgerSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.actionGroups = actionGroups
+        self.actionsById = actionsById
+        self.operatorSequence = operatorSequence
+        self.operatorActions = operatorActions
+        self.safety = safety
+    }
+}
+
 public struct FinalAcceptanceSourceFile: Codable, Equatable, Sendable {
     public var path: String
     public var exists: Bool
@@ -2377,6 +2629,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var finalResourcesPreflight: FinalResourcesPreflightReport?
     public var finalResourceRequirements: FinalResourceRequirementsReport?
     public var finalResourceApplyPreview: FinalResourceApplyPreviewReport?
+    public var finalExternalActionLedger: FinalExternalActionLedgerReport?
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
     public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
@@ -2403,6 +2656,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
         finalResourceRequirements: FinalResourceRequirementsReport? = nil,
         finalResourceApplyPreview: FinalResourceApplyPreviewReport? = nil,
+        finalExternalActionLedger: FinalExternalActionLedgerReport? = nil,
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
         threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
@@ -2428,6 +2682,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.finalResourcesPreflight = finalResourcesPreflight
         self.finalResourceRequirements = finalResourceRequirements
         self.finalResourceApplyPreview = finalResourceApplyPreview
+        self.finalExternalActionLedger = finalExternalActionLedger
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
         self.threeDEvaluationReadiness = threeDEvaluationReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
