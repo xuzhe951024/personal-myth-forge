@@ -66,6 +66,11 @@ final-handoff-index:
 final-showcase-readiness:
 	cd services/backend && uv run python -m myth_forge_api.cli final-showcase-readiness --repo-root ../.. --output .local/final-showcase-readiness.json
 
+.PHONY: print-fulfillment-readiness
+
+print-fulfillment-readiness:
+	cd services/backend && uv run python -m myth_forge_api.cli print-fulfillment-readiness --repo-root ../.. --output .local/print-fulfillment-readiness.json
+
 .PHONY: live-provider-evidence
 
 live-provider-evidence:

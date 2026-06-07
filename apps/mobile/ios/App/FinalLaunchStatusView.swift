@@ -41,6 +41,10 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "Live Evidence", lines: summary.liveProviderEvidenceRows)
             }
 
+            if !summary.printFulfillmentReadinessRows.isEmpty {
+                groupedLines(title: "Print Fulfillment", lines: summary.printFulfillmentReadinessRows)
+            }
+
             if !summary.showcaseReadinessRows.isEmpty {
                 groupedLines(title: "Showcase Readiness", lines: summary.showcaseReadinessRows)
             }

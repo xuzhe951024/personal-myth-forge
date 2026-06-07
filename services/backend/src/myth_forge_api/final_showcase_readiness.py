@@ -22,6 +22,9 @@ from myth_forge_api.live_provider_evidence import build_live_provider_evidence_r
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
+from myth_forge_api.print_fulfillment_readiness import (
+    build_print_fulfillment_readiness_report,
+)
 from myth_forge_api.resource_handoff import build_resource_handoff_report
 from myth_forge_api.three_d_evaluation_readiness import (
     build_three_d_evaluation_readiness_report,
@@ -35,6 +38,7 @@ CAPABILITY_ORDER = [
     "capture_scanning",
     "game_asset_3d_generation",
     "ai_agent_npc",
+    "print_fulfillment",
     "provider_key_handoff",
     "functional_regression",
     "visual_regression",
@@ -79,6 +83,10 @@ def build_final_showcase_readiness_report(
     live_provider_evidence = build_live_provider_evidence_report(
         repo_root=selected_repo_root,
     ).report
+    print_fulfillment_readiness = build_print_fulfillment_readiness_report(
+        settings=selected_settings,
+        repo_root=selected_repo_root,
+    ).report
     ios_deploy_runbook = build_ios_deploy_runbook_report(
         mode="local",
         repo_root=selected_repo_root,
@@ -100,6 +108,7 @@ def build_final_showcase_readiness_report(
         npc_evaluation=npc_evaluation,
         visual_regression=visual_regression,
         live_provider_evidence=live_provider_evidence,
+        print_fulfillment_readiness=print_fulfillment_readiness,
         ios_deploy_runbook=ios_deploy_runbook,
         ios_device_launch_rehearsal=ios_device_launch_rehearsal,
         final_resources=final_resources,
@@ -123,6 +132,9 @@ def build_final_showcase_readiness_report(
             "npc_agent_evaluation_readiness": _evidence_summary(npc_evaluation),
             "visual_regression_readiness": _evidence_summary(visual_regression),
             "live_provider_evidence": _evidence_summary(live_provider_evidence),
+            "print_fulfillment_readiness": _evidence_summary(
+                print_fulfillment_readiness,
+            ),
             "ios_deploy_runbook": _evidence_summary(ios_deploy_runbook),
             "ios_device_launch_rehearsal_readiness": _evidence_summary(
                 ios_device_launch_rehearsal,
@@ -161,6 +173,7 @@ def _capabilities(
     npc_evaluation: dict[str, Any],
     visual_regression: dict[str, Any],
     live_provider_evidence: dict[str, Any],
+    print_fulfillment_readiness: dict[str, Any],
     ios_deploy_runbook: dict[str, Any],
     ios_device_launch_rehearsal: dict[str, Any],
     final_resources: dict[str, Any],
@@ -180,6 +193,7 @@ def _capabilities(
             npc_evaluation=npc_evaluation,
             live_provider_evidence=live_provider_evidence,
         ),
+        _print_fulfillment_capability(print_fulfillment_readiness),
         _provider_key_handoff_capability(
             final_resources=final_resources,
             resource_handoff=resource_handoff,
@@ -210,6 +224,7 @@ def _capabilities(
             npc_evaluation=npc_evaluation,
             visual_regression=visual_regression,
             live_provider_evidence=live_provider_evidence,
+            print_fulfillment_readiness=print_fulfillment_readiness,
             ios_deploy_runbook=ios_deploy_runbook,
             ios_device_launch_rehearsal=ios_device_launch_rehearsal,
             final_resources=final_resources,
@@ -361,6 +376,34 @@ def _ai_agent_npc_capability(
             f"npc_agent_evaluation:{npc_evaluation.get('status', 'unknown')}",
             f"live_provider_evidence:{live_provider_evidence.get('status', 'unknown')}",
         ],
+    )
+
+
+def _print_fulfillment_capability(report: dict[str, Any]) -> dict[str, Any]:
+    raw_status = str(report.get("status", "missing"))
+    status = _normalized_status(raw_status)
+    first_blocker = report.get("first_blocker")
+    if status == "ready":
+        classification = "print_fulfillment_ready"
+        detail = "Local and configured print fulfillment quote handoff evidence are ready."
+    elif isinstance(first_blocker, dict):
+        classification = str(
+            first_blocker.get("classification", "print_fulfillment_not_ready")
+        )
+        detail = str(
+            first_blocker.get("detail", "Print fulfillment readiness is not ready.")
+        )
+    else:
+        classification = "missing_print_fulfillment_readiness"
+        detail = "Print fulfillment readiness report is missing or incomplete."
+    return _capability(
+        capability_id="print_fulfillment",
+        label="Print fulfillment",
+        status=status,
+        classification=classification,
+        command="make print-fulfillment-readiness",
+        detail=detail,
+        evidence=[f"{report.get('kind', 'print_fulfillment_readiness')}:{raw_status}"],
     )
 
 
@@ -557,6 +600,7 @@ def _commands() -> list[str]:
         "make final-rehearsal-local",
         "make ios-device-launch-rehearsal",
         "make live-provider-evidence",
+        "make print-fulfillment-readiness",
         "make final-showcase-readiness",
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "

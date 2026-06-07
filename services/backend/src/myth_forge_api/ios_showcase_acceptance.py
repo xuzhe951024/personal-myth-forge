@@ -688,6 +688,58 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="final_print_fulfillment_readiness",
+        label="Final print fulfillment readiness",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/print_fulfillment_readiness.py",
+                "build_print_fulfillment_readiness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/print_fulfillment_readiness.py",
+                "print_fulfillment_readiness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/print_fulfillment_readiness.py",
+                "configured_treatstock_quote",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "print_fulfillment_readiness",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "print_fulfillment",
+            ),
+            SourceRequirement("services/backend/src/myth_forge_api/cli.py", "print-fulfillment-readiness"),
+            SourceRequirement("Makefile", "print-fulfillment-readiness:"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "PrintFulfillmentReadinessReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "printFulfillmentReadiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "printFulfillmentReadinessRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Print Fulfillment",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="provider_readiness",
         label="Provider readiness",
         requirements=(
