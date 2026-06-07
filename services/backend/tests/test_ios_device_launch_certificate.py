@@ -75,6 +75,7 @@ def test_ios_device_launch_certificate_ready_with_configured_inputs(
     assert result.report["certificate"]["product_bundle_identifier"]["configured"] is True
     assert result.report["certificate"]["backend_base_url"]["configured"] is True
     assert result.report["final_handoff_index"]["status"] == "ready"
+    assert result.report["final_handoff_index"]["summary"]["blocked"] == 0
     assert result.report["ios_deploy_runbook"]["status"] == "partial"
     assert result.report["final_demo_launch"]["overall_status"] == "partial"
     assert gates["ios_deploy_config"]["status"] == "ready"
@@ -171,6 +172,7 @@ def _write_final_resources(repo_root: Path) -> None:
 def _write_local_rehearsal_reports(repo_root: Path) -> None:
     _write_three_d_evaluation(repo_root)
     _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
     _write_final_acceptance(repo_root)
     _write_final_demo_launch(repo_root)
     _write_ios_deploy_runbook(repo_root)
@@ -255,6 +257,21 @@ def _write_three_d_evaluation(repo_root: Path) -> None:
         "cases": [],
     }
     _write_json(repo_root / "services/backend/.local/3d-evaluation-local.json", report)
+
+
+def _write_visual_regression(repo_root: Path) -> None:
+    report = {
+        "kind": "visual_regression_report",
+        "status": "passed",
+        "summary": {"passed": 1, "failed": 0},
+        "artifacts": [
+            {
+                "id": "p0.118_scene_load_proof",
+                "status": "passed",
+            }
+        ],
+    }
+    _write_json(repo_root / "services/backend/.local/visual-regression-local.json", report)
 
 
 def _write_json(path: Path, report: dict[str, object]) -> None:
