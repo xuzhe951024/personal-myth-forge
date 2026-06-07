@@ -9,6 +9,9 @@ from myth_forge_api.final_acceptance_readiness import (
     LOCAL_FINAL_ACCEPTANCE_COMMAND,
     build_final_acceptance_readiness_report,
 )
+from myth_forge_api.final_resource_apply_preview import (
+    build_final_resource_apply_preview_report,
+)
 from myth_forge_api.final_resources_preflight import (
     DEFAULT_RESOURCES_PATH,
     build_final_resources_preflight_report,
@@ -40,6 +43,9 @@ def build_ios_deploy_runbook_report(
     final_resources = build_final_resources_preflight_report(
         repo_root=selected_repo_root,
     ).report
+    final_resource_apply_preview = build_final_resource_apply_preview_report(
+        repo_root=selected_repo_root,
+    ).report
     final_acceptance = build_final_acceptance_readiness_report(
         repo_root=selected_repo_root,
     ).report
@@ -53,6 +59,7 @@ def build_ios_deploy_runbook_report(
         mode=mode,
         deploy_values=_deploy_config_values(selected_repo_root),
         final_resources=final_resources,
+        final_resource_apply_preview=final_resource_apply_preview,
         final_acceptance=final_acceptance,
         three_d_evaluation=three_d_evaluation,
         npc_evaluation=npc_evaluation,
@@ -91,6 +98,7 @@ def _input_slots(
     mode: LaunchMode,
     deploy_values: dict[str, str],
     final_resources: dict[str, Any],
+    final_resource_apply_preview: dict[str, Any],
     final_acceptance: dict[str, Any],
     three_d_evaluation: dict[str, Any],
     npc_evaluation: dict[str, Any],
@@ -111,6 +119,14 @@ def _input_slots(
                 "copy services/backend/final-resources.env.example to "
                 "services/backend/.local/final-resources.env"
             ),
+        ),
+        _slot(
+            slot_id="final_resource_apply_preview",
+            label="Final resource apply preview",
+            status=str(final_resource_apply_preview.get("status", "missing")),
+            required=True,
+            source="services/backend/.local/final-resource-apply-preview.json",
+            action="run make final-resource-apply-preview before applying resources",
         ),
         _slot(
             slot_id="backend_provider_env",
@@ -303,9 +319,21 @@ def _command_sequence(
             "Validate ignored final resources file without applying it.",
         ),
         _command_step(
+            "preview_final_resource_apply",
+            "Preview final resource apply",
+            str(slots["final_resource_apply_preview"]["status"]),
+            "make final-resource-apply-preview",
+            "Preview backend .env and iOS deploy config writes without running writer scripts.",
+        ),
+        _command_step(
             "apply_final_resources",
             "Apply final resources",
-            str(slots["final_resources_env"]["status"]),
+            _combined_status(
+                [
+                    str(slots["final_resources_env"]["status"]),
+                    str(slots["final_resource_apply_preview"]["status"]),
+                ]
+            ),
             "make final-apply-resources",
             "Write only ignored backend and iOS local config files.",
         ),

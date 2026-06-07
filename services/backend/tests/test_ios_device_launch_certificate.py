@@ -77,6 +77,14 @@ def test_ios_device_launch_certificate_ready_with_configured_inputs(
     assert result.report["final_handoff_index"]["status"] == "ready"
     assert result.report["final_handoff_index"]["summary"]["blocked"] == 0
     assert result.report["ios_deploy_runbook"]["status"] == "partial"
+    runbook_commands = [
+        step["command"]
+        for step in result.report["ios_deploy_runbook"]["command_sequence"]
+    ]
+    assert "make final-resource-apply-preview" in runbook_commands
+    assert runbook_commands.index("make final-resource-apply-preview") < (
+        runbook_commands.index("make final-apply-resources")
+    )
     assert result.report["final_demo_launch"]["overall_status"] == "partial"
     assert gates["ios_deploy_config"]["status"] == "ready"
     assert gates["backend_device_server"]["status"] == "manual"

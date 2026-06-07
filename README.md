@@ -2494,3 +2494,21 @@ OpenAI, and print evidence are proven.
 This remains read-only. It does not write `.env`, write iOS deploy config,
 run shell writers, call live providers, run Xcode, or touch signing/keychain
 state.
+
+## P0.127 iOS Deploy Apply Preview Gate
+
+The iOS deploy runbook now includes `make final-resource-apply-preview` before
+`make final-apply-resources`:
+
+```bash
+make ios-deploy-runbook
+cat services/backend/.local/ios-deploy-runbook-local.json
+```
+
+The runbook exposes a required `final_resource_apply_preview` input slot and a
+`preview_final_resource_apply` command step. The device launch certificate also
+inherits this command order through its compact runbook summary, so the iOS
+deployment path cannot skip the dry-run preview in the final handoff.
+
+This remains report-only. It does not apply resources, run writer scripts, call
+providers, run Xcode, or mutate signing/keychain state.
