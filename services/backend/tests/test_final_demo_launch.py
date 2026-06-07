@@ -360,6 +360,26 @@ def test_final_demo_launch_embeds_visual_regression_readiness(
     assert readiness["safety"]["commands_run"] is False
 
 
+def test_final_demo_launch_embeds_print_fulfillment_readiness(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    readiness = result.report["print_fulfillment_readiness"]
+
+    assert readiness["kind"] == "print_fulfillment_readiness_report"
+    assert readiness["status"] in {"blocked", "partial", "ready"}
+    assert "configured_treatstock_quote" in readiness["checks_by_id"]
+    assert readiness["safety"]["commands_run"] is False
+    assert readiness["safety"]["live_provider_calls"] is False
+
+
 def test_final_demo_launch_embeds_live_provider_evidence(
     tmp_path: Path,
 ) -> None:

@@ -26,6 +26,9 @@ from myth_forge_api.live_provider_evidence import build_live_provider_evidence_r
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
+from myth_forge_api.print_fulfillment_readiness import (
+    build_print_fulfillment_readiness_report,
+)
 from myth_forge_api.resource_handoff import build_resource_handoff_report
 from myth_forge_api.three_d_evaluation_readiness import (
     build_three_d_evaluation_readiness_report,
@@ -75,6 +78,10 @@ def build_final_demo_launch_report(
     live_provider_evidence = build_live_provider_evidence_report(
         repo_root=selected_repo_root,
     ).report
+    print_fulfillment_readiness = build_print_fulfillment_readiness_report(
+        settings=selected_settings,
+        repo_root=selected_repo_root,
+    ).report
     final_showcase_readiness = build_final_showcase_readiness_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
@@ -118,6 +125,7 @@ def build_final_demo_launch_report(
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,
         "visual_regression_readiness": visual_regression_readiness,
         "live_provider_evidence": live_provider_evidence,
+        "print_fulfillment_readiness": print_fulfillment_readiness,
         "final_showcase_readiness": final_showcase_readiness,
         "ios_device_launch_rehearsal_readiness": (
             ios_device_launch_rehearsal_readiness

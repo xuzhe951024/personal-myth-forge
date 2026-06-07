@@ -25,6 +25,7 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
         "capture_scanning",
         "game_asset_3d_generation",
         "ai_agent_npc",
+        "print_fulfillment",
         "provider_key_handoff",
         "functional_regression",
         "visual_regression",
@@ -37,6 +38,9 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
         "status"
     ] == "blocked"
     assert result.report["capabilities_by_id"]["ai_agent_npc"]["status"] == "blocked"
+    assert result.report["capabilities_by_id"]["print_fulfillment"][
+        "status"
+    ] == "blocked"
     assert result.report["first_blocker"]["id"] == "ios_deployable"
     assert "make final-rehearsal-local" in result.report["commands"]
     assert "make final-showcase-readiness" in result.report["commands"]
@@ -79,6 +83,8 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     assert rows["capture_scanning"]["status"] == "ready"
     assert rows["game_asset_3d_generation"]["status"] == "partial"
     assert rows["ai_agent_npc"]["status"] == "partial"
+    assert rows["print_fulfillment"]["status"] == "partial"
+    assert rows["print_fulfillment"]["classification"] == "missing_configured_treatstock_quote"
     assert rows["provider_key_handoff"]["status"] == "partial"
     assert rows["functional_regression"]["status"] == "ready"
     assert rows["visual_regression"]["status"] == "ready"
@@ -163,6 +169,9 @@ def _write_capture_source_acceptance(repo_root: Path) -> None:
                 "ThreeDGenerationInputReviewBuilder.build",
                 "CaptureGenerationReceiptView(receipt: captureGenerationReceipt)",
                 "capture: state.capture",
+                "isPrintQuoteApproved",
+                "PrintFulfillmentReceiptBuilder.build",
+                "fulfillmentReceipt: printFulfillmentReceipt",
             ]
         ),
     )
@@ -230,6 +239,7 @@ def _write_capture_source_acceptance(repo_root: Path) -> None:
             [
                 "ThreeDGenerationInputReviewView.swift",
                 "CaptureGenerationReceiptView.swift",
+                "PrintFulfillmentReceiptView.swift",
             ]
         ),
     )
@@ -244,8 +254,28 @@ def _write_capture_source_acceptance(repo_root: Path) -> None:
                 "testThreeDGenerationInputReviewRedactsUnsafeText",
                 "testCaptureGenerationReceiptShowsReadyGuidedScanGeneration",
                 "testCaptureGenerationReceiptRedactsUnsafeText",
+                "testPrintFulfillmentReceiptRequiresApprovalBeforeHandoff",
+                "testPrintFulfillmentReceiptBlocksAndRedactsUnsafeText",
             ]
         ),
+    )
+    _write_text(
+        repo_root / "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PrintFulfillmentReceipt.swift",
+        "\n".join(
+            [
+                "PrintFulfillmentReceiptBuilder",
+                "Checkout/payment links stay withheld",
+                "canHandOffToProvider",
+            ]
+        ),
+    )
+    _write_text(
+        repo_root / "apps/mobile/ios/App/PrintFulfillmentReceiptView.swift",
+        "Print Fulfillment",
+    )
+    _write_text(
+        repo_root / "apps/mobile/ios/App/PrintQuoteReviewView.swift",
+        "PrintFulfillmentReceiptView(receipt: fulfillmentReceipt) Approve Print Handoff",
     )
 
 
@@ -327,6 +357,10 @@ def _write_visual_regression(repo_root: Path) -> None:
             "artifacts": [
                 {
                     "id": "p0.119_visual_regression_handoff",
+                    "status": "passed",
+                },
+                {
+                    "id": "p0.101_print_fulfillment_receipt",
                     "status": "passed",
                 }
             ],
