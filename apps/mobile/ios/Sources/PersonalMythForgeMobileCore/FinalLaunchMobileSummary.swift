@@ -25,6 +25,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var title: String
     public var subtitle: String
     public var phaseRows: [FinalLaunchMobilePhaseRow]
+    public var launchReceiptRows: [String]
     public var modePolicyRows: [String]
     public var resourceChecklistRows: [String]
     public var resourceActions: [String]
@@ -38,6 +39,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         title: String,
         subtitle: String,
         phaseRows: [FinalLaunchMobilePhaseRow],
+        launchReceiptRows: [String] = [],
         modePolicyRows: [String] = [],
         resourceChecklistRows: [String] = [],
         resourceActions: [String],
@@ -50,6 +52,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.title = title
         self.subtitle = subtitle
         self.phaseRows = phaseRows
+        self.launchReceiptRows = launchReceiptRows
         self.modePolicyRows = modePolicyRows
         self.resourceChecklistRows = resourceChecklistRows
         self.resourceActions = resourceActions
@@ -71,6 +74,7 @@ public enum FinalLaunchMobileSummaryBuilder {
                 title: "Final launch report blocked",
                 subtitle: sanitize(error),
                 phaseRows: [],
+                launchReceiptRows: ["Receipt: final launch report blocked by API error."],
                 resourceActions: [],
                 acceptanceRows: [],
                 handoffRows: [],
@@ -84,6 +88,7 @@ public enum FinalLaunchMobileSummaryBuilder {
                 title: "Final launch report waiting",
                 subtitle: "Final launch report has not loaded.",
                 phaseRows: [],
+                launchReceiptRows: ["Receipt: waiting for final launch report."],
                 resourceActions: [],
                 acceptanceRows: [],
                 handoffRows: [],
@@ -106,6 +111,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             title: "Final launch \(sanitize(report.overallStatus))",
             subtitle: summaryText(report.summary, mode: report.mode),
             phaseRows: Array(phaseRows.prefix(4)),
+            launchReceiptRows: launchReceiptRows(from: report),
             modePolicyRows: modePolicyRows(from: report),
             resourceChecklistRows: resourceChecklistRows(from: report.finalResourcesPreflight),
             resourceActions: resourceActions(from: report.finalResourcesPreflight),
@@ -165,6 +171,52 @@ public enum FinalLaunchMobileSummaryBuilder {
             parts.append(note)
         }
         return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func launchReceiptRows(from report: FinalDemoLaunchReport) -> [String] {
+        [
+            receiptStatusRow(report),
+            acceptanceReceiptRow(report.finalAcceptanceReadiness),
+            firstBlockerReceiptRow(report),
+            liveProviderReceiptRow(report),
+        ].map(sanitize)
+    }
+
+    private static func receiptStatusRow(_ report: FinalDemoLaunchReport) -> String {
+        "Receipt: \(displayMode(report.mode).lowercased()) launch \(report.overallStatus)."
+    }
+
+    private static func acceptanceReceiptRow(_ readiness: FinalAcceptanceReadinessReport?) -> String {
+        guard let readiness else {
+            return "Acceptance: readiness report not loaded."
+        }
+        return "Acceptance: \(readiness.summary.passed) passed, \(readiness.summary.blocked) blocked, \(readiness.summary.failed) failed."
+    }
+
+    private static func firstBlockerReceiptRow(_ report: FinalDemoLaunchReport) -> String {
+        if let blocker = report.finalAcceptanceReadiness?.blockers.first {
+            return "First blocker: \(blocker.id) \(blocker.status) \(blocker.classification) | \(blocker.detail)"
+        }
+        if let item = report.finalResourcesPreflight?.items.first(where: {
+            ($0.status == "missing" && $0.required) || $0.status == "blocked"
+        }) {
+            let detail = item.classification ?? item.normalizedValue ?? ""
+            return "First blocker: \(item.id) \(item.status) \(detail)"
+        }
+        if let action = report.finalOperatorHandoff?.nextActions.first {
+            return "First blocker: \(action)"
+        }
+        return "First blocker: none; final handoff ready."
+    }
+
+    private static func liveProviderReceiptRow(_ report: FinalDemoLaunchReport) -> String {
+        if report.liveCallPolicy.configuredAcceptanceRequiresConsent {
+            return "Live providers: consent required for configured acceptance."
+        }
+        if report.liveCallPolicy.liveCallsByDefault {
+            return "Live providers: live calls enabled by default."
+        }
+        return "Live providers: no live calls by default."
     }
 
     private static func resourceChecklistRows(from preflight: FinalResourcesPreflightReport?) -> [String] {

@@ -71,6 +71,11 @@ do {
     try testDevicePreflightBlocksAndRedactsFinalResourcesPreflight()
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testFinalLaunchMobileSummaryWaitsForMissingReport()
+    try testFinalLaunchMobileSummaryWaitsWithLaunchReceipt()
+    try testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt()
+    try testFinalLaunchMobileSummaryShowsResourceBlockerReceipt()
+    try testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt()
+    try testFinalLaunchMobileSummaryRedactsUnsafeLaunchReceipt()
     try testFinalLaunchMobileSummaryBuildsPartialOperatorStatus()
     try testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsMissingResourceChecklist()
@@ -1657,6 +1662,93 @@ private func testFinalLaunchMobileSummaryWaitsForMissingReport() throws {
     try expectContains(summary.subtitle, "not loaded")
     try expectEqual(summary.phaseRows.count, 0)
     try expectEqual(summary.commandRows.count, 0)
+}
+
+private func testFinalLaunchMobileSummaryWaitsWithLaunchReceipt() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: nil, error: nil)
+
+    try expectEqual(summary.launchReceiptRows.first, "Receipt: waiting for final launch report.")
+}
+
+private func testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "blocked",
+            finalOperatorHandoffStatus: "blocked"
+        ),
+        error: nil
+    )
+
+    try expectContains(summary.launchReceiptRows[0], "Receipt: local launch blocked.")
+    try expectContains(summary.launchReceiptRows[1], "Acceptance: 12 passed, 2 blocked, 0 failed.")
+    try expectContains(summary.launchReceiptRows[2], "First blocker: mobile_deploy_preflight")
+    try expectContains(summary.launchReceiptRows[2], "blocked_by_local_ios_deploy_config")
+    try expectContains(summary.launchReceiptRows[3], "Live providers: consent required")
+}
+
+private func testFinalLaunchMobileSummaryShowsResourceBlockerReceipt() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalResourcesStatus: "blocked",
+            finalResourcesItemsJSON: blockedFinalResourceItemsJSON(),
+            finalAcceptanceStatus: "ready",
+            finalOperatorHandoffStatus: "blocked",
+            finalOperatorHandoffAction: "copy final resources and rerun preflight"
+        ),
+        error: nil
+    )
+
+    try expectContains(summary.launchReceiptRows[2], "First blocker: MESHY_API_KEY")
+    try expectContains(summary.launchReceiptRows[2], "missing")
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
+            finalAcceptanceStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.launchReceiptRows[0], "Receipt: configured launch ready.")
+    try expectEqual(summary.launchReceiptRows[2], "First blocker: none; final handoff ready.")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeLaunchReceipt() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "blocked",
+            finalAcceptanceBlockerDetail: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token"
+        ),
+        error: nil
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+    let receiptText = summary.launchReceiptRows.joined(separator: " ")
+
+    try expectContains(receiptText, "[withheld]")
+    try expectContains(text, "[withheld]")
+    try expectNotContains(receiptText, "sk-test")
+    try expectNotContains(receiptText, "/Users/")
+    try expectNotContains(receiptText, "file:///")
+    try expectNotContains(receiptText, "local-capture://")
+    try expectNotContains(receiptText, "checkout")
+    try expectNotContains(receiptText, "Bearer")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
 }
 
 private func testFinalLaunchMobileSummaryBuildsPartialOperatorStatus() throws {
