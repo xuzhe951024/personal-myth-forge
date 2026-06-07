@@ -2332,3 +2332,23 @@ Static evidence lives at:
 docs/superpowers/verification/p0.79-deploy-preflight-launch-mode.html
 docs/superpowers/verification/assets/p0.79-deploy-preflight-launch-mode-390x844.png
 ```
+
+P0.118 adds a local visual regression gate for mobile showcase evidence:
+
+```bash
+make visual-regression
+```
+
+The first required artifact is the SceneKit load-proof preview evidence from
+P0.117. The gate checks that the HTML and PNG exist, the PNG is `390x844`,
+required proof copy is present, and visible evidence does not contain provider
+keys, local paths, checkout fields, or raw media data. It does not install
+browsers, call providers, run Xcode, mutate signing state, or change global
+machine settings.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.118-scene-load-proof.html
+docs/superpowers/verification/assets/p0.118-scene-load-proof-390x844.png
+```

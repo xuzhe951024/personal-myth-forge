@@ -133,6 +133,7 @@ Bridge deliverable:
 - P0.115 iPhone-visible freshness guard for stale saved iOS device launch rehearsal evidence
 - P0.116 iPhone-visible final handoff source freshness for stale indexed local evidence
 - P0.117 iPhone SceneKit load proof for generated 3D preview assets
+- P0.118 local visual regression gate for iPhone scene load proof evidence
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

@@ -18,6 +18,11 @@ backend-demo:
 backend-generate-local:
 	cd services/backend && uv run python -m myth_forge_api.cli generate-asset --provider local --prompt "Create a brass key relic worshiped by a tiny village."
 
+.PHONY: visual-regression
+
+visual-regression:
+	cd services/backend && uv run python -m myth_forge_api.cli visual-regression --repo-root ../..
+
 .PHONY: backend-evaluate-3d backend-evaluate-npc backend-evaluate-local
 
 backend-evaluate-3d:

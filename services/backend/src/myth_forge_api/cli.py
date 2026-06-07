@@ -174,6 +174,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
+        if args.command == "visual-regression":
+            return _visual_regression(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
     except (MeshyProviderError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -286,6 +291,10 @@ def _build_parser() -> argparse.ArgumentParser:
     final_acceptance_parser.add_argument("--npc-steps", type=_npc_steps_arg, default=3)
     final_acceptance_parser.add_argument("--repo-root", default=None)
     final_acceptance_parser.add_argument("--output", default=None)
+
+    visual_regression_parser = subcommands.add_parser("visual-regression")
+    visual_regression_parser.add_argument("--repo-root", default=None)
+    visual_regression_parser.add_argument("--output", default=None)
 
     return parser
 
@@ -527,6 +536,18 @@ def _final_acceptance(
         npc_steps=npc_steps,
         repo_root=repo_root,
     )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _visual_regression(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    from myth_forge_api.visual_regression import check_visual_artifacts
+
+    result = check_visual_artifacts(Path(repo_root) if repo_root else Path.cwd())
     _write_json_payload(result.report, output_path)
     return result.exit_code
 
