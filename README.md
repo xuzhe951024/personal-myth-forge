@@ -129,6 +129,13 @@ rehearsal. Exit `1` still fails the target. The command does not call live
 providers, apply secrets, start servers, run Xcode, accept Apple licenses, or
 mutate global machine state.
 
+P0.121 expands `make visual-regression` into the full-showcase visual index. The
+gate now checks ten static 390x844 iPhone evidence artifacts covering scan input,
+guided scan, capture-to-3D, generation result, SceneKit load proof, NPC Agent
+tick, print fulfillment, live provider consent, iOS launch rehearsal, and final
+launch visual handoff. It remains read-only and does not call providers, run
+Xcode, install to a device, or mutate global machine state.
+
 For the final key-backed handoff, fill the one-file resource bundle, apply it,
 then run the configured launch report:
 

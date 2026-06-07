@@ -136,6 +136,7 @@ Bridge deliverable:
 - P0.118 local visual regression gate for iPhone scene load proof evidence
 - P0.119 visual regression evidence wired into final handoff and iPhone launch readiness
 - P0.120 live provider evidence manifest for final configured Meshy/OpenAI/Treatstock/iPhone proof
+- P0.121 full-showcase visual regression index for the iPhone demo evidence path
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

@@ -1012,6 +1012,69 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="showcase_visual_regression_index",
+        label="Showcase visual regression index",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "DEFAULT_VISUAL_ARTIFACTS",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.12_ios_device_media_input",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.19_guided_scan_entry",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.98_capture_generation_receipt",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.103_generation_result_receipt",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.118_scene_load_proof",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.82_npc_agent_tick_summary",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.101_print_fulfillment_receipt",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.100_live_provider_consent",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.112_ios_device_launch_rehearsal",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.119_visual_regression_handoff",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_visual_regression.py",
+                "test_default_visual_artifacts_cover_full_showcase_flow",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_visual_regression.py",
+                "test_visual_regression_default_passes_checked_in_showcase_artifacts",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_visual_regression.py",
+                "test_visual_regression_cli_writes_showcase_report",
+            ),
+            SourceRequirement("README.md", "full-showcase visual index"),
+        ),
+    ),
+    FeatureRequirement(
         id="mobile_live_provider_evidence",
         label="Mobile live provider evidence",
         requirements=(
