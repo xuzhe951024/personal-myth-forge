@@ -46,6 +46,11 @@ backend-write-provider-env:
 final-apply-resources:
 	@services/backend/scripts/apply_final_resources.sh
 
+.PHONY: final-resource-init
+
+final-resource-init:
+	cd services/backend && sh scripts/init_final_resources.sh
+
 .PHONY: final-resources-preflight
 
 final-resources-preflight:

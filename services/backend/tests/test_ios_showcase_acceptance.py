@@ -413,6 +413,58 @@ def test_ios_showcase_acceptance_fails_missing_final_resource_requirements_witho
     assert "data:image" not in report_text
 
 
+def test_ios_showcase_acceptance_fails_missing_final_resource_init_script_without_absolute_paths(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    (tmp_path / "services/backend/scripts/init_final_resources.sh").unlink()
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 46, "failed": 1}
+    assert features["final_resource_requirements_manifest"]["status"] == "failed"
+    assert {
+        "file": "services/backend/scripts/init_final_resources.sh",
+        "contains": "final-resources.env initialized",
+    } in features["final_resource_requirements_manifest"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+    assert "data:image" not in report_text
+
+
+def test_ios_showcase_acceptance_fails_missing_final_resource_init_make_target_without_absolute_paths(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    makefile_path = tmp_path / "Makefile"
+    makefile_path.write_text(
+        makefile_path.read_text(encoding="utf-8").replace("final-resource-init:", ""),
+        encoding="utf-8",
+    )
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 46, "failed": 1}
+    assert features["final_resource_requirements_manifest"]["status"] == "failed"
+    assert {
+        "file": "Makefile",
+        "contains": "final-resource-init:",
+    } in features["final_resource_requirements_manifest"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+    assert "data:image" not in report_text
+
+
 def test_ios_showcase_acceptance_fails_missing_final_resource_apply_preview_without_absolute_paths(
     tmp_path,
 ) -> None:
@@ -866,6 +918,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_final_resource_requirements_report final_resource_requirements_report "
             "FinalResourceRequirementsResult validation_commands"
         ),
+        "services/backend/scripts/init_final_resources.sh": (
+            "final-resources.env initialized make final-resource-init must stay untracked"
+        ),
         "services/backend/src/myth_forge_api/final_resource_apply_preview.py": (
             "build_final_resource_apply_preview_report final_resource_apply_preview_report "
             "FinalResourceApplyPreviewResult write_targets_by_id"
@@ -903,6 +958,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final-resource-requirements: .local/final-resource-requirements.json "
             "final-resource-apply-preview: .local/final-resource-apply-preview.json "
             "final-external-action-ledger: .local/final-external-action-ledger.json "
+            "final-resource-init: services/backend/scripts/init_final_resources.sh "
             "final-rehearsal-local: backend-evaluate-local visual-regression-local "
             "final-configured-preflight: final-handoff-index: "
             "ios-device-launch-certificate: ios-device-launch-rehearsal: "

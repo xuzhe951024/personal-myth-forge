@@ -47,6 +47,7 @@ def test_requirements_report_lists_missing_required_resources_without_leaks(
     assert report["summary"]["print"] >= 2
     assert "make final-resources-preflight" in report["validation_commands"]
     assert "make final-resource-requirements" in report["validation_commands"]
+    assert report["operator_actions"][0] == "run make final-resource-init"
     assert str(tmp_path) not in report_text
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text

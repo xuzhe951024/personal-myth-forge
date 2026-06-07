@@ -125,8 +125,7 @@ values are supplied through the unified final resource file, apply them and run
 configured mode:
 
 ```bash
-mkdir -p services/backend/.local
-cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
+make final-resource-init
 $EDITOR services/backend/.local/final-resources.env
 make final-resources-preflight
 make final-apply-resources
@@ -142,6 +141,14 @@ config is written. The launch report then shows `final_resources_preflight` and
 readiness, configured final acceptance, deploy preflight, and Xcode build-gate
 commands. It does not store mobile provider secrets and does not mutate Xcode,
 signing, or global developer settings.
+
+## P0.139 Final Resource Init
+
+`make final-resource-init` safely creates
+`services/backend/.local/final-resources.env` from the checked-in template when
+the ignored local file is missing. It refuses to overwrite an existing file and
+does not write backend `.env`, iOS xcconfig, keychain, Xcode, or provider state.
+After filling the copy, run `make final-resources-preflight`.
 
 `make final-configured-preflight` writes
 `services/backend/.local/final-configured-preflight.json` as a read-only

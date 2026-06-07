@@ -44,10 +44,7 @@ def test_operator_handoff_blocks_missing_resources_and_acceptance_without_runnin
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["optional"] == 1
     assert report["next_actions"][:2] == [
-        (
-            "copy services/backend/final-resources.env.example to "
-            "services/backend/.local/final-resources.env"
-        ),
+        "run make final-resource-init",
         (
             "run make final-acceptance-local to write "
             "services/backend/.local/final-acceptance-local.json"
@@ -277,12 +274,7 @@ def _missing_resources_report() -> dict[str, object]:
         },
         "summary": {"ready": 0, "missing": 1, "blocked": 0, "optional": 0},
         "items": [],
-        "operator_actions": [
-            (
-                "copy services/backend/final-resources.env.example to "
-                "services/backend/.local/final-resources.env"
-            )
-        ],
+        "operator_actions": ["run make final-resource-init"],
         "safety": {
             "provider_secrets_in_report": False,
             "local_paths_in_report": False,
