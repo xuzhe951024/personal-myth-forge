@@ -7,6 +7,8 @@ struct PrintQuoteReviewView: View {
     let quote: PrintQuote?
     let isLoading: Bool
     let errorMessage: String?
+    let fulfillmentReceipt: PrintFulfillmentReceipt
+    @Binding var isPrintQuoteApproved: Bool
     let requestQuote: () -> Void
 
     var body: some View {
@@ -32,9 +34,21 @@ struct PrintQuoteReviewView: View {
                 if let quote {
                     quoteSummary(quote)
                 }
+
+                PrintFulfillmentReceiptView(receipt: fulfillmentReceipt)
+
+                if quote != nil && fulfillmentReceipt.canApprove {
+                    Toggle("Approve Print Handoff", isOn: $isPrintQuoteApproved)
+                        .font(.caption.weight(.semibold))
+                        .toggleStyle(.switch)
+                    Text("Approval only unlocks provider handoff readiness in this demo.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 Text("Print quote review appears after the myth session is ready.")
                     .foregroundStyle(.secondary)
+                PrintFulfillmentReceiptView(receipt: fulfillmentReceipt)
             }
         }
     }

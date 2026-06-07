@@ -35,6 +35,11 @@ do {
     try testNPCAgentActionGateDisablesWhileAutonomyRuns()
     try testNPCAgentActionGateRedactsUnsafeDetail()
     try testDecodesPrintQuotePayload()
+    try testPrintFulfillmentReceiptWaitsForQuote()
+    try testPrintFulfillmentReceiptRequiresApprovalBeforeHandoff()
+    try testPrintFulfillmentReceiptShowsApprovedProviderHandoff()
+    try testPrintFulfillmentReceiptHandlesNoApprovalRequiredQuote()
+    try testPrintFulfillmentReceiptBlocksAndRedactsUnsafeText()
     try testFinalShowcaseSummaryWaitsBeforeSession()
     try testFinalShowcaseSummaryReadyForLocalDemo()
     try testFinalShowcaseSummaryMarksPrintQuoteReady()
@@ -1079,6 +1084,121 @@ private func testDecodesPrintQuotePayload() throws {
     try expectEqual(quote.checkoutUrl, nil)
     try expectEqual(quote.requiresUserApproval, true)
     try expectEqual(quote.quoteNotes.count, 2)
+}
+
+private func testPrintFulfillmentReceiptWaitsForQuote() throws {
+    let session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+
+    let receipt = PrintFulfillmentReceiptBuilder.build(
+        session: session,
+        quote: nil,
+        isLoading: false,
+        errorMessage: nil,
+        isApproved: false
+    )
+
+    try expectEqual(receipt.status, .waiting)
+    try expectEqual(receipt.canApprove, false)
+    try expectEqual(receipt.canHandOffToProvider, false)
+    try expectContains(receipt.title, "Print fulfillment waiting")
+    try expectContains(receipt.detail, "quote")
+    try expectContains(receipt.row(id: "candidate")?.detail ?? "", "stl")
+}
+
+private func testPrintFulfillmentReceiptRequiresApprovalBeforeHandoff() throws {
+    let session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    let quote = localPrintQuote()
+
+    let receipt = PrintFulfillmentReceiptBuilder.build(
+        session: session,
+        quote: quote,
+        isLoading: false,
+        errorMessage: nil,
+        isApproved: false
+    )
+
+    try expectEqual(receipt.status, .needsApproval)
+    try expectEqual(receipt.canApprove, true)
+    try expectEqual(receipt.canHandOffToProvider, false)
+    try expectContains(receipt.title, "Print approval required")
+    try expectContains(receipt.row(id: "provider")?.detail ?? "", "local_stub")
+    try expectContains(receipt.row(id: "quote")?.detail ?? "", "USD 16.00")
+    try expectContains(receipt.row(id: "approval")?.detail ?? "", "review before fulfillment")
+}
+
+private func testPrintFulfillmentReceiptShowsApprovedProviderHandoff() throws {
+    let session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    let quote = localPrintQuote()
+
+    let receipt = PrintFulfillmentReceiptBuilder.build(
+        session: session,
+        quote: quote,
+        isLoading: false,
+        errorMessage: nil,
+        isApproved: true
+    )
+
+    try expectEqual(receipt.status, .ready)
+    try expectEqual(receipt.canApprove, true)
+    try expectEqual(receipt.canHandOffToProvider, true)
+    try expectContains(receipt.title, "Print handoff ready")
+    try expectContains(receipt.detail, "provider handoff")
+    try expectContains(receipt.privacyNotes.joined(separator: " "), "Checkout/payment links stay withheld")
+}
+
+private func testPrintFulfillmentReceiptHandlesNoApprovalRequiredQuote() throws {
+    let session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    var quote = localPrintQuote()
+    quote.requiresUserApproval = false
+    quote.approvalReason = "Provider quote can move to handoff without extra review."
+    quote.checkoutUrl = "https://checkout.example/pay?token=secret"
+
+    let receipt = PrintFulfillmentReceiptBuilder.build(
+        session: session,
+        quote: quote,
+        isLoading: false,
+        errorMessage: nil,
+        isApproved: false
+    )
+
+    try expectEqual(receipt.status, .ready)
+    try expectEqual(receipt.canApprove, false)
+    try expectEqual(receipt.canHandOffToProvider, true)
+    try expectContains(receipt.row(id: "approval")?.detail ?? "", "No extra approval required")
+
+    let text = String(decoding: try PMFJSON.encoder.encode(receipt), as: UTF8.self)
+    try expectNotContains(text, "checkout.example")
+    try expectNotContains(text, "token=secret")
+}
+
+private func testPrintFulfillmentReceiptBlocksAndRedactsUnsafeText() throws {
+    var session = mythSession(asset: generatedAsset(format: "glb", uri: "local://asset.glb"))
+    session.printCandidate.approvalReason = "review sk-test /Users/me/private file:///tmp/private local-capture://cap checkout_url=https://pay.example Bearer token"
+    var quote = localPrintQuote()
+    quote.provider = "treatstock Bearer token"
+    quote.checkoutUrl = "https://checkout.example/pay?token=secret"
+    quote.approvalReason = "approve after Authorization=Bearer secret"
+    quote.quoteNotes = ["safe quote note", "api_key=secret", "private path /tmp/private"]
+
+    let receipt = PrintFulfillmentReceiptBuilder.build(
+        session: session,
+        quote: quote,
+        isLoading: false,
+        errorMessage: "Provider failed Authorization=Bearer secret api_key=secret checkout_url=https://pay.example /Users/me/raw local-capture://cap",
+        isApproved: true
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(receipt), as: UTF8.self)
+
+    try expectEqual(receipt.status, .blocked)
+    try expectEqual(receipt.canHandOffToProvider, false)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout.example")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key=secret")
 }
 
 private func testFinalShowcaseSummaryWaitsBeforeSession() throws {

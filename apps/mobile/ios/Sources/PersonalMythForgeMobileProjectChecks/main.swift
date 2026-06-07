@@ -39,6 +39,7 @@ do {
     let captureGenerationReceiptView = try readText(appRoot.appendingPathComponent("CaptureGenerationReceiptView.swift"))
     let forgeProgressReceiptView = try readText(appRoot.appendingPathComponent("ForgeProgressReceiptView.swift"))
     let liveProviderConsentView = try readText(appRoot.appendingPathComponent("LiveProviderConsentView.swift"))
+    let printFulfillmentReceiptView = try readText(appRoot.appendingPathComponent("PrintFulfillmentReceiptView.swift"))
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
@@ -88,6 +89,7 @@ do {
         coreRoot.appendingPathComponent("CaptureGenerationReceipt.swift")
     )
     let forgeProgressReceipt = try readText(coreRoot.appendingPathComponent("ForgeProgressReceipt.swift"))
+    let printFulfillmentReceipt = try readText(coreRoot.appendingPathComponent("PrintFulfillmentReceipt.swift"))
     let apiClient = try readText(coreRoot.appendingPathComponent("PersonalMythForgeAPIClient.swift"))
     let contractTests = try readText(
         iosRoot.appendingPathComponent("Sources/PersonalMythForgeMobileCoreContractTests/main.swift")
@@ -280,6 +282,7 @@ do {
         "CaptureGenerationReceiptView.swift",
         "ForgeProgressReceiptView.swift",
         "LiveProviderConsentView.swift",
+        "PrintFulfillmentReceiptView.swift",
         "ArtifactSummaryView.swift",
         "Artifact3DPreviewView.swift",
         "GuidedScanCaptureView.swift",
@@ -380,6 +383,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000024 /* LiveProviderConsentView.swift in Sources */,",
         "live provider consent Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000025 /* PrintFulfillmentReceiptView.swift in Sources */,",
+        "print fulfillment receipt Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -528,6 +537,37 @@ do {
     try requireContains(forgeRootView, "printQuote", "print quote root state")
     try requireContains(forgeRootView, "isLoadingPrintQuote", "print quote loading state")
     try requireContains(forgeRootView, "printQuoteError", "print quote error state")
+    try requireContains(forgeRootView, "isPrintQuoteApproved", "print quote approval root state")
+    try requireContains(
+        forgeRootView,
+        "isPrintQuoteApproved = false",
+        "print quote approval reset"
+    )
+    try requireContains(
+        forgeRootView,
+        "isPrintQuoteApproved = !quote.requiresUserApproval",
+        "print quote approval default from quote"
+    )
+    try requireContains(
+        forgeRootView,
+        "fulfillmentReceipt: printFulfillmentReceipt",
+        "print fulfillment receipt view handoff"
+    )
+    try requireContains(
+        forgeRootView,
+        "isPrintQuoteApproved: $isPrintQuoteApproved",
+        "print fulfillment approval binding"
+    )
+    try requireContains(
+        forgeRootView,
+        "private var printFulfillmentReceipt: PrintFulfillmentReceipt",
+        "print fulfillment root property"
+    )
+    try requireContains(
+        forgeRootView,
+        "PrintFulfillmentReceiptBuilder.build",
+        "print fulfillment builder wiring"
+    )
     try requireContains(forgeRootView, "FinalShowcaseSummaryView(", "final showcase summary view wiring")
     try requireContains(forgeRootView, "FinalShowcaseSummaryBuilder.build", "final showcase summary builder wiring")
     try requireContains(
@@ -882,6 +922,51 @@ do {
     try requireContains(liveProviderConsentView, "Live Provider Consent", "live provider consent view title")
     try requireContains(liveProviderConsentView, "summary.consentFlag", "live provider consent flag rendering")
     try requireContains(liveProviderConsentView, "summary.privacyNotes", "live provider consent privacy rendering")
+    try requireContains(
+        printFulfillmentReceipt,
+        "PrintFulfillmentReceiptBuilder",
+        "print fulfillment receipt builder"
+    )
+    try requireContains(
+        printFulfillmentReceipt,
+        "PrintFulfillmentReceiptRow",
+        "print fulfillment receipt row"
+    )
+    try requireContains(
+        printFulfillmentReceipt,
+        "Checkout/payment links stay withheld",
+        "print fulfillment checkout boundary"
+    )
+    try requireContains(printFulfillmentReceipt, "canHandOffToProvider", "print fulfillment handoff gate")
+    try requireContains(printFulfillmentReceipt, "sanitize", "print fulfillment redaction")
+    try requireContains(printFulfillmentReceiptView, "Print Fulfillment", "print fulfillment view title")
+    try requireContains(printFulfillmentReceiptView, "receipt.privacyNotes", "print fulfillment privacy rendering")
+    try requireContains(
+        printQuoteReviewView,
+        "PrintFulfillmentReceiptView(receipt: fulfillmentReceipt)",
+        "print quote review fulfillment receipt"
+    )
+    try requireContains(printQuoteReviewView, "Approve Print Handoff", "print quote approval toggle")
+    try requireContains(
+        printQuoteReviewView,
+        "@Binding var isPrintQuoteApproved",
+        "print quote approval binding input"
+    )
+    try requireContains(
+        contractTests,
+        "testPrintFulfillmentReceiptRequiresApprovalBeforeHandoff",
+        "print fulfillment approval required test"
+    )
+    try requireContains(
+        contractTests,
+        "testPrintFulfillmentReceiptShowsApprovedProviderHandoff",
+        "print fulfillment approved handoff test"
+    )
+    try requireContains(
+        contractTests,
+        "testPrintFulfillmentReceiptBlocksAndRedactsUnsafeText",
+        "print fulfillment redaction test"
+    )
     try requireContains(finalLaunchMobileSummary, "resourceHandoffRows", "final launch resource handoff rows")
     try requireContains(
         finalLaunchMobileSummary,
