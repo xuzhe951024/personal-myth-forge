@@ -20,6 +20,7 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert report["mode"] == "local"
     assert report["status"] == "blocked"
     assert slots["final_resources_env"]["status"] == "missing"
+    assert slots["final_resource_apply_preview"]["status"] == "missing"
     assert slots["development_team"]["status"] == "missing"
     assert slots["backend_base_url"]["status"] == "missing"
     assert slots["local_final_acceptance"]["status"] == "missing"
@@ -28,9 +29,18 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert "copy services/backend/final-resources.env.example" in " ".join(
         report["operator_actions"]
     )
+    assert "run make final-resource-apply-preview before applying resources" in " ".join(
+        report["operator_actions"]
+    )
     assert "run make final-acceptance-local" in " ".join(report["operator_actions"])
     assert "run make backend-evaluate-3d" in " ".join(report["operator_actions"])
     assert "run make backend-evaluate-npc" in " ".join(report["operator_actions"])
+    commands = [step["command"] for step in report["command_sequence"]]
+    assert commands[:3] == [
+        "make final-resources-preflight",
+        "make final-resource-apply-preview",
+        "make final-apply-resources",
+    ]
     assert "run local 3D evaluation with evaluate-3d" not in report_text
     assert "run local NPC Agent evaluation with evaluate-npc" not in report_text
     assert report["safety"] == {
@@ -62,11 +72,13 @@ def test_ios_deploy_runbook_ready_local_inputs_preserve_command_order(
 
     assert report["status"] == "partial"
     assert slots["development_team"]["status"] == "ready"
+    assert slots["final_resource_apply_preview"]["status"] == "ready"
     assert slots["backend_base_url"]["status"] == "ready"
     assert slots["three_d_evaluation"]["status"] == "ready"
     assert "3D evaluation is ready" not in " ".join(report["operator_actions"])
-    assert commands[:4] == [
+    assert commands[:5] == [
         "make final-resources-preflight",
+        "make final-resource-apply-preview",
         "make final-apply-resources",
         "make backend-device-demo",
         "make mobile-deploy-preflight",
