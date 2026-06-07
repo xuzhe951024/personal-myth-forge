@@ -556,6 +556,88 @@ def test_cli_final_resources_preflight_writes_ready_report(tmp_path) -> None:
     assert str(tmp_path) not in report_text
 
 
+def test_cli_final_resource_repair_preview_writes_report(tmp_path) -> None:
+    repo_root = tmp_path / "repo"
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    output_file = tmp_path / "final-resource-repair-preview.json"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "\n".join(
+            [
+                "MESHY_API_KEY=meshy-secret-test",
+                "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
+                "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "final-resource-repair-preview",
+            "--repo-root",
+            str(repo_root),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report_text = output_file.read_text(encoding="utf-8")
+    report = json.loads(report_text)
+    repairs = {repair["id"]: repair for repair in report["repairs"]}
+
+    assert exit_code == 2
+    assert report["kind"] == "final_resource_repair_report"
+    assert report["status"] == "repairable"
+    assert repairs["PRODUCT_BUNDLE_IDENTIFIER"]["action"] == "clear_value"
+    assert repairs["PMF_BACKEND_BASE_URL"]["action"] == "clear_value"
+    assert "meshy-secret-test" not in report_text
+    assert "192.168.1.10" not in report_text
+    assert str(tmp_path) not in report_text
+
+
+def test_cli_final_resource_repair_applies_safe_placeholder_cleanup(tmp_path) -> None:
+    repo_root = tmp_path / "repo"
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    output_file = tmp_path / "final-resource-repair.json"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "\n".join(
+            [
+                "MESHY_API_KEY=meshy-secret-test",
+                "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
+                "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "final-resource-repair",
+            "--repo-root",
+            str(repo_root),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report_text = output_file.read_text(encoding="utf-8")
+    report = json.loads(report_text)
+    repaired_text = resources.read_text(encoding="utf-8")
+
+    assert exit_code == 0
+    assert report["status"] == "repaired"
+    assert report["summary"] == {"repaired": 2}
+    assert "MESHY_API_KEY=meshy-secret-test" in repaired_text
+    assert "PRODUCT_BUNDLE_IDENTIFIER=\n" in repaired_text
+    assert "PMF_BACKEND_BASE_URL=\n" in repaired_text
+    assert "meshy-secret-test" not in report_text
+    assert "192.168.1.10" not in report_text
+
+
 def test_cli_final_resources_preflight_returns_two_when_missing(
     tmp_path,
     capsys,

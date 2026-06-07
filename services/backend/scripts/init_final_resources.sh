@@ -22,6 +22,7 @@ fi
 if [ -e "$DESTINATION" ]; then
   printf '%s\n' "$DESTINATION_LABEL already exists; refusing to overwrite." >&2
   printf '%s\n' "Review it or remove it before rerunning make final-resource-init." >&2
+  printf '%s\n' "If it came from an older template, run make final-resource-repair-preview." >&2
   exit 2
 fi
 

@@ -32,6 +32,9 @@ from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
 )
+from myth_forge_api.final_resource_repair import (
+    build_final_resource_repair_report,
+)
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
@@ -154,6 +157,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _final_resource_apply_preview(
                 repo_root=args.repo_root,
                 output_path=args.output,
+            )
+        if args.command == "final-resource-repair-preview":
+            return _final_resource_repair(
+                repo_root=args.repo_root,
+                output_path=args.output,
+                apply=False,
+            )
+        if args.command == "final-resource-repair":
+            return _final_resource_repair(
+                repo_root=args.repo_root,
+                output_path=args.output,
+                apply=True,
             )
         if args.command == "final-external-action-ledger":
             return _final_external_action_ledger(
@@ -295,6 +310,16 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     final_resource_apply_preview_parser.add_argument("--repo-root", default=None)
     final_resource_apply_preview_parser.add_argument("--output", default=None)
+
+    final_resource_repair_preview_parser = subcommands.add_parser(
+        "final-resource-repair-preview"
+    )
+    final_resource_repair_preview_parser.add_argument("--repo-root", default=None)
+    final_resource_repair_preview_parser.add_argument("--output", default=None)
+
+    final_resource_repair_parser = subcommands.add_parser("final-resource-repair")
+    final_resource_repair_parser.add_argument("--repo-root", default=None)
+    final_resource_repair_parser.add_argument("--output", default=None)
 
     final_external_action_ledger_parser = subcommands.add_parser(
         "final-external-action-ledger"
@@ -539,6 +564,20 @@ def _final_resource_apply_preview(
 ) -> int:
     result = build_final_resource_apply_preview_report(
         repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _final_resource_repair(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+    apply: bool,
+) -> int:
+    result = build_final_resource_repair_report(
+        repo_root=Path(repo_root) if repo_root else None,
+        apply=apply,
     )
     _write_json_payload(result.report, output_path)
     return result.exit_code

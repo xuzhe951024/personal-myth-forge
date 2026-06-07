@@ -29,6 +29,7 @@ def test_init_refuses_to_overwrite_existing_final_resources(tmp_path: Path) -> N
 
     assert result.returncode == 2
     assert "already exists" in result.stderr
+    assert "make final-resource-repair-preview" in result.stderr
     assert destination.read_text(encoding="utf-8") == "MESHY_API_KEY=already-filled\n"
     assert "already-filled" not in result.stdout + result.stderr
 
@@ -59,6 +60,10 @@ def test_makefile_exposes_final_resource_init_target() -> None:
 
     assert "final-resource-init:" in text
     assert "scripts/init_final_resources.sh" in text
+    assert "final-resource-repair-preview:" in text
+    assert "final-resource-repair:" in text
+    assert "final-resource-repair-preview --repo-root ../.." in text
+    assert "final-resource-repair --repo-root ../.." in text
 
 
 def test_final_resource_template_keeps_user_specific_ios_values_empty() -> None:
