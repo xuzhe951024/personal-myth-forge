@@ -690,13 +690,27 @@ do {
     )
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileSummaryBuilder", "final launch summary builder")
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileStatus", "final launch summary status")
+    try requireContains(finalLaunchMobileSummary, "launchReceiptRows", "final launch receipt rows")
+    try requireContains(finalLaunchMobileSummary, "launchReceiptRows(from:", "final launch receipt builder")
+    try requireContains(finalLaunchMobileSummary, "firstBlockerReceiptRow", "final launch receipt blocker row")
     try requireContains(finalLaunchMobileSummary, "modePolicyRows", "final launch summary mode policy rows")
     try requireContains(finalLaunchMobileSummary, "liveCallPolicy", "final launch summary live policy mapping")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRows", "final launch resource checklist rows")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRow", "final launch resource checklist row builder")
     try requireContains(finalLaunchMobileSummary, "acceptanceRows", "final launch summary acceptance rows")
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
+    try requireContains(finalLaunchStatusView, "Launch Receipt", "final launch receipt section")
     try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt",
+        "final launch acceptance blocker receipt test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt",
+        "final launch ready configured receipt test"
+    )
     try requireContains(
         contractTests,
         "testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload",

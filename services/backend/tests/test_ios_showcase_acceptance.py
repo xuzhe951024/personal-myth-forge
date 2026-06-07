@@ -213,7 +213,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/ProviderReadinessView.swift": "missingEnv",
         "apps/mobile/ios/App/FinalShowcaseSummaryView.swift": "Final Showcase",
         "apps/mobile/ios/App/FinalLaunchStatusView.swift": (
-            "Mode Acceptance Next handoffRows Resource Checklist"
+            "Mode Acceptance Next handoffRows Launch Receipt Resource Checklist"
         ),
         "apps/mobile/ios/App/DevicePreflightView.swift": (
             "Device Preflight backendBaseURL Check checkBackend"
@@ -271,6 +271,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance "
             "testFinalLaunchMobileSummaryShowsHandoffNextActions "
             "testFinalLaunchMobileSummaryShowsMissingResourceChecklist "
+            "testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt "
+            "testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt "
             "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
             "testGetConfiguredFinalDemoLaunchBuildsGETRequest "
             "testFinalLaunchMobileSummaryShowsConfiguredModePolicy"
@@ -312,7 +314,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "items: [FinalResourcesPreflightItem]"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
-            "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows"
+            "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows "
+            "launchReceiptRows firstBlockerReceiptRow"
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
             "build_final_acceptance_readiness_report"

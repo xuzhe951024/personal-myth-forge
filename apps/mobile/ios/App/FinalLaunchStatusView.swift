@@ -29,6 +29,10 @@ struct FinalLaunchStatusView: View {
                 }
             }
 
+            if !summary.launchReceiptRows.isEmpty {
+                groupedLines(title: "Launch Receipt", lines: summary.launchReceiptRows)
+            }
+
             if !summary.modePolicyRows.isEmpty {
                 groupedLines(title: "Mode", lines: summary.modePolicyRows)
             }
