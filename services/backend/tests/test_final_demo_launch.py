@@ -411,6 +411,14 @@ def test_ios_device_launch_rehearsal_readiness_missing_without_leaks(
         "path": "services/backend/.local/ios-device-launch-rehearsal.json",
         "exists": False,
     }
+    assert readiness["freshness"] == {
+        "status": "unknown",
+        "classification": "source_missing",
+        "checked_against": "git_head",
+        "source_modified_at": None,
+        "current_revision": None,
+        "current_revision_committed_at": None,
+    }
     assert readiness["operator_actions"] == ["run make ios-device-launch-rehearsal"]
     assert "make ios-device-launch-rehearsal" in readiness["commands"]
     assert readiness["safety"]["commands_run"] is False
@@ -435,6 +443,8 @@ def test_final_demo_launch_embeds_blocked_ios_device_launch_rehearsal_readiness(
 
     assert readiness["status"] == "blocked"
     assert readiness["summary"]["blocked"] == 1
+    assert readiness["freshness"]["checked_against"] == "git_head"
+    assert readiness["freshness"]["classification"] == "git_unavailable"
     assert readiness["sequence"][0]["id"] == "final_handoff_index"
     assert readiness["sequence"][0]["status"] == "blocked"
     assert readiness["operator_actions"][0].startswith("refresh final handoff index")
