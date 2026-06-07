@@ -55,6 +55,8 @@ SOURCE_CAPTURE_FEATURES = {
     "mobile_3d_generation_input_review",
     "capture_generation_receipt",
 }
+FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT = 24
+FINAL_SHOWCASE_REPORT_ACTION_LIMIT = 4
 
 
 @dataclass(frozen=True)
@@ -130,7 +132,19 @@ def build_final_showcase_readiness_report(
         "capabilities": capabilities,
         "capabilities_by_id": {row["id"]: row for row in capabilities},
         "first_blocker": _first_blocker(capabilities),
-        "operator_actions": _operator_actions(capabilities),
+        "operator_actions": _operator_actions(
+            capabilities,
+            action_reports=[
+                ios_device_launch_rehearsal,
+                live_provider_evidence,
+                print_fulfillment_readiness,
+                final_resource_apply_preview,
+                final_resources,
+                resource_handoff,
+                final_acceptance,
+                visual_regression,
+            ],
+        ),
         "commands": _commands(),
         "evidence": {
             "ios_showcase_acceptance": _evidence_summary(source_acceptance),
@@ -613,18 +627,42 @@ def _first_blocker(capabilities: list[dict[str, Any]]) -> dict[str, Any] | None:
     return None
 
 
-def _operator_actions(capabilities: list[dict[str, Any]]) -> list[str]:
-    actions = [
+def _operator_actions(
+    capabilities: list[dict[str, Any]],
+    *,
+    action_reports: list[dict[str, Any]],
+) -> list[str]:
+    actions: list[str] = []
+    for report in action_reports:
+        if _normalized_report_status(report) == "ready":
+            continue
+        actions.extend(
+            _report_operator_actions(report)[:FINAL_SHOWCASE_REPORT_ACTION_LIMIT],
+        )
+    actions.extend(["make final-rehearsal-local", "make final-showcase-readiness"])
+    actions.extend(
         row["command"]
         for row in capabilities
         if row.get("required", True) and row.get("status") != "ready"
-    ]
+    )
     if any("live_provider" in row.get("classification", "") for row in capabilities):
         actions.append(
             "run make live-provider-evidence to refresh live provider evidence after cost consent"
         )
-    actions.extend(["make final-rehearsal-local", "make final-showcase-readiness"])
-    return _dedupe(actions)[:8]
+    return _dedupe(actions)[:FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT]
+
+
+def _normalized_report_status(report: dict[str, Any]) -> str:
+    return _normalized_status(
+        str(report.get("status", report.get("overall_status", "missing"))),
+    )
+
+
+def _report_operator_actions(report: dict[str, Any]) -> list[str]:
+    raw_actions = report.get("operator_actions")
+    if not isinstance(raw_actions, list):
+        return []
+    return [str(action) for action in raw_actions if isinstance(action, str) and action]
 
 
 def _commands() -> list[str]:
