@@ -137,6 +137,7 @@ Bridge deliverable:
 - P0.119 visual regression evidence wired into final handoff and iPhone launch readiness
 - P0.120 live provider evidence manifest for final configured Meshy/OpenAI/Treatstock/iPhone proof
 - P0.121 full-showcase visual regression index for the iPhone demo evidence path
+- P0.122 final showcase readiness ledger mapping the C-path objective to local, live, and device evidence
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

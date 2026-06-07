@@ -1798,6 +1798,126 @@ public struct LiveProviderEvidenceReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalShowcaseReadinessSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var partial: Int
+    public var blocked: Int
+
+    public init(ready: Int, partial: Int, blocked: Int) {
+        self.ready = ready
+        self.partial = partial
+        self.blocked = blocked
+    }
+}
+
+public struct FinalShowcaseReadinessCapability: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var required: Bool
+    public var evidence: [String]
+    public var command: String
+    public var detail: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        required: Bool,
+        evidence: [String],
+        command: String,
+        detail: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.required = required
+        self.evidence = evidence
+        self.command = command
+        self.detail = detail
+    }
+}
+
+public struct FinalShowcaseReadinessSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+    public var providerSecretsInReport: Bool
+    public var rawPrivateContextInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        liveProviderCalls: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        globalMutation: Bool,
+        xcodeOrSigning: Bool,
+        keychainWrites: Bool,
+        providerSecretsInReport: Bool,
+        rawPrivateContextInReport: Bool,
+        rawMediaInReport: Bool,
+        paymentLinksInReport: Bool,
+        localPathsInReport: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.globalMutation = globalMutation
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawPrivateContextInReport = rawPrivateContextInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.localPathsInReport = localPathsInReport
+    }
+}
+
+public struct FinalShowcaseReadinessReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: FinalShowcaseReadinessSummary
+    public var capabilities: [FinalShowcaseReadinessCapability]
+    public var firstBlocker: FinalShowcaseReadinessCapability?
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var safety: FinalShowcaseReadinessSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: FinalShowcaseReadinessSummary,
+        capabilities: [FinalShowcaseReadinessCapability],
+        firstBlocker: FinalShowcaseReadinessCapability? = nil,
+        operatorActions: [String],
+        commands: [String],
+        safety: FinalShowcaseReadinessSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.capabilities = capabilities
+        self.firstBlocker = firstBlocker
+        self.operatorActions = operatorActions
+        self.commands = commands
+        self.safety = safety
+    }
+}
+
 public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
@@ -1810,6 +1930,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
     public var visualRegressionReadiness: VisualRegressionReadinessReport?
     public var liveProviderEvidence: LiveProviderEvidenceReport?
+    public var finalShowcaseReadiness: FinalShowcaseReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
     public var iosDeployRunbook: IOSDeployRunbookReport?
     public var iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport?
@@ -1832,6 +1953,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
         visualRegressionReadiness: VisualRegressionReadinessReport? = nil,
         liveProviderEvidence: LiveProviderEvidenceReport? = nil,
+        finalShowcaseReadiness: FinalShowcaseReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
         iosDeployRunbook: IOSDeployRunbookReport? = nil,
         iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport? = nil,
@@ -1853,6 +1975,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
         self.visualRegressionReadiness = visualRegressionReadiness
         self.liveProviderEvidence = liveProviderEvidence
+        self.finalShowcaseReadiness = finalShowcaseReadiness
         self.finalOperatorHandoff = finalOperatorHandoff
         self.iosDeployRunbook = iosDeployRunbook
         self.iosDeviceLaunchRehearsalReadiness = iosDeviceLaunchRehearsalReadiness

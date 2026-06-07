@@ -14,6 +14,9 @@ from myth_forge_api.final_acceptance_readiness import (
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
+from myth_forge_api.final_showcase_readiness import (
+    build_final_showcase_readiness_report,
+)
 from myth_forge_api.final_operator_handoff import build_final_operator_handoff_report
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.ios_device_launch_rehearsal_readiness import (
@@ -72,6 +75,10 @@ def build_final_demo_launch_report(
     live_provider_evidence = build_live_provider_evidence_report(
         repo_root=selected_repo_root,
     ).report
+    final_showcase_readiness = build_final_showcase_readiness_report(
+        settings=selected_settings,
+        repo_root=selected_repo_root,
+    ).report
     ios_device_launch_rehearsal_readiness = (
         build_ios_device_launch_rehearsal_readiness_report(
             repo_root=selected_repo_root,
@@ -111,6 +118,7 @@ def build_final_demo_launch_report(
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,
         "visual_regression_readiness": visual_regression_readiness,
         "live_provider_evidence": live_provider_evidence,
+        "final_showcase_readiness": final_showcase_readiness,
         "ios_device_launch_rehearsal_readiness": (
             ios_device_launch_rehearsal_readiness
         ),
