@@ -11,6 +11,9 @@ from myth_forge_api.final_acceptance_readiness import (
     LOCAL_FINAL_ACCEPTANCE_COMMAND,
     build_final_acceptance_readiness_report,
 )
+from myth_forge_api.final_external_action_ledger import (
+    build_final_external_action_ledger_report,
+)
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
 )
@@ -75,6 +78,10 @@ def build_final_demo_launch_report(
     final_resource_apply_preview = build_final_resource_apply_preview_report(
         repo_root=selected_repo_root,
     ).report
+    final_external_action_ledger = build_final_external_action_ledger_report(
+        settings=selected_settings,
+        repo_root=selected_repo_root,
+    ).report
     final_acceptance_readiness = build_final_acceptance_readiness_report(
         repo_root=selected_repo_root,
     ).report
@@ -134,6 +141,7 @@ def build_final_demo_launch_report(
         "final_resources_preflight": final_resources_preflight,
         "final_resource_requirements": final_resource_requirements,
         "final_resource_apply_preview": final_resource_apply_preview,
+        "final_external_action_ledger": final_external_action_ledger,
         "final_acceptance_readiness": final_acceptance_readiness,
         "three_d_evaluation_readiness": three_d_evaluation_readiness,
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,

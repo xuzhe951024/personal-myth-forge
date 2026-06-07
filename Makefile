@@ -61,6 +61,11 @@ final-resource-requirements:
 final-resource-apply-preview:
 	cd services/backend && uv run python -m myth_forge_api.cli final-resource-apply-preview --repo-root ../.. --output .local/final-resource-apply-preview.json
 
+.PHONY: final-external-action-ledger
+
+final-external-action-ledger:
+	cd services/backend && uv run python -m myth_forge_api.cli final-external-action-ledger --repo-root ../.. --output .local/final-external-action-ledger.json
+
 .PHONY: final-configured-preflight
 
 final-configured-preflight:

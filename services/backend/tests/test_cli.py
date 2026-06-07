@@ -6,6 +6,7 @@ from myth_forge_api.acceptance import DemoAcceptanceResult
 from myth_forge_api.config import Settings
 from myth_forge_api.final_demo_launch import FinalDemoLaunchResult
 from myth_forge_api.final_configured_preflight import FinalConfiguredPreflightResult
+from myth_forge_api.final_external_action_ledger import FinalExternalActionLedgerResult
 from myth_forge_api.final_handoff_index import FinalHandoffIndexResult
 from myth_forge_api.final_resource_apply_preview import FinalResourceApplyPreviewResult
 from myth_forge_api.final_resource_requirements import FinalResourceRequirementsResult
@@ -658,6 +659,50 @@ def test_cli_final_resource_apply_preview_writes_report_and_returns_result_code(
     assert exit_code == 2
     assert calls == [{"repo_root": tmp_path}]
     assert report["kind"] == "final_resource_apply_preview_report"
+    assert report["status"] == "blocked"
+
+
+def test_cli_final_external_action_ledger_writes_report_and_returns_result_code(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "final-external-action-ledger.json"
+    calls = []
+
+    def fake_build_final_external_action_ledger_report(**kwargs):
+        calls.append(kwargs)
+        return FinalExternalActionLedgerResult(
+            exit_code=2,
+            report={
+                "kind": "final_external_action_ledger_report",
+                "status": "blocked",
+                "summary": {"groups": 5, "actions": 16, "blocked": 3},
+                "action_groups": [],
+                "actions_by_id": {},
+                "operator_sequence": ["make final-resource-requirements"],
+                "safety": {"commands_run": False, "global_mutation": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_final_external_action_ledger_report",
+        fake_build_final_external_action_ledger_report,
+    )
+
+    exit_code = main(
+        [
+            "final-external-action-ledger",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 2
+    assert calls == [{"repo_root": tmp_path}]
+    assert report["kind"] == "final_external_action_ledger_report"
     assert report["status"] == "blocked"
 
 

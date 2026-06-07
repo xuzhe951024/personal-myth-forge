@@ -428,6 +428,30 @@ def test_final_demo_launch_embeds_final_resource_apply_preview(
     assert preview["safety"]["runs_shell_writers"] is False
 
 
+def test_final_demo_launch_embeds_final_external_action_ledger(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    ledger = result.report["final_external_action_ledger"]
+
+    assert ledger["kind"] == "final_external_action_ledger_report"
+    assert ledger["status"] in {"blocked", "partial", "ready"}
+    assert "resource_inputs" in {
+        group["id"] for group in ledger["action_groups"]
+    }
+    assert "preview_final_resource_apply" in ledger["actions_by_id"]
+    assert ledger["safety"]["commands_run"] is False
+    assert ledger["safety"]["global_mutation"] is False
+    assert ledger["safety"]["provider_secrets_in_report"] is False
+
+
 def test_final_demo_launch_embeds_live_provider_evidence(
     tmp_path: Path,
 ) -> None:
