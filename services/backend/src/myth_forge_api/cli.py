@@ -20,6 +20,9 @@ from myth_forge_api.evaluation.npc import (
     DEFAULT_NPC_AGENT_EVALUATION_SUITE,
     run_npc_agent_evaluation,
 )
+from myth_forge_api.final_configured_preflight import (
+    build_final_configured_preflight_report,
+)
 from myth_forge_api.final_acceptance import run_final_acceptance
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_resources_preflight import (
@@ -114,6 +117,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 resources_file=args.resources_file,
                 output_path=args.output,
             )
+        if args.command == "final-configured-preflight":
+            return _final_configured_preflight(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
         if args.command == "final-demo-launch":
             return _final_demo_launch(
                 mode=args.mode,
@@ -192,6 +200,12 @@ def _build_parser() -> argparse.ArgumentParser:
     final_resources_parser.add_argument("--repo-root", default=None)
     final_resources_parser.add_argument("--resources-file", default=None)
     final_resources_parser.add_argument("--output", default=None)
+
+    final_configured_preflight_parser = subcommands.add_parser(
+        "final-configured-preflight"
+    )
+    final_configured_preflight_parser.add_argument("--repo-root", default=None)
+    final_configured_preflight_parser.add_argument("--output", default=None)
 
     final_demo_launch_parser = subcommands.add_parser("final-demo-launch")
     final_demo_launch_parser.add_argument(
@@ -358,6 +372,18 @@ def _final_resources_preflight(
     result = build_final_resources_preflight_report(
         repo_root=Path(repo_root) if repo_root else None,
         resources_file=Path(resources_file) if resources_file else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _final_configured_preflight(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = build_final_configured_preflight_report(
+        repo_root=Path(repo_root) if repo_root else None,
     )
     _write_json_payload(result.report, output_path)
     return result.exit_code

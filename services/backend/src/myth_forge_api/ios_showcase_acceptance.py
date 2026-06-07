@@ -1175,6 +1175,57 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="configured_handoff_preflight",
+        label="Configured handoff preflight",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_configured_preflight.py",
+                "build_final_configured_preflight_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_configured_preflight.py",
+                "final_configured_preflight_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_configured_preflight.py",
+                "build_provider_readiness",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_configured_preflight.py",
+                "build_ios_deploy_runbook_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_configured_preflight.py",
+                '"provider_calls": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_configured_preflight.py",
+                '"writes_backend_env": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_configured_preflight.py",
+                '"writes_ios_deploy_config": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "final-configured-preflight",
+            ),
+            SourceRequirement("Makefile", "final-configured-preflight:"),
+            SourceRequirement(
+                "Makefile",
+                "--output .local/final-configured-preflight.json",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_configured_preflight.py",
+                "test_configured_preflight_is_ready_with_configured_handoff_inputs",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_cli.py",
+                "test_cli_final_configured_preflight_writes_report_and_returns_result_code",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="mobile_final_launch_mode",
         label="Mobile final launch mode",
         requirements=(

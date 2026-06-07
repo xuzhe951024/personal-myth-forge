@@ -5,6 +5,7 @@ import pytest
 from myth_forge_api.acceptance import DemoAcceptanceResult
 from myth_forge_api.config import Settings
 from myth_forge_api.final_demo_launch import FinalDemoLaunchResult
+from myth_forge_api.final_configured_preflight import FinalConfiguredPreflightResult
 from myth_forge_api.final_acceptance import FinalAcceptanceResult
 from myth_forge_api.resource_template_acceptance import ResourceTemplateAcceptanceResult
 from myth_forge_api.cli import main
@@ -671,6 +672,45 @@ def test_cli_final_demo_launch_writes_report_and_returns_result_code(
     ]
     assert report["kind"] == "final_demo_launch_report"
     assert report["mode"] == "local"
+
+
+def test_cli_final_configured_preflight_writes_report_and_returns_result_code(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "final-configured-preflight.json"
+    calls = []
+
+    def fake_build_final_configured_preflight_report(**kwargs):
+        calls.append(kwargs)
+        return FinalConfiguredPreflightResult(
+            exit_code=2,
+            report={
+                "kind": "final_configured_preflight_report",
+                "status": "blocked",
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_final_configured_preflight_report",
+        fake_build_final_configured_preflight_report,
+    )
+
+    exit_code = main(
+        [
+            "final-configured-preflight",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 2
+    assert calls == [{"repo_root": tmp_path}]
+    assert report["kind"] == "final_configured_preflight_report"
+    assert report["status"] == "blocked"
 
 
 def test_cli_demo_acceptance_writes_report(tmp_path, monkeypatch) -> None:

@@ -130,6 +130,7 @@ cp services/backend/final-resources.env.example services/backend/.local/final-re
 $EDITOR services/backend/.local/final-resources.env
 make final-resources-preflight
 make final-apply-resources
+make final-configured-preflight
 cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../..
 ```
@@ -140,6 +141,16 @@ config is written. The launch report then shows `final_resources_preflight` and
 readiness, configured final acceptance, deploy preflight, and Xcode build-gate
 commands. It does not store mobile provider secrets and does not mutate Xcode,
 signing, or global developer settings.
+
+`make final-configured-preflight` writes
+`services/backend/.local/final-configured-preflight.json` as a read-only
+configured handoff packet. It composes final resources, current backend provider
+readiness, backend/iOS resource handoff, configured launch, and the configured
+iOS deploy runbook without calling providers, applying secrets, starting
+servers, running Xcode, writing keychain/signing state, or changing global
+developer settings. Exit `2` means the blocked JSON packet was still written for
+review; exit `0` means the configured handoff is ready for the next operator
+step.
 
 P0.64 exposes the same sanitized status through:
 

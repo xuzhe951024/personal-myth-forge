@@ -109,6 +109,9 @@ final-apply-resources:
 .PHONY: final-resources-preflight
 final-resources-preflight:
 \tcd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../..
+.PHONY: final-configured-preflight
+final-configured-preflight:
+\tcd services/backend && uv run python -m myth_forge_api.cli final-configured-preflight --repo-root ../.. --output .local/final-configured-preflight.json
 .PHONY: ios-deploy-runbook ios-deploy-runbook-local
 ios-deploy-runbook:
 \tcd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
@@ -118,7 +121,9 @@ final-rehearsal-local: backend-evaluate-local final-acceptance-local final-demo-
 """
 
 CLI_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
+from myth_forge_api.final_configured_preflight import build_final_configured_preflight_report
 from myth_forge_api.final_resources_preflight import build_final_resources_preflight_report
+subcommands.add_parser("final-configured-preflight")
 subcommands.add_parser("final-demo-launch")
 subcommands.add_parser("final-resources-preflight")
 """
@@ -134,6 +139,27 @@ FINAL_RESOURCES_PREFLIGHT_TEMPLATE = """def build_final_resources_preflight_repo
     return {"safety": {"live_provider_calls": False, "global_mutation": False}}
 """
 
+FINAL_CONFIGURED_PREFLIGHT_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
+from myth_forge_api.final_resources_preflight import build_final_resources_preflight_report
+from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
+from myth_forge_api.providers.readiness import build_provider_readiness
+from myth_forge_api.resource_handoff import build_resource_handoff_report
+
+def build_final_configured_preflight_report():
+    build_final_resources_preflight_report()
+    build_provider_readiness()
+    build_resource_handoff_report()
+    build_final_demo_launch_report()
+    build_ios_deploy_runbook_report()
+    return {"safety": {
+        "provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "xcode_or_signing": False,
+        "keychain_writes": False,
+    }}
+"""
+
 
 def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) -> None:
     repo_root = _write_repo(tmp_path)
@@ -143,7 +169,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.exit_code == 0
     assert result.report["kind"] == "resource_template_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 12, "failed": 0}
+    assert result.report["summary"] == {"passed": 13, "failed": 0}
     assert result.report["backend_template"]["missing_keys"] == []
     assert result.report["ios_template"]["missing_keys"] == []
     assert "OPENAI_API_KEY" in result.report["backend_template"]["required_keys"]
@@ -236,6 +262,24 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         result.report["final_resources_preflight"]["checks"]["launch_integration"] is True
     )
     assert result.report["final_resources_preflight"]["checks"]["no_banned_commands"] is True
+    assert result.report["final_configured_preflight"]["path"] == (
+        "services/backend/src/myth_forge_api/final_configured_preflight.py"
+    )
+    assert result.report["final_configured_preflight"]["make_target"] == (
+        "final-configured-preflight"
+    )
+    assert result.report["final_configured_preflight"]["output_path"] == (
+        ".local/final-configured-preflight.json"
+    )
+    assert result.report["final_configured_preflight"]["checks"] == {
+        "module_exists": True,
+        "cli_command": True,
+        "make_target": True,
+        "output_path": True,
+        "composes_handoff_reports": True,
+        "safety_contract": True,
+        "no_banned_commands": True,
+    }
 
 
 def test_resource_template_acceptance_fails_missing_backend_key(tmp_path: Path) -> None:
@@ -321,6 +365,7 @@ def _write_repo(
     final_acceptance_local_script: str = FINAL_ACCEPTANCE_LOCAL_SCRIPT,
     ios_deploy_runbook_local_script: str = IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT,
     final_resources_preflight: str = FINAL_RESOURCES_PREFLIGHT_TEMPLATE,
+    final_configured_preflight: str = FINAL_CONFIGURED_PREFLIGHT_TEMPLATE,
     makefile: str = MAKEFILE_TEMPLATE,
 ) -> Path:
     repo_root = tmp_path / "repo"
@@ -369,6 +414,12 @@ def _write_repo(
         repo_root / "services/backend/src/myth_forge_api/final_resources_preflight.py"
     ).write_text(
         final_resources_preflight,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/src/myth_forge_api/final_configured_preflight.py"
+    ).write_text(
+        final_configured_preflight,
         encoding="utf-8",
     )
     (repo_root / "Makefile").write_text(makefile, encoding="utf-8")
