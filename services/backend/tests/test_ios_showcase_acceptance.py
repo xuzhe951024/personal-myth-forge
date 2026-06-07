@@ -511,8 +511,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift": (
             "finalLaunchSummary: FinalLaunchMobileSummary? "
-            "npcEvaluationStage operatorHandoffStage finalLaunchStage "
-            '"npc_evaluation" "operator_handoff" "final_launch"'
+            "threeDEvaluationStage npcEvaluationStage operatorHandoffStage finalLaunchStage "
+            '"three_d_evaluation" "npc_evaluation" "operator_handoff" "final_launch"'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
             "testARKitScanPackageBuilderBuildsReadySelection "
@@ -538,15 +538,23 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testForgeActionGateEnablesLocalDemoForge "
             "testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest "
             "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest "
+            "testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest "
+            "testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest "
             "testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest "
+            "testFinalShowcaseSummaryRedactsUnsafeThreeDEvaluationDigest "
             "testFinalShowcaseSummaryRedactsUnsafeFinalLaunchDigest "
             "testArtifactHandoffActionsOpenAndShareSceneAsset "
             "testArtifactGenerationProvenanceSummaryShowsScanAssets "
             "testDemoScriptShowsBlockedFinalLaunch "
+            "testDemoScriptShowsReadyThreeDEvaluationBeforeNPCEvaluation "
+            "testDemoScriptWaitsForMissingThreeDEvaluation "
+            "testDemoScriptBlocksAndRedactsFailedThreeDEvaluation "
             "testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch "
             "testDemoScriptWaitsForMissingNPCEvaluation "
             "testDemoScriptBlocksAndRedactsFailedNPCEvaluation "
             "testShowcaseAutopilotBlocksOnFinalLaunchBlocker "
+            "testShowcaseAutopilotWaitsForMissingThreeDEvaluation "
+            "testShowcaseAutopilotBlocksOnFailedThreeDEvaluation "
             "testShowcaseAutopilotWaitsForMissingNPCEvaluation "
             "testShowcaseAutopilotBlocksOnFailedNPCEvaluation "
             "testNPCAgentModeShowsOpenAIReadyRuntime "
@@ -600,10 +608,12 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             'NPCAgentActionGateBuilder canRunAutonomy disabledReason autonomyTitle: "Run Autonomy"'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift": (
-            "DemoScriptBuilder final_launch npc_evaluation npcEvaluationStep FinalLaunchMobileSummary"
+            "DemoScriptBuilder final_launch three_d_evaluation npc_evaluation "
+            "threeDEvaluationStep npcEvaluationStep FinalLaunchMobileSummary"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ShowcaseAutopilot.swift": (
             'ShowcaseAutopilotPlanner script.step(id: "final_launch") '
+            'script.step(id: "three_d_evaluation") '
             'script.step(id: "npc_evaluation")'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DevicePreflight.swift": (

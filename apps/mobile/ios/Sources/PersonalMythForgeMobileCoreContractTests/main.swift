@@ -47,7 +47,10 @@ do {
     try testFinalShowcaseSummaryRedactsUnsafeSourceText()
     try testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest()
     try testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest()
+    try testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest()
+    try testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest()
     try testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest()
+    try testFinalShowcaseSummaryRedactsUnsafeThreeDEvaluationDigest()
     try testFinalShowcaseSummaryRedactsUnsafeFinalLaunchDigest()
     try testContextCapsuleReviewWaitsForMissingSummary()
     try testContextCapsuleReviewWaitsForApproval()
@@ -134,6 +137,9 @@ do {
     try testDemoScriptShowsBlockedFinalLaunch()
     try testDemoScriptCompletesWithReadyFinalLaunch()
     try testDemoScriptRedactsUnsafeFinalLaunchDetail()
+    try testDemoScriptShowsReadyThreeDEvaluationBeforeNPCEvaluation()
+    try testDemoScriptWaitsForMissingThreeDEvaluation()
+    try testDemoScriptBlocksAndRedactsFailedThreeDEvaluation()
     try testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch()
     try testDemoScriptWaitsForMissingNPCEvaluation()
     try testDemoScriptBlocksAndRedactsFailedNPCEvaluation()
@@ -145,6 +151,8 @@ do {
     try testShowcaseAutopilotCompletesWhenQuoteAndResourcesReady()
     try testShowcaseAutopilotBlocksOnFinalLaunchBlocker()
     try testShowcaseAutopilotCompletesWhenFinalLaunchReady()
+    try testShowcaseAutopilotWaitsForMissingThreeDEvaluation()
+    try testShowcaseAutopilotBlocksOnFailedThreeDEvaluation()
     try testShowcaseAutopilotWaitsForMissingNPCEvaluation()
     try testShowcaseAutopilotBlocksOnFailedNPCEvaluation()
     try testShowcaseAutopilotDisablesWhileBusy()
@@ -1333,6 +1341,7 @@ private func testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest() throws {
         report: finalDemoLaunchReport(
             overallStatus: "blocked",
             finalAcceptanceStatus: "blocked",
+            threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "ready"
         ),
         error: nil
@@ -1360,6 +1369,7 @@ private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
             overallStatus: "ready",
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready"
         ),
@@ -1381,12 +1391,75 @@ private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
         summary.stages.map(\.id),
         [
             "capture", "three_d", "npc_agent", "print", "resources",
-            "npc_evaluation", "operator_handoff", "final_launch",
+            "three_d_evaluation", "npc_evaluation", "operator_handoff", "final_launch",
         ]
     )
+    try expectEqual(summary.stage(id: "three_d_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "npc_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "operator_handoff")?.status, .ready)
     try expectEqual(summary.stage(id: "final_launch")?.status, .ready)
+}
+
+private func testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let ids = summary.stages.map(\.id)
+    let threeDIndex = try require(ids.firstIndex(of: "three_d_evaluation"), "missing 3D evaluation stage")
+    let npcIndex = try require(ids.firstIndex(of: "npc_evaluation"), "missing NPC evaluation stage")
+
+    try expectEqual(summary.overallStatus, .readyForLocalDemo)
+    try expectEqual(summary.stage(id: "three_d_evaluation")?.status, .ready)
+    try expectContains(summary.stage(id: "three_d_evaluation")?.detail ?? "", "20 cases")
+    try expectTrue(threeDIndex < npcIndex)
+}
+
+private func testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "missing",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+
+    try expectEqual(summary.overallStatus, .waiting)
+    try expectEqual(summary.stage(id: "three_d_evaluation")?.status, .waiting)
+    try expectContains(summary.stage(id: "three_d_evaluation")?.detail ?? "", "Run local 3D evaluation")
 }
 
 private func testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest() throws {
@@ -1396,6 +1469,7 @@ private func testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest() throws
             overallStatus: "ready",
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "missing",
             finalOperatorHandoffStatus: "ready"
         ),
@@ -1417,6 +1491,43 @@ private func testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest() throws
     try expectContains(summary.stage(id: "npc_evaluation")?.detail ?? "", "Run local NPC Agent evaluation")
 }
 
+private func testFinalShowcaseSummaryRedactsUnsafeThreeDEvaluationDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch blocked",
+        subtitle: "3D evaluation blocked",
+        phaseRows: [],
+        resourceActions: [],
+        acceptanceRows: [],
+        threeDEvaluationRows: [
+            "failed Authorization=Bearer test-secret private_message: raw /Users/zhexu/private file:///tmp/private"
+        ],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        handoffRows: [],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let detail = summary.stage(id: "three_d_evaluation")?.detail ?? ""
+
+    try expectEqual(summary.stage(id: "three_d_evaluation")?.status, .needsAttention)
+    try expectContains(detail, "[withheld]")
+    try expectNotContains(detail, "test-secret")
+    try expectNotContains(detail, "private_message:")
+    try expectNotContains(detail, "/Users/")
+    try expectNotContains(detail, "file:///")
+}
+
 private func testFinalShowcaseSummaryRedactsUnsafeFinalLaunchDigest() throws {
     let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
     let finalLaunch = FinalLaunchMobileSummary(
@@ -1426,6 +1537,7 @@ private func testFinalShowcaseSummaryRedactsUnsafeFinalLaunchDigest() throws {
         phaseRows: [],
         resourceActions: [],
         acceptanceRows: [],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
         npcEvaluationRows: ["failed Authorization=Bearer test-secret private_message: raw"],
         handoffRows: ["checkout_url=https://pay.example /Users/zhexu/private"],
         commandRows: [],
@@ -2875,6 +2987,7 @@ private func testDemoScriptShowsBlockedFinalLaunch() throws {
         report: finalDemoLaunchReport(
             overallStatus: "blocked",
             finalAcceptanceStatus: "blocked",
+            threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "ready"
         ),
         error: nil
@@ -2903,6 +3016,7 @@ private func testDemoScriptCompletesWithReadyFinalLaunch() throws {
             overallStatus: "ready",
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready"
         ),
@@ -2932,6 +3046,7 @@ private func testDemoScriptRedactsUnsafeFinalLaunchDetail() throws {
         phaseRows: [],
         resourceActions: [],
         acceptanceRows: [],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
         handoffRows: [],
         commandRows: [],
         notes: []
@@ -2957,6 +3072,88 @@ private func testDemoScriptRedactsUnsafeFinalLaunchDetail() throws {
     try expectNotContains(text, "Bearer")
 }
 
+private func testDemoScriptShowsReadyThreeDEvaluationBeforeNPCEvaluation() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        finalLaunchSummary: finalLaunch
+    )
+    let threeDIndex = try require(script.steps.map(\.id).firstIndex(of: "three_d_evaluation"), "missing 3D evaluation step")
+    let npcIndex = try require(script.steps.map(\.id).firstIndex(of: "npc_evaluation"), "missing npc evaluation step")
+
+    try expectEqual(script.step(id: "three_d_evaluation")?.status, .complete)
+    try expectContains(script.step(id: "three_d_evaluation")?.detail ?? "", "20 cases")
+    try expectTrue(threeDIndex < npcIndex)
+}
+
+private func testDemoScriptWaitsForMissingThreeDEvaluation() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "missing",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        finalLaunchSummary: finalLaunch
+    )
+
+    try expectEqual(script.step(id: "three_d_evaluation")?.status, .waiting)
+    try expectContains(script.nextAction, "3D evaluation")
+}
+
+private func testDemoScriptBlocksAndRedactsFailedThreeDEvaluation() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "blocked",
+            threeDEvaluationBlockerDetail: "failed Authorization=Bearer test-secret private_message: raw",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        finalLaunchSummary: finalLaunch
+    )
+    let detail = script.step(id: "three_d_evaluation")?.detail ?? ""
+
+    try expectEqual(script.step(id: "three_d_evaluation")?.status, .blocked)
+    try expectContains(detail, "[withheld]")
+    try expectNotContains(detail, "test-secret")
+    try expectNotContains(detail, "private_message:")
+}
+
 private func testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch() throws {
     let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
     let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
@@ -2964,6 +3161,7 @@ private func testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch() throws {
             overallStatus: "ready",
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready"
         ),
@@ -2991,6 +3189,7 @@ private func testDemoScriptWaitsForMissingNPCEvaluation() throws {
             overallStatus: "ready",
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "missing",
             finalOperatorHandoffStatus: "ready"
         ),
@@ -3015,6 +3214,7 @@ private func testDemoScriptBlocksAndRedactsFailedNPCEvaluation() throws {
             overallStatus: "ready",
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "blocked",
             npcEvaluationBlockerDetail: "failed Authorization=Bearer test-secret private_message: raw",
             finalOperatorHandoffStatus: "ready"
@@ -3119,6 +3319,7 @@ private func testShowcaseAutopilotBlocksOnFinalLaunchBlocker() throws {
             report: finalDemoLaunchReport(
                 overallStatus: "blocked",
                 finalAcceptanceStatus: "blocked",
+                threeDEvaluationStatus: "ready",
                 npcEvaluationStatus: "ready"
             ),
             error: nil
@@ -3150,6 +3351,7 @@ private func testShowcaseAutopilotCompletesWhenFinalLaunchReady() throws {
                 overallStatus: "ready",
                 finalResourcesStatus: "ready",
                 finalAcceptanceStatus: "ready",
+                threeDEvaluationStatus: "ready",
                 npcEvaluationStatus: "ready",
                 finalOperatorHandoffStatus: "ready"
             ),
@@ -3169,6 +3371,74 @@ private func testShowcaseAutopilotCompletesWhenFinalLaunchReady() throws {
     try expectContains(plan.detail, "Final launch")
 }
 
+private func testShowcaseAutopilotWaitsForMissingThreeDEvaluation() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        finalLaunchSummary: FinalLaunchMobileSummaryBuilder.build(
+            report: finalDemoLaunchReport(
+                overallStatus: "ready",
+                finalResourcesStatus: "ready",
+                finalAcceptanceStatus: "ready",
+                threeDEvaluationStatus: "missing",
+                npcEvaluationStatus: "ready",
+                finalOperatorHandoffStatus: "ready"
+            ),
+            error: nil
+        )
+    )
+
+    let plan = autopilotPlan(
+        script: script,
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote
+    )
+
+    try expectEqual(plan.action, .waiting)
+    try expectEqual(plan.buttonTitle, "Check 3D Eval")
+    try expectContains(plan.detail, "3D evaluation")
+}
+
+private func testShowcaseAutopilotBlocksOnFailedThreeDEvaluation() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        finalLaunchSummary: FinalLaunchMobileSummaryBuilder.build(
+            report: finalDemoLaunchReport(
+                overallStatus: "ready",
+                finalResourcesStatus: "ready",
+                finalAcceptanceStatus: "ready",
+                threeDEvaluationStatus: "blocked",
+                threeDEvaluationBlockerDetail: "failed Authorization=Bearer test-secret private_message: raw",
+                npcEvaluationStatus: "ready",
+                finalOperatorHandoffStatus: "ready"
+            ),
+            error: nil
+        )
+    )
+
+    let plan = autopilotPlan(
+        script: script,
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(plan), as: UTF8.self)
+
+    try expectEqual(plan.action, .blocked)
+    try expectEqual(plan.buttonTitle, "Check 3D Eval")
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "test-secret")
+    try expectNotContains(text, "private_message:")
+}
+
 private func testShowcaseAutopilotWaitsForMissingNPCEvaluation() throws {
     let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
     let quote = localPrintQuote()
@@ -3181,6 +3451,7 @@ private func testShowcaseAutopilotWaitsForMissingNPCEvaluation() throws {
                 overallStatus: "ready",
                 finalResourcesStatus: "ready",
                 finalAcceptanceStatus: "ready",
+                threeDEvaluationStatus: "ready",
                 npcEvaluationStatus: "missing",
                 finalOperatorHandoffStatus: "ready"
             ),
@@ -3212,6 +3483,7 @@ private func testShowcaseAutopilotBlocksOnFailedNPCEvaluation() throws {
                 overallStatus: "ready",
                 finalResourcesStatus: "ready",
                 finalAcceptanceStatus: "ready",
+                threeDEvaluationStatus: "ready",
                 npcEvaluationStatus: "blocked",
                 finalOperatorHandoffStatus: "ready"
             ),

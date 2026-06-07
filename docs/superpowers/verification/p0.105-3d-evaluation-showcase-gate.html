@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.105 3D Evaluation Showcase Gate</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17201b;
+      --muted: #63716a;
+      --paper: #f4f1ea;
+      --panel: #ffffff;
+      --line: #d9ded7;
+      --green: #16714b;
+      --blue: #295f98;
+      --amber: #9c681c;
+      --red: #a34038;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      margin: 0;
+      padding: 15px 13px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.32;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 5px 7px;
+      border-radius: 7px;
+      border: 1px solid rgba(38, 93, 154, 0.25);
+      background: rgba(38, 93, 154, 0.08);
+      color: var(--blue);
+      font-size: 10px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    section {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 5px 15px rgba(20, 28, 24, 0.06);
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 7px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .state {
+      padding: 4px 7px;
+      border-radius: 7px;
+      font-size: 10px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .ready {
+      color: var(--green);
+      background: rgba(22, 113, 75, 0.09);
+      border: 1px solid rgba(22, 113, 75, 0.25);
+    }
+
+    .waiting {
+      color: var(--amber);
+      background: rgba(156, 104, 28, 0.09);
+      border: 1px solid rgba(156, 104, 28, 0.25);
+    }
+
+    .blocked {
+      color: var(--red);
+      background: rgba(163, 64, 56, 0.09);
+      border: 1px solid rgba(163, 64, 56, 0.25);
+    }
+
+    .rows {
+      display: grid;
+      gap: 4px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 8px 96px 1fr;
+      gap: 7px;
+      align-items: start;
+    }
+
+    .script .row {
+      grid-template-columns: 19px 114px 1fr;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      margin-top: 4px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    .dot.ready-dot {
+      background: var(--green);
+    }
+
+    .dot.blocked-dot {
+      background: var(--red);
+    }
+
+    .num {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .label {
+      color: var(--ink);
+      font-size: 10.5px;
+      line-height: 1.25;
+      font-weight: 720;
+    }
+
+    .value {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.32;
+      overflow-wrap: anywhere;
+    }
+
+    .value strong {
+      color: var(--ink);
+    }
+
+    .autopilot {
+      display: grid;
+      grid-template-columns: 98px 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .button {
+      text-align: center;
+      padding: 8px 7px;
+      border-radius: 7px;
+      color: var(--amber);
+      background: rgba(156, 104, 28, 0.09);
+      border: 1px solid rgba(156, 104, 28, 0.25);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    footer {
+      padding: 1px 2px 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>P0.105 3D Evaluation Gate</h1>
+        <div class="sub">Final Showcase, Demo Script, and Autopilot now stop before NPC evaluation when 3D provider evaluation is missing or failed.</div>
+      </div>
+      <div class="badge">390 x 844</div>
+    </header>
+
+    <section>
+      <div class="top">
+        <h2>Final Showcase</h2>
+        <div class="state waiting">waiting</div>
+      </div>
+      <div class="rows">
+        <div class="row">
+          <div class="dot ready-dot"></div>
+          <div class="label">3D Asset</div>
+          <div class="value">meshy GLB via multi_image</div>
+        </div>
+        <div class="row">
+          <div class="dot"></div>
+          <div class="label">3D Evaluation</div>
+          <div class="value"><strong>Run local 3D evaluation</strong> to create the readiness report.</div>
+        </div>
+        <div class="row">
+          <div class="dot ready-dot"></div>
+          <div class="label">NPC Eval</div>
+          <div class="value">NPC Agent evaluation ready: 6 cases passed.</div>
+        </div>
+        <div class="row">
+          <div class="dot ready-dot"></div>
+          <div class="label">Launch</div>
+          <div class="value">Final launch ready: local acceptance report loaded.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="script">
+      <div class="top">
+        <h2>Demo Script</h2>
+        <div class="state waiting">next action</div>
+      </div>
+      <div class="rows">
+        <div class="row">
+          <div class="num">06</div>
+          <div class="label">Check Resources</div>
+          <div class="value">Local demo providers ready.</div>
+        </div>
+        <div class="row">
+          <div class="num">07</div>
+          <div class="label">3D Evaluation</div>
+          <div class="value"><strong>Load 3D evaluation readiness.</strong></div>
+        </div>
+        <div class="row">
+          <div class="num">08</div>
+          <div class="label">NPC Evaluation</div>
+          <div class="value">Ready only after the 3D quality gate is reviewed.</div>
+        </div>
+        <div class="row">
+          <div class="num">09</div>
+          <div class="label">Final Launch</div>
+          <div class="value">Waits behind provider evaluation gates.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="top">
+        <h2>Autopilot</h2>
+        <div class="state waiting">non-executable</div>
+      </div>
+      <div class="autopilot">
+        <div class="button">Check 3D Eval</div>
+        <div class="value">Load 3D evaluation readiness: Run local 3D evaluation to create the readiness report.</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="top">
+        <h2>Blocked State</h2>
+        <div class="state blocked">needs attention</div>
+      </div>
+      <div class="rows">
+        <div class="row">
+          <div class="dot blocked-dot"></div>
+          <div class="label">3D Evaluation</div>
+          <div class="value">three_d_evaluation_failed | [withheld] | scene import failed for 2 cases</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Safety check: the view shows no provider key, raw capture URI, checkout link, or local file path. Long rows wrap within the mobile viewport.
+    </footer>
+  </main>
+</body>
+</html>

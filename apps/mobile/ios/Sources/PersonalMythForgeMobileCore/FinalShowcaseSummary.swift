@@ -68,6 +68,7 @@ public enum FinalShowcaseSummaryBuilder {
             resourcesStage(readiness: providerReadiness, error: providerReadinessError),
         ]
         if let finalLaunchSummary {
+            stages.append(threeDEvaluationStage(finalLaunchSummary))
             stages.append(npcEvaluationStage(finalLaunchSummary))
             stages.append(operatorHandoffStage(finalLaunchSummary))
             stages.append(finalLaunchStage(finalLaunchSummary))
@@ -82,6 +83,19 @@ public enum FinalShowcaseSummaryBuilder {
                 "Checkout links are not surfaced in the demo summary.",
                 "Local file paths are withheld.",
             ]
+        )
+    }
+
+    private static func threeDEvaluationStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
+        stage(
+            "three_d_evaluation",
+            "3D Evaluation",
+            launchRowStatus(
+                summary.threeDEvaluationRows,
+                readyPrefix: "3D evaluation ready:",
+                waitingNeedle: "3d evaluation readiness has not loaded"
+            ),
+            launchDetail(summary.threeDEvaluationRows, fallback: "3D evaluation readiness has not loaded.")
         )
     }
 
@@ -251,7 +265,7 @@ public enum FinalShowcaseSummaryBuilder {
         let requiredReady = ["capture", "three_d", "npc_agent", "resources"].allSatisfy { id in
             stages.first(where: { $0.id == id })?.status == .ready
         }
-        let launchStageIDs = Set(["npc_evaluation", "operator_handoff", "final_launch"])
+        let launchStageIDs = Set(["three_d_evaluation", "npc_evaluation", "operator_handoff", "final_launch"])
         let launchStages = stages.filter { launchStageIDs.contains($0.id) }
         let launchReady = launchStages.allSatisfy { $0.status == .ready }
         return requiredReady && launchReady ? .readyForLocalDemo : .waiting

@@ -84,6 +84,18 @@ public enum ShowcaseAutopilotPlanner {
         guard providerReadiness.overallDemoReady else {
             return blocked("Check Resources", missingProviderDetail(providerReadiness))
         }
+        if let threeDEvaluationStep = script.step(id: "three_d_evaluation") {
+            switch threeDEvaluationStep.status {
+            case .complete:
+                break
+            case .blocked:
+                return blocked("Check 3D Eval", "Review 3D evaluation blockers: \(threeDEvaluationStep.detail)")
+            case .waiting:
+                return waiting("Check 3D Eval", "Load 3D evaluation readiness: \(threeDEvaluationStep.detail)")
+            case .current, .optional:
+                return waiting("Check 3D Eval", "Review 3D evaluation readiness: \(threeDEvaluationStep.detail)")
+            }
+        }
         if let npcEvaluationStep = script.step(id: "npc_evaluation") {
             switch npcEvaluationStep.status {
             case .complete:
