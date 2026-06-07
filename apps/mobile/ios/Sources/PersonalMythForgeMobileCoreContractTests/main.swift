@@ -40,6 +40,10 @@ do {
     try testFinalShowcaseSummaryMarksPrintQuoteReady()
     try testFinalShowcaseSummaryMarksProviderErrorNeedsAttention()
     try testFinalShowcaseSummaryRedactsUnsafeSourceText()
+    try testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest()
+    try testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest()
+    try testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest()
+    try testFinalShowcaseSummaryRedactsUnsafeFinalLaunchDigest()
     try testContextCapsuleReviewWaitsForMissingSummary()
     try testContextCapsuleReviewWaitsForApproval()
     try testContextCapsuleReviewMarksApprovedSummaryReady()
@@ -1175,6 +1179,132 @@ private func testFinalShowcaseSummaryRedactsUnsafeSourceText() throws {
     try expectNotContains(text, "/Users/")
     try expectNotContains(text, "file:///")
     try expectNotContains(text, "checkout")
+}
+
+private func testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalAcceptanceStatus: "blocked",
+            npcEvaluationStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+
+    try expectEqual(summary.overallStatus, .needsAttention)
+    try expectEqual(summary.stage(id: "final_launch")?.status, .needsAttention)
+    try expectContains(summary.stage(id: "final_launch")?.detail ?? "", "Final launch blocked")
+}
+
+private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+
+    try expectEqual(summary.overallStatus, .readyForLocalDemo)
+    try expectEqual(
+        summary.stages.map(\.id),
+        [
+            "capture", "three_d", "npc_agent", "print", "resources",
+            "npc_evaluation", "operator_handoff", "final_launch",
+        ]
+    )
+    try expectEqual(summary.stage(id: "npc_evaluation")?.status, .ready)
+    try expectEqual(summary.stage(id: "operator_handoff")?.status, .ready)
+    try expectEqual(summary.stage(id: "final_launch")?.status, .ready)
+}
+
+private func testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            npcEvaluationStatus: "missing",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+
+    try expectEqual(summary.overallStatus, .waiting)
+    try expectEqual(summary.stage(id: "npc_evaluation")?.status, .waiting)
+    try expectContains(summary.stage(id: "npc_evaluation")?.detail ?? "", "Run local NPC Agent evaluation")
+}
+
+private func testFinalShowcaseSummaryRedactsUnsafeFinalLaunchDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch blocked",
+        subtitle: "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token private_message: raw",
+        phaseRows: [],
+        resourceActions: [],
+        acceptanceRows: [],
+        npcEvaluationRows: ["failed Authorization=Bearer test-secret private_message: raw"],
+        handoffRows: ["checkout_url=https://pay.example /Users/zhexu/private"],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let text = ([summary.title] + summary.stages.map(\.detail) + summary.privacyNotes).joined(separator: " ")
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "private_message:")
 }
 
 private func testContextCapsuleReviewWaitsForMissingSummary() throws {

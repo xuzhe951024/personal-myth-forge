@@ -257,6 +257,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeReadinessSummary.swift": (
             "ForgeReadinessSummaryBuilder routeLabel canForge ForgeActionGateBuilder disabledReason"
         ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift": (
+            "finalLaunchSummary: FinalLaunchMobileSummary? "
+            "npcEvaluationStage operatorHandoffStage finalLaunchStage "
+            '"npc_evaluation" "operator_handoff" "final_launch"'
+        ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
             "testARKitScanPackageBuilderBuildsReadySelection "
             "testCaptureGenerationReadinessMarksGuidedScanMultiImageRoute "
@@ -264,6 +269,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testContextCapsuleReviewMarksApprovedSummaryReady "
             "testForgeReadinessMarksLocalDemoReady "
             "testForgeActionGateEnablesLocalDemoForge "
+            "testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest "
+            "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest "
+            "testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest "
+            "testFinalShowcaseSummaryRedactsUnsafeFinalLaunchDigest "
             "testArtifactHandoffActionsOpenAndShareSceneAsset "
             "testArtifactGenerationProvenanceSummaryShowsScanAssets "
             "testDemoScriptShowsBlockedFinalLaunch "

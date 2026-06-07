@@ -67,6 +67,7 @@ do {
     let demoScript = try readText(coreRoot.appendingPathComponent("DemoScript.swift"))
     let showcaseAutopilot = try readText(coreRoot.appendingPathComponent("ShowcaseAutopilot.swift"))
     let devicePreflight = try readText(coreRoot.appendingPathComponent("DevicePreflight.swift"))
+    let finalShowcaseSummary = try readText(coreRoot.appendingPathComponent("FinalShowcaseSummary.swift"))
     let finalLaunchMobileSummary = try readText(
         coreRoot.appendingPathComponent("FinalLaunchMobileSummary.swift")
     )
@@ -475,6 +476,11 @@ do {
     try requireContains(forgeRootView, "FinalShowcaseSummaryBuilder.build", "final showcase summary builder wiring")
     try requireContains(
         forgeRootView,
+        "finalLaunchSummary: finalLaunchMobileSummary",
+        "final showcase launch digest root wiring"
+    )
+    try requireContains(
+        forgeRootView,
         "CaptureGenerationReadinessBuilder.build",
         "capture generation readiness root wiring"
     )
@@ -628,6 +634,37 @@ do {
     try requireContains(npcTickView, "runAutonomy", "autonomy run button action")
     try requireContains(finalShowcaseSummaryView, "Final Showcase", "final showcase summary title")
     try requireContains(finalShowcaseSummaryView, "privacyNotes", "final showcase privacy note rendering")
+    try requireContains(
+        finalShowcaseSummary,
+        "finalLaunchSummary: FinalLaunchMobileSummary?",
+        "final showcase launch summary input"
+    )
+    try requireContains(finalShowcaseSummary, "npcEvaluationStage", "final showcase npc evaluation digest")
+    try requireContains(finalShowcaseSummary, "operatorHandoffStage", "final showcase operator handoff digest")
+    try requireContains(finalShowcaseSummary, "finalLaunchStage", "final showcase final launch digest")
+    try requireContains(finalShowcaseSummary, #""npc_evaluation""#, "final showcase npc evaluation stage id")
+    try requireContains(finalShowcaseSummary, #""operator_handoff""#, "final showcase handoff stage id")
+    try requireContains(finalShowcaseSummary, #""final_launch""#, "final showcase launch stage id")
+    try requireContains(
+        contractTests,
+        "testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest",
+        "blocked final showcase launch digest contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest",
+        "ready final showcase launch digest contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest",
+        "missing npc evaluation final showcase digest contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalShowcaseSummaryRedactsUnsafeFinalLaunchDigest",
+        "redacted final showcase launch digest contract test"
+    )
     try requireContains(devicePreflightView, "Device Preflight", "device preflight title")
     try requireContains(devicePreflightView, "backendBaseURL", "device preflight backend URL")
     try requireContains(devicePreflightView, "checkBackend", "device preflight check action")

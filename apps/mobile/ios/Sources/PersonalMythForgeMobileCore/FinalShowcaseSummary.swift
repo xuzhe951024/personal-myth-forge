@@ -57,15 +57,21 @@ public enum FinalShowcaseSummaryBuilder {
         npcTickHistoryCount: Int,
         printQuote: PrintQuote?,
         providerReadiness: ProviderReadinessResponse?,
-        providerReadinessError: String?
+        providerReadinessError: String?,
+        finalLaunchSummary: FinalLaunchMobileSummary? = nil
     ) -> FinalShowcaseSummary {
-        let stages = [
+        var stages = [
             captureStage(captureSelection),
             threeDStage(session),
             npcStage(session: session, npcTickHistoryCount: npcTickHistoryCount),
             printStage(session: session, printQuote: printQuote),
             resourcesStage(readiness: providerReadiness, error: providerReadinessError),
         ]
+        if let finalLaunchSummary {
+            stages.append(npcEvaluationStage(finalLaunchSummary))
+            stages.append(operatorHandoffStage(finalLaunchSummary))
+            stages.append(finalLaunchStage(finalLaunchSummary))
+        }
         return FinalShowcaseSummary(
             overallStatus: overallStatus(session: session, stages: stages),
             title: sanitize(session?.mythSeed.title ?? "Waiting for first myth session"),
@@ -77,6 +83,82 @@ public enum FinalShowcaseSummaryBuilder {
                 "Local file paths are withheld.",
             ]
         )
+    }
+
+    private static func npcEvaluationStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
+        stage(
+            "npc_evaluation",
+            "NPC Eval",
+            launchRowStatus(
+                summary.npcEvaluationRows,
+                readyPrefix: "NPC Agent evaluation ready:",
+                waitingNeedle: "evaluation readiness has not loaded"
+            ),
+            launchDetail(summary.npcEvaluationRows, fallback: "NPC Agent evaluation readiness has not loaded.")
+        )
+    }
+
+    private static func operatorHandoffStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
+        stage(
+            "operator_handoff",
+            "Handoff",
+            launchRowStatus(
+                summary.handoffRows,
+                readyPrefix: "Final operator handoff ready.",
+                waitingNeedle: "handoff has not loaded"
+            ),
+            launchDetail(summary.handoffRows, fallback: "Final operator handoff has not loaded.")
+        )
+    }
+
+    private static func finalLaunchStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
+        let status: FinalShowcaseStageStatus
+        switch summary.overallStatus {
+        case .ready:
+            status = .ready
+        case .blocked:
+            status = .needsAttention
+        case .waiting:
+            status = .waiting
+        }
+        let detail = summary.phaseRows.first { $0.status != .ready }?.detail
+            ?? summary.acceptanceRows.first
+            ?? summary.handoffRows.first
+            ?? summary.subtitle
+        return stage("final_launch", "Launch", status, "\(summary.title): \(detail)")
+    }
+
+    private static func launchRowStatus(
+        _ rows: [String],
+        readyPrefix: String,
+        waitingNeedle: String
+    ) -> FinalShowcaseStageStatus {
+        guard !rows.isEmpty else {
+            return .waiting
+        }
+        if rows.first?.hasPrefix(readyPrefix) == true {
+            return .ready
+        }
+        let text = rows.joined(separator: " ").lowercased()
+        if text.contains(waitingNeedle)
+            || text.contains("has not loaded")
+            || text.contains("run local")
+        {
+            return .waiting
+        }
+        if text.contains("blocked")
+            || text.contains("failed")
+            || text.contains("missing")
+            || text.contains("stale")
+            || text.contains("npc_agent_evaluation_failed")
+        {
+            return .needsAttention
+        }
+        return .needsAttention
+    }
+
+    private static func launchDetail(_ rows: [String], fallback: String) -> String {
+        rows.first.map(sanitize) ?? fallback
     }
 
     private static func captureStage(_ selection: CaptureMediaSelection?) -> FinalShowcaseSummaryStage {
@@ -169,7 +251,10 @@ public enum FinalShowcaseSummaryBuilder {
         let requiredReady = ["capture", "three_d", "npc_agent", "resources"].allSatisfy { id in
             stages.first(where: { $0.id == id })?.status == .ready
         }
-        return requiredReady ? .readyForLocalDemo : .waiting
+        let launchStageIDs = Set(["npc_evaluation", "operator_handoff", "final_launch"])
+        let launchStages = stages.filter { launchStageIDs.contains($0.id) }
+        let launchReady = launchStages.allSatisfy { $0.status == .ready }
+        return requiredReady && launchReady ? .readyForLocalDemo : .waiting
     }
 
     private static func stage(
@@ -182,13 +267,27 @@ public enum FinalShowcaseSummaryBuilder {
     }
 
     private static func sanitize(_ value: String) -> String {
-        if value.contains("sk-")
-            || value.contains("/Users/")
-            || value.contains("file://")
-            || value.lowercased().contains("checkout")
-        {
-            return "[withheld]"
+        var sanitized = value
+        let patterns = [
+            #"sk-[A-Za-z0-9._-]+"#,
+            #"Bearer\s+[A-Za-z0-9._~+/\-=:-]+"#,
+            #"api[_-]?key\s*[=:]\s*[^\s,;"']+"#,
+            #"(private_message|raw_context|message_body)\s*:\s*[^\n]+"#,
+            #"local-capture://[^\s,;"']+"#,
+            #"file://[^\s,;"']+"#,
+            #"/Users/[^\s,;"']+"#,
+            #"/tmp/[^\s,;"']+"#,
+            #"checkout_url"#,
+            #"https?://checkout\.[^\s,;"']+"#,
+            #"https?://pay\.[^\s,;"']+"#,
+        ]
+        for pattern in patterns {
+            sanitized = sanitized.replacingOccurrences(
+                of: pattern,
+                with: "[withheld]",
+                options: .regularExpression
+            )
         }
-        return value
+        return sanitized
     }
 }
