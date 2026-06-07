@@ -560,6 +560,54 @@ FEATURES = (
                 "services/backend/tests/test_final_operator_handoff.py",
                 "test_operator_handoff_includes_ios_deploy_runbook_before_deploy_preflight",
             ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "IOSDeployRunbookReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "iosDeployRunbook",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "deployRunbookRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "deployRunbookCommandRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "deployRunbookSafetyRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "iOS Deploy Runbook",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Deploy Commands",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Deploy Safety",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesIOSDeployRunbookFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
+            ),
         ),
     ),
     FeatureRequirement(

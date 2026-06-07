@@ -93,6 +93,10 @@ do {
     try testDecodesFinalOperatorHandoffFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsHandoffNextActions()
     try testFinalLaunchMobileSummaryShowsReadyHandoff()
+    try testDecodesIOSDeployRunbookFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook()
+    try testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook()
+    try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook()
     try testFinalLaunchMobileSummaryMarksReadyReport()
     try testFinalLaunchMobileSummaryRedactsUnsafeReportText()
     try testFinalLaunchMobileSummaryRedactsUnsafeAcceptanceText()
@@ -2053,6 +2057,87 @@ private func testFinalLaunchMobileSummaryShowsReadyHandoff() throws {
     try expectEqual(summary.handoffRows.first, "Final operator handoff ready.")
 }
 
+private func testDecodesIOSDeployRunbookFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            iosDeployRunbookStatus: "partial",
+            iosDeployRunbookSlotStatus: "missing"
+        )
+    )
+
+    let runbook = try require(report.iosDeployRunbook, "missing iOS deploy runbook")
+    try expectEqual(runbook.kind, "ios_deploy_runbook_report")
+    try expectEqual(runbook.mode, "local")
+    try expectEqual(runbook.status, "partial")
+    try expectEqual(runbook.inputSlots.first?.id, "backend_base_url")
+    try expectEqual(runbook.inputSlots.first?.required, true)
+    try expectEqual(runbook.inputSlots.first?.configured, false)
+    try expectEqual(runbook.commandSequence.first?.id, "mobile_deploy_preflight")
+    try expectEqual(runbook.commandSequence.first?.requiresConsent, false)
+    try expectFalse(runbook.safety.commandsRun)
+    try expectFalse(runbook.safety.providerCalls)
+    try expectFalse(runbook.safety.globalMutation)
+}
+
+private func testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            iosDeployRunbookStatus: "partial",
+            iosDeployRunbookSlotStatus: "missing",
+            iosDeployRunbookAction: "set PMF_BACKEND_BASE_URL to the Mac LAN URL"
+        ),
+        error: nil
+    )
+    let runbookText = summary.deployRunbookRows.joined(separator: " ")
+    let commandText = summary.deployRunbookCommandRows.joined(separator: " ")
+    let safetyText = summary.deployRunbookSafetyRows.joined(separator: " ")
+
+    try expectEqual(summary.deployRunbookRows.first, "iOS deploy runbook partial.")
+    try expectContains(runbookText, "backend_base_url: missing required")
+    try expectContains(runbookText, "set PMF_BACKEND_BASE_URL")
+    try expectContains(commandText, "mobile_deploy_preflight: ready | make mobile-deploy-preflight")
+    try expectContains(commandText, "mobile_xcode_build: blocked | make mobile-xcode-build")
+    try expectContains(safetyText, "commands_run=false")
+    try expectContains(safetyText, "provider_calls=false")
+    try expectContains(safetyText, "global_mutation=false")
+}
+
+private func testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            iosDeployRunbookStatus: "blocked",
+            iosDeployRunbookSlotStatus: "blocked",
+            iosDeployRunbookAction: "provide DEVELOPMENT_TEAM and rerun mobile deploy preflight"
+        ),
+        error: nil
+    )
+    let text = summary.deployRunbookRows.joined(separator: " ")
+
+    try expectEqual(summary.deployRunbookRows.first, "iOS deploy runbook blocked.")
+    try expectContains(text, "backend_base_url: blocked required blocked_by_ios_deploy_config")
+    try expectContains(text, "provide DEVELOPMENT_TEAM")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook() throws {
+    let report = finalDemoLaunchReport(
+        iosDeployRunbookStatus: "blocked",
+        iosDeployRunbookSlotStatus: "blocked",
+        iosDeployRunbookAction: "run sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
+        iosDeployRunbookCommand: "make mobile-deploy-preflight sk-test /Users/zhexu/private file:///tmp/private"
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testFinalLaunchMobileSummaryMarksReadyReport() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -3100,7 +3185,11 @@ private func finalDemoLaunchPayload(
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
     finalOperatorHandoffStatus: String = "missing",
-    finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
+    finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json",
+    iosDeployRunbookStatus: String = "partial",
+    iosDeployRunbookSlotStatus: String = "ready",
+    iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
+    iosDeployRunbookCommand: String = "make mobile-deploy-preflight"
 ) -> Data {
     Data(
         """
@@ -3291,6 +3380,67 @@ private func finalDemoLaunchPayload(
               "payment_links_in_report": false,
               "local_paths_in_report": false,
               "command_execution_from_app": false
+            }
+          },
+          "ios_deploy_runbook": {
+            "kind": "ios_deploy_runbook_report",
+            "mode": "local",
+            "status": "\(iosDeployRunbookStatus)",
+            "input_slots": [
+              {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "\(iosDeployRunbookSlotStatus)",
+                "required": true,
+                "source": "Deployment.local.xcconfig",
+                "operator_action": "\(iosDeployRunbookAction)",
+                "configured": \(iosDeployRunbookSlotStatus == "ready" ? "true" : "false"),
+                "redacted": false,
+                "classification": "\(iosDeployRunbookSlotStatus == "ready" ? "ready" : "blocked_by_ios_deploy_config")",
+                "key": "PMF_BACKEND_BASE_URL",
+                "expected_mode": "local"
+              },
+              {
+                "id": "development_team",
+                "label": "Development team",
+                "status": "ready",
+                "required": true,
+                "source": "Deployment.local.xcconfig",
+                "operator_action": "set DEVELOPMENT_TEAM",
+                "configured": true,
+                "redacted": true,
+                "classification": "ready",
+                "key": "DEVELOPMENT_TEAM",
+                "expected_mode": "local"
+              }
+            ],
+            "command_sequence": [
+              {
+                "id": "mobile_deploy_preflight",
+                "label": "Mobile deploy preflight",
+                "status": "ready",
+                "command": "\(iosDeployRunbookCommand)",
+                "notes": ["checks iOS deploy config without touching global state"],
+                "requires_consent": false
+              },
+              {
+                "id": "mobile_xcode_build",
+                "label": "Xcode build",
+                "status": "blocked",
+                "command": "make mobile-xcode-build",
+                "notes": ["requires local Xcode and signing outside the app"],
+                "requires_consent": false
+              }
+            ],
+            "operator_actions": ["\(iosDeployRunbookAction)"],
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "global_mutation": false,
+              "provider_secrets_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false
             }
           },
           "launch_phases": [
@@ -5089,7 +5239,11 @@ private func finalDemoLaunchReport(
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
     finalOperatorHandoffStatus: String = "missing",
-    finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
+    finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json",
+    iosDeployRunbookStatus: String = "partial",
+    iosDeployRunbookSlotStatus: String = "ready",
+    iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
+    iosDeployRunbookCommand: String = "make mobile-deploy-preflight"
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -5108,7 +5262,11 @@ private func finalDemoLaunchReport(
             npcEvaluationBlockerClassification: npcEvaluationBlockerClassification,
             npcEvaluationBlockerDetail: npcEvaluationBlockerDetail,
             finalOperatorHandoffStatus: finalOperatorHandoffStatus,
-            finalOperatorHandoffAction: finalOperatorHandoffAction
+            finalOperatorHandoffAction: finalOperatorHandoffAction,
+            iosDeployRunbookStatus: iosDeployRunbookStatus,
+            iosDeployRunbookSlotStatus: iosDeployRunbookSlotStatus,
+            iosDeployRunbookAction: iosDeployRunbookAction,
+            iosDeployRunbookCommand: iosDeployRunbookCommand
         )
     )
 }

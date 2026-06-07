@@ -650,6 +650,9 @@ do {
         "acceptanceRows",
         "final launch acceptance row rendering"
     )
+    try requireContains(finalLaunchStatusView, "iOS Deploy Runbook", "final launch iOS deploy runbook section")
+    try requireContains(finalLaunchStatusView, "Deploy Commands", "final launch iOS deploy command section")
+    try requireContains(finalLaunchStatusView, "Deploy Safety", "final launch iOS deploy safety section")
     try requireContains(finalLaunchStatusView, "Next", "final launch operator handoff section")
     try requireContains(
         finalLaunchStatusView,
@@ -716,6 +719,16 @@ do {
         "finalOperatorHandoff",
         "final demo launch final operator handoff field"
     )
+    try requireContains(
+        pmfModels,
+        "IOSDeployRunbookReport",
+        "iOS deploy runbook model"
+    )
+    try requireContains(
+        pmfModels,
+        "iosDeployRunbook",
+        "final demo launch iOS deploy runbook field"
+    )
     try requireContains(pmfModels, "FinalResourcesPreflightItem", "final resources preflight item model")
     try requireContains(
         pmfModels,
@@ -738,6 +751,22 @@ do {
         finalLaunchMobileSummary,
         "npcEvaluationRows(from:",
         "final launch summary NPC evaluation row builder"
+    )
+    try requireContains(finalLaunchMobileSummary, "deployRunbookRows", "final launch iOS deploy runbook rows")
+    try requireContains(
+        finalLaunchMobileSummary,
+        "deployRunbookCommandRows",
+        "final launch iOS deploy command rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "deployRunbookSafetyRows",
+        "final launch iOS deploy safety rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "deployRunbookRows(from:",
+        "final launch iOS deploy runbook row builder"
     )
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
     try requireContains(
@@ -827,6 +856,26 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation",
         "NPC Agent evaluation blocked summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesIOSDeployRunbookFromFinalLaunchPayload",
+        "iOS deploy runbook decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook",
+        "iOS deploy runbook partial summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook",
+        "iOS deploy runbook blocked summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
+        "iOS deploy runbook redaction test"
     )
     try requireContains(
         contractTests,

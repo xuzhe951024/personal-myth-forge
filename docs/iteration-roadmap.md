@@ -110,6 +110,7 @@ Bridge deliverable:
 - P0.92 iPhone Demo Script gate for NPC Agent evaluation readiness
 - P0.93 Mac-side final operator handoff step for NPC Agent evaluation
 - P0.94 sanitized iOS deploy runbook for final physical-device handoff
+- P0.95 iPhone Final Launch panel for iOS deploy runbook details
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

@@ -107,6 +107,18 @@ SOURCE_REQUIREMENTS = (
         "displayLabel",
     ),
     SourceRequirement(
+        "model_ios_deploy_runbook",
+        "iOS deploy runbook report model",
+        PMF_MODELS_PATH,
+        "IOSDeployRunbookReport",
+    ),
+    SourceRequirement(
+        "model_ios_deploy_runbook_field",
+        "Final launch iOS deploy runbook field",
+        PMF_MODELS_PATH,
+        "iosDeployRunbook",
+    ),
+    SourceRequirement(
         "app_configuration_final_launch_mode",
         "App configuration final launch mode",
         APP_CONFIGURATION_PATH,
@@ -233,6 +245,24 @@ SOURCE_REQUIREMENTS = (
         "liveCallPolicy",
     ),
     SourceRequirement(
+        "mobile_summary_ios_deploy_runbook_rows",
+        "Mobile final launch iOS deploy runbook rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "deployRunbookRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_ios_deploy_command_rows",
+        "Mobile final launch iOS deploy command rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "deployRunbookCommandRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_ios_deploy_safety_rows",
+        "Mobile final launch iOS deploy safety rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "deployRunbookSafetyRows",
+    ),
+    SourceRequirement(
         "mobile_summary_redaction",
         "Mobile final launch summary redaction",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -255,6 +285,24 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch mode section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Mode",
+    ),
+    SourceRequirement(
+        "mobile_status_view_ios_deploy_runbook",
+        "Mobile final launch iOS deploy runbook section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "iOS Deploy Runbook",
+    ),
+    SourceRequirement(
+        "mobile_status_view_ios_deploy_commands",
+        "Mobile final launch iOS deploy commands section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Deploy Commands",
+    ),
+    SourceRequirement(
+        "mobile_status_view_ios_deploy_safety",
+        "Mobile final launch iOS deploy safety section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Deploy Safety",
     ),
     SourceRequirement(
         "mobile_status_view_commands",
@@ -369,6 +417,30 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts mobile final launch summary",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeReportText",
+    ),
+    SourceRequirement(
+        "contract_ios_deploy_runbook_decode",
+        "Contract test decodes iOS deploy runbook",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesIOSDeployRunbookFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_ios_deploy_runbook_partial_summary",
+        "Contract test renders partial iOS deploy runbook",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook",
+    ),
+    SourceRequirement(
+        "contract_ios_deploy_runbook_blocked_summary",
+        "Contract test renders blocked iOS deploy runbook",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook",
+    ),
+    SourceRequirement(
+        "contract_ios_deploy_runbook_redaction",
+        "Contract test redacts iOS deploy runbook",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
     ),
 )
 

@@ -214,7 +214,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/ProviderReadinessView.swift": "missingEnv",
         "apps/mobile/ios/App/FinalShowcaseSummaryView.swift": "Final Showcase",
         "apps/mobile/ios/App/FinalLaunchStatusView.swift": (
-            "Mode Acceptance NPC Evaluation Next handoffRows Launch Receipt Resource Checklist"
+            "Mode Acceptance NPC Evaluation iOS Deploy Runbook Deploy Commands Deploy Safety "
+            "Next handoffRows Launch Receipt Resource Checklist"
         ),
         "apps/mobile/ios/App/DevicePreflightView.swift": (
             "Device Preflight backendBaseURL Check checkBackend"
@@ -284,6 +285,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation "
             "testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation "
+            "testDecodesIOSDeployRunbookFromFinalLaunchPayload "
+            "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook "
+            "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook "
+            "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook "
             "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
             "testGetConfiguredFinalDemoLaunchBuildsGETRequest "
             "testFinalLaunchMobileSummaryShowsConfiguredModePolicy"
@@ -324,12 +329,13 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff "
             "FinalLaunchMode displayLabel FinalResourcesPreflightItem FinalAcceptanceFreshness "
             "NPCAgentEvaluationReadinessReport npcAgentEvaluationReadiness "
+            "IOSDeployRunbookReport iosDeployRunbook "
             "items: [FinalResourcesPreflightItem] freshness: FinalAcceptanceFreshness?"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
             "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows "
             "launchReceiptRows firstBlockerReceiptRow freshness.status == \"stale\" "
-            "npcEvaluationRows"
+            "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows"
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
             "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness"
