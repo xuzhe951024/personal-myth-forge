@@ -2204,6 +2204,28 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="final_showcase_apply_preview_ledger",
+        label="Final showcase apply preview ledger",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "build_final_resource_apply_preview_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "final_resource_apply_preview",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_showcase_readiness.py",
+                "final_resource_apply_preview:missing",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_showcase_readiness.py",
+                "final_resource_apply_preview:ready",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="deploy_config",
         label="Deploy config",
         requirements=(

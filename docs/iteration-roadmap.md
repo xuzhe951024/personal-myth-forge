@@ -141,6 +141,7 @@ Bridge deliverable:
 - P0.123 print fulfillment readiness report and iPhone Final Launch rows for local quote, approval UX, visual proof, provider/key handoff, and configured Treatstock quote evidence
 - P0.124 final resource requirements manifest for API keys, print provider keys, iOS deploy values, destinations, blocker mapping, validation commands, and iPhone Final Launch rows
 - P0.125 final resource apply preview for dry-run `.env` and iOS deploy config targets before running `make final-apply-resources`
+- P0.126 final showcase readiness ledger integration for apply preview evidence and provider/key handoff next command routing
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
