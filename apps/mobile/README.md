@@ -172,6 +172,14 @@ build, no signing/keychain writes, no Apple license mutation, and no backend/iOS
 config writes. Exit `2` still writes a blocked certificate; exit `0` means the
 operator can proceed to the manual iPhone sequence.
 
+`make ios-device-launch-rehearsal` regenerates the complete safe Mac-side JSON
+evidence set for the iPhone launch path. It runs the local/no-key final
+rehearsal, configured preflight, final handoff index, and iOS device launch
+certificate in order, accepting exit `2` for blocked-but-written reports. It
+does not call providers, apply resources, start servers, execute deploy
+preflight, run Xcode, write signing/keychain state, accept Apple licenses, or
+change global developer settings.
+
 P0.64 exposes the same sanitized status through:
 
 ```http

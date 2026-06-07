@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.112 iOS Device Launch Rehearsal</title>
+  <style>
+    :root {
+      --ink: #171715;
+      --muted: #62635d;
+      --line: #d8d4c8;
+      --paper: #f6f2e8;
+      --panel: #fffdf7;
+      --ready: #28735c;
+      --blocked: #a84637;
+      --safe: #325f45;
+      --blue: #425fa7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #e3ded1;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0 auto;
+      background: var(--paper);
+      border-left: 1px solid #cfc8b8;
+      border-right: 1px solid #cfc8b8;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 18px;
+      background: #20231f;
+      color: #fff8e8;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: #b9d7bf;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 325px;
+      font-size: 25px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subhead {
+      margin: 8px 0 0;
+      max-width: 335px;
+      color: #e8dfce;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    main { padding: 10px; }
+
+    section {
+      margin: 0 0 9px;
+      padding: 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .command {
+      display: block;
+      padding: 8px;
+      background: #1f211d;
+      border-radius: 6px;
+      color: #fff7df;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 7px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      min-height: 43px;
+      padding: 8px;
+      background: #f2ecdf;
+      border: 1px solid #ded6c7;
+      border-radius: 7px;
+    }
+
+    .num {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #252722;
+      color: #fff8e8;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .copy strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.15;
+    }
+
+    .copy span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .badge {
+      min-width: 62px;
+      padding: 5px 6px;
+      border-radius: 999px;
+      color: #fff;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .badge.ready { background: var(--ready); }
+    .badge.blocked { background: var(--blocked); }
+    .badge.safe { background: var(--safe); }
+    .badge.blue { background: var(--blue); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .safety-item {
+      padding: 8px;
+      background: #edf4ed;
+      border: 1px solid #c6d8c8;
+      border-radius: 6px;
+      color: #2d5238;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header>
+      <p class="eyebrow">P0.112 One-Command Evidence</p>
+      <h1>iOS Device Launch Rehearsal</h1>
+      <p class="subhead">Regenerates the safe local and read-only handoff reports before the final physical iPhone operator pass.</p>
+    </header>
+    <main>
+      <section>
+        <h2>Run From Project Root</h2>
+        <code class="command">make ios-device-launch-rehearsal</code>
+      </section>
+
+      <section>
+        <h2>Refresh Order</h2>
+        <div class="timeline">
+          <div class="step"><div class="num">1</div><div class="copy"><strong>Local final rehearsal</strong><span>3D eval, NPC eval, local acceptance, launch, deploy runbook.</span></div><div class="badge ready">local</div></div>
+          <div class="step"><div class="num">2</div><div class="copy"><strong>Configured preflight</strong><span>Read-only API/key and iOS handoff review.</span></div><div class="badge safe">safe</div></div>
+          <div class="step"><div class="num">3</div><div class="copy"><strong>Final handoff index</strong><span>Consolidates local, configured, deploy, and live consent lanes.</span></div><div class="badge safe">index</div></div>
+          <div class="step"><div class="num">4</div><div class="copy"><strong>Launch certificate</strong><span>Device gates and final iPhone command order.</span></div><div class="badge blue">cert</div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Exit Policy</h2>
+        <div class="timeline">
+          <div class="step"><div class="num">0</div><div class="copy"><strong>Accepted</strong><span>Ready report was written.</span></div><div class="badge ready">ok</div></div>
+          <div class="step"><div class="num">2</div><div class="copy"><strong>Accepted</strong><span>Blocked report was still written and usable.</span></div><div class="badge blocked">report</div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Safety Contract</h2>
+        <div class="grid">
+          <div class="safety-item">No provider calls</div>
+          <div class="safety-item">No config writes</div>
+          <div class="safety-item">No server start</div>
+          <div class="safety-item">No Xcode signing</div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

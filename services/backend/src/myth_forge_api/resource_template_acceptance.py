@@ -37,6 +37,14 @@ IOS_DEVICE_LAUNCH_CERTIFICATE_PATH = (
 )
 IOS_DEVICE_LAUNCH_CERTIFICATE_MAKE_TARGET = "ios-device-launch-certificate"
 IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT = ".local/ios-device-launch-certificate.json"
+IOS_DEVICE_LAUNCH_REHEARSAL_PATH = (
+    "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py"
+)
+IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT_PATH = (
+    "services/backend/scripts/write_ios_device_launch_rehearsal.sh"
+)
+IOS_DEVICE_LAUNCH_REHEARSAL_MAKE_TARGET = "ios-device-launch-rehearsal"
+IOS_DEVICE_LAUNCH_REHEARSAL_OUTPUT = ".local/ios-device-launch-rehearsal.json"
 CLI_PATH = "services/backend/src/myth_forge_api/cli.py"
 FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.py"
 FINAL_DEMO_LAUNCH_MAKE_TARGET = "final-demo-launch"
@@ -147,6 +155,16 @@ def run_resource_template_acceptance(
         ios_device_launch_certificate_text,
         ios_device_launch_certificate_exists,
     ) = _read_optional_text(selected_repo_root / IOS_DEVICE_LAUNCH_CERTIFICATE_PATH)
+    (
+        ios_device_launch_rehearsal_text,
+        ios_device_launch_rehearsal_exists,
+    ) = _read_optional_text(selected_repo_root / IOS_DEVICE_LAUNCH_REHEARSAL_PATH)
+    (
+        ios_device_launch_rehearsal_script_text,
+        ios_device_launch_rehearsal_script_exists,
+    ) = _read_optional_text(
+        selected_repo_root / IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT_PATH
+    )
     cli_text, cli_exists = _read_optional_text(selected_repo_root / CLI_PATH)
     final_demo_launch_text, final_demo_launch_exists = _read_optional_text(
         selected_repo_root / FINAL_DEMO_LAUNCH_PATH
@@ -236,6 +254,16 @@ def run_resource_template_acceptance(
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
+    ios_device_launch_rehearsal_checks = _ios_device_launch_rehearsal_checks(
+        module_text=ios_device_launch_rehearsal_text,
+        module_exists=ios_device_launch_rehearsal_exists,
+        script_text=ios_device_launch_rehearsal_script_text,
+        script_exists=ios_device_launch_rehearsal_script_exists,
+        cli_text=cli_text,
+        cli_exists=cli_exists,
+        makefile_text=makefile_text,
+        makefile_exists=makefile_exists,
+    )
     final_rehearsal_local_checks = _final_rehearsal_local_checks(
         final_acceptance_script_text=final_acceptance_local_script_text,
         final_acceptance_script_exists=final_acceptance_local_script_exists,
@@ -268,6 +296,10 @@ def run_resource_template_acceptance(
         _check(
             "ios_device_launch_certificate",
             all(ios_device_launch_certificate_checks.values()),
+        ),
+        _check(
+            "ios_device_launch_rehearsal",
+            all(ios_device_launch_rehearsal_checks.values()),
         ),
         _check("final_rehearsal_local", all(final_rehearsal_local_checks.values())),
     ]
@@ -352,6 +384,15 @@ def run_resource_template_acceptance(
             "output_path": IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT,
             "exists": ios_device_launch_certificate_exists,
             "checks": ios_device_launch_certificate_checks,
+        },
+        "ios_device_launch_rehearsal": {
+            "path": IOS_DEVICE_LAUNCH_REHEARSAL_PATH,
+            "script_path": IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT_PATH,
+            "make_target": IOS_DEVICE_LAUNCH_REHEARSAL_MAKE_TARGET,
+            "output_path": IOS_DEVICE_LAUNCH_REHEARSAL_OUTPUT,
+            "exists": ios_device_launch_rehearsal_exists,
+            "script_exists": ios_device_launch_rehearsal_script_exists,
+            "checks": ios_device_launch_rehearsal_checks,
         },
         "final_rehearsal_local": {
             "make_target": FINAL_REHEARSAL_LOCAL_MAKE_TARGET,
@@ -686,6 +727,71 @@ def _ios_device_launch_certificate_checks(
                 '"writes_ios_deploy_config": False',
                 '"xcode_or_signing": False',
                 '"keychain_writes": False',
+            ]
+        ),
+        "no_banned_commands": not any(
+            banned in checked_text for banned in BANNED_WRITER_TEXT
+        ),
+    }
+
+
+def _ios_device_launch_rehearsal_checks(
+    *,
+    module_text: str,
+    module_exists: bool,
+    script_text: str,
+    script_exists: bool,
+    cli_text: str,
+    cli_exists: bool,
+    makefile_text: str,
+    makefile_exists: bool,
+) -> dict[str, bool]:
+    checked_text = "\n".join([module_text, script_text, makefile_text])
+    return {
+        "module_exists": module_exists,
+        "script_exists": script_exists,
+        "cli_command": cli_exists
+        and "ios-device-launch-rehearsal" in cli_text
+        and "build_ios_device_launch_rehearsal_report" in cli_text,
+        "make_target": makefile_exists
+        and IOS_DEVICE_LAUNCH_REHEARSAL_MAKE_TARGET in makefile_text
+        and IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT_PATH in makefile_text,
+        "output_path": IOS_DEVICE_LAUNCH_REHEARSAL_OUTPUT in script_text,
+        "composes_rehearsal_reports": all(
+            text in module_text
+            for text in [
+                "ios_device_launch_rehearsal_report",
+                "LOCAL_REPORT_SOURCES",
+                "REHEARSAL_REPORT_SOURCES",
+                "final_configured_preflight",
+                "final_handoff_index",
+                "ios_device_launch_certificate",
+                "operator_actions",
+            ]
+        ),
+        "safety_contract": all(
+            text in module_text
+            for text in [
+                '"report_builder_commands_run": False',
+                '"make_wrapper_runs_commands": True',
+                '"writes_ignored_reports": True',
+                '"provider_calls": False',
+                '"writes_backend_env": False',
+                '"writes_ios_deploy_config": False',
+                '"xcode_or_signing": False',
+                '"keychain_writes": False',
+            ]
+        ),
+        "script_accepts_blocked_reports": all(
+            text in script_text
+            for text in [
+                "run_report_command",
+                '"$status" -eq 2',
+                "accepted $label exit code",
+                "final-configured-preflight",
+                "final-handoff-index",
+                "ios-device-launch-certificate",
+                "ios-device-launch-rehearsal",
             ]
         ),
         "no_banned_commands": not any(

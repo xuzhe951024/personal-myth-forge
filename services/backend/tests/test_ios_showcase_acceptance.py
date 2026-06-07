@@ -12,7 +12,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_showcase_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 35, "failed": 0}
+    assert result.report["summary"] == {"passed": 36, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "camera_capture",
         "guided_scan",
@@ -43,6 +43,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
         "configured_handoff_preflight",
         "final_handoff_index",
         "ios_device_launch_certificate",
+        "ios_device_launch_rehearsal",
         "mobile_final_launch_mode",
         "device_preflight",
         "backend_health_probe",
@@ -71,7 +72,7 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["camera_capture"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/CameraCaptureView.swift",
@@ -95,7 +96,7 @@ def test_ios_showcase_acceptance_fails_missing_final_rehearsal_script_without_ab
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["mobile_final_operator_handoff"]["status"] == "failed"
     assert {
         "file": "services/backend/scripts/write_final_acceptance_local.sh",
@@ -121,7 +122,7 @@ def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolu
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["arkit_scan_package"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
@@ -148,7 +149,7 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_readiness_with
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["capture_generation_readiness"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
@@ -175,7 +176,7 @@ def test_ios_showcase_acceptance_fails_missing_3d_generation_input_review_withou
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["mobile_3d_generation_input_review"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ThreeDGenerationInputReview.swift",
@@ -202,7 +203,7 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_receipt_withou
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["capture_generation_receipt"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReceipt.swift",
@@ -229,7 +230,7 @@ def test_ios_showcase_acceptance_fails_missing_forge_progress_receipt_without_ab
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["forge_progress_receipt"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeProgressReceipt.swift",
@@ -256,7 +257,7 @@ def test_ios_showcase_acceptance_fails_missing_generation_result_receipt_without
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["mobile_generation_result_receipt"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/GenerationResultReceipt.swift",
@@ -283,7 +284,7 @@ def test_ios_showcase_acceptance_fails_missing_live_provider_consent_without_abs
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["live_provider_consent_interface"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
@@ -310,7 +311,7 @@ def test_ios_showcase_acceptance_fails_missing_print_fulfillment_receipt_without
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["mobile_print_fulfillment_receipt"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PrintFulfillmentReceipt.swift",
@@ -339,7 +340,7 @@ def test_ios_showcase_acceptance_fails_missing_local_network_usage_without_absol
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["deploy_config"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/Info.plist",
@@ -366,7 +367,7 @@ def test_ios_showcase_acceptance_fails_missing_3d_evaluation_readiness_without_a
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 34, "failed": 1}
+    assert result.report["summary"] == {"passed": 35, "failed": 1}
     assert features["mobile_3d_evaluation_readiness"]["status"] == "failed"
     assert {
         "file": "services/backend/src/myth_forge_api/three_d_evaluation_readiness.py",
@@ -680,13 +681,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/cli.py": (
             "ios-deploy-runbook final-configured-preflight final-handoff-index "
-            "ios-device-launch-certificate"
+            "ios-device-launch-certificate ios-device-launch-rehearsal"
         ),
         "Makefile": (
             "ios-deploy-runbook: backend-evaluate-3d: backend-evaluate-npc: "
             "backend-evaluate-local: final-acceptance-local: ios-deploy-runbook-local: "
             "final-rehearsal-local: final-configured-preflight: final-handoff-index: "
-            "ios-device-launch-certificate: "
+            "ios-device-launch-certificate: ios-device-launch-rehearsal: "
+            "services/backend/scripts/write_ios_device_launch_rehearsal.sh "
             "--output .local/final-demo-launch-local.json "
             "--output .local/final-configured-preflight.json "
             "--output .local/final-handoff-index.json "
@@ -728,6 +730,17 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_final_demo_launch_report device_gates operator_sequence "
             '"provider_calls": False "xcode_or_signing": False "keychain_writes": False'
         ),
+        "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py": (
+            "build_ios_device_launch_rehearsal_report ios_device_launch_rehearsal_report "
+            "LOCAL_REPORT_SOURCES REHEARSAL_REPORT_SOURCES final_configured_preflight "
+            "final_handoff_index ios_device_launch_certificate operator_actions "
+            '"provider_calls": False "xcode_or_signing": False "keychain_writes": False'
+        ),
+        "services/backend/scripts/write_ios_device_launch_rehearsal.sh": (
+            "run_report_command accepted $label exit code final-configured-preflight "
+            "final-handoff-index ios-device-launch-certificate ios-device-launch-rehearsal "
+            "services/backend/.local/ios-device-launch-rehearsal.json"
+        ),
         "services/backend/tests/test_final_demo_launch.py": (
             "test_final_demo_launch_embeds_three_d_evaluation_readiness "
             "test_final_demo_launch_operator_handoff_includes_three_d_evaluation_step "
@@ -743,6 +756,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/tests/test_ios_device_launch_certificate.py": (
             "test_ios_device_launch_certificate_ready_with_configured_inputs "
             "test_ios_device_launch_certificate_cli_writes_report_and_makefile_target"
+        ),
+        "services/backend/tests/test_ios_device_launch_rehearsal.py": (
+            "test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_manual_gates "
+            "test_ios_device_launch_rehearsal_cli_writes_report_and_makefile_target"
         ),
         "services/backend/tests/test_cli.py": (
             "test_cli_final_configured_preflight_writes_report_and_returns_result_code "

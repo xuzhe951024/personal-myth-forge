@@ -186,6 +186,16 @@ config files. Exit `2` still writes a blocked certificate for review; exit `0`
 means the checkout is ready enough to begin `make backend-device-demo`,
 `make mobile-deploy-preflight`, and the manual Xcode build gate.
 
+`make ios-device-launch-rehearsal` runs the safe final rehearsal sequence and
+writes `services/backend/.local/ios-device-launch-rehearsal.json`. It refreshes
+local/no-key reports, configured preflight, final handoff index, and the iOS
+device launch certificate, accepting exit `2` as "blocked report written" for
+each step. The wrapper still does not call live providers, apply resources,
+write backend/iOS config, start servers, run deploy preflight, run Xcode, touch
+signing/keychain, accept Apple licenses, or mutate global machine state. Use it
+before the final iPhone operator pass when you want the complete ignored JSON
+evidence set regenerated in one command.
+
 The same sanitized launch status is available to the iPhone app:
 
 ```bash
