@@ -15,6 +15,9 @@ from myth_forge_api.final_resources_preflight import (
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
+from myth_forge_api.three_d_evaluation_readiness import (
+    build_three_d_evaluation_readiness_report,
+)
 
 LaunchMode = Literal["local", "configured"]
 
@@ -41,6 +44,9 @@ def build_ios_deploy_runbook_report(
     final_acceptance = build_final_acceptance_readiness_report(
         repo_root=selected_repo_root,
     ).report
+    three_d_evaluation = build_three_d_evaluation_readiness_report(
+        repo_root=selected_repo_root,
+    ).report
     npc_evaluation = build_npc_agent_evaluation_readiness_report(
         repo_root=selected_repo_root,
     ).report
@@ -49,6 +55,7 @@ def build_ios_deploy_runbook_report(
         deploy_values=_deploy_config_values(selected_repo_root),
         final_resources=final_resources,
         final_acceptance=final_acceptance,
+        three_d_evaluation=three_d_evaluation,
         npc_evaluation=npc_evaluation,
     )
     command_sequence = _command_sequence(mode=mode, input_slots=input_slots)
@@ -63,6 +70,7 @@ def build_ios_deploy_runbook_report(
             input_slots=input_slots,
             final_resources=final_resources,
             final_acceptance=final_acceptance,
+            three_d_evaluation=three_d_evaluation,
             npc_evaluation=npc_evaluation,
             command_sequence=command_sequence,
         ),
@@ -85,6 +93,7 @@ def _input_slots(
     deploy_values: dict[str, str],
     final_resources: dict[str, Any],
     final_acceptance: dict[str, Any],
+    three_d_evaluation: dict[str, Any],
     npc_evaluation: dict[str, Any],
 ) -> list[dict[str, Any]]:
     return [
@@ -137,6 +146,17 @@ def _input_slots(
             action=(
                 "run local final acceptance and write "
                 "services/backend/.local/final-acceptance-local.json"
+            ),
+        ),
+        _slot(
+            slot_id="three_d_evaluation",
+            label="3D evaluation",
+            status=str(three_d_evaluation.get("status", "missing")),
+            required=True,
+            source="services/backend/.local/3d-evaluation-local.json",
+            action=(
+                "run local 3D evaluation with evaluate-3d and write "
+                "services/backend/.local/3d-evaluation-local.json"
             ),
         ),
         _slot(
@@ -358,6 +378,7 @@ def _operator_actions(
     input_slots: list[dict[str, Any]],
     final_resources: dict[str, Any],
     final_acceptance: dict[str, Any],
+    three_d_evaluation: dict[str, Any],
     npc_evaluation: dict[str, Any],
     command_sequence: list[dict[str, Any]],
 ) -> list[str]:
@@ -367,6 +388,11 @@ def _operator_actions(
         action
         for action in _string_list(final_acceptance.get("operator_actions"))
         if action != "final acceptance is ready"
+    )
+    actions.extend(
+        action
+        for action in _string_list(three_d_evaluation.get("operator_actions"))
+        if action != "3D evaluation is ready"
     )
     actions.extend(
         action

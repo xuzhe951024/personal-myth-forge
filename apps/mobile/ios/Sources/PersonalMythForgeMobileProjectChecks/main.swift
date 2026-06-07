@@ -1266,6 +1266,16 @@ do {
     )
     try requireContains(
         iosDeployRunbook,
+        "build_three_d_evaluation_readiness_report",
+        "iOS deploy runbook 3D evaluation readiness input"
+    )
+    try requireContains(
+        iosDeployRunbook,
+        "three_d_evaluation",
+        "iOS deploy runbook 3D evaluation slot id"
+    )
+    try requireContains(
+        iosDeployRunbook,
         "IOS_DEPLOY_RUNBOOK_COMMAND",
         "iOS deploy runbook command constant"
     )
@@ -1283,6 +1293,16 @@ do {
         iosDeployRunbookTests,
         "test_ios_deploy_runbook_ready_local_inputs_preserve_command_order",
         "iOS deploy runbook command order test"
+    )
+    try requireContains(
+        iosDeployRunbookTests,
+        "test_ios_deploy_runbook_blocks_and_redacts_failed_3d_evaluation",
+        "iOS deploy runbook blocked 3D evaluation test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsThreeDEvaluationIOSDeployRunbookSlot",
+        "mobile final launch iOS deploy runbook 3D evaluation slot test"
     )
     try requireContains(
         finalDemoLaunchTests,
