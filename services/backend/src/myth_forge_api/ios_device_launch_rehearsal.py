@@ -168,6 +168,12 @@ def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]
         "mode": payload.get("mode"),
         "summary": payload.get("summary", {}),
     }
+    nested_actions = _bounded_operator_actions(
+        payload.get("operator_actions"),
+        repo_root=repo_root,
+    )
+    if nested_actions:
+        report["operator_actions"] = nested_actions
     freshness_summary = _bounded_freshness_summary(payload.get("freshness_summary"))
     if freshness_summary is not None:
         report["freshness_summary"] = freshness_summary
@@ -234,10 +240,25 @@ def _summary(sequence: list[dict[str, Any]]) -> dict[str, int]:
 
 
 def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
-    actions = ["run make ios-device-launch-rehearsal"]
+    if any(step["status"] == "missing" for step in sequence):
+        actions = ["run make ios-device-launch-rehearsal"]
+        for step in sequence:
+            if step["status"] == "missing":
+                actions.append(f"refresh {step['id']}: {step['command']}")
+        return _dedupe(actions)
+
+    actions: list[str] = []
     for step in sequence:
-        if step["status"] in {"missing", "blocked"}:
-            actions.append(f"refresh {step['id']}: {step['command']}")
+        if step["status"] != "blocked":
+            continue
+        nested_actions = step.get("operator_actions")
+        if isinstance(nested_actions, list) and nested_actions:
+            actions.extend(f"{step['id']}: {action}" for action in nested_actions)
+        else:
+            actions.append(f"review {step['id']}: {step['command']}")
+    if actions:
+        return _dedupe(actions)
+
     if all(step["status"] not in {"missing", "blocked"} for step in sequence):
         actions.append("continue with make backend-device-demo")
         actions.append("run make mobile-deploy-preflight after backend is running")
@@ -328,6 +349,22 @@ def _bounded_freshness_summary(raw_summary: Any) -> dict[str, int] | None:
         "stale": _non_negative_int(raw_summary.get("stale")),
         "unknown": _non_negative_int(raw_summary.get("unknown")),
     }
+
+
+def _bounded_operator_actions(raw_actions: Any, *, repo_root: Path) -> list[str]:
+    if not isinstance(raw_actions, list):
+        return []
+    actions: list[str] = []
+    for action in raw_actions:
+        if isinstance(action, str):
+            actions.append(_clean_action(action, repo_root=repo_root))
+        if len(actions) == 4:
+            break
+    return [action for action in actions if action]
+
+
+def _clean_action(action: str, *, repo_root: Path) -> str:
+    return _safe_text(action.strip(), repo_root)[:180]
 
 
 def _freshness_status(summary: dict[str, int]) -> str:
