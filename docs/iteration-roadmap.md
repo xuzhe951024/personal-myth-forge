@@ -114,6 +114,7 @@ Bridge deliverable:
 - P0.96 iPhone Final Launch resource handoff overview for backend and iOS slots
 - P0.97 iPhone Final Showcase launch digest for NPC evaluation, operator handoff, and final launch state
 - P0.98 iPhone capture-to-generation receipt for scan/photo source proof
+- P0.99 iPhone Forge progress receipt for upload, 3D generation, and NPC Agent status
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

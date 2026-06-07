@@ -37,6 +37,7 @@ do {
     let appConfiguration = try readText(appRoot.appendingPathComponent("AppConfiguration.swift"))
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
     let captureGenerationReceiptView = try readText(appRoot.appendingPathComponent("CaptureGenerationReceiptView.swift"))
+    let forgeProgressReceiptView = try readText(appRoot.appendingPathComponent("ForgeProgressReceiptView.swift"))
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
@@ -82,6 +83,7 @@ do {
     let captureGenerationReceipt = try readText(
         coreRoot.appendingPathComponent("CaptureGenerationReceipt.swift")
     )
+    let forgeProgressReceipt = try readText(coreRoot.appendingPathComponent("ForgeProgressReceipt.swift"))
     let apiClient = try readText(coreRoot.appendingPathComponent("PersonalMythForgeAPIClient.swift"))
     let contractTests = try readText(
         iosRoot.appendingPathComponent("Sources/PersonalMythForgeMobileCoreContractTests/main.swift")
@@ -272,6 +274,7 @@ do {
         "ForgeRootView.swift",
         "CaptureFormView.swift",
         "CaptureGenerationReceiptView.swift",
+        "ForgeProgressReceiptView.swift",
         "ArtifactSummaryView.swift",
         "Artifact3DPreviewView.swift",
         "GuidedScanCaptureView.swift",
@@ -361,6 +364,12 @@ do {
         "10A000000000000000000022 /* CaptureGenerationReceiptView.swift in Sources */,",
         "capture generation receipt Xcode source membership"
     )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000023 /* ForgeProgressReceiptView.swift in Sources */,",
+        "forge progress receipt Xcode source membership"
+    )
     for file in [
         "PMFJSON.swift",
         "PMFModels.swift",
@@ -409,6 +418,16 @@ do {
         captureFormView,
         "let forgeActionGate: ForgeActionGate",
         "capture form forge action gate input"
+    )
+    try requireContains(
+        captureFormView,
+        "let forgeProgressReceipt: ForgeProgressReceipt",
+        "capture form forge progress receipt input"
+    )
+    try requireContains(
+        captureFormView,
+        "ForgeProgressReceiptView(receipt: forgeProgressReceipt)",
+        "capture form forge progress receipt view"
     )
     try requireContains(captureFormView, "chooseCapture", "capture button closure")
     try requireContains(captureFormView, "let takePhoto: () -> Void", "camera action form input")
@@ -467,6 +486,21 @@ do {
         forgeRootView,
         "forgeActionGate: forgeActionGate",
         "forge action gate capture form handoff"
+    )
+    try requireContains(
+        forgeRootView,
+        "forgeProgressReceipt: forgeProgressReceipt",
+        "forge progress receipt capture form handoff"
+    )
+    try requireContains(
+        forgeRootView,
+        "private var forgeProgressReceipt: ForgeProgressReceipt",
+        "forge progress root property"
+    )
+    try requireContains(
+        forgeRootView,
+        "ForgeProgressReceiptBuilder.build",
+        "forge progress builder wiring"
     )
     try requireContains(forgeRootView, "isContextCapsuleApproved = false", "context approval reset")
     try requireContains(forgeRootView, "guard isContextCapsuleApproved else", "forge context approval guard")
@@ -1253,6 +1287,41 @@ do {
         "capture generation receipt privacy rendering"
     )
     try requireContains(
+        forgeProgressReceipt,
+        "ForgeProgressReceiptBuilder",
+        "forge progress receipt builder"
+    )
+    try requireContains(
+        forgeProgressReceipt,
+        "ForgeProgressReceiptRow",
+        "forge progress receipt rows"
+    )
+    try requireContains(
+        forgeProgressReceipt,
+        "Raw capture media stays off this receipt.",
+        "forge progress receipt privacy note"
+    )
+    try requireContains(
+        forgeProgressReceipt,
+        "sanitize",
+        "forge progress receipt redaction"
+    )
+    try requireContains(
+        forgeProgressReceiptView,
+        "Forge Progress",
+        "forge progress receipt view title"
+    )
+    try requireContains(
+        forgeProgressReceiptView,
+        "statusBadge",
+        "forge progress receipt status badge"
+    )
+    try requireContains(
+        forgeProgressReceiptView,
+        "receipt.privacyNotes",
+        "forge progress receipt privacy rendering"
+    )
+    try requireContains(
         contractTests,
         "testARKitScanPackageBuilderBuildsReadySelection",
         "ARKit scan package contract test"
@@ -1266,6 +1335,16 @@ do {
         contractTests,
         "testCaptureGenerationReceiptRedactsUnsafeText",
         "capture generation receipt redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testForgeProgressReceiptShowsReadyProviderAndNPCRuntime",
+        "forge progress receipt ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testForgeProgressReceiptRedactsUnsafeFailure",
+        "forge progress receipt redaction contract test"
     )
     try requireContains(artifactAssetPreparation, "FileSystemArtifactAssetCache", "asset cache implementation")
     try requireContains(
