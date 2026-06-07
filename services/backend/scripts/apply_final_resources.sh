@@ -15,7 +15,7 @@ Usage: apply_final_resources.sh [--resources-file PATH]
 Default resources file:
   services/backend/.local/final-resources.env
 
-Copy services/backend/final-resources.env.example to the default path, fill values,
+Run `make final-resource-init` to create the default file, fill values,
 then run this script or `make final-apply-resources`.
 EOF
 }
@@ -45,7 +45,7 @@ done
 
 if [ ! -f "$resources_file" ]; then
   printf '%s\n' "Missing final resources file: $resources_file" >&2
-  printf '%s\n' "Copy services/backend/final-resources.env.example to services/backend/.local/final-resources.env." >&2
+  printf '%s\n' "Run make final-resource-init to create services/backend/.local/final-resources.env." >&2
   exit 2
 fi
 

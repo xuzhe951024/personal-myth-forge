@@ -44,11 +44,35 @@ def script_repo(tmp_path: Path) -> Path:
 
 def test_apply_blocks_missing_default_resources_file(script_repo: Path) -> None:
     result = run_apply(script_repo)
+    combined_output = result.stdout + result.stderr
 
     assert result.returncode == 2
     assert "Missing final resources file" in result.stderr
+    assert "make final-resource-init" in result.stderr
+    assert "Copy services/backend/final-resources.env.example" not in combined_output
     assert not backend_env_path(script_repo).exists()
     assert not ios_local_config_path(script_repo).exists()
+
+
+def test_apply_help_points_to_final_resource_init(script_repo: Path) -> None:
+    result = run_apply(script_repo, "--help")
+    combined_output = result.stdout + result.stderr
+
+    assert result.returncode == 0
+    assert "make final-resource-init" in result.stdout
+    assert "Copy services/backend/final-resources.env.example" not in combined_output
+
+
+def test_root_readme_uses_final_resource_init_for_current_handoffs() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+    readme = (repo_root / "README.md").read_text(encoding="utf-8")
+
+    assert "make final-resource-init" in readme
+    assert (
+        "mkdir -p services/backend/.local\n"
+        "cp services/backend/final-resources.env.example "
+        "services/backend/.local/final-resources.env"
+    ) not in readme
 
 
 def test_apply_blocks_unknown_key_without_writing_outputs(script_repo: Path) -> None:
