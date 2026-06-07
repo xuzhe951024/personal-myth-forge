@@ -65,6 +65,7 @@ struct Artifact3DPreviewView: View {
                 Text(sceneLoadProof.title)
                     .font(.caption)
                     .foregroundStyle(sceneLoadProof.canOpenScene ? Color.green : Color.secondary)
+                    .accessibilityLabel("SceneKit load proof")
                 Text(sceneLoadProof.detail)
                     .font(.caption2)
                     .foregroundStyle(.secondary)

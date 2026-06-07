@@ -937,6 +937,81 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_visual_regression_readiness",
+        label="Mobile visual regression readiness",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression_readiness.py",
+                "build_visual_regression_readiness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression_readiness.py",
+                "make visual-regression-local",
+            ),
+            SourceRequirement("Makefile", "visual-regression-local:"),
+            SourceRequirement(
+                "Makefile",
+                "--output .local/visual-regression-local.json",
+            ),
+            SourceRequirement(
+                "Makefile",
+                "final-rehearsal-local: backend-evaluate-local visual-regression-local",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
+                "visual_regression",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "visual_regression",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "visual_regression_readiness",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_visual_regression_readiness.py",
+                "test_visual_regression_readiness_ready_from_saved_report",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_final_demo_launch_embeds_visual_regression_readiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "VisualRegressionReadinessReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "visualRegressionReadiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "visualRegressionRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "visualRegressionRows(from:",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Visual Regression",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesVisualRegressionReadinessFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsReadyVisualRegression",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsBlockedVisualRegression",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="ios_deploy_runbook",
         label="iOS deploy runbook",
         requirements=(
@@ -1339,6 +1414,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_handoff_index.py",
+                "visual_regression",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
                 '"provider_calls": False',
             ),
             SourceRequirement(
@@ -1446,6 +1525,10 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
                 "LOCAL_REPORT_SOURCES",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "visual_regression",
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",

@@ -153,6 +153,12 @@ do {
     let threeDEvaluationReadinessTests = try readText(
         repositoryRoot.appendingPathComponent("services/backend/tests/test_three_d_evaluation_readiness.py")
     )
+    let visualRegressionReadiness = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/visual_regression_readiness.py")
+    )
+    let visualRegressionReadinessTests = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/tests/test_visual_regression_readiness.py")
+    )
     let npcAgentEvaluationReadiness = try readText(
         repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py")
     )
@@ -359,8 +365,14 @@ do {
     )
     try requireContains(
         makefile,
-        "final-rehearsal-local: backend-evaluate-local final-acceptance-local final-demo-launch ios-deploy-runbook-local",
+        "final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local",
         "final rehearsal local target order"
+    )
+    try requireContains(makefile, "visual-regression-local:", "visual regression local Make target")
+    try requireContains(
+        makefile,
+        "--output .local/visual-regression-local.json",
+        "visual regression local report output"
     )
     try requireContains(makefile, "backend-evaluate-3d:", "backend 3D evaluation Make target")
     try requireContains(makefile, "backend-evaluate-npc:", "backend NPC evaluation Make target")
@@ -1274,6 +1286,11 @@ do {
     )
     try requireContains(
         pmfModels,
+        "VisualRegressionReadinessReport",
+        "visual regression readiness model"
+    )
+    try requireContains(
+        pmfModels,
         "ThreeDEvaluationReadinessInputModes",
         "3D evaluation input mode coverage model"
     )
@@ -1292,6 +1309,11 @@ do {
         pmfModels,
         "threeDEvaluationReadiness",
         "final demo launch 3D evaluation readiness field"
+    )
+    try requireContains(
+        pmfModels,
+        "visualRegressionReadiness",
+        "final demo launch visual regression readiness field"
     )
     try requireContains(
         pmfModels,
@@ -1587,6 +1609,21 @@ do {
         "deployRunbookRows(from:",
         "final launch iOS deploy runbook row builder"
     )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "visualRegressionRows",
+        "final launch visual regression rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "visualRegressionRows(from:",
+        "final launch visual regression row builder"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Visual regression ready:",
+        "final launch visual regression ready copy"
+    )
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
     try requireContains(
         threeDEvaluationReadiness,
@@ -1627,6 +1664,26 @@ do {
         finalDemoLaunch,
         "three_d_evaluation_readiness=three_d_evaluation_readiness",
         "final demo launch passes 3D evaluation readiness to handoff"
+    )
+    try requireContains(
+        visualRegressionReadiness,
+        "build_visual_regression_readiness_report",
+        "visual regression readiness report builder"
+    )
+    try requireContains(
+        visualRegressionReadiness,
+        "make visual-regression-local",
+        "visual regression readiness local command"
+    )
+    try requireContains(
+        visualRegressionReadinessTests,
+        "test_visual_regression_readiness_ready_from_saved_report",
+        "visual regression readiness ready report test"
+    )
+    try requireContains(
+        finalDemoLaunch,
+        "visual_regression_readiness",
+        "final demo launch embeds visual regression readiness"
     )
     try requireContains(
         finalOperatorHandoff,
@@ -1729,6 +1786,7 @@ do {
     try requireContains(finalLaunchStatusView, "Backend Resources", "final launch backend resources section")
     try requireContains(finalLaunchStatusView, "iOS Resources", "final launch iOS resources section")
     try requireContains(finalLaunchStatusView, "3D Evaluation", "final launch 3D evaluation section")
+    try requireContains(finalLaunchStatusView, "Visual Regression", "final launch visual regression section")
     try requireContains(finalLaunchStatusView, "NPC Evaluation", "final launch NPC evaluation section")
     try requireContains(
         contractTests,
@@ -1764,6 +1822,21 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsBlockedThreeDEvaluation",
         "3D evaluation blocked summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesVisualRegressionReadinessFromFinalLaunchPayload",
+        "visual regression readiness decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsReadyVisualRegression",
+        "visual regression ready summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsBlockedVisualRegression",
+        "visual regression blocked summary test"
     )
     try requireContains(
         contractTests,

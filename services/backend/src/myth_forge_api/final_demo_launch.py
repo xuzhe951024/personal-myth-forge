@@ -26,6 +26,9 @@ from myth_forge_api.resource_handoff import build_resource_handoff_report
 from myth_forge_api.three_d_evaluation_readiness import (
     build_three_d_evaluation_readiness_report,
 )
+from myth_forge_api.visual_regression_readiness import (
+    build_visual_regression_readiness_report,
+)
 
 LaunchMode = Literal["local", "configured"]
 
@@ -60,6 +63,9 @@ def build_final_demo_launch_report(
         repo_root=selected_repo_root,
     ).report
     npc_agent_evaluation_readiness = build_npc_agent_evaluation_readiness_report(
+        repo_root=selected_repo_root,
+    ).report
+    visual_regression_readiness = build_visual_regression_readiness_report(
         repo_root=selected_repo_root,
     ).report
     ios_device_launch_rehearsal_readiness = (
@@ -99,6 +105,7 @@ def build_final_demo_launch_report(
         "final_acceptance_readiness": final_acceptance_readiness,
         "three_d_evaluation_readiness": three_d_evaluation_readiness,
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,
+        "visual_regression_readiness": visual_regression_readiness,
         "ios_device_launch_rehearsal_readiness": (
             ios_device_launch_rehearsal_readiness
         ),
@@ -321,6 +328,7 @@ def _commands(mode: LaunchMode) -> list[str]:
         return [
             "make final-resources-preflight",
             "make final-apply-resources",
+            "make visual-regression-local",
             "make ios-deploy-runbook",
             "make ios-device-launch-rehearsal",
             "make backend-device-demo",
@@ -335,6 +343,7 @@ def _commands(mode: LaunchMode) -> list[str]:
     return [
         "make final-resources-preflight",
         "make final-apply-resources",
+        "make visual-regression-local",
         "make ios-deploy-runbook",
         "make ios-device-launch-rehearsal",
         "make backend-device-demo",

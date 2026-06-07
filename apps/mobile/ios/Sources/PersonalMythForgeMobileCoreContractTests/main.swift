@@ -110,6 +110,11 @@ do {
     try testDecodesThreeDEvaluationReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsReadyThreeDEvaluation()
     try testFinalLaunchMobileSummaryShowsBlockedThreeDEvaluation()
+    try testDecodesVisualRegressionReadinessFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsReadyVisualRegression()
+    try testFinalLaunchMobileSummaryShowsBlockedVisualRegression()
+    try testFinalLaunchMobileSummaryShowsStaleVisualRegressionFreshness()
+    try testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression()
     try testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation()
     try testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation()
@@ -2627,6 +2632,95 @@ private func testFinalLaunchMobileSummaryShowsBlockedThreeDEvaluation() throws {
     try expectNotContains(text, "Bearer")
 }
 
+private func testDecodesVisualRegressionReadinessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(visualRegressionStatus: "ready")
+    )
+
+    let readiness = try require(
+        report.visualRegressionReadiness,
+        "missing visual regression readiness"
+    )
+    try expectEqual(readiness.kind, "visual_regression_readiness_report")
+    try expectEqual(readiness.status, "ready")
+    try expectEqual(readiness.summary.passed, 1)
+    try expectEqual(readiness.summary.failed, 0)
+    try expectEqual(readiness.artifacts.first?.id, "p0.118_scene_load_proof")
+    try expectFalse(readiness.safety.commandsRun)
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyVisualRegression() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(visualRegressionStatus: "ready"),
+        error: nil
+    )
+
+    try expectEqual(
+        summary.visualRegressionRows.first,
+        "Visual regression ready: 1 artifact passed, 0 failed."
+    )
+    try expectContains(
+        summary.visualRegressionRows.joined(separator: " "),
+        "p0.118_scene_load_proof"
+    )
+}
+
+private func testFinalLaunchMobileSummaryShowsBlockedVisualRegression() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            visualRegressionStatus: "blocked",
+            visualRegressionBlockerDetail: "unsafe screenshot text Authorization=Bearer test-secret"
+        ),
+        error: nil
+    )
+    let text = summary.visualRegressionRows.joined(separator: " ")
+
+    try expectContains(text, "visual_regression_failed")
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "test-secret")
+    try expectNotContains(text, "Bearer")
+}
+
+private func testFinalLaunchMobileSummaryShowsStaleVisualRegressionFreshness() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            visualRegressionStatus: "blocked",
+            visualRegressionFreshnessStatus: "stale",
+            visualRegressionFreshnessClassification: "stale_report",
+            visualRegressionBlockerClassification: "stale_report",
+            visualRegressionBlockerDetail: "Visual regression report is older than current git revision."
+        ),
+        error: nil
+    )
+    let text = summary.visualRegressionRows.joined(separator: " ")
+
+    try expectContains(text, "Visual regression freshness stale_report")
+    try expectContains(text, "rerun local visual regression")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression() throws {
+    let report = finalDemoLaunchReport(
+        visualRegressionStatus: "blocked",
+        visualRegressionBlockerDetail: (
+            "sk-test /Users/zhexu/private file:///tmp/private "
+            + "local-capture://cap checkout_url https://pay.example Bearer token"
+        ),
+        visualRegressionAction: "rerun make visual-regression-local sk-test /Users/zhexu/private"
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "pay.example")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4166,6 +4260,12 @@ private func finalDemoLaunchPayload(
     threeDEvaluationStatus: String = "missing",
     threeDEvaluationBlockerClassification: String = "three_d_evaluation_failed",
     threeDEvaluationBlockerDetail: String = "3D evaluation report contains failed cases.",
+    visualRegressionStatus: String = "missing",
+    visualRegressionFreshnessStatus: String = "fresh",
+    visualRegressionFreshnessClassification: String = "fresh_report",
+    visualRegressionBlockerClassification: String = "visual_regression_failed",
+    visualRegressionBlockerDetail: String = "Visual regression report contains failed artifacts.",
+    visualRegressionAction: String = "run make visual-regression-local",
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -4336,6 +4436,64 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "local_paths_in_report": false,
               "payment_links_in_report": false
+            }
+          },
+          "visual_regression_readiness": {
+            "kind": "visual_regression_readiness_report",
+            "status": "\(visualRegressionStatus)",
+            "source_file": {
+              "path": "services/backend/.local/visual-regression-local.json",
+              "exists": \(visualRegressionStatus == "missing" ? "false" : "true")
+            },
+            "freshness": {
+              "status": "\(visualRegressionFreshnessStatus)",
+              "classification": "\(visualRegressionFreshnessClassification)",
+              "checked_against": "git_head",
+              "source_modified_at": "2026-06-07T12:05:00Z",
+              "current_revision": "abc1234",
+              "current_revision_committed_at": "2026-06-07T12:00:00Z"
+            },
+            "summary": {
+              "passed": \(visualRegressionStatus == "ready" ? "1" : "0"),
+              "failed": \(visualRegressionStatus == "blocked" ? "1" : "0")
+            },
+            "artifacts": [
+              {
+                "id": "p0.118_scene_load_proof",
+                "status": "\(visualRegressionStatus == "ready" ? "passed" : "failed")",
+                "html_path": "docs/superpowers/verification/p0.118-scene-load-proof.html",
+                "png_path": "docs/superpowers/verification/assets/p0.118-scene-load-proof-390x844.png"
+              }
+            ],
+            "blockers": \(visualRegressionStatus == "blocked" ? """
+            [
+              {
+                "id": "visual_regression",
+                "label": "Visual regression",
+                "status": "failed",
+                "classification": "\(visualRegressionBlockerClassification)",
+                "command": "make visual-regression-local",
+                "detail": "\(visualRegressionBlockerDetail)"
+              }
+            ]
+            """ : "[]"),
+            "operator_actions": \(visualRegressionStatus == "ready" ? #"[]"# : "[\"\(visualRegressionAction)\"]"),
+            "commands": [
+              "make visual-regression-local",
+              "cd services/backend && uv run python -m myth_forge_api.cli visual-regression --repo-root ../.. --output .local/visual-regression-local.json"
+            ],
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
+              "provider_secrets_in_report": false,
+              "raw_private_context_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false
             }
           },
           "npc_agent_evaluation_readiness": {
@@ -7042,6 +7200,12 @@ private func finalDemoLaunchReport(
     threeDEvaluationStatus: String = "missing",
     threeDEvaluationBlockerClassification: String = "three_d_evaluation_failed",
     threeDEvaluationBlockerDetail: String = "3D evaluation report contains failed cases.",
+    visualRegressionStatus: String = "missing",
+    visualRegressionFreshnessStatus: String = "fresh",
+    visualRegressionFreshnessClassification: String = "fresh_report",
+    visualRegressionBlockerClassification: String = "visual_regression_failed",
+    visualRegressionBlockerDetail: String = "Visual regression report contains failed artifacts.",
+    visualRegressionAction: String = "run make visual-regression-local",
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -7084,6 +7248,12 @@ private func finalDemoLaunchReport(
             threeDEvaluationStatus: threeDEvaluationStatus,
             threeDEvaluationBlockerClassification: threeDEvaluationBlockerClassification,
             threeDEvaluationBlockerDetail: threeDEvaluationBlockerDetail,
+            visualRegressionStatus: visualRegressionStatus,
+            visualRegressionFreshnessStatus: visualRegressionFreshnessStatus,
+            visualRegressionFreshnessClassification: visualRegressionFreshnessClassification,
+            visualRegressionBlockerClassification: visualRegressionBlockerClassification,
+            visualRegressionBlockerDetail: visualRegressionBlockerDetail,
+            visualRegressionAction: visualRegressionAction,
             npcEvaluationStatus: npcEvaluationStatus,
             npcEvaluationBlockerClassification: npcEvaluationBlockerClassification,
             npcEvaluationBlockerDetail: npcEvaluationBlockerDetail,

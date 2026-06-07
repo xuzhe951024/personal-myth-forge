@@ -134,6 +134,7 @@ Bridge deliverable:
 - P0.116 iPhone-visible final handoff source freshness for stale indexed local evidence
 - P0.117 iPhone SceneKit load proof for generated 3D preview assets
 - P0.118 local visual regression gate for iPhone scene load proof evidence
+- P0.119 visual regression evidence wired into final handoff and iPhone launch readiness
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

@@ -117,6 +117,7 @@ This writes the canonical ignored local reports needed for handoff review:
 
 - `services/backend/.local/3d-evaluation-local.json`
 - `services/backend/.local/npc-evaluation-local.json`
+- `services/backend/.local/visual-regression-local.json`
 - `services/backend/.local/final-acceptance-local.json`
 - `services/backend/.local/final-demo-launch-local.json`
 - `services/backend/.local/ios-deploy-runbook-local.json`
@@ -2351,4 +2352,28 @@ Static evidence lives at:
 ```text
 docs/superpowers/verification/p0.118-scene-load-proof.html
 docs/superpowers/verification/assets/p0.118-scene-load-proof-390x844.png
+```
+
+P0.119 adds the same visual evidence to the final handoff path. Run:
+
+```bash
+make visual-regression-local
+make final-rehearsal-local
+```
+
+`visual-regression-local` writes
+`services/backend/.local/visual-regression-local.json`. `final-rehearsal-local`
+now refreshes that report automatically, and `make final-handoff-index` treats
+it as required local rehearsal evidence with git-HEAD freshness checks. The
+`/v1/final-demo-launch?mode=local` payload also includes
+`visual_regression_readiness`, and the iPhone Final Launch panel renders a
+read-only `Visual Regression` group. Missing, failed, or stale visual evidence
+tells the Mac operator to rerun `make visual-regression-local` or
+`make ios-device-launch-rehearsal`; the app never runs those commands itself.
+
+Static evidence lives at:
+
+```text
+docs/superpowers/verification/p0.119-visual-regression-handoff.html
+docs/superpowers/verification/assets/p0.119-visual-regression-handoff-390x844.png
 ```

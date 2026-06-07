@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.119 Visual Regression Handoff</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #eef2f4;
+      color: #172026;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #f8faf8;
+    }
+    main {
+      width: 390px;
+      height: 844px;
+      padding: 18px 14px;
+      overflow: hidden;
+    }
+    .phone-bar {
+      height: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #314048;
+      margin-bottom: 12px;
+    }
+    .screen-title {
+      font-size: 22px;
+      line-height: 1.12;
+      font-weight: 800;
+      margin: 0 0 3px;
+      letter-spacing: 0;
+    }
+    .subhead {
+      margin: 0 0 14px;
+      font-size: 12px;
+      color: #68757a;
+    }
+    .panel {
+      border: 1px solid #d7dedf;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 10px 24px rgba(44, 55, 60, 0.08);
+      padding: 12px;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .panel-title {
+      flex: 1;
+      min-width: 0;
+    }
+    h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .caption {
+      margin-top: 2px;
+      font-size: 11px;
+      color: #6f7b80;
+      line-height: 1.25;
+    }
+    .badge {
+      flex: 0 0 auto;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+      color: #247247;
+    }
+    .phase {
+      display: grid;
+      grid-template-columns: 8px 104px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 6px 0;
+      border-bottom: 1px solid #edf0f1;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: #2e9b60;
+    }
+    .dot.wait { background: #8b9497; }
+    .phase b {
+      font-size: 11px;
+      line-height: 1.25;
+    }
+    .phase span {
+      font-size: 10px;
+      color: #667277;
+      line-height: 1.3;
+    }
+    .group {
+      margin-top: 11px;
+    }
+    .group h3 {
+      margin: 0 0 5px;
+      font-size: 12px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .row {
+      font-family: "SF Mono", ui-monospace, Menlo, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+      color: #627076;
+      padding: 2px 0;
+      overflow-wrap: anywhere;
+    }
+    .row.good { color: #276b48; }
+    .row.warn { color: #8a5b18; }
+    .row.bad { color: #9b3e3e; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="phone-bar">
+      <span>9:41</span>
+      <span>PMF</span>
+    </div>
+    <h1 class="screen-title">Final Launch Status</h1>
+    <p class="subhead">Visual regression evidence now travels with final rehearsal and iPhone handoff.</p>
+
+    <section class="panel" aria-label="Final launch panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <h2>Final Launch ready</h2>
+          <div class="caption">mode local; visual evidence included</div>
+        </div>
+        <div class="badge">READY</div>
+      </div>
+
+      <div class="phase">
+        <div class="dot"></div>
+        <b>Local final acceptance</b>
+        <span>make final-acceptance-local</span>
+      </div>
+      <div class="phase">
+        <div class="dot"></div>
+        <b>Visual regression</b>
+        <span>make visual-regression-local writes saved evidence</span>
+      </div>
+      <div class="phase">
+        <div class="dot wait"></div>
+        <b>Xcode build gate</b>
+        <span>manual Mac step remains outside the app</span>
+      </div>
+
+      <div class="group">
+        <h3>Visual Regression</h3>
+        <div class="row good">Visual regression ready: 1 artifact passed, 0 failed.</div>
+        <div class="row good">p0.118_scene_load_proof: passed</div>
+      </div>
+
+      <div class="group">
+        <h3>Visual Regression</h3>
+        <div class="row warn">Visual regression freshness stale_report; rerun local visual regression.</div>
+        <div class="row warn">visual_regression_freshness: stale_report</div>
+      </div>
+
+      <div class="group">
+        <h3>Visual Regression</h3>
+        <div class="row bad">visual_regression: failed visual_regression_failed | make visual-regression-local</div>
+        <div class="row bad">rerun make visual-regression-local and review failed artifacts</div>
+      </div>
+
+      <div class="group">
+        <h3>Commands</h3>
+        <div class="row">make visual-regression-local</div>
+        <div class="row">make final-rehearsal-local</div>
+        <div class="row">make ios-device-launch-rehearsal</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

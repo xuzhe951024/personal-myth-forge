@@ -84,6 +84,11 @@ def test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready(
     assert lanes["device_deploy"]["status"] == "partial"
     assert lanes["live_acceptance"]["status"] == "live"
     assert lanes["live_acceptance"]["requires_consent"] is True
+    assert source_reports["visual_regression"]["status"] == "ready"
+    assert source_reports["visual_regression"]["path"] == (
+        "services/backend/.local/visual-regression-local.json"
+    )
+    assert source_reports["visual_regression"]["command"] == "make visual-regression-local"
     assert source_reports["final_configured_preflight"]["status"] == "ready"
     assert source_reports["final_configured_preflight"]["exists"] is False
     assert result.report["operator_sequence"][0]["command"] == "make final-rehearsal-local"
@@ -157,7 +162,8 @@ def test_final_handoff_index_marks_local_sources_fresh_against_git_head(
     assert source_reports["three_d_evaluation"]["freshness"][
         "classification"
     ] == "fresh_report"
-    assert result.report["freshness_summary"]["fresh"] >= 5
+    assert source_reports["visual_regression"]["freshness"]["status"] == "fresh"
+    assert result.report["freshness_summary"]["fresh"] >= 6
     assert result.report["freshness_summary"]["stale"] == 0
 
 
@@ -278,6 +284,7 @@ def _write_final_resources(repo_root: Path) -> None:
 def _write_local_rehearsal_reports(repo_root: Path) -> None:
     _write_three_d_evaluation(repo_root)
     _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
     _write_final_acceptance(repo_root)
     _write_final_demo_launch(repo_root)
     _write_ios_deploy_runbook(repo_root)
@@ -362,6 +369,26 @@ def _write_three_d_evaluation(repo_root: Path) -> None:
         "cases": [],
     }
     _write_json(repo_root / "services/backend/.local/3d-evaluation-local.json", report)
+
+
+def _write_visual_regression(repo_root: Path) -> None:
+    report = {
+        "kind": "visual_regression_report",
+        "status": "passed",
+        "summary": {"passed": 1, "failed": 0},
+        "artifacts": [
+            {
+                "id": "p0.118_scene_load_proof",
+                "status": "passed",
+                "html_path": "docs/superpowers/verification/p0.118-scene-load-proof.html",
+                "png_path": (
+                    "docs/superpowers/verification/assets/"
+                    "p0.118-scene-load-proof-390x844.png"
+                ),
+            }
+        ],
+    }
+    _write_json(repo_root / "services/backend/.local/visual-regression-local.json", report)
 
 
 def _write_json(path: Path, report: dict[str, object]) -> None:

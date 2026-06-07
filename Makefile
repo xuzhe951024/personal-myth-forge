@@ -18,10 +18,13 @@ backend-demo:
 backend-generate-local:
 	cd services/backend && uv run python -m myth_forge_api.cli generate-asset --provider local --prompt "Create a brass key relic worshiped by a tiny village."
 
-.PHONY: visual-regression
+.PHONY: visual-regression visual-regression-local
 
 visual-regression:
 	cd services/backend && uv run python -m myth_forge_api.cli visual-regression --repo-root ../..
+
+visual-regression-local:
+	cd services/backend && uv run python -m myth_forge_api.cli visual-regression --repo-root ../.. --output .local/visual-regression-local.json
 
 .PHONY: backend-evaluate-3d backend-evaluate-npc backend-evaluate-local
 
@@ -84,7 +87,7 @@ ios-deploy-runbook:
 ios-deploy-runbook-local:
 	@services/backend/scripts/write_ios_deploy_runbook_local.sh
 
-final-rehearsal-local: backend-evaluate-local final-acceptance-local final-demo-launch ios-deploy-runbook-local
+final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local
 
 .PHONY: mobile-xcode-build
 

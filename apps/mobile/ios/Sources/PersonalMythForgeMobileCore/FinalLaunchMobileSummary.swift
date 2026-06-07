@@ -35,6 +35,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var acceptanceRows: [String]
     public var threeDEvaluationRows: [String]
     public var npcEvaluationRows: [String]
+    public var visualRegressionRows: [String]
     public var deployRunbookRows: [String]
     public var deployRunbookCommandRows: [String]
     public var deployRunbookSafetyRows: [String]
@@ -58,6 +59,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         acceptanceRows: [String] = [],
         threeDEvaluationRows: [String] = [],
         npcEvaluationRows: [String] = [],
+        visualRegressionRows: [String] = [],
         deployRunbookRows: [String] = [],
         deployRunbookCommandRows: [String] = [],
         deployRunbookSafetyRows: [String] = [],
@@ -80,6 +82,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.acceptanceRows = acceptanceRows
         self.threeDEvaluationRows = threeDEvaluationRows
         self.npcEvaluationRows = npcEvaluationRows
+        self.visualRegressionRows = visualRegressionRows
         self.deployRunbookRows = deployRunbookRows
         self.deployRunbookCommandRows = deployRunbookCommandRows
         self.deployRunbookSafetyRows = deployRunbookSafetyRows
@@ -148,6 +151,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             acceptanceRows: acceptanceRows(from: report.finalAcceptanceReadiness),
             threeDEvaluationRows: threeDEvaluationRows(from: report.threeDEvaluationReadiness),
             npcEvaluationRows: npcEvaluationRows(from: report.npcAgentEvaluationReadiness),
+            visualRegressionRows: visualRegressionRows(from: report.visualRegressionReadiness),
             deployRunbookRows: deployRunbookRows(from: report.iosDeployRunbook),
             deployRunbookCommandRows: deployRunbookCommandRows(from: report.iosDeployRunbook),
             deployRunbookSafetyRows: deployRunbookSafetyRows(from: report.iosDeployRunbook),
@@ -433,6 +437,47 @@ public enum FinalLaunchMobileSummaryBuilder {
         default:
             return ["3D evaluation \(sanitize(readiness.status))."]
         }
+    }
+
+    private static func visualRegressionRows(
+        from readiness: VisualRegressionReadinessReport?
+    ) -> [String] {
+        guard let readiness else {
+            return ["Visual regression readiness has not loaded."]
+        }
+        var rows: [String] = []
+        if let freshness = readiness.freshness,
+           freshness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "stale" {
+            rows.append(
+                "Visual regression freshness \(sanitize(freshness.classification)); rerun local visual regression."
+            )
+        }
+        switch readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            rows.append(
+                "Visual regression ready: \(readiness.summary.passed) artifact passed, \(readiness.summary.failed) failed."
+            )
+            if let artifact = readiness.artifacts.first {
+                rows.append("\(artifact.id): \(artifact.status)")
+            }
+        case "missing":
+            rows.append("Run local visual regression to create the readiness report.")
+        case "blocked", "failed":
+            if !readiness.blockers.isEmpty {
+                rows.append(contentsOf: readiness.blockers.prefix(3).map { blocker in
+                    sanitize(
+                        "\(blocker.id): \(blocker.status) \(blocker.classification) | \(blocker.command) | \(blocker.detail)"
+                    )
+                })
+            } else if !readiness.operatorActions.isEmpty {
+                rows.append(contentsOf: readiness.operatorActions.prefix(3).map(sanitize))
+            } else {
+                rows.append("Visual regression blocked.")
+            }
+        default:
+            rows.append("Visual regression \(sanitize(readiness.status)).")
+        }
+        return rows.map(sanitize)
     }
 
     private static func handoffRows(from handoff: FinalOperatorHandoffReport?) -> [String] {

@@ -131,6 +131,18 @@ SOURCE_REQUIREMENTS = (
         "iosDeviceLaunchRehearsalReadiness",
     ),
     SourceRequirement(
+        "model_visual_regression_readiness",
+        "Visual regression readiness model",
+        PMF_MODELS_PATH,
+        "VisualRegressionReadinessReport",
+    ),
+    SourceRequirement(
+        "model_visual_regression_readiness_field",
+        "Final launch visual regression readiness field",
+        PMF_MODELS_PATH,
+        "visualRegressionReadiness",
+    ),
+    SourceRequirement(
         "model_resource_handoff",
         "Resource handoff report model",
         PMF_MODELS_PATH,
@@ -293,6 +305,12 @@ SOURCE_REQUIREMENTS = (
         "launchRehearsalRows",
     ),
     SourceRequirement(
+        "mobile_summary_visual_regression_rows",
+        "Mobile final launch visual regression rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "visualRegressionRows",
+    ),
+    SourceRequirement(
         "mobile_summary_resource_handoff_rows",
         "Mobile final launch resource handoff rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -357,6 +375,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch rehearsal section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Launch Rehearsal",
+    ),
+    SourceRequirement(
+        "mobile_status_view_visual_regression",
+        "Mobile final launch visual regression section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Visual Regression",
     ),
     SourceRequirement(
         "mobile_status_view_resource_handoff",
@@ -537,6 +561,30 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts iOS launch rehearsal",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal",
+    ),
+    SourceRequirement(
+        "contract_visual_regression_decode",
+        "Contract test decodes visual regression readiness",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesVisualRegressionReadinessFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_visual_regression_ready_summary",
+        "Contract test renders ready visual regression",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsReadyVisualRegression",
+    ),
+    SourceRequirement(
+        "contract_visual_regression_blocked_summary",
+        "Contract test renders blocked visual regression",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsBlockedVisualRegression",
+    ),
+    SourceRequirement(
+        "contract_visual_regression_redaction",
+        "Contract test redacts visual regression",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression",
     ),
     SourceRequirement(
         "contract_resource_handoff_decode",

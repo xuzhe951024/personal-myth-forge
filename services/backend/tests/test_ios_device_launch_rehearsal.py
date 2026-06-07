@@ -84,6 +84,15 @@ def test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_m
     assert result.report["configured_preflight"]["status"] == "ready"
     assert result.report["final_handoff_index"]["status"] == "ready"
     assert result.report["ios_device_launch_certificate"]["status"] == "ready"
+    local_sources = {
+        source["id"]: source
+        for source in result.report["local_rehearsal_reports"]
+    }
+    assert local_sources["visual_regression"]["status"] == "ready"
+    assert local_sources["visual_regression"]["path"] == (
+        "services/backend/.local/visual-regression-local.json"
+    )
+    assert local_sources["visual_regression"]["command"] == "make visual-regression-local"
     assert result.report["summary"]["partial"] >= 1
     assert result.report["summary"]["missing"] == 0
     assert result.report["summary"]["blocked"] == 0
@@ -274,6 +283,20 @@ def _write_local_rehearsal_reports(local_dir: Path) -> None:
             "total_cases": 6,
             "succeeded": 6,
             "failed": 0,
+        },
+    )
+    _write_json(
+        local_dir / "visual-regression-local.json",
+        {
+            "kind": "visual_regression_report",
+            "status": "passed",
+            "summary": {"passed": 1, "failed": 0},
+            "artifacts": [
+                {
+                    "id": "p0.118_scene_load_proof",
+                    "status": "passed",
+                }
+            ],
         },
     )
     _write_json(
