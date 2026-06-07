@@ -870,6 +870,170 @@ public struct FinalResourceRequirementsReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalResourceApplyPreviewSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var optional: Int
+    public var secret: Int
+    public var backend: Int
+    public var ios: Int
+    public var print: Int
+    public var writeTargets: Int
+
+    public init(
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        optional: Int,
+        secret: Int,
+        backend: Int,
+        ios: Int,
+        print: Int,
+        writeTargets: Int
+    ) {
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.optional = optional
+        self.secret = secret
+        self.backend = backend
+        self.ios = ios
+        self.print = print
+        self.writeTargets = writeTargets
+    }
+}
+
+public struct FinalResourceApplyPreviewSlot: Codable, Equatable, Sendable {
+    public var id: String
+    public var status: String
+    public var required: Bool
+    public var secret: Bool
+    public var configured: Bool
+    public var classification: String
+    public var redacted: Bool
+    public var writes: [String]
+
+    public init(
+        id: String,
+        status: String,
+        required: Bool,
+        secret: Bool,
+        configured: Bool,
+        classification: String,
+        redacted: Bool,
+        writes: [String]
+    ) {
+        self.id = id
+        self.status = status
+        self.required = required
+        self.secret = secret
+        self.configured = configured
+        self.classification = classification
+        self.redacted = redacted
+        self.writes = writes
+    }
+}
+
+public struct FinalResourceApplyPreviewTarget: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var destination: String
+    public var writer: String
+    public var status: String
+    public var command: String
+    public var slots: [FinalResourceApplyPreviewSlot]
+    public var blockedBy: [String]
+    public var notes: [String]
+
+    public init(
+        id: String,
+        label: String,
+        destination: String,
+        writer: String,
+        status: String,
+        command: String,
+        slots: [FinalResourceApplyPreviewSlot],
+        blockedBy: [String] = [],
+        notes: [String] = []
+    ) {
+        self.id = id
+        self.label = label
+        self.destination = destination
+        self.writer = writer
+        self.status = status
+        self.command = command
+        self.slots = slots
+        self.blockedBy = blockedBy
+        self.notes = notes
+    }
+}
+
+public struct FinalResourceApplyPreviewSafety: Codable, Equatable, Sendable {
+    public var providerSecretsInReport: Bool
+    public var localPathsInReport: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var runsShellWriters: Bool
+    public var liveProviderCalls: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+
+    public init(
+        providerSecretsInReport: Bool,
+        localPathsInReport: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        runsShellWriters: Bool,
+        liveProviderCalls: Bool,
+        globalMutation: Bool,
+        xcodeOrSigning: Bool
+    ) {
+        self.providerSecretsInReport = providerSecretsInReport
+        self.localPathsInReport = localPathsInReport
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.runsShellWriters = runsShellWriters
+        self.liveProviderCalls = liveProviderCalls
+        self.globalMutation = globalMutation
+        self.xcodeOrSigning = xcodeOrSigning
+    }
+}
+
+public struct FinalResourceApplyPreviewReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: FinalResourceApplyPreviewSummary
+    public var resourcesFile: FinalResourcesFileStatus?
+    public var writeTargets: [FinalResourceApplyPreviewTarget]
+    public var writeTargetsById: [String: FinalResourceApplyPreviewTarget]
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var safety: FinalResourceApplyPreviewSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: FinalResourceApplyPreviewSummary,
+        resourcesFile: FinalResourcesFileStatus? = nil,
+        writeTargets: [FinalResourceApplyPreviewTarget],
+        writeTargetsById: [String: FinalResourceApplyPreviewTarget],
+        operatorActions: [String] = [],
+        commands: [String] = [],
+        safety: FinalResourceApplyPreviewSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.resourcesFile = resourcesFile
+        self.writeTargets = writeTargets
+        self.writeTargetsById = writeTargetsById
+        self.operatorActions = operatorActions
+        self.commands = commands
+        self.safety = safety
+    }
+}
+
 public struct FinalAcceptanceSourceFile: Codable, Equatable, Sendable {
     public var path: String
     public var exists: Bool
@@ -2212,6 +2376,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var phaseSummary: FinalDemoLaunchSummary?
     public var finalResourcesPreflight: FinalResourcesPreflightReport?
     public var finalResourceRequirements: FinalResourceRequirementsReport?
+    public var finalResourceApplyPreview: FinalResourceApplyPreviewReport?
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
     public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
@@ -2237,6 +2402,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         phaseSummary: FinalDemoLaunchSummary? = nil,
         finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
         finalResourceRequirements: FinalResourceRequirementsReport? = nil,
+        finalResourceApplyPreview: FinalResourceApplyPreviewReport? = nil,
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
         threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
@@ -2261,6 +2427,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.phaseSummary = phaseSummary
         self.finalResourcesPreflight = finalResourcesPreflight
         self.finalResourceRequirements = finalResourceRequirements
+        self.finalResourceApplyPreview = finalResourceApplyPreview
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
         self.threeDEvaluationReadiness = threeDEvaluationReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness

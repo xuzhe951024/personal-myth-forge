@@ -99,6 +99,8 @@ do {
     try testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist()
     try testDecodesFinalResourceRequirementsFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsBlockedResourceRequirements()
+    try testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsResourceApplyPreview()
     try testDecodesResourceHandoffFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsMissingResourceHandoff()
     try testFinalLaunchMobileSummaryShowsReadyResourceHandoff()
@@ -2461,6 +2463,50 @@ private func testFinalLaunchMobileSummaryShowsBlockedResourceRequirements() thro
     try expectContains(text, "make final-resource-requirements")
 }
 
+private func testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload()
+    )
+
+    let preview = try require(
+        report.finalResourceApplyPreview,
+        "missing final resource apply preview"
+    )
+
+    try expectEqual(preview.kind, "final_resource_apply_preview_report")
+    try expectEqual(preview.status, "missing")
+    try expectEqual(preview.summary.writeTargets, 2)
+    try expectEqual(preview.writeTargetsById["backend_env"]?.destination, "services/backend/.env")
+    try expectEqual(
+        preview.writeTargetsById["ios_deploy_config"]?.destination,
+        "apps/mobile/ios/Config/Deployment.local.xcconfig"
+    )
+    try expectEqual(preview.writeTargetsById["backend_env"]?.slots.first?.id, "MESHY_API_KEY")
+    try expectEqual(preview.writeTargetsById["backend_env"]?.slots.first?.secret, true)
+    try expectEqual(preview.writeTargetsById["backend_env"]?.slots.first?.writes, ["MESHY_API_KEY"])
+    try expectEqual(preview.commands.first, "make final-resource-apply-preview")
+    try expectFalse(preview.safety.writesBackendEnv)
+    try expectFalse(preview.safety.writesIosDeployConfig)
+    try expectFalse(preview.safety.runsShellWriters)
+}
+
+private func testFinalLaunchMobileSummaryShowsResourceApplyPreview() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(),
+        error: nil
+    )
+    let text = summary.applyPreviewRows.joined(separator: " ")
+
+    try expectContains(text, "Apply preview missing")
+    try expectContains(text, "targets 2")
+    try expectContains(text, "backend_env")
+    try expectContains(text, "services/backend/.env")
+    try expectContains(text, "ios_deploy_config")
+    try expectContains(text, "MESHY_API_KEY")
+    try expectContains(text, "make final-resource-apply-preview")
+}
+
 private func testDecodesResourceHandoffFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4760,6 +4806,156 @@ private func finalDemoLaunchPayload(
               "writes_ios_deploy_config": false,
               "live_provider_calls": false,
               "global_mutation": false
+            }
+          },
+          "final_resource_apply_preview": {
+            "kind": "final_resource_apply_preview_report",
+            "status": "missing",
+            "summary": {
+              "ready": 0,
+              "missing": 5,
+              "blocked": 0,
+              "optional": 8,
+              "secret": 4,
+              "backend": 9,
+              "ios": 4,
+              "print": 4,
+              "write_targets": 2
+            },
+            "resources_file": {
+              "path": "services/backend/.local/final-resources.env",
+              "exists": \(finalResourcesStatus == "missing" ? "false" : "true")
+            },
+            "write_targets": [
+              {
+                "id": "backend_env",
+                "label": "Backend env",
+                "destination": "services/backend/.env",
+                "writer": "services/backend/scripts/write_backend_env.sh",
+                "status": "missing",
+                "command": "make final-apply-resources",
+                "slots": [
+                  {
+                    "id": "MESHY_API_KEY",
+                    "status": "missing",
+                    "required": true,
+                    "secret": true,
+                    "configured": false,
+                    "classification": "missing_required_value",
+                    "redacted": true,
+                    "writes": ["MESHY_API_KEY"]
+                  }
+                ],
+                "blocked_by": ["MESHY_API_KEY"],
+                "notes": ["Preview does not write services/backend/.env."]
+              },
+              {
+                "id": "ios_deploy_config",
+                "label": "iOS deploy config",
+                "destination": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                "writer": "apps/mobile/ios/scripts/write_deploy_local_config.sh",
+                "status": "missing",
+                "command": "make final-apply-resources",
+                "slots": [
+                  {
+                    "id": "PMF_BACKEND_BASE_URL",
+                    "status": "missing",
+                    "required": true,
+                    "secret": false,
+                    "configured": false,
+                    "classification": "missing_required_value",
+                    "redacted": false,
+                    "writes": ["PMF_BACKEND_BASE_URL"]
+                  }
+                ],
+                "blocked_by": ["PMF_BACKEND_BASE_URL"],
+                "notes": ["Preview does not write Deployment.local.xcconfig."]
+              }
+            ],
+            "write_targets_by_id": {
+              "backend_env": {
+                "id": "backend_env",
+                "label": "Backend env",
+                "destination": "services/backend/.env",
+                "writer": "services/backend/scripts/write_backend_env.sh",
+                "status": "missing",
+                "command": "make final-apply-resources",
+                "slots": [
+                  {
+                    "id": "MESHY_API_KEY",
+                    "status": "missing",
+                    "required": true,
+                    "secret": true,
+                    "configured": false,
+                    "classification": "missing_required_value",
+                    "redacted": true,
+                    "writes": ["MESHY_API_KEY"]
+                  }
+                ],
+                "blocked_by": ["MESHY_API_KEY"],
+                "notes": ["Preview does not write services/backend/.env."]
+              },
+              "ios_deploy_config": {
+                "id": "ios_deploy_config",
+                "label": "iOS deploy config",
+                "destination": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                "writer": "apps/mobile/ios/scripts/write_deploy_local_config.sh",
+                "status": "missing",
+                "command": "make final-apply-resources",
+                "slots": [
+                  {
+                    "id": "PMF_BACKEND_BASE_URL",
+                    "status": "missing",
+                    "required": true,
+                    "secret": false,
+                    "configured": false,
+                    "classification": "missing_required_value",
+                    "redacted": false,
+                    "writes": ["PMF_BACKEND_BASE_URL"]
+                  }
+                ],
+                "blocked_by": ["PMF_BACKEND_BASE_URL"],
+                "notes": ["Preview does not write Deployment.local.xcconfig."]
+              }
+            },
+            "operator_actions": [
+              "copy services/backend/final-resources.env.example to services/backend/.local/final-resources.env"
+            ],
+            "commands": [
+              "make final-resource-apply-preview",
+              "make final-resources-preflight",
+              "make final-apply-resources"
+            ],
+            "source_reports": {
+              "final_resources_preflight": {
+                "kind": "final_resources_preflight_report",
+                "status": "\(finalResourcesStatus)",
+                "summary": {
+                  "ready": 0,
+                  "missing": 1,
+                  "blocked": 0,
+                  "optional": 0
+                }
+              },
+              "final_resource_requirements": {
+                "kind": "final_resource_requirements_report",
+                "status": "blocked",
+                "summary": {
+                  "ready": 0,
+                  "missing": 5,
+                  "blocked": 0
+                }
+              }
+            },
+            "safety": {
+              "provider_secrets_in_report": false,
+              "local_paths_in_report": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "runs_shell_writers": false,
+              "live_provider_calls": false,
+              "global_mutation": false,
+              "xcode_or_signing": false
             }
           },
           "final_acceptance_readiness": {

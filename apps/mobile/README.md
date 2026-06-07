@@ -2241,3 +2241,19 @@ resource rows, and the validation command for the Mac operator.
 
 The app still does not receive provider secrets, write config files, run Mac
 commands, call live providers, or mutate local signing state.
+
+## P0.125 Final Resource Apply Preview
+
+The iPhone Final Launch panel now decodes `final_resource_apply_preview` from
+`/v1/final-demo-launch` and renders a read-only `Apply Preview` group. It shows
+the dry-run status for `services/backend/.env` and
+`apps/mobile/ios/Config/Deployment.local.xcconfig`, the first missing or blocked
+slots, and the Mac validation command:
+
+```bash
+make final-resource-apply-preview
+```
+
+This is only a preview of `make final-apply-resources`. The app still does not
+receive provider secrets, write local config files, run Mac writer scripts, call
+live providers, run Xcode, or mutate signing state.

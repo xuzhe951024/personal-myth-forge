@@ -402,6 +402,32 @@ def test_final_demo_launch_embeds_final_resource_requirements(
     assert requirements["safety"]["live_provider_calls"] is False
 
 
+def test_final_demo_launch_embeds_final_resource_apply_preview(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    preview = result.report["final_resource_apply_preview"]
+
+    assert preview["kind"] == "final_resource_apply_preview_report"
+    assert preview["status"] == "missing"
+    assert preview["write_targets_by_id"]["backend_env"]["destination"] == (
+        "services/backend/.env"
+    )
+    assert preview["write_targets_by_id"]["ios_deploy_config"]["destination"] == (
+        "apps/mobile/ios/Config/Deployment.local.xcconfig"
+    )
+    assert preview["safety"]["writes_backend_env"] is False
+    assert preview["safety"]["writes_ios_deploy_config"] is False
+    assert preview["safety"]["runs_shell_writers"] is False
+
+
 def test_final_demo_launch_embeds_live_provider_evidence(
     tmp_path: Path,
 ) -> None:

@@ -181,6 +181,7 @@ mkdir -p services/backend/.local
 cp services/backend/final-resources.env.example services/backend/.local/final-resources.env
 $EDITOR services/backend/.local/final-resources.env
 make final-resources-preflight
+make final-resource-apply-preview
 make final-apply-resources
 make final-configured-preflight
 make final-handoff-index
@@ -2451,3 +2452,24 @@ values.
 
 `/v1/final-demo-launch` embeds the report as `final_resource_requirements`, and
 the iPhone Final Launch panel renders it under `Resource Requirements`.
+
+## P0.125 Final Resource Apply Preview
+
+The backend now has a read-only dry-run preview for the final resource apply
+step:
+
+```bash
+make final-resource-apply-preview
+```
+
+It writes `services/backend/.local/final-resource-apply-preview.json` and exits
+2 when the final resource bundle is missing or still has blocking values. The
+report shows the two write targets, `services/backend/.env` and
+`apps/mobile/ios/Config/Deployment.local.xcconfig`, plus the slots that would be
+written by `make final-apply-resources`.
+
+The preview never writes `.env`, writes `Deployment.local.xcconfig`, runs shell
+writer scripts, calls providers, runs Xcode, touches signing/keychain state, or
+returns raw secrets. `/v1/final-demo-launch` embeds it as
+`final_resource_apply_preview`, and the iPhone Final Launch panel renders it
+under `Apply Preview`.
