@@ -532,8 +532,20 @@ FEATURES = (
                 "build_final_operator_handoff_report",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_operator_handoff.py",
+                "npc_agent_evaluation",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_operator_handoff.py",
+                "LOCAL_NPC_EVALUATION_COMMAND",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_operator_handoff",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
@@ -551,6 +563,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsHandoffNextActions",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_final_demo_launch_operator_handoff_includes_npc_evaluation_step",
             ),
         ),
     ),

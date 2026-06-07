@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.93 Operator NPC Evaluation Handoff</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17201b;
+      --muted: #5f6a64;
+      --paper: #f7f5ef;
+      --panel: #ffffff;
+      --line: #d9dfd8;
+      --green: #177245;
+      --blue: #235c9a;
+      --amber: #9a681b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 18px 14px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 2px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 5px;
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border: 1px solid rgba(23, 114, 69, 0.25);
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 7px;
+      border-radius: 7px;
+      background: rgba(23, 114, 69, 0.08);
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .caption {
+      margin: -4px 0 10px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .steps {
+      display: grid;
+      gap: 8px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 9px 1fr;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: var(--green);
+    }
+
+    .dot.amber {
+      background: var(--amber);
+    }
+
+    .title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .title strong {
+      min-width: 0;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .status {
+      flex: 0 0 auto;
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .status.amber {
+      color: var(--amber);
+    }
+
+    .command {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .metric {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px;
+      background: #fbfcfa;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+      padding: 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>P0.93 Operator NPC Evaluation Handoff</h1>
+        <div class="sub">Mac-side final launch sequence now includes the saved NPC Agent evaluation step.</div>
+      </div>
+      <div class="badge">HANDOFF</div>
+    </header>
+
+    <section>
+      <h2>Final Operator Handoff</h2>
+      <p class="caption">Run these commands on the Mac. The iPhone app never executes them.</p>
+      <div class="steps">
+        <div class="step">
+          <span class="dot"></span>
+          <div>
+            <div class="title"><strong>Final resources preflight</strong><span class="status">ready</span></div>
+            <p class="command">make final-resources-preflight</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="dot"></span>
+          <div>
+            <div class="title"><strong>Run local final acceptance</strong><span class="status">ready</span></div>
+            <p class="command">uv run python -m myth_forge_api.cli final-acceptance --profile quick</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="dot"></span>
+          <div>
+            <div class="title"><strong>Run NPC Agent evaluation</strong><span class="status">ready</span></div>
+            <p class="command">uv run python -m myth_forge_api.cli evaluate-npc --provider local --suite default-v0</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="dot amber"></span>
+          <div>
+            <div class="title"><strong>Run iOS deploy preflight</strong><span class="status amber">blocked</span></div>
+            <p class="command">make mobile-deploy-preflight</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="dot amber"></span>
+          <div>
+            <div class="title"><strong>Run Xcode build gate</strong><span class="status amber">manual</span></div>
+            <p class="command">make mobile-xcode-build</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>NPC Evaluation Receipt</h2>
+      <div class="summary">
+        <div class="metric"><strong>6</strong><span>cases succeeded</span></div>
+        <div class="metric"><strong>12</strong><span>ticks completed</span></div>
+        <div class="metric"><strong>0</strong><span>provider calls from handoff</span></div>
+      </div>
+    </section>
+
+    <footer>
+      Source: final_operator_handoff consumes the sanitized readiness report from
+      final-demo-launch. No provider keys, local absolute paths, raw private markers,
+      media payloads, payment links, Xcode changes, or global config mutation.
+    </footer>
+  </main>
+</body>
+</html>

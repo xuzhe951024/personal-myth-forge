@@ -337,10 +337,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_npc_agent_evaluation_readiness_report"
         ),
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
-            "build_final_operator_handoff_report"
+            "build_final_operator_handoff_report npc_agent_evaluation LOCAL_NPC_EVALUATION_COMMAND"
         ),
         "services/backend/src/myth_forge_api/final_demo_launch.py": (
-            "final_acceptance_readiness npc_agent_evaluation_readiness final_operator_handoff"
+            "final_acceptance_readiness npc_agent_evaluation_readiness final_operator_handoff "
+            "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness"
+        ),
+        "services/backend/tests/test_final_demo_launch.py": (
+            "test_final_demo_launch_operator_handoff_includes_npc_evaluation_step"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift": (
             "getBackendHealth getFinalDemoLaunch"
