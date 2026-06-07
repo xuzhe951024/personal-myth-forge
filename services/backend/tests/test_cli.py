@@ -9,6 +9,7 @@ from myth_forge_api.final_configured_preflight import FinalConfiguredPreflightRe
 from myth_forge_api.final_external_action_ledger import FinalExternalActionLedgerResult
 from myth_forge_api.final_handoff_index import FinalHandoffIndexResult
 from myth_forge_api.final_local_report_refresh import FinalLocalReportRefreshResult
+from myth_forge_api.final_resource_fill_guide import FinalResourceFillGuideResult
 from myth_forge_api.final_resource_apply_preview import FinalResourceApplyPreviewResult
 from myth_forge_api.final_resource_requirements import FinalResourceRequirementsResult
 from myth_forge_api.final_showcase_readiness import FinalShowcaseReadinessResult
@@ -841,6 +842,55 @@ def test_cli_final_local_report_refresh_writes_report(
     assert report["status"] == "blocked"
     assert report["safety"]["live_provider_calls"] is False
     assert report["steps"][0]["id"] == "final_showcase_readiness"
+
+
+def test_cli_final_resource_fill_guide_writes_json_and_markdown(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "final-resource-fill-guide.json"
+    markdown_file = tmp_path / "final-resource-fill-guide.md"
+    calls = []
+
+    def fake_build_final_resource_fill_guide_report(**kwargs):
+        calls.append(kwargs)
+        return FinalResourceFillGuideResult(
+            exit_code=2,
+            report={
+                "kind": "final_resource_fill_guide_report",
+                "status": "blocked",
+                "summary": {"required_inputs": 1},
+                "required_inputs": [{"id": "MESHY_API_KEY"}],
+                "markdown": "# Final Resource Fill Guide\n\n- `MESHY_API_KEY`",
+                "safety": {"provider_secrets_in_report": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_final_resource_fill_guide_report",
+        fake_build_final_resource_fill_guide_report,
+    )
+
+    exit_code = main(
+        [
+            "final-resource-fill-guide",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+            "--markdown-output",
+            str(markdown_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 2
+    assert calls == [{"repo_root": tmp_path}]
+    assert report["kind"] == "final_resource_fill_guide_report"
+    assert report["status"] == "blocked"
+    assert markdown_file.read_text(encoding="utf-8").startswith(
+        "# Final Resource Fill Guide"
+    )
 
 
 def test_cli_resource_template_acceptance_writes_report(tmp_path, monkeypatch) -> None:

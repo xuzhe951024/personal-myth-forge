@@ -74,6 +74,11 @@ final-resource-repair-preview:
 final-resource-repair:
 	cd services/backend && uv run python -m myth_forge_api.cli final-resource-repair --repo-root ../.. --output .local/final-resource-repair.json
 
+.PHONY: final-resource-fill-guide
+
+final-resource-fill-guide:
+	cd services/backend && uv run python -m myth_forge_api.cli final-resource-fill-guide --repo-root ../.. --output .local/final-resource-fill-guide.json --markdown-output .local/final-resource-fill-guide.md
+
 .PHONY: final-external-action-ledger
 
 final-external-action-ledger:

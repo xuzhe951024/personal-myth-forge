@@ -30,6 +30,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert result.report["summary"]["blocked"] >= 1
     assert steps["final_acceptance_local"]["status"] == "blocked"
     assert steps["final_acceptance_local"]["accepted_blocked"] is True
+    assert steps["final_resource_fill_guide"]["status"] == "blocked"
     assert final_acceptance["refresh_safety"] == {
         "mobile_gate_commands_executed": False,
         "xcode_or_signing_executed": False,
@@ -55,6 +56,8 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "services/backend/.local/final-resource-requirements.json",
         "services/backend/.local/final-resource-repair-preview.json",
         "services/backend/.local/final-resource-apply-preview.json",
+        "services/backend/.local/final-resource-fill-guide.json",
+        "services/backend/.local/final-resource-fill-guide.md",
         "services/backend/.local/3d-evaluation-local.json",
         "services/backend/.local/npc-evaluation-local.json",
         "services/backend/.local/visual-regression-local.json",

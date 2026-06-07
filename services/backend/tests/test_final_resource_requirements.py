@@ -76,8 +76,22 @@ def test_requirements_report_lists_missing_required_resources_without_leaks(
     assert rows["MESHY_API_KEY"]["destination"] == (
         "services/backend/.local/final-resources.env"
     )
+    assert rows["MESHY_API_KEY"]["input_source"] == (
+        "services/backend/.local/final-resources.env"
+    )
+    assert rows["MESHY_API_KEY"]["write_destination"] == "services/backend/.env"
     assert rows["DEVELOPMENT_TEAM"]["destination"] == (
         "apps/mobile/ios/Config/Deployment.local.xcconfig"
+    )
+    assert rows["DEVELOPMENT_TEAM"]["input_source"] == (
+        "services/backend/.local/final-resources.env"
+    )
+    assert rows["DEVELOPMENT_TEAM"]["write_destination"] == (
+        "apps/mobile/ios/Config/Deployment.local.xcconfig"
+    )
+    assert rows["DEVELOPMENT_TEAM"]["apply_command"] == "make final-apply-resources"
+    assert rows["DEVELOPMENT_TEAM"]["fill_action"] == (
+        "fill DEVELOPMENT_TEAM in services/backend/.local/final-resources.env"
     )
     assert rows["PMF_BACKEND_BASE_URL"]["validation_command"] == (
         "make final-resources-preflight"

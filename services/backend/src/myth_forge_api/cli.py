@@ -30,6 +30,9 @@ from myth_forge_api.final_handoff_index import build_final_handoff_index_report
 from myth_forge_api.final_acceptance import run_final_acceptance
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_local_report_refresh import run_final_local_report_refresh
+from myth_forge_api.final_resource_fill_guide import (
+    build_final_resource_fill_guide_report,
+)
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
 )
@@ -170,6 +173,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 output_path=args.output,
                 apply=True,
+            )
+        if args.command == "final-resource-fill-guide":
+            return _final_resource_fill_guide(
+                repo_root=args.repo_root,
+                output_path=args.output,
+                markdown_output_path=args.markdown_output,
             )
         if args.command == "final-external-action-ledger":
             return _final_external_action_ledger(
@@ -326,6 +335,13 @@ def _build_parser() -> argparse.ArgumentParser:
     final_resource_repair_parser = subcommands.add_parser("final-resource-repair")
     final_resource_repair_parser.add_argument("--repo-root", default=None)
     final_resource_repair_parser.add_argument("--output", default=None)
+
+    final_resource_fill_guide_parser = subcommands.add_parser(
+        "final-resource-fill-guide"
+    )
+    final_resource_fill_guide_parser.add_argument("--repo-root", default=None)
+    final_resource_fill_guide_parser.add_argument("--output", default=None)
+    final_resource_fill_guide_parser.add_argument("--markdown-output", default=None)
 
     final_external_action_ledger_parser = subcommands.add_parser(
         "final-external-action-ledger"
@@ -595,6 +611,21 @@ def _final_resource_repair(
     return result.exit_code
 
 
+def _final_resource_fill_guide(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+    markdown_output_path: str | None,
+) -> int:
+    result = build_final_resource_fill_guide_report(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    if markdown_output_path:
+        _write_text_payload(str(result.report.get("markdown", "")), markdown_output_path)
+    return result.exit_code
+
+
 def _final_external_action_ledger(
     *,
     repo_root: str | None,
@@ -803,6 +834,12 @@ def _write_json_payload(report: dict[str, object], output_path: str | None) -> N
         destination.write_text(payload, encoding="utf-8")
     else:
         print(payload)
+
+
+def _write_text_payload(payload: str, output_path: str) -> None:
+    destination = Path(output_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(payload, encoding="utf-8")
 
 
 def _npc_steps_arg(value: str) -> int:

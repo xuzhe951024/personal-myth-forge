@@ -31,6 +31,9 @@ from myth_forge_api.final_handoff_index import build_final_handoff_index_report
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
 )
+from myth_forge_api.final_resource_fill_guide import (
+    build_final_resource_fill_guide_report,
+)
 from myth_forge_api.final_resource_repair import build_final_resource_repair_report
 from myth_forge_api.final_resource_requirements import (
     build_final_resource_requirements_report,
@@ -131,6 +134,12 @@ def _default_steps() -> list[RefreshStepDefinition]:
             lambda repo_root: build_final_resource_apply_preview_report(
                 repo_root=repo_root,
             ).report,
+        ),
+        _step(
+            "final_resource_fill_guide",
+            "Final resource fill guide",
+            "final-resource-fill-guide.json",
+            _final_resource_fill_guide_report,
         ),
         _step(
             "three_d_evaluation_local",
@@ -323,6 +332,17 @@ def _three_d_evaluation_report(repo_root: Path) -> dict[str, Any]:
     )
 
 
+def _final_resource_fill_guide_report(repo_root: Path) -> dict[str, Any]:
+    report = build_final_resource_fill_guide_report(repo_root=repo_root).report
+    markdown_path = LOCAL_REPORT_DIR / "final-resource-fill-guide.md"
+    _write_text(
+        repo_root=repo_root,
+        relative_path=markdown_path,
+        payload=str(report.get("markdown", "")),
+    )
+    return report
+
+
 def _npc_evaluation_report(repo_root: Path) -> dict[str, Any]:
     _ = repo_root
     director = build_npc_director(LOCAL_SETTINGS)
@@ -404,6 +424,17 @@ def _write_json(
     destination = repo_root / relative_path
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(report, indent=2), encoding="utf-8")
+
+
+def _write_text(
+    *,
+    repo_root: Path,
+    relative_path: Path,
+    payload: str,
+) -> None:
+    destination = repo_root / relative_path
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(payload, encoding="utf-8")
 
 
 def _raw_status(report: dict[str, Any]) -> str:

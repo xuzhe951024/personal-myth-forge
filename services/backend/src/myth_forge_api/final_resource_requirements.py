@@ -10,10 +10,13 @@ from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
 
-BACKEND_RESOURCE_DESTINATION = "services/backend/.local/final-resources.env"
+FINAL_RESOURCE_INPUT_SOURCE = "services/backend/.local/final-resources.env"
+BACKEND_RESOURCE_DESTINATION = FINAL_RESOURCE_INPUT_SOURCE
+BACKEND_ENV_WRITE_DESTINATION = "services/backend/.env"
 IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
 BACKEND_TEMPLATE = "services/backend/final-resources.env.example"
 IOS_TEMPLATE = "apps/mobile/ios/Config/Deployment.local.xcconfig.example"
+FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 
 VALIDATION_COMMANDS = [
     "make final-resource-requirements",
@@ -29,6 +32,7 @@ class RequirementMetadata:
     label: str
     domain: str
     destination: str
+    write_destination: str
     source_template: str
     default_required: bool
     unblocks: tuple[str, ...]
@@ -49,6 +53,7 @@ REQUIREMENTS = [
         label="Meshy API key",
         domain="backend_provider",
         destination=BACKEND_RESOURCE_DESTINATION,
+        write_destination=BACKEND_ENV_WRITE_DESTINATION,
         source_template=BACKEND_TEMPLATE,
         default_required=True,
         unblocks=("game_asset_3d_generation", "provider_key_handoff"),
@@ -61,6 +66,7 @@ REQUIREMENTS = [
         label="OpenAI API key",
         domain="backend_provider",
         destination=BACKEND_RESOURCE_DESTINATION,
+        write_destination=BACKEND_ENV_WRITE_DESTINATION,
         source_template=BACKEND_TEMPLATE,
         default_required=True,
         unblocks=("ai_agent_npc", "provider_key_handoff"),
@@ -73,6 +79,7 @@ REQUIREMENTS = [
         label="OpenAI base URL override",
         domain="backend_provider",
         destination=BACKEND_RESOURCE_DESTINATION,
+        write_destination=BACKEND_ENV_WRITE_DESTINATION,
         source_template=BACKEND_TEMPLATE,
         default_required=False,
         unblocks=("ai_agent_npc",),
@@ -85,6 +92,7 @@ REQUIREMENTS = [
         label="Print provider",
         domain="print_provider",
         destination=BACKEND_RESOURCE_DESTINATION,
+        write_destination=BACKEND_ENV_WRITE_DESTINATION,
         source_template=BACKEND_TEMPLATE,
         default_required=False,
         unblocks=("print_fulfillment",),
@@ -97,6 +105,7 @@ REQUIREMENTS = [
         label="Treatstock API key",
         domain="print_provider",
         destination=BACKEND_RESOURCE_DESTINATION,
+        write_destination=BACKEND_ENV_WRITE_DESTINATION,
         source_template=BACKEND_TEMPLATE,
         default_required=False,
         unblocks=("print_fulfillment", "provider_key_handoff"),
@@ -109,6 +118,7 @@ REQUIREMENTS = [
         label="Treatstock base URL override",
         domain="print_provider",
         destination=BACKEND_RESOURCE_DESTINATION,
+        write_destination=BACKEND_ENV_WRITE_DESTINATION,
         source_template=BACKEND_TEMPLATE,
         default_required=False,
         unblocks=("print_fulfillment",),
@@ -121,6 +131,7 @@ REQUIREMENTS = [
         label="Sculpteo API key",
         domain="print_provider",
         destination=BACKEND_RESOURCE_DESTINATION,
+        write_destination=BACKEND_ENV_WRITE_DESTINATION,
         source_template=BACKEND_TEMPLATE,
         default_required=False,
         unblocks=("print_fulfillment",),
@@ -133,6 +144,7 @@ REQUIREMENTS = [
         label="Apple development team",
         domain="ios_deploy",
         destination=IOS_DEPLOY_DESTINATION,
+        write_destination=IOS_DEPLOY_DESTINATION,
         source_template=IOS_TEMPLATE,
         default_required=True,
         unblocks=("ios_deployable", "functional_regression"),
@@ -145,6 +157,7 @@ REQUIREMENTS = [
         label="iOS bundle identifier",
         domain="ios_deploy",
         destination=IOS_DEPLOY_DESTINATION,
+        write_destination=IOS_DEPLOY_DESTINATION,
         source_template=IOS_TEMPLATE,
         default_required=True,
         unblocks=("ios_deployable", "functional_regression"),
@@ -157,6 +170,7 @@ REQUIREMENTS = [
         label="iPhone backend URL",
         domain="ios_deploy",
         destination=IOS_DEPLOY_DESTINATION,
+        write_destination=IOS_DEPLOY_DESTINATION,
         source_template=IOS_TEMPLATE,
         default_required=True,
         unblocks=("ios_deployable", "capture_scanning", "functional_regression"),
@@ -169,6 +183,7 @@ REQUIREMENTS = [
         label="Final launch mode",
         domain="final_launch",
         destination=IOS_DEPLOY_DESTINATION,
+        write_destination=IOS_DEPLOY_DESTINATION,
         source_template=IOS_TEMPLATE,
         default_required=False,
         unblocks=("provider_key_handoff", "privacy_safety"),
@@ -181,6 +196,7 @@ REQUIREMENTS = [
         label="Capture storage directory",
         domain="storage",
         destination=BACKEND_RESOURCE_DESTINATION,
+        write_destination=BACKEND_ENV_WRITE_DESTINATION,
         source_template=BACKEND_TEMPLATE,
         default_required=False,
         unblocks=("capture_scanning",),
@@ -193,6 +209,7 @@ REQUIREMENTS = [
         label="Myth session storage directory",
         domain="storage",
         destination=BACKEND_RESOURCE_DESTINATION,
+        write_destination=BACKEND_ENV_WRITE_DESTINATION,
         source_template=BACKEND_TEMPLATE,
         default_required=False,
         unblocks=("capture_scanning", "ai_agent_npc"),
@@ -283,7 +300,11 @@ def _requirement_row(
         "label": metadata.label,
         "domain": metadata.domain,
         "destination": metadata.destination,
+        "input_source": FINAL_RESOURCE_INPUT_SOURCE,
+        "write_destination": metadata.write_destination,
         "source_template": metadata.source_template,
+        "apply_command": FINAL_RESOURCE_APPLY_COMMAND,
+        "fill_action": f"fill {metadata.id} in {FINAL_RESOURCE_INPUT_SOURCE}",
         "required": required,
         "secret": metadata.id in SECRET_KEYS,
         "configured": configured,
