@@ -143,6 +143,40 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert actions.count("make print-fulfillment-readiness") == 1
 
 
+def test_final_showcase_readiness_normalizes_legacy_final_resource_copy_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression_blocked(repo_root)
+    _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_ios_device_launch_rehearsal_with_actions(
+        repo_root,
+        extra_actions=[
+            (
+                "final_rehearsal_local: ios_deploy_runbook_local: "
+                "copy services/backend/final-resources.env.example to "
+                "services/backend/.local/final-resources.env"
+            ),
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+    report_text = json.dumps(result.report)
+
+    assert result.exit_code == 2
+    assert "run make final-resource-init" in actions
+    assert "services/backend/final-resources.env.example" not in report_text
+    assert "final_handoff_index: run make final-configured-preflight" in actions
+    assert "ios_device_launch_certificate: run make final-handoff-index" in actions
+
+
 def test_final_showcase_readiness_sanitizes_secrets_paths_and_private_context(
     tmp_path: Path,
 ) -> None:
@@ -467,7 +501,25 @@ def _write_final_acceptance_blocked_with_actions(repo_root: Path) -> None:
     )
 
 
-def _write_ios_device_launch_rehearsal_with_actions(repo_root: Path) -> None:
+def _write_ios_device_launch_rehearsal_with_actions(
+    repo_root: Path,
+    *,
+    extra_actions: list[str] | None = None,
+) -> None:
+    operator_actions = [
+        "final_rehearsal_local: final_acceptance_local: action 1",
+        "final_rehearsal_local: final_acceptance_local: action 2",
+        "final_rehearsal_local: ios_deploy_runbook_local: action 1",
+        "final_rehearsal_local: ios_deploy_runbook_local: action 2",
+        "final_configured_preflight: action 1",
+        "final_configured_preflight: action 2",
+        "final_handoff_index: run make final-rehearsal-local",
+        "final_handoff_index: run make final-configured-preflight",
+        "ios_device_launch_certificate: run make final-handoff-index",
+        "ios_device_launch_certificate: provide iOS deploy config",
+    ]
+    if extra_actions:
+        operator_actions[2:2] = extra_actions
     _write_json(
         repo_root / "services/backend/.local/ios-device-launch-rehearsal.json",
         {
@@ -482,18 +534,7 @@ def _write_ios_device_launch_rehearsal_with_actions(repo_root: Path) -> None:
                 "live": 0,
             },
             "sequence": [],
-            "operator_actions": [
-                "final_rehearsal_local: final_acceptance_local: action 1",
-                "final_rehearsal_local: final_acceptance_local: action 2",
-                "final_rehearsal_local: ios_deploy_runbook_local: action 1",
-                "final_rehearsal_local: ios_deploy_runbook_local: action 2",
-                "final_configured_preflight: action 1",
-                "final_configured_preflight: action 2",
-                "final_handoff_index: run make final-rehearsal-local",
-                "final_handoff_index: run make final-configured-preflight",
-                "ios_device_launch_certificate: run make final-handoff-index",
-                "ios_device_launch_certificate: provide iOS deploy config",
-            ],
+            "operator_actions": operator_actions,
             "commands": ["make ios-device-launch-rehearsal"],
             "safety": {
                 "provider_calls": False,
