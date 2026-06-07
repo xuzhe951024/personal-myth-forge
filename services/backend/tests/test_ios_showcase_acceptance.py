@@ -212,7 +212,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/PrintQuoteReviewView.swift": "Get Quote",
         "apps/mobile/ios/App/ProviderReadinessView.swift": "missingEnv",
         "apps/mobile/ios/App/FinalShowcaseSummaryView.swift": "Final Showcase",
-        "apps/mobile/ios/App/FinalLaunchStatusView.swift": "Mode Acceptance Next handoffRows",
+        "apps/mobile/ios/App/FinalLaunchStatusView.swift": (
+            "Mode Acceptance Next handoffRows Resource Checklist"
+        ),
         "apps/mobile/ios/App/DevicePreflightView.swift": (
             "Device Preflight backendBaseURL Check checkBackend"
         ),
@@ -268,6 +270,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testNPCAgentActionGateEnablesLocalDemoActions "
             "testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance "
             "testFinalLaunchMobileSummaryShowsHandoffNextActions "
+            "testFinalLaunchMobileSummaryShowsMissingResourceChecklist "
             "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
             "testGetConfiguredFinalDemoLaunchBuildsGETRequest "
             "testFinalLaunchMobileSummaryShowsConfiguredModePolicy"
@@ -305,10 +308,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift": (
             "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff "
-            "FinalLaunchMode displayLabel"
+            "FinalLaunchMode displayLabel FinalResourcesPreflightItem "
+            "items: [FinalResourcesPreflightItem]"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
-            "acceptanceRows handoffRows modePolicyRows liveCallPolicy"
+            "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows"
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
             "build_final_acceptance_readiness_report"

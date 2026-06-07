@@ -72,6 +72,10 @@ do {
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testFinalLaunchMobileSummaryWaitsForMissingReport()
     try testFinalLaunchMobileSummaryBuildsPartialOperatorStatus()
+    try testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsMissingResourceChecklist()
+    try testFinalLaunchMobileSummaryShowsReadyResourceChecklist()
+    try testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist()
     try testDecodesFinalAcceptanceReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryWaitsForFinalAcceptanceReadiness()
     try testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance()
@@ -1677,6 +1681,85 @@ private func testFinalLaunchMobileSummaryBuildsPartialOperatorStatus() throws {
     try expectContains(summary.notes.joined(separator: " "), "read-only")
 }
 
+private func testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            finalResourcesStatus: "blocked",
+            finalResourcesItemsJSON: blockedFinalResourceItemsJSON()
+        )
+    )
+
+    let preflight = try require(report.finalResourcesPreflight, "missing final resources preflight")
+    try expectEqual(preflight.items.count, 3)
+    try expectEqual(preflight.items[0].id, "MESHY_API_KEY")
+    try expectEqual(preflight.items[0].status, "missing")
+    try expectTrue(preflight.items[0].required)
+    try expectEqual(preflight.items[2].classification, "loopback_url")
+}
+
+private func testFinalLaunchMobileSummaryShowsMissingResourceChecklist() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            finalResourcesStatus: "blocked",
+            finalResourcesItemsJSON: blockedFinalResourceItemsJSON()
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.resourceChecklistRows.count, 3)
+    try expectContains(summary.resourceChecklistRows[0], "MESHY_API_KEY")
+    try expectContains(summary.resourceChecklistRows[0], "missing required")
+    try expectContains(summary.resourceChecklistRows[1], "OPENAI_API_KEY")
+    try expectContains(summary.resourceChecklistRows[2], "PMF_BACKEND_BASE_URL")
+    try expectContains(summary.resourceChecklistRows[2], "loopback_url")
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyResourceChecklist() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalResourcesItemsJSON: readyFinalResourceItemsJSON()
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.resourceChecklistRows.first, "Required final resources ready.")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist() throws {
+    let unsafeItems = """
+    [
+      {
+        "id": "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
+        "status": "blocked",
+        "required": true,
+        "configured": false,
+        "redacted": false,
+        "classification": "api_key=secret /Users/zhexu/private checkout_url"
+      }
+    ]
+    """
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            finalResourcesStatus: "blocked",
+            finalResourcesItemsJSON: unsafeItems
+        ),
+        error: nil
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
+}
+
 private func testDecodesFinalAcceptanceReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -2681,6 +2764,7 @@ private func finalDemoLaunchPayload(
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     finalResourcesStatus: String = "missing",
     finalResourcesAction: String = "copy services/backend/final-resources.env.example",
+    finalResourcesItemsJSON: String = "[]",
     finalAcceptanceStatus: String = "missing",
     finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
     finalOperatorHandoffStatus: String = "missing",
@@ -2721,7 +2805,7 @@ private func finalDemoLaunchPayload(
               "blocked": \(finalResourcesStatus == "blocked" ? "1" : "0"),
               "optional": 2
             },
-            "items": [],
+            "items": \(finalResourcesItemsJSON),
             "unknown_keys": [],
             "malformed_lines": [],
             "operator_actions": ["\(finalResourcesAction)"],
@@ -4539,12 +4623,80 @@ private func devicePreflightSummary(
     )
 }
 
+private func blockedFinalResourceItemsJSON() -> String {
+    """
+    [
+      {
+        "id": "MESHY_API_KEY",
+        "status": "missing",
+        "required": true,
+        "configured": false,
+        "redacted": false,
+        "classification": "missing_required_value"
+      },
+      {
+        "id": "OPENAI_API_KEY",
+        "status": "missing",
+        "required": true,
+        "configured": false,
+        "redacted": false,
+        "classification": "missing_required_value"
+      },
+      {
+        "id": "PMF_BACKEND_BASE_URL",
+        "status": "blocked",
+        "required": true,
+        "configured": false,
+        "redacted": true,
+        "classification": "loopback_url"
+      }
+    ]
+    """
+}
+
+private func readyFinalResourceItemsJSON() -> String {
+    """
+    [
+      {
+        "id": "MESHY_API_KEY",
+        "status": "ready",
+        "required": true,
+        "configured": true,
+        "redacted": true
+      },
+      {
+        "id": "OPENAI_API_KEY",
+        "status": "ready",
+        "required": true,
+        "configured": true,
+        "redacted": true
+      },
+      {
+        "id": "PMF_BACKEND_BASE_URL",
+        "status": "ready",
+        "required": true,
+        "configured": true,
+        "redacted": true
+      },
+      {
+        "id": "PRINT_PROVIDER",
+        "status": "ready",
+        "required": false,
+        "configured": true,
+        "redacted": false,
+        "normalized_value": "local"
+      }
+    ]
+    """
+}
+
 private func finalDemoLaunchReport(
     mode: String = "local",
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     finalResourcesStatus: String = "ready",
     finalResourcesAction: String = "copy services/backend/final-resources.env.example",
+    finalResourcesItemsJSON: String = "[]",
     finalAcceptanceStatus: String = "missing",
     finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
     finalOperatorHandoffStatus: String = "missing",
@@ -4558,6 +4710,7 @@ private func finalDemoLaunchReport(
             unsafeDetail: unsafeDetail,
             finalResourcesStatus: finalResourcesStatus,
             finalResourcesAction: finalResourcesAction,
+            finalResourcesItemsJSON: finalResourcesItemsJSON,
             finalAcceptanceStatus: finalAcceptanceStatus,
             finalAcceptanceBlockerDetail: finalAcceptanceBlockerDetail,
             finalOperatorHandoffStatus: finalOperatorHandoffStatus,

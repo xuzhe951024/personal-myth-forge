@@ -503,6 +503,14 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalResourcesPreflightItem",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "items: [FinalResourcesPreflightItem]",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "displayLabel",
             ),
             SourceRequirement("apps/mobile/ios/App/AppConfiguration.swift", "PMFFinalLaunchMode"),
@@ -551,10 +559,19 @@ FEATURES = (
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "liveCallPolicy",
             ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "resourceChecklistRows",
+            ),
+            SourceRequirement("apps/mobile/ios/App/FinalLaunchStatusView.swift", "Resource Checklist"),
             SourceRequirement("apps/mobile/ios/App/FinalLaunchStatusView.swift", "Mode"),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsMissingResourceChecklist",
             ),
         ),
     ),

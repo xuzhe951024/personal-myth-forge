@@ -33,6 +33,10 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "Mode", lines: summary.modePolicyRows)
             }
 
+            if !summary.resourceChecklistRows.isEmpty {
+                groupedLines(title: "Resource Checklist", lines: summary.resourceChecklistRows)
+            }
+
             if !summary.resourceActions.isEmpty {
                 groupedLines(title: "Resources", lines: summary.resourceActions)
             }

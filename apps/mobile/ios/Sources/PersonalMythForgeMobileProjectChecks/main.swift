@@ -682,12 +682,31 @@ do {
         "finalOperatorHandoff",
         "final demo launch final operator handoff field"
     )
+    try requireContains(pmfModels, "FinalResourcesPreflightItem", "final resources preflight item model")
+    try requireContains(
+        pmfModels,
+        "items: [FinalResourcesPreflightItem]",
+        "final resources preflight items"
+    )
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileSummaryBuilder", "final launch summary builder")
     try requireContains(finalLaunchMobileSummary, "FinalLaunchMobileStatus", "final launch summary status")
     try requireContains(finalLaunchMobileSummary, "modePolicyRows", "final launch summary mode policy rows")
     try requireContains(finalLaunchMobileSummary, "liveCallPolicy", "final launch summary live policy mapping")
+    try requireContains(finalLaunchMobileSummary, "resourceChecklistRows", "final launch resource checklist rows")
+    try requireContains(finalLaunchMobileSummary, "resourceChecklistRow", "final launch resource checklist row builder")
     try requireContains(finalLaunchMobileSummary, "acceptanceRows", "final launch summary acceptance rows")
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
+    try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")
+    try requireContains(
+        contractTests,
+        "testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload",
+        "final resources item decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsMissingResourceChecklist",
+        "final resources checklist summary test"
+    )
     try requireContains(
         finalLaunchMobileSummary,
         "Final acceptance ready.",
