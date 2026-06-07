@@ -119,6 +119,18 @@ SOURCE_REQUIREMENTS = (
         "iosDeployRunbook",
     ),
     SourceRequirement(
+        "model_ios_device_launch_rehearsal",
+        "iOS device launch rehearsal readiness model",
+        PMF_MODELS_PATH,
+        "IOSDeviceLaunchRehearsalReadinessReport",
+    ),
+    SourceRequirement(
+        "model_ios_device_launch_rehearsal_field",
+        "Final launch iOS device launch rehearsal field",
+        PMF_MODELS_PATH,
+        "iosDeviceLaunchRehearsalReadiness",
+    ),
+    SourceRequirement(
         "model_resource_handoff",
         "Resource handoff report model",
         PMF_MODELS_PATH,
@@ -275,6 +287,12 @@ SOURCE_REQUIREMENTS = (
         "deployRunbookSafetyRows",
     ),
     SourceRequirement(
+        "mobile_summary_launch_rehearsal_rows",
+        "Mobile final launch rehearsal rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "launchRehearsalRows",
+    ),
+    SourceRequirement(
         "mobile_summary_resource_handoff_rows",
         "Mobile final launch resource handoff rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -333,6 +351,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch iOS deploy safety section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Deploy Safety",
+    ),
+    SourceRequirement(
+        "mobile_status_view_launch_rehearsal",
+        "Mobile final launch rehearsal section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Launch Rehearsal",
     ),
     SourceRequirement(
         "mobile_status_view_resource_handoff",
@@ -489,6 +513,30 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts iOS deploy runbook",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_rehearsal_decode",
+        "Contract test decodes iOS launch rehearsal readiness",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_rehearsal_blocked_summary",
+        "Contract test renders blocked iOS launch rehearsal",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_rehearsal_ready_summary",
+        "Contract test renders ready iOS launch rehearsal",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_rehearsal_redaction",
+        "Contract test redacts iOS launch rehearsal",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal",
     ),
     SourceRequirement(
         "contract_resource_handoff_decode",

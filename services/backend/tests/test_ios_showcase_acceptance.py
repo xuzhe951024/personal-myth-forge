@@ -470,7 +470,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/FinalShowcaseSummaryView.swift": "Final Showcase",
         "apps/mobile/ios/App/FinalLaunchStatusView.swift": (
             "Mode Acceptance 3D Evaluation NPC Evaluation iOS Deploy Runbook Deploy Commands Deploy Safety "
-            "Resource Handoff Backend Resources iOS Resources Next handoffRows Launch Receipt "
+            "Launch Rehearsal Resource Handoff Backend Resources iOS Resources Next handoffRows Launch Receipt "
             "Resource Checklist"
         ),
         "apps/mobile/ios/App/DevicePreflightView.swift": (
@@ -605,6 +605,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsThreeDEvaluationIOSDeployRunbookSlot "
             "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook "
             "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook "
+            "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload "
+            "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal "
+            "testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal "
+            "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal "
             "testDecodesResourceHandoffFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsMissingResourceHandoff "
             "testFinalLaunchMobileSummaryShowsReadyResourceHandoff "
@@ -653,6 +657,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "ThreeDEvaluationReadinessReport threeDEvaluationReadiness "
             "NPCAgentEvaluationReadinessReport npcAgentEvaluationReadiness "
             "IOSDeployRunbookReport iosDeployRunbook "
+            "IOSDeviceLaunchRehearsalReadinessReport iosDeviceLaunchRehearsalReadiness "
             "ResourceHandoffReport resourceReport "
             "items: [FinalResourcesPreflightItem] freshness: FinalAcceptanceFreshness?"
         ),
@@ -661,7 +666,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "launchReceiptRows firstBlockerReceiptRow freshness.status == \"stale\" "
             "threeDEvaluationRows threeDEvaluationRows(from: "
             "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
-            "resourceHandoffRows resourceHandoffBackendRows resourceHandoffIOSRows"
+            "launchRehearsalRows resourceHandoffRows resourceHandoffBackendRows resourceHandoffIOSRows"
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
             "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness "
@@ -710,7 +715,12 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/src/myth_forge_api/final_demo_launch.py": (
             "final_acceptance_readiness three_d_evaluation_readiness npc_agent_evaluation_readiness "
             "final_operator_handoff three_d_evaluation_readiness=three_d_evaluation_readiness "
-            "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness ios_deploy_runbook"
+            "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness ios_deploy_runbook "
+            "ios_device_launch_rehearsal_readiness"
+        ),
+        "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py": (
+            "build_ios_device_launch_rehearsal_readiness_report "
+            "ios_device_launch_rehearsal_readiness_report"
         ),
         "services/backend/src/myth_forge_api/final_configured_preflight.py": (
             "build_final_configured_preflight_report final_configured_preflight_report "

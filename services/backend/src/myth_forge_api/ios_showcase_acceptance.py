@@ -978,6 +978,18 @@ FEATURES = (
                 "ios_deploy_runbook",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "ios_device_launch_rehearsal_readiness",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py",
+                "build_ios_device_launch_rehearsal_readiness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py",
+                "ios_device_launch_rehearsal_readiness_report",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_operator_handoff.py",
                 "ios_deploy_runbook",
             ),
@@ -1010,6 +1022,14 @@ FEATURES = (
                 "iosDeployRunbook",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "IOSDeviceLaunchRehearsalReadinessReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "iosDeviceLaunchRehearsalReadiness",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "deployRunbookRows",
             ),
@@ -1022,6 +1042,10 @@ FEATURES = (
                 "deployRunbookSafetyRows",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "launchRehearsalRows",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/App/FinalLaunchStatusView.swift",
                 "iOS Deploy Runbook",
             ),
@@ -1032,6 +1056,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/App/FinalLaunchStatusView.swift",
                 "Deploy Safety",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Launch Rehearsal",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
@@ -1052,6 +1080,22 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
