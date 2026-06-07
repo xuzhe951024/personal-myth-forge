@@ -392,6 +392,58 @@ def test_final_demo_launch_embeds_ios_deploy_runbook(tmp_path: Path) -> None:
     )
 
 
+def test_ios_device_launch_rehearsal_readiness_missing_without_leaks(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    readiness = result.report["ios_device_launch_rehearsal_readiness"]
+    report_text = json.dumps(readiness)
+
+    assert readiness["kind"] == "ios_device_launch_rehearsal_readiness_report"
+    assert readiness["status"] == "missing"
+    assert readiness["source_file"] == {
+        "path": "services/backend/.local/ios-device-launch-rehearsal.json",
+        "exists": False,
+    }
+    assert readiness["operator_actions"] == ["run make ios-device-launch-rehearsal"]
+    assert "make ios-device-launch-rehearsal" in readiness["commands"]
+    assert readiness["safety"]["commands_run"] is False
+    assert readiness["safety"]["provider_calls"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+
+
+def test_final_demo_launch_embeds_blocked_ios_device_launch_rehearsal_readiness(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_ios_device_launch_rehearsal(repo_root)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    readiness = result.report["ios_device_launch_rehearsal_readiness"]
+    report_text = json.dumps(result.report)
+
+    assert readiness["status"] == "blocked"
+    assert readiness["summary"]["blocked"] == 1
+    assert readiness["sequence"][0]["id"] == "final_handoff_index"
+    assert readiness["sequence"][0]["status"] == "blocked"
+    assert readiness["operator_actions"][0].startswith("refresh final handoff index")
+    assert "make ios-device-launch-rehearsal" in result.report["commands"]
+    assert readiness["safety"]["provider_secrets_in_report"] is False
+    assert "sk-openai-test" not in report_text
+    assert str(tmp_path) not in report_text
+
+
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:
     repo_root = tmp_path / "repo"
     config_dir = repo_root / "apps/mobile/ios/Config"
@@ -471,6 +523,53 @@ def _write_three_d_evaluation(repo_root: Path) -> None:
     evaluation = repo_root / "services/backend/.local/3d-evaluation-local.json"
     evaluation.parent.mkdir(parents=True, exist_ok=True)
     evaluation.write_text(json.dumps(report), encoding="utf-8")
+
+
+def _write_ios_device_launch_rehearsal(repo_root: Path) -> None:
+    report = {
+        "kind": "ios_device_launch_rehearsal_report",
+        "status": "blocked",
+        "mode": "local",
+        "summary": {
+            "ready": 3,
+            "missing": 0,
+            "blocked": 1,
+            "partial": 0,
+            "manual": 0,
+            "live": 0,
+        },
+        "sequence": [
+            {
+                "id": "final_handoff_index",
+                "label": "Final handoff index",
+                "status": "blocked",
+                "command": "make final-handoff-index",
+            }
+        ],
+        "operator_actions": [
+            "refresh final handoff index sk-openai-test /Users/zhexu/private"
+        ],
+        "commands": ["make ios-device-launch-rehearsal"],
+        "safety": {
+            "report_builder_commands_run": False,
+            "make_wrapper_runs_commands": True,
+            "writes_ignored_reports": True,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "raw_media_in_report": False,
+            "payment_links_in_report": False,
+            "local_paths_in_report": False,
+        },
+    }
+    rehearsal = repo_root / "services/backend/.local/ios-device-launch-rehearsal.json"
+    rehearsal.parent.mkdir(parents=True, exist_ok=True)
+    rehearsal.write_text(json.dumps(report), encoding="utf-8")
 
 
 def _write_final_resources(repo_root: Path) -> None:

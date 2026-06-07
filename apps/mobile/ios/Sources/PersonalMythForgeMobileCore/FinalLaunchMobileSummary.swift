@@ -38,6 +38,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var deployRunbookRows: [String]
     public var deployRunbookCommandRows: [String]
     public var deployRunbookSafetyRows: [String]
+    public var launchRehearsalRows: [String]
     public var handoffRows: [String]
     public var commandRows: [String]
     public var notes: [String]
@@ -60,6 +61,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         deployRunbookRows: [String] = [],
         deployRunbookCommandRows: [String] = [],
         deployRunbookSafetyRows: [String] = [],
+        launchRehearsalRows: [String] = [],
         handoffRows: [String] = [],
         commandRows: [String],
         notes: [String]
@@ -81,6 +83,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.deployRunbookRows = deployRunbookRows
         self.deployRunbookCommandRows = deployRunbookCommandRows
         self.deployRunbookSafetyRows = deployRunbookSafetyRows
+        self.launchRehearsalRows = launchRehearsalRows
         self.handoffRows = handoffRows
         self.commandRows = commandRows
         self.notes = notes
@@ -148,6 +151,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             deployRunbookRows: deployRunbookRows(from: report.iosDeployRunbook),
             deployRunbookCommandRows: deployRunbookCommandRows(from: report.iosDeployRunbook),
             deployRunbookSafetyRows: deployRunbookSafetyRows(from: report.iosDeployRunbook),
+            launchRehearsalRows: launchRehearsalRows(
+                from: report.iosDeviceLaunchRehearsalReadiness
+            ),
             handoffRows: handoffRows(from: report.finalOperatorHandoff),
             commandRows: report.commands.prefix(4).map(sanitize),
             notes: baseNotes()
@@ -509,6 +515,49 @@ public enum FinalLaunchMobileSummaryBuilder {
             "Safety: commands_run=\(flag(safety.commandsRun)) provider_calls=\(flag(safety.providerCalls)) global_mutation=\(flag(safety.globalMutation))",
             "Report: secrets=\(flag(safety.providerSecretsInReport)) raw_media=\(flag(safety.rawMediaInReport)) payment_links=\(flag(safety.paymentLinksInReport)) local_paths=\(flag(safety.localPathsInReport))",
         ].map(sanitize)
+    }
+
+    private static func launchRehearsalRows(
+        from readiness: IOSDeviceLaunchRehearsalReadinessReport?
+    ) -> [String] {
+        guard let readiness else {
+            return ["iOS launch rehearsal readiness has not loaded."]
+        }
+
+        var rows = [
+            "iOS launch rehearsal \(sanitize(readiness.status)): ready \(readiness.summary.ready), blocked \(readiness.summary.blocked), partial \(readiness.summary.partial)."
+        ]
+        switch readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            rows.append("safe evidence refreshed at \(readiness.sourceFile.path).")
+        case "missing":
+            rows = ["Run iOS device launch rehearsal to refresh final evidence."]
+        case "blocked", "partial":
+            let attention = readiness.sequence.filter { row in
+                status(from: row.status) != .ready
+            }
+            rows.append(contentsOf: attention.prefix(3).map(launchRehearsalSequenceRow))
+            if rows.count == 1 {
+                rows.append(contentsOf: readiness.operatorActions.prefix(3).map(sanitize))
+            } else if let action = readiness.operatorActions.first {
+                rows.append(sanitize(action))
+            }
+        default:
+            if let action = readiness.operatorActions.first {
+                rows.append(sanitize(action))
+            }
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func launchRehearsalSequenceRow(
+        _ row: IOSDeviceLaunchRehearsalSequenceRow
+    ) -> String {
+        var parts = ["\(row.id): \(row.status)", row.command]
+        if let classification = row.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        return sanitize(parts.joined(separator: " | "))
     }
 
     private static func flag(_ value: Bool) -> String {

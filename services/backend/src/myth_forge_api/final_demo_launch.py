@@ -16,6 +16,9 @@ from myth_forge_api.final_resources_preflight import (
 )
 from myth_forge_api.final_operator_handoff import build_final_operator_handoff_report
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
+from myth_forge_api.ios_device_launch_rehearsal_readiness import (
+    build_ios_device_launch_rehearsal_readiness_report,
+)
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
@@ -59,6 +62,11 @@ def build_final_demo_launch_report(
     npc_agent_evaluation_readiness = build_npc_agent_evaluation_readiness_report(
         repo_root=selected_repo_root,
     ).report
+    ios_device_launch_rehearsal_readiness = (
+        build_ios_device_launch_rehearsal_readiness_report(
+            repo_root=selected_repo_root,
+        ).report
+    )
     ios_deploy_runbook = build_ios_deploy_runbook_report(
         mode=mode,
         repo_root=selected_repo_root,
@@ -91,6 +99,9 @@ def build_final_demo_launch_report(
         "final_acceptance_readiness": final_acceptance_readiness,
         "three_d_evaluation_readiness": three_d_evaluation_readiness,
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,
+        "ios_device_launch_rehearsal_readiness": (
+            ios_device_launch_rehearsal_readiness
+        ),
         "ios_deploy_runbook": ios_deploy_runbook,
         "final_operator_handoff": final_operator_handoff,
         "resource_report": resource_report,
@@ -311,6 +322,7 @@ def _commands(mode: LaunchMode) -> list[str]:
             "make final-resources-preflight",
             "make final-apply-resources",
             "make ios-deploy-runbook",
+            "make ios-device-launch-rehearsal",
             "make backend-device-demo",
             "make mobile-deploy-preflight",
             (
@@ -324,6 +336,7 @@ def _commands(mode: LaunchMode) -> list[str]:
         "make final-resources-preflight",
         "make final-apply-resources",
         "make ios-deploy-runbook",
+        "make ios-device-launch-rehearsal",
         "make backend-device-demo",
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "

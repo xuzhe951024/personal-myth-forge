@@ -204,8 +204,13 @@ curl http://127.0.0.1:8080/v1/final-demo-launch?mode=local
 
 The mobile device preflight panel loads this read-only report and shows a
 `Final Launch` row alongside backend, provider, local demo, and saved NPC
-history checks. The endpoint does not write config files, start servers, call
-live providers, or expose secret values.
+history checks. P0.113 also embeds
+`ios_device_launch_rehearsal_readiness` from the saved
+`services/backend/.local/ios-device-launch-rehearsal.json` report, and the
+iPhone Final Launch panel renders it under `Launch Rehearsal` so the operator
+can see whether the safe Mac-side evidence refresh is missing, blocked, partial,
+or ready. The endpoint does not write config files, start servers, run the
+rehearsal command, call live providers, or expose secret values.
 
 Upload a local object capture, then create a myth session from that capture:
 

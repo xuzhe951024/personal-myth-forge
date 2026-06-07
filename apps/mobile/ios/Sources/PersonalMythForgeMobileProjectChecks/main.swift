@@ -1205,6 +1205,7 @@ do {
     try requireContains(finalLaunchStatusView, "iOS Deploy Runbook", "final launch iOS deploy runbook section")
     try requireContains(finalLaunchStatusView, "Deploy Commands", "final launch iOS deploy command section")
     try requireContains(finalLaunchStatusView, "Deploy Safety", "final launch iOS deploy safety section")
+    try requireContains(finalLaunchStatusView, "Launch Rehearsal", "final launch rehearsal section")
     try requireContains(finalLaunchStatusView, "Next", "final launch operator handoff section")
     try requireContains(
         finalLaunchStatusView,
@@ -1295,6 +1296,16 @@ do {
         pmfModels,
         "iosDeployRunbook",
         "final demo launch iOS deploy runbook field"
+    )
+    try requireContains(
+        pmfModels,
+        "IOSDeviceLaunchRehearsalReadinessReport",
+        "iOS device launch rehearsal readiness model"
+    )
+    try requireContains(
+        pmfModels,
+        "iosDeviceLaunchRehearsalReadiness",
+        "final demo launch iOS device launch rehearsal field"
     )
     try requireContains(
         pmfModels,
@@ -1532,6 +1543,11 @@ do {
     )
     try requireContains(
         finalLaunchMobileSummary,
+        "launchRehearsalRows",
+        "final launch iOS device launch rehearsal rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
         "deployRunbookRows(from:",
         "final launch iOS deploy runbook row builder"
     )
@@ -1747,6 +1763,26 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
         "iOS deploy runbook redaction test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload",
+        "iOS launch rehearsal readiness decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal",
+        "iOS launch rehearsal blocked summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal",
+        "iOS launch rehearsal ready summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal",
+        "iOS launch rehearsal redaction test"
     )
     try requireContains(
         contractTests,

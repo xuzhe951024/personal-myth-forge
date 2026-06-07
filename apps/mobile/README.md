@@ -188,7 +188,11 @@ GET /v1/final-demo-launch?mode=local
 
 `ForgeRootView` loads that report and passes it into `DevicePreflightSummary`.
 The device preflight panel now includes a `Final Launch` row so the operator can
-see the final launch lane state directly on the phone.
+see the final launch lane state directly on the phone. P0.113 decodes the saved
+`ios_device_launch_rehearsal_readiness` block from that payload and renders a
+`Launch Rehearsal` group in the Final Launch panel. The group is read-only: the
+app never runs Mac commands, starts servers, calls providers, applies resources,
+or touches Xcode/signing state.
 
 ## P0.8 Xcode App Shell
 
