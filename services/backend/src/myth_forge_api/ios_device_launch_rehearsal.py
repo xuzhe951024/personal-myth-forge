@@ -111,7 +111,7 @@ def build_ios_device_launch_rehearsal_report(
 
 def _final_rehearsal_local(local_sources: list[dict[str, Any]]) -> dict[str, Any]:
     status = _combined_status([str(source["status"]) for source in local_sources])
-    return {
+    step = {
         "id": "final_rehearsal_local",
         "label": "Local final rehearsal",
         "status": status,
@@ -125,6 +125,31 @@ def _final_rehearsal_local(local_sources: list[dict[str, Any]]) -> dict[str, Any
             for source in local_sources
         ],
     }
+    actions = _local_rehearsal_operator_actions(local_sources)
+    if actions:
+        step["operator_actions"] = actions
+    return step
+
+
+def _local_rehearsal_operator_actions(
+    local_sources: list[dict[str, Any]],
+) -> list[str]:
+    actions: list[str] = []
+    for source in local_sources:
+        status = str(source["status"])
+        if status == "missing":
+            actions.append(f"refresh {source['id']}: {source['command']}")
+            continue
+        if status != "blocked":
+            continue
+        nested_actions = source.get("operator_actions")
+        if isinstance(nested_actions, list) and nested_actions:
+            actions.extend(f"{source['id']}: {action}" for action in nested_actions)
+        else:
+            actions.append(f"review {source['id']}: {source['command']}")
+        if len(actions) >= 6:
+            break
+    return _dedupe(actions)[:6]
 
 
 def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]:
@@ -299,6 +324,7 @@ def _compact_source(source: dict[str, Any]) -> dict[str, Any]:
             "freshness_summary",
             "freshness_status",
             "freshness_classification",
+            "operator_actions",
         ]
         if key in source
     }
