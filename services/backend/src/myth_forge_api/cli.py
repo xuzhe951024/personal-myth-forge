@@ -50,6 +50,9 @@ from myth_forge_api.providers.three_d import (
 )
 from myth_forge_api.resource_handoff import build_resource_handoff_report
 from myth_forge_api.resource_template_acceptance import run_resource_template_acceptance
+from myth_forge_api.visual_regression_readiness import (
+    build_visual_regression_readiness_report,
+)
 
 CORE_PROVIDER_KINDS = ["three_d", "npc", "capture_storage"]
 BACKEND_ONLY_ENV = [
@@ -179,6 +182,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
+        if args.command == "visual-regression-readiness":
+            return _visual_regression_readiness(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
     except (MeshyProviderError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -295,6 +303,12 @@ def _build_parser() -> argparse.ArgumentParser:
     visual_regression_parser = subcommands.add_parser("visual-regression")
     visual_regression_parser.add_argument("--repo-root", default=None)
     visual_regression_parser.add_argument("--output", default=None)
+
+    visual_regression_readiness_parser = subcommands.add_parser(
+        "visual-regression-readiness"
+    )
+    visual_regression_readiness_parser.add_argument("--repo-root", default=None)
+    visual_regression_readiness_parser.add_argument("--output", default=None)
 
     return parser
 
@@ -548,6 +562,18 @@ def _visual_regression(
     from myth_forge_api.visual_regression import check_visual_artifacts
 
     result = check_visual_artifacts(Path(repo_root) if repo_root else Path.cwd())
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _visual_regression_readiness(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = build_visual_regression_readiness_report(
+        repo_root=Path(repo_root) if repo_root else Path.cwd(),
+    )
     _write_json_payload(result.report, output_path)
     return result.exit_code
 
