@@ -1461,6 +1461,22 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "final launch rehearsal sync",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "final-demo-launch",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                "--mode local",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
+                ".local/final-demo-launch-local.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
                 "services/backend/.local/ios-device-launch-rehearsal.json",
             ),
             SourceRequirement(
