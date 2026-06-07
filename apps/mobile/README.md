@@ -2269,3 +2269,15 @@ resource writer is run.
 The mobile app still only receives sanitized readiness metadata. Provider keys,
 resource files, writer execution, live provider calls, Xcode, and signing state
 remain backend/operator responsibilities.
+
+## P0.127 iOS Deploy Apply Preview Gate
+
+The backend iOS deploy runbook now places `make final-resource-apply-preview`
+before `make final-apply-resources`. The iPhone can keep rendering the existing
+Final Launch and Deploy Runbook rows while receiving a safer command sequence:
+preview writes first, then apply ignored backend/iOS config files only after the
+preview is ready.
+
+The app still does not run the command sequence or receive provider secrets.
+Xcode, signing, Apple SDK license state, and device installation remain
+operator-run gates.

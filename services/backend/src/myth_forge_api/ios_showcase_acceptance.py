@@ -1795,6 +1795,28 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="ios_deploy_apply_preview_gate",
+        label="iOS deploy apply preview gate",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
+                "build_final_resource_apply_preview_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
+                "preview_final_resource_apply",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_ios_deploy_runbook.py",
+                "final_resource_apply_preview",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_ios_device_launch_certificate.py",
+                "make final-resource-apply-preview",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="ios_device_launch_rehearsal",
         label="iOS device launch rehearsal",
         requirements=(
