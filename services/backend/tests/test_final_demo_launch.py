@@ -447,6 +447,13 @@ def test_final_demo_launch_embeds_blocked_ios_device_launch_rehearsal_readiness(
     assert readiness["freshness"]["classification"] == "git_unavailable"
     assert readiness["sequence"][0]["id"] == "final_handoff_index"
     assert readiness["sequence"][0]["status"] == "blocked"
+    assert readiness["sequence"][0]["freshness_summary"] == {
+        "fresh": 4,
+        "stale": 1,
+        "unknown": 0,
+    }
+    assert readiness["sequence"][0]["freshness_status"] == "stale"
+    assert readiness["sequence"][0]["freshness_classification"] == "stale_report"
     assert readiness["operator_actions"][0].startswith("refresh final handoff index")
     assert "make ios-device-launch-rehearsal" in result.report["commands"]
     assert readiness["safety"]["provider_secrets_in_report"] is False
@@ -554,6 +561,9 @@ def _write_ios_device_launch_rehearsal(repo_root: Path) -> None:
                 "label": "Final handoff index",
                 "status": "blocked",
                 "command": "make final-handoff-index",
+                "freshness_summary": {"fresh": 4, "stale": 1, "unknown": 0},
+                "freshness_status": "stale",
+                "freshness_classification": "stale_report",
             }
         ],
         "operator_actions": [

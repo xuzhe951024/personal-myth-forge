@@ -92,6 +92,57 @@ def test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_m
     assert str(tmp_path) not in report_text
 
 
+def test_ios_device_launch_rehearsal_preserves_final_handoff_source_freshness(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True)
+    _write_local_rehearsal_reports(local_dir)
+    _write_json(
+        local_dir / "final-configured-preflight.json",
+        {"kind": "final_configured_preflight_report", "status": "ready"},
+    )
+    _write_json(
+        local_dir / "final-handoff-index.json",
+        {
+            "kind": "final_handoff_index_report",
+            "status": "blocked",
+            "summary": {"ready": 1, "blocked": 1, "live": 1},
+            "freshness_summary": {"fresh": 4, "stale": 1, "unknown": 0},
+        },
+    )
+    _write_json(
+        local_dir / "ios-device-launch-certificate.json",
+        {
+            "kind": "ios_device_launch_certificate_report",
+            "status": "ready",
+            "mode": "configured",
+            "summary": {"ready": 4, "manual": 2, "live": 1, "partial": 0},
+            "safety": {
+                "provider_calls": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+            },
+        },
+    )
+
+    result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
+    sequence = {step["id"]: step for step in result.report["sequence"]}
+    final_handoff_step = sequence["final_handoff_index"]
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert final_handoff_step["status"] == "blocked"
+    assert final_handoff_step["freshness_summary"] == {
+        "fresh": 4,
+        "stale": 1,
+        "unknown": 0,
+    }
+    assert final_handoff_step["freshness_status"] == "stale"
+    assert final_handoff_step["freshness_classification"] == "stale_report"
+
+
 def test_ios_device_launch_rehearsal_cli_writes_report_and_makefile_target(
     tmp_path: Path,
 ) -> None:
@@ -181,6 +232,29 @@ def test_ios_device_launch_rehearsal_readiness_blocks_stale_saved_report_against
         "rerun make ios-device-launch-rehearsal to regenerate "
         "services/backend/.local/ios-device-launch-rehearsal.json for the current git revision"
     )
+
+
+def test_ios_device_launch_rehearsal_readiness_preserves_final_handoff_source_freshness(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"][0]["freshness_summary"] = {
+        "fresh": 4,
+        "stale": 1,
+        "unknown": 0,
+    }
+    payload["sequence"][0]["freshness_status"] = "stale"
+    payload["sequence"][0]["freshness_classification"] = "stale_report"
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    row = result.report["sequence"][0]
+
+    assert row["freshness_summary"] == {"fresh": 4, "stale": 1, "unknown": 0}
+    assert row["freshness_status"] == "stale"
+    assert row["freshness_classification"] == "stale_report"
 
 
 def _write_local_rehearsal_reports(local_dir: Path) -> None:
