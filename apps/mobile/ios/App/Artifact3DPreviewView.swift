@@ -23,6 +23,10 @@ struct Artifact3DPreviewView: View {
     let latestTick: NPCAgentTick?
     private let preparer: ArtifactAssetPreparer
     @State private var preparedAsset: PreparedArtifactAsset?
+    @State private var sceneLoadProof = ArtifactSceneLoadProofBuilder.build(
+        preparedAsset: nil,
+        sceneLoadError: nil
+    )
 
     init(
         session: MythSession?,
@@ -58,6 +62,13 @@ struct Artifact3DPreviewView: View {
                 Text(preparedAsset?.statusDetail ?? preview.statusDetail)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Text(sceneLoadProof.title)
+                    .font(.caption)
+                    .foregroundStyle(sceneLoadProof.canOpenScene ? Color.green : Color.secondary)
+                Text(sceneLoadProof.detail)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
                 Text("\(preview.providerLabel) \(preview.formatLabel)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -91,6 +102,10 @@ struct Artifact3DPreviewView: View {
             guard let session else {
                 await MainActor.run {
                     preparedAsset = nil
+                    sceneLoadProof = ArtifactSceneLoadProofBuilder.build(
+                        preparedAsset: nil,
+                        sceneLoadError: nil
+                    )
                 }
                 return
             }
@@ -101,8 +116,16 @@ struct Artifact3DPreviewView: View {
     private func prepareAsset(for session: MythSession) async {
         await MainActor.run {
             preparedAsset = nil
+            sceneLoadProof = ArtifactSceneLoadProofBuilder.build(
+                preparedAsset: nil,
+                sceneLoadError: nil
+            )
         }
         let asset = await preparer.prepare(session: session)
+        guard !Task.isCancelled else {
+            return
+        }
+        let sceneLoadResult = Self.verifySceneLoad(for: asset)
         guard !Task.isCancelled else {
             return
         }
@@ -110,7 +133,8 @@ struct Artifact3DPreviewView: View {
             guard !Task.isCancelled else {
                 return
             }
-            preparedAsset = asset
+            preparedAsset = sceneLoadResult.preparedAsset
+            sceneLoadProof = sceneLoadResult.proof
         }
     }
 
@@ -140,6 +164,40 @@ struct Artifact3DPreviewView: View {
         scene.rootNode.addChildNode(titleNode)
         addNPCRitualOverlay(to: scene, ritualScene: ritualScene)
         return scene
+    }
+
+    private static func verifySceneLoad(
+        for preparedAsset: PreparedArtifactAsset
+    ) -> (preparedAsset: PreparedArtifactAsset, proof: ArtifactSceneLoadProof) {
+        guard let sceneURL = preparedAsset.sceneURL else {
+            return (
+                preparedAsset,
+                ArtifactSceneLoadProofBuilder.build(
+                    preparedAsset: preparedAsset,
+                    sceneLoadError: nil
+                )
+            )
+        }
+
+        do {
+            _ = try SCNScene(url: sceneURL, options: nil)
+            return (
+                preparedAsset,
+                ArtifactSceneLoadProofBuilder.build(
+                    preparedAsset: preparedAsset,
+                    sceneLoadError: nil
+                )
+            )
+        } catch {
+            let failedAsset = preparedAsset.sceneLoadFailure(detail: "SceneKit could not parse the cached generated asset.")
+            return (
+                failedAsset,
+                ArtifactSceneLoadProofBuilder.build(
+                    preparedAsset: failedAsset,
+                    sceneLoadError: error.localizedDescription
+                )
+            )
+        }
     }
 
     private static func placeholderScene() -> SCNScene {
