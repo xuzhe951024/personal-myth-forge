@@ -791,6 +791,57 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="final_resource_apply_preview",
+        label="Final resource apply preview",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_resource_apply_preview.py",
+                "build_final_resource_apply_preview_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_resource_apply_preview.py",
+                "final_resource_apply_preview_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "final-resource-apply-preview",
+            ),
+            SourceRequirement("Makefile", "final-resource-apply-preview:"),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "final_resource_apply_preview",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalResourceApplyPreviewReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "finalResourceApplyPreview",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "applyPreviewRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "Apply preview",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Apply Preview",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsResourceApplyPreview",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="provider_readiness",
         label="Provider readiness",
         requirements=(
