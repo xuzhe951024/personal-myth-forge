@@ -8,6 +8,7 @@ from typing import Any, Literal
 from myth_forge_api.final_acceptance_readiness import LOCAL_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.ios_deploy_runbook import IOS_DEPLOY_RUNBOOK_COMMAND
 from myth_forge_api.npc_agent_evaluation_readiness import LOCAL_NPC_EVALUATION_COMMAND
+from myth_forge_api.three_d_evaluation_readiness import LOCAL_THREE_D_EVALUATION_COMMAND
 
 LaunchMode = Literal["local", "configured"]
 
@@ -23,6 +24,7 @@ STEP_ORDER = [
     "apply_final_resources",
     "backend_device_server",
     "local_final_acceptance",
+    "three_d_evaluation",
     "npc_agent_evaluation",
     "ios_deploy_runbook",
     "mobile_deploy_preflight",
@@ -36,6 +38,7 @@ def build_final_operator_handoff_report(
     mode: LaunchMode,
     final_resources_preflight: dict[str, Any],
     final_acceptance_readiness: dict[str, Any],
+    three_d_evaluation_readiness: dict[str, Any],
     npc_agent_evaluation_readiness: dict[str, Any],
     ios_deploy_runbook: dict[str, Any],
     launch_phases: list[dict[str, Any]],
@@ -61,6 +64,7 @@ def build_final_operator_handoff_report(
             fallback_command="make backend-device-demo",
         ),
         _local_acceptance_step(final_acceptance_readiness, phases),
+        _three_d_evaluation_step(three_d_evaluation_readiness),
         _npc_evaluation_step(npc_agent_evaluation_readiness),
         _ios_deploy_runbook_step(ios_deploy_runbook),
         _acceptance_or_phase_step(
@@ -92,6 +96,7 @@ def build_final_operator_handoff_report(
             mode=mode,
             final_resources_preflight=final_resources_preflight,
             final_acceptance_readiness=final_acceptance_readiness,
+            three_d_evaluation_readiness=three_d_evaluation_readiness,
             npc_agent_evaluation_readiness=npc_agent_evaluation_readiness,
             ios_deploy_runbook=ios_deploy_runbook,
             steps=steps,
@@ -214,6 +219,29 @@ def _npc_evaluation_step(readiness: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def _three_d_evaluation_step(readiness: dict[str, Any]) -> dict[str, Any]:
+    status = str(readiness.get("status", "missing"))
+    notes = _three_d_evaluation_notes(readiness)
+    if status == "ready":
+        mapped_status = "ready"
+    elif status == "missing":
+        mapped_status = "missing"
+    elif status in {"blocked", "failed"}:
+        mapped_status = "blocked"
+    else:
+        mapped_status = "blocked"
+        notes.append("unknown_three_d_evaluation_status")
+    return _step(
+        step_id="three_d_evaluation",
+        label="Run 3D evaluation",
+        status=mapped_status,
+        command=LOCAL_THREE_D_EVALUATION_COMMAND,
+        required_for="3D provider final demo readiness",
+        source="three_d_evaluation_readiness",
+        notes=notes,
+    )
+
+
 def _ios_deploy_runbook_step(runbook: dict[str, Any]) -> dict[str, Any]:
     status = str(runbook.get("status", "missing"))
     if status not in {"ready", "partial", "blocked", "missing"}:
@@ -316,6 +344,26 @@ def _npc_evaluation_notes(readiness: dict[str, Any]) -> list[str]:
     return notes
 
 
+def _three_d_evaluation_notes(readiness: dict[str, Any]) -> list[str]:
+    notes: list[str] = []
+    summary = readiness.get("summary", {})
+    if isinstance(summary, dict):
+        succeeded = summary.get("succeeded", 0)
+        failed = summary.get("failed", 0)
+        notes.append(f"3D evaluation has {succeeded} succeeded and {failed} failed cases.")
+    coverage = readiness.get("coverage", {})
+    if isinstance(coverage, dict):
+        scene_loadable = coverage.get("scene_loadable_cases", 0)
+        notes.append(f"3D evaluation has {scene_loadable} scene-loadable cases.")
+    blockers = readiness.get("blockers", [])
+    if isinstance(blockers, list) and blockers:
+        blocker = blockers[0]
+        if isinstance(blocker, dict):
+            notes.append(str(blocker.get("classification", "blocked")))
+            notes.append(str(blocker.get("detail", "")))
+    return notes
+
+
 def _ios_deploy_runbook_notes(runbook: dict[str, Any]) -> list[str]:
     notes: list[str] = []
     input_slots = runbook.get("input_slots", [])
@@ -344,6 +392,7 @@ def _next_actions(
     mode: LaunchMode,
     final_resources_preflight: dict[str, Any],
     final_acceptance_readiness: dict[str, Any],
+    three_d_evaluation_readiness: dict[str, Any],
     npc_agent_evaluation_readiness: dict[str, Any],
     ios_deploy_runbook: dict[str, Any],
     steps: list[dict[str, Any]],
@@ -356,6 +405,14 @@ def _next_actions(
         if action != "final acceptance is ready"
     ]
     actions.extend(readiness_actions)
+    three_d_step = next((step for step in steps if step["id"] == "three_d_evaluation"), None)
+    if three_d_step is not None and three_d_step["status"] in {"missing", "blocked"}:
+        three_d_actions = [
+            action
+            for action in _string_list(three_d_evaluation_readiness.get("operator_actions"))
+            if action != "3D evaluation is ready"
+        ]
+        actions.extend(three_d_actions)
     npc_step = next((step for step in steps if step["id"] == "npc_agent_evaluation"), None)
     if npc_step is not None and npc_step["status"] in {"missing", "blocked"}:
         npc_actions = [
@@ -380,6 +437,8 @@ def _next_actions(
             if step["id"] in {"final_resources_preflight", "local_final_acceptance"}:
                 continue
             if step["source"] == "final_acceptance_readiness":
+                continue
+            if step["source"] == "three_d_evaluation_readiness":
                 continue
             if step["source"] == "npc_agent_evaluation_readiness":
                 continue

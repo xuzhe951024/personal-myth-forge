@@ -828,6 +828,73 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_3d_evaluation_readiness",
+        label="Mobile 3D evaluation readiness",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/three_d_evaluation_readiness.py",
+                "build_three_d_evaluation_readiness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/three_d_evaluation_readiness.py",
+                "LOCAL_THREE_D_EVALUATION_COMMAND",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "three_d_evaluation_readiness",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_operator_handoff.py",
+                "three_d_evaluation",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_operator_handoff.py",
+                "LOCAL_THREE_D_EVALUATION_COMMAND",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_three_d_evaluation_readiness.py",
+                "test_three_d_evaluation_readiness_ready_report",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_final_demo_launch_embeds_three_d_evaluation_readiness",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_final_demo_launch_operator_handoff_includes_three_d_evaluation_step",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "ThreeDEvaluationReadinessReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "threeDEvaluationReadiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "threeDEvaluationRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "threeDEvaluationRows(from:",
+            ),
+            SourceRequirement("apps/mobile/ios/App/FinalLaunchStatusView.swift", "3D Evaluation"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesThreeDEvaluationReadinessFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsReadyThreeDEvaluation",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsBlockedThreeDEvaluation",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="ios_deploy_runbook",
         label="iOS deploy runbook",
         requirements=(

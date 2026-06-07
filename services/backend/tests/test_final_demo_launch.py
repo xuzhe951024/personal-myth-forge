@@ -57,6 +57,7 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
         ),
     )
     _write_final_resources(repo_root)
+    _write_three_d_evaluation(repo_root)
     _write_npc_evaluation(repo_root)
     _write_final_acceptance(
         repo_root,
@@ -299,6 +300,48 @@ def test_final_demo_launch_embeds_npc_agent_evaluation_readiness(
     assert readiness["safety"]["commands_run"] is False
 
 
+def test_final_demo_launch_embeds_three_d_evaluation_readiness(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_three_d_evaluation(repo_root)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    readiness = result.report["three_d_evaluation_readiness"]
+
+    assert readiness["kind"] == "three_d_evaluation_readiness_report"
+    assert readiness["status"] == "ready"
+    assert readiness["summary"]["succeeded"] == 20
+    assert readiness["coverage"]["input_modes"]["text_prompt"] == 20
+    assert readiness["coverage"]["scene_loadable_cases"] == 20
+    assert readiness["safety"]["commands_run"] is False
+
+
+def test_final_demo_launch_operator_handoff_includes_three_d_evaluation_step(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_three_d_evaluation(repo_root)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    handoff_steps = {
+        step["id"]: step
+        for step in result.report["final_operator_handoff"]["steps"]
+    }
+
+    assert handoff_steps["three_d_evaluation"]["status"] == "ready"
+    assert "evaluate-3d" in handoff_steps["three_d_evaluation"]["command"]
+
+
 def test_final_demo_launch_operator_handoff_includes_npc_evaluation_step(
     tmp_path: Path,
 ) -> None:
@@ -390,6 +433,34 @@ def _write_npc_evaluation(repo_root: Path) -> None:
         "cases": [],
     }
     evaluation = repo_root / "services/backend/.local/npc-evaluation-local.json"
+    evaluation.parent.mkdir(parents=True, exist_ok=True)
+    evaluation.write_text(json.dumps(report), encoding="utf-8")
+
+
+def _write_three_d_evaluation(repo_root: Path) -> None:
+    report = {
+        "kind": "three_d_evaluation_report",
+        "suite": "default-v0",
+        "provider": "local",
+        "total_cases": 20,
+        "succeeded": 20,
+        "failed": 0,
+        "coverage": {
+            "input_modes": {
+                "text_prompt": 20,
+                "single_image": 0,
+                "multi_image": 0,
+                "unknown": 0,
+            },
+            "variant_roles": {
+                "game_asset": 20,
+                "ios_scene_asset": 20,
+            },
+            "scene_loadable_cases": 20,
+        },
+        "cases": [],
+    }
+    evaluation = repo_root / "services/backend/.local/3d-evaluation-local.json"
     evaluation.parent.mkdir(parents=True, exist_ok=True)
     evaluation.write_text(json.dumps(report), encoding="utf-8")
 

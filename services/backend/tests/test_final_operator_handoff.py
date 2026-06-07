@@ -9,6 +9,7 @@ STEP_ORDER = [
     "apply_final_resources",
     "backend_device_server",
     "local_final_acceptance",
+    "three_d_evaluation",
     "npc_agent_evaluation",
     "ios_deploy_runbook",
     "mobile_deploy_preflight",
@@ -24,6 +25,7 @@ def test_operator_handoff_blocks_missing_resources_and_acceptance_without_runnin
         mode="local",
         final_resources_preflight=_missing_resources_report(),
         final_acceptance_readiness=_missing_acceptance_report(),
+        three_d_evaluation_readiness=_missing_three_d_evaluation_readiness(),
         npc_agent_evaluation_readiness=_missing_npc_evaluation_readiness(),
         ios_deploy_runbook=_missing_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(),
@@ -38,7 +40,7 @@ def test_operator_handoff_blocks_missing_resources_and_acceptance_without_runnin
     assert steps["final_resources_preflight"]["status"] == "missing"
     assert steps["local_final_acceptance"]["status"] == "missing"
     assert steps["configured_final_acceptance"]["status"] == "optional"
-    assert report["summary"]["missing"] == 5
+    assert report["summary"]["missing"] == 6
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["optional"] == 1
     assert report["next_actions"][:2] == [
@@ -67,6 +69,7 @@ def test_operator_handoff_promotes_saved_acceptance_blockers_and_redacts_text(
         mode="local",
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_blocked_acceptance_report(tmp_path),
+        three_d_evaluation_readiness=_ready_three_d_evaluation_readiness(),
         npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
         ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(
@@ -101,6 +104,7 @@ def test_operator_handoff_marks_configured_acceptance_as_live_consent_gate(
         mode="configured",
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
+        three_d_evaluation_readiness=_ready_three_d_evaluation_readiness(),
         npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
         ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_configured_launch_phases(),
@@ -124,11 +128,40 @@ def test_operator_handoff_marks_configured_acceptance_as_live_consent_gate(
     assert report["safety"]["commands_run"] is False
 
 
+def test_operator_handoff_includes_ready_three_d_evaluation_step(tmp_path: Path) -> None:
+    report = build_final_operator_handoff_report(
+        mode="local",
+        final_resources_preflight=_ready_resources_report(),
+        final_acceptance_readiness=_ready_acceptance_report(),
+        three_d_evaluation_readiness=_ready_three_d_evaluation_readiness(),
+        npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
+        ios_deploy_runbook=_ready_ios_deploy_runbook(),
+        launch_phases=_local_launch_phases(
+            apply_status="ready",
+            mobile_preflight_status="ready",
+        ),
+        repo_root=tmp_path,
+    )
+    steps = {step["id"]: step for step in report["steps"]}
+    step_ids = [step["id"] for step in report["steps"]]
+
+    assert steps["three_d_evaluation"]["status"] == "ready"
+    assert "evaluate-3d" in steps["three_d_evaluation"]["command"]
+    assert step_ids.index("local_final_acceptance") < step_ids.index(
+        "three_d_evaluation"
+    )
+    assert step_ids.index("three_d_evaluation") < step_ids.index(
+        "npc_agent_evaluation"
+    )
+    assert all("evaluate-3d" not in action for action in report["next_actions"])
+
+
 def test_operator_handoff_includes_ready_npc_evaluation_step(tmp_path: Path) -> None:
     report = build_final_operator_handoff_report(
         mode="local",
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
+        three_d_evaluation_readiness=_ready_three_d_evaluation_readiness(),
         npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
         ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(
@@ -158,6 +191,7 @@ def test_operator_handoff_surfaces_missing_npc_evaluation_action(
         mode="local",
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
+        three_d_evaluation_readiness=_ready_three_d_evaluation_readiness(),
         npc_agent_evaluation_readiness=_missing_npc_evaluation_readiness(),
         ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(
@@ -181,6 +215,7 @@ def test_operator_handoff_redacts_blocked_npc_evaluation_detail(
         mode="local",
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
+        three_d_evaluation_readiness=_ready_three_d_evaluation_readiness(),
         npc_agent_evaluation_readiness=readiness,
         ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(
@@ -207,6 +242,7 @@ def test_operator_handoff_includes_ios_deploy_runbook_before_deploy_preflight(
         mode="local",
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
+        three_d_evaluation_readiness=_ready_three_d_evaluation_readiness(),
         npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
         ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(
@@ -364,6 +400,64 @@ def _ready_acceptance_report() -> dict[str, object]:
             "raw_media_in_report": False,
             "payment_links_in_report": False,
             "local_paths_in_report": False,
+        },
+    }
+
+
+def _ready_three_d_evaluation_readiness() -> dict[str, object]:
+    return {
+        "kind": "three_d_evaluation_readiness_report",
+        "status": "ready",
+        "summary": {"total_cases": 20, "succeeded": 20, "failed": 0},
+        "coverage": {
+            "input_modes": {
+                "text_prompt": 20,
+                "single_image": 0,
+                "multi_image": 0,
+                "unknown": 0,
+            },
+            "variant_roles": {
+                "game_asset": 20,
+                "ios_scene_asset": 20,
+            },
+            "scene_loadable_cases": 20,
+        },
+        "blockers": [],
+        "operator_actions": ["3D evaluation is ready"],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "global_mutation": False,
+        },
+    }
+
+
+def _missing_three_d_evaluation_readiness() -> dict[str, object]:
+    return {
+        "kind": "three_d_evaluation_readiness_report",
+        "status": "missing",
+        "summary": {"total_cases": 0, "succeeded": 0, "failed": 0},
+        "coverage": {
+            "input_modes": {
+                "text_prompt": 0,
+                "single_image": 0,
+                "multi_image": 0,
+                "unknown": 0,
+            },
+            "variant_roles": {},
+            "scene_loadable_cases": 0,
+        },
+        "blockers": [],
+        "operator_actions": [
+            (
+                "run local 3D evaluation with evaluate-3d and write "
+                "services/backend/.local/3d-evaluation-local.json"
+            )
+        ],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "global_mutation": False,
         },
     }
 

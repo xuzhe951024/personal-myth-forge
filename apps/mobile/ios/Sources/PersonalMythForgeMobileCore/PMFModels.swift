@@ -869,6 +869,135 @@ public struct NPCAgentEvaluationReadinessSummary: Codable, Equatable, Sendable {
     }
 }
 
+public struct ThreeDEvaluationReadinessSummary: Codable, Equatable, Sendable {
+    public var totalCases: Int
+    public var succeeded: Int
+    public var failed: Int
+
+    public init(totalCases: Int, succeeded: Int, failed: Int) {
+        self.totalCases = totalCases
+        self.succeeded = succeeded
+        self.failed = failed
+    }
+}
+
+public struct ThreeDEvaluationReadinessInputModes: Codable, Equatable, Sendable {
+    public var textPrompt: Int
+    public var singleImage: Int
+    public var multiImage: Int
+    public var unknown: Int
+
+    public init(textPrompt: Int, singleImage: Int, multiImage: Int, unknown: Int) {
+        self.textPrompt = textPrompt
+        self.singleImage = singleImage
+        self.multiImage = multiImage
+        self.unknown = unknown
+    }
+}
+
+public struct ThreeDEvaluationReadinessCoverage: Codable, Equatable, Sendable {
+    public var inputModes: ThreeDEvaluationReadinessInputModes
+    public var variantRoles: [String: Int]
+    public var sceneLoadableCases: Int
+
+    public init(
+        inputModes: ThreeDEvaluationReadinessInputModes,
+        variantRoles: [String: Int],
+        sceneLoadableCases: Int
+    ) {
+        self.inputModes = inputModes
+        self.variantRoles = variantRoles
+        self.sceneLoadableCases = sceneLoadableCases
+    }
+}
+
+public struct ThreeDEvaluationReadinessBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String
+    public var command: String
+    public var detail: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String,
+        command: String,
+        detail: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+    }
+}
+
+public struct ThreeDEvaluationReadinessSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var globalMutation: Bool
+    public var providerSecretsInReport: Bool
+    public var rawPrivateContextInReport: Bool
+    public var rawMediaInReport: Bool
+    public var localPathsInReport: Bool
+    public var paymentLinksInReport: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        globalMutation: Bool,
+        providerSecretsInReport: Bool,
+        rawPrivateContextInReport: Bool,
+        rawMediaInReport: Bool,
+        localPathsInReport: Bool,
+        paymentLinksInReport: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.globalMutation = globalMutation
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawPrivateContextInReport = rawPrivateContextInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.localPathsInReport = localPathsInReport
+        self.paymentLinksInReport = paymentLinksInReport
+    }
+}
+
+public struct ThreeDEvaluationReadinessReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var sourceFile: FinalAcceptanceSourceFile
+    public var summary: ThreeDEvaluationReadinessSummary
+    public var coverage: ThreeDEvaluationReadinessCoverage
+    public var blockers: [ThreeDEvaluationReadinessBlocker]
+    public var operatorActions: [String]
+    public var safety: ThreeDEvaluationReadinessSafety
+
+    public init(
+        kind: String,
+        status: String,
+        sourceFile: FinalAcceptanceSourceFile,
+        summary: ThreeDEvaluationReadinessSummary,
+        coverage: ThreeDEvaluationReadinessCoverage,
+        blockers: [ThreeDEvaluationReadinessBlocker],
+        operatorActions: [String],
+        safety: ThreeDEvaluationReadinessSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.sourceFile = sourceFile
+        self.summary = summary
+        self.coverage = coverage
+        self.blockers = blockers
+        self.operatorActions = operatorActions
+        self.safety = safety
+    }
+}
+
 public struct NPCAgentEvaluationReadinessCoverage: Codable, Equatable, Sendable {
     public var expectedNpcSets: Int
     public var traceSets: Int
@@ -1329,6 +1458,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var phaseSummary: FinalDemoLaunchSummary?
     public var finalResourcesPreflight: FinalResourcesPreflightReport?
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
+    public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
     public var iosDeployRunbook: IOSDeployRunbookReport?
@@ -1347,6 +1477,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         phaseSummary: FinalDemoLaunchSummary? = nil,
         finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
+        threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
         iosDeployRunbook: IOSDeployRunbookReport? = nil,
@@ -1364,6 +1495,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.phaseSummary = phaseSummary
         self.finalResourcesPreflight = finalResourcesPreflight
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
+        self.threeDEvaluationReadiness = threeDEvaluationReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
         self.finalOperatorHandoff = finalOperatorHandoff
         self.iosDeployRunbook = iosDeployRunbook

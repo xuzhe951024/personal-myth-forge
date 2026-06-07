@@ -119,6 +119,7 @@ Bridge deliverable:
 - P0.101 iPhone Print Fulfillment approval receipt for third-party provider handoff
 - P0.102 iPhone 3D Generation Input review for scan/photo provider routing
 - P0.103 iPhone 3D Generation Result receipt for post-forge artifact proof
+- P0.104 iPhone Final Launch 3D provider evaluation readiness rows
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
