@@ -31,6 +31,6 @@ if command -v chmod >/dev/null 2>&1; then
   chmod 600 "$DESTINATION"
 fi
 
-printf '%s\n' "$DESTINATION_LABEL initialized from $TEMPLATE_LABEL."
+printf '%s\n' "$DESTINATION_LABEL initialized from $TEMPLATE_LABEL; final-resources.env initialized."
 printf '%s\n' "Fill the copy with final provider and iOS values; do not commit it."
 printf '%s\n' "Next: make final-resources-preflight"
