@@ -28,6 +28,9 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var launchReceiptRows: [String]
     public var modePolicyRows: [String]
     public var resourceChecklistRows: [String]
+    public var resourceHandoffRows: [String]
+    public var resourceHandoffBackendRows: [String]
+    public var resourceHandoffIOSRows: [String]
     public var resourceActions: [String]
     public var acceptanceRows: [String]
     public var npcEvaluationRows: [String]
@@ -46,6 +49,9 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         launchReceiptRows: [String] = [],
         modePolicyRows: [String] = [],
         resourceChecklistRows: [String] = [],
+        resourceHandoffRows: [String] = [],
+        resourceHandoffBackendRows: [String] = [],
+        resourceHandoffIOSRows: [String] = [],
         resourceActions: [String],
         acceptanceRows: [String] = [],
         npcEvaluationRows: [String] = [],
@@ -63,6 +69,9 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.launchReceiptRows = launchReceiptRows
         self.modePolicyRows = modePolicyRows
         self.resourceChecklistRows = resourceChecklistRows
+        self.resourceHandoffRows = resourceHandoffRows
+        self.resourceHandoffBackendRows = resourceHandoffBackendRows
+        self.resourceHandoffIOSRows = resourceHandoffIOSRows
         self.resourceActions = resourceActions
         self.acceptanceRows = acceptanceRows
         self.npcEvaluationRows = npcEvaluationRows
@@ -126,6 +135,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             launchReceiptRows: launchReceiptRows(from: report),
             modePolicyRows: modePolicyRows(from: report),
             resourceChecklistRows: resourceChecklistRows(from: report.finalResourcesPreflight),
+            resourceHandoffRows: resourceHandoffRows(from: report.resourceReport),
+            resourceHandoffBackendRows: resourceHandoffBackendRows(from: report.resourceReport),
+            resourceHandoffIOSRows: resourceHandoffIOSRows(from: report.resourceReport),
             resourceActions: resourceActions(from: report.finalResourcesPreflight),
             acceptanceRows: acceptanceRows(from: report.finalAcceptanceReadiness),
             npcEvaluationRows: npcEvaluationRows(from: report.npcAgentEvaluationReadiness),
@@ -279,6 +291,45 @@ public enum FinalLaunchMobileSummaryBuilder {
             return preflight.operatorActions.prefix(3).map(sanitize)
         }
         return ["Final resources preflight \(sanitize(preflight.status))."]
+    }
+
+    private static func resourceHandoffRows(from report: ResourceHandoffReport?) -> [String] {
+        guard let report else {
+            return ["Resource handoff has not loaded."]
+        }
+        var rows = [
+            "Resource handoff \(report.overallStatus): ready \(report.summary.ready), missing \(report.summary.missing), blocked \(report.summary.blocked), manual \(report.summary.manual).",
+            "Backend: \(report.backend.destination)",
+            "iOS: \(report.ios.destination)",
+        ]
+        if let action = report.operatorActions.first, !action.isEmpty {
+            rows.append(action)
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func resourceHandoffBackendRows(from report: ResourceHandoffReport?) -> [String] {
+        guard let report else {
+            return []
+        }
+        return resourceHandoffItemRows(report.backend.items)
+    }
+
+    private static func resourceHandoffIOSRows(from report: ResourceHandoffReport?) -> [String] {
+        guard let report else {
+            return []
+        }
+        return resourceHandoffItemRows(report.ios.items)
+    }
+
+    private static func resourceHandoffItemRows(_ items: [ResourceHandoffItem]) -> [String] {
+        let attention = items.filter { item in
+            item.status == "missing" || item.status == "blocked"
+        }
+        let selected = attention.isEmpty ? items : attention
+        return selected.prefix(4).map { item in
+            sanitize("\(item.id): \(item.status) | \(item.requiredFor)")
+        }
     }
 
     private static func acceptanceRows(from readiness: FinalAcceptanceReadinessReport?) -> [String] {

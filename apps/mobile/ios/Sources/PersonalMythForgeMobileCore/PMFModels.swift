@@ -1217,6 +1217,110 @@ public struct IOSDeployRunbookReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct ResourceHandoffSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var manual: Int
+    public var optional: Int
+
+    public init(ready: Int, missing: Int, blocked: Int, manual: Int, optional: Int) {
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.manual = manual
+        self.optional = optional
+    }
+}
+
+public struct ResourceHandoffItem: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var destination: String
+    public var requiredFor: String
+    public var status: String
+    public var configured: Bool
+    public var missing: Bool
+    public var notes: [String]
+
+    public init(
+        id: String,
+        label: String,
+        destination: String,
+        requiredFor: String,
+        status: String,
+        configured: Bool,
+        missing: Bool,
+        notes: [String] = []
+    ) {
+        self.id = id
+        self.label = label
+        self.destination = destination
+        self.requiredFor = requiredFor
+        self.status = status
+        self.configured = configured
+        self.missing = missing
+        self.notes = notes
+    }
+}
+
+public struct ResourceHandoffSection: Codable, Equatable, Sendable {
+    public var destination: String
+    public var items: [ResourceHandoffItem]
+
+    public init(destination: String, items: [ResourceHandoffItem]) {
+        self.destination = destination
+        self.items = items
+    }
+}
+
+public struct ResourceHandoffSafety: Codable, Equatable, Sendable {
+    public var providerSecretsInReport: Bool
+    public var localPathsInReport: Bool
+    public var paymentLinksInReport: Bool
+
+    public init(
+        providerSecretsInReport: Bool,
+        localPathsInReport: Bool,
+        paymentLinksInReport: Bool
+    ) {
+        self.providerSecretsInReport = providerSecretsInReport
+        self.localPathsInReport = localPathsInReport
+        self.paymentLinksInReport = paymentLinksInReport
+    }
+}
+
+public struct ResourceHandoffReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var overallStatus: String
+    public var summary: ResourceHandoffSummary
+    public var backend: ResourceHandoffSection
+    public var ios: ResourceHandoffSection
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var safety: ResourceHandoffSafety
+
+    public init(
+        kind: String,
+        overallStatus: String,
+        summary: ResourceHandoffSummary,
+        backend: ResourceHandoffSection,
+        ios: ResourceHandoffSection,
+        operatorActions: [String],
+        commands: [String],
+        safety: ResourceHandoffSafety
+    ) {
+        self.kind = kind
+        self.overallStatus = overallStatus
+        self.summary = summary
+        self.backend = backend
+        self.ios = ios
+        self.operatorActions = operatorActions
+        self.commands = commands
+        self.safety = safety
+    }
+}
+
 public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
@@ -1228,6 +1332,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
     public var iosDeployRunbook: IOSDeployRunbookReport?
+    public var resourceReport: ResourceHandoffReport?
     public var launchPhases: [FinalDemoLaunchPhase]
     public var operatorChecklist: [String]
     public var commands: [String]
@@ -1245,6 +1350,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
         iosDeployRunbook: IOSDeployRunbookReport? = nil,
+        resourceReport: ResourceHandoffReport? = nil,
         launchPhases: [FinalDemoLaunchPhase],
         operatorChecklist: [String],
         commands: [String],
@@ -1261,6 +1367,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
         self.finalOperatorHandoff = finalOperatorHandoff
         self.iosDeployRunbook = iosDeployRunbook
+        self.resourceReport = resourceReport
         self.launchPhases = launchPhases
         self.operatorChecklist = operatorChecklist
         self.commands = commands

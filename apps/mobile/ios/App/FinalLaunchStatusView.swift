@@ -41,6 +41,18 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "Resource Checklist", lines: summary.resourceChecklistRows)
             }
 
+            if !summary.resourceHandoffRows.isEmpty {
+                groupedLines(title: "Resource Handoff", lines: summary.resourceHandoffRows)
+            }
+
+            if !summary.resourceHandoffBackendRows.isEmpty {
+                groupedLines(title: "Backend Resources", lines: summary.resourceHandoffBackendRows)
+            }
+
+            if !summary.resourceHandoffIOSRows.isEmpty {
+                groupedLines(title: "iOS Resources", lines: summary.resourceHandoffIOSRows)
+            }
+
             if !summary.resourceActions.isEmpty {
                 groupedLines(title: "Resources", lines: summary.resourceActions)
             }

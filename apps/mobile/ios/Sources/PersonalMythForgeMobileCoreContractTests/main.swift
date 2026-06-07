@@ -81,6 +81,10 @@ do {
     try testFinalLaunchMobileSummaryShowsMissingResourceChecklist()
     try testFinalLaunchMobileSummaryShowsReadyResourceChecklist()
     try testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist()
+    try testDecodesResourceHandoffFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsMissingResourceHandoff()
+    try testFinalLaunchMobileSummaryShowsReadyResourceHandoff()
+    try testFinalLaunchMobileSummaryRedactsUnsafeResourceHandoff()
     try testDecodesFinalAcceptanceReadinessFromFinalLaunchPayload()
     try testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryWaitsForFinalAcceptanceReadiness()
@@ -1866,6 +1870,94 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist() throws
     try expectNotContains(text, "api_key")
 }
 
+private func testDecodesResourceHandoffFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            resourceHandoffStatus: "blocked",
+            resourceHandoffBackendStatus: "missing",
+            resourceHandoffIOSStatus: "blocked"
+        )
+    )
+
+    let handoff = try require(report.resourceReport, "missing resource handoff report")
+    try expectEqual(handoff.kind, "resource_handoff_report")
+    try expectEqual(handoff.overallStatus, "blocked")
+    try expectEqual(handoff.summary.missing, 4)
+    try expectEqual(handoff.backend.destination, "services/backend/.env")
+    try expectEqual(handoff.backend.items.first?.id, "MESHY_API_KEY")
+    try expectEqual(handoff.backend.items.first?.requiredFor, "real text/image/multi-image 3D generation")
+    try expectEqual(handoff.ios.destination, "apps/mobile/ios/Config/Deployment.local.xcconfig")
+    try expectEqual(handoff.ios.items.first?.id, "PMF_BACKEND_BASE_URL")
+    try expectFalse(handoff.safety.providerSecretsInReport)
+    try expectFalse(handoff.safety.localPathsInReport)
+}
+
+private func testFinalLaunchMobileSummaryShowsMissingResourceHandoff() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            resourceHandoffStatus: "blocked",
+            resourceHandoffBackendStatus: "missing",
+            resourceHandoffIOSStatus: "blocked",
+            resourceHandoffAction: "provide MESHY_API_KEY"
+        ),
+        error: nil
+    )
+    let overviewText = summary.resourceHandoffRows.joined(separator: " ")
+    let backendText = summary.resourceHandoffBackendRows.joined(separator: " ")
+    let iosText = summary.resourceHandoffIOSRows.joined(separator: " ")
+
+    try expectEqual(
+        summary.resourceHandoffRows.first,
+        "Resource handoff blocked: ready 2, missing 4, blocked 1, manual 1."
+    )
+    try expectContains(overviewText, "Backend: services/backend/.env")
+    try expectContains(overviewText, "iOS: apps/mobile/ios/Config/Deployment.local.xcconfig")
+    try expectContains(overviewText, "provide MESHY_API_KEY")
+    try expectContains(backendText, "MESHY_API_KEY: missing")
+    try expectContains(backendText, "real text/image/multi-image 3D generation")
+    try expectContains(iosText, "PMF_BACKEND_BASE_URL: blocked")
+    try expectContains(iosText, "device-to-Mac backend calls")
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyResourceHandoff() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready",
+            resourceHandoffAction: "final resource handoff ready"
+        ),
+        error: nil
+    )
+
+    try expectContains(summary.resourceHandoffRows.first ?? "", "Resource handoff ready")
+    try expectContains(summary.resourceHandoffBackendRows.joined(separator: " "), "MESHY_API_KEY: ready")
+    try expectContains(summary.resourceHandoffBackendRows.joined(separator: " "), "OPENAI_API_KEY: ready")
+    try expectContains(summary.resourceHandoffIOSRows.joined(separator: " "), "PMF_BACKEND_BASE_URL: ready")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeResourceHandoff() throws {
+    let report = finalDemoLaunchReport(
+        resourceHandoffStatus: "blocked",
+        resourceHandoffBackendStatus: "missing",
+        resourceHandoffIOSStatus: "blocked",
+        resourceHandoffAction: "provide sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
+        resourceHandoffDestination: "/Users/zhexu/private/.env"
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesFinalAcceptanceReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -3189,7 +3281,12 @@ private func finalDemoLaunchPayload(
     iosDeployRunbookStatus: String = "partial",
     iosDeployRunbookSlotStatus: String = "ready",
     iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
-    iosDeployRunbookCommand: String = "make mobile-deploy-preflight"
+    iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
+    resourceHandoffStatus: String = "blocked",
+    resourceHandoffBackendStatus: String = "missing",
+    resourceHandoffIOSStatus: String = "blocked",
+    resourceHandoffAction: String = "provide MESHY_API_KEY",
+    resourceHandoffDestination: String = "services/backend/.env"
 ) -> Data {
     Data(
         """
@@ -3441,6 +3538,74 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "payment_links_in_report": false,
               "local_paths_in_report": false
+            }
+          },
+          "resource_report": {
+            "kind": "resource_handoff_report",
+            "overall_status": "\(resourceHandoffStatus)",
+            "summary": {
+              "ready": \(resourceHandoffStatus == "ready" ? "9" : "2"),
+              "missing": \(resourceHandoffStatus == "ready" ? "0" : "4"),
+              "blocked": \(resourceHandoffStatus == "ready" ? "0" : "1"),
+              "manual": \(resourceHandoffStatus == "ready" ? "0" : "1"),
+              "optional": 1
+            },
+            "backend": {
+              "destination": "\(resourceHandoffDestination)",
+              "items": [
+                {
+                  "id": "MESHY_API_KEY",
+                  "label": "Meshy API key",
+                  "destination": "\(resourceHandoffDestination)",
+                  "required_for": "real text/image/multi-image 3D generation",
+                  "status": "\(resourceHandoffBackendStatus)",
+                  "configured": \(resourceHandoffBackendStatus == "ready" ? "true" : "false"),
+                  "missing": \(resourceHandoffBackendStatus == "missing" ? "true" : "false"),
+                  "notes": ["Backend-only key; never put it in the iOS app."]
+                },
+                {
+                  "id": "OPENAI_API_KEY",
+                  "label": "OpenAI API key",
+                  "destination": "\(resourceHandoffDestination)",
+                  "required_for": "AI Agent NPC traces and ticks",
+                  "status": "\(resourceHandoffBackendStatus)",
+                  "configured": \(resourceHandoffBackendStatus == "ready" ? "true" : "false"),
+                  "missing": \(resourceHandoffBackendStatus == "missing" ? "true" : "false"),
+                  "notes": ["Backend-only key; mobile sees only generated NPC state."]
+                }
+              ]
+            },
+            "ios": {
+              "destination": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+              "items": [
+                {
+                  "id": "PMF_BACKEND_BASE_URL",
+                  "label": "iPhone-reachable backend URL",
+                  "destination": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                  "required_for": "device-to-Mac backend calls",
+                  "status": "\(resourceHandoffIOSStatus)",
+                  "configured": \(resourceHandoffIOSStatus == "ready" ? "true" : "false"),
+                  "missing": \(resourceHandoffIOSStatus == "missing" ? "true" : "false"),
+                  "notes": ["Use a LAN URL such as http://192.168.1.10:8080, not loopback."]
+                },
+                {
+                  "id": "DEVELOPMENT_TEAM",
+                  "label": "Apple development team",
+                  "destination": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                  "required_for": "iPhone signing",
+                  "status": "\(resourceHandoffIOSStatus == "ready" ? "ready" : "missing")",
+                  "configured": \(resourceHandoffIOSStatus == "ready" ? "true" : "false"),
+                  "missing": \(resourceHandoffIOSStatus == "ready" ? "false" : "true"),
+                  "notes": ["Copy Deployment.local.xcconfig.example and fill your Apple Team ID."]
+                }
+              ]
+            },
+            "operator_actions": ["\(resourceHandoffAction)"],
+            "commands": ["make final-apply-resources"],
+            "safety": {
+              "provider_secrets_in_report": false,
+              "local_paths_in_report": false,
+              "payment_links_in_report": false
             }
           },
           "launch_phases": [
@@ -5243,7 +5408,12 @@ private func finalDemoLaunchReport(
     iosDeployRunbookStatus: String = "partial",
     iosDeployRunbookSlotStatus: String = "ready",
     iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
-    iosDeployRunbookCommand: String = "make mobile-deploy-preflight"
+    iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
+    resourceHandoffStatus: String = "blocked",
+    resourceHandoffBackendStatus: String = "missing",
+    resourceHandoffIOSStatus: String = "blocked",
+    resourceHandoffAction: String = "provide MESHY_API_KEY",
+    resourceHandoffDestination: String = "services/backend/.env"
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -5266,7 +5436,12 @@ private func finalDemoLaunchReport(
             iosDeployRunbookStatus: iosDeployRunbookStatus,
             iosDeployRunbookSlotStatus: iosDeployRunbookSlotStatus,
             iosDeployRunbookAction: iosDeployRunbookAction,
-            iosDeployRunbookCommand: iosDeployRunbookCommand
+            iosDeployRunbookCommand: iosDeployRunbookCommand,
+            resourceHandoffStatus: resourceHandoffStatus,
+            resourceHandoffBackendStatus: resourceHandoffBackendStatus,
+            resourceHandoffIOSStatus: resourceHandoffIOSStatus,
+            resourceHandoffAction: resourceHandoffAction,
+            resourceHandoffDestination: resourceHandoffDestination
         )
     )
 }

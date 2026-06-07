@@ -119,6 +119,18 @@ SOURCE_REQUIREMENTS = (
         "iosDeployRunbook",
     ),
     SourceRequirement(
+        "model_resource_handoff",
+        "Resource handoff report model",
+        PMF_MODELS_PATH,
+        "ResourceHandoffReport",
+    ),
+    SourceRequirement(
+        "model_resource_handoff_field",
+        "Final launch resource handoff field",
+        PMF_MODELS_PATH,
+        "resourceReport",
+    ),
+    SourceRequirement(
         "app_configuration_final_launch_mode",
         "App configuration final launch mode",
         APP_CONFIGURATION_PATH,
@@ -263,6 +275,24 @@ SOURCE_REQUIREMENTS = (
         "deployRunbookSafetyRows",
     ),
     SourceRequirement(
+        "mobile_summary_resource_handoff_rows",
+        "Mobile final launch resource handoff rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "resourceHandoffRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_backend_resource_rows",
+        "Mobile final launch backend resource rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "resourceHandoffBackendRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_ios_resource_rows",
+        "Mobile final launch iOS resource rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "resourceHandoffIOSRows",
+    ),
+    SourceRequirement(
         "mobile_summary_redaction",
         "Mobile final launch summary redaction",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -303,6 +333,24 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch iOS deploy safety section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Deploy Safety",
+    ),
+    SourceRequirement(
+        "mobile_status_view_resource_handoff",
+        "Mobile final launch resource handoff section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Resource Handoff",
+    ),
+    SourceRequirement(
+        "mobile_status_view_backend_resources",
+        "Mobile final launch backend resources section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Backend Resources",
+    ),
+    SourceRequirement(
+        "mobile_status_view_ios_resources",
+        "Mobile final launch iOS resources section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "iOS Resources",
     ),
     SourceRequirement(
         "mobile_status_view_commands",
@@ -441,6 +489,30 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts iOS deploy runbook",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
+    ),
+    SourceRequirement(
+        "contract_resource_handoff_decode",
+        "Contract test decodes resource handoff",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesResourceHandoffFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_resource_handoff_missing_summary",
+        "Contract test renders missing resource handoff",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsMissingResourceHandoff",
+    ),
+    SourceRequirement(
+        "contract_resource_handoff_ready_summary",
+        "Contract test renders ready resource handoff",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsReadyResourceHandoff",
+    ),
+    SourceRequirement(
+        "contract_resource_handoff_redaction",
+        "Contract test redacts resource handoff",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeResourceHandoff",
     ),
 )
 

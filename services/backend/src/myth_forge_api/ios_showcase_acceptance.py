@@ -608,6 +608,54 @@ FEATURES = (
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
             ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "ResourceHandoffReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "resourceReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "resourceHandoffRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "resourceHandoffBackendRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "resourceHandoffIOSRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Resource Handoff",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Backend Resources",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "iOS Resources",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesResourceHandoffFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsMissingResourceHandoff",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsReadyResourceHandoff",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryRedactsUnsafeResourceHandoff",
+            ),
         ),
     ),
     FeatureRequirement(
