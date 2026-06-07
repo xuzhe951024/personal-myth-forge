@@ -1281,6 +1281,69 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="ios_device_launch_certificate",
+        label="iOS device launch certificate",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                "build_ios_device_launch_certificate_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                "ios_device_launch_certificate_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                "build_final_handoff_index_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                "build_ios_deploy_runbook_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                "build_final_demo_launch_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                "device_gates",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                "operator_sequence",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                '"provider_calls": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                '"xcode_or_signing": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                '"keychain_writes": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "ios-device-launch-certificate",
+            ),
+            SourceRequirement("Makefile", "ios-device-launch-certificate:"),
+            SourceRequirement(
+                "Makefile",
+                "--output .local/ios-device-launch-certificate.json",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_ios_device_launch_certificate.py",
+                "test_ios_device_launch_certificate_ready_with_configured_inputs",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_ios_device_launch_certificate.py",
+                "test_ios_device_launch_certificate_cli_writes_report_and_makefile_target",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="mobile_final_launch_mode",
         label="Mobile final launch mode",
         requirements=(

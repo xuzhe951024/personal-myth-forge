@@ -115,6 +115,9 @@ final-configured-preflight:
 .PHONY: final-handoff-index
 final-handoff-index:
 \tcd services/backend && uv run python -m myth_forge_api.cli final-handoff-index --repo-root ../.. --output .local/final-handoff-index.json
+.PHONY: ios-device-launch-certificate
+ios-device-launch-certificate:
+\tcd services/backend && uv run python -m myth_forge_api.cli ios-device-launch-certificate --repo-root ../.. --output .local/ios-device-launch-certificate.json
 .PHONY: ios-deploy-runbook ios-deploy-runbook-local
 ios-deploy-runbook:
 \tcd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
@@ -127,8 +130,10 @@ CLI_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_
 from myth_forge_api.final_configured_preflight import build_final_configured_preflight_report
 from myth_forge_api.final_handoff_index import build_final_handoff_index_report
 from myth_forge_api.final_resources_preflight import build_final_resources_preflight_report
+from myth_forge_api.ios_device_launch_certificate import build_ios_device_launch_certificate_report
 subcommands.add_parser("final-configured-preflight")
 subcommands.add_parser("final-handoff-index")
+subcommands.add_parser("ios-device-launch-certificate")
 subcommands.add_parser("final-demo-launch")
 subcommands.add_parser("final-resources-preflight")
 """
@@ -185,6 +190,29 @@ def build_final_handoff_index_report():
     }
 """
 
+IOS_DEVICE_LAUNCH_CERTIFICATE_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
+from myth_forge_api.final_handoff_index import build_final_handoff_index_report
+from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
+
+def build_ios_device_launch_certificate_report():
+    build_final_handoff_index_report()
+    build_ios_deploy_runbook_report()
+    build_final_demo_launch_report()
+    return {
+        "kind": "ios_device_launch_certificate_report",
+        "device_gates": [],
+        "operator_sequence": [],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+        },
+    }
+"""
+
 
 def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) -> None:
     repo_root = _write_repo(tmp_path)
@@ -194,7 +222,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.exit_code == 0
     assert result.report["kind"] == "resource_template_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 14, "failed": 0}
+    assert result.report["summary"] == {"passed": 15, "failed": 0}
     assert result.report["backend_template"]["missing_keys"] == []
     assert result.report["ios_template"]["missing_keys"] == []
     assert "OPENAI_API_KEY" in result.report["backend_template"]["required_keys"]
@@ -323,6 +351,24 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         "safety_contract": True,
         "no_banned_commands": True,
     }
+    assert result.report["ios_device_launch_certificate"]["path"] == (
+        "services/backend/src/myth_forge_api/ios_device_launch_certificate.py"
+    )
+    assert result.report["ios_device_launch_certificate"]["make_target"] == (
+        "ios-device-launch-certificate"
+    )
+    assert result.report["ios_device_launch_certificate"]["output_path"] == (
+        ".local/ios-device-launch-certificate.json"
+    )
+    assert result.report["ios_device_launch_certificate"]["checks"] == {
+        "module_exists": True,
+        "cli_command": True,
+        "make_target": True,
+        "output_path": True,
+        "composes_device_reports": True,
+        "safety_contract": True,
+        "no_banned_commands": True,
+    }
 
 
 def test_resource_template_acceptance_fails_missing_backend_key(tmp_path: Path) -> None:
@@ -410,6 +456,7 @@ def _write_repo(
     final_resources_preflight: str = FINAL_RESOURCES_PREFLIGHT_TEMPLATE,
     final_configured_preflight: str = FINAL_CONFIGURED_PREFLIGHT_TEMPLATE,
     final_handoff_index: str = FINAL_HANDOFF_INDEX_TEMPLATE,
+    ios_device_launch_certificate: str = IOS_DEVICE_LAUNCH_CERTIFICATE_TEMPLATE,
     makefile: str = MAKEFILE_TEMPLATE,
 ) -> Path:
     repo_root = tmp_path / "repo"
@@ -468,6 +515,12 @@ def _write_repo(
     )
     (repo_root / "services/backend/src/myth_forge_api/final_handoff_index.py").write_text(
         final_handoff_index,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/src/myth_forge_api/ios_device_launch_certificate.py"
+    ).write_text(
+        ios_device_launch_certificate,
         encoding="utf-8",
     )
     (repo_root / "Makefile").write_text(makefile, encoding="utf-8")
