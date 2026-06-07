@@ -29,6 +29,9 @@ from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
+from myth_forge_api.ios_device_launch_certificate import (
+    build_ios_device_launch_certificate_report,
+)
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.providers.factory import (
     build_npc_director,
@@ -128,6 +131,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
+        if args.command == "ios-device-launch-certificate":
+            return _ios_device_launch_certificate(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
         if args.command == "final-demo-launch":
             return _final_demo_launch(
                 mode=args.mode,
@@ -216,6 +224,12 @@ def _build_parser() -> argparse.ArgumentParser:
     final_handoff_index_parser = subcommands.add_parser("final-handoff-index")
     final_handoff_index_parser.add_argument("--repo-root", default=None)
     final_handoff_index_parser.add_argument("--output", default=None)
+
+    ios_device_launch_certificate_parser = subcommands.add_parser(
+        "ios-device-launch-certificate"
+    )
+    ios_device_launch_certificate_parser.add_argument("--repo-root", default=None)
+    ios_device_launch_certificate_parser.add_argument("--output", default=None)
 
     final_demo_launch_parser = subcommands.add_parser("final-demo-launch")
     final_demo_launch_parser.add_argument(
@@ -405,6 +419,18 @@ def _final_handoff_index(
     output_path: str | None,
 ) -> int:
     result = build_final_handoff_index_report(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _ios_device_launch_certificate(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = build_ios_device_launch_certificate_report(
         repo_root=Path(repo_root) if repo_root else None,
     )
     _write_json_payload(result.report, output_path)

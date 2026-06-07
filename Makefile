@@ -53,6 +53,11 @@ final-configured-preflight:
 final-handoff-index:
 	cd services/backend && uv run python -m myth_forge_api.cli final-handoff-index --repo-root ../.. --output .local/final-handoff-index.json
 
+.PHONY: ios-device-launch-certificate
+
+ios-device-launch-certificate:
+	cd services/backend && uv run python -m myth_forge_api.cli ios-device-launch-certificate --repo-root ../.. --output .local/ios-device-launch-certificate.json
+
 .PHONY: final-acceptance-local final-demo-launch final-rehearsal-local
 
 final-acceptance-local:
