@@ -94,6 +94,11 @@ final-local-report-refresh:
 final-configured-preflight:
 	cd services/backend && uv run python -m myth_forge_api.cli final-configured-preflight --repo-root ../.. --output .local/final-configured-preflight.json
 
+.PHONY: final-configured-evidence-plan
+
+final-configured-evidence-plan:
+	cd services/backend && uv run python -m myth_forge_api.cli final-configured-evidence-plan --repo-root ../.. --output .local/final-configured-evidence-plan.json
+
 .PHONY: final-handoff-index
 
 final-handoff-index:

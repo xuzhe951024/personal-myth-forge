@@ -31,6 +31,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert steps["final_acceptance_local"]["status"] == "blocked"
     assert steps["final_acceptance_local"]["accepted_blocked"] is True
     assert steps["final_resource_fill_guide"]["status"] == "blocked"
+    assert steps["final_configured_evidence_plan"]["status"] == "blocked"
     assert final_acceptance["refresh_safety"] == {
         "mobile_gate_commands_executed": False,
         "xcode_or_signing_executed": False,
@@ -65,6 +66,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "services/backend/.local/final-demo-launch-local.json",
         "services/backend/.local/ios-deploy-runbook-local.json",
         "services/backend/.local/final-configured-preflight.json",
+        "services/backend/.local/final-configured-evidence-plan.json",
         "services/backend/.local/final-handoff-index.json",
         "services/backend/.local/ios-device-launch-certificate.json",
         "services/backend/.local/ios-device-launch-rehearsal.json",

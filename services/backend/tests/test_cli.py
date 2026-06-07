@@ -6,6 +6,9 @@ from myth_forge_api.acceptance import DemoAcceptanceResult
 from myth_forge_api.config import Settings
 from myth_forge_api.final_demo_launch import FinalDemoLaunchResult
 from myth_forge_api.final_configured_preflight import FinalConfiguredPreflightResult
+from myth_forge_api.final_configured_evidence_plan import (
+    FinalConfiguredEvidencePlanResult,
+)
 from myth_forge_api.final_external_action_ledger import FinalExternalActionLedgerResult
 from myth_forge_api.final_handoff_index import FinalHandoffIndexResult
 from myth_forge_api.final_local_report_refresh import FinalLocalReportRefreshResult
@@ -891,6 +894,57 @@ def test_cli_final_resource_fill_guide_writes_json_and_markdown(
     assert markdown_file.read_text(encoding="utf-8").startswith(
         "# Final Resource Fill Guide"
     )
+
+
+def test_cli_final_configured_evidence_plan_writes_report(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "final-configured-evidence-plan.json"
+    calls = []
+
+    def fake_build_final_configured_evidence_plan_report(**kwargs):
+        calls.append(kwargs)
+        return FinalConfiguredEvidencePlanResult(
+            exit_code=2,
+            report={
+                "kind": "final_configured_evidence_plan_report",
+                "status": "consent_required",
+                "summary": {"steps": 10, "consent_required": 3},
+                "safety": {
+                    "commands_run": False,
+                    "live_provider_calls": False,
+                },
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_final_configured_evidence_plan_report",
+        fake_build_final_configured_evidence_plan_report,
+    )
+
+    exit_code = main(
+        [
+            "final-configured-evidence-plan",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+            "--allow-live-provider-calls",
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 2
+    assert calls == [
+        {
+            "repo_root": tmp_path,
+            "allow_live_provider_calls": True,
+        }
+    ]
+    assert report["kind"] == "final_configured_evidence_plan_report"
+    assert report["status"] == "consent_required"
+    assert report["safety"]["commands_run"] is False
 
 
 def test_cli_resource_template_acceptance_writes_report(tmp_path, monkeypatch) -> None:

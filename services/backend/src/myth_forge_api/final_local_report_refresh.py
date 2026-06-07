@@ -23,6 +23,9 @@ from myth_forge_api.final_acceptance import (
 from myth_forge_api.final_configured_preflight import (
     build_final_configured_preflight_report,
 )
+from myth_forge_api.final_configured_evidence_plan import (
+    build_final_configured_evidence_plan_report,
+)
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_external_action_ledger import (
     build_final_external_action_ledger_report,
@@ -188,6 +191,14 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "Final configured preflight",
             "final-configured-preflight.json",
             lambda repo_root: build_final_configured_preflight_report(
+                repo_root=repo_root,
+            ).report,
+        ),
+        _step(
+            "final_configured_evidence_plan",
+            "Final configured evidence plan",
+            "final-configured-evidence-plan.json",
+            lambda repo_root: build_final_configured_evidence_plan_report(
                 repo_root=repo_root,
             ).report,
         ),
