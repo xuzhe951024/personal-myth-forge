@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.101 Print Fulfillment Receipt</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #f5f5f1;
+      color: #202522;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 100vh;
+      background: #f5f5f1;
+    }
+
+    .phone {
+      width: 390px;
+      min-height: 844px;
+      margin: 0;
+      padding: 14px 14px 18px;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.15;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .mode {
+      padding: 3px 8px;
+      border: 1px solid #c8d1cc;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #4d5853;
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .panel {
+      padding: 9px 11px;
+      border-radius: 8px;
+      border: 1px solid rgba(39, 54, 48, 0.12);
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 7px 18px rgba(34, 42, 38, 0.07);
+    }
+
+    .section-title {
+      margin: 0 0 6px;
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .quote-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .quote-row strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .quote-row span {
+      display: block;
+      margin-top: 3px;
+      color: #68736d;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .price {
+      font-size: 13px;
+      font-weight: 760;
+      color: #243029;
+      white-space: nowrap;
+    }
+
+    .button {
+      margin-top: 7px;
+      width: 100%;
+      height: 30px;
+      border: 0;
+      border-radius: 8px;
+      background: #275f74;
+      color: white;
+      font-size: 13px;
+      font-weight: 720;
+    }
+
+    .receipt .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+
+    .receipt h2 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.2;
+      font-weight: 740;
+      letter-spacing: 0;
+    }
+
+    .receipt .title {
+      margin: 2px 0 0;
+      color: #65716b;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding-top: 1px;
+      font-size: 10px;
+      font-weight: 820;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .badge.wait {
+      color: #65716b;
+    }
+
+    .badge.approve {
+      color: #b46013;
+    }
+
+    .badge.ready {
+      color: #1d7c55;
+    }
+
+    .detail {
+      margin: 0 0 6px;
+      color: #68736d;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .rows {
+      display: grid;
+      gap: 4px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 10px 72px minmax(0, 1fr);
+      gap: 7px;
+      align-items: start;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      margin-top: 4px;
+      border-radius: 999px;
+      background: #89928d;
+    }
+
+    .dot.approve {
+      background: #d07a1c;
+    }
+
+    .dot.ready {
+      background: #279264;
+    }
+
+    .label {
+      color: #34413b;
+      font-size: 11px;
+      line-height: 1.25;
+      font-weight: 720;
+    }
+
+    .value {
+      min-width: 0;
+      color: #65716b;
+      font-size: 11px;
+      line-height: 1.32;
+      overflow-wrap: anywhere;
+    }
+
+    .toggle {
+      display: grid;
+      grid-template-columns: 1fr 42px;
+      gap: 8px;
+      align-items: center;
+      margin-top: 7px;
+      padding-top: 6px;
+      border-top: 1px solid #e5e9e5;
+      color: #37443d;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .switch {
+      position: relative;
+      width: 42px;
+      height: 24px;
+      border-radius: 999px;
+      background: #d6dcd7;
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+    }
+
+    .switch.on {
+      background: #2c8f65;
+    }
+
+    .switch.on::after {
+      left: 21px;
+    }
+
+    .notes {
+      margin: 8px 0 0;
+      color: #6c7771;
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <div class="nav">
+      <h1>Personal Myth Forge</h1>
+      <div class="mode">Print</div>
+    </div>
+
+    <section class="stack">
+      <article class="panel">
+        <p class="section-title">Print Quote</p>
+        <div class="quote-row">
+          <div>
+            <strong>STL candidate from Treatstock</strong>
+            <span>Stable base; thin ritual prongs repaired before quote.</span>
+          </div>
+          <div class="price">USD 16.00</div>
+        </div>
+        <button class="button">Get Quote</button>
+      </article>
+
+      <article class="panel receipt">
+        <div class="header">
+          <div>
+            <h2>Print Fulfillment</h2>
+            <p class="title">Print fulfillment waiting</p>
+          </div>
+          <div class="badge wait">WAIT</div>
+        </div>
+        <p class="detail">Request a quote before print fulfillment handoff.</p>
+        <div class="rows">
+          <div class="row"><span class="dot"></span><span class="label">Print asset</span><span class="value">STL candidate from local; review before fulfillment.</span></div>
+          <div class="row"><span class="dot"></span><span class="label">Quote</span><span class="value">No provider quote loaded.</span></div>
+          <div class="row"><span class="dot"></span><span class="label">Approval</span><span class="value">User approval is unavailable until the quote returns.</span></div>
+        </div>
+        <p class="notes">Checkout/payment links stay withheld until a separate order flow.</p>
+      </article>
+
+      <article class="panel receipt">
+        <div class="header">
+          <div>
+            <h2>Print Fulfillment</h2>
+            <p class="title">Print approval required</p>
+          </div>
+          <div class="badge approve">APPROVE</div>
+        </div>
+        <p class="detail">User approval required before provider handoff.</p>
+        <div class="rows">
+          <div class="row"><span class="dot ready"></span><span class="label">Provider</span><span class="value">treatstock draft quote</span></div>
+          <div class="row"><span class="dot approve"></span><span class="label">Quote</span><span class="value">USD 16.00, draft_quote.</span></div>
+          <div class="row"><span class="dot approve"></span><span class="label">Approval</span><span class="value">Review material, country, and shipping before handoff.</span></div>
+        </div>
+        <div class="toggle">
+          <span>Approve Print Handoff</span>
+          <span class="switch"></span>
+        </div>
+        <p class="notes">Approval is local app state and does not place an order.</p>
+      </article>
+
+      <article class="panel receipt">
+        <div class="header">
+          <div>
+            <h2>Print Fulfillment</h2>
+            <p class="title">Print handoff ready</p>
+          </div>
+          <div class="badge ready">READY</div>
+        </div>
+        <p class="detail">Approved quote is ready for provider handoff; order placement remains separate.</p>
+        <div class="rows">
+          <div class="row"><span class="dot ready"></span><span class="label">Provider</span><span class="value">treatstock</span></div>
+          <div class="row"><span class="dot ready"></span><span class="label">Timeline</span><span class="value">Production 5d, shipping 6d.</span></div>
+          <div class="row"><span class="dot ready"></span><span class="label">Approval</span><span class="value">Approved locally for provider handoff.</span></div>
+        </div>
+        <div class="toggle">
+          <span>Approve Print Handoff</span>
+          <span class="switch on"></span>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

@@ -553,6 +553,51 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_print_fulfillment_receipt",
+        label="Mobile print fulfillment receipt",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PrintFulfillmentReceipt.swift",
+                "PrintFulfillmentReceiptBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PrintFulfillmentReceipt.swift",
+                "Checkout/payment links stay withheld",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PrintFulfillmentReceipt.swift",
+                "canHandOffToProvider",
+            ),
+            SourceRequirement("apps/mobile/ios/App/PrintFulfillmentReceiptView.swift", "Print Fulfillment"),
+            SourceRequirement(
+                "apps/mobile/ios/App/PrintQuoteReviewView.swift",
+                "PrintFulfillmentReceiptView(receipt: fulfillmentReceipt)",
+            ),
+            SourceRequirement("apps/mobile/ios/App/PrintQuoteReviewView.swift", "Approve Print Handoff"),
+            SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "isPrintQuoteApproved"),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "PrintFulfillmentReceiptBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "fulfillmentReceipt: printFulfillmentReceipt",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
+                "PrintFulfillmentReceiptView.swift",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testPrintFulfillmentReceiptRequiresApprovalBeforeHandoff",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testPrintFulfillmentReceiptBlocksAndRedactsUnsafeText",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="provider_readiness",
         label="Provider readiness",
         requirements=(

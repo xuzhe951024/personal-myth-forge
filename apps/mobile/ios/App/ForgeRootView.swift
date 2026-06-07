@@ -28,6 +28,7 @@ struct ForgeRootView: View {
     @State private var printQuote: PrintQuote?
     @State private var printQuoteError: String?
     @State private var isLoadingPrintQuote = false
+    @State private var isPrintQuoteApproved = false
     @State private var objectLabel = "old brass key"
     @State private var materials = "metal, brass"
     @State private var visualNotes = "worn teeth, circular bow, warm reflections"
@@ -137,6 +138,8 @@ struct ForgeRootView: View {
                         quote: printQuote,
                         isLoading: isLoadingPrintQuote,
                         errorMessage: printQuoteError,
+                        fulfillmentReceipt: printFulfillmentReceipt,
+                        isPrintQuoteApproved: $isPrintQuoteApproved,
                         requestQuote: requestPrintQuote
                     )
                 }
@@ -497,12 +500,14 @@ struct ForgeRootView: View {
         }
         isLoadingPrintQuote = true
         printQuoteError = nil
+        isPrintQuoteApproved = false
 
         Task {
             do {
                 let quote = try await apiClient.createPrintQuote(printCandidate: session.printCandidate)
                 await MainActor.run {
                     printQuote = quote
+                    isPrintQuoteApproved = !quote.requiresUserApproval
                     isLoadingPrintQuote = false
                     printQuoteError = nil
                 }
@@ -534,6 +539,7 @@ struct ForgeRootView: View {
         printQuote = nil
         printQuoteError = nil
         isLoadingPrintQuote = false
+        isPrintQuoteApproved = false
     }
 
     private var readySession: MythSession? {
@@ -636,6 +642,16 @@ struct ForgeRootView: View {
         ForgeProgressReceiptBuilder.build(
             state: state,
             captureGenerationReadiness: captureGenerationReadiness
+        )
+    }
+
+    private var printFulfillmentReceipt: PrintFulfillmentReceipt {
+        PrintFulfillmentReceiptBuilder.build(
+            session: readySession,
+            quote: printQuote,
+            isLoading: isLoadingPrintQuote,
+            errorMessage: printQuoteError,
+            isApproved: isPrintQuoteApproved
         )
     }
 
