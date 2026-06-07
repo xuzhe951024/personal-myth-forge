@@ -602,7 +602,7 @@ def test_final_demo_launch_embeds_blocked_ios_device_launch_rehearsal_readiness(
 
     assert readiness["status"] == "blocked"
     assert readiness["summary"]["blocked"] == 1
-    assert readiness["freshness"]["checked_against"] == "git_head"
+    assert readiness["freshness"]["checked_against"] == "git_product_sources"
     assert readiness["freshness"]["classification"] == "git_unavailable"
     assert readiness["sequence"][0]["id"] == "final_handoff_index"
     assert readiness["sequence"][0]["status"] == "blocked"

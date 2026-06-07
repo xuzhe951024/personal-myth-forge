@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from myth_forge_api.source_freshness import (
+    freshness_payload,
+    git_product_source_metadata,
+)
 
 DEFAULT_IOS_DEVICE_LAUNCH_REHEARSAL_PATH = Path(
     "services/backend/.local/ios-device-launch-rehearsal.json"
@@ -14,7 +17,7 @@ DEFAULT_IOS_DEVICE_LAUNCH_REHEARSAL_PATH = Path(
 IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND = "make ios-device-launch-rehearsal"
 IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION = (
     "rerun make ios-device-launch-rehearsal to regenerate "
-    "services/backend/.local/ios-device-launch-rehearsal.json for the current git revision"
+    "services/backend/.local/ios-device-launch-rehearsal.json for the current product sources"
 )
 IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT = 20
 
@@ -332,19 +335,21 @@ def _freshness_report(
             classification="source_missing",
             source_modified_at=None,
             git_metadata=None,
+            checked_against="git_head",
         )
     source_modified_at = rehearsal_file.stat().st_mtime
-    git_metadata = _git_head_metadata(repo_root)
+    git_metadata = git_product_source_metadata(repo_root)
     if git_metadata is None:
         return _freshness_payload(
             status="unknown",
             classification="git_unavailable",
             source_modified_at=source_modified_at,
             git_metadata=None,
+            checked_against="git_product_sources",
         )
     freshness_status = (
         "stale"
-        if source_modified_at < git_metadata["committed_at_epoch"]
+        if source_modified_at < git_metadata.committed_at_epoch
         else "fresh"
     )
     return _freshness_payload(
@@ -352,35 +357,8 @@ def _freshness_report(
         classification="stale_report" if freshness_status == "stale" else "fresh_report",
         source_modified_at=source_modified_at,
         git_metadata=git_metadata,
+        checked_against="git_product_sources",
     )
-
-
-def _git_head_metadata(repo_root: Path) -> dict[str, Any] | None:
-    try:
-        revision = subprocess.run(
-            ["git", "-C", str(repo_root), "rev-parse", "--short", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=2,
-        ).stdout.strip()
-        committed_at = subprocess.run(
-            ["git", "-C", str(repo_root), "log", "-1", "--format=%ct", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=2,
-        ).stdout.strip()
-    except (subprocess.SubprocessError, OSError):
-        return None
-    try:
-        committed_at_epoch = float(committed_at)
-    except ValueError:
-        return None
-    return {
-        "revision": revision or None,
-        "committed_at_epoch": committed_at_epoch,
-    }
 
 
 def _freshness_payload(
@@ -388,27 +366,15 @@ def _freshness_payload(
     status: str,
     classification: str,
     source_modified_at: float | None,
-    git_metadata: dict[str, Any] | None,
+    git_metadata: Any,
+    checked_against: str,
 ) -> dict[str, Any]:
-    return {
-        "status": status,
-        "classification": classification,
-        "checked_against": "git_head",
-        "source_modified_at": _iso_timestamp(source_modified_at),
-        "current_revision": None if git_metadata is None else git_metadata["revision"],
-        "current_revision_committed_at": None
-        if git_metadata is None
-        else _iso_timestamp(git_metadata["committed_at_epoch"]),
-    }
-
-
-def _iso_timestamp(epoch: float | None) -> str | None:
-    if epoch is None:
-        return None
-    return (
-        datetime.fromtimestamp(epoch, tz=timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
+    return freshness_payload(
+        status=status,
+        classification=classification,
+        source_modified_at=source_modified_at,
+        git_metadata=git_metadata,
+        checked_against=checked_against,
     )
 
 
@@ -421,7 +387,7 @@ def _freshness_blocker(freshness: dict[str, Any]) -> dict[str, Any]:
         "command": IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND,
         "detail": (
             "Saved iOS device launch rehearsal report is older than the current "
-            "git revision."
+            "product sources."
         ),
     }
 

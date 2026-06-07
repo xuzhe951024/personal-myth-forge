@@ -109,8 +109,47 @@ def test_final_acceptance_readiness_blocks_stale_saved_report_against_git_head(
     assert result.report["blockers"][0]["classification"] == "stale_report"
     assert result.report["operator_actions"][0] == (
         "rerun make final-acceptance-local to regenerate "
-        "services/backend/.local/final-acceptance-local.json for the current git revision"
+        "services/backend/.local/final-acceptance-local.json for the current product sources"
     )
+
+
+def test_final_acceptance_readiness_ignores_newer_docs_only_commit(
+    tmp_path: Path,
+) -> None:
+    repo_root = _init_git_repo(
+        tmp_path,
+        committed_at="2026-06-06T12:00:00+00:00",
+    )
+    report_path = _write_final_acceptance_report(
+        repo_root,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "passed",
+            "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": "provider_handoff",
+                    "label": "Provider handoff",
+                    "status": "passed",
+                },
+            ],
+        },
+    )
+    _set_mtime(report_path, "2026-06-06T12:05:00+00:00")
+    _commit_fixture_file(
+        repo_root,
+        relative_path="docs/superpowers/plans/docs-only.md",
+        content="docs only\n",
+        committed_at="2026-06-06T12:10:00+00:00",
+        message="docs only",
+    )
+
+    result = build_final_acceptance_readiness_report(repo_root=repo_root)
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
+    assert result.report["freshness"]["status"] == "fresh"
+    assert result.report["freshness"]["checked_against"] == "git_product_sources"
 
 
 def test_final_acceptance_readiness_marks_freshness_unknown_without_git(
@@ -273,8 +312,12 @@ def _init_git_repo(tmp_path: Path, *, committed_at: str) -> Path:
         text=True,
     )
     (repo_root / "README.md").write_text("freshness fixture\n", encoding="utf-8")
+    (repo_root / "Makefile").write_text(
+        "backend-test:\n\tpytest\n",
+        encoding="utf-8",
+    )
     subprocess.run(
-        ["git", "add", "README.md"],
+        ["git", "add", "README.md", "Makefile"],
         cwd=repo_root,
         check=True,
         capture_output=True,
@@ -300,6 +343,39 @@ def _init_git_repo(tmp_path: Path, *, committed_at: str) -> Path:
         env=env,
     )
     return repo_root
+
+
+def _commit_fixture_file(
+    repo_root: Path,
+    *,
+    relative_path: str,
+    content: str,
+    committed_at: str,
+    message: str,
+) -> None:
+    path = repo_root / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    subprocess.run(["git", "add", relative_path], cwd=repo_root, check=True)
+    env = os.environ.copy()
+    env.update(
+        {
+            "GIT_AUTHOR_NAME": "Test",
+            "GIT_AUTHOR_EMAIL": "test@example.com",
+            "GIT_COMMITTER_NAME": "Test",
+            "GIT_COMMITTER_EMAIL": "test@example.com",
+            "GIT_AUTHOR_DATE": committed_at,
+            "GIT_COMMITTER_DATE": committed_at,
+        }
+    )
+    subprocess.run(
+        ["git", "commit", "-m", message],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
 
 
 def _set_mtime(path: Path, iso_timestamp: str) -> None:
