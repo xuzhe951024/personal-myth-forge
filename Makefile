@@ -48,6 +48,11 @@ final-resources-preflight:
 final-configured-preflight:
 	cd services/backend && uv run python -m myth_forge_api.cli final-configured-preflight --repo-root ../.. --output .local/final-configured-preflight.json
 
+.PHONY: final-handoff-index
+
+final-handoff-index:
+	cd services/backend && uv run python -m myth_forge_api.cli final-handoff-index --repo-root ../.. --output .local/final-handoff-index.json
+
 .PHONY: final-acceptance-local final-demo-launch final-rehearsal-local
 
 final-acceptance-local:

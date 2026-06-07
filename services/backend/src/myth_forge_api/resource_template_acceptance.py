@@ -29,6 +29,9 @@ FINAL_CONFIGURED_PREFLIGHT_PATH = (
 )
 FINAL_CONFIGURED_PREFLIGHT_MAKE_TARGET = "final-configured-preflight"
 FINAL_CONFIGURED_PREFLIGHT_OUTPUT = ".local/final-configured-preflight.json"
+FINAL_HANDOFF_INDEX_PATH = "services/backend/src/myth_forge_api/final_handoff_index.py"
+FINAL_HANDOFF_INDEX_MAKE_TARGET = "final-handoff-index"
+FINAL_HANDOFF_INDEX_OUTPUT = ".local/final-handoff-index.json"
 CLI_PATH = "services/backend/src/myth_forge_api/cli.py"
 FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.py"
 FINAL_DEMO_LAUNCH_MAKE_TARGET = "final-demo-launch"
@@ -132,6 +135,9 @@ def run_resource_template_acceptance(
     final_configured_preflight_text, final_configured_preflight_exists = (
         _read_optional_text(selected_repo_root / FINAL_CONFIGURED_PREFLIGHT_PATH)
     )
+    final_handoff_index_text, final_handoff_index_exists = _read_optional_text(
+        selected_repo_root / FINAL_HANDOFF_INDEX_PATH
+    )
     cli_text, cli_exists = _read_optional_text(selected_repo_root / CLI_PATH)
     final_demo_launch_text, final_demo_launch_exists = _read_optional_text(
         selected_repo_root / FINAL_DEMO_LAUNCH_PATH
@@ -205,6 +211,14 @@ def run_resource_template_acceptance(
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
+    final_handoff_index_checks = _final_handoff_index_checks(
+        module_text=final_handoff_index_text,
+        module_exists=final_handoff_index_exists,
+        cli_text=cli_text,
+        cli_exists=cli_exists,
+        makefile_text=makefile_text,
+        makefile_exists=makefile_exists,
+    )
     final_rehearsal_local_checks = _final_rehearsal_local_checks(
         final_acceptance_script_text=final_acceptance_local_script_text,
         final_acceptance_script_exists=final_acceptance_local_script_exists,
@@ -233,6 +247,7 @@ def run_resource_template_acceptance(
             "final_configured_preflight",
             all(final_configured_preflight_checks.values()),
         ),
+        _check("final_handoff_index", all(final_handoff_index_checks.values())),
         _check("final_rehearsal_local", all(final_rehearsal_local_checks.values())),
     ]
     summary = {
@@ -302,6 +317,13 @@ def run_resource_template_acceptance(
             "output_path": FINAL_CONFIGURED_PREFLIGHT_OUTPUT,
             "exists": final_configured_preflight_exists,
             "checks": final_configured_preflight_checks,
+        },
+        "final_handoff_index": {
+            "path": FINAL_HANDOFF_INDEX_PATH,
+            "make_target": FINAL_HANDOFF_INDEX_MAKE_TARGET,
+            "output_path": FINAL_HANDOFF_INDEX_OUTPUT,
+            "exists": final_handoff_index_exists,
+            "checks": final_handoff_index_checks,
         },
         "final_rehearsal_local": {
             "make_target": FINAL_REHEARSAL_LOCAL_MAKE_TARGET,
@@ -538,6 +560,52 @@ def _final_configured_preflight_checks(
         "safety_contract": all(
             text in module_text
             for text in [
+                '"provider_calls": False',
+                '"writes_backend_env": False',
+                '"writes_ios_deploy_config": False',
+                '"xcode_or_signing": False',
+                '"keychain_writes": False',
+            ]
+        ),
+        "no_banned_commands": not any(
+            banned in checked_text for banned in BANNED_WRITER_TEXT
+        ),
+    }
+
+
+def _final_handoff_index_checks(
+    *,
+    module_text: str,
+    module_exists: bool,
+    cli_text: str,
+    cli_exists: bool,
+    makefile_text: str,
+    makefile_exists: bool,
+) -> dict[str, bool]:
+    checked_text = "\n".join([module_text, makefile_text])
+    return {
+        "module_exists": module_exists,
+        "cli_command": cli_exists
+        and "final-handoff-index" in cli_text
+        and "build_final_handoff_index_report" in cli_text,
+        "make_target": makefile_exists
+        and FINAL_HANDOFF_INDEX_MAKE_TARGET in makefile_text
+        and "myth_forge_api.cli final-handoff-index" in makefile_text,
+        "output_path": FINAL_HANDOFF_INDEX_OUTPUT in makefile_text,
+        "composes_handoff_reports": all(
+            text in module_text
+            for text in [
+                "build_final_configured_preflight_report",
+                "final_handoff_index_report",
+                "source_reports",
+                "operator_sequence",
+                "lanes_by_id",
+            ]
+        ),
+        "safety_contract": all(
+            text in module_text
+            for text in [
+                '"commands_run": False',
                 '"provider_calls": False',
                 '"writes_backend_env": False',
                 '"writes_ios_deploy_config": False',
