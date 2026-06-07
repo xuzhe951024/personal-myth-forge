@@ -319,6 +319,28 @@ def test_final_demo_launch_operator_handoff_includes_npc_evaluation_step(
     assert "evaluate-npc" in handoff_steps["npc_agent_evaluation"]["command"]
 
 
+def test_final_demo_launch_embeds_ios_deploy_runbook(tmp_path: Path) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    runbook = result.report["ios_deploy_runbook"]
+
+    assert runbook["kind"] == "ios_deploy_runbook_report"
+    assert any(
+        step["id"] == "mobile_deploy_preflight"
+        for step in runbook["command_sequence"]
+    )
+    assert any(
+        slot["id"] == "backend_base_url"
+        for slot in runbook["input_slots"]
+    )
+
+
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:
     repo_root = tmp_path / "repo"
     config_dir = repo_root / "apps/mobile/ios/Config"

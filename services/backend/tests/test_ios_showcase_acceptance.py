@@ -12,7 +12,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_showcase_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 24, "failed": 0}
+    assert result.report["summary"] == {"passed": 25, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "camera_capture",
         "guided_scan",
@@ -31,6 +31,7 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
         "provider_readiness",
         "final_showcase",
         "mobile_final_acceptance_readiness",
+        "ios_deploy_runbook",
         "mobile_final_operator_handoff",
         "mobile_final_launch_mode",
         "device_preflight",
@@ -60,7 +61,7 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 23, "failed": 1}
+    assert result.report["summary"] == {"passed": 24, "failed": 1}
     assert features["camera_capture"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/CameraCaptureView.swift",
@@ -87,7 +88,7 @@ def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolu
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 23, "failed": 1}
+    assert result.report["summary"] == {"passed": 24, "failed": 1}
     assert features["arkit_scan_package"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
@@ -114,7 +115,7 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_readiness_with
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 23, "failed": 1}
+    assert result.report["summary"] == {"passed": 24, "failed": 1}
     assert features["capture_generation_readiness"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
@@ -143,7 +144,7 @@ def test_ios_showcase_acceptance_fails_missing_local_network_usage_without_absol
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 23, "failed": 1}
+    assert result.report["summary"] == {"passed": 24, "failed": 1}
     assert features["deploy_config"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/Info.plist",
@@ -336,15 +337,28 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py": (
             "build_npc_agent_evaluation_readiness_report"
         ),
+        "services/backend/src/myth_forge_api/ios_deploy_runbook.py": (
+            "build_ios_deploy_runbook_report IOS_DEPLOY_RUNBOOK_COMMAND"
+        ),
+        "services/backend/src/myth_forge_api/cli.py": "ios-deploy-runbook",
+        "Makefile": "ios-deploy-runbook:",
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
-            "build_final_operator_handoff_report npc_agent_evaluation LOCAL_NPC_EVALUATION_COMMAND"
+            "build_final_operator_handoff_report npc_agent_evaluation LOCAL_NPC_EVALUATION_COMMAND "
+            "ios_deploy_runbook"
         ),
         "services/backend/src/myth_forge_api/final_demo_launch.py": (
             "final_acceptance_readiness npc_agent_evaluation_readiness final_operator_handoff "
-            "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness"
+            "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness ios_deploy_runbook"
         ),
         "services/backend/tests/test_final_demo_launch.py": (
-            "test_final_demo_launch_operator_handoff_includes_npc_evaluation_step"
+            "test_final_demo_launch_operator_handoff_includes_npc_evaluation_step "
+            "test_final_demo_launch_embeds_ios_deploy_runbook"
+        ),
+        "services/backend/tests/test_ios_deploy_runbook.py": (
+            "test_ios_deploy_runbook_ready_local_inputs_preserve_command_order"
+        ),
+        "services/backend/tests/test_final_operator_handoff.py": (
+            "test_operator_handoff_includes_ios_deploy_runbook_before_deploy_preflight"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift": (
             "getBackendHealth getFinalDemoLaunch"

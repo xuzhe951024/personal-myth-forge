@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from myth_forge_api.final_acceptance_readiness import LOCAL_FINAL_ACCEPTANCE_COMMAND
+from myth_forge_api.ios_deploy_runbook import IOS_DEPLOY_RUNBOOK_COMMAND
 from myth_forge_api.npc_agent_evaluation_readiness import LOCAL_NPC_EVALUATION_COMMAND
 
 LaunchMode = Literal["local", "configured"]
@@ -22,6 +23,8 @@ STEP_ORDER = [
     "apply_final_resources",
     "backend_device_server",
     "local_final_acceptance",
+    "npc_agent_evaluation",
+    "ios_deploy_runbook",
     "mobile_deploy_preflight",
     "xcode_build_gate",
     "configured_final_acceptance",
@@ -34,6 +37,7 @@ def build_final_operator_handoff_report(
     final_resources_preflight: dict[str, Any],
     final_acceptance_readiness: dict[str, Any],
     npc_agent_evaluation_readiness: dict[str, Any],
+    ios_deploy_runbook: dict[str, Any],
     launch_phases: list[dict[str, Any]],
     repo_root: Path | str | None = None,
 ) -> dict[str, Any]:
@@ -58,6 +62,7 @@ def build_final_operator_handoff_report(
         ),
         _local_acceptance_step(final_acceptance_readiness, phases),
         _npc_evaluation_step(npc_agent_evaluation_readiness),
+        _ios_deploy_runbook_step(ios_deploy_runbook),
         _acceptance_or_phase_step(
             step_id="mobile_deploy_preflight",
             blocker_id="mobile_deploy_preflight",
@@ -88,6 +93,7 @@ def build_final_operator_handoff_report(
             final_resources_preflight=final_resources_preflight,
             final_acceptance_readiness=final_acceptance_readiness,
             npc_agent_evaluation_readiness=npc_agent_evaluation_readiness,
+            ios_deploy_runbook=ios_deploy_runbook,
             steps=steps,
         ),
         "safety": {
@@ -208,6 +214,21 @@ def _npc_evaluation_step(readiness: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def _ios_deploy_runbook_step(runbook: dict[str, Any]) -> dict[str, Any]:
+    status = str(runbook.get("status", "missing"))
+    if status not in {"ready", "partial", "blocked", "missing"}:
+        status = "blocked"
+    return _step(
+        step_id="ios_deploy_runbook",
+        label="Review iOS deploy runbook",
+        status=status,
+        command=IOS_DEPLOY_RUNBOOK_COMMAND,
+        required_for="physical iPhone deploy command handoff",
+        source="ios_deploy_runbook",
+        notes=_ios_deploy_runbook_notes(runbook),
+    )
+
+
 def _configured_acceptance_step(
     *,
     mode: LaunchMode,
@@ -295,12 +316,36 @@ def _npc_evaluation_notes(readiness: dict[str, Any]) -> list[str]:
     return notes
 
 
+def _ios_deploy_runbook_notes(runbook: dict[str, Any]) -> list[str]:
+    notes: list[str] = []
+    input_slots = runbook.get("input_slots", [])
+    command_sequence = runbook.get("command_sequence", [])
+    if isinstance(input_slots, list):
+        missing = sum(
+            1
+            for slot in input_slots
+            if isinstance(slot, dict) and slot.get("status") == "missing"
+        )
+        blocked = sum(
+            1
+            for slot in input_slots
+            if isinstance(slot, dict) and slot.get("status") == "blocked"
+        )
+        notes.append(
+            f"iOS deploy runbook has {missing} missing and {blocked} blocked input slots."
+        )
+    if isinstance(command_sequence, list):
+        notes.append(f"iOS deploy runbook has {len(command_sequence)} command steps.")
+    return notes
+
+
 def _next_actions(
     *,
     mode: LaunchMode,
     final_resources_preflight: dict[str, Any],
     final_acceptance_readiness: dict[str, Any],
     npc_agent_evaluation_readiness: dict[str, Any],
+    ios_deploy_runbook: dict[str, Any],
     steps: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
@@ -319,6 +364,9 @@ def _next_actions(
             if action != "NPC Agent evaluation is ready"
         ]
         actions.extend(npc_actions)
+    runbook_step = next((step for step in steps if step["id"] == "ios_deploy_runbook"), None)
+    if runbook_step is not None and runbook_step["status"] in {"missing", "blocked"}:
+        actions.extend(_string_list(ios_deploy_runbook.get("operator_actions")))
     if mode == "configured" and any(
         step["id"] == "configured_final_acceptance" and step["status"] == "live"
         for step in steps
@@ -334,6 +382,8 @@ def _next_actions(
             if step["source"] == "final_acceptance_readiness":
                 continue
             if step["source"] == "npc_agent_evaluation_readiness":
+                continue
+            if step["source"] == "ios_deploy_runbook":
                 continue
             actions.append(f"unblock {step['id']}: {step['command']}")
         if step["status"] == "manual" and step["id"] == "xcode_build_gate":

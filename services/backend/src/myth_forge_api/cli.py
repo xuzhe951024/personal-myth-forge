@@ -25,6 +25,7 @@ from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
+from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.providers.factory import (
     build_npc_director,
     build_npc_tick_runtime,
@@ -119,6 +120,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
+        if args.command == "ios-deploy-runbook":
+            return _ios_deploy_runbook(
+                mode=args.mode,
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
         if args.command == "demo-acceptance":
             return _demo_acceptance(
                 provider_mode=args.provider_mode,
@@ -194,6 +201,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     final_demo_launch_parser.add_argument("--repo-root", default=None)
     final_demo_launch_parser.add_argument("--output", default=None)
+
+    ios_deploy_runbook_parser = subcommands.add_parser("ios-deploy-runbook")
+    ios_deploy_runbook_parser.add_argument(
+        "--mode",
+        choices=["local", "configured"],
+        default="local",
+    )
+    ios_deploy_runbook_parser.add_argument("--repo-root", default=None)
+    ios_deploy_runbook_parser.add_argument("--output", default=None)
 
     acceptance_parser = subcommands.add_parser("demo-acceptance")
     acceptance_parser.add_argument(
@@ -359,6 +375,20 @@ def _final_demo_launch(
     )
     _write_json_payload(result.report, output_path)
     return result.exit_code
+
+
+def _ios_deploy_runbook(
+    *,
+    mode: str,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    report = build_ios_deploy_runbook_report(
+        mode=mode,
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(report, output_path)
+    return 2 if report["status"] == "blocked" else 0
 
 
 def _demo_acceptance(
