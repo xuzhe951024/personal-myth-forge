@@ -1,0 +1,362 @@
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+LOCAL_REPORT_SOURCES = [
+    {
+        "id": "three_d_evaluation",
+        "path": "services/backend/.local/3d-evaluation-local.json",
+        "command": "make backend-evaluate-3d",
+    },
+    {
+        "id": "npc_agent_evaluation",
+        "path": "services/backend/.local/npc-evaluation-local.json",
+        "command": "make backend-evaluate-npc",
+    },
+    {
+        "id": "final_acceptance_local",
+        "path": "services/backend/.local/final-acceptance-local.json",
+        "command": "make final-acceptance-local",
+    },
+    {
+        "id": "final_demo_launch_local",
+        "path": "services/backend/.local/final-demo-launch-local.json",
+        "command": "make final-demo-launch",
+    },
+    {
+        "id": "ios_deploy_runbook_local",
+        "path": "services/backend/.local/ios-deploy-runbook-local.json",
+        "command": "make ios-deploy-runbook-local",
+    },
+]
+
+REHEARSAL_REPORT_SOURCES = [
+    {
+        "id": "final_configured_preflight",
+        "path": "services/backend/.local/final-configured-preflight.json",
+        "command": "make final-configured-preflight",
+    },
+    {
+        "id": "final_handoff_index",
+        "path": "services/backend/.local/final-handoff-index.json",
+        "command": "make final-handoff-index",
+    },
+    {
+        "id": "ios_device_launch_certificate",
+        "path": "services/backend/.local/ios-device-launch-certificate.json",
+        "command": "make ios-device-launch-certificate",
+    },
+]
+
+
+@dataclass(frozen=True)
+class IOSDeviceLaunchRehearsalResult:
+    exit_code: int
+    report: dict[str, Any]
+
+
+def build_ios_device_launch_rehearsal_report(
+    *,
+    repo_root: Path | str | None = None,
+) -> IOSDeviceLaunchRehearsalResult:
+    selected_repo_root = Path(repo_root) if repo_root is not None else _default_repo_root()
+    local_sources = [
+        _source_report(source=source, repo_root=selected_repo_root)
+        for source in LOCAL_REPORT_SOURCES
+    ]
+    final_rehearsal_local = _final_rehearsal_local(local_sources)
+    report_sources = {
+        source["id"]: _source_report(source=source, repo_root=selected_repo_root)
+        for source in REHEARSAL_REPORT_SOURCES
+    }
+    sequence = [
+        final_rehearsal_local,
+        report_sources["final_configured_preflight"],
+        report_sources["final_handoff_index"],
+        report_sources["ios_device_launch_certificate"],
+    ]
+    status = _overall_status(sequence)
+    mode = _mode_from_certificate(report_sources["ios_device_launch_certificate"])
+    report = {
+        "kind": "ios_device_launch_rehearsal_report",
+        "status": status,
+        "mode": mode,
+        "summary": _summary(sequence),
+        "sequence": sequence,
+        "local_rehearsal_reports": local_sources,
+        "configured_preflight": report_sources["final_configured_preflight"],
+        "final_handoff_index": report_sources["final_handoff_index"],
+        "ios_device_launch_certificate": report_sources[
+            "ios_device_launch_certificate"
+        ],
+        "operator_actions": _operator_actions(sequence),
+        "commands": _commands(),
+        "safety": _safety(),
+    }
+    sanitized = _sanitize_report(report, selected_repo_root)
+    return IOSDeviceLaunchRehearsalResult(
+        exit_code=0 if sanitized["status"] in {"ready", "partial"} else 2,
+        report=sanitized,
+    )
+
+
+def _final_rehearsal_local(local_sources: list[dict[str, Any]]) -> dict[str, Any]:
+    status = _combined_status([str(source["status"]) for source in local_sources])
+    return {
+        "id": "final_rehearsal_local",
+        "label": "Local final rehearsal",
+        "status": status,
+        "path": "services/backend/.local/",
+        "exists": all(source["exists"] for source in local_sources),
+        "command": "make final-rehearsal-local",
+        "kind": "local_rehearsal_report_set",
+        "classification": "saved_report_set",
+        "reports": [
+            _compact_source(source)
+            for source in local_sources
+        ],
+    }
+
+
+def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]:
+    relative_path = source["path"]
+    path = repo_root / relative_path
+    base = {
+        "id": source["id"],
+        "label": _label(source["id"]),
+        "path": relative_path,
+        "exists": path.exists(),
+        "command": source["command"],
+    }
+    if not path.exists():
+        return {
+            **base,
+            "status": "missing",
+            "kind": None,
+            "classification": "missing_report",
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {
+            **base,
+            "status": "blocked",
+            "kind": None,
+            "classification": "unreadable_report",
+        }
+    if not isinstance(payload, dict):
+        return {
+            **base,
+            "status": "blocked",
+            "kind": None,
+            "classification": "invalid_report_shape",
+        }
+    return {
+        **base,
+        "status": _saved_report_status(payload),
+        "kind": payload.get("kind"),
+        "classification": "saved_report",
+        "mode": payload.get("mode"),
+        "summary": payload.get("summary", {}),
+    }
+
+
+def _saved_report_status(payload: dict[str, Any]) -> str:
+    kind = str(payload.get("kind", ""))
+    if kind in {"three_d_evaluation_report", "npc_agent_evaluation_report"}:
+        return "blocked" if _positive_int(payload.get("failed")) else "ready"
+    if kind == "final_acceptance_report":
+        summary = payload.get("summary", {})
+        if isinstance(summary, dict) and (
+            _positive_int(summary.get("blocked")) or _positive_int(summary.get("failed"))
+        ):
+            return "blocked"
+        return _normalized_status(str(payload.get("overall_status", "ready")))
+    if kind == "final_demo_launch_report":
+        return _normalized_status(str(payload.get("overall_status", "ready")))
+    if kind in {
+        "ios_deploy_runbook_report",
+        "final_configured_preflight_report",
+        "final_handoff_index_report",
+        "ios_device_launch_certificate_report",
+    }:
+        return _normalized_status(str(payload.get("status", "ready")))
+    return _normalized_status(str(payload.get("status", "ready")))
+
+
+def _overall_status(sequence: list[dict[str, Any]]) -> str:
+    statuses = [str(step["status"]) for step in sequence]
+    if "missing" in statuses or "blocked" in statuses:
+        return "blocked"
+    if any(status in {"partial", "manual", "live"} for status in statuses):
+        return "partial"
+    certificate = next(
+        (step for step in sequence if step["id"] == "ios_device_launch_certificate"),
+        {},
+    )
+    summary = certificate.get("summary", {})
+    if isinstance(summary, dict) and any(
+        _positive_int(summary.get(status)) for status in ["manual", "live", "partial"]
+    ):
+        return "partial"
+    return "ready"
+
+
+def _summary(sequence: list[dict[str, Any]]) -> dict[str, int]:
+    statuses = ["ready", "missing", "blocked", "partial", "manual", "live"]
+    return {
+        status: sum(1 for step in sequence if step["status"] == status)
+        for status in statuses
+    }
+
+
+def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
+    actions = ["run make ios-device-launch-rehearsal"]
+    for step in sequence:
+        if step["status"] in {"missing", "blocked"}:
+            actions.append(f"refresh {step['id']}: {step['command']}")
+    if all(step["status"] not in {"missing", "blocked"} for step in sequence):
+        actions.append("continue with make backend-device-demo")
+        actions.append("run make mobile-deploy-preflight after backend is running")
+    return _dedupe(actions)
+
+
+def _commands() -> list[str]:
+    return [
+        "make ios-device-launch-rehearsal",
+        "make final-rehearsal-local",
+        "make final-configured-preflight",
+        "make final-handoff-index",
+        "make ios-device-launch-certificate",
+        (
+            "cd services/backend && uv run python -m myth_forge_api.cli "
+            "ios-device-launch-rehearsal --repo-root ../.. "
+            "--output .local/ios-device-launch-rehearsal.json"
+        ),
+    ]
+
+
+def _mode_from_certificate(certificate: dict[str, Any]) -> str:
+    mode = certificate.get("mode")
+    return str(mode) if mode in {"local", "configured"} else "local"
+
+
+def _compact_source(source: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: source[key]
+        for key in ["id", "status", "path", "exists", "kind", "command"]
+        if key in source
+    }
+
+
+def _combined_status(statuses: list[str]) -> str:
+    normalized = [_normalized_status(status) for status in statuses]
+    if "missing" in normalized:
+        return "missing"
+    if "blocked" in normalized:
+        return "blocked"
+    if "partial" in normalized:
+        return "partial"
+    return "ready"
+
+
+def _normalized_status(status: str) -> str:
+    if status in {"ready", "missing", "blocked", "partial", "manual", "live"}:
+        return status
+    if status in {"passed", "succeeded"}:
+        return "ready"
+    if status in {"failed", "error"}:
+        return "blocked"
+    return "blocked"
+
+
+def _positive_int(value: Any) -> int:
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int) and value > 0:
+        return value
+    return 0
+
+
+def _label(source_id: str) -> str:
+    return source_id.replace("_", " ").capitalize()
+
+
+def _safety() -> dict[str, bool]:
+    return {
+        "report_builder_commands_run": False,
+        "make_wrapper_runs_commands": True,
+        "writes_ignored_reports": True,
+        "provider_calls": False,
+        "live_provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "global_mutation": False,
+        "xcode_or_signing": False,
+        "keychain_writes": False,
+        "provider_secrets_in_report": False,
+        "raw_media_in_report": False,
+        "payment_links_in_report": False,
+        "local_paths_in_report": False,
+    }
+
+
+def _sanitize_report(report: dict[str, Any], repo_root: Path) -> dict[str, Any]:
+    return json.loads(json.dumps(_sanitize_value(report, repo_root)))
+
+
+def _sanitize_value(value: Any, repo_root: Path) -> Any:
+    if isinstance(value, str):
+        return _safe_text(value, repo_root)
+    if isinstance(value, list):
+        return [_sanitize_value(item, repo_root) for item in value]
+    if isinstance(value, dict):
+        return {key: _sanitize_value(item, repo_root) for key, item in value.items()}
+    return value
+
+
+def _safe_text(message: str, repo_root: Path) -> str:
+    sanitized = message
+    patterns = [
+        r"sk-[A-Za-z0-9._-]+",
+        r"Bearer\s+[A-Za-z0-9._~+/\-=:-]+",
+        r"api[_-]?key\s*[=:]\s*[^\s,;\"']+",
+        r"data:[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=_-]+",
+        r"local-capture://[^\s,;\"']+",
+        r"file://[^\s,;\"']+",
+        r"https?://pay\.[^\s,;\"']+",
+        r"https?://checkout\.[^\s,;\"']+",
+        r"raw_email:[^\n\r]+",
+        r"raw_calendar:[^\n\r]+",
+        r"private_message:[^\n\r]+",
+        r"raw_context:[^\n\r]+",
+        r"message_body:[^\n\r]+",
+    ]
+    for pattern in patterns:
+        sanitized = re.sub(pattern, "[redacted]", sanitized, flags=re.IGNORECASE)
+    root_text = str(repo_root)
+    if root_text:
+        sanitized = sanitized.replace(root_text, "[repo-root]")
+    home_text = str(Path.home())
+    if home_text:
+        sanitized = sanitized.replace(home_text, "[home]")
+    return sanitized
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
+def _default_repo_root() -> Path:
+    return Path(__file__).resolve().parents[4]
