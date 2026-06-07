@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+from datetime import datetime
 from pathlib import Path
 
 from myth_forge_api.config import Settings
@@ -94,6 +97,105 @@ def test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready(
     assert str(tmp_path) not in report_text
 
 
+def test_final_handoff_index_reports_missing_source_freshness(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_handoff_index_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    source_reports = {source["id"]: source for source in result.report["source_reports"]}
+
+    assert source_reports["three_d_evaluation"]["freshness"] == {
+        "status": "unknown",
+        "classification": "source_missing",
+        "checked_against": "git_head",
+        "source_modified_at": None,
+        "current_revision": None,
+        "current_revision_committed_at": None,
+    }
+    assert result.report["freshness_summary"]["unknown"] >= 1
+
+
+def test_final_handoff_index_marks_local_sources_fresh_against_git_head(
+    tmp_path: Path,
+) -> None:
+    repo_root = _init_git_repo(
+        tmp_path,
+        committed_at="2026-06-07T12:00:00+00:00",
+    )
+    _write_deploy_config_at(
+        repo_root,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge\n"
+            "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = configured\n"
+        ),
+    )
+    _write_final_resources(repo_root)
+    _write_local_rehearsal_reports(repo_root)
+    for path in (repo_root / "services/backend/.local").glob("*.json"):
+        _set_mtime(path, "2026-06-07T12:05:00+00:00")
+
+    result = build_final_handoff_index_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-secret",
+            npc_provider="openai",
+            openai_api_key="sk-openai-secret",
+            print_provider="local",
+        ),
+        repo_root=repo_root,
+    )
+    source_reports = {source["id"]: source for source in result.report["source_reports"]}
+
+    assert source_reports["three_d_evaluation"]["status"] == "ready"
+    assert source_reports["three_d_evaluation"]["freshness"]["status"] == "fresh"
+    assert source_reports["three_d_evaluation"]["freshness"][
+        "classification"
+    ] == "fresh_report"
+    assert result.report["freshness_summary"]["fresh"] >= 5
+    assert result.report["freshness_summary"]["stale"] == 0
+
+
+def test_final_handoff_index_blocks_stale_required_local_source(
+    tmp_path: Path,
+) -> None:
+    repo_root = _init_git_repo(
+        tmp_path,
+        committed_at="2026-06-07T12:10:00+00:00",
+    )
+    _write_deploy_config_at(repo_root)
+    _write_final_resources(repo_root)
+    _write_local_rehearsal_reports(repo_root)
+    stale_path = repo_root / "services/backend/.local/3d-evaluation-local.json"
+    _set_mtime(stale_path, "2026-06-07T12:00:00+00:00")
+
+    result = build_final_handoff_index_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-secret",
+            npc_provider="openai",
+            openai_api_key="sk-openai-secret",
+            print_provider="local",
+        ),
+        repo_root=repo_root,
+    )
+    source_reports = {source["id"]: source for source in result.report["source_reports"]}
+    lanes = result.report["lanes_by_id"]
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert lanes["local_rehearsal"]["status"] == "blocked"
+    assert source_reports["three_d_evaluation"]["status"] == "blocked"
+    assert source_reports["three_d_evaluation"]["classification"] == "stale_report"
+    assert source_reports["three_d_evaluation"]["freshness"]["status"] == "stale"
+    assert result.report["freshness_summary"]["stale"] >= 1
+
+
 def test_final_handoff_index_cli_writes_report_and_makefile_exposes_target(
     tmp_path: Path,
 ) -> None:
@@ -127,8 +229,12 @@ def test_final_handoff_index_cli_writes_report_and_makefile_exposes_target(
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:
     repo_root = tmp_path / "repo"
+    return _write_deploy_config_at(repo_root, local_config=local_config)
+
+
+def _write_deploy_config_at(repo_root: Path, local_config: str | None = None) -> Path:
     config_dir = repo_root / "apps/mobile/ios/Config"
-    config_dir.mkdir(parents=True)
+    config_dir.mkdir(parents=True, exist_ok=True)
     (config_dir / "Deployment.xcconfig").write_text(
         "\n".join(
             [
@@ -261,3 +367,38 @@ def _write_three_d_evaluation(repo_root: Path) -> None:
 def _write_json(path: Path, report: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report), encoding="utf-8")
+
+
+def _init_git_repo(tmp_path: Path, *, committed_at: str) -> Path:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    env = os.environ | {
+        "GIT_AUTHOR_DATE": committed_at,
+        "GIT_COMMITTER_DATE": committed_at,
+    }
+    subprocess.run(["git", "init"], cwd=repo_root, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=repo_root,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=repo_root,
+        check=True,
+    )
+    (repo_root / "README.md").write_text("test\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repo_root, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "initial"],
+        cwd=repo_root,
+        check=True,
+        env=env,
+        capture_output=True,
+    )
+    return repo_root
+
+
+def _set_mtime(path: Path, iso_timestamp: str) -> None:
+    epoch = datetime.fromisoformat(iso_timestamp).timestamp()
+    os.utime(path, (epoch, epoch))

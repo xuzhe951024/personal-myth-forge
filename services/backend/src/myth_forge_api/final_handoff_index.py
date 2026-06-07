@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -83,6 +85,7 @@ def build_final_handoff_index_report(
         "lanes": lanes,
         "lanes_by_id": {lane["id"]: lane for lane in lanes},
         "source_reports": source_reports,
+        "freshness_summary": _freshness_summary(source_reports),
         "operator_sequence": _operator_sequence(lanes),
         "commands": _commands(),
         "safety": _safety(),
@@ -97,11 +100,17 @@ def build_final_handoff_index_report(
 def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]:
     relative_path = source["path"]
     path = repo_root / relative_path
+    freshness = _freshness_report(
+        repo_root=repo_root,
+        source_file=path,
+        source_exists=path.exists(),
+    )
     base = {
         "id": source["id"],
         "path": relative_path,
         "exists": path.exists(),
         "command": source["command"],
+        "freshness": freshness,
     }
     if not path.exists():
         return {
@@ -126,11 +135,16 @@ def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]
             "kind": None,
             "classification": "invalid_report_shape",
         }
+    status = _saved_report_status(payload)
+    classification = "saved_report"
+    if freshness["status"] == "stale":
+        status = "blocked"
+        classification = "stale_report"
     return {
         **base,
-        "status": _saved_report_status(payload),
+        "status": status,
         "kind": payload.get("kind"),
-        "classification": "saved_report",
+        "classification": classification,
     }
 
 
@@ -393,6 +407,110 @@ def _positive_int(value: Any) -> int:
     if isinstance(value, int) and value > 0:
         return value
     return 0
+
+
+def _freshness_report(
+    *,
+    repo_root: Path,
+    source_file: Path,
+    source_exists: bool,
+) -> dict[str, Any]:
+    if not source_exists:
+        return _freshness_payload(
+            status="unknown",
+            classification="source_missing",
+            source_modified_at=None,
+            git_metadata=None,
+        )
+    source_modified_at = source_file.stat().st_mtime
+    git_metadata = _git_head_metadata(repo_root)
+    if git_metadata is None:
+        return _freshness_payload(
+            status="unknown",
+            classification="git_unavailable",
+            source_modified_at=source_modified_at,
+            git_metadata=None,
+        )
+    freshness_status = (
+        "stale"
+        if source_modified_at < git_metadata["committed_at_epoch"]
+        else "fresh"
+    )
+    return _freshness_payload(
+        status=freshness_status,
+        classification="stale_report" if freshness_status == "stale" else "fresh_report",
+        source_modified_at=source_modified_at,
+        git_metadata=git_metadata,
+    )
+
+
+def _git_head_metadata(repo_root: Path) -> dict[str, Any] | None:
+    try:
+        revision = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--short", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        ).stdout.strip()
+        committed_at = subprocess.run(
+            ["git", "-C", str(repo_root), "log", "-1", "--format=%ct", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        ).stdout.strip()
+    except (subprocess.SubprocessError, OSError):
+        return None
+    try:
+        committed_at_epoch = float(committed_at)
+    except ValueError:
+        return None
+    return {
+        "revision": revision or None,
+        "committed_at_epoch": committed_at_epoch,
+    }
+
+
+def _freshness_payload(
+    *,
+    status: str,
+    classification: str,
+    source_modified_at: float | None,
+    git_metadata: dict[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "classification": classification,
+        "checked_against": "git_head",
+        "source_modified_at": _iso_timestamp(source_modified_at),
+        "current_revision": None if git_metadata is None else git_metadata["revision"],
+        "current_revision_committed_at": None
+        if git_metadata is None
+        else _iso_timestamp(git_metadata["committed_at_epoch"]),
+    }
+
+
+def _iso_timestamp(epoch: float | None) -> str | None:
+    if epoch is None:
+        return None
+    return (
+        datetime.fromtimestamp(epoch, tz=timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
+def _freshness_summary(source_reports: list[dict[str, Any]]) -> dict[str, int]:
+    statuses = ["fresh", "stale", "unknown"]
+    return {
+        status: sum(
+            1
+            for source in source_reports
+            if source.get("freshness", {}).get("status") == status
+        )
+        for status in statuses
+    }
 
 
 def _safety() -> dict[str, bool]:
