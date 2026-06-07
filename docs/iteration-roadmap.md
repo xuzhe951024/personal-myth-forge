@@ -144,6 +144,7 @@ Bridge deliverable:
 - P0.126 final showcase readiness ledger integration for apply preview evidence and provider/key handoff next command routing
 - P0.127 iOS deploy runbook gate that inserts `make final-resource-apply-preview` before `make final-apply-resources`
 - P0.128 final external action ledger separating missing secrets, safe local writes, live provider cost actions, global Mac/Xcode actions, and device runtime actions
+- P0.129 iPhone Final Launch `External Actions` group for the final external action ledger payload
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

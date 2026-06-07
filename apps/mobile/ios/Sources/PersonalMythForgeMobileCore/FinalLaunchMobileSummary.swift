@@ -30,6 +30,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var resourceChecklistRows: [String]
     public var resourceRequirementRows: [String]
     public var applyPreviewRows: [String]
+    public var externalActionLedgerRows: [String]
     public var resourceHandoffRows: [String]
     public var resourceHandoffBackendRows: [String]
     public var resourceHandoffIOSRows: [String]
@@ -59,6 +60,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         resourceChecklistRows: [String] = [],
         resourceRequirementRows: [String] = [],
         applyPreviewRows: [String] = [],
+        externalActionLedgerRows: [String] = [],
         resourceHandoffRows: [String] = [],
         resourceHandoffBackendRows: [String] = [],
         resourceHandoffIOSRows: [String] = [],
@@ -87,6 +89,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.resourceChecklistRows = resourceChecklistRows
         self.resourceRequirementRows = resourceRequirementRows
         self.applyPreviewRows = applyPreviewRows
+        self.externalActionLedgerRows = externalActionLedgerRows
         self.resourceHandoffRows = resourceHandoffRows
         self.resourceHandoffBackendRows = resourceHandoffBackendRows
         self.resourceHandoffIOSRows = resourceHandoffIOSRows
@@ -163,6 +166,9 @@ public enum FinalLaunchMobileSummaryBuilder {
                 from: report.finalResourceRequirements
             ),
             applyPreviewRows: applyPreviewRows(from: report.finalResourceApplyPreview),
+            externalActionLedgerRows: externalActionLedgerRows(
+                from: report.finalExternalActionLedger
+            ),
             resourceHandoffRows: resourceHandoffRows(from: report.resourceReport),
             resourceHandoffBackendRows: resourceHandoffBackendRows(from: report.resourceReport),
             resourceHandoffIOSRows: resourceHandoffIOSRows(from: report.resourceReport),
@@ -393,6 +399,51 @@ public enum FinalLaunchMobileSummaryBuilder {
             parts.append("blocked by \(target.blockedBy.joined(separator: ", "))")
         } else if let firstSlot = target.slots.first {
             parts.append("writes \(firstSlot.writes.joined(separator: ", "))")
+        }
+        return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func externalActionLedgerRows(
+        from report: FinalExternalActionLedgerReport?
+    ) -> [String] {
+        guard let report else {
+            return ["External action ledger has not loaded."]
+        }
+        var rows = [
+            "External actions \(sanitize(report.status)): groups \(report.summary.groups), blocked \(report.summary.blocked), missing \(report.summary.missing), live \(report.summary.live), manual \(report.summary.manual)."
+        ]
+        let attention = report.actionGroups.filter { group in
+            status(from: group.status) != .ready
+        }
+        let selected = attention.isEmpty ? report.actionGroups : attention
+        rows.append(contentsOf: selected.prefix(3).map(externalActionGroupRow))
+        rows.append(
+            "Consent: global confirmation \(flag(report.safety.requiresUserConfirmationForGlobalActions)), live cost consent \(flag(report.safety.requiresCostConsentForLiveActions))."
+        )
+        rows.append(
+            "Safety: commands_run=\(flag(report.safety.commandsRun)) global_mutation=\(flag(report.safety.globalMutation)) live_calls=\(flag(report.safety.liveProviderCalls))"
+        )
+        if let command = report.operatorSequence.first, !command.isEmpty {
+            rows.append("First command: \(sanitize(command))")
+        }
+        if report.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready",
+           let action = report.operatorActions.first,
+           !action.isEmpty {
+            rows.append(sanitize(action))
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func externalActionGroupRow(
+        _ group: FinalExternalActionLedgerActionGroup
+    ) -> String {
+        let summary = group.summary
+        var parts = [
+            "\(group.id): \(group.status)",
+            "actions \(summary.actions), missing \(summary.missing), blocked \(summary.blocked), live \(summary.live), manual \(summary.manual)",
+        ]
+        if let action = group.actions.first {
+            parts.append("\(action.id) | \(action.command) | \(action.detail)")
         }
         return sanitize(parts.joined(separator: " | "))
     }
