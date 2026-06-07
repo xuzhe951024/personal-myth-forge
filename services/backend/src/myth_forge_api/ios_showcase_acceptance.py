@@ -130,6 +130,49 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_3d_generation_input_review",
+        label="Mobile 3D generation input review",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ThreeDGenerationInputReview.swift",
+                "ThreeDGenerationInputReviewBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ThreeDGenerationInputReview.swift",
+                "provider images",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ThreeDGenerationInputReview.swift",
+                "Raw capture files withheld.",
+            ),
+            SourceRequirement("apps/mobile/ios/App/ThreeDGenerationInputReviewView.swift", "3D Generation Input"),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "ThreeDGenerationInputReviewView(review: generationInputReview)",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "generationInputReview: threeDGenerationInputReview",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "ThreeDGenerationInputReviewBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
+                "ThreeDGenerationInputReviewView.swift",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testThreeDGenerationInputReviewShowsGuidedScanProviderSelection",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testThreeDGenerationInputReviewRedactsUnsafeText",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="capture_generation_receipt",
         label="Capture generation receipt",
         requirements=(

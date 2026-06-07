@@ -105,6 +105,7 @@ struct ForgeRootView: View {
                         generationReadinessTitle: captureGenerationReadiness.title,
                         generationReadinessRouteLabel: captureGenerationReadiness.route.displayLabel,
                         generationReadinessDetail: captureGenerationReadiness.detail,
+                        generationInputReview: threeDGenerationInputReview,
                         contextCapsuleReview: contextCapsuleReview,
                         forgeReadinessSummary: forgeReadinessSummary,
                         forgeActionGate: forgeActionGate,
@@ -599,6 +600,15 @@ struct ForgeRootView: View {
             capture: state.capture,
             session: readySession,
             captureGenerationReadiness: captureGenerationReadiness
+        )
+    }
+
+    private var threeDGenerationInputReview: ThreeDGenerationInputReview {
+        ThreeDGenerationInputReviewBuilder.build(
+            selection: mediaSelection,
+            generationReadiness: captureGenerationReadiness,
+            providerReadiness: providerReadiness,
+            providerReadinessError: providerReadinessError
         )
     }
 

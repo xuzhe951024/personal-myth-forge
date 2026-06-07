@@ -209,6 +209,11 @@ do {
     try testCaptureGenerationReadinessMarksARKitScanAssetRoute()
     try testCaptureGenerationReadinessMarksMissingThreeDProvider()
     try testCaptureGenerationReadinessRedactsProviderErrors()
+    try testThreeDGenerationInputReviewWaitsForCaptureMedia()
+    try testThreeDGenerationInputReviewShowsGuidedScanProviderSelection()
+    try testThreeDGenerationInputReviewShowsARKitScanPackage()
+    try testThreeDGenerationInputReviewShowsMeshyReadyRoute()
+    try testThreeDGenerationInputReviewRedactsUnsafeText()
     try testCaptureGenerationReceiptWaitsBeforeCapture()
     try testCaptureGenerationReceiptShowsUploadedCaptureBeforeSession()
     try testCaptureGenerationReceiptShowsReadyGuidedScanGeneration()
@@ -4961,6 +4966,156 @@ private func testCaptureGenerationReadinessRedactsProviderErrors() throws {
 
     try expectEqual(readiness.status, .needsAttention)
     try expectEqual(readiness.detail, "[withheld]")
+}
+
+private func testThreeDGenerationInputReviewWaitsForCaptureMedia() throws {
+    let selection = CaptureMediaSelection(mode: .guidedScan)
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: selection,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    let review = ThreeDGenerationInputReviewBuilder.build(
+        selection: selection,
+        generationReadiness: readiness,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(review.status, .waiting)
+    try expectEqual(review.canForge3D, false)
+    try expectEqual(review.routeLabel, "waiting")
+    try expectContains(review.title, "3D input waiting")
+    try expectContains(review.row(id: "capture_mode")?.detail ?? "", "guided_scan")
+    try expectContains(review.row(id: "provider_route")?.detail ?? "", "waiting")
+}
+
+private func testThreeDGenerationInputReviewShowsGuidedScanProviderSelection() throws {
+    let selection = CaptureMediaSelection(
+        mode: .guidedScan,
+        media: (0..<9).map { index in
+            captureMedia(filename: "scan_\(index).jpg", contentType: "image/jpeg", kind: .image)
+        }
+    )
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: selection,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    let review = ThreeDGenerationInputReviewBuilder.build(
+        selection: selection,
+        generationReadiness: readiness,
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(review), as: UTF8.self)
+
+    try expectEqual(review.status, .ready)
+    try expectEqual(review.canForge3D, true)
+    try expectEqual(review.routeLabel, "multi_image")
+    try expectEqual(review.selectedProviderSourceCount, 4)
+    try expectContains(review.row(id: "source_media")?.detail ?? "", "9 guided scan photos")
+    try expectContains(review.row(id: "provider_route")?.detail ?? "", "selected 4/9 provider images")
+    try expectContains(review.row(id: "provider")?.detail ?? "", "Local demo route ready")
+    try expectContains(review.privacyNotes.joined(separator: " "), "Raw capture files withheld")
+    try expectNotContains(text, "scan_0.jpg")
+}
+
+private func testThreeDGenerationInputReviewShowsARKitScanPackage() throws {
+    let selection = try ARKitScanPackageBuilder.selection(
+        scanExport: ARKitScanExportFile(
+            filename: "idol.glb",
+            contentType: "model/gltf-binary",
+            data: Data([1])
+        ),
+        referenceImages: [
+            ARKitScanReferenceImageFile(filename: "front.jpg", contentType: "image/jpeg", data: Data([2])),
+            ARKitScanReferenceImageFile(filename: "side.png", contentType: "image/png", data: Data([3])),
+        ]
+    )
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: selection,
+        providerReadiness: realThreeDProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    let review = ThreeDGenerationInputReviewBuilder.build(
+        selection: selection,
+        generationReadiness: readiness,
+        providerReadiness: realThreeDProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(review.status, .ready)
+    try expectEqual(review.routeLabel, "scan_asset")
+    try expectEqual(review.selectedProviderSourceCount, 1)
+    try expectContains(review.row(id: "source_media")?.detail ?? "", "1 scan asset + 2 references")
+    try expectContains(review.row(id: "provider_route")?.detail ?? "", "scan asset handoff")
+    try expectContains(review.row(id: "provider")?.detail ?? "", "Meshy real provider ready")
+}
+
+private func testThreeDGenerationInputReviewShowsMeshyReadyRoute() throws {
+    let selection = CaptureMediaSelection(
+        mode: .singlePhoto,
+        media: [captureMedia(filename: "key.jpg", contentType: "image/jpeg", kind: .image)]
+    )
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: selection,
+        providerReadiness: realThreeDProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    let review = ThreeDGenerationInputReviewBuilder.build(
+        selection: selection,
+        generationReadiness: readiness,
+        providerReadiness: realThreeDProviderReadiness(),
+        providerReadinessError: nil
+    )
+
+    try expectEqual(review.status, .ready)
+    try expectEqual(review.routeLabel, "single_image")
+    try expectEqual(review.selectedProviderSourceCount, 1)
+    try expectEqual(review.canForge3D, true)
+    try expectContains(review.title, "3D input ready")
+    try expectContains(review.detail, "Real 3D provider ready")
+    try expectContains(review.row(id: "provider_route")?.detail ?? "", "image-to-3D")
+    try expectContains(review.row(id: "provider")?.detail ?? "", "Meshy real provider ready")
+}
+
+private func testThreeDGenerationInputReviewRedactsUnsafeText() throws {
+    let selection = CaptureMediaSelection(
+        mode: .singlePhoto,
+        media: [captureMedia(filename: "/Users/zhexu/secret.jpg", contentType: "image/jpeg", kind: .image)]
+    )
+    let unsafeError = "Authorization=Bearer secret sk-test /Users/zhexu/private file:///tmp/private local-capture://cap data:image/png;base64,AAAA checkout_url=https://pay.example api_key=secret"
+    let readiness = CaptureGenerationReadinessBuilder.build(
+        selection: selection,
+        providerReadiness: nil,
+        providerReadinessError: unsafeError
+    )
+
+    let review = ThreeDGenerationInputReviewBuilder.build(
+        selection: selection,
+        generationReadiness: readiness,
+        providerReadiness: nil,
+        providerReadinessError: unsafeError
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(review), as: UTF8.self)
+
+    try expectEqual(review.status, .needsAttention)
+    try expectEqual(review.canForge3D, false)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "data:image")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key=secret")
+    try expectNotContains(text, "secret.jpg")
 }
 
 private func testCaptureGenerationReceiptWaitsBeforeCapture() throws {
