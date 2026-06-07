@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.115 Rehearsal Freshness</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f2;
+      --panel: #ffffff;
+      --ink: #17201b;
+      --muted: #65716b;
+      --line: #d7dfd7;
+      --green: #1d7550;
+      --amber: #936110;
+      --red: #a63d3d;
+      --blue: #2c5f82;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .screen {
+      min-height: 844px;
+      padding: 18px 14px 14px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 780;
+    }
+
+    .mode {
+      border: 1px solid #c9d5ce;
+      border-radius: 8px;
+      padding: 5px 8px;
+      color: var(--blue);
+      background: #edf4f0;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(27, 40, 34, 0.08);
+      padding: 12px;
+    }
+
+    .header {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .header-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .header h2 {
+      font-size: 16px;
+      font-weight: 760;
+      margin-bottom: 3px;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      border-radius: 8px;
+      padding: 4px 7px;
+      color: var(--red);
+      background: #f8eaea;
+      border: 1px solid #e4c4c4;
+      font-size: 11px;
+      font-weight: 820;
+      white-space: nowrap;
+    }
+
+    .section {
+      border-top: 1px solid var(--line);
+      margin-top: 10px;
+      padding-top: 8px;
+    }
+
+    .section h3 {
+      font-size: 12px;
+      font-weight: 780;
+      margin-bottom: 7px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 8px 1fr;
+      gap: 7px;
+      align-items: start;
+      color: var(--muted);
+      font-size: 11.5px;
+      margin: 5px 0;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      background: var(--green);
+    }
+
+    .dot.warn {
+      background: var(--amber);
+    }
+
+    .dot.blocked {
+      background: var(--red);
+    }
+
+    code {
+      display: block;
+      color: #26302b;
+      background: #eff2ef;
+      border: 1px solid #d9dfd8;
+      border-radius: 6px;
+      padding: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      margin-top: 5px;
+    }
+
+    .callout {
+      border: 1px solid #decaa5;
+      border-radius: 8px;
+      background: #fff9ee;
+      padding: 10px;
+      color: #604b25;
+      font-size: 11.5px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <div class="topbar">
+      <h1>Final Launch</h1>
+      <div class="mode">P0.115</div>
+    </div>
+
+    <section class="card" aria-label="iOS rehearsal freshness evidence">
+      <div class="header">
+        <div class="header-main">
+          <h2>Launch Rehearsal</h2>
+          <p>saved evidence is checked against current git HEAD</p>
+        </div>
+        <div class="badge">STALE</div>
+      </div>
+
+      <div class="section">
+        <h3>Readiness</h3>
+        <div class="row"><span class="dot blocked"></span><span>iOS launch rehearsal blocked: ready 4, blocked 0, partial 0.</span></div>
+        <div class="row"><span class="dot blocked"></span><span>Freshness: stale_report; rerun iOS device launch rehearsal.</span></div>
+        <div class="row"><span class="dot warn"></span><span>ios_device_launch_rehearsal_freshness: blocked | stale_report</span></div>
+      </div>
+
+      <div class="section">
+        <h3>Operator Action</h3>
+        <div class="row"><span class="dot warn"></span><span>rerun make ios-device-launch-rehearsal</span></div>
+        <code>make ios-device-launch-rehearsal</code>
+      </div>
+
+      <div class="section">
+        <h3>Evidence</h3>
+        <div class="row"><span class="dot"></span><span>checked_against: git_head</span></div>
+        <div class="row"><span class="dot"></span><span>source: services/backend/.local/ios-device-launch-rehearsal.json</span></div>
+        <div class="row"><span class="dot"></span><span>phone source: final-demo-launch-local.json</span></div>
+      </div>
+
+      <div class="section">
+        <h3>Safety</h3>
+        <div class="row"><span class="dot"></span><span>commands_run=false provider_calls=false global_mutation=false</span></div>
+        <div class="row"><span class="dot"></span><span>writes_backend_env=false writes_ios_deploy_config=false</span></div>
+        <div class="row"><span class="dot"></span><span>xcode_or_signing=false keychain_writes=false</span></div>
+      </div>
+
+      <div class="callout">
+        The app still does not run Mac commands. It only shows that saved launch
+        rehearsal evidence is older than the code currently being reviewed.
+      </div>
+    </section>
+  </main>
+</body>
+</html>
