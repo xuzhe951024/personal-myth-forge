@@ -153,6 +153,26 @@ capability is ready. `/v1/final-demo-launch` embeds the same report under
 `final_showcase_readiness`, and the iPhone Final Launch panel renders it under
 `Showcase Readiness`.
 
+P0.123 adds a print fulfillment readiness surface:
+
+```bash
+make print-fulfillment-readiness
+cat services/backend/.local/print-fulfillment-readiness.json
+```
+
+The report checks the real-world relic path without placing orders or calling
+Treatstock by itself. It combines local print quote acceptance, iPhone
+`PrintFulfillmentReceipt` source acceptance, the print fulfillment visual
+artifact, print provider/key handoff state, and an optional configured
+Treatstock quote evidence file at
+`services/backend/.local/print-quote-configured.json`. Missing configured
+Treatstock quote evidence makes the report `partial`; unsafe or unapproved quote
+evidence is `blocked`; a ready configured quote must still be a `draft_quote`
+with `requires_user_approval: true`. `/v1/final-demo-launch` embeds the report as
+`print_fulfillment_readiness`, final showcase readiness exposes it as the
+`print_fulfillment` capability, and the iPhone Final Launch panel renders it
+under `Print Fulfillment`.
+
 For the final key-backed handoff, fill the one-file resource bundle, apply it,
 then run the configured launch report:
 
