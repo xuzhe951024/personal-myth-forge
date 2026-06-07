@@ -123,9 +123,11 @@ do {
     try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook()
     try testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload()
     try testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload()
+    try testDecodesIOSDeviceLaunchRehearsalSourceFreshnessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal()
     try testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal()
     try testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness()
+    try testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalSourceFreshness()
     try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal()
     try testFinalLaunchMobileSummaryMarksReadyReport()
     try testFinalLaunchMobileSummaryRedactsUnsafeReportText()
@@ -2855,6 +2857,26 @@ private func testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload(
     try expectEqual(freshness.checkedAgainst, "git_head")
 }
 
+private func testDecodesIOSDeviceLaunchRehearsalSourceFreshnessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchSourceFreshnessStatus: "stale",
+            iosDeviceLaunchSourceFreshnessClassification: "stale_report",
+            iosDeviceLaunchSourceFreshnessSummaryJSON: #"{"fresh": 4, "stale": 1, "unknown": 0}"#
+        )
+    )
+    let row = try require(
+        report.iosDeviceLaunchRehearsalReadiness?.sequence.first,
+        "missing rehearsal sequence row"
+    )
+
+    try expectEqual(row.freshnessStatus, "stale")
+    try expectEqual(row.freshnessClassification, "stale_report")
+    try expectEqual(row.freshnessSummary?["stale"], 1)
+}
+
 private func testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -2896,6 +2918,22 @@ private func testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFresh
 
     try expectContains(text, "Freshness: stale_report; rerun iOS device launch rehearsal.")
     try expectContains(text, "rerun make ios-device-launch-rehearsal")
+}
+
+private func testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalSourceFreshness() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchSourceFreshnessStatus: "stale",
+            iosDeviceLaunchSourceFreshnessClassification: "stale_report",
+            iosDeviceLaunchSourceFreshnessSummaryJSON: #"{"fresh": 4, "stale": 1, "unknown": 0}"#
+        ),
+        error: nil
+    )
+    let text = summary.launchRehearsalRows.joined(separator: " ")
+
+    try expectContains(text, "Source freshness: 4 fresh, 1 stale, 0 unknown.")
+    try expectContains(text, "stale_report")
 }
 
 private func testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal() throws {
@@ -4140,6 +4178,9 @@ private func finalDemoLaunchPayload(
     iosDeviceLaunchRehearsalFreshnessClassification: String = "fresh_report",
     iosDeviceLaunchRehearsalFreshnessSourceModifiedAt: String = "2026-06-07T12:05:00Z",
     iosDeviceLaunchRehearsalFreshnessCurrentRevision: String = "abc1234",
+    iosDeviceLaunchSourceFreshnessStatus: String = "fresh",
+    iosDeviceLaunchSourceFreshnessClassification: String = "fresh_report",
+    iosDeviceLaunchSourceFreshnessSummaryJSON: String = #"{"fresh": 1, "stale": 0, "unknown": 0}"#,
     resourceHandoffStatus: String = "blocked",
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
@@ -4485,7 +4526,10 @@ private func finalDemoLaunchPayload(
                 "label": "Final handoff index",
                 "status": "\(iosDeviceLaunchRehearsalStatus == "ready" ? "ready" : "blocked")",
                 "command": "\(iosDeviceLaunchRehearsalCommand)",
-                "classification": "saved_report"
+                "classification": "saved_report",
+                "freshness_status": "\(iosDeviceLaunchSourceFreshnessStatus)",
+                "freshness_classification": "\(iosDeviceLaunchSourceFreshnessClassification)",
+                "freshness_summary": \(iosDeviceLaunchSourceFreshnessSummaryJSON)
               }
             ]
             """),
@@ -6923,6 +6967,9 @@ private func finalDemoLaunchReport(
     iosDeviceLaunchRehearsalFreshnessClassification: String = "fresh_report",
     iosDeviceLaunchRehearsalFreshnessSourceModifiedAt: String = "2026-06-07T12:05:00Z",
     iosDeviceLaunchRehearsalFreshnessCurrentRevision: String = "abc1234",
+    iosDeviceLaunchSourceFreshnessStatus: String = "fresh",
+    iosDeviceLaunchSourceFreshnessClassification: String = "fresh_report",
+    iosDeviceLaunchSourceFreshnessSummaryJSON: String = #"{"fresh": 1, "stale": 0, "unknown": 0}"#,
     resourceHandoffStatus: String = "blocked",
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
@@ -6962,6 +7009,9 @@ private func finalDemoLaunchReport(
             iosDeviceLaunchRehearsalFreshnessClassification: iosDeviceLaunchRehearsalFreshnessClassification,
             iosDeviceLaunchRehearsalFreshnessSourceModifiedAt: iosDeviceLaunchRehearsalFreshnessSourceModifiedAt,
             iosDeviceLaunchRehearsalFreshnessCurrentRevision: iosDeviceLaunchRehearsalFreshnessCurrentRevision,
+            iosDeviceLaunchSourceFreshnessStatus: iosDeviceLaunchSourceFreshnessStatus,
+            iosDeviceLaunchSourceFreshnessClassification: iosDeviceLaunchSourceFreshnessClassification,
+            iosDeviceLaunchSourceFreshnessSummaryJSON: iosDeviceLaunchSourceFreshnessSummaryJSON,
             resourceHandoffStatus: resourceHandoffStatus,
             resourceHandoffBackendStatus: resourceHandoffBackendStatus,
             resourceHandoffIOSStatus: resourceHandoffIOSStatus,

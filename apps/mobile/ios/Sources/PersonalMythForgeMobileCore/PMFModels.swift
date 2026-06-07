@@ -1377,19 +1377,28 @@ public struct IOSDeviceLaunchRehearsalSequenceRow: Codable, Equatable, Sendable 
     public var status: String
     public var command: String
     public var classification: String?
+    public var freshnessStatus: String?
+    public var freshnessClassification: String?
+    public var freshnessSummary: [String: Int]?
 
     public init(
         id: String,
         label: String,
         status: String,
         command: String,
-        classification: String? = nil
+        classification: String? = nil,
+        freshnessStatus: String? = nil,
+        freshnessClassification: String? = nil,
+        freshnessSummary: [String: Int]? = nil
     ) {
         self.id = id
         self.label = label
         self.status = status
         self.command = command
         self.classification = classification
+        self.freshnessStatus = freshnessStatus
+        self.freshnessClassification = freshnessClassification
+        self.freshnessSummary = freshnessSummary
     }
 }
 
