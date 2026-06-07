@@ -7,6 +7,7 @@ from myth_forge_api.config import Settings
 from myth_forge_api.final_demo_launch import FinalDemoLaunchResult
 from myth_forge_api.final_configured_preflight import FinalConfiguredPreflightResult
 from myth_forge_api.final_handoff_index import FinalHandoffIndexResult
+from myth_forge_api.final_showcase_readiness import FinalShowcaseReadinessResult
 from myth_forge_api.final_acceptance import FinalAcceptanceResult
 from myth_forge_api.resource_template_acceptance import ResourceTemplateAcceptanceResult
 from myth_forge_api.cli import main
@@ -750,6 +751,50 @@ def test_cli_final_handoff_index_writes_report_and_returns_result_code(
     assert exit_code == 2
     assert calls == [{"repo_root": tmp_path}]
     assert report["kind"] == "final_handoff_index_report"
+    assert report["status"] == "blocked"
+
+
+def test_cli_final_showcase_readiness_writes_report_and_returns_result_code(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "final-showcase-readiness.json"
+    calls = []
+
+    def fake_build_final_showcase_readiness_report(**kwargs):
+        calls.append(kwargs)
+        return FinalShowcaseReadinessResult(
+            exit_code=2,
+            report={
+                "kind": "final_showcase_readiness_report",
+                "status": "blocked",
+                "summary": {"ready": 0, "partial": 0, "blocked": 1},
+                "capabilities": [],
+                "operator_actions": ["run make final-rehearsal-local"],
+                "commands": ["make final-showcase-readiness"],
+                "safety": {"commands_run": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_final_showcase_readiness_report",
+        fake_build_final_showcase_readiness_report,
+    )
+
+    exit_code = main(
+        [
+            "final-showcase-readiness",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 2
+    assert calls == [{"repo_root": tmp_path}]
+    assert report["kind"] == "final_showcase_readiness_report"
     assert report["status"] == "blocked"
 
 

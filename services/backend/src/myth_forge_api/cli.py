@@ -29,6 +29,9 @@ from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
+from myth_forge_api.final_showcase_readiness import (
+    build_final_showcase_readiness_report,
+)
 from myth_forge_api.live_provider_evidence import (
     build_live_provider_evidence_report,
 )
@@ -137,6 +140,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if args.command == "final-handoff-index":
             return _final_handoff_index(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
+        if args.command == "final-showcase-readiness":
+            return _final_showcase_readiness(
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
@@ -253,6 +261,12 @@ def _build_parser() -> argparse.ArgumentParser:
     final_handoff_index_parser = subcommands.add_parser("final-handoff-index")
     final_handoff_index_parser.add_argument("--repo-root", default=None)
     final_handoff_index_parser.add_argument("--output", default=None)
+
+    final_showcase_readiness_parser = subcommands.add_parser(
+        "final-showcase-readiness"
+    )
+    final_showcase_readiness_parser.add_argument("--repo-root", default=None)
+    final_showcase_readiness_parser.add_argument("--output", default=None)
 
     live_provider_evidence_parser = subcommands.add_parser("live-provider-evidence")
     live_provider_evidence_parser.add_argument("--repo-root", default=None)
@@ -468,6 +482,18 @@ def _final_handoff_index(
     output_path: str | None,
 ) -> int:
     result = build_final_handoff_index_report(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _final_showcase_readiness(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = build_final_showcase_readiness_report(
         repo_root=Path(repo_root) if repo_root else None,
     )
     _write_json_payload(result.report, output_path)
