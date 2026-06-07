@@ -107,6 +107,27 @@ providers:
 make final-demo-launch
 ```
 
+Run the full local final rehearsal from the project root:
+
+```bash
+make final-rehearsal-local
+```
+
+This writes the canonical ignored local reports needed for handoff review:
+
+- `services/backend/.local/3d-evaluation-local.json`
+- `services/backend/.local/npc-evaluation-local.json`
+- `services/backend/.local/final-acceptance-local.json`
+- `services/backend/.local/final-demo-launch-local.json`
+- `services/backend/.local/ios-deploy-runbook-local.json`
+
+`final-rehearsal-local` runs only local/no-key gates by default. The final
+acceptance and iOS deploy runbook wrappers treat exit `2` as a valid
+report-written state, so expected local iPhone/Xcode blockers do not stop the
+rehearsal. Exit `1` still fails the target. The command does not call live
+providers, apply secrets, start servers, run Xcode, accept Apple licenses, or
+mutate global machine state.
+
 For the final key-backed handoff, fill the one-file resource bundle, apply it,
 then run the configured launch report:
 

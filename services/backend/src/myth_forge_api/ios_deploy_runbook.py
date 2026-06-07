@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from myth_forge_api.final_acceptance_readiness import (
+    LOCAL_FINAL_ACCEPTANCE_COMMAND,
     build_final_acceptance_readiness_report,
 )
 from myth_forge_api.final_resources_preflight import (
@@ -25,11 +26,7 @@ LaunchMode = Literal["local", "configured"]
 
 IOS_BASE_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.xcconfig")
 IOS_DEPLOY_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.local.xcconfig")
-IOS_DEPLOY_RUNBOOK_COMMAND = (
-    "cd services/backend && uv run python -m myth_forge_api.cli "
-    "ios-deploy-runbook --mode local --repo-root ../.. "
-    "--output .local/ios-deploy-runbook-local.json"
-)
+IOS_DEPLOY_RUNBOOK_COMMAND = "make ios-deploy-runbook-local"
 
 
 def build_ios_deploy_runbook_report(
@@ -146,7 +143,7 @@ def _input_slots(
             required=True,
             source="services/backend/.local/final-acceptance-local.json",
             action=(
-                "run local final acceptance and write "
+                f"run {LOCAL_FINAL_ACCEPTANCE_COMMAND} to write "
                 "services/backend/.local/final-acceptance-local.json"
             ),
         ),

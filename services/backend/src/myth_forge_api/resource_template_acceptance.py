@@ -27,6 +27,16 @@ FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET = "final-resources-preflight"
 CLI_PATH = "services/backend/src/myth_forge_api/cli.py"
 FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.py"
 FINAL_DEMO_LAUNCH_MAKE_TARGET = "final-demo-launch"
+FINAL_DEMO_LAUNCH_LOCAL_OUTPUT = ".local/final-demo-launch-local.json"
+FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH = (
+    "services/backend/scripts/write_final_acceptance_local.sh"
+)
+IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH = (
+    "services/backend/scripts/write_ios_deploy_runbook_local.sh"
+)
+FINAL_ACCEPTANCE_LOCAL_MAKE_TARGET = "final-acceptance-local"
+IOS_DEPLOY_RUNBOOK_LOCAL_MAKE_TARGET = "ios-deploy-runbook-local"
+FINAL_REHEARSAL_LOCAL_MAKE_TARGET = "final-rehearsal-local"
 BANNED_WRITER_TEXT = [
     "sudo",
     "xcode-select",
@@ -118,6 +128,13 @@ def run_resource_template_acceptance(
     final_demo_launch_text, final_demo_launch_exists = _read_optional_text(
         selected_repo_root / FINAL_DEMO_LAUNCH_PATH
     )
+    final_acceptance_local_script_text, final_acceptance_local_script_exists = (
+        _read_optional_text(selected_repo_root / FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH)
+    )
+    (
+        ios_deploy_runbook_local_script_text,
+        ios_deploy_runbook_local_script_exists,
+    ) = _read_optional_text(selected_repo_root / IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH)
 
     backend_keys = _parse_assignment_keys(backend_text, comment_prefixes=("#",))
     ios_keys = _parse_assignment_keys(ios_text, comment_prefixes=("#", "//"))
@@ -172,6 +189,14 @@ def run_resource_template_acceptance(
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
+    final_rehearsal_local_checks = _final_rehearsal_local_checks(
+        final_acceptance_script_text=final_acceptance_local_script_text,
+        final_acceptance_script_exists=final_acceptance_local_script_exists,
+        ios_deploy_runbook_script_text=ios_deploy_runbook_local_script_text,
+        ios_deploy_runbook_script_exists=ios_deploy_runbook_local_script_exists,
+        makefile_text=makefile_text,
+        makefile_exists=makefile_exists,
+    )
 
     checks = [
         _check("backend_template_exists", backend_exists),
@@ -188,6 +213,7 @@ def run_resource_template_acceptance(
             all(final_resources_preflight_checks.values()),
         ),
         _check("final_demo_launch", all(final_demo_launch_checks.values())),
+        _check("final_rehearsal_local", all(final_rehearsal_local_checks.values())),
     ]
     summary = {
         "passed": sum(1 for check in checks if check["status"] == "passed"),
@@ -249,6 +275,12 @@ def run_resource_template_acceptance(
             "make_target": FINAL_DEMO_LAUNCH_MAKE_TARGET,
             "exists": final_demo_launch_exists,
             "checks": final_demo_launch_checks,
+        },
+        "final_rehearsal_local": {
+            "make_target": FINAL_REHEARSAL_LOCAL_MAKE_TARGET,
+            "final_acceptance_script_path": FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH,
+            "ios_deploy_runbook_script_path": IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH,
+            "checks": final_rehearsal_local_checks,
         },
         "safety": safety,
     }
@@ -439,7 +471,49 @@ def _final_demo_launch_checks(
         "make_target": makefile_exists
         and FINAL_DEMO_LAUNCH_MAKE_TARGET in makefile_text
         and "myth_forge_api.cli final-demo-launch" in makefile_text,
+        "local_output_path": FINAL_DEMO_LAUNCH_LOCAL_OUTPUT in makefile_text,
         "uses_resource_handoff": "build_resource_handoff_report" in module_text,
+        "no_banned_commands": not any(
+            banned in checked_text for banned in BANNED_WRITER_TEXT
+        ),
+    }
+
+
+def _final_rehearsal_local_checks(
+    *,
+    final_acceptance_script_text: str,
+    final_acceptance_script_exists: bool,
+    ios_deploy_runbook_script_text: str,
+    ios_deploy_runbook_script_exists: bool,
+    makefile_text: str,
+    makefile_exists: bool,
+) -> dict[str, bool]:
+    checked_text = "\n".join(
+        [final_acceptance_script_text, ios_deploy_runbook_script_text, makefile_text]
+    )
+    return {
+        "final_acceptance_script_exists": final_acceptance_script_exists,
+        "ios_deploy_runbook_script_exists": ios_deploy_runbook_script_exists,
+        "final_acceptance_accepts_blocked_report": (
+            'accepted final acceptance exit code $status' in final_acceptance_script_text
+            and "final-acceptance-local.json" in final_acceptance_script_text
+        ),
+        "ios_deploy_runbook_accepts_blocked_report": (
+            "accepted iOS deploy runbook exit code $status"
+            in ios_deploy_runbook_script_text
+            and "ios-deploy-runbook-local.json" in ios_deploy_runbook_script_text
+        ),
+        "make_targets": makefile_exists
+        and FINAL_ACCEPTANCE_LOCAL_MAKE_TARGET in makefile_text
+        and FINAL_REHEARSAL_LOCAL_MAKE_TARGET in makefile_text
+        and IOS_DEPLOY_RUNBOOK_LOCAL_MAKE_TARGET in makefile_text
+        and FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH in makefile_text
+        and IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH in makefile_text
+        and "backend-evaluate-local" in makefile_text
+        and FINAL_DEMO_LAUNCH_MAKE_TARGET in makefile_text,
+        "local_output_paths": FINAL_DEMO_LAUNCH_LOCAL_OUTPUT in makefile_text
+        and "final-acceptance-local.json" in final_acceptance_script_text
+        and "ios-deploy-runbook-local.json" in ios_deploy_runbook_script_text,
         "no_banned_commands": not any(
             banned in checked_text for banned in BANNED_WRITER_TEXT
         ),

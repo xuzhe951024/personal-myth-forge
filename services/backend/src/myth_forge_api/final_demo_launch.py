@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_acceptance_readiness import (
+    LOCAL_FINAL_ACCEPTANCE_COMMAND,
     build_final_acceptance_readiness_report,
 )
 from myth_forge_api.final_resources_preflight import (
@@ -193,10 +194,7 @@ def _launch_phases(
             "Run local final acceptance",
             local_acceptance_status,
             "no-key deterministic smoke acceptance",
-            (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-acceptance --profile quick --provider-mode local --repo-root ../.."
-            ),
+            LOCAL_FINAL_ACCEPTANCE_COMMAND,
             ["Expected to surface local iOS/Xcode environment blockers on this machine."],
         ),
         _phase(
@@ -320,11 +318,7 @@ def _commands(mode: LaunchMode) -> list[str]:
                 "final-demo-launch --mode local --repo-root ../.. "
                 "--output .local/final-demo-launch-local.json"
             ),
-            (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-acceptance --profile quick --provider-mode local --repo-root ../.. "
-                "--output .local/final-acceptance-local.json"
-            ),
+            LOCAL_FINAL_ACCEPTANCE_COMMAND,
         ]
     return [
         "make final-resources-preflight",
@@ -341,6 +335,7 @@ def _commands(mode: LaunchMode) -> list[str]:
             "final-demo-launch --mode configured --repo-root ../.. "
             "--output .local/final-demo-launch-configured.json"
         ),
+        LOCAL_FINAL_ACCEPTANCE_COMMAND,
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "
             "final-acceptance --profile quick --provider-mode configured "

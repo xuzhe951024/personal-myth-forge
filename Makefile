@@ -43,15 +43,23 @@ final-apply-resources:
 final-resources-preflight:
 	cd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../..
 
-.PHONY: final-demo-launch
+.PHONY: final-acceptance-local final-demo-launch final-rehearsal-local
+
+final-acceptance-local:
+	@services/backend/scripts/write_final_acceptance_local.sh
 
 final-demo-launch:
-	cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../..
+	cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../.. --output .local/final-demo-launch-local.json
 
-.PHONY: ios-deploy-runbook
+.PHONY: ios-deploy-runbook ios-deploy-runbook-local
 
 ios-deploy-runbook:
 	cd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
+
+ios-deploy-runbook-local:
+	@services/backend/scripts/write_ios_deploy_runbook_local.sh
+
+final-rehearsal-local: backend-evaluate-local final-acceptance-local final-demo-launch ios-deploy-runbook-local
 
 .PHONY: mobile-xcode-build
 

@@ -105,6 +105,21 @@ P0.63 adds a consolidated final demo launch report for the operator handoff:
 make final-demo-launch
 ```
 
+P0.108 adds the project-root local rehearsal target that prepares every saved
+JSON report consumed by the iPhone `Final Launch Status` and deploy runbook
+panels:
+
+```bash
+make final-rehearsal-local
+```
+
+It writes the ignored local 3D evaluation, NPC Agent evaluation, final
+acceptance readiness, final demo launch, and iOS deploy runbook JSON files under
+`services/backend/.local/`. The wrappers accept report-written exit code `2`
+for known local deploy/Xcode blockers, but still fail on unusable exit code `1`.
+No live providers, Xcode builds, signing changes, keychain writes, Apple license
+acceptance, or global machine mutations are performed.
+
 That local mode is a no-key dry run. After backend provider keys and iOS deploy
 values are supplied through the unified final resource file, apply them and run
 configured mode:

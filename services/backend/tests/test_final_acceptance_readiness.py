@@ -37,7 +37,7 @@ def test_final_acceptance_readiness_missing_file_without_running_commands(
     }
     assert result.report["blockers"] == []
     assert result.report["operator_actions"] == [
-        "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
+        "run make final-acceptance-local to write services/backend/.local/final-acceptance-local.json"
     ]
     assert result.report["safety"] == {
         "commands_run": False,
@@ -108,8 +108,8 @@ def test_final_acceptance_readiness_blocks_stale_saved_report_against_git_head(
     assert result.report["blockers"][0]["id"] == "final_acceptance_freshness"
     assert result.report["blockers"][0]["classification"] == "stale_report"
     assert result.report["operator_actions"][0] == (
-        "regenerate services/backend/.local/final-acceptance-local.json "
-        "for the current git revision"
+        "rerun make final-acceptance-local to regenerate "
+        "services/backend/.local/final-acceptance-local.json for the current git revision"
     )
 
 
@@ -251,16 +251,12 @@ def test_final_acceptance_readiness_blocks_malformed_file_safely(tmp_path: Path)
             "label": "Final acceptance file",
             "status": "failed",
             "classification": "unreadable_report",
-            "command": (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-acceptance --profile quick --provider-mode local --repo-root ../.. "
-                "--output .local/final-acceptance-local.json"
-            ),
+            "command": "make final-acceptance-local",
             "detail": "Saved final acceptance report is not valid JSON.",
         }
     ]
     assert result.report["operator_actions"] == [
-        "regenerate services/backend/.local/final-acceptance-local.json"
+        "rerun make final-acceptance-local to regenerate services/backend/.local/final-acceptance-local.json"
     ]
     assert "sk-secret" not in report_text
     assert "/Users/" not in report_text

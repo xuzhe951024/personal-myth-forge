@@ -35,9 +35,11 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
     assert "write_backend_env" not in phases
     assert "write_ios_deploy_config" not in phases
     assert phases["configured_final_acceptance"]["status"] == "blocked"
+    assert phases["local_final_acceptance"]["command"] == "make final-acceptance-local"
     assert result.report["commands"].index("make final-resources-preflight") < (
         result.report["commands"].index("make final-apply-resources")
     )
+    assert "make final-acceptance-local" in result.report["commands"]
     assert "make final-apply-resources" in result.report["commands"]
     assert all("backend-write-provider-env" not in command for command in result.report["commands"])
     assert all("mobile-write-deploy-config" not in command for command in result.report["commands"])
@@ -143,14 +145,20 @@ def test_local_final_demo_launch_is_no_key_ready_but_surfaces_ios_actions(
     phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
     assert phases["apply_final_resources"]["status"] == "missing"
     assert phases["apply_final_resources"]["command"] == "make final-apply-resources"
+    assert phases["local_final_acceptance"]["command"] == "make final-acceptance-local"
     assert "write_backend_env" not in phases
     assert "write_ios_deploy_config" not in phases
     assert result.report["commands"].index("make final-resources-preflight") < (
         result.report["commands"].index("make final-apply-resources")
     )
     assert "make final-apply-resources" in result.report["commands"]
+    assert "make final-acceptance-local" in result.report["commands"]
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
+    assert all(
+        "final-acceptance --profile quick --provider-mode local" not in command
+        for command in result.report["commands"]
+    )
     assert all("MESHY_API_KEY=..." not in command for command in result.report["commands"])
     assert all("backend-write-provider-env" not in command for command in result.report["commands"])
     assert all("mobile-write-deploy-config" not in command for command in result.report["commands"])
