@@ -51,6 +51,11 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "mobile_summary_visual_regression_rows" in requirement_ids
     assert "mobile_status_view_visual_regression" in requirement_ids
     assert "contract_visual_regression_decode" in requirement_ids
+    assert "model_live_provider_evidence" in requirement_ids
+    assert "model_live_provider_evidence_field" in requirement_ids
+    assert "mobile_summary_live_provider_evidence_rows" in requirement_ids
+    assert "mobile_status_view_live_evidence" in requirement_ids
+    assert "contract_live_provider_evidence_decode" in requirement_ids
     assert result.report["safety"] == {
         "global_mutation": False,
         "live_provider_calls_by_default": False,
@@ -138,6 +143,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "iosDeviceLaunchRehearsalReadiness",
                 "VisualRegressionReadinessReport",
                 "visualRegressionReadiness",
+                "LiveProviderEvidenceReport",
+                "liveProviderEvidence",
                 "ResourceHandoffReport",
                 "resourceReport",
             ]
@@ -183,6 +190,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "deployRunbookSafetyRows",
                 "launchRehearsalRows",
                 "visualRegressionRows",
+                "liveProviderEvidenceRows",
                 "rehearsalFreshnessRow",
                 "Freshness:",
                 "resourceHandoffRows",
@@ -200,6 +208,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Deploy Safety",
                 "Launch Rehearsal",
                 "Visual Regression",
+                "Live Evidence",
                 "Resource Handoff",
                 "Backend Resources",
                 "iOS Resources",
@@ -245,6 +254,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryShowsReadyVisualRegression",
                 "testFinalLaunchMobileSummaryShowsBlockedVisualRegression",
                 "testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression",
+                "testDecodesLiveProviderEvidenceFromFinalLaunchPayload",
                 "testDecodesResourceHandoffFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsMissingResourceHandoff",
                 "testFinalLaunchMobileSummaryShowsReadyResourceHandoff",

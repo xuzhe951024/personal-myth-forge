@@ -175,6 +175,18 @@ Xcode, touch signing/keychain, or write backend/iOS config files. Exit `2`
 means the index was written with remaining blockers; exit `0` means the saved
 handoff state is ready enough for the next configured operator step.
 
+`make live-provider-evidence` writes
+`services/backend/.local/live-provider-evidence.json` as the P0.120 live
+provider evidence manifest for configured Meshy/OpenAI/Treatstock and iPhone
+proof. It only reads ignored configured evidence JSON files and never calls
+providers, applies secrets, writes backend/iOS config, starts servers, runs
+Xcode, touches signing/keychain, or mutates global machine state by itself.
+Default checkouts should expect exit `2` until the operator has explicitly run
+the listed key-backed evidence commands; those listed commands may spend provider
+credits only when run manually with the live-provider consent flags. The
+configured launch report embeds this manifest in `live_provider_evidence`, and
+the iPhone Final Launch panel renders it under `Live Evidence`.
+
 `make ios-device-launch-certificate` writes
 `services/backend/.local/ios-device-launch-certificate.json` as the final
 Mac-side certificate for starting the physical iPhone sequence. It composes the
