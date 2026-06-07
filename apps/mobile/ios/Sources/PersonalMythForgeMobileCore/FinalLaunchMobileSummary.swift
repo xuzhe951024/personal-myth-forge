@@ -190,6 +190,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         guard let readiness else {
             return "Acceptance: readiness report not loaded."
         }
+        if let freshness = readiness.freshness, freshness.status == "stale" {
+            return "Acceptance: \(freshness.classification); rerun final acceptance for current revision."
+        }
         return "Acceptance: \(readiness.summary.passed) passed, \(readiness.summary.blocked) blocked, \(readiness.summary.failed) failed."
     }
 
@@ -265,6 +268,11 @@ public enum FinalLaunchMobileSummaryBuilder {
     private static func acceptanceRows(from readiness: FinalAcceptanceReadinessReport?) -> [String] {
         guard let readiness else {
             return ["Final acceptance readiness has not loaded."]
+        }
+        if let freshness = readiness.freshness, freshness.status == "stale" {
+            return [
+                "Final acceptance freshness \(sanitize(freshness.classification)); rerun local final acceptance.",
+            ]
         }
         switch readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
         case "ready":

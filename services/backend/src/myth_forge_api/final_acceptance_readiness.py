@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -35,11 +37,17 @@ def build_final_acceptance_readiness_report(
         "path": _path_label(path=selected_acceptance_file, repo_root=selected_repo_root),
         "exists": selected_acceptance_file.exists(),
     }
+    freshness = _freshness_report(
+        repo_root=selected_repo_root,
+        acceptance_file=selected_acceptance_file,
+        source_exists=selected_acceptance_file.exists(),
+    )
     if not selected_acceptance_file.exists():
         report = _base_report(
             repo_root=selected_repo_root,
             status="missing",
             source_file=source_file,
+            freshness=freshness,
             summary=_empty_summary(),
             blockers=[],
             operator_actions=[
@@ -54,6 +62,7 @@ def build_final_acceptance_readiness_report(
         report = _invalid_report(
             repo_root=selected_repo_root,
             source_file=source_file,
+            freshness=freshness,
             classification="unreadable_report",
             detail="Saved final acceptance report is not valid JSON.",
         )
@@ -63,6 +72,7 @@ def build_final_acceptance_readiness_report(
         report = _invalid_report(
             repo_root=selected_repo_root,
             source_file=source_file,
+            freshness=freshness,
             classification="invalid_report_shape",
             detail="Saved final acceptance report must be a JSON object.",
         )
@@ -77,11 +87,14 @@ def build_final_acceptance_readiness_report(
         for check in checks
         if isinstance(check, dict) and check.get("status") in {"blocked", "failed"}
     ]
+    if freshness["status"] == "stale":
+        blockers.insert(0, _freshness_blocker(freshness))
     status = "ready" if summary["blocked"] == 0 and summary["failed"] == 0 and not blockers else "blocked"
     report = _base_report(
         repo_root=selected_repo_root,
         status=status,
         source_file=source_file,
+        freshness=freshness,
         summary=summary,
         blockers=blockers,
         operator_actions=_operator_actions(status=status, blockers=blockers),
@@ -96,6 +109,7 @@ def _invalid_report(
     *,
     repo_root: Path,
     source_file: dict[str, Any],
+    freshness: dict[str, Any],
     classification: str,
     detail: str,
 ) -> dict[str, Any]:
@@ -103,6 +117,7 @@ def _invalid_report(
         repo_root=repo_root,
         status="blocked",
         source_file=source_file,
+        freshness=freshness,
         summary=_empty_summary(),
         blockers=[
             {
@@ -125,6 +140,7 @@ def _base_report(
     repo_root: Path,
     status: str,
     source_file: dict[str, Any],
+    freshness: dict[str, Any],
     summary: dict[str, int],
     blockers: list[dict[str, Any]],
     operator_actions: list[str],
@@ -133,6 +149,7 @@ def _base_report(
         "kind": "final_acceptance_readiness_report",
         "status": status,
         "source_file": source_file,
+        "freshness": freshness,
         "summary": summary,
         "blockers": blockers,
         "operator_actions": operator_actions,
@@ -199,6 +216,109 @@ def _detail(check: dict[str, Any]) -> str:
     return "Final acceptance check needs attention."
 
 
+def _freshness_report(
+    *,
+    repo_root: Path,
+    acceptance_file: Path,
+    source_exists: bool,
+) -> dict[str, Any]:
+    if not source_exists:
+        return _freshness_payload(
+            status="unknown",
+            classification="source_missing",
+            source_modified_at=None,
+            git_metadata=None,
+        )
+    source_modified_at = acceptance_file.stat().st_mtime
+    git_metadata = _git_head_metadata(repo_root)
+    if git_metadata is None:
+        return _freshness_payload(
+            status="unknown",
+            classification="git_unavailable",
+            source_modified_at=source_modified_at,
+            git_metadata=None,
+        )
+    freshness_status = (
+        "stale"
+        if source_modified_at < git_metadata["committed_at_epoch"]
+        else "fresh"
+    )
+    return _freshness_payload(
+        status=freshness_status,
+        classification="stale_report" if freshness_status == "stale" else "fresh_report",
+        source_modified_at=source_modified_at,
+        git_metadata=git_metadata,
+    )
+
+
+def _git_head_metadata(repo_root: Path) -> dict[str, Any] | None:
+    try:
+        revision = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--short", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        ).stdout.strip()
+        committed_at = subprocess.run(
+            ["git", "-C", str(repo_root), "log", "-1", "--format=%ct", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        ).stdout.strip()
+    except (subprocess.SubprocessError, OSError):
+        return None
+    try:
+        committed_at_epoch = float(committed_at)
+    except ValueError:
+        return None
+    return {
+        "revision": revision or None,
+        "committed_at_epoch": committed_at_epoch,
+    }
+
+
+def _freshness_payload(
+    *,
+    status: str,
+    classification: str,
+    source_modified_at: float | None,
+    git_metadata: dict[str, Any] | None,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "classification": classification,
+        "checked_against": "git_head",
+        "source_modified_at": _iso_timestamp(source_modified_at),
+        "current_revision": None if git_metadata is None else git_metadata["revision"],
+        "current_revision_committed_at": None
+        if git_metadata is None
+        else _iso_timestamp(git_metadata["committed_at_epoch"]),
+    }
+
+
+def _iso_timestamp(epoch: float | None) -> str | None:
+    if epoch is None:
+        return None
+    return (
+        datetime.fromtimestamp(epoch, tz=timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
+def _freshness_blocker(freshness: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": "final_acceptance_freshness",
+        "label": "Final acceptance freshness",
+        "status": "blocked",
+        "classification": str(freshness["classification"]),
+        "command": LOCAL_FINAL_ACCEPTANCE_COMMAND,
+        "detail": "Saved final acceptance report is older than the current git revision.",
+    }
+
+
 def _operator_actions(*, status: str, blockers: list[dict[str, Any]]) -> list[str]:
     if status == "ready":
         return ["final acceptance is ready"]
@@ -211,6 +331,11 @@ def _operator_actions(*, status: str, blockers: list[dict[str, Any]]) -> list[st
             and classification == "blocked_by_local_ios_backend_health"
         ):
             actions.append("start backend-device-demo and rerun mobile deploy preflight")
+        elif blocker_id == "final_acceptance_freshness":
+            actions.append(
+                "regenerate services/backend/.local/final-acceptance-local.json "
+                "for the current git revision"
+            )
         elif blocker_id == "mobile_deploy_preflight":
             actions.append("provide iOS deploy config and rerun mobile deploy preflight")
         elif blocker_id == "mobile_xcode_build":

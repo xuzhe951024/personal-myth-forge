@@ -444,18 +444,46 @@ FEATURES = (
                 "build_final_acceptance_readiness_report",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_acceptance_readiness.py",
+                "_freshness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_acceptance_readiness.py",
+                "final_acceptance_freshness",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_acceptance_readiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalAcceptanceFreshness",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "FinalAcceptanceReadinessReport",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "freshness: FinalAcceptanceFreshness?",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "acceptanceRows",
             ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                'freshness.status == "stale"',
+            ),
             SourceRequirement("apps/mobile/ios/App/FinalLaunchStatusView.swift", "Acceptance"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness",
+            ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance",

@@ -82,7 +82,9 @@ do {
     try testFinalLaunchMobileSummaryShowsReadyResourceChecklist()
     try testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist()
     try testDecodesFinalAcceptanceReadinessFromFinalLaunchPayload()
+    try testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryWaitsForFinalAcceptanceReadiness()
+    try testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness()
     try testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance()
     try testFinalLaunchMobileSummaryShowsReadyFinalAcceptance()
     try testDecodesFinalOperatorHandoffFromFinalLaunchPayload()
@@ -1874,6 +1876,22 @@ private func testDecodesFinalAcceptanceReadinessFromFinalLaunchPayload() throws 
     try expectFalse(readiness.safety.commandsRun)
 }
 
+private func testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            finalAcceptanceStatus: "blocked",
+            finalAcceptanceFreshnessStatus: "stale",
+            finalAcceptanceFreshnessClassification: "stale_report"
+        )
+    )
+    let freshness = try require(report.finalAcceptanceReadiness?.freshness, "missing freshness")
+
+    try expectEqual(freshness.status, "stale")
+    try expectEqual(freshness.classification, "stale_report")
+    try expectEqual(freshness.checkedAgainst, "git_head")
+}
+
 private func testFinalLaunchMobileSummaryWaitsForFinalAcceptanceReadiness() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(finalAcceptanceStatus: "missing"),
@@ -1881,6 +1899,21 @@ private func testFinalLaunchMobileSummaryWaitsForFinalAcceptanceReadiness() thro
     )
 
     try expectEqual(summary.acceptanceRows.first, "Run local final acceptance to create the latest readiness report.")
+}
+
+private func testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalAcceptanceStatus: "blocked",
+            finalAcceptanceFreshnessStatus: "stale",
+            finalAcceptanceFreshnessClassification: "stale_report"
+        ),
+        error: nil
+    )
+
+    try expectContains(summary.launchReceiptRows[1], "stale_report")
+    try expectContains(summary.acceptanceRows.first ?? "", "stale_report")
 }
 
 private func testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance() throws {
@@ -2858,6 +2891,8 @@ private func finalDemoLaunchPayload(
     finalResourcesAction: String = "copy services/backend/final-resources.env.example",
     finalResourcesItemsJSON: String = "[]",
     finalAcceptanceStatus: String = "missing",
+    finalAcceptanceFreshnessStatus: String = "fresh",
+    finalAcceptanceFreshnessClassification: String = "fresh_report",
     finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
     finalOperatorHandoffStatus: String = "missing",
     finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
@@ -2916,6 +2951,14 @@ private func finalDemoLaunchPayload(
             "source_file": {
               "path": "services/backend/.local/final-acceptance-local.json",
               "exists": \(finalAcceptanceStatus == "missing" ? "false" : "true")
+            },
+            "freshness": {
+              "status": "\(finalAcceptanceFreshnessStatus)",
+              "classification": "\(finalAcceptanceFreshnessClassification)",
+              "checked_against": "git_head",
+              "source_modified_at": "2026-06-06T12:00:00Z",
+              "current_revision": "abc1234",
+              "current_revision_committed_at": "2026-06-06T12:05:00Z"
             },
             "summary": {
               "passed": \(finalAcceptanceStatus == "ready" ? "14" : "12"),
@@ -4790,6 +4833,8 @@ private func finalDemoLaunchReport(
     finalResourcesAction: String = "copy services/backend/final-resources.env.example",
     finalResourcesItemsJSON: String = "[]",
     finalAcceptanceStatus: String = "missing",
+    finalAcceptanceFreshnessStatus: String = "fresh",
+    finalAcceptanceFreshnessClassification: String = "fresh_report",
     finalAcceptanceBlockerDetail: String = "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
     finalOperatorHandoffStatus: String = "missing",
     finalOperatorHandoffAction: String = "run local final acceptance and write services/backend/.local/final-acceptance-local.json"
@@ -4804,6 +4849,8 @@ private func finalDemoLaunchReport(
             finalResourcesAction: finalResourcesAction,
             finalResourcesItemsJSON: finalResourcesItemsJSON,
             finalAcceptanceStatus: finalAcceptanceStatus,
+            finalAcceptanceFreshnessStatus: finalAcceptanceFreshnessStatus,
+            finalAcceptanceFreshnessClassification: finalAcceptanceFreshnessClassification,
             finalAcceptanceBlockerDetail: finalAcceptanceBlockerDetail,
             finalOperatorHandoffStatus: finalOperatorHandoffStatus,
             finalOperatorHandoffAction: finalOperatorHandoffAction

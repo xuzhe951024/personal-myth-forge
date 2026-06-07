@@ -667,6 +667,12 @@ do {
         "FinalAcceptanceReadinessReport",
         "final acceptance readiness model"
     )
+    try requireContains(pmfModels, "FinalAcceptanceFreshness", "final acceptance freshness model")
+    try requireContains(
+        pmfModels,
+        "freshness: FinalAcceptanceFreshness?",
+        "final acceptance freshness field"
+    )
     try requireContains(
         pmfModels,
         "finalAcceptanceReadiness",
@@ -693,6 +699,7 @@ do {
     try requireContains(finalLaunchMobileSummary, "launchReceiptRows", "final launch receipt rows")
     try requireContains(finalLaunchMobileSummary, "launchReceiptRows(from:", "final launch receipt builder")
     try requireContains(finalLaunchMobileSummary, "firstBlockerReceiptRow", "final launch receipt blocker row")
+    try requireContains(finalLaunchMobileSummary, "freshness.status == \"stale\"", "final launch stale freshness handling")
     try requireContains(finalLaunchMobileSummary, "modePolicyRows", "final launch summary mode policy rows")
     try requireContains(finalLaunchMobileSummary, "liveCallPolicy", "final launch summary live policy mapping")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRows", "final launch resource checklist rows")
@@ -710,6 +717,16 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt",
         "final launch ready configured receipt test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload",
+        "final acceptance freshness decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness",
+        "final acceptance stale freshness summary test"
     )
     try requireContains(
         contractTests,

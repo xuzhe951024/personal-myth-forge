@@ -104,6 +104,7 @@ Bridge deliverable:
 - P0.86 iPhone Demo Script final launch readiness step for operator-safe autopilot
 - P0.87 iPhone Final Launch resource checklist for API/key and deploy slots
 - P0.88 iPhone Final Launch receipt for verdict, first blocker, acceptance counts, and live consent
+- P0.89 final acceptance freshness guard for stale saved readiness reports
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice
