@@ -380,6 +380,23 @@ def test_final_demo_launch_embeds_live_provider_evidence(
     assert evidence["safety"]["commands_run"] is False
 
 
+def test_final_demo_launch_embeds_final_showcase_readiness(tmp_path: Path) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    readiness = result.report["final_showcase_readiness"]
+
+    assert readiness["kind"] == "final_showcase_readiness_report"
+    assert readiness["status"] in {"blocked", "partial", "ready"}
+    assert "ios_deployable" in readiness["capabilities_by_id"]
+    assert readiness["safety"]["commands_run"] is False
+
+
 def test_final_demo_launch_operator_handoff_includes_three_d_evaluation_step(
     tmp_path: Path,
 ) -> None:
