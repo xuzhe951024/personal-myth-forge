@@ -14,6 +14,9 @@ from myth_forge_api.final_acceptance_readiness import (
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
+from myth_forge_api.final_resource_requirements import (
+    build_final_resource_requirements_report,
+)
 from myth_forge_api.final_showcase_readiness import (
     build_final_showcase_readiness_report,
 )
@@ -61,6 +64,9 @@ def build_final_demo_launch_report(
         repo_root=selected_repo_root,
     )
     final_resources_preflight = build_final_resources_preflight_report(
+        repo_root=selected_repo_root,
+    ).report
+    final_resource_requirements = build_final_resource_requirements_report(
         repo_root=selected_repo_root,
     ).report
     final_acceptance_readiness = build_final_acceptance_readiness_report(
@@ -120,6 +126,7 @@ def build_final_demo_launch_report(
         "summary": resource_summary,
         "phase_summary": phase_summary,
         "final_resources_preflight": final_resources_preflight,
+        "final_resource_requirements": final_resource_requirements,
         "final_acceptance_readiness": final_acceptance_readiness,
         "three_d_evaluation_readiness": three_d_evaluation_readiness,
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,
@@ -353,6 +360,7 @@ def _operator_checklist(
 def _commands(mode: LaunchMode) -> list[str]:
     if mode == "local":
         return [
+            "make final-resource-requirements",
             "make final-resources-preflight",
             "make final-apply-resources",
             "make visual-regression-local",
@@ -369,6 +377,7 @@ def _commands(mode: LaunchMode) -> list[str]:
             LOCAL_FINAL_ACCEPTANCE_COMMAND,
         ]
     return [
+        "make final-resource-requirements",
         "make final-resources-preflight",
         "make final-apply-resources",
         "make visual-regression-local",

@@ -380,6 +380,28 @@ def test_final_demo_launch_embeds_print_fulfillment_readiness(
     assert readiness["safety"]["live_provider_calls"] is False
 
 
+def test_final_demo_launch_embeds_final_resource_requirements(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    requirements = result.report["final_resource_requirements"]
+
+    assert requirements["kind"] == "final_resource_requirements_report"
+    assert requirements["status"] == "blocked"
+    assert requirements["requirements_by_id"]["MESHY_API_KEY"]["secret"] is True
+    assert requirements["requirements_by_id"]["MESHY_API_KEY"]["status"] == "missing"
+    assert requirements["validation_commands"][0] == "make final-resource-requirements"
+    assert requirements["safety"]["provider_secrets_in_report"] is False
+    assert requirements["safety"]["live_provider_calls"] is False
+
+
 def test_final_demo_launch_embeds_live_provider_evidence(
     tmp_path: Path,
 ) -> None:
