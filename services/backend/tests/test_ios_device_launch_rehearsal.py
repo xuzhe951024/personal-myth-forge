@@ -471,8 +471,33 @@ def test_ios_device_launch_rehearsal_readiness_blocks_stale_saved_report_against
     assert result.report["blockers"][0]["classification"] == "stale_report"
     assert result.report["operator_actions"][0] == (
         "rerun make ios-device-launch-rehearsal to regenerate "
-        "services/backend/.local/ios-device-launch-rehearsal.json for the current git revision"
+        "services/backend/.local/ios-device-launch-rehearsal.json for the current product sources"
     )
+
+
+def test_ios_device_launch_rehearsal_readiness_ignores_newer_docs_only_commit(
+    tmp_path: Path,
+) -> None:
+    repo_root = _init_git_repo(
+        tmp_path,
+        committed_at="2026-06-07T12:00:00+00:00",
+    )
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="ready")
+    _set_mtime(report_path, "2026-06-07T12:05:00+00:00")
+    _commit_fixture_file(
+        repo_root,
+        relative_path="docs/superpowers/plans/docs-only.md",
+        content="docs only\n",
+        committed_at="2026-06-07T12:10:00+00:00",
+        message="docs only",
+    )
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
+    assert result.report["freshness"]["status"] == "fresh"
+    assert result.report["freshness"]["checked_against"] == "git_product_sources"
 
 
 def test_ios_device_launch_rehearsal_readiness_preserves_final_handoff_source_freshness(
@@ -628,7 +653,15 @@ def _init_git_repo(tmp_path: Path, *, committed_at: str) -> Path:
         check=True,
     )
     (repo_root / "README.md").write_text("test\n", encoding="utf-8")
-    subprocess.run(["git", "add", "README.md"], cwd=repo_root, check=True)
+    (repo_root / "Makefile").write_text(
+        "backend-test:\n\tpytest\n",
+        encoding="utf-8",
+    )
+    subprocess.run(
+        ["git", "add", "README.md", "Makefile"],
+        cwd=repo_root,
+        check=True,
+    )
     subprocess.run(
         ["git", "commit", "-m", "initial"],
         cwd=repo_root,
@@ -637,6 +670,31 @@ def _init_git_repo(tmp_path: Path, *, committed_at: str) -> Path:
         capture_output=True,
     )
     return repo_root
+
+
+def _commit_fixture_file(
+    repo_root: Path,
+    *,
+    relative_path: str,
+    content: str,
+    committed_at: str,
+    message: str,
+) -> None:
+    path = repo_root / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    subprocess.run(["git", "add", relative_path], cwd=repo_root, check=True)
+    env = os.environ | {
+        "GIT_AUTHOR_DATE": committed_at,
+        "GIT_COMMITTER_DATE": committed_at,
+    }
+    subprocess.run(
+        ["git", "commit", "-m", message],
+        cwd=repo_root,
+        check=True,
+        env=env,
+        capture_output=True,
+    )
 
 
 def _write_saved_rehearsal_readiness_report(
