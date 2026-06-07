@@ -106,7 +106,11 @@ uv run python -m myth_forge_api.cli final-configured-preflight --output .local/f
 uv run python -m myth_forge_api.cli final-handoff-index --output .local/final-handoff-index.json
 uv run python -m myth_forge_api.cli ios-device-launch-certificate --output .local/ios-device-launch-certificate.json
 uv run python -m myth_forge_api.cli ios-device-launch-rehearsal --output .local/ios-device-launch-rehearsal.json
+run_report_command "final launch rehearsal sync" sh -c '
+  uv run python -m myth_forge_api.cli final-demo-launch --mode local --output .local/final-demo-launch-local.json
+'
 printf '%s\\n' "services/backend/.local/ios-device-launch-rehearsal.json"
+printf '%s\\n' "services/backend/.local/final-demo-launch-local.json"
 """
 
 MAKEFILE_TEMPLATE = """.PHONY: backend-write-provider-env
@@ -431,6 +435,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         "composes_rehearsal_reports": True,
         "safety_contract": True,
         "script_accepts_blocked_reports": True,
+        "syncs_final_launch_after_rehearsal": True,
         "no_banned_commands": True,
     }
 

@@ -544,6 +544,26 @@ do {
     )
     try requireContains(
         iosDeviceLaunchRehearsalScript,
+        "final launch rehearsal sync",
+        "iOS device launch rehearsal final launch sync command label"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
+        "final-demo-launch",
+        "iOS device launch rehearsal final launch sync command"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
+        "--mode local",
+        "iOS device launch rehearsal final launch sync local mode"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
+        ".local/final-demo-launch-local.json",
+        "iOS device launch rehearsal final launch sync output"
+    )
+    try requireContains(
+        iosDeviceLaunchRehearsalScript,
         "services/backend/.local/ios-device-launch-rehearsal.json",
         "iOS device launch rehearsal report path"
     )

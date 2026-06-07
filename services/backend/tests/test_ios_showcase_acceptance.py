@@ -749,6 +749,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/scripts/write_ios_device_launch_rehearsal.sh": (
             "run_report_command accepted $label exit code final-configured-preflight "
             "final-handoff-index ios-device-launch-certificate ios-device-launch-rehearsal "
+            "final launch rehearsal sync final-demo-launch --mode local "
+            ".local/final-demo-launch-local.json "
             "services/backend/.local/ios-device-launch-rehearsal.json"
         ),
         "services/backend/tests/test_final_demo_launch.py": (

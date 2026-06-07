@@ -178,7 +178,10 @@ rehearsal, configured preflight, final handoff index, and iOS device launch
 certificate in order, accepting exit `2` for blocked-but-written reports. It
 does not call providers, apply resources, start servers, execute deploy
 preflight, run Xcode, write signing/keychain state, accept Apple licenses, or
-change global developer settings.
+change global developer settings. P0.114 finishes by rewriting
+`services/backend/.local/final-demo-launch-local.json` after
+`services/backend/.local/ios-device-launch-rehearsal.json`, so the phone's
+read-only `Launch Rehearsal` group reflects the newest Mac-side rehearsal run.
 
 P0.64 exposes the same sanitized status through:
 
@@ -192,7 +195,9 @@ see the final launch lane state directly on the phone. P0.113 decodes the saved
 `ios_device_launch_rehearsal_readiness` block from that payload and renders a
 `Launch Rehearsal` group in the Final Launch panel. The group is read-only: the
 app never runs Mac commands, starts servers, calls providers, applies resources,
-or touches Xcode/signing state.
+or touches Xcode/signing state. P0.114 keeps that payload fresh after the
+one-command Mac rehearsal by syncing `final-demo-launch-local.json` at the end
+of `make ios-device-launch-rehearsal`.
 
 ## P0.8 Xcode App Shell
 

@@ -129,6 +129,7 @@ Bridge deliverable:
 - P0.111 project-root iOS device launch certificate for the final physical-iPhone operator sequence
 - P0.112 project-root iOS device launch rehearsal wrapper for regenerating all safe handoff JSON evidence
 - P0.113 iPhone Final Launch panel rows for saved iOS device launch rehearsal readiness
+- P0.114 post-rehearsal final launch local sync so the iPhone reads the newest saved launch readiness
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

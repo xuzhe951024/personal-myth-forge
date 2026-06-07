@@ -747,6 +747,10 @@ def _ios_device_launch_rehearsal_checks(
     makefile_exists: bool,
 ) -> dict[str, bool]:
     checked_text = "\n".join([module_text, script_text, makefile_text])
+    rehearsal_command_index = script_text.find(
+        "myth_forge_api.cli ios-device-launch-rehearsal"
+    )
+    final_launch_sync_index = script_text.find("myth_forge_api.cli final-demo-launch")
     return {
         "module_exists": module_exists,
         "script_exists": script_exists,
@@ -794,6 +798,17 @@ def _ios_device_launch_rehearsal_checks(
                 "ios-device-launch-rehearsal",
             ]
         ),
+        "syncs_final_launch_after_rehearsal": all(
+            text in script_text
+            for text in [
+                "final launch rehearsal sync",
+                "myth_forge_api.cli final-demo-launch",
+                "--mode local",
+                FINAL_DEMO_LAUNCH_LOCAL_OUTPUT,
+            ]
+        )
+        and rehearsal_command_index >= 0
+        and final_launch_sync_index > rehearsal_command_index,
         "no_banned_commands": not any(
             banned in checked_text for banned in BANNED_WRITER_TEXT
         ),

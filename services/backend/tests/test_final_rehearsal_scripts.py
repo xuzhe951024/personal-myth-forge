@@ -68,7 +68,9 @@ def test_write_ios_device_launch_rehearsal_accepts_blocked_report_exit_code(
     assert "accepted final handoff index exit code 2" in result.stdout
     assert "accepted iOS device launch certificate exit code 2" in result.stdout
     assert "accepted iOS device launch rehearsal exit code 2" in result.stdout
+    assert "accepted final launch rehearsal sync exit code 2" in result.stdout
     assert "services/backend/.local/ios-device-launch-rehearsal.json" in result.stdout
+    assert "services/backend/.local/final-demo-launch-local.json" in result.stdout
     fake_make_args = (
         script_repo / "services/backend/.local/fake-make-args.txt"
     ).read_text(encoding="utf-8")
@@ -80,6 +82,28 @@ def test_write_ios_device_launch_rehearsal_accepts_blocked_report_exit_code(
     assert "final-handoff-index" in fake_uv_args
     assert "ios-device-launch-certificate" in fake_uv_args
     assert "ios-device-launch-rehearsal" in fake_uv_args
+    assert "final-demo-launch --mode local" in fake_uv_args
+    assert fake_uv_args.rfind("ios-device-launch-rehearsal") < fake_uv_args.rfind(
+        "final-demo-launch --mode local"
+    )
+
+
+def test_write_ios_device_launch_rehearsal_syncs_final_launch_after_rehearsal(
+    script_repo: Path,
+) -> None:
+    _write_fake_make(script_repo, exit_code=0)
+    _write_fake_uv(script_repo, exit_code=0)
+
+    result = _run_script(script_repo, "write_ios_device_launch_rehearsal.sh")
+    fake_uv_args = (
+        script_repo / "services/backend/.local/fake-uv-args.txt"
+    ).read_text(encoding="utf-8")
+
+    assert result.returncode == 0
+    assert fake_uv_args.rfind("ios-device-launch-rehearsal") < fake_uv_args.rfind(
+        "final-demo-launch --mode local"
+    )
+    assert "--output .local/final-demo-launch-local.json" in fake_uv_args
 
 
 def test_write_ios_device_launch_rehearsal_fails_unusable_exit_code(
