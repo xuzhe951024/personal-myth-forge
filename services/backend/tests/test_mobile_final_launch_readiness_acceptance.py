@@ -126,6 +126,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "displayLabel",
                 "IOSDeployRunbookReport",
                 "iosDeployRunbook",
+                "ResourceHandoffReport",
+                "resourceReport",
             ]
         ),
         "apps/mobile/ios/App/AppConfiguration.swift": "\n".join(
@@ -167,6 +169,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "deployRunbookRows",
                 "deployRunbookCommandRows",
                 "deployRunbookSafetyRows",
+                "resourceHandoffRows",
+                "resourceHandoffBackendRows",
+                "resourceHandoffIOSRows",
                 "sanitize",
             ]
         ),
@@ -177,6 +182,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "iOS Deploy Runbook",
                 "Deploy Commands",
                 "Deploy Safety",
+                "Resource Handoff",
+                "Backend Resources",
+                "iOS Resources",
                 "resourceActions",
                 "commandRows",
             ]
@@ -209,6 +217,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook",
                 "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook",
                 "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
+                "testDecodesResourceHandoffFromFinalLaunchPayload",
+                "testFinalLaunchMobileSummaryShowsMissingResourceHandoff",
+                "testFinalLaunchMobileSummaryShowsReadyResourceHandoff",
+                "testFinalLaunchMobileSummaryRedactsUnsafeResourceHandoff",
             ]
         ),
     }

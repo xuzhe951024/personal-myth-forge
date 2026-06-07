@@ -729,6 +729,16 @@ do {
         "iosDeployRunbook",
         "final demo launch iOS deploy runbook field"
     )
+    try requireContains(
+        pmfModels,
+        "ResourceHandoffReport",
+        "resource handoff model"
+    )
+    try requireContains(
+        pmfModels,
+        "resourceReport",
+        "final demo launch resource handoff field"
+    )
     try requireContains(pmfModels, "FinalResourcesPreflightItem", "final resources preflight item model")
     try requireContains(
         pmfModels,
@@ -745,6 +755,17 @@ do {
     try requireContains(finalLaunchMobileSummary, "liveCallPolicy", "final launch summary live policy mapping")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRows", "final launch resource checklist rows")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRow", "final launch resource checklist row builder")
+    try requireContains(finalLaunchMobileSummary, "resourceHandoffRows", "final launch resource handoff rows")
+    try requireContains(
+        finalLaunchMobileSummary,
+        "resourceHandoffBackendRows",
+        "final launch backend resource handoff rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "resourceHandoffIOSRows",
+        "final launch iOS resource handoff rows"
+    )
     try requireContains(finalLaunchMobileSummary, "acceptanceRows", "final launch summary acceptance rows")
     try requireContains(finalLaunchMobileSummary, "npcEvaluationRows", "final launch summary NPC evaluation rows")
     try requireContains(
@@ -821,6 +842,9 @@ do {
     )
     try requireContains(finalLaunchStatusView, "Launch Receipt", "final launch receipt section")
     try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")
+    try requireContains(finalLaunchStatusView, "Resource Handoff", "final launch resource handoff section")
+    try requireContains(finalLaunchStatusView, "Backend Resources", "final launch backend resources section")
+    try requireContains(finalLaunchStatusView, "iOS Resources", "final launch iOS resources section")
     try requireContains(finalLaunchStatusView, "NPC Evaluation", "final launch NPC evaluation section")
     try requireContains(
         contractTests,
@@ -876,6 +900,26 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
         "iOS deploy runbook redaction test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesResourceHandoffFromFinalLaunchPayload",
+        "resource handoff decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsMissingResourceHandoff",
+        "resource handoff missing summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsReadyResourceHandoff",
+        "resource handoff ready summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryRedactsUnsafeResourceHandoff",
+        "resource handoff redaction test"
     )
     try requireContains(
         contractTests,

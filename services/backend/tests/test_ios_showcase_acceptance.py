@@ -215,7 +215,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/FinalShowcaseSummaryView.swift": "Final Showcase",
         "apps/mobile/ios/App/FinalLaunchStatusView.swift": (
             "Mode Acceptance NPC Evaluation iOS Deploy Runbook Deploy Commands Deploy Safety "
-            "Next handoffRows Launch Receipt Resource Checklist"
+            "Resource Handoff Backend Resources iOS Resources Next handoffRows Launch Receipt "
+            "Resource Checklist"
         ),
         "apps/mobile/ios/App/DevicePreflightView.swift": (
             "Device Preflight backendBaseURL Check checkBackend"
@@ -289,6 +290,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook "
             "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook "
             "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook "
+            "testDecodesResourceHandoffFromFinalLaunchPayload "
+            "testFinalLaunchMobileSummaryShowsMissingResourceHandoff "
+            "testFinalLaunchMobileSummaryShowsReadyResourceHandoff "
+            "testFinalLaunchMobileSummaryRedactsUnsafeResourceHandoff "
             "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
             "testGetConfiguredFinalDemoLaunchBuildsGETRequest "
             "testFinalLaunchMobileSummaryShowsConfiguredModePolicy"
@@ -330,12 +335,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "FinalLaunchMode displayLabel FinalResourcesPreflightItem FinalAcceptanceFreshness "
             "NPCAgentEvaluationReadinessReport npcAgentEvaluationReadiness "
             "IOSDeployRunbookReport iosDeployRunbook "
+            "ResourceHandoffReport resourceReport "
             "items: [FinalResourcesPreflightItem] freshness: FinalAcceptanceFreshness?"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
             "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows "
             "launchReceiptRows firstBlockerReceiptRow freshness.status == \"stale\" "
-            "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows"
+            "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
+            "resourceHandoffRows resourceHandoffBackendRows resourceHandoffIOSRows"
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
             "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness"

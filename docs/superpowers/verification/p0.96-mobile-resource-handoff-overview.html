@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.96 Mobile Resource Handoff Overview</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f4f1ec;
+        --panel: #fffdf8;
+        --ink: #151914;
+        --muted: #5c635d;
+        --line: #d7d0c5;
+        --green: #187348;
+        --amber: #9c5e12;
+        --red: #b1453c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        width: 390px;
+        min-height: 844px;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: 390px;
+        min-height: 844px;
+        padding: 16px 14px 18px;
+        overflow: hidden;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 11px;
+        box-shadow: 0 10px 24px rgba(44, 38, 28, 0.08);
+      }
+
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.32;
+      }
+
+      .badge {
+        flex: 0 0 auto;
+        color: var(--amber);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      section {
+        border-top: 1px solid var(--line);
+        margin-top: 8px;
+        padding-top: 7px;
+      }
+
+      h2 {
+        margin: 0 0 4px;
+        font-size: 11px;
+        line-height: 1.2;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .lines {
+        display: grid;
+        gap: 3px;
+      }
+
+      .line {
+        color: var(--muted);
+        font-family: "SF Mono", Menlo, ui-monospace, monospace;
+        font-size: 8.7px;
+        line-height: 1.28;
+        overflow-wrap: anywhere;
+      }
+
+      .line.primary {
+        color: var(--ink);
+      }
+
+      .line.warning {
+        color: var(--amber);
+      }
+
+      .line.blocked {
+        color: var(--red);
+      }
+
+      .phase {
+        display: grid;
+        grid-template-columns: 9px 104px 1fr;
+        gap: 7px;
+        align-items: start;
+        margin-top: 8px;
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 99px;
+        background: var(--green);
+        margin-top: 5px;
+      }
+
+      .dot.amber {
+        background: var(--amber);
+      }
+
+      .phase strong {
+        font-size: 10px;
+        line-height: 1.2;
+      }
+
+      .phase span {
+        color: var(--muted);
+        font-size: 9px;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+      }
+
+      footer {
+        margin-top: 9px;
+        color: var(--muted);
+        font-size: 8.8px;
+        line-height: 1.34;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="panel">
+        <header>
+          <div>
+            <h1>Final Launch Status</h1>
+            <p class="subtitle">mode configured; ready 2, missing 4, blocked 1, manual 1</p>
+          </div>
+          <div class="badge">Blocked</div>
+        </header>
+
+        <div class="phase">
+          <div class="dot"></div>
+          <strong>Start backend on LAN</strong>
+          <span>make backend-device-demo</span>
+        </div>
+        <div class="phase">
+          <div class="dot amber"></div>
+          <strong>Apply final resources</strong>
+          <span>make final-apply-resources | read ignored resource bundle</span>
+        </div>
+
+        <section>
+          <h2>Launch Receipt</h2>
+          <div class="lines">
+            <div class="line primary">Receipt: configured launch blocked.</div>
+            <div class="line">Acceptance: readiness report not loaded.</div>
+            <div class="line warning">First blocker: provide final provider keys and iOS deploy values</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Resource Checklist</h2>
+          <div class="lines">
+            <div class="line warning">MESHY_API_KEY: missing required missing_required_value</div>
+            <div class="line warning">OPENAI_API_KEY: missing required missing_required_value</div>
+            <div class="line blocked">PMF_BACKEND_BASE_URL: blocked required loopback_url</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Resource Handoff</h2>
+          <div class="lines">
+            <div class="line primary">Resource handoff blocked: ready 2, missing 4, blocked 1, manual 1.</div>
+            <div class="line">Backend: services/backend/.env</div>
+            <div class="line">iOS: apps/mobile/ios/Config/Deployment.local.xcconfig</div>
+            <div class="line warning">provide final provider keys through final-resources.env</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Backend Resources</h2>
+          <div class="lines">
+            <div class="line warning">MESHY_API_KEY: missing | real text/image/multi-image 3D generation</div>
+            <div class="line warning">OPENAI_API_KEY: missing | AI Agent NPC traces and ticks</div>
+            <div class="line">PRINT_PROVIDER: ready | print quote review</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>iOS Resources</h2>
+          <div class="lines">
+            <div class="line blocked">PMF_BACKEND_BASE_URL: blocked | device-to-Mac backend calls</div>
+            <div class="line warning">DEVELOPMENT_TEAM: missing | iPhone signing</div>
+            <div class="line">PRODUCT_BUNDLE_IDENTIFIER: ready | iPhone signing</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>iOS Deploy Runbook</h2>
+          <div class="lines">
+            <div class="line primary">iOS deploy runbook partial.</div>
+            <div class="line warning">backend_base_url: missing required blocked_by_ios_deploy_config</div>
+          </div>
+        </section>
+
+        <footer>
+          read-only iPhone launch status. Provider keys remain backend-only; resource apply commands
+          are for the Mac operator and are not executed by the app.
+        </footer>
+      </div>
+    </main>
+  </body>
+</html>
