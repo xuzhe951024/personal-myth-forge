@@ -23,6 +23,7 @@ public enum PreparedArtifactAssetStatus: String, Equatable, Sendable {
     case unsupportedURI
     case unsupportedFormat
     case downloadFailed
+    case sceneLoadFailed
     case cancelled
 }
 
@@ -51,6 +52,20 @@ public struct PreparedArtifactAsset: Equatable, Sendable {
         self.status = status
         self.statusTitle = statusTitle
         self.statusDetail = statusDetail
+    }
+}
+
+public extension PreparedArtifactAsset {
+    func sceneLoadFailure(detail: String) -> PreparedArtifactAsset {
+        PreparedArtifactAsset(
+            preview: preview,
+            sourceURI: sourceURI,
+            cachedURL: cachedURL,
+            sceneURL: nil,
+            status: .sceneLoadFailed,
+            statusTitle: "SceneKit load failed",
+            statusDetail: detail
+        )
     }
 }
 
