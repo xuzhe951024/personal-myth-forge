@@ -498,6 +498,52 @@ def test_ios_device_launch_rehearsal_readiness_preserves_final_handoff_source_fr
     assert row["freshness_classification"] == "stale_report"
 
 
+def test_ios_device_launch_rehearsal_readiness_preserves_bounded_operator_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["operator_actions"] = [
+        "final_rehearsal_local: action 1",
+        "final_rehearsal_local: action 2",
+        "final_rehearsal_local: action 3",
+        "final_rehearsal_local: action 4",
+        "final_rehearsal_local: action 5",
+        "final_rehearsal_local: action 6",
+        "final_configured_preflight: action 1",
+        "final_configured_preflight: action 2",
+        "final_configured_preflight: action 3",
+        "final_configured_preflight: action 4",
+        "final_handoff_index: run make final-configured-preflight",
+        "final_handoff_index: run configured final-demo-launch",
+        "final_handoff_index: run make mobile-deploy-preflight",
+        "ios_device_launch_certificate: run make final-handoff-index",
+        "ios_device_launch_certificate: provide iOS deploy config",
+        "ios_device_launch_certificate: run make ios-deploy-runbook-local",
+        "ios_device_launch_certificate: start backend-device-demo",
+        "future_launch_group: optional action 1",
+        "future_launch_group: optional action 2",
+        "future_launch_group: optional action 3",
+        "future_launch_group: optional action 4",
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+
+    assert result.exit_code == 2
+    assert len(result.report["operator_actions"]) == 20
+    assert (
+        "final_handoff_index: run make final-configured-preflight"
+        in result.report["operator_actions"]
+    )
+    assert (
+        "ios_device_launch_certificate: run make final-handoff-index"
+        in result.report["operator_actions"]
+    )
+    assert "future_launch_group: optional action 4" not in result.report["operator_actions"]
+
+
 def _write_local_rehearsal_reports(local_dir: Path) -> None:
     _write_json(
         local_dir / "3d-evaluation-local.json",

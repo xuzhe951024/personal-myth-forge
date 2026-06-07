@@ -16,6 +16,7 @@ IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION = (
     "rerun make ios-device-launch-rehearsal to regenerate "
     "services/backend/.local/ios-device-launch-rehearsal.json for the current git revision"
 )
+IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT = 20
 
 
 @dataclass(frozen=True)
@@ -242,11 +243,16 @@ def _operator_actions(
             if isinstance(raw_actions, list)
             else []
         )
-        return _dedupe([IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION, *existing_actions])[:5]
+        return _dedupe(
+            [IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION, *existing_actions]
+        )[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
     if not isinstance(raw_actions, list):
         return [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
     actions = [str(action) for action in raw_actions if isinstance(action, str) and action]
-    return _dedupe(actions)[:5] or [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
+    return (
+        _dedupe(actions)[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
+        or [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
+    )
 
 
 def _commands(raw_commands: Any) -> list[str]:

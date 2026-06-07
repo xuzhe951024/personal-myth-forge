@@ -148,6 +148,7 @@ do {
     try testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload()
     try testDecodesIOSDeviceLaunchRehearsalSourceFreshnessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal()
+    try testFinalLaunchMobileSummaryShowsMultipleIOSDeviceLaunchRehearsalActions()
     try testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal()
     try testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness()
     try testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalSourceFreshness()
@@ -3357,6 +3358,25 @@ private func testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal() 
     try expectContains(text, "refresh final handoff index")
 }
 
+private func testFinalLaunchMobileSummaryShowsMultipleIOSDeviceLaunchRehearsalActions() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchRehearsalActions: [
+                "final_rehearsal_local: final_acceptance_local: provide iOS deploy config",
+                "final_handoff_index: run make final-configured-preflight",
+                "ios_device_launch_certificate: run make final-handoff-index",
+            ]
+        ),
+        error: nil
+    )
+    let text = summary.launchRehearsalRows.joined(separator: " ")
+
+    try expectContains(text, "final_rehearsal_local: final_acceptance_local")
+    try expectContains(text, "final_handoff_index: run make final-configured-preflight")
+    try expectContains(text, "ios_device_launch_certificate: run make final-handoff-index")
+}
+
 private func testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(iosDeviceLaunchRehearsalStatus: "ready"),
@@ -4651,6 +4671,7 @@ private func finalDemoLaunchPayload(
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
     iosDeviceLaunchRehearsalStatus: String = "missing",
     iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
+    iosDeviceLaunchRehearsalActions: [String]? = nil,
     iosDeviceLaunchRehearsalCommand: String = "make final-handoff-index",
     iosDeviceLaunchRehearsalFreshnessStatus: String = "fresh",
     iosDeviceLaunchRehearsalFreshnessClassification: String = "fresh_report",
@@ -4671,6 +4692,13 @@ private func finalDemoLaunchPayload(
     let liveEvidenceBlocked = liveProviderEvidenceStatus == "blocked"
     let printReadinessReady = printFulfillmentReadinessStatus == "ready"
     let printReadinessBlocked = printFulfillmentReadinessStatus == "blocked"
+    let iosDeviceLaunchActions = iosDeviceLaunchRehearsalActions ?? [
+        iosDeviceLaunchRehearsalAction
+    ]
+    let iosDeviceLaunchActionsJSON = String(
+        decoding: try! PMFJSON.encoder.encode(iosDeviceLaunchActions),
+        as: UTF8.self
+    )
     let liveEvidenceFirstID = liveEvidenceBlocked ? "three_d_evaluation_configured" : "provider_handoff"
     let liveEvidenceFirstLabel = liveEvidenceBlocked ? "Configured 3D evaluation" : "Provider handoff"
     let liveEvidenceFirstStatus = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "blocked" : "missing"
@@ -5714,7 +5742,7 @@ private func finalDemoLaunchPayload(
             ]
             """),
             "blockers": [],
-            "operator_actions": ["\(iosDeviceLaunchRehearsalAction)"],
+            "operator_actions": \(iosDeviceLaunchActionsJSON),
             "commands": ["make ios-device-launch-rehearsal"],
             "safety": {
               "commands_run": false,
@@ -8243,6 +8271,7 @@ private func finalDemoLaunchReport(
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
     iosDeviceLaunchRehearsalStatus: String = "missing",
     iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
+    iosDeviceLaunchRehearsalActions: [String]? = nil,
     iosDeviceLaunchRehearsalCommand: String = "make final-handoff-index",
     iosDeviceLaunchRehearsalFreshnessStatus: String = "fresh",
     iosDeviceLaunchRehearsalFreshnessClassification: String = "fresh_report",
@@ -8301,6 +8330,7 @@ private func finalDemoLaunchReport(
             iosDeployRunbookCommand: iosDeployRunbookCommand,
             iosDeviceLaunchRehearsalStatus: iosDeviceLaunchRehearsalStatus,
             iosDeviceLaunchRehearsalAction: iosDeviceLaunchRehearsalAction,
+            iosDeviceLaunchRehearsalActions: iosDeviceLaunchRehearsalActions,
             iosDeviceLaunchRehearsalCommand: iosDeviceLaunchRehearsalCommand,
             iosDeviceLaunchRehearsalFreshnessStatus: iosDeviceLaunchRehearsalFreshnessStatus,
             iosDeviceLaunchRehearsalFreshnessClassification: iosDeviceLaunchRehearsalFreshnessClassification,
