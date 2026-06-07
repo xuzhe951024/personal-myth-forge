@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.110 Final Handoff Index</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #edf0ec;
+        --panel: #fffdf8;
+        --ink: #151815;
+        --muted: #5f675f;
+        --line: #d2d8cf;
+        --green: #17643d;
+        --amber: #93590d;
+        --blue: #286084;
+        --red: #9f4038;
+        --violet: #5d528d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        width: 390px;
+        min-height: 844px;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: 390px;
+        min-height: 844px;
+        padding: 16px 13px 18px;
+        overflow: hidden;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 12px;
+        box-shadow: 0 12px 30px rgba(27, 32, 25, 0.08);
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.16;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      .badge {
+        flex: 0 0 auto;
+        color: var(--blue);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .command {
+        margin: 11px 0 9px;
+        border: 1px solid color-mix(in srgb, var(--blue) 25%, var(--line));
+        border-radius: 8px;
+        padding: 9px;
+        background: color-mix(in srgb, #e8f2f7 64%, white 36%);
+      }
+
+      .command strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 10px;
+        line-height: 1.2;
+      }
+
+      code {
+        font-family: "SF Mono", Menlo, ui-monospace, monospace;
+        font-size: 9px;
+        line-height: 1.32;
+        overflow-wrap: anywhere;
+      }
+
+      section {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+      }
+
+      h2 {
+        margin: 0 0 6px;
+        font-size: 10px;
+        line-height: 1.2;
+        letter-spacing: 0;
+        font-weight: 850;
+      }
+
+      .rows {
+        display: grid;
+        gap: 5px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 10px 1fr auto;
+        gap: 7px;
+        align-items: start;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        margin-top: 4px;
+        border-radius: 99px;
+        background: var(--green);
+      }
+
+      .dot.amber {
+        background: var(--amber);
+      }
+
+      .dot.blue {
+        background: var(--blue);
+      }
+
+      .dot.red {
+        background: var(--red);
+      }
+
+      .dot.violet {
+        background: var(--violet);
+      }
+
+      .row strong {
+        display: block;
+        font-size: 10px;
+        line-height: 1.22;
+      }
+
+      .row span {
+        display: block;
+        color: var(--muted);
+        font-family: "SF Mono", Menlo, ui-monospace, monospace;
+        font-size: 8.5px;
+        line-height: 1.28;
+        overflow-wrap: anywhere;
+      }
+
+      .status {
+        min-width: 44px;
+        text-align: right;
+        font-size: 8.5px;
+        line-height: 1.25;
+        color: var(--muted);
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .ready { color: var(--green); }
+      .partial { color: var(--amber); }
+      .live { color: var(--red); }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .mini {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 7px;
+        background: #fbfaf5;
+      }
+
+      .mini b {
+        display: block;
+        margin-bottom: 3px;
+        font-size: 9.5px;
+        line-height: 1.2;
+      }
+
+      .mini span {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        line-height: 1.28;
+      }
+
+      footer {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 8.5px;
+        line-height: 1.35;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="panel">
+        <header>
+          <div>
+            <h1>Final Handoff Index</h1>
+            <p class="subtitle">one read-only operator packet before final acceptance</p>
+          </div>
+          <div class="badge">P0.110</div>
+        </header>
+
+        <div class="command">
+          <strong>Canonical command</strong>
+          <code>make final-handoff-index</code>
+        </div>
+
+        <section>
+          <h2>Saved Index</h2>
+          <div class="rows">
+            <div class="row"><div class="dot blue"></div><div><strong>Final handoff JSON</strong><span>services/backend/.local/final-handoff-index.json</span></div><div class="status ready">ready</div></div>
+            <div class="row"><div class="dot"></div><div><strong>Local rehearsal lane</strong><span>3D eval + NPC eval + local launch + runbook</span></div><div class="status ready">ready</div></div>
+            <div class="row"><div class="dot"></div><div><strong>Configured preflight lane</strong><span>API/key resource packet + iOS deploy review</span></div><div class="status ready">ready</div></div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Indexed Reports</h2>
+          <div class="split">
+            <div class="mini"><b>Local Reports</b><span>five saved no-key JSON artifacts</span></div>
+            <div class="mini"><b>Configured Packet</b><span>final-configured-preflight summary</span></div>
+            <div class="mini"><b>Deploy Path</b><span>backend LAN + mobile preflight</span></div>
+            <div class="mini"><b>Live Acceptance</b><span>explicit consent command only</span></div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Operator Sequence</h2>
+          <div class="rows">
+            <div class="row"><div class="dot"></div><div><strong>Generate local evidence</strong><span>make final-rehearsal-local</span></div><div class="status ready">safe</div></div>
+            <div class="row"><div class="dot"></div><div><strong>Review configured resources</strong><span>make final-configured-preflight</span></div><div class="status ready">safe</div></div>
+            <div class="row"><div class="dot blue"></div><div><strong>Refresh index</strong><span>make final-handoff-index</span></div><div class="status ready">safe</div></div>
+            <div class="row"><div class="dot amber"></div><div><strong>Run device deploy preflight</strong><span>make backend-device-demo; make mobile-deploy-preflight</span></div><div class="status partial">manual</div></div>
+            <div class="row"><div class="dot red"></div><div><strong>Run live acceptance</strong><span>--require-real-core --allow-live-provider-calls</span></div><div class="status live">consent</div></div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Safety Boundaries</h2>
+          <div class="rows">
+            <div class="row"><div class="dot"></div><div><strong>No commands executed</strong><span>index reads files and composes reports only</span></div><div class="status ready">false</div></div>
+            <div class="row"><div class="dot"></div><div><strong>No provider calls</strong><span>Meshy/OpenAI/Treatstock are not contacted</span></div><div class="status ready">false</div></div>
+            <div class="row"><div class="dot"></div><div><strong>No config or Xcode writes</strong><span>no .env, local xcconfig, signing, keychain, or license mutation</span></div><div class="status ready">false</div></div>
+          </div>
+        </section>
+
+        <footer>
+          Exit 2 still writes a blocked index for review. Exit 0 means local and configured evidence are ready for the next operator step.
+        </footer>
+      </div>
+    </main>
+  </body>
+</html>

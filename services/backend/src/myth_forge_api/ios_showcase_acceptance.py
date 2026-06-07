@@ -1226,6 +1226,61 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="final_handoff_index",
+        label="Final handoff index",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
+                "build_final_handoff_index_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
+                "final_handoff_index_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
+                "build_final_configured_preflight_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
+                "operator_sequence",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
+                "source_reports",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
+                '"provider_calls": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
+                '"writes_backend_env": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
+                '"writes_ios_deploy_config": False',
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "final-handoff-index",
+            ),
+            SourceRequirement("Makefile", "final-handoff-index:"),
+            SourceRequirement(
+                "Makefile",
+                "--output .local/final-handoff-index.json",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_handoff_index.py",
+                "test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_cli.py",
+                "test_cli_final_handoff_index_writes_report_and_returns_result_code",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="mobile_final_launch_mode",
         label="Mobile final launch mode",
         requirements=(

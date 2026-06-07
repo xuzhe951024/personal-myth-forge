@@ -138,6 +138,7 @@ $EDITOR services/backend/.local/final-resources.env
 make final-resources-preflight
 make final-apply-resources
 make final-configured-preflight
+make final-handoff-index
 cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch \
   --mode configured \
@@ -163,6 +164,15 @@ The command is read-only: it does not call live providers, apply secrets, start
 servers, run Xcode, touch signing/keychain, or write backend/iOS config files.
 Exit `2` still writes a usable blocked packet; exit `0` means the configured
 handoff is ready enough for the next operator step.
+
+`make final-handoff-index` writes
+`services/backend/.local/final-handoff-index.json` as the final operator index
+across the local rehearsal lane, configured preflight lane, device deploy path,
+and consent-gated configured final acceptance command. It is read-only and does
+not run rehearsal, apply resources, call live providers, start servers, run
+Xcode, touch signing/keychain, or write backend/iOS config files. Exit `2`
+means the index was written with remaining blockers; exit `0` means the saved
+handoff state is ready enough for the next configured operator step.
 
 The same sanitized launch status is available to the iPhone app:
 

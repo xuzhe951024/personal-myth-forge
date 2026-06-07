@@ -131,6 +131,7 @@ $EDITOR services/backend/.local/final-resources.env
 make final-resources-preflight
 make final-apply-resources
 make final-configured-preflight
+make final-handoff-index
 cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../..
 ```
@@ -151,6 +152,15 @@ servers, running Xcode, writing keychain/signing state, or changing global
 developer settings. Exit `2` means the blocked JSON packet was still written for
 review; exit `0` means the configured handoff is ready for the next operator
 step.
+
+`make final-handoff-index` writes
+`services/backend/.local/final-handoff-index.json` as the final Mac-side
+operator index. It summarizes local rehearsal reports, configured preflight,
+device deploy commands, and the consent-gated configured final acceptance
+command without running those commands, calling providers, starting servers,
+running Xcode, touching signing/keychain, or writing backend/iOS config files.
+Exit `2` still writes a blocked index for review; exit `0` means the handoff is
+ready enough for the next configured operator step.
 
 P0.64 exposes the same sanitized status through:
 

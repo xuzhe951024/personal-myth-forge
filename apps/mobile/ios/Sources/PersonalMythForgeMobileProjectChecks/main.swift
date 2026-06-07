@@ -30,6 +30,9 @@ do {
     let finalConfiguredPreflightFile = repositoryRoot.appendingPathComponent(
         "services/backend/src/myth_forge_api/final_configured_preflight.py"
     )
+    let finalHandoffIndexFile = repositoryRoot.appendingPathComponent(
+        "services/backend/src/myth_forge_api/final_handoff_index.py"
+    )
 
     let packageManifest = try readText(packageFile)
     let project = try readText(projectFile)
@@ -46,6 +49,7 @@ do {
     let gitignore = try readText(gitignoreFile)
     let makefile = try readText(makefileFile)
     let finalConfiguredPreflight = try readText(finalConfiguredPreflightFile)
+    let finalHandoffIndex = try readText(finalHandoffIndexFile)
     let appConfiguration = try readText(appRoot.appendingPathComponent("AppConfiguration.swift"))
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
     let captureGenerationReceiptView = try readText(appRoot.appendingPathComponent("CaptureGenerationReceiptView.swift"))
@@ -279,10 +283,18 @@ do {
     try requireContains(makefile, ".PHONY: final-configured-preflight", "configured handoff preflight Make phony target")
     try requireContains(makefile, "final-configured-preflight:", "configured handoff preflight Make target")
     try requireContains(makefile, "myth_forge_api.cli final-configured-preflight", "configured handoff preflight CLI target")
+    try requireContains(makefile, ".PHONY: final-handoff-index", "final handoff index Make phony target")
+    try requireContains(makefile, "final-handoff-index:", "final handoff index Make target")
+    try requireContains(makefile, "myth_forge_api.cli final-handoff-index", "final handoff index CLI target")
     try requireContains(
         makefile,
         "--output .local/final-configured-preflight.json",
         "configured handoff preflight report output"
+    )
+    try requireContains(
+        makefile,
+        "--output .local/final-handoff-index.json",
+        "final handoff index report output"
     )
     try requireContains(
         makefile,
@@ -335,6 +347,41 @@ do {
         finalConfiguredPreflight,
         #""writes_ios_deploy_config": False"#,
         "configured handoff preflight no iOS config writes"
+    )
+    try requireContains(
+        finalHandoffIndex,
+        "build_final_handoff_index_report",
+        "final handoff index report builder"
+    )
+    try requireContains(
+        finalHandoffIndex,
+        "build_final_configured_preflight_report",
+        "final handoff index configured preflight composition"
+    )
+    try requireContains(
+        finalHandoffIndex,
+        "operator_sequence",
+        "final handoff index operator sequence"
+    )
+    try requireContains(
+        finalHandoffIndex,
+        "source_reports",
+        "final handoff index source report list"
+    )
+    try requireContains(
+        finalHandoffIndex,
+        #""provider_calls": False"#,
+        "final handoff index no provider calls"
+    )
+    try requireContains(
+        finalHandoffIndex,
+        #""writes_backend_env": False"#,
+        "final handoff index no backend env writes"
+    )
+    try requireContains(
+        finalHandoffIndex,
+        #""writes_ios_deploy_config": False"#,
+        "final handoff index no iOS config writes"
     )
     try requireContains(finalAcceptanceLocalScript, "accepted final acceptance exit code $status", "final acceptance local accepts blocked report")
     try requireContains(finalAcceptanceLocalScript, "services/backend/.local/final-acceptance-local.json", "final acceptance local report path")
