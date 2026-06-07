@@ -121,6 +121,10 @@ do {
     try testFinalLaunchMobileSummaryShowsThreeDEvaluationIOSDeployRunbookSlot()
     try testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook()
     try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook()
+    try testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal()
+    try testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal()
+    try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal()
     try testFinalLaunchMobileSummaryMarksReadyReport()
     try testFinalLaunchMobileSummaryRedactsUnsafeReportText()
     try testFinalLaunchMobileSummaryRedactsUnsafeAcceptanceText()
@@ -2812,6 +2816,70 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook() throws 
     try expectNotContains(text, "Bearer")
 }
 
+private func testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(iosDeviceLaunchRehearsalStatus: "blocked")
+    )
+
+    let readiness = try require(
+        report.iosDeviceLaunchRehearsalReadiness,
+        "missing iOS device launch rehearsal readiness"
+    )
+    try expectEqual(readiness.kind, "ios_device_launch_rehearsal_readiness_report")
+    try expectEqual(readiness.status, "blocked")
+    try expectEqual(readiness.sourceFile.path, "services/backend/.local/ios-device-launch-rehearsal.json")
+    try expectEqual(readiness.summary.blocked, 1)
+    try expectEqual(readiness.sequence.first?.id, "final_handoff_index")
+    try expectEqual(readiness.sequence.first?.command, "make final-handoff-index")
+    try expectFalse(readiness.safety.commandsRun)
+    try expectFalse(readiness.safety.providerCalls)
+}
+
+private func testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchRehearsalAction: "refresh final handoff index"
+        ),
+        error: nil
+    )
+    let text = summary.launchRehearsalRows.joined(separator: " ")
+
+    try expectEqual(summary.launchRehearsalRows.first, "iOS launch rehearsal blocked: ready 3, blocked 1, partial 0.")
+    try expectContains(text, "final_handoff_index: blocked")
+    try expectContains(text, "make final-handoff-index")
+    try expectContains(text, "refresh final handoff index")
+}
+
+private func testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(iosDeviceLaunchRehearsalStatus: "ready"),
+        error: nil
+    )
+
+    try expectEqual(summary.launchRehearsalRows.first, "iOS launch rehearsal ready: ready 4, blocked 0, partial 0.")
+    try expectContains(summary.launchRehearsalRows.joined(separator: " "), "safe evidence refreshed")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal() throws {
+    let report = finalDemoLaunchReport(
+        iosDeviceLaunchRehearsalStatus: "blocked",
+        iosDeviceLaunchRehearsalAction: "rerun sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
+        iosDeviceLaunchRehearsalCommand: "make ios-device-launch-rehearsal sk-test /Users/zhexu/private file:///tmp/private"
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testFinalLaunchMobileSummaryMarksReadyReport() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -4028,6 +4096,9 @@ private func finalDemoLaunchPayload(
     iosDeployRunbookThreeDSlotStatus: String = "ready",
     iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
+    iosDeviceLaunchRehearsalStatus: String = "missing",
+    iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
+    iosDeviceLaunchRehearsalCommand: String = "make final-handoff-index",
     resourceHandoffStatus: String = "blocked",
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
@@ -4337,6 +4408,50 @@ private func finalDemoLaunchPayload(
               "commands_run": false,
               "provider_calls": false,
               "global_mutation": false,
+              "provider_secrets_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false
+            }
+          },
+          "ios_device_launch_rehearsal_readiness": {
+            "kind": "ios_device_launch_rehearsal_readiness_report",
+            "status": "\(iosDeviceLaunchRehearsalStatus)",
+            "source_file": {
+              "path": "services/backend/.local/ios-device-launch-rehearsal.json",
+              "exists": \(iosDeviceLaunchRehearsalStatus == "missing" ? "false" : "true")
+            },
+            "summary": {
+              "ready": \(iosDeviceLaunchRehearsalStatus == "ready" ? "4" : "3"),
+              "missing": \(iosDeviceLaunchRehearsalStatus == "missing" ? "1" : "0"),
+              "blocked": \(iosDeviceLaunchRehearsalStatus == "blocked" ? "1" : "0"),
+              "partial": \(iosDeviceLaunchRehearsalStatus == "partial" ? "1" : "0"),
+              "manual": 0,
+              "live": 0
+            },
+            "sequence": \(iosDeviceLaunchRehearsalStatus == "missing" ? "[]" : """
+            [
+              {
+                "id": "final_handoff_index",
+                "label": "Final handoff index",
+                "status": "\(iosDeviceLaunchRehearsalStatus == "ready" ? "ready" : "blocked")",
+                "command": "\(iosDeviceLaunchRehearsalCommand)",
+                "classification": "saved_report"
+              }
+            ]
+            """),
+            "blockers": [],
+            "operator_actions": ["\(iosDeviceLaunchRehearsalAction)"],
+            "commands": ["make ios-device-launch-rehearsal"],
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
               "provider_secrets_in_report": false,
               "raw_media_in_report": false,
               "payment_links_in_report": false,
@@ -6752,6 +6867,9 @@ private func finalDemoLaunchReport(
     iosDeployRunbookThreeDSlotStatus: String = "ready",
     iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
+    iosDeviceLaunchRehearsalStatus: String = "missing",
+    iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
+    iosDeviceLaunchRehearsalCommand: String = "make final-handoff-index",
     resourceHandoffStatus: String = "blocked",
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
@@ -6784,6 +6902,9 @@ private func finalDemoLaunchReport(
             iosDeployRunbookThreeDSlotStatus: iosDeployRunbookThreeDSlotStatus,
             iosDeployRunbookAction: iosDeployRunbookAction,
             iosDeployRunbookCommand: iosDeployRunbookCommand,
+            iosDeviceLaunchRehearsalStatus: iosDeviceLaunchRehearsalStatus,
+            iosDeviceLaunchRehearsalAction: iosDeviceLaunchRehearsalAction,
+            iosDeviceLaunchRehearsalCommand: iosDeviceLaunchRehearsalCommand,
             resourceHandoffStatus: resourceHandoffStatus,
             resourceHandoffBackendStatus: resourceHandoffBackendStatus,
             resourceHandoffIOSStatus: resourceHandoffIOSStatus,
