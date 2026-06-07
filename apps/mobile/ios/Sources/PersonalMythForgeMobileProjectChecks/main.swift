@@ -816,8 +816,10 @@ do {
         "final showcase launch summary input"
     )
     try requireContains(finalShowcaseSummary, "npcEvaluationStage", "final showcase npc evaluation digest")
+    try requireContains(finalShowcaseSummary, "threeDEvaluationStage", "final showcase 3D evaluation digest")
     try requireContains(finalShowcaseSummary, "operatorHandoffStage", "final showcase operator handoff digest")
     try requireContains(finalShowcaseSummary, "finalLaunchStage", "final showcase final launch digest")
+    try requireContains(finalShowcaseSummary, #""three_d_evaluation""#, "final showcase 3D evaluation stage id")
     try requireContains(finalShowcaseSummary, #""npc_evaluation""#, "final showcase npc evaluation stage id")
     try requireContains(finalShowcaseSummary, #""operator_handoff""#, "final showcase handoff stage id")
     try requireContains(finalShowcaseSummary, #""final_launch""#, "final showcase launch stage id")
@@ -833,8 +835,23 @@ do {
     )
     try requireContains(
         contractTests,
+        "testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest",
+        "ready 3D evaluation final showcase digest contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest",
+        "missing 3D evaluation final showcase digest contract test"
+    )
+    try requireContains(
+        contractTests,
         "testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest",
         "missing npc evaluation final showcase digest contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalShowcaseSummaryRedactsUnsafeThreeDEvaluationDigest",
+        "redacted 3D evaluation final showcase digest contract test"
     )
     try requireContains(
         contractTests,
@@ -1837,7 +1854,9 @@ do {
     try requireContains(demoScriptView, "ShowcaseAutopilotPlan", "demo script autopilot input")
     try requireContains(demoScriptView, "Button(action: runAutopilot)", "demo script autopilot button")
     try requireContains(demoScript, "final_launch", "demo script final launch step")
+    try requireContains(demoScript, "three_d_evaluation", "demo script 3D evaluation step")
     try requireContains(demoScript, "npc_evaluation", "demo script NPC evaluation step")
+    try requireContains(demoScript, "threeDEvaluationStep", "demo script 3D evaluation builder")
     try requireContains(demoScript, "npcEvaluationStep", "demo script NPC evaluation builder")
     try requireContains(demoScript, "FinalLaunchMobileSummary", "demo script final launch summary input")
     try requireContains(showcaseAutopilot, "ShowcaseAutopilotPlanner", "showcase autopilot core planner")
@@ -1845,6 +1864,11 @@ do {
         showcaseAutopilot,
         #"script.step(id: "final_launch")"#,
         "autopilot final launch step handling"
+    )
+    try requireContains(
+        showcaseAutopilot,
+        #"script.step(id: "three_d_evaluation")"#,
+        "autopilot 3D evaluation step handling"
     )
     try requireContains(
         showcaseAutopilot,
@@ -1863,6 +1887,21 @@ do {
     )
     try requireContains(
         contractTests,
+        "testDemoScriptShowsReadyThreeDEvaluationBeforeNPCEvaluation",
+        "demo script ready 3D evaluation contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDemoScriptWaitsForMissingThreeDEvaluation",
+        "demo script missing 3D evaluation contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDemoScriptBlocksAndRedactsFailedThreeDEvaluation",
+        "demo script blocked 3D evaluation contract test"
+    )
+    try requireContains(
+        contractTests,
         "testDemoScriptWaitsForMissingNPCEvaluation",
         "demo script missing NPC evaluation contract test"
     )
@@ -1875,6 +1914,16 @@ do {
         contractTests,
         "testShowcaseAutopilotBlocksOnFinalLaunchBlocker",
         "autopilot final launch contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testShowcaseAutopilotWaitsForMissingThreeDEvaluation",
+        "autopilot missing 3D evaluation contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testShowcaseAutopilotBlocksOnFailedThreeDEvaluation",
+        "autopilot blocked 3D evaluation contract test"
     )
     try requireContains(
         contractTests,

@@ -88,6 +88,7 @@ public enum DemoScriptBuilder {
         ]
 
         if let finalLaunchSummary {
+            steps.append(threeDEvaluationStep(finalLaunchSummary))
             steps.append(npcEvaluationStep(finalLaunchSummary))
             steps.append(finalLaunchStep(finalLaunchSummary))
         }
@@ -101,6 +102,7 @@ public enum DemoScriptBuilder {
                 npcComplete: npcComplete,
                 printQuote: printQuote,
                 resourcesStatus: resources.status,
+                threeDEvaluationStatus: steps.first { $0.id == "three_d_evaluation" }?.status,
                 npcEvaluationStatus: steps.first { $0.id == "npc_evaluation" }?.status,
                 finalLaunchStatus: steps.first { $0.id == "final_launch" }?.status
             ),
@@ -213,6 +215,15 @@ public enum DemoScriptBuilder {
         )
     }
 
+    private static func threeDEvaluationStep(_ summary: FinalLaunchMobileSummary) -> DemoScriptStep {
+        step(
+            "three_d_evaluation",
+            "3D Evaluation",
+            threeDEvaluationStatus(summary.threeDEvaluationRows),
+            threeDEvaluationDetail(summary.threeDEvaluationRows)
+        )
+    }
+
     private static func npcEvaluationStep(_ summary: FinalLaunchMobileSummary) -> DemoScriptStep {
         step(
             "npc_evaluation",
@@ -220,6 +231,24 @@ public enum DemoScriptBuilder {
             npcEvaluationStatus(summary.npcEvaluationRows),
             npcEvaluationDetail(summary.npcEvaluationRows)
         )
+    }
+
+    private static func threeDEvaluationStatus(_ rows: [String]) -> DemoScriptStepStatus {
+        let text = rows.joined(separator: " ").lowercased()
+        if rows.first?.hasPrefix("3D evaluation ready:") == true {
+            return .complete
+        }
+        if text.contains("blocked")
+            || text.contains("failed")
+            || text.contains("three_d_evaluation_failed")
+        {
+            return .blocked
+        }
+        return .waiting
+    }
+
+    private static func threeDEvaluationDetail(_ rows: [String]) -> String {
+        rows.first ?? "3D evaluation readiness has not loaded."
     }
 
     private static func npcEvaluationStatus(_ rows: [String]) -> DemoScriptStepStatus {
@@ -266,6 +295,7 @@ public enum DemoScriptBuilder {
         npcComplete: Bool,
         printQuote: PrintQuote?,
         resourcesStatus: DemoScriptStepStatus,
+        threeDEvaluationStatus: DemoScriptStepStatus?,
         npcEvaluationStatus: DemoScriptStepStatus?,
         finalLaunchStatus: DemoScriptStepStatus?
     ) -> String {
@@ -289,6 +319,18 @@ public enum DemoScriptBuilder {
         }
         if resourcesStatus == .waiting {
             return "Check backend resources."
+        }
+        if let threeDEvaluationStatus {
+            switch threeDEvaluationStatus {
+            case .complete:
+                break
+            case .blocked:
+                return "Review 3D evaluation blockers."
+            case .waiting:
+                return "Load 3D evaluation readiness."
+            case .current, .optional:
+                return "Review 3D evaluation readiness."
+            }
         }
         if let npcEvaluationStatus {
             switch npcEvaluationStatus {
