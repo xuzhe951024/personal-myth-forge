@@ -2248,6 +2248,54 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="final_external_action_ledger",
+        label="Final external action ledger",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_external_action_ledger.py",
+                "build_final_external_action_ledger_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_external_action_ledger.py",
+                "final_external_action_ledger_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_external_action_ledger.py",
+                "global_machine_actions",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_external_action_ledger.py",
+                "requires_cost_consent_for_live_actions",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "final_external_action_ledger",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "final-external-action-ledger",
+            ),
+            SourceRequirement("Makefile", "final-external-action-ledger:"),
+            SourceRequirement(
+                "Makefile",
+                ".local/final-external-action-ledger.json",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_external_action_ledger.py",
+                "test_external_action_ledger_blocks_missing_resources_without_running_actions",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_cli.py",
+                "test_cli_final_external_action_ledger_writes_report_and_returns_result_code",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_final_demo_launch_embeds_final_external_action_ledger",
+            ),
+            SourceRequirement("README.md", "P0.128"),
+        ),
+    ),
+    FeatureRequirement(
         id="deploy_config",
         label="Deploy config",
         requirements=(

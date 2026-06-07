@@ -2512,3 +2512,22 @@ deployment path cannot skip the dry-run preview in the final handoff.
 
 This remains report-only. It does not apply resources, run writer scripts, call
 providers, run Xcode, or mutate signing/keychain state.
+
+## P0.128 Final External Action Ledger
+
+P0.128 adds a read-only external action ledger for the last demo blockers:
+
+```bash
+make final-external-action-ledger
+cat services/backend/.local/final-external-action-ledger.json
+```
+
+The report groups remaining work into resource inputs, safe local writes, live
+provider cost actions, global Mac/Xcode actions, and device runtime actions. It
+is also embedded in `final_demo_launch_report` as
+`final_external_action_ledger`, so the final launch payload has the same
+handoff context as the local operator reports.
+
+This report never runs commands, writes `.env`, writes iOS deploy config, calls
+Meshy/OpenAI/print providers, runs Xcode, accepts Apple SDK licenses, changes
+signing/keychain state, or exposes provider secrets.

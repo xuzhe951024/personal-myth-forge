@@ -143,6 +143,7 @@ Bridge deliverable:
 - P0.125 final resource apply preview for dry-run `.env` and iOS deploy config targets before running `make final-apply-resources`
 - P0.126 final showcase readiness ledger integration for apply preview evidence and provider/key handoff next command routing
 - P0.127 iOS deploy runbook gate that inserts `make final-resource-apply-preview` before `make final-apply-resources`
+- P0.128 final external action ledger separating missing secrets, safe local writes, live provider cost actions, global Mac/Xcode actions, and device runtime actions
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

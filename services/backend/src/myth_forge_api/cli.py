@@ -23,6 +23,9 @@ from myth_forge_api.evaluation.npc import (
 from myth_forge_api.final_configured_preflight import (
     build_final_configured_preflight_report,
 )
+from myth_forge_api.final_external_action_ledger import (
+    build_final_external_action_ledger_report,
+)
 from myth_forge_api.final_handoff_index import build_final_handoff_index_report
 from myth_forge_api.final_acceptance import run_final_acceptance
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
@@ -149,6 +152,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if args.command == "final-resource-apply-preview":
             return _final_resource_apply_preview(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
+        if args.command == "final-external-action-ledger":
+            return _final_external_action_ledger(
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
@@ -287,6 +295,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     final_resource_apply_preview_parser.add_argument("--repo-root", default=None)
     final_resource_apply_preview_parser.add_argument("--output", default=None)
+
+    final_external_action_ledger_parser = subcommands.add_parser(
+        "final-external-action-ledger"
+    )
+    final_external_action_ledger_parser.add_argument("--repo-root", default=None)
+    final_external_action_ledger_parser.add_argument("--output", default=None)
 
     final_configured_preflight_parser = subcommands.add_parser(
         "final-configured-preflight"
@@ -524,6 +538,18 @@ def _final_resource_apply_preview(
     output_path: str | None,
 ) -> int:
     result = build_final_resource_apply_preview_report(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _final_external_action_ledger(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = build_final_external_action_ledger_report(
         repo_root=Path(repo_root) if repo_root else None,
     )
     _write_json_payload(result.report, output_path)
