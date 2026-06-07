@@ -127,7 +127,9 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     actions = result.report["operator_actions"]
 
     assert result.exit_code == 2
-    assert actions[0] == "ios_device_launch_certificate: run make final-handoff-index"
+    assert actions[0] == "final_rehearsal_local: final_acceptance_local: action 1"
+    assert "final_handoff_index: run make final-configured-preflight" in actions
+    assert "ios_device_launch_certificate: run make final-handoff-index" in actions
     assert (
         "run make live-provider-evidence after configured provider evidence files are refreshed"
         in actions
@@ -140,7 +142,7 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert "provide iOS deploy config and rerun mobile deploy preflight" in actions
     assert "rerun make visual-regression-local and review failed artifacts" in actions
     assert "make final-showcase-readiness" in actions
-    assert len(actions) <= 24
+    assert len(actions) <= 32
     assert actions.count("make print-fulfillment-readiness") == 1
 
 
@@ -484,6 +486,14 @@ def _write_ios_device_launch_rehearsal_with_actions(repo_root: Path) -> None:
             },
             "sequence": [],
             "operator_actions": [
+                "final_rehearsal_local: final_acceptance_local: action 1",
+                "final_rehearsal_local: final_acceptance_local: action 2",
+                "final_rehearsal_local: ios_deploy_runbook_local: action 1",
+                "final_rehearsal_local: ios_deploy_runbook_local: action 2",
+                "final_configured_preflight: action 1",
+                "final_configured_preflight: action 2",
+                "final_handoff_index: run make final-rehearsal-local",
+                "final_handoff_index: run make final-configured-preflight",
                 "ios_device_launch_certificate: run make final-handoff-index",
                 "ios_device_launch_certificate: provide iOS deploy config",
             ],

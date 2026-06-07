@@ -55,8 +55,13 @@ SOURCE_CAPTURE_FEATURES = {
     "mobile_3d_generation_input_review",
     "capture_generation_receipt",
 }
-FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT = 24
+FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT = 32
 FINAL_SHOWCASE_REPORT_ACTION_LIMIT = 4
+FINAL_SHOWCASE_IOS_REHEARSAL_ACTION_LIMIT = 12
+FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES = (
+    "final_handoff_index:",
+    "ios_device_launch_certificate:",
+)
 
 
 @dataclass(frozen=True)
@@ -636,9 +641,7 @@ def _operator_actions(
     for report in action_reports:
         if _normalized_report_status(report) == "ready":
             continue
-        actions.extend(
-            _report_operator_actions(report)[:FINAL_SHOWCASE_REPORT_ACTION_LIMIT],
-        )
+        actions.extend(_selected_report_operator_actions(report))
     actions.extend(["make final-rehearsal-local", "make final-showcase-readiness"])
     actions.extend(
         row["command"]
@@ -663,6 +666,19 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
     if not isinstance(raw_actions, list):
         return []
     return [str(action) for action in raw_actions if isinstance(action, str) and action]
+
+
+def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
+    actions = _report_operator_actions(report)
+    if report.get("kind") != "ios_device_launch_rehearsal_readiness_report":
+        return actions[:FINAL_SHOWCASE_REPORT_ACTION_LIMIT]
+    selected = actions[:FINAL_SHOWCASE_REPORT_ACTION_LIMIT]
+    selected.extend(
+        action
+        for action in actions
+        if action.startswith(FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES)
+    )
+    return _dedupe(selected)[:FINAL_SHOWCASE_IOS_REHEARSAL_ACTION_LIMIT]
 
 
 def _commands() -> list[str]:
