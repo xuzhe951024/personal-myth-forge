@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.98 Mobile Capture Generation Receipt</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #f1f4f2;
+      color: #17211c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: #f1f4f2;
+    }
+
+    .screen {
+      width: 390px;
+      min-height: 844px;
+      padding: 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(241, 244, 242, 0.94)),
+        #f1f4f2;
+    }
+
+    .title {
+      margin: 2px 0 12px;
+      font-size: 24px;
+      line-height: 1.12;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .card {
+      width: 100%;
+      border: 1px solid rgba(37, 54, 44, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 22px rgba(37, 54, 44, 0.08);
+      padding: 10px;
+    }
+
+    .card + .card {
+      margin-top: 12px;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .kicker {
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .sub {
+      margin-top: 1px;
+      font-size: 12px;
+      line-height: 1.25;
+      color: #637268;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding-top: 3px;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 800;
+      color: #1d8f55;
+    }
+
+    .detail {
+      margin-bottom: 8px;
+      font-size: 12px;
+      line-height: 1.28;
+      color: #637268;
+      overflow-wrap: anywhere;
+    }
+
+    .rows {
+      display: grid;
+      gap: 6px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 10px minmax(0, 1fr);
+      column-gap: 8px;
+      align-items: start;
+      min-height: 18px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 50%;
+      background: #1d8f55;
+    }
+
+    .row-text {
+      font-size: 11px;
+      line-height: 1.25;
+      color: #64736a;
+      overflow-wrap: anywhere;
+    }
+
+    .privacy {
+      margin-top: 8px;
+      font-size: 10.5px;
+      line-height: 1.25;
+      color: #78877e;
+    }
+
+    .capture-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .metric {
+      border-radius: 8px;
+      border: 1px solid rgba(37, 54, 44, 0.12);
+      background: rgba(246, 248, 247, 0.78);
+      padding: 8px;
+      min-height: 52px;
+    }
+
+    .metric-label {
+      font-size: 10px;
+      line-height: 1.2;
+      color: #78877e;
+      font-weight: 700;
+    }
+
+    .metric-value {
+      margin-top: 4px;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: #25362c;
+      overflow-wrap: anywhere;
+    }
+
+    .artifact {
+      height: 118px;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 50% 34%, rgba(77, 143, 110, 0.28), transparent 32%),
+        linear-gradient(180deg, #e7ece8, #f8faf9);
+      position: relative;
+      overflow: hidden;
+      margin: 4px 0 9px;
+    }
+
+    .artifact::before {
+      content: "";
+      position: absolute;
+      left: 146px;
+      top: 28px;
+      width: 86px;
+      height: 62px;
+      border-radius: 42px 42px 18px 18px;
+      border: 8px solid rgba(45, 89, 67, 0.84);
+      border-bottom: 0;
+      transform: rotate(-8deg);
+    }
+
+    .artifact::after {
+      content: "";
+      position: absolute;
+      left: 188px;
+      top: 76px;
+      width: 84px;
+      height: 12px;
+      border-radius: 10px;
+      background: #2d5943;
+      box-shadow: 22px 15px 0 -2px #2d5943, 40px 15px 0 -2px #2d5943;
+      transform: rotate(-8deg);
+    }
+
+    .section-title {
+      margin: 0 0 7px;
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <h1 class="title">Personal Myth Forge</h1>
+
+    <section class="card">
+      <div class="top">
+        <div>
+          <div class="kicker">Capture</div>
+          <div class="sub">Guided scan ready for 3D</div>
+        </div>
+        <div class="badge">READY</div>
+      </div>
+      <div class="detail">3 reference images selected for the multi-image 3D route. Real provider setup can replace the local stub without changing the mobile flow.</div>
+      <div class="capture-grid">
+        <div class="metric">
+          <div class="metric-label">Mode</div>
+          <div class="metric-value">guided_scan</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Route</div>
+          <div class="metric-value">multi_image</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="top">
+        <div>
+          <div class="kicker">Capture-to-3D</div>
+          <div class="sub">Capture-to-3D ready</div>
+        </div>
+        <div class="badge">READY</div>
+      </div>
+
+      <div class="detail">Uploaded capture is linked to generated 3D provenance.</div>
+
+      <div class="rows">
+        <div class="row"><span class="dot"></span><span class="row-text">capture cap_ba02a3816bd145b4</span></div>
+        <div class="row"><span class="dot"></span><span class="row-text">mode guided_scan</span></div>
+        <div class="row"><span class="dot"></span><span class="row-text">media reference_image 3, scan_asset 0</span></div>
+        <div class="row"><span class="dot"></span><span class="row-text">provider local_stub</span></div>
+        <div class="row"><span class="dot"></span><span class="row-text">input multi_image</span></div>
+        <div class="row"><span class="dot"></span><span class="row-text">route /openapi/v1/multi-image-to-3d</span></div>
+        <div class="row"><span class="dot"></span><span class="row-text">selected 3/3; raw sources withheld</span></div>
+      </div>
+
+      <div class="privacy">
+        Raw capture media withheld. Capture media URIs stay off this receipt. Provider keys and local paths are redacted.
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">3D Artifact</h2>
+      <div class="artifact" aria-label="Generated key artifact preview"></div>
+      <div class="detail">SceneKit handoff can load the generated GLB or USDZ variant after the receipt confirms source proof.</div>
+    </section>
+  </main>
+</body>
+</html>

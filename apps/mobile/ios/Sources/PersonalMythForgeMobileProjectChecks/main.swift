@@ -36,6 +36,7 @@ do {
     let makefile = try readText(makefileFile)
     let appConfiguration = try readText(appRoot.appendingPathComponent("AppConfiguration.swift"))
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
+    let captureGenerationReceiptView = try readText(appRoot.appendingPathComponent("CaptureGenerationReceiptView.swift"))
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
@@ -77,6 +78,9 @@ do {
     let arkitScanPackageBuilder = try readText(coreRoot.appendingPathComponent("ARKitScanPackageBuilder.swift"))
     let captureGenerationReadiness = try readText(
         coreRoot.appendingPathComponent("CaptureGenerationReadiness.swift")
+    )
+    let captureGenerationReceipt = try readText(
+        coreRoot.appendingPathComponent("CaptureGenerationReceipt.swift")
     )
     let apiClient = try readText(coreRoot.appendingPathComponent("PersonalMythForgeAPIClient.swift"))
     let contractTests = try readText(
@@ -267,6 +271,7 @@ do {
         "PersonalMythForgeApp.swift",
         "ForgeRootView.swift",
         "CaptureFormView.swift",
+        "CaptureGenerationReceiptView.swift",
         "ArtifactSummaryView.swift",
         "Artifact3DPreviewView.swift",
         "GuidedScanCaptureView.swift",
@@ -349,6 +354,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000019 /* ContextCapsuleReviewView.swift in Sources */,",
         "context capsule review Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000022 /* CaptureGenerationReceiptView.swift in Sources */,",
+        "capture generation receipt Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -488,6 +499,21 @@ do {
         forgeRootView,
         "captureGenerationReadiness.route.displayLabel",
         "capture generation readiness route label wiring"
+    )
+    try requireContains(
+        forgeRootView,
+        "CaptureGenerationReceiptView(receipt: captureGenerationReceipt)",
+        "capture generation receipt view wiring"
+    )
+    try requireContains(
+        forgeRootView,
+        "private var captureGenerationReceipt: CaptureGenerationReceipt",
+        "capture generation receipt root property"
+    )
+    try requireContains(
+        forgeRootView,
+        "capture: state.capture",
+        "capture generation receipt uploaded capture wiring"
     )
     try requireContains(forgeRootView, "DevicePreflightSummaryBuilder.build", "device preflight summary wiring")
     try requireContains(forgeRootView, "DevicePreflightView(summary:", "device preflight view wiring")
@@ -1187,9 +1213,59 @@ do {
         "capture generation route display label"
     )
     try requireContains(
+        captureGenerationReceipt,
+        "CaptureGenerationReceiptBuilder",
+        "capture generation receipt builder"
+    )
+    try requireContains(
+        captureGenerationReceipt,
+        "Capture-to-3D proof missing",
+        "capture generation receipt missing provenance state"
+    )
+    try requireContains(
+        captureGenerationReceipt,
+        "raw sources",
+        "capture generation receipt raw source row"
+    )
+    try requireContains(
+        captureGenerationReceipt,
+        "Raw capture media withheld.",
+        "capture generation receipt privacy note"
+    )
+    try requireContains(
+        captureGenerationReceipt,
+        "sanitize",
+        "capture generation receipt redaction"
+    )
+    try requireContains(
+        captureGenerationReceiptView,
+        "Capture-to-3D",
+        "capture generation receipt view title"
+    )
+    try requireContains(
+        captureGenerationReceiptView,
+        "statusBadge",
+        "capture generation receipt status badge"
+    )
+    try requireContains(
+        captureGenerationReceiptView,
+        "receipt.privacyNotes",
+        "capture generation receipt privacy rendering"
+    )
+    try requireContains(
         contractTests,
         "testARKitScanPackageBuilderBuildsReadySelection",
         "ARKit scan package contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testCaptureGenerationReceiptShowsReadyGuidedScanGeneration",
+        "capture generation receipt ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testCaptureGenerationReceiptRedactsUnsafeText",
+        "capture generation receipt redaction contract test"
     )
     try requireContains(artifactAssetPreparation, "FileSystemArtifactAssetCache", "asset cache implementation")
     try requireContains(
