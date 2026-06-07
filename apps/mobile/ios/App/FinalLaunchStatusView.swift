@@ -37,6 +37,10 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "Mode", lines: summary.modePolicyRows)
             }
 
+            if !summary.liveProviderEvidenceRows.isEmpty {
+                groupedLines(title: "Live Evidence", lines: summary.liveProviderEvidenceRows)
+            }
+
             if !summary.resourceChecklistRows.isEmpty {
                 groupedLines(title: "Resource Checklist", lines: summary.resourceChecklistRows)
             }

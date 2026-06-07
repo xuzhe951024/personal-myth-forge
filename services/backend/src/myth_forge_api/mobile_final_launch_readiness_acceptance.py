@@ -143,6 +143,18 @@ SOURCE_REQUIREMENTS = (
         "visualRegressionReadiness",
     ),
     SourceRequirement(
+        "model_live_provider_evidence",
+        "Live provider evidence model",
+        PMF_MODELS_PATH,
+        "LiveProviderEvidenceReport",
+    ),
+    SourceRequirement(
+        "model_live_provider_evidence_field",
+        "Final launch live provider evidence field",
+        PMF_MODELS_PATH,
+        "liveProviderEvidence",
+    ),
+    SourceRequirement(
         "model_resource_handoff",
         "Resource handoff report model",
         PMF_MODELS_PATH,
@@ -311,6 +323,12 @@ SOURCE_REQUIREMENTS = (
         "visualRegressionRows",
     ),
     SourceRequirement(
+        "mobile_summary_live_provider_evidence_rows",
+        "Mobile final launch live provider evidence rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "liveProviderEvidenceRows",
+    ),
+    SourceRequirement(
         "mobile_summary_resource_handoff_rows",
         "Mobile final launch resource handoff rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -381,6 +399,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch visual regression section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Visual Regression",
+    ),
+    SourceRequirement(
+        "mobile_status_view_live_evidence",
+        "Mobile final launch live evidence section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Live Evidence",
     ),
     SourceRequirement(
         "mobile_status_view_resource_handoff",
@@ -585,6 +609,12 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts visual regression",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression",
+    ),
+    SourceRequirement(
+        "contract_live_provider_evidence_decode",
+        "Contract test decodes live provider evidence",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesLiveProviderEvidenceFromFinalLaunchPayload",
     ),
     SourceRequirement(
         "contract_resource_handoff_decode",

@@ -1012,6 +1012,73 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_live_provider_evidence",
+        label="Mobile live provider evidence",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/live_provider_evidence.py",
+                "build_live_provider_evidence_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/live_provider_evidence.py",
+                "live_provider_evidence_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/live_provider_evidence.py",
+                "make live-provider-evidence",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "live-provider-evidence",
+            ),
+            SourceRequirement("Makefile", "live-provider-evidence:"),
+            SourceRequirement(
+                "Makefile",
+                ".local/live-provider-evidence.json",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "live_provider_evidence",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_live_provider_evidence.py",
+                "test_live_provider_evidence_missing_reports_without_running_commands",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_final_demo_launch_embeds_live_provider_evidence",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "LiveProviderEvidenceReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "liveProviderEvidence",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "liveProviderEvidenceRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "Live evidence",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Live Evidence",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesLiveProviderEvidenceFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsMissingLiveProviderEvidence",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="ios_deploy_runbook",
         label="iOS deploy runbook",
         requirements=(
