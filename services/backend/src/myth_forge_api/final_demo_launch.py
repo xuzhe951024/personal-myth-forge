@@ -60,6 +60,7 @@ def build_final_demo_launch_report(
         mode=mode,
         final_resources_preflight=final_resources_preflight,
         final_acceptance_readiness=final_acceptance_readiness,
+        npc_agent_evaluation_readiness=npc_agent_evaluation_readiness,
         launch_phases=phases,
         repo_root=selected_repo_root,
     )

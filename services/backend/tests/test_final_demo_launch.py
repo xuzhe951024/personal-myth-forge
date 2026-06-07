@@ -57,6 +57,7 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
         ),
     )
     _write_final_resources(repo_root)
+    _write_npc_evaluation(repo_root)
     _write_final_acceptance(
         repo_root,
         {
@@ -296,6 +297,26 @@ def test_final_demo_launch_embeds_npc_agent_evaluation_readiness(
     assert readiness["summary"]["succeeded"] == 6
     assert readiness["coverage"]["tick_steps_completed"] == 12
     assert readiness["safety"]["commands_run"] is False
+
+
+def test_final_demo_launch_operator_handoff_includes_npc_evaluation_step(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_npc_evaluation(repo_root)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    handoff_steps = {
+        step["id"]: step
+        for step in result.report["final_operator_handoff"]["steps"]
+    }
+
+    assert handoff_steps["npc_agent_evaluation"]["status"] == "ready"
+    assert "evaluate-npc" in handoff_steps["npc_agent_evaluation"]["command"]
 
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:

@@ -81,6 +81,15 @@ do {
     let contractTests = try readText(
         iosRoot.appendingPathComponent("Sources/PersonalMythForgeMobileCoreContractTests/main.swift")
     )
+    let finalOperatorHandoff = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/final_operator_handoff.py")
+    )
+    let finalDemoLaunch = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/final_demo_launch.py")
+    )
+    let finalDemoLaunchTests = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/tests/test_final_demo_launch.py")
+    )
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
     try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
@@ -722,6 +731,26 @@ do {
         "final launch summary NPC evaluation row builder"
     )
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
+    try requireContains(
+        finalOperatorHandoff,
+        "npc_agent_evaluation",
+        "final operator handoff NPC evaluation step"
+    )
+    try requireContains(
+        finalOperatorHandoff,
+        "LOCAL_NPC_EVALUATION_COMMAND",
+        "final operator handoff NPC evaluation command"
+    )
+    try requireContains(
+        finalDemoLaunch,
+        "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness",
+        "final demo launch passes NPC evaluation readiness to handoff"
+    )
+    try requireContains(
+        finalDemoLaunchTests,
+        "test_final_demo_launch_operator_handoff_includes_npc_evaluation_step",
+        "final demo launch NPC evaluation handoff test"
+    )
     try requireContains(finalLaunchStatusView, "Launch Receipt", "final launch receipt section")
     try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")
     try requireContains(finalLaunchStatusView, "NPC Evaluation", "final launch NPC evaluation section")

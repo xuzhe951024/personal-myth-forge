@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from myth_forge_api.final_acceptance_readiness import LOCAL_FINAL_ACCEPTANCE_COMMAND
+from myth_forge_api.npc_agent_evaluation_readiness import LOCAL_NPC_EVALUATION_COMMAND
 
 LaunchMode = Literal["local", "configured"]
 
@@ -32,6 +33,7 @@ def build_final_operator_handoff_report(
     mode: LaunchMode,
     final_resources_preflight: dict[str, Any],
     final_acceptance_readiness: dict[str, Any],
+    npc_agent_evaluation_readiness: dict[str, Any],
     launch_phases: list[dict[str, Any]],
     repo_root: Path | str | None = None,
 ) -> dict[str, Any]:
@@ -55,6 +57,7 @@ def build_final_operator_handoff_report(
             fallback_command="make backend-device-demo",
         ),
         _local_acceptance_step(final_acceptance_readiness, phases),
+        _npc_evaluation_step(npc_agent_evaluation_readiness),
         _acceptance_or_phase_step(
             step_id="mobile_deploy_preflight",
             blocker_id="mobile_deploy_preflight",
@@ -84,6 +87,7 @@ def build_final_operator_handoff_report(
             mode=mode,
             final_resources_preflight=final_resources_preflight,
             final_acceptance_readiness=final_acceptance_readiness,
+            npc_agent_evaluation_readiness=npc_agent_evaluation_readiness,
             steps=steps,
         ),
         "safety": {
@@ -181,6 +185,29 @@ def _acceptance_or_phase_step(
     )
 
 
+def _npc_evaluation_step(readiness: dict[str, Any]) -> dict[str, Any]:
+    status = str(readiness.get("status", "missing"))
+    notes = _npc_evaluation_notes(readiness)
+    if status == "ready":
+        mapped_status = "ready"
+    elif status == "missing":
+        mapped_status = "missing"
+    elif status in {"blocked", "failed"}:
+        mapped_status = "blocked"
+    else:
+        mapped_status = "blocked"
+        notes.append("unknown_npc_evaluation_status")
+    return _step(
+        step_id="npc_agent_evaluation",
+        label="Run NPC Agent evaluation",
+        status=mapped_status,
+        command=LOCAL_NPC_EVALUATION_COMMAND,
+        required_for="AI Agent NPC final demo readiness",
+        source="npc_agent_evaluation_readiness",
+        notes=notes,
+    )
+
+
 def _configured_acceptance_step(
     *,
     mode: LaunchMode,
@@ -252,11 +279,28 @@ def _acceptance_notes(readiness: dict[str, Any]) -> list[str]:
     return []
 
 
+def _npc_evaluation_notes(readiness: dict[str, Any]) -> list[str]:
+    notes: list[str] = []
+    summary = readiness.get("summary", {})
+    if isinstance(summary, dict):
+        succeeded = summary.get("succeeded", 0)
+        failed = summary.get("failed", 0)
+        notes.append(f"NPC evaluation has {succeeded} succeeded and {failed} failed cases.")
+    blockers = readiness.get("blockers", [])
+    if isinstance(blockers, list) and blockers:
+        blocker = blockers[0]
+        if isinstance(blocker, dict):
+            notes.append(str(blocker.get("classification", "blocked")))
+            notes.append(str(blocker.get("detail", "")))
+    return notes
+
+
 def _next_actions(
     *,
     mode: LaunchMode,
     final_resources_preflight: dict[str, Any],
     final_acceptance_readiness: dict[str, Any],
+    npc_agent_evaluation_readiness: dict[str, Any],
     steps: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
@@ -267,6 +311,14 @@ def _next_actions(
         if action != "final acceptance is ready"
     ]
     actions.extend(readiness_actions)
+    npc_step = next((step for step in steps if step["id"] == "npc_agent_evaluation"), None)
+    if npc_step is not None and npc_step["status"] in {"missing", "blocked"}:
+        npc_actions = [
+            action
+            for action in _string_list(npc_agent_evaluation_readiness.get("operator_actions"))
+            if action != "NPC Agent evaluation is ready"
+        ]
+        actions.extend(npc_actions)
     if mode == "configured" and any(
         step["id"] == "configured_final_acceptance" and step["status"] == "live"
         for step in steps
@@ -280,6 +332,8 @@ def _next_actions(
             if step["id"] in {"final_resources_preflight", "local_final_acceptance"}:
                 continue
             if step["source"] == "final_acceptance_readiness":
+                continue
+            if step["source"] == "npc_agent_evaluation_readiness":
                 continue
             actions.append(f"unblock {step['id']}: {step['command']}")
         if step["status"] == "manual" and step["id"] == "xcode_build_gate":
@@ -334,6 +388,9 @@ def _safe_text(message: str, repo_root: Path) -> str:
         r"https?://checkout\.[^\s,;\"']+",
         r"checkout_url",
         r"file://[^\s,;\"']+",
+        r"private_message:[^\n\r]+",
+        r"raw_context:[^\n\r]+",
+        r"message_body:[^\n\r]+",
     ]
     for pattern in patterns:
         sanitized = re.sub(pattern, "[redacted]", sanitized, flags=re.IGNORECASE)

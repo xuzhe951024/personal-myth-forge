@@ -9,6 +9,7 @@ STEP_ORDER = [
     "apply_final_resources",
     "backend_device_server",
     "local_final_acceptance",
+    "npc_agent_evaluation",
     "mobile_deploy_preflight",
     "xcode_build_gate",
     "configured_final_acceptance",
@@ -22,6 +23,7 @@ def test_operator_handoff_blocks_missing_resources_and_acceptance_without_runnin
         mode="local",
         final_resources_preflight=_missing_resources_report(),
         final_acceptance_readiness=_missing_acceptance_report(),
+        npc_agent_evaluation_readiness=_missing_npc_evaluation_readiness(),
         launch_phases=_local_launch_phases(),
         repo_root=tmp_path,
     )
@@ -34,7 +36,7 @@ def test_operator_handoff_blocks_missing_resources_and_acceptance_without_runnin
     assert steps["final_resources_preflight"]["status"] == "missing"
     assert steps["local_final_acceptance"]["status"] == "missing"
     assert steps["configured_final_acceptance"]["status"] == "optional"
-    assert report["summary"]["missing"] == 3
+    assert report["summary"]["missing"] == 4
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["optional"] == 1
     assert report["next_actions"][:2] == [
@@ -63,6 +65,7 @@ def test_operator_handoff_promotes_saved_acceptance_blockers_and_redacts_text(
         mode="local",
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_blocked_acceptance_report(tmp_path),
+        npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
         launch_phases=_local_launch_phases(
             apply_status="ready",
             mobile_preflight_status="ready",
@@ -95,6 +98,7 @@ def test_operator_handoff_marks_configured_acceptance_as_live_consent_gate(
         mode="configured",
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
+        npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
         launch_phases=_configured_launch_phases(),
         repo_root=tmp_path,
     )
@@ -114,6 +118,79 @@ def test_operator_handoff_marks_configured_acceptance_as_live_consent_gate(
     ]
     assert report["safety"]["provider_calls"] is False
     assert report["safety"]["commands_run"] is False
+
+
+def test_operator_handoff_includes_ready_npc_evaluation_step(tmp_path: Path) -> None:
+    report = build_final_operator_handoff_report(
+        mode="local",
+        final_resources_preflight=_ready_resources_report(),
+        final_acceptance_readiness=_ready_acceptance_report(),
+        npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
+        launch_phases=_local_launch_phases(
+            apply_status="ready",
+            mobile_preflight_status="ready",
+        ),
+        repo_root=tmp_path,
+    )
+    steps = {step["id"]: step for step in report["steps"]}
+    step_ids = [step["id"] for step in report["steps"]]
+
+    assert steps["npc_agent_evaluation"]["status"] == "ready"
+    assert "evaluate-npc" in steps["npc_agent_evaluation"]["command"]
+    assert step_ids.index("local_final_acceptance") < step_ids.index(
+        "npc_agent_evaluation"
+    )
+    assert step_ids.index("npc_agent_evaluation") < step_ids.index(
+        "mobile_deploy_preflight"
+    )
+    assert all("evaluate-npc" not in action for action in report["next_actions"])
+
+
+def test_operator_handoff_surfaces_missing_npc_evaluation_action(
+    tmp_path: Path,
+) -> None:
+    report = build_final_operator_handoff_report(
+        mode="local",
+        final_resources_preflight=_ready_resources_report(),
+        final_acceptance_readiness=_ready_acceptance_report(),
+        npc_agent_evaluation_readiness=_missing_npc_evaluation_readiness(),
+        launch_phases=_local_launch_phases(
+            apply_status="ready",
+            mobile_preflight_status="ready",
+        ),
+        repo_root=tmp_path,
+    )
+    steps = {step["id"]: step for step in report["steps"]}
+
+    assert steps["npc_agent_evaluation"]["status"] == "missing"
+    assert "evaluate-npc" in " ".join(report["next_actions"])
+
+
+def test_operator_handoff_redacts_blocked_npc_evaluation_detail(
+    tmp_path: Path,
+) -> None:
+    readiness = _blocked_npc_evaluation_readiness()
+
+    report = build_final_operator_handoff_report(
+        mode="local",
+        final_resources_preflight=_ready_resources_report(),
+        final_acceptance_readiness=_ready_acceptance_report(),
+        npc_agent_evaluation_readiness=readiness,
+        launch_phases=_local_launch_phases(
+            apply_status="ready",
+            mobile_preflight_status="ready",
+        ),
+        repo_root=tmp_path,
+    )
+    report_text = json.dumps(report)
+    steps = {step["id"]: step for step in report["steps"]}
+
+    assert steps["npc_agent_evaluation"]["status"] == "blocked"
+    assert "npc_agent_evaluation_failed" in report_text
+    assert "test-secret" not in report_text
+    assert "private_message:" not in report_text
+    assert "/Users/" not in report_text
+    assert "file://" not in report_text
 
 
 def _missing_resources_report() -> dict[str, object]:
@@ -254,6 +331,79 @@ def _ready_acceptance_report() -> dict[str, object]:
             "local_paths_in_report": False,
         },
     }
+
+
+def _ready_npc_evaluation_readiness() -> dict[str, object]:
+    return {
+        "kind": "npc_agent_evaluation_readiness_report",
+        "status": "ready",
+        "summary": {"total_cases": 6, "succeeded": 6, "failed": 0, "tick_steps": 2},
+        "coverage": {
+            "expected_npc_sets": 6,
+            "trace_sets": 6,
+            "proposed_action_plan_matches": 6,
+            "tick_steps_completed": 12,
+            "world_resolution_steps": 12,
+        },
+        "blockers": [],
+        "operator_actions": ["NPC Agent evaluation is ready"],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "global_mutation": False,
+        },
+    }
+
+
+def _missing_npc_evaluation_readiness() -> dict[str, object]:
+    return {
+        "kind": "npc_agent_evaluation_readiness_report",
+        "status": "missing",
+        "summary": {"total_cases": 0, "succeeded": 0, "failed": 0, "tick_steps": 0},
+        "coverage": {
+            "expected_npc_sets": 0,
+            "trace_sets": 0,
+            "proposed_action_plan_matches": 0,
+            "tick_steps_completed": 0,
+            "world_resolution_steps": 0,
+        },
+        "blockers": [],
+        "operator_actions": [
+            (
+                "run local NPC Agent evaluation with evaluate-npc and write "
+                "services/backend/.local/npc-evaluation-local.json"
+            )
+        ],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "global_mutation": False,
+        },
+    }
+
+
+def _blocked_npc_evaluation_readiness() -> dict[str, object]:
+    readiness = _missing_npc_evaluation_readiness()
+    readiness["status"] = "blocked"
+    readiness["summary"] = {"total_cases": 6, "succeeded": 5, "failed": 1, "tick_steps": 2}
+    readiness["blockers"] = [
+        {
+            "id": "npc_agent_evaluation",
+            "label": "NPC Agent evaluation",
+            "status": "failed",
+            "classification": "npc_agent_evaluation_failed",
+            "command": (
+                "cd services/backend && uv run python -m myth_forge_api.cli "
+                "evaluate-npc --provider local"
+            ),
+            "detail": (
+                "failed Authorization=Bearer test-secret private_message: raw "
+                "file:///Users/example/private.txt"
+            ),
+        }
+    ]
+    readiness["operator_actions"] = ["rerun local NPC Agent evaluation and review failed cases"]
+    return readiness
 
 
 def _local_launch_phases(
