@@ -43,6 +43,9 @@ do {
     let threeDGenerationInputReviewView = try readText(
         appRoot.appendingPathComponent("ThreeDGenerationInputReviewView.swift")
     )
+    let generationResultReceiptView = try readText(
+        appRoot.appendingPathComponent("GenerationResultReceiptView.swift")
+    )
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
@@ -91,6 +94,7 @@ do {
     let threeDGenerationInputReview = try readText(
         coreRoot.appendingPathComponent("ThreeDGenerationInputReview.swift")
     )
+    let generationResultReceipt = try readText(coreRoot.appendingPathComponent("GenerationResultReceipt.swift"))
     let captureGenerationReceipt = try readText(
         coreRoot.appendingPathComponent("CaptureGenerationReceipt.swift")
     )
@@ -290,6 +294,7 @@ do {
         "LiveProviderConsentView.swift",
         "PrintFulfillmentReceiptView.swift",
         "ThreeDGenerationInputReviewView.swift",
+        "GenerationResultReceiptView.swift",
         "ArtifactSummaryView.swift",
         "Artifact3DPreviewView.swift",
         "GuidedScanCaptureView.swift",
@@ -402,6 +407,12 @@ do {
         sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000026 /* ThreeDGenerationInputReviewView.swift in Sources */,",
         "3D generation input review Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000027 /* GenerationResultReceiptView.swift in Sources */,",
+        "3D generation result receipt Xcode source membership"
     )
     for file in [
         "PMFJSON.swift",
@@ -998,6 +1009,43 @@ do {
         "3D generation input review privacy rendering"
     )
     try requireContains(
+        generationResultReceipt,
+        "GenerationResultReceiptBuilder",
+        "3D generation result receipt builder"
+    )
+    try requireContains(
+        generationResultReceipt,
+        "canPresentResult",
+        "3D generation result presentation gate"
+    )
+    try requireContains(
+        generationResultReceipt,
+        "Raw provider URIs and prompts withheld.",
+        "3D generation result privacy note"
+    )
+    try requireContains(
+        generationResultReceipt,
+        "scene-loadable iOS asset",
+        "3D generation result iOS scene proof"
+    )
+    try requireContains(generationResultReceipt, "npcAgentTraces", "3D generation result NPC trace proof")
+    try requireContains(generationResultReceipt, "sanitize", "3D generation result redaction")
+    try requireContains(
+        generationResultReceiptView,
+        "3D Generation Result",
+        "3D generation result view title"
+    )
+    try requireContains(
+        generationResultReceiptView,
+        "receipt.routeLabel",
+        "3D generation result route rendering"
+    )
+    try requireContains(
+        generationResultReceiptView,
+        "receipt.privacyNotes",
+        "3D generation result privacy rendering"
+    )
+    try requireContains(
         printFulfillmentReceipt,
         "PrintFulfillmentReceiptBuilder",
         "print fulfillment receipt builder"
@@ -1051,6 +1099,26 @@ do {
         contractTests,
         "testThreeDGenerationInputReviewRedactsUnsafeText",
         "3D generation input review redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testGenerationResultReceiptWaitsForForge",
+        "3D generation result waiting contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testGenerationResultReceiptShowsCompleteForgeResult",
+        "3D generation result ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testGenerationResultReceiptRequiresIOSSceneVariant",
+        "3D generation result iOS scene contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testGenerationResultReceiptRedactsUnsafeText",
+        "3D generation result redaction contract test"
     )
     try requireContains(
         contractTests,
@@ -1374,6 +1442,16 @@ do {
         artifactSummaryView,
         "Artifact3DPreviewView(session: session, latestTick: latestTick)",
         "artifact summary 3D preview wiring"
+    )
+    try requireContains(
+        artifactSummaryView,
+        "GenerationResultReceiptView(",
+        "artifact summary generation result receipt wiring"
+    )
+    try requireContains(
+        artifactSummaryView,
+        "GenerationResultReceiptBuilder.build(session: session)",
+        "artifact summary generation result receipt builder"
     )
     try requireContains(artifactSummaryView, "let latestTick: NPCAgentTick?", "artifact summary latest tick input")
     try requireContains(
