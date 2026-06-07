@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.95 Mobile iOS Deploy Runbook</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f5f3ef;
+        --panel: #fffdf8;
+        --ink: #161915;
+        --muted: #5e645e;
+        --line: #d8d2c7;
+        --green: #187346;
+        --amber: #a05d12;
+        --blue: #2b5f8a;
+        --red: #b4433b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        width: 390px;
+        min-height: 844px;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: 390px;
+        min-height: 844px;
+        padding: 18px 14px 20px;
+        overflow: hidden;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--panel) 92%, white 8%);
+        padding: 12px;
+        box-shadow: 0 10px 26px rgba(44, 38, 28, 0.08);
+      }
+
+      header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        justify-content: space-between;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.16;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.35;
+      }
+
+      .badge {
+        flex: 0 0 auto;
+        color: var(--amber);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      .phases {
+        margin: 12px 0 10px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .phase {
+        display: grid;
+        grid-template-columns: 10px 108px 1fr;
+        gap: 8px;
+        align-items: start;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        margin-top: 5px;
+        border-radius: 99px;
+        background: var(--green);
+      }
+
+      .dot.amber {
+        background: var(--amber);
+      }
+
+      .dot.red {
+        background: var(--red);
+      }
+
+      .phase strong {
+        font-size: 11px;
+        line-height: 1.2;
+      }
+
+      .phase span {
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.28;
+        overflow-wrap: anywhere;
+      }
+
+      section {
+        border-top: 1px solid var(--line);
+        padding-top: 8px;
+        margin-top: 8px;
+      }
+
+      h2 {
+        margin: 0 0 5px;
+        font-size: 11px;
+        line-height: 1.2;
+        letter-spacing: 0;
+        font-weight: 800;
+      }
+
+      .lines {
+        display: grid;
+        gap: 4px;
+      }
+
+      .line {
+        color: var(--muted);
+        font-family: "SF Mono", Menlo, ui-monospace, monospace;
+        font-size: 9px;
+        line-height: 1.32;
+        overflow-wrap: anywhere;
+      }
+
+      .line.primary {
+        color: var(--ink);
+      }
+
+      .line.warning {
+        color: var(--amber);
+      }
+
+      .line.blocked {
+        color: var(--red);
+      }
+
+      footer {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 9px;
+        line-height: 1.35;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="panel">
+        <header>
+          <div>
+            <h1>Final Launch Status</h1>
+            <p class="subtitle">mode local; ready 4, missing 3, blocked 1, manual 3</p>
+          </div>
+          <div class="badge">Waiting</div>
+        </header>
+
+        <div class="phases">
+          <div class="phase">
+            <div class="dot"></div>
+            <strong>Start backend on LAN</strong>
+            <span>make backend-device-demo</span>
+          </div>
+          <div class="phase">
+            <div class="dot amber"></div>
+            <strong>Final Launch</strong>
+            <span>make final-demo-launch | review operator checklist</span>
+          </div>
+        </div>
+
+        <section>
+          <h2>Launch Receipt</h2>
+          <div class="lines">
+            <div class="line primary">Receipt: local launch partial.</div>
+            <div class="line">Acceptance: 12 passed, 0 blocked, 0 failed.</div>
+            <div class="line warning">First blocker: set PMF_BACKEND_BASE_URL to the Mac LAN URL</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>NPC Evaluation</h2>
+          <div class="lines">
+            <div class="line primary">NPC Agent evaluation ready: 6 cases, 12 ticks.</div>
+            <div class="line">Coverage: 6 trace sets, 12 world resolutions.</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>iOS Deploy Runbook</h2>
+          <div class="lines">
+            <div class="line primary">iOS deploy runbook partial.</div>
+            <div class="line warning">backend_base_url: missing required blocked_by_ios_deploy_config</div>
+            <div class="line">development_team: ready required ready</div>
+            <div class="line">set PMF_BACKEND_BASE_URL to the Mac LAN URL</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Deploy Commands</h2>
+          <div class="lines">
+            <div class="line primary">mobile_deploy_preflight: ready | make mobile-deploy-preflight</div>
+            <div class="line blocked">mobile_xcode_build: blocked | make mobile-xcode-build</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Deploy Safety</h2>
+          <div class="lines">
+            <div class="line primary">Safety: commands_run=false provider_calls=false global_mutation=false</div>
+            <div class="line">Report: secrets=false raw_media=false payment_links=false local_paths=false</div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Next</h2>
+          <div class="lines">
+            <div class="line">provide iOS deploy config and rerun mobile deploy preflight</div>
+          </div>
+        </section>
+
+        <footer>
+          read-only iPhone launch status. Provider keys and resource files stay backend-only.
+          Commands are for the Mac operator; the app does not run them.
+        </footer>
+      </div>
+    </main>
+  </body>
+</html>

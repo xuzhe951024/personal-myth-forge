@@ -53,6 +53,18 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "NPC Evaluation", lines: summary.npcEvaluationRows)
             }
 
+            if !summary.deployRunbookRows.isEmpty {
+                groupedLines(title: "iOS Deploy Runbook", lines: summary.deployRunbookRows)
+            }
+
+            if !summary.deployRunbookCommandRows.isEmpty {
+                groupedLines(title: "Deploy Commands", lines: summary.deployRunbookCommandRows)
+            }
+
+            if !summary.deployRunbookSafetyRows.isEmpty {
+                groupedLines(title: "Deploy Safety", lines: summary.deployRunbookSafetyRows)
+            }
+
             if !summary.handoffRows.isEmpty {
                 groupedLines(title: "Next", lines: summary.handoffRows)
             }

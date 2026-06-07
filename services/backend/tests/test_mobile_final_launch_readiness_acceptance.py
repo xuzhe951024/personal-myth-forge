@@ -124,6 +124,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "FinalResourcesPreflightSummary",
                 "FinalLaunchMode",
                 "displayLabel",
+                "IOSDeployRunbookReport",
+                "iosDeployRunbook",
             ]
         ),
         "apps/mobile/ios/App/AppConfiguration.swift": "\n".join(
@@ -162,6 +164,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "FinalLaunchMobileStatus",
                 "modePolicyRows",
                 "liveCallPolicy",
+                "deployRunbookRows",
+                "deployRunbookCommandRows",
+                "deployRunbookSafetyRows",
                 "sanitize",
             ]
         ),
@@ -169,6 +174,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
             [
                 "Final Launch Status",
                 "Mode",
+                "iOS Deploy Runbook",
+                "Deploy Commands",
+                "Deploy Safety",
                 "resourceActions",
                 "commandRows",
             ]
@@ -197,6 +205,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
                 "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",
                 "testFinalLaunchMobileSummaryRedactsUnsafeReportText",
+                "testDecodesIOSDeployRunbookFromFinalLaunchPayload",
+                "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook",
+                "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook",
+                "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
             ]
         ),
     }

@@ -31,6 +31,9 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var resourceActions: [String]
     public var acceptanceRows: [String]
     public var npcEvaluationRows: [String]
+    public var deployRunbookRows: [String]
+    public var deployRunbookCommandRows: [String]
+    public var deployRunbookSafetyRows: [String]
     public var handoffRows: [String]
     public var commandRows: [String]
     public var notes: [String]
@@ -46,6 +49,9 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         resourceActions: [String],
         acceptanceRows: [String] = [],
         npcEvaluationRows: [String] = [],
+        deployRunbookRows: [String] = [],
+        deployRunbookCommandRows: [String] = [],
+        deployRunbookSafetyRows: [String] = [],
         handoffRows: [String] = [],
         commandRows: [String],
         notes: [String]
@@ -60,6 +66,9 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.resourceActions = resourceActions
         self.acceptanceRows = acceptanceRows
         self.npcEvaluationRows = npcEvaluationRows
+        self.deployRunbookRows = deployRunbookRows
+        self.deployRunbookCommandRows = deployRunbookCommandRows
+        self.deployRunbookSafetyRows = deployRunbookSafetyRows
         self.handoffRows = handoffRows
         self.commandRows = commandRows
         self.notes = notes
@@ -120,6 +129,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             resourceActions: resourceActions(from: report.finalResourcesPreflight),
             acceptanceRows: acceptanceRows(from: report.finalAcceptanceReadiness),
             npcEvaluationRows: npcEvaluationRows(from: report.npcAgentEvaluationReadiness),
+            deployRunbookRows: deployRunbookRows(from: report.iosDeployRunbook),
+            deployRunbookCommandRows: deployRunbookCommandRows(from: report.iosDeployRunbook),
+            deployRunbookSafetyRows: deployRunbookSafetyRows(from: report.iosDeployRunbook),
             handoffRows: handoffRows(from: report.finalOperatorHandoff),
             commandRows: report.commands.prefix(4).map(sanitize),
             notes: baseNotes()
@@ -353,6 +365,66 @@ public enum FinalLaunchMobileSummaryBuilder {
         default:
             return ["Final operator handoff \(sanitize(handoff.status))."]
         }
+    }
+
+    private static func deployRunbookRows(from runbook: IOSDeployRunbookReport?) -> [String] {
+        guard let runbook else {
+            return ["iOS deploy runbook has not loaded."]
+        }
+
+        var rows = ["iOS deploy runbook \(sanitize(runbook.status))."]
+        let attention = runbook.inputSlots.filter { slot in
+            (slot.status == "missing" && slot.required) || slot.status == "blocked"
+        }
+        let slots = attention.isEmpty
+            ? runbook.inputSlots.filter(\.required).prefix(3)
+            : attention.prefix(3)
+        rows.append(contentsOf: slots.map(deployRunbookSlotRow))
+        if let action = runbook.operatorActions.first, !action.isEmpty {
+            rows.append(sanitize(action))
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func deployRunbookSlotRow(_ slot: IOSDeployRunbookInputSlot) -> String {
+        var parts = ["\(slot.id): \(slot.status)"]
+        parts.append(slot.required ? "required" : "optional")
+        if let classification = slot.classification, !classification.isEmpty {
+            parts.append(classification)
+        } else if slot.configured {
+            parts.append("configured")
+        }
+        if !slot.operatorAction.isEmpty {
+            parts.append("| \(slot.operatorAction)")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func deployRunbookCommandRows(from runbook: IOSDeployRunbookReport?) -> [String] {
+        guard let runbook else {
+            return []
+        }
+        return runbook.commandSequence.prefix(4).map { step in
+            var row = "\(step.id): \(step.status) | \(step.command)"
+            if step.requiresConsent {
+                row += " | consent required"
+            }
+            return sanitize(row)
+        }
+    }
+
+    private static func deployRunbookSafetyRows(from runbook: IOSDeployRunbookReport?) -> [String] {
+        guard let safety = runbook?.safety else {
+            return []
+        }
+        return [
+            "Safety: commands_run=\(flag(safety.commandsRun)) provider_calls=\(flag(safety.providerCalls)) global_mutation=\(flag(safety.globalMutation))",
+            "Report: secrets=\(flag(safety.providerSecretsInReport)) raw_media=\(flag(safety.rawMediaInReport)) payment_links=\(flag(safety.paymentLinksInReport)) local_paths=\(flag(safety.localPathsInReport))",
+        ].map(sanitize)
+    }
+
+    private static func flag(_ value: Bool) -> String {
+        value ? "true" : "false"
     }
 
     private static func baseNotes() -> [String] {

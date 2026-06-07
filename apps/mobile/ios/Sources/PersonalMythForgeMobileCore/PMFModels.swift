@@ -1096,6 +1096,127 @@ public struct FinalOperatorHandoffReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct IOSDeployRunbookInputSlot: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var required: Bool
+    public var source: String
+    public var operatorAction: String
+    public var configured: Bool
+    public var redacted: Bool
+    public var classification: String?
+    public var key: String?
+    public var expectedMode: String?
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        required: Bool,
+        source: String,
+        operatorAction: String,
+        configured: Bool,
+        redacted: Bool,
+        classification: String? = nil,
+        key: String? = nil,
+        expectedMode: String? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.required = required
+        self.source = source
+        self.operatorAction = operatorAction
+        self.configured = configured
+        self.redacted = redacted
+        self.classification = classification
+        self.key = key
+        self.expectedMode = expectedMode
+    }
+}
+
+public struct IOSDeployRunbookCommandStep: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var command: String
+    public var notes: [String]
+    public var requiresConsent: Bool
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        command: String,
+        notes: [String] = [],
+        requiresConsent: Bool = false
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.command = command
+        self.notes = notes
+        self.requiresConsent = requiresConsent
+    }
+}
+
+public struct IOSDeployRunbookSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var globalMutation: Bool
+    public var providerSecretsInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        globalMutation: Bool,
+        providerSecretsInReport: Bool,
+        rawMediaInReport: Bool,
+        paymentLinksInReport: Bool,
+        localPathsInReport: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.globalMutation = globalMutation
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.localPathsInReport = localPathsInReport
+    }
+}
+
+public struct IOSDeployRunbookReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var mode: String
+    public var status: String
+    public var inputSlots: [IOSDeployRunbookInputSlot]
+    public var commandSequence: [IOSDeployRunbookCommandStep]
+    public var operatorActions: [String]
+    public var safety: IOSDeployRunbookSafety
+
+    public init(
+        kind: String,
+        mode: String,
+        status: String,
+        inputSlots: [IOSDeployRunbookInputSlot],
+        commandSequence: [IOSDeployRunbookCommandStep],
+        operatorActions: [String],
+        safety: IOSDeployRunbookSafety
+    ) {
+        self.kind = kind
+        self.mode = mode
+        self.status = status
+        self.inputSlots = inputSlots
+        self.commandSequence = commandSequence
+        self.operatorActions = operatorActions
+        self.safety = safety
+    }
+}
+
 public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
@@ -1106,6 +1227,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
+    public var iosDeployRunbook: IOSDeployRunbookReport?
     public var launchPhases: [FinalDemoLaunchPhase]
     public var operatorChecklist: [String]
     public var commands: [String]
@@ -1122,6 +1244,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
+        iosDeployRunbook: IOSDeployRunbookReport? = nil,
         launchPhases: [FinalDemoLaunchPhase],
         operatorChecklist: [String],
         commands: [String],
@@ -1137,6 +1260,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
         self.finalOperatorHandoff = finalOperatorHandoff
+        self.iosDeployRunbook = iosDeployRunbook
         self.launchPhases = launchPhases
         self.operatorChecklist = operatorChecklist
         self.commands = commands
