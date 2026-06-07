@@ -2531,3 +2531,14 @@ handoff context as the local operator reports.
 This report never runs commands, writes `.env`, writes iOS deploy config, calls
 Meshy/OpenAI/print providers, runs Xcode, accepts Apple SDK licenses, changes
 signing/keychain state, or exposes provider secrets.
+
+## P0.129 Mobile External Action Ledger
+
+The iPhone Final Launch panel now decodes `final_external_action_ledger` from
+`/v1/final-demo-launch` and renders it under `External Actions`. The rows show
+group counts for blocked, missing, live, and manual actions, plus whether global
+confirmation and live provider cost consent are required.
+
+This remains display-only. The app does not run commands, call providers,
+write local resource files, run Xcode, change signing/keychain state, or receive
+provider secrets.

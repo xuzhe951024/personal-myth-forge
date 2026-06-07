@@ -2292,3 +2292,15 @@ global Mac/Xcode actions, and device runtime actions for final demo handoff.
 The app still receives no provider secrets and does not run cost-bearing or
 global machine actions. Use `make final-external-action-ledger` on the backend
 to inspect the same ledger as a local JSON report.
+
+## P0.129 Mobile External Action Ledger
+
+The Final Launch screen now renders the backend
+`final_external_action_ledger` payload as an `External Actions` group. It keeps
+the existing compact grouped-line style and shows which remaining actions are
+resource inputs, live provider cost gates, global Mac/Xcode confirmations, or
+device runtime steps.
+
+The app still treats those rows as read-only operator guidance. It does not run
+the commands, call Meshy/OpenAI/print providers, write config files, run Xcode,
+or mutate signing/keychain state.
