@@ -167,6 +167,26 @@ def test_ios_device_launch_rehearsal_make_target_dry_run_uses_wrapper() -> None:
     assert "write_ios_device_launch_rehearsal.sh" in result.stdout
 
 
+def test_final_local_report_refresh_make_target_dry_run_uses_cli() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "final-local-report-refresh"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    assert ".PHONY: final-local-report-refresh" in makefile
+    assert "final-local-report-refresh:" in makefile
+    assert "myth_forge_api.cli final-local-report-refresh" in result.stdout
+    assert "--repo-root ../.." in result.stdout
+    assert "--output .local/final-local-report-refresh.json" in result.stdout
+
+
 def _run_script(root: Path, script_name: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["sh", f"services/backend/scripts/{script_name}"],

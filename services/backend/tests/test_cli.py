@@ -8,6 +8,7 @@ from myth_forge_api.final_demo_launch import FinalDemoLaunchResult
 from myth_forge_api.final_configured_preflight import FinalConfiguredPreflightResult
 from myth_forge_api.final_external_action_ledger import FinalExternalActionLedgerResult
 from myth_forge_api.final_handoff_index import FinalHandoffIndexResult
+from myth_forge_api.final_local_report_refresh import FinalLocalReportRefreshResult
 from myth_forge_api.final_resource_apply_preview import FinalResourceApplyPreviewResult
 from myth_forge_api.final_resource_requirements import FinalResourceRequirementsResult
 from myth_forge_api.final_showcase_readiness import FinalShowcaseReadinessResult
@@ -786,6 +787,60 @@ def test_cli_final_external_action_ledger_writes_report_and_returns_result_code(
     assert calls == [{"repo_root": tmp_path}]
     assert report["kind"] == "final_external_action_ledger_report"
     assert report["status"] == "blocked"
+
+
+def test_cli_final_local_report_refresh_writes_report(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "final-local-report-refresh.json"
+    calls = []
+
+    def fake_run_final_local_report_refresh(**kwargs):
+        calls.append(kwargs)
+        return FinalLocalReportRefreshResult(
+            exit_code=2,
+            report={
+                "kind": "final_local_report_refresh_report",
+                "status": "blocked",
+                "summary": {"steps": 17, "ready": 3, "blocked": 14, "failed": 0},
+                "steps": [
+                    {
+                        "id": "final_showcase_readiness",
+                        "status": "blocked",
+                        "output": "services/backend/.local/final-showcase-readiness.json",
+                    }
+                ],
+                "safety": {
+                    "live_provider_calls": False,
+                    "global_mutation": False,
+                    "xcode_or_signing": False,
+                },
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.run_final_local_report_refresh",
+        fake_run_final_local_report_refresh,
+    )
+
+    exit_code = main(
+        [
+            "final-local-report-refresh",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 2
+    assert calls == [{"repo_root": tmp_path}]
+    assert report["kind"] == "final_local_report_refresh_report"
+    assert report["status"] == "blocked"
+    assert report["safety"]["live_provider_calls"] is False
+    assert report["steps"][0]["id"] == "final_showcase_readiness"
 
 
 def test_cli_resource_template_acceptance_writes_report(tmp_path, monkeypatch) -> None:

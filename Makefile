@@ -79,6 +79,11 @@ final-resource-repair:
 final-external-action-ledger:
 	cd services/backend && uv run python -m myth_forge_api.cli final-external-action-ledger --repo-root ../.. --output .local/final-external-action-ledger.json
 
+.PHONY: final-local-report-refresh
+
+final-local-report-refresh:
+	cd services/backend && uv run python -m myth_forge_api.cli final-local-report-refresh --repo-root ../.. --output .local/final-local-report-refresh.json
+
 .PHONY: final-configured-preflight
 
 final-configured-preflight:
