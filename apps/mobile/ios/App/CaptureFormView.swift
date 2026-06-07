@@ -18,6 +18,7 @@ struct CaptureFormView: View {
     let generationReadinessTitle: String
     let generationReadinessRouteLabel: String
     let generationReadinessDetail: String
+    let generationInputReview: ThreeDGenerationInputReview
     let contextCapsuleReview: ContextCapsuleReview
     let forgeReadinessSummary: ForgeReadinessSummary
     let forgeActionGate: ForgeActionGate
@@ -84,6 +85,8 @@ struct CaptureFormView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.regularMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+            ThreeDGenerationInputReviewView(review: generationInputReview)
 
             if selectedCaptureMode == .arkitScan || selectedCaptureMode == .guidedScan {
                 VStack(alignment: .leading, spacing: 6) {

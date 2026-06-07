@@ -40,6 +40,9 @@ do {
     let forgeProgressReceiptView = try readText(appRoot.appendingPathComponent("ForgeProgressReceiptView.swift"))
     let liveProviderConsentView = try readText(appRoot.appendingPathComponent("LiveProviderConsentView.swift"))
     let printFulfillmentReceiptView = try readText(appRoot.appendingPathComponent("PrintFulfillmentReceiptView.swift"))
+    let threeDGenerationInputReviewView = try readText(
+        appRoot.appendingPathComponent("ThreeDGenerationInputReviewView.swift")
+    )
     let forgeRootView = try readText(appRoot.appendingPathComponent("ForgeRootView.swift"))
     let artifactSummaryView = try readText(appRoot.appendingPathComponent("ArtifactSummaryView.swift"))
     let artifact3DPreviewView = try readText(appRoot.appendingPathComponent("Artifact3DPreviewView.swift"))
@@ -84,6 +87,9 @@ do {
     let arkitScanPackageBuilder = try readText(coreRoot.appendingPathComponent("ARKitScanPackageBuilder.swift"))
     let captureGenerationReadiness = try readText(
         coreRoot.appendingPathComponent("CaptureGenerationReadiness.swift")
+    )
+    let threeDGenerationInputReview = try readText(
+        coreRoot.appendingPathComponent("ThreeDGenerationInputReview.swift")
     )
     let captureGenerationReceipt = try readText(
         coreRoot.appendingPathComponent("CaptureGenerationReceipt.swift")
@@ -283,6 +289,7 @@ do {
         "ForgeProgressReceiptView.swift",
         "LiveProviderConsentView.swift",
         "PrintFulfillmentReceiptView.swift",
+        "ThreeDGenerationInputReviewView.swift",
         "ArtifactSummaryView.swift",
         "Artifact3DPreviewView.swift",
         "GuidedScanCaptureView.swift",
@@ -390,6 +397,12 @@ do {
         "10A000000000000000000025 /* PrintFulfillmentReceiptView.swift in Sources */,",
         "print fulfillment receipt Xcode source membership"
     )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000026 /* ThreeDGenerationInputReviewView.swift in Sources */,",
+        "3D generation input review Xcode source membership"
+    )
     for file in [
         "PMFJSON.swift",
         "PMFModels.swift",
@@ -419,6 +432,16 @@ do {
     try requireContains(captureFormView, "generationReadinessTitle", "capture generation readiness title")
     try requireContains(captureFormView, "generationReadinessRouteLabel", "capture generation readiness route label")
     try requireContains(captureFormView, "generationReadinessDetail", "capture generation readiness detail")
+    try requireContains(
+        captureFormView,
+        "let generationInputReview: ThreeDGenerationInputReview",
+        "capture form 3D generation input review input"
+    )
+    try requireContains(
+        captureFormView,
+        "ThreeDGenerationInputReviewView(review: generationInputReview)",
+        "capture form 3D generation input review panel"
+    )
     try requireContains(captureFormView, "isContextCapsuleApproved", "capture form context approval binding")
     try requireContains(captureFormView, "ContextCapsuleReviewView(", "capture form context review wiring")
     try requireContains(captureFormView, "Forge Readiness", "capture form forge readiness panel")
@@ -584,6 +607,21 @@ do {
         forgeRootView,
         "captureGenerationReadiness.route.displayLabel",
         "capture generation readiness route label wiring"
+    )
+    try requireContains(
+        forgeRootView,
+        "generationInputReview: threeDGenerationInputReview",
+        "3D generation input review capture form handoff"
+    )
+    try requireContains(
+        forgeRootView,
+        "private var threeDGenerationInputReview: ThreeDGenerationInputReview",
+        "3D generation input review root property"
+    )
+    try requireContains(
+        forgeRootView,
+        "ThreeDGenerationInputReviewBuilder.build",
+        "3D generation input review builder wiring"
     )
     try requireContains(
         forgeRootView,
@@ -923,6 +961,43 @@ do {
     try requireContains(liveProviderConsentView, "summary.consentFlag", "live provider consent flag rendering")
     try requireContains(liveProviderConsentView, "summary.privacyNotes", "live provider consent privacy rendering")
     try requireContains(
+        threeDGenerationInputReview,
+        "ThreeDGenerationInputReviewBuilder",
+        "3D generation input review builder"
+    )
+    try requireContains(
+        threeDGenerationInputReview,
+        "selectedProviderSourceCount",
+        "3D generation input review provider source count"
+    )
+    try requireContains(
+        threeDGenerationInputReview,
+        "provider images",
+        "3D generation input review selected provider image copy"
+    )
+    try requireContains(
+        threeDGenerationInputReview,
+        "Raw capture files withheld.",
+        "3D generation input review privacy note"
+    )
+    try requireContains(threeDGenerationInputReview, "canForge3D", "3D generation input review forge gate")
+    try requireContains(threeDGenerationInputReview, "sanitize", "3D generation input review redaction")
+    try requireContains(
+        threeDGenerationInputReviewView,
+        "3D Generation Input",
+        "3D generation input review view title"
+    )
+    try requireContains(
+        threeDGenerationInputReviewView,
+        "review.routeLabel",
+        "3D generation input review route rendering"
+    )
+    try requireContains(
+        threeDGenerationInputReviewView,
+        "review.privacyNotes",
+        "3D generation input review privacy rendering"
+    )
+    try requireContains(
         printFulfillmentReceipt,
         "PrintFulfillmentReceiptBuilder",
         "print fulfillment receipt builder"
@@ -951,6 +1026,31 @@ do {
         printQuoteReviewView,
         "@Binding var isPrintQuoteApproved",
         "print quote approval binding input"
+    )
+    try requireContains(
+        contractTests,
+        "testThreeDGenerationInputReviewWaitsForCaptureMedia",
+        "3D generation input review waiting contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testThreeDGenerationInputReviewShowsGuidedScanProviderSelection",
+        "3D generation input review guided scan contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testThreeDGenerationInputReviewShowsARKitScanPackage",
+        "3D generation input review ARKit scan contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testThreeDGenerationInputReviewShowsMeshyReadyRoute",
+        "3D generation input review Meshy-ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testThreeDGenerationInputReviewRedactsUnsafeText",
+        "3D generation input review redaction contract test"
     )
     try requireContains(
         contractTests,
