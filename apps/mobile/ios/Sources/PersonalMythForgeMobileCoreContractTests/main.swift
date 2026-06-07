@@ -132,6 +132,7 @@ do {
     try testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness()
     try testDecodesFinalShowcaseReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness()
+    try testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions()
     try testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness()
     try testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation()
@@ -3065,6 +3066,35 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness() throws {
     try expectContains(text, "make ios-device-launch-rehearsal")
 }
 
+private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            finalShowcaseReadinessStatus: "blocked",
+            finalShowcaseReadinessActions: [
+                "final_rehearsal_local: final_acceptance_local: provide iOS deploy config",
+                "final_rehearsal_local: final_acceptance_local: resolve Xcode build gate",
+                "final_handoff_index: run make final-configured-preflight",
+                "ios_device_launch_certificate: run make final-handoff-index",
+                "run make live-provider-evidence after configured provider evidence files are refreshed",
+                "copy services/backend/final-resources.env.example to services/backend/.local/final-resources.env",
+                "make final-showcase-readiness",
+                "extra action that should stay hidden",
+            ]
+        ),
+        error: nil
+    )
+    let text = summary.showcaseReadinessRows.joined(separator: " ")
+
+    try expectContains(text, "final_rehearsal_local: final_acceptance_local")
+    try expectContains(text, "final_handoff_index: run make final-configured-preflight")
+    try expectContains(text, "ios_device_launch_certificate: run make final-handoff-index")
+    try expectContains(text, "run make live-provider-evidence")
+    try expectContains(text, "final-resources.env.example")
+    try expectContains(text, "make final-showcase-readiness")
+    try expectNotContains(text, "extra action that should stay hidden")
+    try expectEqual(summary.showcaseReadinessRows.count, 8)
+}
+
 private func testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness() throws {
     let report = finalDemoLaunchReport(
         finalShowcaseReadinessStatus: "blocked",
@@ -4659,6 +4689,7 @@ private func finalDemoLaunchPayload(
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
+    finalShowcaseReadinessActions: [String]? = nil,
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -4697,6 +4728,13 @@ private func finalDemoLaunchPayload(
     ]
     let iosDeviceLaunchActionsJSON = String(
         decoding: try! PMFJSON.encoder.encode(iosDeviceLaunchActions),
+        as: UTF8.self
+    )
+    let finalShowcaseActions = finalShowcaseReadinessActions ?? [
+        finalShowcaseReadinessAction
+    ]
+    let finalShowcaseActionsJSON = String(
+        decoding: try! PMFJSON.encoder.encode(finalShowcaseActions),
         as: UTF8.self
     )
     let liveEvidenceFirstID = liveEvidenceBlocked ? "three_d_evaluation_configured" : "provider_handoff"
@@ -5520,7 +5558,7 @@ private func finalDemoLaunchPayload(
               "detail": "\(finalShowcaseReadinessFirstBlockerDetail)"
             }
             """),
-            "operator_actions": ["\(finalShowcaseReadinessAction)"],
+            "operator_actions": \(finalShowcaseActionsJSON),
             "commands": [
               "make final-rehearsal-local",
               "make final-showcase-readiness"
@@ -8259,6 +8297,7 @@ private func finalDemoLaunchReport(
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
+    finalShowcaseReadinessActions: [String]? = nil,
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -8318,6 +8357,7 @@ private func finalDemoLaunchReport(
             finalShowcaseReadinessStatus: finalShowcaseReadinessStatus,
             finalShowcaseReadinessFirstBlockerDetail: finalShowcaseReadinessFirstBlockerDetail,
             finalShowcaseReadinessAction: finalShowcaseReadinessAction,
+            finalShowcaseReadinessActions: finalShowcaseReadinessActions,
             npcEvaluationStatus: npcEvaluationStatus,
             npcEvaluationBlockerClassification: npcEvaluationBlockerClassification,
             npcEvaluationBlockerDetail: npcEvaluationBlockerDetail,
