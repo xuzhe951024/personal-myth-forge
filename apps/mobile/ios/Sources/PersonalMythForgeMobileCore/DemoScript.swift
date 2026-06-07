@@ -45,14 +45,15 @@ public enum DemoScriptBuilder {
         npcTickHistoryCount: Int,
         printQuote: PrintQuote?,
         providerReadiness: ProviderReadinessResponse?,
-        providerReadinessError: String?
+        providerReadinessError: String?,
+        finalLaunchSummary: FinalLaunchMobileSummary? = nil
     ) -> DemoScript {
         let captureReady = captureSelection?.isReadyForUpload == true
         let sceneDetail = sceneStatus(for: session)
         let npcComplete = npcTickHistoryCount >= 3
         let resources = resourcesStatus(readiness: providerReadiness, error: providerReadinessError)
 
-        let steps = [
+        var steps = [
             step(
                 "capture",
                 "Capture Object",
@@ -86,6 +87,10 @@ public enum DemoScriptBuilder {
             step("resources", "Check Resources", resources.status, resources.detail),
         ]
 
+        if let finalLaunchSummary {
+            steps.append(finalLaunchStep(finalLaunchSummary))
+        }
+
         return DemoScript(
             title: "Live Demo Script",
             nextAction: nextAction(
@@ -94,7 +99,8 @@ public enum DemoScriptBuilder {
                 sceneReady: sceneDetail.isReady,
                 npcComplete: npcComplete,
                 printQuote: printQuote,
-                resourcesStatus: resources.status
+                resourcesStatus: resources.status,
+                finalLaunchStatus: steps.first { $0.id == "final_launch" }?.status
             ),
             steps: steps
         )
@@ -196,13 +202,42 @@ public enum DemoScriptBuilder {
         return (.blocked, missing.isEmpty ? "Provider setup needed." : "Missing \(missing)")
     }
 
+    private static func finalLaunchStep(_ summary: FinalLaunchMobileSummary) -> DemoScriptStep {
+        step(
+            "final_launch",
+            "Final Launch",
+            finalLaunchStatus(summary.overallStatus),
+            finalLaunchDetail(summary)
+        )
+    }
+
+    private static func finalLaunchStatus(_ status: FinalLaunchMobileStatus) -> DemoScriptStepStatus {
+        switch status {
+        case .ready:
+            return .complete
+        case .waiting:
+            return .waiting
+        case .blocked:
+            return .blocked
+        }
+    }
+
+    private static func finalLaunchDetail(_ summary: FinalLaunchMobileSummary) -> String {
+        let firstProblem = summary.phaseRows.first { $0.status != .ready }?.detail
+            ?? summary.acceptanceRows.first
+            ?? summary.handoffRows.first
+            ?? summary.subtitle
+        return "\(summary.title): \(firstProblem)"
+    }
+
     private static func nextAction(
         captureReady: Bool,
         session: MythSession?,
         sceneReady: Bool,
         npcComplete: Bool,
         printQuote: PrintQuote?,
-        resourcesStatus: DemoScriptStepStatus
+        resourcesStatus: DemoScriptStepStatus,
+        finalLaunchStatus: DemoScriptStepStatus?
     ) -> String {
         if !captureReady {
             return "Capture or import an object."
@@ -221,6 +256,21 @@ public enum DemoScriptBuilder {
         }
         if resourcesStatus == .blocked {
             return "Check backend resources."
+        }
+        if resourcesStatus == .waiting {
+            return "Check backend resources."
+        }
+        if let finalLaunchStatus {
+            switch finalLaunchStatus {
+            case .complete:
+                return "Final launch is ready."
+            case .blocked:
+                return "Review final launch blockers."
+            case .waiting:
+                return "Load final launch readiness."
+            case .current, .optional:
+                return "Review final launch readiness."
+            }
         }
         return "Local demo loop is ready."
     }

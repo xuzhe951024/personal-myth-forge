@@ -101,6 +101,7 @@ Bridge deliverable:
 - P0.83 iPhone Forge readiness summary before capture/context/provider handoff
 - P0.84 iPhone Forge action gate that disables primary forging until readiness is actionable
 - P0.85 iPhone NPC action gate for provider-aware autonomy and tick controls
+- P0.86 iPhone Demo Script final launch readiness step for operator-safe autopilot
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

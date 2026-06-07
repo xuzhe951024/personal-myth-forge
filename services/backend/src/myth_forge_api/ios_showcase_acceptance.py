@@ -602,8 +602,24 @@ FEATURES = (
             SourceRequirement("apps/mobile/ios/App/DemoScriptView.swift", "Demo Script"),
             SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "DemoScriptBuilder.build"),
             SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "finalLaunchSummary: finalLaunchMobileSummary",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift",
                 "DemoScriptBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift",
+                "final_launch",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift",
+                "FinalLaunchMobileSummary",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDemoScriptShowsBlockedFinalLaunch",
             ),
             SourceRequirement(
                 "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
@@ -622,6 +638,14 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ShowcaseAutopilot.swift",
                 "ShowcaseAutopilotPlanner",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ShowcaseAutopilot.swift",
+                'script.step(id: "final_launch")',
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testShowcaseAutopilotBlocksOnFinalLaunchBlocker",
             ),
         ),
     ),

@@ -64,6 +64,7 @@ do {
     let npcAgentModeSummary = try readText(coreRoot.appendingPathComponent("NPCAgentModeSummary.swift"))
     let npcAgentTickSummary = try readText(coreRoot.appendingPathComponent("NPCAgentTickSummary.swift"))
     let npcRitualScene = try readText(coreRoot.appendingPathComponent("NPCRitualScene.swift"))
+    let demoScript = try readText(coreRoot.appendingPathComponent("DemoScript.swift"))
     let showcaseAutopilot = try readText(coreRoot.appendingPathComponent("ShowcaseAutopilot.swift"))
     let devicePreflight = try readText(coreRoot.appendingPathComponent("DevicePreflight.swift"))
     let finalLaunchMobileSummary = try readText(
@@ -528,6 +529,11 @@ do {
         forgeRootView,
         "switch showcaseAutopilotPlan.action",
         "showcase autopilot action dispatch"
+    )
+    try requireContains(
+        forgeRootView,
+        "finalLaunchSummary: finalLaunchMobileSummary",
+        "demo script final launch summary wiring"
     )
     try requireContains(
         forgeRootView,
@@ -999,7 +1005,24 @@ do {
     try requireContains(project, "NPCAgentModeView.swift", "npc agent mode Xcode file reference")
     try requireContains(demoScriptView, "ShowcaseAutopilotPlan", "demo script autopilot input")
     try requireContains(demoScriptView, "Button(action: runAutopilot)", "demo script autopilot button")
+    try requireContains(demoScript, "final_launch", "demo script final launch step")
+    try requireContains(demoScript, "FinalLaunchMobileSummary", "demo script final launch summary input")
     try requireContains(showcaseAutopilot, "ShowcaseAutopilotPlanner", "showcase autopilot core planner")
+    try requireContains(
+        showcaseAutopilot,
+        #"script.step(id: "final_launch")"#,
+        "autopilot final launch step handling"
+    )
+    try requireContains(
+        contractTests,
+        "testDemoScriptShowsBlockedFinalLaunch",
+        "demo script final launch contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testShowcaseAutopilotBlocksOnFinalLaunchBlocker",
+        "autopilot final launch contract test"
+    )
     try requireContains(demoSnapshotStatusView, "Restored Demo Run", "demo snapshot restored label")
     try requireContains(demoSnapshotStatusView, "Clear", "demo snapshot clear action")
     try requireContains(

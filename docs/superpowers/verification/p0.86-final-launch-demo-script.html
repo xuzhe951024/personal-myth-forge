@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.86 Final Launch Demo Script</title>
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #edf2f6;
+      color: #17212b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f8fafb 0%, #e6edf3 100%);
+    }
+
+    .phone {
+      width: 488px;
+      min-height: 844px;
+      padding: 18px 16px 24px;
+      background: #f9fbfc;
+      overflow: hidden;
+      transform: scale(0.8);
+      transform-origin: top left;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      height: 20px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      font-weight: 850;
+      color: #24313c;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .mode {
+      flex: 0 0 auto;
+      padding: 5px 8px;
+      border-radius: 8px;
+      border: 1px solid #c4d0db;
+      background: #ffffff;
+      color: #344553;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .panel {
+      border-radius: 8px;
+      border: 1px solid #d4dfe8;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .panel.soft {
+      background: rgba(238, 245, 248, 0.94);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      margin: 0 0 2px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #1e2a34;
+    }
+
+    .caption {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #647684;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 4px 7px;
+      border-radius: 7px;
+      background: #fff0d6;
+      color: #9a5b00;
+      font-size: 10px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .button {
+      flex: 0 0 auto;
+      min-width: 94px;
+      min-height: 34px;
+      border: 0;
+      border-radius: 8px;
+      background: #a5b2bd;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 850;
+      text-align: center;
+    }
+
+    .action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .steps {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 18px 110px 1fr;
+      gap: 8px;
+      align-items: start;
+      min-height: 30px;
+    }
+
+    .mark {
+      width: 16px;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-align: left;
+    }
+
+    .mark.done {
+      color: #25804a;
+    }
+
+    .mark.blocked {
+      color: #b66a00;
+    }
+
+    .label {
+      font-size: 12px;
+      font-weight: 850;
+      line-height: 1.25;
+      color: #26333e;
+    }
+
+    .detail {
+      font-size: 11px;
+      line-height: 1.32;
+      color: #5f7080;
+    }
+
+    .blocked-text {
+      color: #995b00;
+    }
+
+    .launch-panel {
+      border-left: 4px solid #d18700;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="P0.86 iPhone final launch-aware demo script">
+    <div class="status">
+      <span>9:41</span>
+      <span>5G 100%</span>
+    </div>
+
+    <div class="header">
+      <h1>Personal Myth Forge</h1>
+      <div class="mode">Local</div>
+    </div>
+
+    <section class="panel soft">
+      <div class="panel-head">
+        <div>
+          <p class="title">Final Launch Status</p>
+          <p class="caption">mode local; ready 12, missing 0, blocked 2, manual 0</p>
+        </div>
+        <div class="badge">BLOCKED</div>
+      </div>
+      <p class="caption">Deploy preflight needs a Team ID and iPhone-reachable backend URL. Xcode build waits for local Apple SDK license acceptance.</p>
+    </section>
+
+    <section class="panel launch-panel">
+      <div class="panel-head">
+        <div>
+          <p class="title">Demo Script</p>
+          <p class="caption">Review final launch blockers.</p>
+        </div>
+        <div class="badge">CHECK</div>
+      </div>
+
+      <div class="action-row">
+        <p class="caption">Autopilot stops after the local loop until final launch readiness is clear.</p>
+        <button class="button" disabled>Check Launch</button>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="mark done">*</div>
+          <div class="label">Capture Object</div>
+          <div class="detail">Guided scan photo set ready.</div>
+        </div>
+        <div class="step">
+          <div class="mark done">*</div>
+          <div class="label">Forge Myth</div>
+          <div class="detail">Myth session is ready.</div>
+        </div>
+        <div class="step">
+          <div class="mark done">*</div>
+          <div class="label">Load 3D Scene</div>
+          <div class="detail">DAE scene asset ready.</div>
+        </div>
+        <div class="step">
+          <div class="mark done">*</div>
+          <div class="label">Run NPC Autonomy</div>
+          <div class="detail">3 ticks saved.</div>
+        </div>
+        <div class="step">
+          <div class="mark done">*</div>
+          <div class="label">Request Print Quote</div>
+          <div class="detail">USD 16.00 draft quote.</div>
+        </div>
+        <div class="step">
+          <div class="mark done">*</div>
+          <div class="label">Check Resources</div>
+          <div class="detail">Local demo providers ready.</div>
+        </div>
+        <div class="step">
+          <div class="mark blocked">!</div>
+          <div class="label">Final Launch</div>
+          <div class="detail blocked-text">Final launch blocked: mobile deploy preflight and Xcode build gate need local operator action.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
