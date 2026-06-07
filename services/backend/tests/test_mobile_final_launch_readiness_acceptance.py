@@ -47,6 +47,10 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "mobile_summary_launch_rehearsal_rows" in requirement_ids
     assert "mobile_status_view_launch_rehearsal" in requirement_ids
     assert "contract_ios_device_launch_rehearsal_decode" in requirement_ids
+    assert "model_visual_regression_readiness" in requirement_ids
+    assert "mobile_summary_visual_regression_rows" in requirement_ids
+    assert "mobile_status_view_visual_regression" in requirement_ids
+    assert "contract_visual_regression_decode" in requirement_ids
     assert result.report["safety"] == {
         "global_mutation": False,
         "live_provider_calls_by_default": False,
@@ -132,6 +136,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "iosDeployRunbook",
                 "IOSDeviceLaunchRehearsalReadinessReport",
                 "iosDeviceLaunchRehearsalReadiness",
+                "VisualRegressionReadinessReport",
+                "visualRegressionReadiness",
                 "ResourceHandoffReport",
                 "resourceReport",
             ]
@@ -176,6 +182,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "deployRunbookCommandRows",
                 "deployRunbookSafetyRows",
                 "launchRehearsalRows",
+                "visualRegressionRows",
                 "rehearsalFreshnessRow",
                 "Freshness:",
                 "resourceHandoffRows",
@@ -192,6 +199,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Deploy Commands",
                 "Deploy Safety",
                 "Launch Rehearsal",
+                "Visual Regression",
                 "Resource Handoff",
                 "Backend Resources",
                 "iOS Resources",
@@ -233,6 +241,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal",
                 "testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness",
                 "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal",
+                "testDecodesVisualRegressionReadinessFromFinalLaunchPayload",
+                "testFinalLaunchMobileSummaryShowsReadyVisualRegression",
+                "testFinalLaunchMobileSummaryShowsBlockedVisualRegression",
+                "testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression",
                 "testDecodesResourceHandoffFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsMissingResourceHandoff",
                 "testFinalLaunchMobileSummaryShowsReadyResourceHandoff",

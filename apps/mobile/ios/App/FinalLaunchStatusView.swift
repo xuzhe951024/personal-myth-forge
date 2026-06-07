@@ -65,6 +65,10 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "3D Evaluation", lines: summary.threeDEvaluationRows)
             }
 
+            if !summary.visualRegressionRows.isEmpty {
+                groupedLines(title: "Visual Regression", lines: summary.visualRegressionRows)
+            }
+
             if !summary.npcEvaluationRows.isEmpty {
                 groupedLines(title: "NPC Evaluation", lines: summary.npcEvaluationRows)
             }

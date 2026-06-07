@@ -204,6 +204,15 @@ of `make ios-device-launch-rehearsal`. P0.115 makes stale saved rehearsal
 evidence visible in the same read-only group through
 `ios_device_launch_rehearsal_readiness.freshness`.
 
+P0.119 adds `visual_regression_readiness` to the same final launch payload and
+renders it as a read-only `Visual Regression` group in the iPhone Final Launch
+panel. The Mac-side source is
+`services/backend/.local/visual-regression-local.json`, refreshed by
+`make visual-regression-local` and included automatically in
+`make final-rehearsal-local`. If the report is missing, failed, or stale, the
+phone shows the operator-facing rerun action; the app still does not run Mac
+commands, call providers, or touch Xcode/signing state.
+
 ## P0.8 Xcode App Shell
 
 P0.8 adds:
