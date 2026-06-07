@@ -66,8 +66,8 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
         tmp_path,
         local_config=(
             "DEVELOPMENT_TEAM = TEAM12345\n"
-            "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge\n"
-            "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
         ),
     )
     _write_capture_source_acceptance(repo_root)
@@ -370,8 +370,8 @@ def _write_final_resources(repo_root: Path) -> None:
                 "OPENAI_API_KEY=sk-openai-test",
                 "PRINT_PROVIDER=local",
                 "DEVELOPMENT_TEAM=TEAM12345",
-                "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
-                "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+                "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+                "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
                 "PMF_FINAL_LAUNCH_MODE=local",
             ]
         ),

@@ -61,6 +61,19 @@ def test_makefile_exposes_final_resource_init_target() -> None:
     assert "scripts/init_final_resources.sh" in text
 
 
+def test_final_resource_template_keeps_user_specific_ios_values_empty() -> None:
+    template = (
+        Path(__file__).resolve().parents[3]
+        / "services/backend/final-resources.env.example"
+    )
+    text = template.read_text(encoding="utf-8")
+
+    assert "PRODUCT_BUNDLE_IDENTIFIER=\n" in text
+    assert "PMF_BACKEND_BASE_URL=\n" in text
+    assert "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge" not in text
+    assert "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080" not in text
+
+
 def _script_repo(tmp_path: Path) -> Path:
     repo = tmp_path / "repo"
     source_root = Path(__file__).resolve().parents[3]

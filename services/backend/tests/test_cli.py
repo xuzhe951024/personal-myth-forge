@@ -526,8 +526,8 @@ def test_cli_final_resources_preflight_writes_ready_report(tmp_path) -> None:
                 "OPENAI_API_KEY=sk-openai-test",
                 "PRINT_PROVIDER=local",
                 "DEVELOPMENT_TEAM=ABCDE12345",
-                "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
-                "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+                    "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+                    "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
             ]
         ),
         encoding="utf-8",

@@ -115,6 +115,12 @@ if [ -z "$bundle_id" ]; then
   printf '%s\n' "Missing PRODUCT_BUNDLE_IDENTIFIER in final resources." >&2
   missing=1
 fi
+case "$bundle_id" in
+  com.example|com.example.*)
+    printf '%s\n' "PRODUCT_BUNDLE_IDENTIFIER must be a unique app bundle id, not com.example.*." >&2
+    missing=1
+    ;;
+esac
 if [ -z "$backend_url" ]; then
   printf '%s\n' "Missing PMF_BACKEND_BASE_URL in final resources." >&2
   missing=1
@@ -144,6 +150,10 @@ if [ "$print_provider" = "treatstock" ] && [ -z "$treatstock_key" ]; then
 fi
 
 case "$backend_url" in
+  http://192.168.1.10:8080|http://192.168.1.10:8080/)
+    printf '%s\n' "PMF_BACKEND_BASE_URL must be changed from the example LAN URL." >&2
+    missing=1
+    ;;
   http://127.0.0.1*|http://localhost*|https://127.0.0.1*|https://localhost*)
     printf '%s\n' "PMF_BACKEND_BASE_URL must be reachable from iPhone, not loopback." >&2
     missing=1

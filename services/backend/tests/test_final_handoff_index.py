@@ -51,8 +51,8 @@ def test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready(
         tmp_path,
         local_config=(
             "DEVELOPMENT_TEAM = TEAM12345\n"
-            "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge\n"
-            "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
             "PMF_FINAL_LAUNCH_MODE = configured\n"
         ),
     )
@@ -139,8 +139,8 @@ def test_final_handoff_index_marks_local_sources_fresh_against_git_head(
         repo_root,
         local_config=(
             "DEVELOPMENT_TEAM = TEAM12345\n"
-            "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge\n"
-            "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
             "PMF_FINAL_LAUNCH_MODE = configured\n"
         ),
     )
@@ -276,8 +276,8 @@ def _write_final_resources(repo_root: Path) -> None:
                 "PRINT_PROVIDER=treatstock",
                 "TREATSTOCK_API_KEY=treatstock-secret-test",
                 "DEVELOPMENT_TEAM=TEAM12345",
-                "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
-                "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+                "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+                "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
                 "PMF_FINAL_LAUNCH_MODE=configured",
             ]
         ),

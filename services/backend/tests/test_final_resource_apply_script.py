@@ -20,8 +20,8 @@ TREATSTOCK_API_KEY=treatstock-secret-test
 TREATSTOCK_API_BASE_URL=https://treatstock.test
 SCULPTEO_API_KEY=
 DEVELOPMENT_TEAM=ABCDE12345
-PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge
-PMF_BACKEND_BASE_URL=http://192.168.1.10:8080
+PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev
+PMF_BACKEND_BASE_URL=http://10.0.0.24:8080
 CAPTURE_STORAGE_DIR=
 MYTH_SESSION_STORAGE_DIR=
 """
@@ -91,7 +91,7 @@ def test_apply_blocks_loopback_backend_without_writing_outputs(script_repo: Path
     resources = write_resources(
         script_repo,
         FULL_RESOURCES.replace(
-            "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
             "PMF_BACKEND_BASE_URL=http://127.0.0.1:8080",
         ),
     )
@@ -100,6 +100,44 @@ def test_apply_blocks_loopback_backend_without_writing_outputs(script_repo: Path
 
     assert result.returncode == 2
     assert "PMF_BACKEND_BASE_URL must be reachable from iPhone" in result.stderr
+    assert not backend_env_path(script_repo).exists()
+    assert not ios_local_config_path(script_repo).exists()
+
+
+def test_apply_blocks_example_backend_url_placeholder_without_writing_outputs(
+    script_repo: Path,
+) -> None:
+    resources = write_resources(
+        script_repo,
+        FULL_RESOURCES.replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+        ),
+    )
+
+    result = run_apply(script_repo, "--resources-file", str(resources))
+
+    assert result.returncode == 2
+    assert "PMF_BACKEND_BASE_URL must be changed from the example LAN URL" in result.stderr
+    assert not backend_env_path(script_repo).exists()
+    assert not ios_local_config_path(script_repo).exists()
+
+
+def test_apply_blocks_example_bundle_identifier_placeholder_without_writing_outputs(
+    script_repo: Path,
+) -> None:
+    resources = write_resources(
+        script_repo,
+        FULL_RESOURCES.replace(
+            "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+            "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
+        ),
+    )
+
+    result = run_apply(script_repo, "--resources-file", str(resources))
+
+    assert result.returncode == 2
+    assert "PRODUCT_BUNDLE_IDENTIFIER must be a unique app bundle id" in result.stderr
     assert not backend_env_path(script_repo).exists()
     assert not ios_local_config_path(script_repo).exists()
 
@@ -175,8 +213,8 @@ def test_apply_writes_backend_and_ios_configs_with_redacted_output(
     assert "TREATSTOCK_API_KEY=treatstock-secret-test" in backend_text
     assert "TREATSTOCK_API_BASE_URL=https://treatstock.test" in backend_text
     assert "DEVELOPMENT_TEAM = ABCDE12345" in ios_text
-    assert "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge" in ios_text
-    assert "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080" in ios_text
+    assert "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev" in ios_text
+    assert "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080" in ios_text
 
 
 def test_apply_output_can_be_loaded_as_final_settings(

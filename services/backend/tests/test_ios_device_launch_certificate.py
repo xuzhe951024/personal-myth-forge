@@ -50,8 +50,8 @@ def test_ios_device_launch_certificate_ready_with_configured_inputs(
         tmp_path,
         local_config=(
             "DEVELOPMENT_TEAM = TEAM12345\n"
-            "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge\n"
-            "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
             "PMF_FINAL_LAUNCH_MODE = configured\n"
         ),
     )
@@ -103,7 +103,7 @@ def test_ios_device_launch_certificate_ready_with_configured_inputs(
     assert "sk-meshy-secret" not in report_text
     assert "sk-openai-secret" not in report_text
     assert "treatstock-secret" not in report_text
-    assert "192.168.1.10" not in report_text
+    assert "10.0.0.24" not in report_text
     assert str(tmp_path) not in report_text
 
 
@@ -173,8 +173,8 @@ def _write_final_resources(repo_root: Path) -> None:
                 "PRINT_PROVIDER=treatstock",
                 "TREATSTOCK_API_KEY=treatstock-secret-test",
                 "DEVELOPMENT_TEAM=TEAM12345",
-                "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
-                "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+                "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+                "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
                 "PMF_FINAL_LAUNCH_MODE=configured",
             ]
         ),

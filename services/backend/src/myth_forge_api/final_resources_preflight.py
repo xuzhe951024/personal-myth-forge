@@ -39,6 +39,7 @@ SECRET_KEYS = {
 
 SUPPORTED_PRINT_PROVIDERS = {"local", "treatstock"}
 SUPPORTED_FINAL_LAUNCH_MODES = {"local", "configured"}
+EXAMPLE_BACKEND_BASE_URLS = {"http://192.168.1.10:8080"}
 
 
 @dataclass(frozen=True)
@@ -149,7 +150,7 @@ def _items(
         _key_item("TREATSTOCK_API_BASE_URL", values, required=False),
         _key_item("SCULPTEO_API_KEY", values, required=False),
         _key_item("DEVELOPMENT_TEAM", values, required=True),
-        _key_item("PRODUCT_BUNDLE_IDENTIFIER", values, required=True),
+        _bundle_identifier_item(values),
         _backend_url_item(values),
         _final_launch_mode_item(values=values, normalized_value=final_launch_mode),
         _key_item("CAPTURE_STORAGE_DIR", values, required=False),
@@ -227,6 +228,9 @@ def _backend_url_item(values: dict[str, str]) -> dict[str, Any]:
     if not configured:
         status = "missing"
         classification = "missing_required_value"
+    elif _is_example_backend_url(value):
+        status = "blocked"
+        classification = "placeholder_value"
     elif _is_loopback_url(value):
         status = "blocked"
         classification = "loopback_url"
@@ -239,6 +243,31 @@ def _backend_url_item(values: dict[str, str]) -> dict[str, Any]:
         "required": True,
         "configured": configured and status == "ready",
         "redacted": configured,
+    }
+    if classification:
+        item["classification"] = classification
+    return item
+
+
+def _bundle_identifier_item(values: dict[str, str]) -> dict[str, Any]:
+    key = "PRODUCT_BUNDLE_IDENTIFIER"
+    value = values.get(key, "")
+    configured = bool(value)
+    if not configured:
+        status = "missing"
+        classification = "missing_required_value"
+    elif _is_example_bundle_identifier(value):
+        status = "blocked"
+        classification = "placeholder_value"
+    else:
+        status = "ready"
+        classification = None
+    item = {
+        "id": key,
+        "status": status,
+        "required": True,
+        "configured": configured and status == "ready",
+        "redacted": False,
     }
     if classification:
         item["classification"] = classification
@@ -279,6 +308,8 @@ def _operator_actions(
             actions.append(f"provide {item['id']} in final-resources.env")
         if item["status"] == "blocked" and item["id"] == "PMF_BACKEND_BASE_URL":
             actions.append("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
+        if item["status"] == "blocked" and item["id"] == "PRODUCT_BUNDLE_IDENTIFIER":
+            actions.append("set PRODUCT_BUNDLE_IDENTIFIER to a unique app bundle id")
         if item["status"] == "blocked" and item["id"] == "PRINT_PROVIDER":
             actions.append("set PRINT_PROVIDER to local or treatstock")
         if item["status"] == "blocked" and item["id"] == "PMF_FINAL_LAUNCH_MODE":
@@ -291,6 +322,16 @@ def _operator_actions(
 def _is_loopback_url(value: str) -> bool:
     lowered = value.lower()
     return "://127.0.0.1" in lowered or "://localhost" in lowered
+
+
+def _is_example_backend_url(value: str) -> bool:
+    normalized = value.strip().rstrip("/").lower()
+    return normalized in EXAMPLE_BACKEND_BASE_URLS
+
+
+def _is_example_bundle_identifier(value: str) -> bool:
+    normalized = value.strip().lower()
+    return normalized == "com.example" or normalized.startswith("com.example.")
 
 
 def _path_label(*, path: Path, repo_root: Path) -> str:

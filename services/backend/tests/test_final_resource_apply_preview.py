@@ -17,8 +17,8 @@ TREATSTOCK_API_KEY=
 TREATSTOCK_API_BASE_URL=https://treatstock.test
 SCULPTEO_API_KEY=
 DEVELOPMENT_TEAM=ABCDE12345
-PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge
-PMF_BACKEND_BASE_URL=http://192.168.1.10:8080
+PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev
+PMF_BACKEND_BASE_URL=http://10.0.0.24:8080
 PMF_FINAL_LAUNCH_MODE=configured
 CAPTURE_STORAGE_DIR=
 MYTH_SESSION_STORAGE_DIR=
@@ -67,7 +67,7 @@ def test_apply_preview_blocks_loopback_backend_url_without_writes(
     resources = write_resources(
         repo_root,
         VALID_LOCAL_RESOURCES.replace(
-            "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
             "PMF_BACKEND_BASE_URL=http://127.0.0.1:8080",
         ),
     )
@@ -89,6 +89,62 @@ def test_apply_preview_blocks_loopback_backend_url_without_writes(
     assert "PMF_BACKEND_BASE_URL" in result.report["write_targets_by_id"][
         "ios_deploy_config"
     ]["blocked_by"]
+    assert not backend_env_path(repo_root).exists()
+    assert not ios_local_config_path(repo_root).exists()
+
+
+def test_apply_preview_blocks_example_backend_url_placeholder_without_writes(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+        ),
+    )
+
+    result = build_final_resource_apply_preview_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    ios_target = result.report["write_targets_by_id"]["ios_deploy_config"]
+    slots = {slot["id"]: slot for slot in ios_target["slots"]}
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert slots["PMF_BACKEND_BASE_URL"]["status"] == "blocked"
+    assert slots["PMF_BACKEND_BASE_URL"]["classification"] == "placeholder_value"
+    assert "PMF_BACKEND_BASE_URL" in ios_target["blocked_by"]
+    assert not backend_env_path(repo_root).exists()
+    assert not ios_local_config_path(repo_root).exists()
+
+
+def test_apply_preview_blocks_example_bundle_identifier_placeholder_without_writes(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+            "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
+        ),
+    )
+
+    result = build_final_resource_apply_preview_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    ios_target = result.report["write_targets_by_id"]["ios_deploy_config"]
+    slots = {slot["id"]: slot for slot in ios_target["slots"]}
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert slots["PRODUCT_BUNDLE_IDENTIFIER"]["status"] == "blocked"
+    assert slots["PRODUCT_BUNDLE_IDENTIFIER"]["classification"] == "placeholder_value"
+    assert "PRODUCT_BUNDLE_IDENTIFIER" in ios_target["blocked_by"]
     assert not backend_env_path(repo_root).exists()
     assert not ios_local_config_path(repo_root).exists()
 
@@ -156,7 +212,7 @@ def test_apply_preview_is_ready_for_valid_local_resources_without_secret_leak(
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
     assert "treatstock-secret-test" not in report_text
-    assert "192.168.1.10" not in report_text
+    assert "10.0.0.24" not in report_text
     assert str(tmp_path) not in report_text
     assert not backend_env_path(repo_root).exists()
     assert not ios_local_config_path(repo_root).exists()

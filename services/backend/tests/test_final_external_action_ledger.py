@@ -18,8 +18,8 @@ TREATSTOCK_API_KEY=
 TREATSTOCK_API_BASE_URL=https://treatstock.test
 SCULPTEO_API_KEY=
 DEVELOPMENT_TEAM=ABCDE12345
-PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge
-PMF_BACKEND_BASE_URL=http://192.168.1.10:8080
+PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev
+PMF_BACKEND_BASE_URL=http://10.0.0.24:8080
 PMF_FINAL_LAUNCH_MODE=configured
 CAPTURE_STORAGE_DIR=
 MYTH_SESSION_STORAGE_DIR=
@@ -141,7 +141,7 @@ def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks
     assert report["summary"]["manual"] >= 3
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
-    assert "192.168.1.10" not in report_text
+    assert "10.0.0.24" not in report_text
     assert str(tmp_path) not in report_text
 
 

@@ -17,8 +17,8 @@ TREATSTOCK_API_KEY=
 TREATSTOCK_API_BASE_URL=https://treatstock.test
 SCULPTEO_API_KEY=
 DEVELOPMENT_TEAM=ABCDE12345
-PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge
-PMF_BACKEND_BASE_URL=http://192.168.1.10:8080
+PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev
+PMF_BACKEND_BASE_URL=http://10.0.0.24:8080
 CAPTURE_STORAGE_DIR=
 MYTH_SESSION_STORAGE_DIR=
 """
@@ -83,7 +83,7 @@ def test_preflight_blocks_loopback_backend_url(tmp_path: Path) -> None:
     resources = write_resources(
         repo_root,
         VALID_LOCAL_RESOURCES.replace(
-            "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
             "PMF_BACKEND_BASE_URL=http://127.0.0.1:8080",
         ),
     )
@@ -98,6 +98,58 @@ def test_preflight_blocks_loopback_backend_url(tmp_path: Path) -> None:
     assert result.report["status"] == "blocked"
     assert items["PMF_BACKEND_BASE_URL"]["status"] == "blocked"
     assert items["PMF_BACKEND_BASE_URL"]["classification"] == "loopback_url"
+
+
+def test_preflight_blocks_example_backend_url_placeholder(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+        ),
+    )
+
+    result = build_final_resources_preflight_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    items = {item["id"]: item for item in result.report["items"]}
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert items["PMF_BACKEND_BASE_URL"]["status"] == "blocked"
+    assert items["PMF_BACKEND_BASE_URL"]["classification"] == "placeholder_value"
+    assert "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL" in result.report[
+        "operator_actions"
+    ]
+
+
+def test_preflight_blocks_example_bundle_identifier_placeholder(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+            "PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge",
+        ),
+    )
+
+    result = build_final_resources_preflight_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    items = {item["id"]: item for item in result.report["items"]}
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert items["PRODUCT_BUNDLE_IDENTIFIER"]["status"] == "blocked"
+    assert items["PRODUCT_BUNDLE_IDENTIFIER"]["classification"] == "placeholder_value"
+    assert "set PRODUCT_BUNDLE_IDENTIFIER to a unique app bundle id" in result.report[
+        "operator_actions"
+    ]
 
 
 def test_preflight_requires_treatstock_key_when_treatstock_selected(
@@ -192,10 +244,11 @@ def test_preflight_marks_valid_local_print_resources_ready_and_redacted(
     assert items["PRINT_PROVIDER"]["normalized_value"] == "local"
     assert items["TREATSTOCK_API_KEY"]["status"] == "optional"
     assert items["DEVELOPMENT_TEAM"]["status"] == "ready"
+    assert items["PRODUCT_BUNDLE_IDENTIFIER"]["status"] == "ready"
     assert items["PMF_BACKEND_BASE_URL"]["status"] == "ready"
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
-    assert "192.168.1.10" not in report_text
+    assert "10.0.0.24" not in report_text
     assert not backend_env_path(repo_root).exists()
     assert not ios_local_config_path(repo_root).exists()
 
