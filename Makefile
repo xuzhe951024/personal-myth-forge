@@ -43,6 +43,11 @@ final-apply-resources:
 final-resources-preflight:
 	cd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../..
 
+.PHONY: final-configured-preflight
+
+final-configured-preflight:
+	cd services/backend && uv run python -m myth_forge_api.cli final-configured-preflight --repo-root ../.. --output .local/final-configured-preflight.json
+
 .PHONY: final-acceptance-local final-demo-launch final-rehearsal-local
 
 final-acceptance-local:

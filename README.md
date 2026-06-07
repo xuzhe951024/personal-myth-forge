@@ -137,6 +137,7 @@ cp services/backend/final-resources.env.example services/backend/.local/final-re
 $EDITOR services/backend/.local/final-resources.env
 make final-resources-preflight
 make final-apply-resources
+make final-configured-preflight
 cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch \
   --mode configured \
@@ -153,6 +154,15 @@ gate. It never starts servers, calls Meshy/OpenAI/Treatstock, or changes
 Xcode/signing/global machine state by itself. Live provider calls remain
 explicitly gated behind `final-acceptance --provider-mode configured
 --require-real-core --allow-live-provider-calls`.
+
+`make final-configured-preflight` writes the ignored
+`services/backend/.local/final-configured-preflight.json` handoff packet. It
+combines the final resources preflight, current provider readiness, backend/iOS
+resource handoff, configured launch report, and configured iOS deploy runbook.
+The command is read-only: it does not call live providers, apply secrets, start
+servers, run Xcode, touch signing/keychain, or write backend/iOS config files.
+Exit `2` still writes a usable blocked packet; exit `0` means the configured
+handoff is ready enough for the next operator step.
 
 The same sanitized launch status is available to the iPhone app:
 

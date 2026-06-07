@@ -124,6 +124,7 @@ Bridge deliverable:
 - P0.106 iPhone iOS deploy runbook 3D evaluation input slot
 - P0.107 project-root Make targets for local 3D and NPC Agent evaluation reports
 - P0.108 project-root local final rehearsal target that writes all saved handoff JSON reports
+- P0.109 project-root configured handoff preflight packet for API/key and iOS deploy review
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

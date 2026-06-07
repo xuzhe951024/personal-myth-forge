@@ -27,6 +27,9 @@ do {
     )
     let gitignoreFile = repositoryRoot.appendingPathComponent(".gitignore")
     let makefileFile = repositoryRoot.appendingPathComponent("Makefile")
+    let finalConfiguredPreflightFile = repositoryRoot.appendingPathComponent(
+        "services/backend/src/myth_forge_api/final_configured_preflight.py"
+    )
 
     let packageManifest = try readText(packageFile)
     let project = try readText(projectFile)
@@ -42,6 +45,7 @@ do {
     let sharedScheme = try readText(sharedSchemeFile)
     let gitignore = try readText(gitignoreFile)
     let makefile = try readText(makefileFile)
+    let finalConfiguredPreflight = try readText(finalConfiguredPreflightFile)
     let appConfiguration = try readText(appRoot.appendingPathComponent("AppConfiguration.swift"))
     let captureFormView = try readText(appRoot.appendingPathComponent("CaptureFormView.swift"))
     let captureGenerationReceiptView = try readText(appRoot.appendingPathComponent("CaptureGenerationReceiptView.swift"))
@@ -272,6 +276,14 @@ do {
     try requireContains(makefile, "ios-deploy-runbook:", "iOS deploy runbook Make target")
     try requireContains(makefile, "ios-deploy-runbook-local:", "iOS deploy runbook local wrapper target")
     try requireContains(makefile, "myth_forge_api.cli ios-deploy-runbook", "iOS deploy runbook CLI target")
+    try requireContains(makefile, ".PHONY: final-configured-preflight", "configured handoff preflight Make phony target")
+    try requireContains(makefile, "final-configured-preflight:", "configured handoff preflight Make target")
+    try requireContains(makefile, "myth_forge_api.cli final-configured-preflight", "configured handoff preflight CLI target")
+    try requireContains(
+        makefile,
+        "--output .local/final-configured-preflight.json",
+        "configured handoff preflight report output"
+    )
     try requireContains(
         makefile,
         "services/backend/scripts/write_ios_deploy_runbook_local.sh",
@@ -294,6 +306,36 @@ do {
     try requireContains(makefile, "--output .local/3d-evaluation-local.json", "3D evaluation local report output")
     try requireContains(makefile, "--output .local/npc-evaluation-local.json", "NPC evaluation local report output")
     try requireContains(makefile, "--output .local/final-demo-launch-local.json", "final demo launch local report output")
+    try requireContains(
+        finalConfiguredPreflight,
+        "build_final_configured_preflight_report",
+        "configured handoff preflight report builder"
+    )
+    try requireContains(
+        finalConfiguredPreflight,
+        "build_provider_readiness",
+        "configured handoff preflight provider readiness composition"
+    )
+    try requireContains(
+        finalConfiguredPreflight,
+        "build_ios_deploy_runbook_report",
+        "configured handoff preflight iOS runbook composition"
+    )
+    try requireContains(
+        finalConfiguredPreflight,
+        #""provider_calls": False"#,
+        "configured handoff preflight no provider calls"
+    )
+    try requireContains(
+        finalConfiguredPreflight,
+        #""writes_backend_env": False"#,
+        "configured handoff preflight no backend env writes"
+    )
+    try requireContains(
+        finalConfiguredPreflight,
+        #""writes_ios_deploy_config": False"#,
+        "configured handoff preflight no iOS config writes"
+    )
     try requireContains(finalAcceptanceLocalScript, "accepted final acceptance exit code $status", "final acceptance local accepts blocked report")
     try requireContains(finalAcceptanceLocalScript, "services/backend/.local/final-acceptance-local.json", "final acceptance local report path")
     try requireContains(iosDeployRunbookLocalScript, "accepted iOS deploy runbook exit code $status", "iOS deploy runbook local accepts blocked report")
