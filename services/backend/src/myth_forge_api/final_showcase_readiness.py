@@ -10,6 +10,9 @@ from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_acceptance_readiness import (
     build_final_acceptance_readiness_report,
 )
+from myth_forge_api.final_resource_apply_preview import (
+    build_final_resource_apply_preview_report,
+)
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
@@ -97,6 +100,9 @@ def build_final_showcase_readiness_report(
     final_resources = build_final_resources_preflight_report(
         repo_root=selected_repo_root,
     ).report
+    final_resource_apply_preview = build_final_resource_apply_preview_report(
+        repo_root=selected_repo_root,
+    ).report
     resource_handoff = build_resource_handoff_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
@@ -112,6 +118,7 @@ def build_final_showcase_readiness_report(
         ios_deploy_runbook=ios_deploy_runbook,
         ios_device_launch_rehearsal=ios_device_launch_rehearsal,
         final_resources=final_resources,
+        final_resource_apply_preview=final_resource_apply_preview,
         resource_handoff=resource_handoff,
     )
     summary = _summary(capabilities)
@@ -140,6 +147,9 @@ def build_final_showcase_readiness_report(
                 ios_device_launch_rehearsal,
             ),
             "final_resources_preflight": _evidence_summary(final_resources),
+            "final_resource_apply_preview": _evidence_summary(
+                final_resource_apply_preview,
+            ),
             "resource_handoff": _evidence_summary(resource_handoff),
         },
         "safety": {
@@ -177,6 +187,7 @@ def _capabilities(
     ios_deploy_runbook: dict[str, Any],
     ios_device_launch_rehearsal: dict[str, Any],
     final_resources: dict[str, Any],
+    final_resource_apply_preview: dict[str, Any],
     resource_handoff: dict[str, Any],
 ) -> list[dict[str, Any]]:
     rows = [
@@ -196,6 +207,7 @@ def _capabilities(
         _print_fulfillment_capability(print_fulfillment_readiness),
         _provider_key_handoff_capability(
             final_resources=final_resources,
+            final_resource_apply_preview=final_resource_apply_preview,
             resource_handoff=resource_handoff,
             live_provider_evidence=live_provider_evidence,
         ),
@@ -228,6 +240,7 @@ def _capabilities(
             ios_deploy_runbook=ios_deploy_runbook,
             ios_device_launch_rehearsal=ios_device_launch_rehearsal,
             final_resources=final_resources,
+            final_resource_apply_preview=final_resource_apply_preview,
             resource_handoff=resource_handoff,
         ),
     ]
@@ -410,15 +423,24 @@ def _print_fulfillment_capability(report: dict[str, Any]) -> dict[str, Any]:
 def _provider_key_handoff_capability(
     *,
     final_resources: dict[str, Any],
+    final_resource_apply_preview: dict[str, Any],
     resource_handoff: dict[str, Any],
     live_provider_evidence: dict[str, Any],
 ) -> dict[str, Any]:
     final_resource_status = _normalized_status(str(final_resources.get("status", "missing")))
+    apply_preview_status = _normalized_status(
+        str(final_resource_apply_preview.get("status", "missing")),
+    )
     resource_handoff_status = _normalized_status(
         str(resource_handoff.get("overall_status", "blocked")),
     )
     live_status = _normalized_status(str(live_provider_evidence.get("status", "missing")))
-    if "blocked" in {final_resource_status, resource_handoff_status}:
+    local_resource_statuses = {
+        final_resource_status,
+        apply_preview_status,
+        resource_handoff_status,
+    }
+    if "blocked" in local_resource_statuses:
         status = "blocked"
     elif live_status == "ready":
         status = "ready"
@@ -430,19 +452,29 @@ def _provider_key_handoff_capability(
         classification = "provider_handoff_ready"
     else:
         classification = "provider_handoff_incomplete"
+    if "blocked" in local_resource_statuses:
+        command = "make final-resource-apply-preview"
+    elif live_status != "ready":
+        command = "make live-provider-evidence"
+    else:
+        command = "make final-showcase-readiness"
     return _capability(
         capability_id="provider_key_handoff",
         label="Provider and key handoff",
         status=status,
         classification=classification,
-        command="make final-resources-preflight",
+        command=command,
         detail=(
-            "Final resources, resource handoff, and live provider evidence must be ready."
+            "Final resources, apply preview, resource handoff, and live provider evidence must be ready."
             if status != "ready"
-            else "Final resources, resource handoff, and live provider evidence are ready."
+            else "Final resources, apply preview, resource handoff, and live provider evidence are ready."
         ),
         evidence=[
             f"final_resources:{final_resources.get('status', 'unknown')}",
+            (
+                "final_resource_apply_preview:"
+                f"{final_resource_apply_preview.get('status', 'unknown')}"
+            ),
             f"resource_handoff:{resource_handoff.get('overall_status', 'unknown')}",
             f"live_provider_evidence:{live_provider_evidence.get('status', 'unknown')}",
         ],
