@@ -449,7 +449,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/App/Artifact3DPreviewView.swift": (
             "ArtifactAssetPreparer.live() NPCRitualSceneBuilder.build addNPCRitualOverlay "
-            "ArtifactHandoffActionsView("
+            "ArtifactSceneLoadProofBuilder.build sceneLoadProof sceneLoadFailure(detail: "
+            "SceneKit load proof ArtifactHandoffActionsView("
         ),
         "apps/mobile/ios/App/ArtifactHandoffActionsView.swift": (
             "Artifact Handoff ShareLink Retry Download"
@@ -619,19 +620,25 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryRedactsUnsafeResourceHandoff "
             "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
             "testGetConfiguredFinalDemoLaunchBuildsGETRequest "
-            "testFinalLaunchMobileSummaryShowsConfiguredModePolicy"
+            "testFinalLaunchMobileSummaryShowsConfiguredModePolicy "
+            "testArtifactSceneLoadProofMarksLoadedScene "
+            "testArtifactSceneLoadProofRedactsFailedSceneLoad "
+            "testArtifactHandoffActionsOfferRetryAfterSceneLoadFailure"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeFlowService.swift": (
             "uploadObjectCapture createMythSessionFromCapture"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactAssetPreparation.swift": (
-            "ArtifactAssetPreparer ios_scene_asset"
+            "ArtifactAssetPreparer ios_scene_asset sceneLoadFailed"
+        ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactSceneLoadProof.swift": (
+            "ArtifactSceneLoadProofBuilder ArtifactSceneLoadProofStatus SceneKit load proof"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactGenerationProvenanceSummary.swift": (
             "ArtifactGenerationProvenanceSummaryBuilder sourceAssetCount privacySummary"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactHandoffActions.swift": (
-            "ArtifactHandoffActionBuilder"
+            "ArtifactHandoffActionBuilder SceneKit load failed"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCRitualScene.swift": (
             "NPCRitualSceneBuilder"

@@ -465,6 +465,18 @@ FEATURES = (
                 "ios_scene_asset",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactAssetPreparation.swift",
+                "sceneLoadFailed",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactSceneLoadProof.swift",
+                "ArtifactSceneLoadProofBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/Artifact3DPreviewView.swift",
+                "SceneKit load proof",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ArtifactGenerationProvenanceSummary.swift",
                 "ArtifactGenerationProvenanceSummaryBuilder",
             ),
