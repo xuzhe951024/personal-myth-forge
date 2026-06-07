@@ -740,6 +740,57 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="final_resource_requirements_manifest",
+        label="Final resource requirements manifest",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_resource_requirements.py",
+                "build_final_resource_requirements_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_resource_requirements.py",
+                "final_resource_requirements_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "final-resource-requirements",
+            ),
+            SourceRequirement("Makefile", "final-resource-requirements:"),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "final_resource_requirements",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalResourceRequirementsReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "finalResourceRequirements",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "resourceRequirementRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "Resource requirements",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Resource Requirements",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesFinalResourceRequirementsFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="provider_readiness",
         label="Provider readiness",
         requirements=(

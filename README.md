@@ -2433,3 +2433,21 @@ Static evidence lives at:
 docs/superpowers/verification/p0.119-visual-regression-handoff.html
 docs/superpowers/verification/assets/p0.119-visual-regression-handoff-390x844.png
 ```
+
+## P0.124 Final Resource Requirements Manifest
+
+The backend now has a read-only final resource requirements report:
+
+```bash
+make final-resource-requirements
+```
+
+It writes `services/backend/.local/final-resource-requirements.json` and exits
+2 when required final resources are still missing. The report lists each API
+key, print-provider value, iOS deploy value, destination file, source template,
+blocker it unblocks, secret policy, and validation command. It never writes
+env files, calls providers, runs Xcode, mutates signing state, or returns secret
+values.
+
+`/v1/final-demo-launch` embeds the report as `final_resource_requirements`, and
+the iPhone Final Launch panel renders it under `Resource Requirements`.
