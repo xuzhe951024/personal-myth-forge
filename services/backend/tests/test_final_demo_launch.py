@@ -27,6 +27,13 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
         "configured_acceptance_requires_consent": True,
         "consent_flag": "--allow-live-provider-calls",
     }
+    assert result.report["live_provider_evidence"]["kind"] == (
+        "live_provider_evidence_report"
+    )
+    assert result.report["live_provider_evidence"]["status"] == "missing"
+    assert "run make live-provider-evidence" in " ".join(
+        result.report["operator_checklist"]
+    )
     assert result.report["final_resources_preflight"]["status"] == "missing"
     assert any("--allow-live-provider-calls" in command for command in result.report["commands"])
     phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
@@ -73,6 +80,7 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
             ],
         },
     )
+    _write_configured_live_evidence(repo_root)
     settings = Settings(
         three_d_provider="meshy",
         meshy_api_key="sk-meshy-secret",
@@ -96,6 +104,7 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
 
     assert result.exit_code == 0
     assert result.report["overall_status"] == "partial"
+    assert result.report["live_provider_evidence"]["status"] == "ready"
     assert result.report["final_resources_preflight"]["status"] == "ready"
     assert backend["MESHY_API_KEY"]["status"] == "ready"
     assert backend["OPENAI_API_KEY"]["status"] == "ready"
@@ -351,6 +360,26 @@ def test_final_demo_launch_embeds_visual_regression_readiness(
     assert readiness["safety"]["commands_run"] is False
 
 
+def test_final_demo_launch_embeds_live_provider_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="configured",
+    )
+
+    evidence = result.report["live_provider_evidence"]
+
+    assert evidence["kind"] == "live_provider_evidence_report"
+    assert evidence["status"] == "missing"
+    assert evidence["summary"]["missing"] == 5
+    assert evidence["first_blocker"]["id"] == "provider_handoff"
+    assert evidence["safety"]["commands_run"] is False
+
+
 def test_final_demo_launch_operator_handoff_includes_three_d_evaluation_step(
     tmp_path: Path,
 ) -> None:
@@ -585,6 +614,60 @@ def _write_visual_regression(repo_root: Path) -> None:
     visual.write_text(json.dumps(report), encoding="utf-8")
 
 
+def _write_configured_live_evidence(repo_root: Path) -> None:
+    local_dir = repo_root / "services/backend/.local"
+    _write_json(
+        local_dir / "provider-handoff.json",
+        {
+            "kind": "provider_handoff_report",
+            "core_real_ready": True,
+            "overall_real_ready": True,
+            "missing_env": [],
+        },
+    )
+    _write_json(
+        local_dir / "3d-evaluation-configured.json",
+        {
+            "kind": "three_d_evaluation_report",
+            "provider": "meshy",
+            "suite": "default-v0",
+            "total_cases": 20,
+            "succeeded": 20,
+            "failed": 0,
+        },
+    )
+    _write_json(
+        local_dir / "npc-evaluation-configured.json",
+        {
+            "kind": "npc_agent_evaluation_report",
+            "provider": "openai",
+            "suite": "default-v0",
+            "total_cases": 6,
+            "succeeded": 6,
+            "failed": 0,
+        },
+    )
+    _write_json(
+        local_dir / "final-acceptance-configured.json",
+        {
+            "kind": "final_acceptance_report",
+            "profile": "quick",
+            "provider_mode": "configured",
+            "overall_status": "passed",
+            "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
+        },
+    )
+    _write_json(
+        local_dir / "final-demo-launch-configured.json",
+        {
+            "kind": "final_demo_launch_report",
+            "mode": "configured",
+            "overall_status": "ready",
+            "summary": {"ready": 9, "missing": 0, "blocked": 0, "manual": 0},
+        },
+    )
+
+
 def _write_ios_device_launch_rehearsal(repo_root: Path) -> None:
     report = {
         "kind": "ios_device_launch_rehearsal_report",
@@ -633,6 +716,11 @@ def _write_ios_device_launch_rehearsal(repo_root: Path) -> None:
     rehearsal = repo_root / "services/backend/.local/ios-device-launch-rehearsal.json"
     rehearsal.parent.mkdir(parents=True, exist_ok=True)
     rehearsal.write_text(json.dumps(report), encoding="utf-8")
+
+
+def _write_json(path: Path, report: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(report), encoding="utf-8")
 
 
 def _write_final_resources(repo_root: Path) -> None:

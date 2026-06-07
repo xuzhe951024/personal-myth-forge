@@ -19,6 +19,7 @@ from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.ios_device_launch_rehearsal_readiness import (
     build_ios_device_launch_rehearsal_readiness_report,
 )
+from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
@@ -68,6 +69,9 @@ def build_final_demo_launch_report(
     visual_regression_readiness = build_visual_regression_readiness_report(
         repo_root=selected_repo_root,
     ).report
+    live_provider_evidence = build_live_provider_evidence_report(
+        repo_root=selected_repo_root,
+    ).report
     ios_device_launch_rehearsal_readiness = (
         build_ios_device_launch_rehearsal_readiness_report(
             repo_root=selected_repo_root,
@@ -106,6 +110,7 @@ def build_final_demo_launch_report(
         "three_d_evaluation_readiness": three_d_evaluation_readiness,
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,
         "visual_regression_readiness": visual_regression_readiness,
+        "live_provider_evidence": live_provider_evidence,
         "ios_device_launch_rehearsal_readiness": (
             ios_device_launch_rehearsal_readiness
         ),
@@ -117,6 +122,7 @@ def build_final_demo_launch_report(
             mode=mode,
             resource_report=resource_report,
             final_resources_preflight=final_resources_preflight,
+            live_provider_evidence=live_provider_evidence,
             phases=phases,
         ),
         "commands": _commands(mode),
@@ -303,6 +309,7 @@ def _operator_checklist(
     mode: LaunchMode,
     resource_report: dict[str, Any],
     final_resources_preflight: dict[str, Any],
+    live_provider_evidence: dict[str, Any],
     phases: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
@@ -320,6 +327,10 @@ def _operator_checklist(
     for phase in phases:
         if phase["status"] in {"blocked", "missing"}:
             actions.append(f"unblock {phase['id']}: {phase['command']}")
+    if mode == "configured" and live_provider_evidence.get("status") != "ready":
+        actions.append(
+            "run make live-provider-evidence after configured provider evidence files are refreshed"
+        )
     return _dedupe(actions)
 
 
@@ -329,6 +340,7 @@ def _commands(mode: LaunchMode) -> list[str]:
             "make final-resources-preflight",
             "make final-apply-resources",
             "make visual-regression-local",
+            "make live-provider-evidence",
             "make ios-deploy-runbook",
             "make ios-device-launch-rehearsal",
             "make backend-device-demo",
@@ -344,6 +356,7 @@ def _commands(mode: LaunchMode) -> list[str]:
         "make final-resources-preflight",
         "make final-apply-resources",
         "make visual-regression-local",
+        "make live-provider-evidence",
         "make ios-deploy-runbook",
         "make ios-device-launch-rehearsal",
         "make backend-device-demo",
