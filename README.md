@@ -201,7 +201,11 @@ newest saved rehearsal readiness without a separate final launch refresh. P0.115
 adds a git-HEAD freshness guard: if the saved rehearsal JSON is older than the
 current revision, the embedded readiness becomes blocked with
 `ios_device_launch_rehearsal_freshness` and tells the operator to rerun
-`make ios-device-launch-rehearsal`.
+`make ios-device-launch-rehearsal`. P0.116 also checks the saved local reports
+indexed by `final-handoff-index`; stale 3D/NPC/final-acceptance/final-launch/iOS
+runbook evidence blocks the local handoff lane and is copied into the saved
+rehearsal sequence as `freshness_summary`, `freshness_status`, and
+`freshness_classification`.
 
 The same sanitized launch status is available to the iPhone app:
 
@@ -221,7 +225,10 @@ or ready. P0.114 keeps the saved local launch payload synchronized by making
 `services/backend/.local/final-demo-launch-local.json` after
 `services/backend/.local/ios-device-launch-rehearsal.json`. P0.115 also embeds
 `ios_device_launch_rehearsal_readiness.freshness`, so stale saved rehearsal
-evidence is visible on the iPhone before the final operator pass. The endpoint
+evidence is visible on the iPhone before the final operator pass. P0.116 adds
+source freshness rows under `Launch Rehearsal`, for example
+`Source freshness: 4 fresh, 1 stale, 0 unknown.`, so the operator can identify
+stale indexed local evidence before deploying to a physical iPhone. The endpoint
 does not write config files, start servers, run the rehearsal command, call live
 providers, or expose secret values.
 

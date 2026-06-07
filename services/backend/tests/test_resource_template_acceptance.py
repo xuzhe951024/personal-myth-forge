@@ -196,12 +196,16 @@ def build_final_configured_preflight_report():
 FINAL_HANDOFF_INDEX_TEMPLATE = """from myth_forge_api.final_configured_preflight import build_final_configured_preflight_report
 
 def build_final_handoff_index_report():
+    _freshness_report()
+    _freshness_summary([])
     build_final_configured_preflight_report()
     return {
         "kind": "final_handoff_index_report",
         "source_reports": [],
+        "freshness_summary": {"fresh": 0, "stale": 0, "unknown": 0},
         "operator_sequence": [],
         "lanes_by_id": {},
+        "blocker": {"classification": "stale_report", "checked_against": "git_head"},
         "safety": {
             "commands_run": False,
             "provider_calls": False,
@@ -211,6 +215,12 @@ def build_final_handoff_index_report():
             "keychain_writes": False,
         },
     }
+
+def _freshness_report():
+    return {"classification": "stale_report", "checked_against": "git_head"}
+
+def _freshness_summary(source_reports):
+    return {"fresh": 0, "stale": 0, "unknown": 0}
 """
 
 IOS_DEVICE_LAUNCH_CERTIFICATE_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
@@ -243,6 +253,9 @@ def build_ios_device_launch_rehearsal_report():
     return {
         "kind": "ios_device_launch_rehearsal_report",
         "sequence": [],
+        "freshness_summary": {"fresh": 0, "stale": 0, "unknown": 0},
+        "freshness_status": "fresh",
+        "freshness_classification": "fresh_report",
         "operator_actions": [],
         "commands": ["make ios-device-launch-rehearsal"],
         "safety": {
@@ -263,6 +276,7 @@ def build_ios_device_launch_rehearsal_readiness_report():
     return {
         "kind": "ios_device_launch_rehearsal_readiness_report",
         "freshness": _freshness_report(),
+        "sequence": [{"freshness_summary": {"fresh": 0, "stale": 0, "unknown": 0}, "freshness_status": "stale", "freshness_classification": "stale_report"}],
         "blockers": [{"id": "ios_device_launch_rehearsal_freshness", "classification": "stale_report"}],
         "operator_actions": ["rerun make ios-device-launch-rehearsal"],
     }
@@ -406,6 +420,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         "make_target": True,
         "output_path": True,
         "composes_handoff_reports": True,
+        "source_freshness": True,
         "safety_contract": True,
         "no_banned_commands": True,
     }
@@ -454,6 +469,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         "script_accepts_blocked_reports": True,
         "syncs_final_launch_after_rehearsal": True,
         "readiness_freshness": True,
+        "source_freshness_propagation": True,
         "no_banned_commands": True,
     }
 

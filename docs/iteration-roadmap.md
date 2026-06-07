@@ -131,6 +131,7 @@ Bridge deliverable:
 - P0.113 iPhone Final Launch panel rows for saved iOS device launch rehearsal readiness
 - P0.114 post-rehearsal final launch local sync so the iPhone reads the newest saved launch readiness
 - P0.115 iPhone-visible freshness guard for stale saved iOS device launch rehearsal evidence
+- P0.116 iPhone-visible final handoff source freshness for stale indexed local evidence
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

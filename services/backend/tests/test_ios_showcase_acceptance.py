@@ -607,9 +607,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook "
             "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload "
             "testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload "
+            "testDecodesIOSDeviceLaunchRehearsalSourceFreshnessFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal "
             "testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal "
             "testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness "
+            "testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalSourceFreshness "
             "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal "
             "testDecodesResourceHandoffFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsMissingResourceHandoff "
@@ -661,7 +663,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "IOSDeployRunbookReport iosDeployRunbook "
             "IOSDeviceLaunchRehearsalReadinessReport iosDeviceLaunchRehearsalReadiness "
             "ResourceHandoffReport resourceReport "
-            "items: [FinalResourcesPreflightItem] freshness: FinalAcceptanceFreshness?"
+            "items: [FinalResourcesPreflightItem] freshness: FinalAcceptanceFreshness? "
+            "freshnessStatus freshnessClassification freshnessSummary"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
             "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows "
@@ -669,6 +672,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "threeDEvaluationRows threeDEvaluationRows(from: "
             "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
             "launchRehearsalRows rehearsalFreshnessRow Freshness: "
+            "launchRehearsalSourceFreshnessRows Source freshness: "
             "resourceHandoffRows resourceHandoffBackendRows resourceHandoffIOSRows"
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
@@ -725,7 +729,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_ios_device_launch_rehearsal_readiness_report "
             "ios_device_launch_rehearsal_readiness_report _freshness_report "
             "ios_device_launch_rehearsal_freshness stale_report "
-            "rerun make ios-device-launch-rehearsal"
+            "rerun make ios-device-launch-rehearsal freshness_summary "
+            "freshness_status freshness_classification"
         ),
         "services/backend/src/myth_forge_api/final_configured_preflight.py": (
             "build_final_configured_preflight_report final_configured_preflight_report "
@@ -736,6 +741,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/src/myth_forge_api/final_handoff_index.py": (
             "build_final_handoff_index_report final_handoff_index_report "
             "build_final_configured_preflight_report operator_sequence source_reports "
+            "_freshness_report _freshness_summary stale_report checked_against "
             '"provider_calls": False "writes_backend_env": False '
             '"writes_ios_deploy_config": False'
         ),
@@ -749,6 +755,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_ios_device_launch_rehearsal_report ios_device_launch_rehearsal_report "
             "LOCAL_REPORT_SOURCES REHEARSAL_REPORT_SOURCES final_configured_preflight "
             "final_handoff_index ios_device_launch_certificate operator_actions "
+            "freshness_summary freshness_status freshness_classification "
             '"provider_calls": False "xcode_or_signing": False "keychain_writes": False'
         ),
         "services/backend/scripts/write_ios_device_launch_rehearsal.sh": (
@@ -776,6 +783,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/tests/test_ios_device_launch_rehearsal.py": (
             "test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_manual_gates "
+            "test_ios_device_launch_rehearsal_preserves_final_handoff_source_freshness "
+            "test_ios_device_launch_rehearsal_readiness_preserves_final_handoff_source_freshness "
             "test_ios_device_launch_rehearsal_cli_writes_report_and_makefile_target"
         ),
         "services/backend/tests/test_cli.py": (

@@ -209,15 +209,25 @@ def _sequence(raw_sequence: Any) -> list[dict[str, Any]]:
     for raw_step in raw_sequence:
         if not isinstance(raw_step, dict):
             continue
-        rows.append(
-            {
-                "id": str(raw_step.get("id", "unknown")),
-                "label": str(raw_step.get("label", raw_step.get("id", "Unknown"))),
-                "status": _normalized_status(str(raw_step.get("status", "blocked"))),
-                "command": str(raw_step.get("command", IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND)),
-                "classification": str(raw_step.get("classification", "saved_report")),
-            }
+        row = {
+            "id": str(raw_step.get("id", "unknown")),
+            "label": str(raw_step.get("label", raw_step.get("id", "Unknown"))),
+            "status": _normalized_status(str(raw_step.get("status", "blocked"))),
+            "command": str(raw_step.get("command", IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND)),
+            "classification": str(raw_step.get("classification", "saved_report")),
+        }
+        freshness_summary = _bounded_freshness_summary(
+            raw_step.get("freshness_summary")
         )
+        if freshness_summary is not None:
+            row["freshness_summary"] = freshness_summary
+        if isinstance(raw_step.get("freshness_status"), str):
+            row["freshness_status"] = str(raw_step["freshness_status"])
+        if isinstance(raw_step.get("freshness_classification"), str):
+            row["freshness_classification"] = str(
+                raw_step["freshness_classification"]
+            )
+        rows.append(row)
     return rows[:8]
 
 
@@ -288,6 +298,16 @@ def _non_negative_int(value: Any) -> int:
     if isinstance(value, int) and value >= 0:
         return value
     return 0
+
+
+def _bounded_freshness_summary(raw_summary: Any) -> dict[str, int] | None:
+    if not isinstance(raw_summary, dict):
+        return None
+    return {
+        "fresh": _non_negative_int(raw_summary.get("fresh")),
+        "stale": _non_negative_int(raw_summary.get("stale")),
+        "unknown": _non_negative_int(raw_summary.get("unknown")),
+    }
 
 
 def _bool(value: Any) -> bool:

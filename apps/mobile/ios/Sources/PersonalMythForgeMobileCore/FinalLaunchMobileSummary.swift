@@ -528,6 +528,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             "iOS launch rehearsal \(sanitize(readiness.status)): ready \(readiness.summary.ready), blocked \(readiness.summary.blocked), partial \(readiness.summary.partial).",
             rehearsalFreshnessRow(readiness.freshness),
         ]
+        rows.append(contentsOf: launchRehearsalSourceFreshnessRows(readiness.sequence))
         switch readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
         case "ready":
             rows.append("safe evidence refreshed at \(readiness.sourceFile.path).")
@@ -567,6 +568,28 @@ public enum FinalLaunchMobileSummaryBuilder {
         default:
             return "Freshness: \(freshness.classification)"
         }
+    }
+
+    private static func launchRehearsalSourceFreshnessRows(
+        _ sequence: [IOSDeviceLaunchRehearsalSequenceRow]
+    ) -> [String] {
+        guard let row = sequence.first(where: {
+            $0.freshnessSummary != nil || $0.freshnessStatus != nil
+        }) else {
+            return []
+        }
+        var rows: [String] = []
+        if let summary = row.freshnessSummary {
+            rows.append(
+                "Source freshness: \(summary["fresh", default: 0]) fresh, \(summary["stale", default: 0]) stale, \(summary["unknown", default: 0]) unknown."
+            )
+        }
+        if let status = row.freshnessStatus,
+           status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "stale",
+           let classification = row.freshnessClassification {
+            rows.append("\(row.id): \(status) | \(classification)")
+        }
+        return rows.map(sanitize)
     }
 
     private static func launchRehearsalSequenceRow(

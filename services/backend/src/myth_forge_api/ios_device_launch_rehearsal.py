@@ -155,7 +155,7 @@ def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]
             "kind": None,
             "classification": "invalid_report_shape",
         }
-    return {
+    report = {
         **base,
         "status": _saved_report_status(payload),
         "kind": payload.get("kind"),
@@ -163,6 +163,14 @@ def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]
         "mode": payload.get("mode"),
         "summary": payload.get("summary", {}),
     }
+    freshness_summary = _bounded_freshness_summary(payload.get("freshness_summary"))
+    if freshness_summary is not None:
+        report["freshness_summary"] = freshness_summary
+        report["freshness_status"] = _freshness_status(freshness_summary)
+        report["freshness_classification"] = _freshness_classification(
+            str(report["freshness_status"])
+        )
+    return report
 
 
 def _saved_report_status(payload: dict[str, Any]) -> str:
@@ -248,7 +256,18 @@ def _mode_from_certificate(certificate: dict[str, Any]) -> str:
 def _compact_source(source: dict[str, Any]) -> dict[str, Any]:
     return {
         key: source[key]
-        for key in ["id", "status", "path", "exists", "kind", "command"]
+        for key in [
+            "id",
+            "status",
+            "path",
+            "exists",
+            "kind",
+            "command",
+            "freshness",
+            "freshness_summary",
+            "freshness_status",
+            "freshness_classification",
+        ]
         if key in source
     }
 
@@ -280,6 +299,40 @@ def _positive_int(value: Any) -> int:
     if isinstance(value, int) and value > 0:
         return value
     return 0
+
+
+def _non_negative_int(value: Any) -> int:
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int) and value >= 0:
+        return value
+    return 0
+
+
+def _bounded_freshness_summary(raw_summary: Any) -> dict[str, int] | None:
+    if not isinstance(raw_summary, dict):
+        return None
+    return {
+        "fresh": _non_negative_int(raw_summary.get("fresh")),
+        "stale": _non_negative_int(raw_summary.get("stale")),
+        "unknown": _non_negative_int(raw_summary.get("unknown")),
+    }
+
+
+def _freshness_status(summary: dict[str, int]) -> str:
+    if summary["stale"]:
+        return "stale"
+    if summary["unknown"] and not summary["fresh"]:
+        return "unknown"
+    return "fresh"
+
+
+def _freshness_classification(status: str) -> str:
+    if status == "stale":
+        return "stale_report"
+    if status == "unknown":
+        return "unknown_report_freshness"
+    return "fresh_report"
 
 
 def _label(source_id: str) -> str:
