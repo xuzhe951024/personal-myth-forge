@@ -722,6 +722,154 @@ public struct FinalResourcesPreflightReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalResourceRequirementsSummary: Codable, Equatable, Sendable {
+    public var total: Int
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var optional: Int
+    public var required: Int
+    public var secret: Int
+    public var backend: Int
+    public var ios: Int
+    public var print: Int
+    public var validationCommands: Int
+
+    public init(
+        total: Int,
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        optional: Int,
+        required: Int,
+        secret: Int,
+        backend: Int,
+        ios: Int,
+        print: Int,
+        validationCommands: Int
+    ) {
+        self.total = total
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.optional = optional
+        self.required = required
+        self.secret = secret
+        self.backend = backend
+        self.ios = ios
+        self.print = print
+        self.validationCommands = validationCommands
+    }
+}
+
+public struct FinalResourceRequirement: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var domain: String
+    public var destination: String
+    public var sourceTemplate: String
+    public var required: Bool
+    public var secret: Bool
+    public var configured: Bool
+    public var status: String
+    public var classification: String?
+    public var unblocks: [String]
+    public var validationCommand: String
+    public var notes: String
+    public var normalizedValue: String?
+
+    public init(
+        id: String,
+        label: String,
+        domain: String,
+        destination: String,
+        sourceTemplate: String,
+        required: Bool,
+        secret: Bool,
+        configured: Bool,
+        status: String,
+        classification: String? = nil,
+        unblocks: [String] = [],
+        validationCommand: String,
+        notes: String,
+        normalizedValue: String? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.domain = domain
+        self.destination = destination
+        self.sourceTemplate = sourceTemplate
+        self.required = required
+        self.secret = secret
+        self.configured = configured
+        self.status = status
+        self.classification = classification
+        self.unblocks = unblocks
+        self.validationCommand = validationCommand
+        self.notes = notes
+        self.normalizedValue = normalizedValue
+    }
+}
+
+public struct FinalResourceRequirementsSafety: Codable, Equatable, Sendable {
+    public var providerSecretsInReport: Bool
+    public var localPathsInReport: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var liveProviderCalls: Bool
+    public var globalMutation: Bool
+
+    public init(
+        providerSecretsInReport: Bool,
+        localPathsInReport: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        liveProviderCalls: Bool,
+        globalMutation: Bool
+    ) {
+        self.providerSecretsInReport = providerSecretsInReport
+        self.localPathsInReport = localPathsInReport
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.liveProviderCalls = liveProviderCalls
+        self.globalMutation = globalMutation
+    }
+}
+
+public struct FinalResourceRequirementsReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: FinalResourceRequirementsSummary
+    public var requirements: [FinalResourceRequirement]
+    public var requirementsById: [String: FinalResourceRequirement]
+    public var operatorActions: [String]
+    public var validationCommands: [String]
+    public var resourcesFile: FinalResourcesFileStatus?
+    public var safety: FinalResourceRequirementsSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: FinalResourceRequirementsSummary,
+        requirements: [FinalResourceRequirement],
+        requirementsById: [String: FinalResourceRequirement],
+        operatorActions: [String],
+        validationCommands: [String],
+        resourcesFile: FinalResourcesFileStatus? = nil,
+        safety: FinalResourceRequirementsSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.requirements = requirements
+        self.requirementsById = requirementsById
+        self.operatorActions = operatorActions
+        self.validationCommands = validationCommands
+        self.resourcesFile = resourcesFile
+        self.safety = safety
+    }
+}
+
 public struct FinalAcceptanceSourceFile: Codable, Equatable, Sendable {
     public var path: String
     public var exists: Bool
@@ -2063,6 +2211,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var summary: FinalDemoLaunchSummary
     public var phaseSummary: FinalDemoLaunchSummary?
     public var finalResourcesPreflight: FinalResourcesPreflightReport?
+    public var finalResourceRequirements: FinalResourceRequirementsReport?
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
     public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
@@ -2087,6 +2236,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         summary: FinalDemoLaunchSummary,
         phaseSummary: FinalDemoLaunchSummary? = nil,
         finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
+        finalResourceRequirements: FinalResourceRequirementsReport? = nil,
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
         threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
@@ -2110,6 +2260,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.summary = summary
         self.phaseSummary = phaseSummary
         self.finalResourcesPreflight = finalResourcesPreflight
+        self.finalResourceRequirements = finalResourceRequirements
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
         self.threeDEvaluationReadiness = threeDEvaluationReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
