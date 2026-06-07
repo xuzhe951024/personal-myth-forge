@@ -855,6 +855,129 @@ public struct FinalAcceptanceReadinessReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct NPCAgentEvaluationReadinessSummary: Codable, Equatable, Sendable {
+    public var totalCases: Int
+    public var succeeded: Int
+    public var failed: Int
+    public var tickSteps: Int
+
+    public init(totalCases: Int, succeeded: Int, failed: Int, tickSteps: Int) {
+        self.totalCases = totalCases
+        self.succeeded = succeeded
+        self.failed = failed
+        self.tickSteps = tickSteps
+    }
+}
+
+public struct NPCAgentEvaluationReadinessCoverage: Codable, Equatable, Sendable {
+    public var expectedNpcSets: Int
+    public var traceSets: Int
+    public var proposedActionPlanMatches: Int
+    public var tickStepsCompleted: Int
+    public var worldResolutionSteps: Int
+
+    public init(
+        expectedNpcSets: Int,
+        traceSets: Int,
+        proposedActionPlanMatches: Int,
+        tickStepsCompleted: Int,
+        worldResolutionSteps: Int
+    ) {
+        self.expectedNpcSets = expectedNpcSets
+        self.traceSets = traceSets
+        self.proposedActionPlanMatches = proposedActionPlanMatches
+        self.tickStepsCompleted = tickStepsCompleted
+        self.worldResolutionSteps = worldResolutionSteps
+    }
+}
+
+public struct NPCAgentEvaluationReadinessBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String
+    public var command: String
+    public var detail: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String,
+        command: String,
+        detail: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+    }
+}
+
+public struct NPCAgentEvaluationReadinessSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var globalMutation: Bool
+    public var providerSecretsInReport: Bool
+    public var rawPrivateContextInReport: Bool
+    public var rawMediaInReport: Bool
+    public var localPathsInReport: Bool
+    public var paymentLinksInReport: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        globalMutation: Bool,
+        providerSecretsInReport: Bool,
+        rawPrivateContextInReport: Bool,
+        rawMediaInReport: Bool,
+        localPathsInReport: Bool,
+        paymentLinksInReport: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.globalMutation = globalMutation
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawPrivateContextInReport = rawPrivateContextInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.localPathsInReport = localPathsInReport
+        self.paymentLinksInReport = paymentLinksInReport
+    }
+}
+
+public struct NPCAgentEvaluationReadinessReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var sourceFile: FinalAcceptanceSourceFile
+    public var summary: NPCAgentEvaluationReadinessSummary
+    public var coverage: NPCAgentEvaluationReadinessCoverage
+    public var blockers: [NPCAgentEvaluationReadinessBlocker]
+    public var operatorActions: [String]
+    public var safety: NPCAgentEvaluationReadinessSafety
+
+    public init(
+        kind: String,
+        status: String,
+        sourceFile: FinalAcceptanceSourceFile,
+        summary: NPCAgentEvaluationReadinessSummary,
+        coverage: NPCAgentEvaluationReadinessCoverage,
+        blockers: [NPCAgentEvaluationReadinessBlocker],
+        operatorActions: [String],
+        safety: NPCAgentEvaluationReadinessSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.sourceFile = sourceFile
+        self.summary = summary
+        self.coverage = coverage
+        self.blockers = blockers
+        self.operatorActions = operatorActions
+        self.safety = safety
+    }
+}
+
 public struct FinalOperatorHandoffSummary: Codable, Equatable, Sendable {
     public var ready: Int
     public var missing: Int
@@ -981,6 +1104,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var phaseSummary: FinalDemoLaunchSummary?
     public var finalResourcesPreflight: FinalResourcesPreflightReport?
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
+    public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
     public var launchPhases: [FinalDemoLaunchPhase]
     public var operatorChecklist: [String]
@@ -996,6 +1120,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         phaseSummary: FinalDemoLaunchSummary? = nil,
         finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
+        npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
         launchPhases: [FinalDemoLaunchPhase],
         operatorChecklist: [String],
@@ -1010,6 +1135,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.phaseSummary = phaseSummary
         self.finalResourcesPreflight = finalResourcesPreflight
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
+        self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
         self.finalOperatorHandoff = finalOperatorHandoff
         self.launchPhases = launchPhases
         self.operatorChecklist = operatorChecklist

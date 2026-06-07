@@ -14,6 +14,9 @@ from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
 from myth_forge_api.final_operator_handoff import build_final_operator_handoff_report
+from myth_forge_api.npc_agent_evaluation_readiness import (
+    build_npc_agent_evaluation_readiness_report,
+)
 from myth_forge_api.resource_handoff import build_resource_handoff_report
 
 LaunchMode = Literal["local", "configured"]
@@ -45,6 +48,9 @@ def build_final_demo_launch_report(
     final_acceptance_readiness = build_final_acceptance_readiness_report(
         repo_root=selected_repo_root,
     ).report
+    npc_agent_evaluation_readiness = build_npc_agent_evaluation_readiness_report(
+        repo_root=selected_repo_root,
+    ).report
     phases = _launch_phases(
         mode=mode,
         resource_report=resource_report,
@@ -68,6 +74,7 @@ def build_final_demo_launch_report(
         "phase_summary": phase_summary,
         "final_resources_preflight": final_resources_preflight,
         "final_acceptance_readiness": final_acceptance_readiness,
+        "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,
         "final_operator_handoff": final_operator_handoff,
         "resource_report": resource_report,
         "launch_phases": phases,

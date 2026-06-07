@@ -277,6 +277,27 @@ def test_final_demo_launch_embeds_saved_final_acceptance_readiness(
     assert str(tmp_path) not in report_text
 
 
+def test_final_demo_launch_embeds_npc_agent_evaluation_readiness(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_npc_evaluation(repo_root)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    readiness = result.report["npc_agent_evaluation_readiness"]
+
+    assert readiness["kind"] == "npc_agent_evaluation_readiness_report"
+    assert readiness["status"] == "ready"
+    assert readiness["summary"]["succeeded"] == 6
+    assert readiness["coverage"]["tick_steps_completed"] == 12
+    assert readiness["safety"]["commands_run"] is False
+
+
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:
     repo_root = tmp_path / "repo"
     config_dir = repo_root / "apps/mobile/ios/Config"
@@ -305,6 +326,29 @@ def _write_final_acceptance(repo_root: Path, report: dict[str, object]) -> None:
     acceptance = repo_root / "services/backend/.local/final-acceptance-local.json"
     acceptance.parent.mkdir(parents=True, exist_ok=True)
     acceptance.write_text(json.dumps(report), encoding="utf-8")
+
+
+def _write_npc_evaluation(repo_root: Path) -> None:
+    report = {
+        "kind": "npc_agent_evaluation_report",
+        "suite": "default-v0",
+        "provider": "local",
+        "tick_steps": 2,
+        "total_cases": 6,
+        "succeeded": 6,
+        "failed": 0,
+        "coverage": {
+            "expected_npc_sets": 6,
+            "trace_sets": 6,
+            "proposed_action_plan_matches": 6,
+            "tick_steps_completed": 12,
+            "world_resolution_steps": 12,
+        },
+        "cases": [],
+    }
+    evaluation = repo_root / "services/backend/.local/npc-evaluation-local.json"
+    evaluation.parent.mkdir(parents=True, exist_ok=True)
+    evaluation.write_text(json.dumps(report), encoding="utf-8")
 
 
 def _write_final_resources(repo_root: Path) -> None:

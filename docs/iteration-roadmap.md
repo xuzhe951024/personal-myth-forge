@@ -106,6 +106,7 @@ Bridge deliverable:
 - P0.88 iPhone Final Launch receipt for verdict, first blocker, acceptance counts, and live consent
 - P0.89 final acceptance freshness guard for stale saved readiness reports
 - P0.90 NPC Agent evaluation suite for local and future OpenAI quality handoff
+- P0.91 iPhone Final Launch NPC Agent evaluation readiness rows
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

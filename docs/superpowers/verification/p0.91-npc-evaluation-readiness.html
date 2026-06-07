@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.91 NPC Evaluation Readiness</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17201b;
+      --muted: #5f6a64;
+      --paper: #f7f5ef;
+      --panel: #ffffff;
+      --line: #d9dfd8;
+      --green: #177245;
+      --blue: #235c9a;
+      --amber: #9a681b;
+      --red: #b23a31;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(390px, 100vw);
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 18px 14px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 2px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 5px;
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border: 1px solid rgba(23, 114, 69, 0.25);
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 7px;
+      border-radius: 7px;
+      background: rgba(23, 114, 69, 0.08);
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      letter-spacing: 0;
+    }
+
+    .status-panel {
+      display: grid;
+      gap: 8px;
+    }
+
+    .top-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .caption {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .pill {
+      border: 1px solid rgba(23, 114, 69, 0.25);
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 7px;
+      padding: 5px 7px;
+      white-space: nowrap;
+      background: rgba(23, 114, 69, 0.08);
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 9px 104px 1fr;
+      gap: 7px;
+      align-items: center;
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .dot.amber {
+      background: var(--amber);
+    }
+
+    .phase strong {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .group {
+      display: grid;
+      gap: 4px;
+      padding-top: 3px;
+    }
+
+    .group h3 {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .line {
+      margin: 0;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.38;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .metric {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px;
+      background: #fbfcfa;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .blocker {
+      border-left: 3px solid var(--amber);
+      padding-left: 8px;
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+      padding: 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>P0.91 NPC Evaluation Readiness</h1>
+        <div class="sub">Read-only Final Launch Status rows for saved NPC Agent evaluation reports.</div>
+      </div>
+      <div class="badge">MOBILE</div>
+    </header>
+
+    <section class="status-panel">
+      <div class="top-row">
+        <div>
+          <p class="title">Final Launch Status</p>
+          <p class="caption">local mode; ready 6, blocked 2, manual 2</p>
+        </div>
+        <div class="pill">BLOCKED</div>
+      </div>
+
+      <div class="phase"><span class="dot"></span><strong>Resources</strong><span>read-only preflight loaded</span></div>
+      <div class="phase"><span class="dot"></span><strong>Acceptance</strong><span>saved quick report loaded</span></div>
+      <div class="phase"><span class="dot amber"></span><strong>Deploy</strong><span>local iOS config still required</span></div>
+
+      <div class="group">
+        <h3>Launch Receipt</h3>
+        <p class="line">Receipt: local launch blocked.</p>
+        <p class="line">Acceptance: 12 passed, 2 blocked, 0 failed.</p>
+      </div>
+
+      <div class="group">
+        <h3>Acceptance</h3>
+        <p class="line">Final acceptance ready.</p>
+      </div>
+
+      <div class="group">
+        <h3>NPC Evaluation</h3>
+        <p class="line">NPC Agent evaluation ready: 6 cases, 12 ticks.</p>
+        <p class="line">Coverage: 6 trace sets, 12 world resolutions.</p>
+      </div>
+
+      <div class="group blocker">
+        <h3>Blocked Report Path</h3>
+        <p class="line">npc_agent_evaluation_failed: blocked | [withheld]</p>
+        <p class="line">No raw private context, secrets, media, paths, or payment links.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Readiness Metrics</h2>
+      <div class="metrics">
+        <div class="metric"><strong>6</strong><span>cases succeeded</span></div>
+        <div class="metric"><strong>12</strong><span>tick steps completed</span></div>
+        <div class="metric"><strong>0</strong><span>provider calls from launch status</span></div>
+      </div>
+    </section>
+
+    <footer>
+      Source: /v1/final-demo-launch reads services/backend/.local/npc-evaluation-local.json only.
+      The iPhone panel displays sanitized summary rows and never runs evaluation commands.
+    </footer>
+  </main>
+</body>
+</html>

@@ -213,7 +213,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/ProviderReadinessView.swift": "missingEnv",
         "apps/mobile/ios/App/FinalShowcaseSummaryView.swift": "Final Showcase",
         "apps/mobile/ios/App/FinalLaunchStatusView.swift": (
-            "Mode Acceptance Next handoffRows Launch Receipt Resource Checklist"
+            "Mode Acceptance NPC Evaluation Next handoffRows Launch Receipt Resource Checklist"
         ),
         "apps/mobile/ios/App/DevicePreflightView.swift": (
             "Device Preflight backendBaseURL Check checkBackend"
@@ -275,6 +275,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt "
             "testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness "
+            "testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload "
+            "testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation "
+            "testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation "
             "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
             "testGetConfiguredFinalDemoLaunchBuildsGETRequest "
             "testFinalLaunchMobileSummaryShowsConfiguredModePolicy"
@@ -313,20 +316,25 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift": (
             "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff "
             "FinalLaunchMode displayLabel FinalResourcesPreflightItem FinalAcceptanceFreshness "
+            "NPCAgentEvaluationReadinessReport npcAgentEvaluationReadiness "
             "items: [FinalResourcesPreflightItem] freshness: FinalAcceptanceFreshness?"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
             "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows "
-            "launchReceiptRows firstBlockerReceiptRow freshness.status == \"stale\""
+            "launchReceiptRows firstBlockerReceiptRow freshness.status == \"stale\" "
+            "npcEvaluationRows"
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
             "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness"
+        ),
+        "services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py": (
+            "build_npc_agent_evaluation_readiness_report"
         ),
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
             "build_final_operator_handoff_report"
         ),
         "services/backend/src/myth_forge_api/final_demo_launch.py": (
-            "final_acceptance_readiness final_operator_handoff"
+            "final_acceptance_readiness npc_agent_evaluation_readiness final_operator_handoff"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift": (
             "getBackendHealth getFinalDemoLaunch"

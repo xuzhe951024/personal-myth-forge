@@ -667,6 +667,11 @@ do {
         "FinalAcceptanceReadinessReport",
         "final acceptance readiness model"
     )
+    try requireContains(
+        pmfModels,
+        "NPCAgentEvaluationReadinessReport",
+        "NPC Agent evaluation readiness model"
+    )
     try requireContains(pmfModels, "FinalAcceptanceFreshness", "final acceptance freshness model")
     try requireContains(
         pmfModels,
@@ -677,6 +682,11 @@ do {
         pmfModels,
         "finalAcceptanceReadiness",
         "final demo launch final acceptance readiness field"
+    )
+    try requireContains(
+        pmfModels,
+        "npcAgentEvaluationReadiness",
+        "final demo launch NPC Agent evaluation readiness field"
     )
     try requireContains(
         pmfModels,
@@ -705,9 +715,16 @@ do {
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRows", "final launch resource checklist rows")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRow", "final launch resource checklist row builder")
     try requireContains(finalLaunchMobileSummary, "acceptanceRows", "final launch summary acceptance rows")
+    try requireContains(finalLaunchMobileSummary, "npcEvaluationRows", "final launch summary NPC evaluation rows")
+    try requireContains(
+        finalLaunchMobileSummary,
+        "npcEvaluationRows(from:",
+        "final launch summary NPC evaluation row builder"
+    )
     try requireContains(finalLaunchMobileSummary, "handoffRows", "final launch summary handoff rows")
     try requireContains(finalLaunchStatusView, "Launch Receipt", "final launch receipt section")
     try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")
+    try requireContains(finalLaunchStatusView, "NPC Evaluation", "final launch NPC evaluation section")
     try requireContains(
         contractTests,
         "testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt",
@@ -727,6 +744,21 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness",
         "final acceptance stale freshness summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload",
+        "NPC Agent evaluation readiness decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation",
+        "NPC Agent evaluation ready summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsBlockedNPCAgentEvaluation",
+        "NPC Agent evaluation blocked summary test"
     )
     try requireContains(
         contractTests,
