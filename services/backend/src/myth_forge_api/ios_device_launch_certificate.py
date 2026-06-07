@@ -60,6 +60,7 @@ def build_ios_device_launch_certificate_report(
         "summary": _summary(device_gates),
         "certificate": certificate,
         "device_gates": device_gates,
+        "operator_actions": _operator_actions(device_gates),
         "final_handoff_index": _final_handoff_index_summary(final_handoff_index),
         "ios_deploy_runbook": _ios_deploy_runbook_summary(ios_deploy_runbook),
         "final_demo_launch": _final_demo_launch_summary(final_demo_launch),
@@ -399,6 +400,48 @@ def _summary(device_gates: list[dict[str, Any]]) -> dict[str, int]:
         status: sum(1 for gate in device_gates if gate["status"] == status)
         for status in statuses
     }
+
+
+def _operator_actions(device_gates: list[dict[str, Any]]) -> list[str]:
+    actions: list[str] = []
+    for gate in device_gates:
+        status = str(gate.get("status", ""))
+        if status not in {"missing", "blocked", "manual", "live"}:
+            continue
+        gate_id = str(gate.get("id", "gate"))
+        command = str(gate.get("command", ""))
+        if gate_id == "final_handoff_index":
+            actions.append("run make final-handoff-index")
+        elif gate_id == "ios_deploy_config":
+            actions.append("provide iOS deploy config and rerun mobile deploy preflight")
+        elif gate_id == "ios_deploy_runbook":
+            actions.append("run make ios-deploy-runbook-local")
+        elif gate_id == "final_demo_launch":
+            actions.append("run make final-demo-launch")
+        elif gate_id == "backend_device_server":
+            actions.append("start backend-device-demo")
+        elif gate_id == "mobile_deploy_preflight":
+            actions.append("run make mobile-deploy-preflight after backend is running")
+        elif gate_id == "xcode_build_gate":
+            actions.append("resolve Xcode build gate outside the app")
+        elif gate_id == "configured_final_acceptance":
+            actions.append("run configured final acceptance after live provider cost review")
+        elif command:
+            actions.append(f"run {command}")
+        else:
+            actions.append(f"unblock {gate_id}")
+    return _dedupe(actions)[:6]
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        deduped.append(value)
+    return deduped
 
 
 def _deploy_config_values(repo_root: Path) -> dict[str, str]:

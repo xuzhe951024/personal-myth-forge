@@ -335,6 +335,55 @@ def test_ios_device_launch_rehearsal_preserves_final_handoff_source_freshness(
     assert final_handoff_step["freshness_classification"] == "stale_report"
 
 
+def test_ios_device_launch_rehearsal_routes_handoff_and_certificate_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True)
+    _write_local_rehearsal_reports(local_dir)
+    _write_json(
+        local_dir / "final-configured-preflight.json",
+        {"kind": "final_configured_preflight_report", "status": "ready"},
+    )
+    _write_json(
+        local_dir / "final-handoff-index.json",
+        {
+            "kind": "final_handoff_index_report",
+            "status": "blocked",
+            "operator_actions": ["run make final-configured-preflight"],
+        },
+    )
+    _write_json(
+        local_dir / "ios-device-launch-certificate.json",
+        {
+            "kind": "ios_device_launch_certificate_report",
+            "status": "blocked",
+            "mode": "local",
+            "operator_actions": ["run make final-handoff-index"],
+        },
+    )
+
+    result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
+
+    assert result.exit_code == 2
+    assert (
+        "final_handoff_index: run make final-configured-preflight"
+        in result.report["operator_actions"]
+    )
+    assert (
+        "ios_device_launch_certificate: run make final-handoff-index"
+        in result.report["operator_actions"]
+    )
+    assert "review final_handoff_index: make final-handoff-index" not in result.report[
+        "operator_actions"
+    ]
+    assert (
+        "review ios_device_launch_certificate: make ios-device-launch-certificate"
+        not in result.report["operator_actions"]
+    )
+
+
 def test_ios_device_launch_rehearsal_cli_writes_report_and_makefile_target(
     tmp_path: Path,
 ) -> None:
