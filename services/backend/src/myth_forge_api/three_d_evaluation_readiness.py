@@ -7,11 +7,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_THREE_D_EVALUATION_PATH = Path("services/backend/.local/3d-evaluation-local.json")
-LOCAL_THREE_D_EVALUATION_COMMAND = (
-    "cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d "
-    "--provider local --suite default-v0 "
-    "--output .local/3d-evaluation-local.json"
-)
+LOCAL_THREE_D_EVALUATION_COMMAND = "make backend-evaluate-3d"
 
 
 @dataclass(frozen=True)
@@ -46,7 +42,7 @@ def build_three_d_evaluation_readiness_report(
                 coverage=_empty_coverage(),
                 blockers=[],
                 operator_actions=[
-                    "run local 3D evaluation with evaluate-3d and write "
+                    "run make backend-evaluate-3d to write "
                     "services/backend/.local/3d-evaluation-local.json"
                 ],
             ),
@@ -91,7 +87,7 @@ def build_three_d_evaluation_readiness_report(
                 summary=summary,
                 coverage=coverage,
                 blockers=[blocker],
-                operator_actions=["rerun local 3D evaluation and review failed cases"],
+                operator_actions=["rerun make backend-evaluate-3d and review failed cases"],
             ),
         )
 
@@ -134,7 +130,10 @@ def _blocked_result(
                     "detail": detail,
                 }
             ],
-            operator_actions=["regenerate services/backend/.local/3d-evaluation-local.json"],
+            operator_actions=[
+                "rerun make backend-evaluate-3d to regenerate "
+                "services/backend/.local/3d-evaluation-local.json"
+            ],
         ),
     )
 

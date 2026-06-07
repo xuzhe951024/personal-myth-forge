@@ -13,9 +13,11 @@ from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
 from myth_forge_api.npc_agent_evaluation_readiness import (
+    LOCAL_NPC_EVALUATION_COMMAND,
     build_npc_agent_evaluation_readiness_report,
 )
 from myth_forge_api.three_d_evaluation_readiness import (
+    LOCAL_THREE_D_EVALUATION_COMMAND,
     build_three_d_evaluation_readiness_report,
 )
 
@@ -155,7 +157,7 @@ def _input_slots(
             required=True,
             source="services/backend/.local/3d-evaluation-local.json",
             action=(
-                "run local 3D evaluation with evaluate-3d and write "
+                f"run {LOCAL_THREE_D_EVALUATION_COMMAND} to write "
                 "services/backend/.local/3d-evaluation-local.json"
             ),
         ),
@@ -166,7 +168,7 @@ def _input_slots(
             required=True,
             source="services/backend/.local/npc-evaluation-local.json",
             action=(
-                "run local NPC Agent evaluation with evaluate-npc and write "
+                f"run {LOCAL_NPC_EVALUATION_COMMAND} to write "
                 "services/backend/.local/npc-evaluation-local.json"
             ),
         ),

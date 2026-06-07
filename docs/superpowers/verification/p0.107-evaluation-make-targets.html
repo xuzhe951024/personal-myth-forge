@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.107 Evaluation Make Targets</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d2433;
+      --muted: #667085;
+      --line: #d9e2ec;
+      --paper: #f7f8fb;
+      --panel: #ffffff;
+      --ready: #0f7a5a;
+      --warn: #a15c12;
+      --cmd: #24324a;
+      --accent: #3b6ea8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .phone {
+      width: min(100vw, 390px);
+      min-height: 844px;
+      margin: 0 auto;
+      padding: 18px 16px 24px;
+      background: var(--paper);
+    }
+
+    .topbar {
+      display: block;
+      padding: 6px 0 14px;
+    }
+
+    .title {
+      min-width: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.12;
+      font-weight: 720;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 10px;
+      border: 1px solid #b8d6c9;
+      background: #e8f5ef;
+      color: var(--ready);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .section {
+      padding: 16px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section:first-of-type {
+      border-top: 0;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 13px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 760;
+    }
+
+    .command-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .command {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      align-items: start;
+      gap: 10px;
+      padding: 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .num {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #eef4fb;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    code {
+      display: block;
+      color: var(--cmd);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .caption {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .path-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .path {
+      padding: 11px 12px;
+      background: #fffdf8;
+      border: 1px solid #ead9b8;
+      border-radius: 8px;
+    }
+
+    .path .label {
+      margin-bottom: 4px;
+      color: var(--warn);
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .safety {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .safety li {
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      gap: 9px;
+      align-items: start;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.38;
+    }
+
+    .safety li span:last-child {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      background: var(--ready);
+    }
+
+    .footer {
+      padding: 15px 0 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header class="topbar">
+      <div class="title">
+        <h1>Evaluation Make Targets</h1>
+        <div class="sub">P0.107 final local handoff</div>
+      </div>
+      <div class="badge">Ready</div>
+    </header>
+
+    <section class="section">
+      <h2 class="section-title">Project-root commands</h2>
+      <div class="command-list">
+        <div class="command">
+          <div class="num">1</div>
+          <div>
+            <code>make backend-evaluate-3d</code>
+            <div class="caption">Runs the local 20-case 3D suite.</div>
+          </div>
+        </div>
+        <div class="command">
+          <div class="num">2</div>
+          <div>
+            <code>make backend-evaluate-npc</code>
+            <div class="caption">Runs the local NPC Agent evaluation suite.</div>
+          </div>
+        </div>
+        <div class="command">
+          <div class="num">3</div>
+          <div>
+            <code>make backend-evaluate-local</code>
+            <div class="caption">Runs 3D first, then NPC Agent evaluation.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Saved reports</h2>
+      <div class="path-list">
+        <div class="path">
+          <div class="label">3D readiness input</div>
+          <code>services/backend/.local/3d-evaluation-local.json</code>
+        </div>
+        <div class="path">
+          <div class="label">NPC readiness input</div>
+          <code>services/backend/.local/npc-evaluation-local.json</code>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Safety contract</h2>
+      <ul class="safety">
+        <li><span class="dot"></span><span>Launch panels stay read-only.</span></li>
+        <li><span class="dot"></span><span>No API or iOS command execution.</span></li>
+        <li><span class="dot"></span><span>Provider keys stay backend-only.</span></li>
+      </ul>
+    </section>
+
+    <footer class="footer">
+      Visual regression target: text wraps inside 390px width, commands remain scan-friendly, and no local absolute paths or secrets appear.
+    </footer>
+  </main>
+</body>
+</html>

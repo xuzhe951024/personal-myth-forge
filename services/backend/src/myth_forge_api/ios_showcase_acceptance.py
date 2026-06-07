@@ -860,6 +860,12 @@ FEATURES = (
                 "LOCAL_THREE_D_EVALUATION_COMMAND",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/three_d_evaluation_readiness.py",
+                "make backend-evaluate-3d",
+            ),
+            SourceRequirement("Makefile", "backend-evaluate-3d:"),
+            SourceRequirement("Makefile", "backend-evaluate-local:"),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "three_d_evaluation_readiness",
             ),
@@ -874,6 +880,10 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/tests/test_three_d_evaluation_readiness.py",
                 "test_three_d_evaluation_readiness_ready_report",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_evaluation_make_targets.py",
+                "test_evaluation_make_targets_dry_run_expected_local_commands",
             ),
             SourceRequirement(
                 "services/backend/tests/test_final_demo_launch.py",
@@ -928,6 +938,14 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
+                "LOCAL_THREE_D_EVALUATION_COMMAND",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
+                "LOCAL_NPC_EVALUATION_COMMAND",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
                 "three_d_evaluation",
             ),
             SourceRequirement(
@@ -939,6 +957,9 @@ FEATURES = (
                 "ios-deploy-runbook",
             ),
             SourceRequirement("Makefile", "ios-deploy-runbook:"),
+            SourceRequirement("Makefile", "backend-evaluate-3d:"),
+            SourceRequirement("Makefile", "backend-evaluate-npc:"),
+            SourceRequirement("Makefile", "backend-evaluate-local:"),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "ios_deploy_runbook",
@@ -1081,6 +1102,12 @@ FEATURES = (
                 "services/backend/src/myth_forge_api/final_operator_handoff.py",
                 "LOCAL_NPC_EVALUATION_COMMAND",
             ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py",
+                "make backend-evaluate-npc",
+            ),
+            SourceRequirement("Makefile", "backend-evaluate-npc:"),
+            SourceRequirement("Makefile", "backend-evaluate-local:"),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_operator_handoff",

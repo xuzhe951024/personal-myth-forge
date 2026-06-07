@@ -22,7 +22,7 @@ def test_npc_agent_evaluation_readiness_missing_file_without_running_commands(
     }
     assert result.report["coverage"]["tick_steps_completed"] == 0
     assert result.report["blockers"] == []
-    assert "evaluate-npc" in result.report["operator_actions"][0]
+    assert "make backend-evaluate-npc" in result.report["operator_actions"][0]
     assert result.report["safety"]["commands_run"] is False
     assert result.report["safety"]["provider_calls"] is False
 
@@ -58,7 +58,7 @@ def test_npc_agent_evaluation_readiness_blocks_invalid_json(tmp_path: Path) -> N
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["blockers"][0]["classification"] == "unreadable_report"
-    assert "evaluate-npc" in result.report["blockers"][0]["command"]
+    assert result.report["blockers"][0]["command"] == "make backend-evaluate-npc"
 
 
 def test_npc_agent_evaluation_readiness_blocks_failed_report_and_redacts(
@@ -84,6 +84,8 @@ def test_npc_agent_evaluation_readiness_blocks_failed_report_and_redacts(
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["blockers"][0]["classification"] == "npc_agent_evaluation_failed"
+    assert result.report["blockers"][0]["command"] == "make backend-evaluate-npc"
+    assert "rerun make backend-evaluate-npc" in result.report["operator_actions"][0]
     assert "[redacted]" in report_text or "[withheld]" in report_text
     assert "test-secret" not in report_text
     assert "private_message:" not in report_text

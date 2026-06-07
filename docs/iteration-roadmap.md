@@ -122,6 +122,7 @@ Bridge deliverable:
 - P0.104 iPhone Final Launch 3D provider evaluation readiness rows
 - P0.105 iPhone Final Showcase and Demo Script 3D evaluation gate
 - P0.106 iPhone iOS deploy runbook 3D evaluation input slot
+- P0.107 project-root Make targets for local 3D and NPC Agent evaluation reports
 - default local provider path that needs no external secrets
 
 ## P1: Mobile Vertical Slice

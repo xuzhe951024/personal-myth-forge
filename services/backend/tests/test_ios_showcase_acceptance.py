@@ -640,17 +640,22 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness"
         ),
         "services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py": (
-            "build_npc_agent_evaluation_readiness_report"
+            "build_npc_agent_evaluation_readiness_report make backend-evaluate-npc"
         ),
         "services/backend/src/myth_forge_api/three_d_evaluation_readiness.py": (
-            "build_three_d_evaluation_readiness_report LOCAL_THREE_D_EVALUATION_COMMAND"
+            "build_three_d_evaluation_readiness_report LOCAL_THREE_D_EVALUATION_COMMAND "
+            "make backend-evaluate-3d"
         ),
         "services/backend/src/myth_forge_api/ios_deploy_runbook.py": (
             "build_ios_deploy_runbook_report build_three_d_evaluation_readiness_report "
+            "LOCAL_THREE_D_EVALUATION_COMMAND LOCAL_NPC_EVALUATION_COMMAND "
             "three_d_evaluation IOS_DEPLOY_RUNBOOK_COMMAND"
         ),
         "services/backend/src/myth_forge_api/cli.py": "ios-deploy-runbook",
-        "Makefile": "ios-deploy-runbook:",
+        "Makefile": (
+            "ios-deploy-runbook: backend-evaluate-3d: backend-evaluate-npc: "
+            "backend-evaluate-local:"
+        ),
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
             "three_d_evaluation LOCAL_THREE_D_EVALUATION_COMMAND "
             "build_final_operator_handoff_report npc_agent_evaluation LOCAL_NPC_EVALUATION_COMMAND "
@@ -669,6 +674,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/tests/test_three_d_evaluation_readiness.py": (
             "test_three_d_evaluation_readiness_ready_report"
+        ),
+        "services/backend/tests/test_evaluation_make_targets.py": (
+            "test_evaluation_make_targets_dry_run_expected_local_commands"
         ),
         "services/backend/tests/test_ios_deploy_runbook.py": (
             "test_ios_deploy_runbook_ready_local_inputs_preserve_command_order "
