@@ -25,6 +25,11 @@ LOCAL_REPORT_SOURCES = [
         "command": "make backend-evaluate-npc",
     },
     {
+        "id": "visual_regression",
+        "path": "services/backend/.local/visual-regression-local.json",
+        "command": "make visual-regression-local",
+    },
+    {
         "id": "final_acceptance_local",
         "path": "services/backend/.local/final-acceptance-local.json",
         "command": "make final-acceptance-local",
@@ -170,6 +175,12 @@ def _saved_report_status(payload: dict[str, Any]) -> str:
     kind = str(payload.get("kind", ""))
     if kind in {"three_d_evaluation_report", "npc_agent_evaluation_report"}:
         return "blocked" if _positive_int(payload.get("failed")) else "ready"
+    if kind == "visual_regression_report":
+        summary = payload.get("summary", {})
+        failed = summary.get("failed") if isinstance(summary, dict) else None
+        if str(payload.get("status")) != "passed" or _positive_int(failed):
+            return "blocked"
+        return "ready"
     if kind == "final_acceptance_report":
         summary = payload.get("summary", {})
         if isinstance(summary, dict) and (

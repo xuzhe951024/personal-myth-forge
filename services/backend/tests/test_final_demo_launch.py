@@ -330,6 +330,27 @@ def test_final_demo_launch_embeds_three_d_evaluation_readiness(
     assert readiness["safety"]["commands_run"] is False
 
 
+def test_final_demo_launch_embeds_visual_regression_readiness(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_visual_regression(repo_root)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    readiness = result.report["visual_regression_readiness"]
+
+    assert readiness["kind"] == "visual_regression_readiness_report"
+    assert readiness["status"] == "ready"
+    assert readiness["summary"] == {"passed": 1, "failed": 0}
+    assert readiness["artifacts"][0]["id"] == "p0.118_scene_load_proof"
+    assert readiness["safety"]["commands_run"] is False
+
+
 def test_final_demo_launch_operator_handoff_includes_three_d_evaluation_step(
     tmp_path: Path,
 ) -> None:
@@ -540,6 +561,28 @@ def _write_three_d_evaluation(repo_root: Path) -> None:
     evaluation = repo_root / "services/backend/.local/3d-evaluation-local.json"
     evaluation.parent.mkdir(parents=True, exist_ok=True)
     evaluation.write_text(json.dumps(report), encoding="utf-8")
+
+
+def _write_visual_regression(repo_root: Path) -> None:
+    report = {
+        "kind": "visual_regression_report",
+        "status": "passed",
+        "summary": {"passed": 1, "failed": 0},
+        "artifacts": [
+            {
+                "id": "p0.118_scene_load_proof",
+                "status": "passed",
+                "html_path": "docs/superpowers/verification/p0.118-scene-load-proof.html",
+                "png_path": (
+                    "docs/superpowers/verification/assets/"
+                    "p0.118-scene-load-proof-390x844.png"
+                ),
+            }
+        ],
+    }
+    visual = repo_root / "services/backend/.local/visual-regression-local.json"
+    visual.parent.mkdir(parents=True, exist_ok=True)
+    visual.write_text(json.dumps(report), encoding="utf-8")
 
 
 def _write_ios_device_launch_rehearsal(repo_root: Path) -> None:
