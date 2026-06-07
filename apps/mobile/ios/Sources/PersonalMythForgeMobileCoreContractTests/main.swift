@@ -122,8 +122,10 @@ do {
     try testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook()
     try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook()
     try testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload()
+    try testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal()
     try testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal()
+    try testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness()
     try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal()
     try testFinalLaunchMobileSummaryMarksReadyReport()
     try testFinalLaunchMobileSummaryRedactsUnsafeReportText()
@@ -2836,6 +2838,23 @@ private func testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload(
     try expectFalse(readiness.safety.providerCalls)
 }
 
+private func testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            iosDeviceLaunchRehearsalFreshnessClassification: "stale_report"
+        )
+    )
+
+    let freshness = try require(
+        report.iosDeviceLaunchRehearsalReadiness?.freshness,
+        "missing iOS device launch rehearsal freshness"
+    )
+    try expectEqual(freshness.status, "fresh")
+    try expectEqual(freshness.classification, "stale_report")
+    try expectEqual(freshness.checkedAgainst, "git_head")
+}
+
 private func testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -2859,14 +2878,32 @@ private func testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal() th
     )
 
     try expectEqual(summary.launchRehearsalRows.first, "iOS launch rehearsal ready: ready 4, blocked 0, partial 0.")
+    try expectContains(summary.launchRehearsalRows.joined(separator: " "), "Freshness: fresh_report")
     try expectContains(summary.launchRehearsalRows.joined(separator: " "), "safe evidence refreshed")
+}
+
+private func testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchRehearsalAction: "rerun make ios-device-launch-rehearsal",
+            iosDeviceLaunchRehearsalFreshnessStatus: "stale",
+            iosDeviceLaunchRehearsalFreshnessClassification: "stale_report"
+        ),
+        error: nil
+    )
+    let text = summary.launchRehearsalRows.joined(separator: " ")
+
+    try expectContains(text, "Freshness: stale_report; rerun iOS device launch rehearsal.")
+    try expectContains(text, "rerun make ios-device-launch-rehearsal")
 }
 
 private func testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal() throws {
     let report = finalDemoLaunchReport(
         iosDeviceLaunchRehearsalStatus: "blocked",
         iosDeviceLaunchRehearsalAction: "rerun sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
-        iosDeviceLaunchRehearsalCommand: "make ios-device-launch-rehearsal sk-test /Users/zhexu/private file:///tmp/private"
+        iosDeviceLaunchRehearsalCommand: "make ios-device-launch-rehearsal sk-test /Users/zhexu/private file:///tmp/private",
+        iosDeviceLaunchRehearsalFreshnessClassification: "stale_report sk-test /Users/zhexu/private file:///tmp/private"
     )
     let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
     let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
@@ -4099,6 +4136,10 @@ private func finalDemoLaunchPayload(
     iosDeviceLaunchRehearsalStatus: String = "missing",
     iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
     iosDeviceLaunchRehearsalCommand: String = "make final-handoff-index",
+    iosDeviceLaunchRehearsalFreshnessStatus: String = "fresh",
+    iosDeviceLaunchRehearsalFreshnessClassification: String = "fresh_report",
+    iosDeviceLaunchRehearsalFreshnessSourceModifiedAt: String = "2026-06-07T12:05:00Z",
+    iosDeviceLaunchRehearsalFreshnessCurrentRevision: String = "abc1234",
     resourceHandoffStatus: String = "blocked",
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
@@ -4420,6 +4461,14 @@ private func finalDemoLaunchPayload(
             "source_file": {
               "path": "services/backend/.local/ios-device-launch-rehearsal.json",
               "exists": \(iosDeviceLaunchRehearsalStatus == "missing" ? "false" : "true")
+            },
+            "freshness": {
+              "status": "\(iosDeviceLaunchRehearsalFreshnessStatus)",
+              "classification": "\(iosDeviceLaunchRehearsalFreshnessClassification)",
+              "checked_against": "git_head",
+              "source_modified_at": "\(iosDeviceLaunchRehearsalFreshnessSourceModifiedAt)",
+              "current_revision": "\(iosDeviceLaunchRehearsalFreshnessCurrentRevision)",
+              "current_revision_committed_at": "2026-06-07T12:00:00Z"
             },
             "summary": {
               "ready": \(iosDeviceLaunchRehearsalStatus == "ready" ? "4" : "3"),
@@ -6870,6 +6919,10 @@ private func finalDemoLaunchReport(
     iosDeviceLaunchRehearsalStatus: String = "missing",
     iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
     iosDeviceLaunchRehearsalCommand: String = "make final-handoff-index",
+    iosDeviceLaunchRehearsalFreshnessStatus: String = "fresh",
+    iosDeviceLaunchRehearsalFreshnessClassification: String = "fresh_report",
+    iosDeviceLaunchRehearsalFreshnessSourceModifiedAt: String = "2026-06-07T12:05:00Z",
+    iosDeviceLaunchRehearsalFreshnessCurrentRevision: String = "abc1234",
     resourceHandoffStatus: String = "blocked",
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
@@ -6905,6 +6958,10 @@ private func finalDemoLaunchReport(
             iosDeviceLaunchRehearsalStatus: iosDeviceLaunchRehearsalStatus,
             iosDeviceLaunchRehearsalAction: iosDeviceLaunchRehearsalAction,
             iosDeviceLaunchRehearsalCommand: iosDeviceLaunchRehearsalCommand,
+            iosDeviceLaunchRehearsalFreshnessStatus: iosDeviceLaunchRehearsalFreshnessStatus,
+            iosDeviceLaunchRehearsalFreshnessClassification: iosDeviceLaunchRehearsalFreshnessClassification,
+            iosDeviceLaunchRehearsalFreshnessSourceModifiedAt: iosDeviceLaunchRehearsalFreshnessSourceModifiedAt,
+            iosDeviceLaunchRehearsalFreshnessCurrentRevision: iosDeviceLaunchRehearsalFreshnessCurrentRevision,
             resourceHandoffStatus: resourceHandoffStatus,
             resourceHandoffBackendStatus: resourceHandoffBackendStatus,
             resourceHandoffIOSStatus: resourceHandoffIOSStatus,

@@ -525,21 +525,26 @@ public enum FinalLaunchMobileSummaryBuilder {
         }
 
         var rows = [
-            "iOS launch rehearsal \(sanitize(readiness.status)): ready \(readiness.summary.ready), blocked \(readiness.summary.blocked), partial \(readiness.summary.partial)."
+            "iOS launch rehearsal \(sanitize(readiness.status)): ready \(readiness.summary.ready), blocked \(readiness.summary.blocked), partial \(readiness.summary.partial).",
+            rehearsalFreshnessRow(readiness.freshness),
         ]
         switch readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
         case "ready":
             rows.append("safe evidence refreshed at \(readiness.sourceFile.path).")
         case "missing":
-            rows = ["Run iOS device launch rehearsal to refresh final evidence."]
+            rows = [
+                "Run iOS device launch rehearsal to refresh final evidence.",
+                rehearsalFreshnessRow(readiness.freshness),
+            ]
         case "blocked", "partial":
             let attention = readiness.sequence.filter { row in
                 status(from: row.status) != .ready
             }
-            rows.append(contentsOf: attention.prefix(3).map(launchRehearsalSequenceRow))
-            if rows.count == 1 {
+            let attentionRows = attention.prefix(3).map(launchRehearsalSequenceRow)
+            if attentionRows.isEmpty {
                 rows.append(contentsOf: readiness.operatorActions.prefix(3).map(sanitize))
             } else if let action = readiness.operatorActions.first {
+                rows.append(contentsOf: attentionRows)
                 rows.append(sanitize(action))
             }
         default:
@@ -548,6 +553,20 @@ public enum FinalLaunchMobileSummaryBuilder {
             }
         }
         return rows.map(sanitize)
+    }
+
+    private static func rehearsalFreshnessRow(
+        _ freshness: FinalAcceptanceFreshness?
+    ) -> String {
+        guard let freshness else {
+            return "Freshness: not reported."
+        }
+        switch freshness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "stale":
+            return "Freshness: \(freshness.classification); rerun iOS device launch rehearsal."
+        default:
+            return "Freshness: \(freshness.classification)"
+        }
     }
 
     private static func launchRehearsalSequenceRow(
