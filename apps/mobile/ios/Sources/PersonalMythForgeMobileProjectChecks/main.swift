@@ -90,6 +90,12 @@ do {
     let finalDemoLaunchTests = try readText(
         repositoryRoot.appendingPathComponent("services/backend/tests/test_final_demo_launch.py")
     )
+    let iosDeployRunbook = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/ios_deploy_runbook.py")
+    )
+    let iosDeployRunbookTests = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/tests/test_ios_deploy_runbook.py")
+    )
 
     try requireContains(packageManifest, ".iOS(.v17)", "Swift package iOS platform")
     try requireContains(packageManifest, ".macOS(.v13)", "Swift package macOS test platform")
@@ -213,6 +219,9 @@ do {
         "services/backend/scripts/write_backend_env.sh",
         "backend provider env writer script"
     )
+    try requireContains(makefile, ".PHONY: ios-deploy-runbook", "iOS deploy runbook Make phony target")
+    try requireContains(makefile, "ios-deploy-runbook:", "iOS deploy runbook Make target")
+    try requireContains(makefile, "myth_forge_api.cli ios-deploy-runbook", "iOS deploy runbook CLI target")
     try requireContains(deployConfigWriterScript, "DEVELOPMENT_TEAM", "deploy config writer team key")
     try requireContains(deployConfigWriterScript, "PRODUCT_BUNDLE_IDENTIFIER", "deploy config writer bundle key")
     try requireContains(deployConfigWriterScript, "PMF_BACKEND_BASE_URL", "deploy config writer backend key")
@@ -747,9 +756,39 @@ do {
         "final demo launch passes NPC evaluation readiness to handoff"
     )
     try requireContains(
+        iosDeployRunbook,
+        "build_ios_deploy_runbook_report",
+        "iOS deploy runbook report builder"
+    )
+    try requireContains(
+        iosDeployRunbook,
+        "IOS_DEPLOY_RUNBOOK_COMMAND",
+        "iOS deploy runbook command constant"
+    )
+    try requireContains(
+        finalOperatorHandoff,
+        "ios_deploy_runbook",
+        "final operator handoff iOS deploy runbook step"
+    )
+    try requireContains(
+        finalDemoLaunch,
+        "ios_deploy_runbook=ios_deploy_runbook",
+        "final demo launch passes iOS deploy runbook to handoff"
+    )
+    try requireContains(
+        iosDeployRunbookTests,
+        "test_ios_deploy_runbook_ready_local_inputs_preserve_command_order",
+        "iOS deploy runbook command order test"
+    )
+    try requireContains(
         finalDemoLaunchTests,
         "test_final_demo_launch_operator_handoff_includes_npc_evaluation_step",
         "final demo launch NPC evaluation handoff test"
+    )
+    try requireContains(
+        finalDemoLaunchTests,
+        "test_final_demo_launch_embeds_ios_deploy_runbook",
+        "final demo launch iOS deploy runbook test"
     )
     try requireContains(finalLaunchStatusView, "Launch Receipt", "final launch receipt section")
     try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")

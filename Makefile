@@ -38,6 +38,11 @@ final-resources-preflight:
 final-demo-launch:
 	cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../..
 
+.PHONY: ios-deploy-runbook
+
+ios-deploy-runbook:
+	cd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
+
 .PHONY: mobile-xcode-build
 
 mobile-xcode-build:

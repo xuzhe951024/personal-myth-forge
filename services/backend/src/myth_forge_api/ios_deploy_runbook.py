@@ -1,0 +1,524 @@
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+from typing import Any, Literal
+
+from myth_forge_api.final_acceptance_readiness import (
+    build_final_acceptance_readiness_report,
+)
+from myth_forge_api.final_resources_preflight import (
+    DEFAULT_RESOURCES_PATH,
+    build_final_resources_preflight_report,
+)
+from myth_forge_api.npc_agent_evaluation_readiness import (
+    build_npc_agent_evaluation_readiness_report,
+)
+
+LaunchMode = Literal["local", "configured"]
+
+IOS_BASE_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.xcconfig")
+IOS_DEPLOY_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.local.xcconfig")
+IOS_DEPLOY_RUNBOOK_COMMAND = (
+    "cd services/backend && uv run python -m myth_forge_api.cli "
+    "ios-deploy-runbook --mode local --repo-root ../.. "
+    "--output .local/ios-deploy-runbook-local.json"
+)
+
+
+def build_ios_deploy_runbook_report(
+    *,
+    mode: LaunchMode,
+    repo_root: Path | str | None = None,
+) -> dict[str, Any]:
+    if mode not in ("local", "configured"):
+        raise ValueError(f"Unsupported iOS deploy runbook mode: {mode}")
+    selected_repo_root = Path(repo_root) if repo_root is not None else _default_repo_root()
+    final_resources = build_final_resources_preflight_report(
+        repo_root=selected_repo_root,
+    ).report
+    final_acceptance = build_final_acceptance_readiness_report(
+        repo_root=selected_repo_root,
+    ).report
+    npc_evaluation = build_npc_agent_evaluation_readiness_report(
+        repo_root=selected_repo_root,
+    ).report
+    input_slots = _input_slots(
+        mode=mode,
+        deploy_values=_deploy_config_values(selected_repo_root),
+        final_resources=final_resources,
+        final_acceptance=final_acceptance,
+        npc_evaluation=npc_evaluation,
+    )
+    command_sequence = _command_sequence(mode=mode, input_slots=input_slots)
+    report = {
+        "kind": "ios_deploy_runbook_report",
+        "mode": mode,
+        "status": _overall_status(input_slots=input_slots, command_sequence=command_sequence),
+        "input_slots": input_slots,
+        "command_sequence": command_sequence,
+        "operator_actions": _operator_actions(
+            mode=mode,
+            input_slots=input_slots,
+            final_resources=final_resources,
+            final_acceptance=final_acceptance,
+            npc_evaluation=npc_evaluation,
+            command_sequence=command_sequence,
+        ),
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "global_mutation": False,
+            "provider_secrets_in_report": False,
+            "raw_media_in_report": False,
+            "payment_links_in_report": False,
+            "local_paths_in_report": False,
+        },
+    }
+    return _sanitize_report(report, selected_repo_root)
+
+
+def _input_slots(
+    *,
+    mode: LaunchMode,
+    deploy_values: dict[str, str],
+    final_resources: dict[str, Any],
+    final_acceptance: dict[str, Any],
+    npc_evaluation: dict[str, Any],
+) -> list[dict[str, Any]]:
+    return [
+        _slot(
+            slot_id="final_resources_env",
+            label="Final resources env",
+            status=str(final_resources.get("status", "missing")),
+            required=True,
+            source=str(
+                final_resources.get("resources_file", {}).get(
+                    "path",
+                    DEFAULT_RESOURCES_PATH.as_posix(),
+                )
+            ),
+            action=(
+                "copy services/backend/final-resources.env.example to "
+                "services/backend/.local/final-resources.env"
+            ),
+        ),
+        _slot(
+            slot_id="backend_provider_env",
+            label="Backend provider env",
+            status=str(final_resources.get("status", "missing")),
+            required=mode == "configured",
+            source="services/backend/.local/final-resources.env",
+            action="provide Meshy/OpenAI provider values in final-resources.env",
+        ),
+        _deploy_value_slot(
+            slot_id="development_team",
+            label="Apple Team ID",
+            key="DEVELOPMENT_TEAM",
+            value=deploy_values.get("DEVELOPMENT_TEAM", ""),
+            action="provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+        ),
+        _deploy_value_slot(
+            slot_id="product_bundle_identifier",
+            label="Bundle identifier",
+            key="PRODUCT_BUNDLE_IDENTIFIER",
+            value=deploy_values.get("PRODUCT_BUNDLE_IDENTIFIER", ""),
+            action="provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
+        ),
+        _backend_url_slot(deploy_values.get("PMF_BACKEND_BASE_URL", "")),
+        _final_launch_mode_slot(mode, deploy_values.get("PMF_FINAL_LAUNCH_MODE", "")),
+        _slot(
+            slot_id="local_final_acceptance",
+            label="Local final acceptance",
+            status=str(final_acceptance.get("status", "missing")),
+            required=True,
+            source="services/backend/.local/final-acceptance-local.json",
+            action=(
+                "run local final acceptance and write "
+                "services/backend/.local/final-acceptance-local.json"
+            ),
+        ),
+        _slot(
+            slot_id="npc_agent_evaluation",
+            label="NPC Agent evaluation",
+            status=str(npc_evaluation.get("status", "missing")),
+            required=True,
+            source="services/backend/.local/npc-evaluation-local.json",
+            action=(
+                "run local NPC Agent evaluation with evaluate-npc and write "
+                "services/backend/.local/npc-evaluation-local.json"
+            ),
+        ),
+    ]
+
+
+def _deploy_value_slot(
+    *,
+    slot_id: str,
+    label: str,
+    key: str,
+    value: str,
+    action: str,
+) -> dict[str, Any]:
+    configured = bool(value)
+    status = "ready" if configured else "missing"
+    slot = _slot(
+        slot_id=slot_id,
+        label=label,
+        status=status,
+        required=True,
+        source=IOS_DEPLOY_CONFIG_PATH.as_posix(),
+        action=action,
+        configured=configured,
+        redacted=configured,
+        classification=None if configured else "missing_required_value",
+    )
+    slot["key"] = key
+    return slot
+
+
+def _backend_url_slot(value: str) -> dict[str, Any]:
+    configured = bool(value)
+    if not configured:
+        status = "missing"
+        classification = "missing_required_value"
+        action = "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    elif _is_loopback_url(value):
+        status = "blocked"
+        classification = "loopback_url"
+        action = "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    else:
+        status = "ready"
+        classification = None
+        action = "PMF_BACKEND_BASE_URL is ready"
+    slot = _slot(
+        slot_id="backend_base_url",
+        label="iPhone backend URL",
+        status=status,
+        required=True,
+        source=IOS_DEPLOY_CONFIG_PATH.as_posix(),
+        action=action,
+        configured=configured and status == "ready",
+        redacted=configured,
+        classification=classification,
+    )
+    slot["key"] = "PMF_BACKEND_BASE_URL"
+    return slot
+
+
+def _final_launch_mode_slot(mode: LaunchMode, value: str) -> dict[str, Any]:
+    normalized = (value or "local").lower()
+    if normalized in {"local", "configured"}:
+        status = "ready"
+        classification = None
+        action = "PMF_FINAL_LAUNCH_MODE is ready"
+    else:
+        status = "blocked"
+        classification = "unsupported_value"
+        action = "set PMF_FINAL_LAUNCH_MODE to local or configured"
+    slot = _slot(
+        slot_id="final_launch_mode",
+        label="Final launch mode",
+        status=status,
+        required=False,
+        source=IOS_DEPLOY_CONFIG_PATH.as_posix(),
+        action=action,
+        configured=bool(value),
+        redacted=False,
+        classification=classification,
+    )
+    slot["key"] = "PMF_FINAL_LAUNCH_MODE"
+    slot["expected_mode"] = mode
+    return slot
+
+
+def _slot(
+    *,
+    slot_id: str,
+    label: str,
+    status: str,
+    required: bool,
+    source: str,
+    action: str,
+    configured: bool | None = None,
+    redacted: bool = False,
+    classification: str | None = None,
+) -> dict[str, Any]:
+    normalized_status = _normalized_slot_status(status)
+    slot = {
+        "id": slot_id,
+        "label": label,
+        "status": normalized_status,
+        "required": required,
+        "source": source,
+        "operator_action": action,
+        "configured": normalized_status == "ready" if configured is None else configured,
+        "redacted": redacted,
+    }
+    if classification:
+        slot["classification"] = classification
+    return slot
+
+
+def _command_sequence(
+    *,
+    mode: LaunchMode,
+    input_slots: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    slots = {slot["id"]: slot for slot in input_slots}
+    deploy_config_status = _combined_status(
+        [
+            str(slots["development_team"]["status"]),
+            str(slots["product_bundle_identifier"]["status"]),
+            str(slots["backend_base_url"]["status"]),
+            str(slots["final_launch_mode"]["status"]),
+        ]
+    )
+    sequence = [
+        _command_step(
+            "final_resources_preflight",
+            "Check final resources",
+            str(slots["final_resources_env"]["status"]),
+            "make final-resources-preflight",
+            "Validate ignored final resources file without applying it.",
+        ),
+        _command_step(
+            "apply_final_resources",
+            "Apply final resources",
+            str(slots["final_resources_env"]["status"]),
+            "make final-apply-resources",
+            "Write only ignored backend and iOS local config files.",
+        ),
+        _command_step(
+            "backend_device_server",
+            "Start backend on LAN",
+            "ready",
+            "make backend-device-demo",
+            "Start uvicorn on 0.0.0.0:8080.",
+        ),
+        _command_step(
+            "mobile_deploy_preflight",
+            "Run iOS deploy preflight",
+            deploy_config_status,
+            "make mobile-deploy-preflight",
+            "Validate iPhone-reachable backend health before opening Xcode.",
+        ),
+    ]
+    if mode == "configured":
+        sequence.append(
+            _command_step(
+                "configured_final_acceptance",
+                "Run configured final acceptance",
+                "live",
+                (
+                    "cd services/backend && uv run python -m myth_forge_api.cli "
+                    "final-acceptance --profile quick --provider-mode configured "
+                    "--require-real-core --allow-live-provider-calls --repo-root ../.. "
+                    "--output .local/final-acceptance-configured.json"
+                ),
+                "May call live providers and spend credits.",
+                requires_consent=True,
+            )
+        )
+    sequence.append(
+        _command_step(
+            "xcode_build_gate",
+            "Run Xcode build gate",
+            "manual",
+            "make mobile-xcode-build",
+            "Apple license/signing state remains external to this repo.",
+        )
+    )
+    return sequence
+
+
+def _command_step(
+    step_id: str,
+    label: str,
+    status: str,
+    command: str,
+    note: str,
+    *,
+    requires_consent: bool = False,
+) -> dict[str, Any]:
+    return {
+        "id": step_id,
+        "label": label,
+        "status": _normalized_command_status(status),
+        "command": command,
+        "notes": [note],
+        "requires_consent": requires_consent,
+    }
+
+
+def _operator_actions(
+    *,
+    mode: LaunchMode,
+    input_slots: list[dict[str, Any]],
+    final_resources: dict[str, Any],
+    final_acceptance: dict[str, Any],
+    npc_evaluation: dict[str, Any],
+    command_sequence: list[dict[str, Any]],
+) -> list[str]:
+    actions: list[str] = []
+    actions.extend(_string_list(final_resources.get("operator_actions")))
+    actions.extend(
+        action
+        for action in _string_list(final_acceptance.get("operator_actions"))
+        if action != "final acceptance is ready"
+    )
+    actions.extend(
+        action
+        for action in _string_list(npc_evaluation.get("operator_actions"))
+        if action != "NPC Agent evaluation is ready"
+    )
+    for slot in input_slots:
+        if slot["status"] in {"missing", "blocked"}:
+            actions.append(str(slot["operator_action"]))
+    if mode == "configured":
+        actions.append(
+            "run configured final acceptance only after live provider cost review "
+            "and --allow-live-provider-calls consent"
+        )
+    for step in command_sequence:
+        if step["status"] in {"missing", "blocked"}:
+            actions.append(f"unblock {step['id']}: {step['command']}")
+        if step["status"] == "manual" and step["id"] == "xcode_build_gate":
+            actions.append("run Xcode build gate manually on the Mac: make mobile-xcode-build")
+    return _dedupe(actions)
+
+
+def _overall_status(
+    *,
+    input_slots: list[dict[str, Any]],
+    command_sequence: list[dict[str, Any]],
+) -> str:
+    statuses = [str(slot["status"]) for slot in input_slots if slot["required"]]
+    statuses.extend(str(step["status"]) for step in command_sequence)
+    if "blocked" in statuses or "missing" in statuses:
+        return "blocked"
+    if any(status in {"manual", "partial", "live"} for status in statuses):
+        return "partial"
+    return "ready"
+
+
+def _deploy_config_values(repo_root: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for relative_path in (IOS_BASE_CONFIG_PATH, IOS_DEPLOY_CONFIG_PATH):
+        path = repo_root / relative_path
+        if path.exists():
+            values.update(_parse_xcconfig(path))
+    return values
+
+
+def _parse_xcconfig(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("//") or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip()
+    return values
+
+
+def _combined_status(statuses: list[str]) -> str:
+    if "blocked" in statuses:
+        return "blocked"
+    if "missing" in statuses:
+        return "missing"
+    if "partial" in statuses:
+        return "partial"
+    return "ready"
+
+
+def _normalized_slot_status(status: str) -> str:
+    if status in {"ready", "missing", "blocked", "partial"}:
+        return status
+    if status == "failed":
+        return "blocked"
+    return "blocked"
+
+
+def _normalized_command_status(status: str) -> str:
+    if status in {"ready", "missing", "blocked", "partial", "manual", "live"}:
+        return status
+    if status == "failed":
+        return "blocked"
+    return "blocked"
+
+
+def _is_loopback_url(value: str) -> bool:
+    lowered = value.lower()
+    return (
+        "://127.0.0.1" in lowered
+        or "://localhost" in lowered
+        or "://0.0.0.0" in lowered
+    )
+
+
+def _sanitize_report(report: dict[str, Any], repo_root: Path) -> dict[str, Any]:
+    return json.loads(json.dumps(_sanitize_value(report, repo_root)))
+
+
+def _sanitize_value(value: Any, repo_root: Path) -> Any:
+    if isinstance(value, str):
+        return _safe_text(value, repo_root)
+    if isinstance(value, list):
+        return [_sanitize_value(item, repo_root) for item in value]
+    if isinstance(value, dict):
+        return {key: _sanitize_value(item, repo_root) for key, item in value.items()}
+    return value
+
+
+def _safe_text(message: str, repo_root: Path) -> str:
+    sanitized = message
+    patterns = [
+        r"sk-[A-Za-z0-9._-]+",
+        r"Bearer\s+[A-Za-z0-9._~+/\-=:-]+",
+        r"api[_-]?key\s*[=:]\s*[^\s,;\"']+",
+        r"data:[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=_-]+",
+        r"local-capture://[^\s,;\"']+",
+        r"file://[^\s,;\"']+",
+        r"https?://pay\.[^\s,;\"']+",
+        r"https?://checkout\.[^\s,;\"']+",
+        r"checkout_url",
+        r"raw_email:[^\n\r]+",
+        r"raw_calendar:[^\n\r]+",
+        r"private_message:[^\n\r]+",
+        r"raw_context:[^\n\r]+",
+        r"message_body:[^\n\r]+",
+    ]
+    for pattern in patterns:
+        sanitized = re.sub(pattern, "[redacted]", sanitized, flags=re.IGNORECASE)
+    root_text = str(repo_root)
+    if root_text:
+        sanitized = sanitized.replace(root_text, "[repo-root]")
+    home_text = str(Path.home())
+    if home_text:
+        sanitized = sanitized.replace(home_text, "[home]")
+    return sanitized
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if str(item)]
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
+def _default_repo_root() -> Path:
+    return Path(__file__).resolve().parents[4]

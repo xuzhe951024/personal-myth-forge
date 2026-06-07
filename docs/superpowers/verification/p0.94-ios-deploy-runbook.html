@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>P0.94 iOS Deploy Runbook</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f7f4ee;
+        --ink: #151917;
+        --muted: #5c625d;
+        --line: #d9d5cc;
+        --panel: #fffdfa;
+        --green: #197348;
+        --amber: #9b640e;
+        --blue: #255f8c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: 100%;
+        max-width: 360px;
+        min-height: 844px;
+        margin: 0;
+        padding: 18px 12px 24px;
+        overflow: hidden;
+      }
+
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 21px;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .badge {
+        flex: 0 0 auto;
+        border: 1px solid #97c6aa;
+        color: #0b6738;
+        background: #eef8f0;
+        border-radius: 8px;
+        padding: 5px 8px;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0;
+      }
+
+      section {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 10px;
+      }
+
+      h2 {
+        margin: 0 0 8px;
+        font-size: 16px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 12px 1fr auto;
+        gap: 8px;
+        align-items: start;
+        padding: 5px 0;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        margin-top: 5px;
+        background: var(--green);
+      }
+
+      .dot.amber {
+        background: var(--amber);
+      }
+
+      .dot.blue {
+        background: var(--blue);
+      }
+
+      .title {
+        font-size: 13px;
+        line-height: 1.25;
+        font-weight: 800;
+      }
+
+      .detail {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+      }
+
+      .status {
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0;
+        padding-top: 1px;
+      }
+
+      .ready {
+        color: var(--green);
+      }
+
+      .manual,
+      .blocked {
+        color: var(--amber);
+      }
+
+      .partial {
+        color: var(--blue);
+      }
+
+      .receipt {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 9px 8px;
+        min-height: 58px;
+        min-width: 0;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+
+      footer {
+        margin: 12px 2px 0;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>P0.94 iOS Deploy Runbook</h1>
+          <p class="subtitle">
+            Final physical-device handoff now has one sanitized Mac-side command
+            sequence.
+          </p>
+        </div>
+        <div class="badge">Runbook</div>
+      </header>
+
+      <section>
+        <h2>Input Slots</h2>
+        <div class="row">
+          <div class="dot"></div>
+          <div>
+            <div class="title">Apple Team ID</div>
+            <div class="detail">Deployment.local.xcconfig</div>
+          </div>
+          <div class="status ready">ready</div>
+        </div>
+        <div class="row">
+          <div class="dot"></div>
+          <div>
+            <div class="title">iPhone backend URL</div>
+            <div class="detail">LAN URL, not localhost or loopback</div>
+          </div>
+          <div class="status ready">ready</div>
+        </div>
+        <div class="row">
+          <div class="dot"></div>
+          <div>
+            <div class="title">NPC Agent evaluation</div>
+            <div class="detail">services/backend/.local/npc-evaluation-local.json</div>
+          </div>
+          <div class="status ready">ready</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Command Sequence</h2>
+        <div class="row">
+          <div class="dot blue"></div>
+          <div>
+            <div class="title">Build deploy runbook</div>
+            <div class="detail">make ios-deploy-runbook</div>
+          </div>
+          <div class="status partial">partial</div>
+        </div>
+        <div class="row">
+          <div class="dot"></div>
+          <div>
+            <div class="title">Start backend on LAN</div>
+            <div class="detail">make backend-device-demo</div>
+          </div>
+          <div class="status ready">ready</div>
+        </div>
+        <div class="row">
+          <div class="dot"></div>
+          <div>
+            <div class="title">Run iOS deploy preflight</div>
+            <div class="detail">make mobile-deploy-preflight</div>
+          </div>
+          <div class="status ready">ready</div>
+        </div>
+        <div class="row">
+          <div class="dot amber"></div>
+          <div>
+            <div class="title">Run Xcode build gate</div>
+            <div class="detail">make mobile-xcode-build</div>
+          </div>
+          <div class="status manual">manual</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Safety Receipt</h2>
+        <div class="receipt">
+          <div class="metric">
+            <strong>0</strong>
+            <span>commands executed</span>
+          </div>
+          <div class="metric">
+            <strong>0</strong>
+            <span>provider calls</span>
+          </div>
+          <div class="metric">
+            <strong>0</strong>
+            <span>global mutations</span>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Source: ios_deploy_runbook is embedded into final-demo-launch and final
+        operator handoff. Reports redact provider secrets, local absolute paths,
+        raw media, payment links, and private context markers.
+      </footer>
+    </main>
+  </body>
+</html>

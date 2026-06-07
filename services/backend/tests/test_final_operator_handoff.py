@@ -10,6 +10,7 @@ STEP_ORDER = [
     "backend_device_server",
     "local_final_acceptance",
     "npc_agent_evaluation",
+    "ios_deploy_runbook",
     "mobile_deploy_preflight",
     "xcode_build_gate",
     "configured_final_acceptance",
@@ -24,6 +25,7 @@ def test_operator_handoff_blocks_missing_resources_and_acceptance_without_runnin
         final_resources_preflight=_missing_resources_report(),
         final_acceptance_readiness=_missing_acceptance_report(),
         npc_agent_evaluation_readiness=_missing_npc_evaluation_readiness(),
+        ios_deploy_runbook=_missing_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(),
         repo_root=tmp_path,
     )
@@ -36,7 +38,7 @@ def test_operator_handoff_blocks_missing_resources_and_acceptance_without_runnin
     assert steps["final_resources_preflight"]["status"] == "missing"
     assert steps["local_final_acceptance"]["status"] == "missing"
     assert steps["configured_final_acceptance"]["status"] == "optional"
-    assert report["summary"]["missing"] == 4
+    assert report["summary"]["missing"] == 5
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["optional"] == 1
     assert report["next_actions"][:2] == [
@@ -66,6 +68,7 @@ def test_operator_handoff_promotes_saved_acceptance_blockers_and_redacts_text(
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_blocked_acceptance_report(tmp_path),
         npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
+        ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(
             apply_status="ready",
             mobile_preflight_status="ready",
@@ -99,6 +102,7 @@ def test_operator_handoff_marks_configured_acceptance_as_live_consent_gate(
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
         npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
+        ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_configured_launch_phases(),
         repo_root=tmp_path,
     )
@@ -126,6 +130,7 @@ def test_operator_handoff_includes_ready_npc_evaluation_step(tmp_path: Path) -> 
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
         npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
+        ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(
             apply_status="ready",
             mobile_preflight_status="ready",
@@ -154,6 +159,7 @@ def test_operator_handoff_surfaces_missing_npc_evaluation_action(
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
         npc_agent_evaluation_readiness=_missing_npc_evaluation_readiness(),
+        ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(
             apply_status="ready",
             mobile_preflight_status="ready",
@@ -176,6 +182,7 @@ def test_operator_handoff_redacts_blocked_npc_evaluation_detail(
         final_resources_preflight=_ready_resources_report(),
         final_acceptance_readiness=_ready_acceptance_report(),
         npc_agent_evaluation_readiness=readiness,
+        ios_deploy_runbook=_ready_ios_deploy_runbook(),
         launch_phases=_local_launch_phases(
             apply_status="ready",
             mobile_preflight_status="ready",
@@ -191,6 +198,34 @@ def test_operator_handoff_redacts_blocked_npc_evaluation_detail(
     assert "private_message:" not in report_text
     assert "/Users/" not in report_text
     assert "file://" not in report_text
+
+
+def test_operator_handoff_includes_ios_deploy_runbook_before_deploy_preflight(
+    tmp_path: Path,
+) -> None:
+    report = build_final_operator_handoff_report(
+        mode="local",
+        final_resources_preflight=_ready_resources_report(),
+        final_acceptance_readiness=_ready_acceptance_report(),
+        npc_agent_evaluation_readiness=_ready_npc_evaluation_readiness(),
+        ios_deploy_runbook=_ready_ios_deploy_runbook(),
+        launch_phases=_local_launch_phases(
+            apply_status="ready",
+            mobile_preflight_status="ready",
+        ),
+        repo_root=tmp_path,
+    )
+    steps = {step["id"]: step for step in report["steps"]}
+    step_ids = [step["id"] for step in report["steps"]]
+
+    assert steps["ios_deploy_runbook"]["status"] == "partial"
+    assert "ios-deploy-runbook" in steps["ios_deploy_runbook"]["command"]
+    assert step_ids.index("npc_agent_evaluation") < step_ids.index(
+        "ios_deploy_runbook"
+    )
+    assert step_ids.index("ios_deploy_runbook") < step_ids.index(
+        "mobile_deploy_preflight"
+    )
 
 
 def _missing_resources_report() -> dict[str, object]:
@@ -404,6 +439,53 @@ def _blocked_npc_evaluation_readiness() -> dict[str, object]:
     ]
     readiness["operator_actions"] = ["rerun local NPC Agent evaluation and review failed cases"]
     return readiness
+
+
+def _missing_ios_deploy_runbook() -> dict[str, object]:
+    return {
+        "kind": "ios_deploy_runbook_report",
+        "mode": "local",
+        "status": "missing",
+        "input_slots": [],
+        "command_sequence": [],
+        "operator_actions": [
+            "generate iOS deploy runbook with make ios-deploy-runbook"
+        ],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "global_mutation": False,
+            "provider_secrets_in_report": False,
+            "raw_media_in_report": False,
+            "payment_links_in_report": False,
+            "local_paths_in_report": False,
+        },
+    }
+
+
+def _ready_ios_deploy_runbook() -> dict[str, object]:
+    return {
+        "kind": "ios_deploy_runbook_report",
+        "mode": "local",
+        "status": "partial",
+        "input_slots": [{"id": "backend_base_url", "status": "ready"}],
+        "command_sequence": [
+            {"id": "mobile_deploy_preflight", "status": "ready"},
+            {"id": "xcode_build_gate", "status": "manual"},
+        ],
+        "operator_actions": [
+            "run Xcode build gate manually on the Mac: make mobile-xcode-build"
+        ],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "global_mutation": False,
+            "provider_secrets_in_report": False,
+            "raw_media_in_report": False,
+            "payment_links_in_report": False,
+            "local_paths_in_report": False,
+        },
+    }
 
 
 def _local_launch_phases(

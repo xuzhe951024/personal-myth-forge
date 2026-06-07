@@ -524,6 +524,45 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="ios_deploy_runbook",
+        label="iOS deploy runbook",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
+                "build_ios_deploy_runbook_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_deploy_runbook.py",
+                "IOS_DEPLOY_RUNBOOK_COMMAND",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "ios-deploy-runbook",
+            ),
+            SourceRequirement("Makefile", "ios-deploy-runbook:"),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "ios_deploy_runbook",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_operator_handoff.py",
+                "ios_deploy_runbook",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_ios_deploy_runbook.py",
+                "test_ios_deploy_runbook_ready_local_inputs_preserve_command_order",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_final_demo_launch_embeds_ios_deploy_runbook",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_operator_handoff.py",
+                "test_operator_handoff_includes_ios_deploy_runbook_before_deploy_preflight",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="mobile_final_operator_handoff",
         label="Mobile final operator handoff",
         requirements=(
