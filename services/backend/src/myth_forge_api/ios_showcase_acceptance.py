@@ -173,6 +173,49 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="forge_progress_receipt",
+        label="Forge progress receipt",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeProgressReceipt.swift",
+                "ForgeProgressReceiptBuilder",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeProgressReceipt.swift",
+                "ForgeProgressReceiptRow",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeProgressReceipt.swift",
+                "Raw capture media stays off this receipt.",
+            ),
+            SourceRequirement("apps/mobile/ios/App/ForgeProgressReceiptView.swift", "Forge Progress"),
+            SourceRequirement(
+                "apps/mobile/ios/App/CaptureFormView.swift",
+                "ForgeProgressReceiptView(receipt: forgeProgressReceipt)",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "forgeProgressReceipt: forgeProgressReceipt",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/ForgeRootView.swift",
+                "ForgeProgressReceiptBuilder.build",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/PersonalMythForge.xcodeproj/project.pbxproj",
+                "ForgeProgressReceiptView.swift",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testForgeProgressReceiptShowsReadyProviderAndNPCRuntime",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testForgeProgressReceiptRedactsUnsafeFailure",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="capture_upload",
         label="Capture upload",
         requirements=(

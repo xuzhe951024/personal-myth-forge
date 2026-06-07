@@ -205,6 +205,11 @@ do {
     try testCaptureGenerationReceiptShowsReadyGuidedScanGeneration()
     try testCaptureGenerationReceiptFlagsMissingProvenance()
     try testCaptureGenerationReceiptRedactsUnsafeText()
+    try testForgeProgressReceiptWaitsBeforeForge()
+    try testForgeProgressReceiptShowsCaptureUploadRunning()
+    try testForgeProgressReceiptShowsMythSessionRunningAfterCaptureUpload()
+    try testForgeProgressReceiptShowsReadyProviderAndNPCRuntime()
+    try testForgeProgressReceiptRedactsUnsafeFailure()
     try testArtifactPreviewStateMarksRemoteGLBAsGeneratedAsset()
     try testArtifactGenerationProvenanceSummaryShowsMultiImageRoute()
     try testArtifactGenerationProvenanceSummaryShowsScanAssets()
@@ -4813,6 +4818,95 @@ private func testCaptureGenerationReceiptRedactsUnsafeText() throws {
     try expectNotContains(text, "checkout")
     try expectNotContains(text, "Bearer")
     try expectNotContains(text, "api_key")
+    try expectNotContains(text, "private_message:")
+}
+
+private func testForgeProgressReceiptWaitsBeforeForge() throws {
+    let receipt = ForgeProgressReceiptBuilder.build(
+        state: ForgeFlowState(),
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+    let labels = receipt.rows.map(\.label).joined(separator: " ")
+    let details = receipt.rows.map(\.detail).joined(separator: " ")
+
+    try expectEqual(receipt.status, .waiting)
+    try expectContains(receipt.title, "Forge waiting")
+    try expectContains(labels, "Capture upload")
+    try expectContains(details, "multi_image")
+}
+
+private func testForgeProgressReceiptShowsCaptureUploadRunning() throws {
+    let state = ForgeFlowState(phase: .uploadingCapture)
+    let receipt = ForgeProgressReceiptBuilder.build(
+        state: state,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+    let statuses = receipt.rows.map(\.status).joined(separator: " ")
+    let details = receipt.rows.map(\.detail).joined(separator: " ")
+
+    try expectEqual(receipt.status, .running)
+    try expectContains(receipt.title, "Forge running")
+    try expectContains(statuses, "running")
+    try expectContains(details, "Uploading capture")
+}
+
+private func testForgeProgressReceiptShowsMythSessionRunningAfterCaptureUpload() throws {
+    let capture = guidedScanObjectCapture()
+    let state = ForgeFlowState(phase: .creatingSession, capture: capture)
+    let receipt = ForgeProgressReceiptBuilder.build(
+        state: state,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+    let details = receipt.rows.map(\.detail).joined(separator: " ")
+
+    try expectEqual(receipt.status, .running)
+    try expectContains(receipt.detail, "Creating myth session")
+    try expectContains(details, "cap_ba02a3816bd145b4")
+}
+
+private func testForgeProgressReceiptShowsReadyProviderAndNPCRuntime() throws {
+    var state = ForgeFlowState()
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    state = ForgeFlowReducer.reduce(state: state, event: .sessionCreated(session))
+
+    let receipt = ForgeProgressReceiptBuilder.build(
+        state: state,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+    let text = receipt.rows.map { "\($0.label) \($0.status) \($0.detail)" }.joined(separator: " ")
+
+    try expectEqual(receipt.status, .ready)
+    try expectContains(receipt.title, "Forge ready")
+    try expectContains(text, "3D generation")
+    try expectContains(text, "local_stub")
+    try expectContains(text, "/openapi/v1/multi-image-to-3d")
+    try expectContains(text, "NPC Agent")
+    try expectContains(text, "local_agent_runtime")
+}
+
+private func testForgeProgressReceiptRedactsUnsafeFailure() throws {
+    let error = ForgeFlowError.transport(
+        "sk-secret Bearer token api_key=secret /Users/zhexu/private /tmp/private " +
+            "file:///tmp/private local-capture://cap checkout_url=https://pay.example/private " +
+            "private_message: raw"
+    )
+    let state = ForgeFlowState(phase: .failed(error))
+    let receipt = ForgeProgressReceiptBuilder.build(
+        state: state,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(receipt), as: UTF8.self)
+
+    try expectEqual(receipt.status, .needsAttention)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-secret")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "/tmp/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
     try expectNotContains(text, "private_message:")
 }
 

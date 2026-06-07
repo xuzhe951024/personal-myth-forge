@@ -21,6 +21,7 @@ struct CaptureFormView: View {
     let contextCapsuleReview: ContextCapsuleReview
     let forgeReadinessSummary: ForgeReadinessSummary
     let forgeActionGate: ForgeActionGate
+    let forgeProgressReceipt: ForgeProgressReceipt
     let captureInputError: String?
     let isMediaReadyForUpload: Bool
     let chooseCapture: () -> Void
@@ -120,6 +121,8 @@ struct CaptureFormView: View {
             Text(forgeActionGate.detail)
                 .font(.caption)
                 .foregroundStyle(forgeActionGate.isEnabled ? Color.secondary : Color.orange)
+
+            ForgeProgressReceiptView(receipt: forgeProgressReceipt)
 
             Text(statusText)
                 .font(.caption)

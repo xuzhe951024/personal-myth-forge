@@ -12,13 +12,14 @@ def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_showcase_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 26, "failed": 0}
+    assert result.report["summary"] == {"passed": 27, "failed": 0}
     assert [item["id"] for item in result.report["required_features"]] == [
         "camera_capture",
         "guided_scan",
         "arkit_scan_package",
         "capture_generation_readiness",
         "capture_generation_receipt",
+        "forge_progress_receipt",
         "capture_upload",
         "context_capsule_review",
         "mobile_forge_readiness_summary",
@@ -62,7 +63,7 @@ def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 25, "failed": 1}
+    assert result.report["summary"] == {"passed": 26, "failed": 1}
     assert features["camera_capture"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/CameraCaptureView.swift",
@@ -89,7 +90,7 @@ def test_ios_showcase_acceptance_fails_missing_arkit_scan_package_without_absolu
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 25, "failed": 1}
+    assert result.report["summary"] == {"passed": 26, "failed": 1}
     assert features["arkit_scan_package"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ARKitScanPackageBuilder.swift",
@@ -116,7 +117,7 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_readiness_with
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 25, "failed": 1}
+    assert result.report["summary"] == {"passed": 26, "failed": 1}
     assert features["capture_generation_readiness"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReadiness.swift",
@@ -143,12 +144,39 @@ def test_ios_showcase_acceptance_fails_missing_capture_generation_receipt_withou
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 25, "failed": 1}
+    assert result.report["summary"] == {"passed": 26, "failed": 1}
     assert features["capture_generation_receipt"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/CaptureGenerationReceipt.swift",
         "contains": "CaptureGenerationReceiptBuilder",
     } in features["capture_generation_receipt"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+    assert "data:image" not in report_text
+
+
+def test_ios_showcase_acceptance_fails_missing_forge_progress_receipt_without_absolute_paths(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    (
+        tmp_path
+        / "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeProgressReceipt.swift"
+    ).unlink()
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 26, "failed": 1}
+    assert features["forge_progress_receipt"]["status"] == "failed"
+    assert {
+        "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeProgressReceipt.swift",
+        "contains": "ForgeProgressReceiptBuilder",
+    } in features["forge_progress_receipt"]["missing"]
     assert str(tmp_path) not in report_text
     assert "/Users/" not in report_text
     assert "sk-" not in report_text
@@ -172,7 +200,7 @@ def test_ios_showcase_acceptance_fails_missing_local_network_usage_without_absol
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 25, "failed": 1}
+    assert result.report["summary"] == {"passed": 26, "failed": 1}
     assert features["deploy_config"]["status"] == "failed"
     assert {
         "file": "apps/mobile/ios/App/Info.plist",
@@ -193,10 +221,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "Take Photo generationReadinessTitle generationReadinessRouteLabel "
             "generationReadinessDetail ContextCapsuleReviewView( isContextCapsuleApproved "
             "Forge Readiness forgeReadinessSummary.routeLabel forgeReadinessSummary.privacyNotes "
-            "forgeActionGate.isEnabled forgeActionGate.detail"
+            "forgeActionGate.isEnabled forgeActionGate.detail "
+            "ForgeProgressReceiptView(receipt: forgeProgressReceipt)"
         ),
         "apps/mobile/ios/App/CaptureGenerationReceiptView.swift": (
             "Capture-to-3D statusBadge receipt.privacyNotes"
+        ),
+        "apps/mobile/ios/App/ForgeProgressReceiptView.swift": (
+            "Forge Progress statusBadge receipt.privacyNotes"
         ),
         "apps/mobile/ios/App/ForgeRootView.swift": (
             "CameraCaptureMediaBuilder.singlePhotoSelection "
@@ -213,6 +245,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "arkitScanPackageSelection ARKitScanPackageBuilder.selection "
             "CaptureGenerationReadinessBuilder.build captureGenerationReadiness.route.displayLabel "
             "CaptureGenerationReceiptView(receipt: captureGenerationReceipt) capture: state.capture "
+            "forgeProgressReceipt: forgeProgressReceipt ForgeProgressReceiptBuilder.build "
             "ContextCapsuleReviewBuilder.build guard isContextCapsuleApproved else "
             "ForgeReadinessSummaryBuilder.build forgeReadinessSummary: forgeReadinessSummary "
             "ForgeActionGateBuilder.build forgeActionGate: forgeActionGate "
@@ -287,6 +320,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "CaptureGenerationReceiptBuilder Capture-to-3D proof missing raw sources "
             "Raw capture media withheld."
         ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ForgeProgressReceipt.swift": (
+            "ForgeProgressReceiptBuilder ForgeProgressReceiptRow "
+            "Raw capture media stays off this receipt. sanitize"
+        ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ContextCapsuleReview.swift": (
             "ContextCapsuleReviewBuilder"
         ),
@@ -304,6 +341,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testCaptureGenerationReadinessMarksARKitScanAssetRoute "
             "testCaptureGenerationReceiptShowsReadyGuidedScanGeneration "
             "testCaptureGenerationReceiptRedactsUnsafeText "
+            "testForgeProgressReceiptShowsReadyProviderAndNPCRuntime "
+            "testForgeProgressReceiptRedactsUnsafeFailure "
             "testContextCapsuleReviewMarksApprovedSummaryReady "
             "testForgeReadinessMarksLocalDemoReady "
             "testForgeActionGateEnablesLocalDemoForge "
@@ -427,7 +466,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "CameraCaptureView.swift GuidedScanCaptureView.swift Artifact3DPreviewView.swift "
             "NPCTickView.swift PrintQuoteReviewView.swift ProviderReadinessView.swift "
             "FinalShowcaseSummaryView.swift DevicePreflightView.swift DemoScriptView.swift "
-            "NPCAgentModeView.swift CaptureGenerationReceiptView.swift"
+            "NPCAgentModeView.swift CaptureGenerationReceiptView.swift ForgeProgressReceiptView.swift"
         ),
     }
     for relative_path, contents in files.items():

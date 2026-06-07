@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.99 Forge Progress Receipt</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #f2f4f7;
+      color: #18212d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: #f2f4f7;
+    }
+
+    .screen {
+      width: 390px;
+      min-height: 844px;
+      padding: 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(242, 244, 247, 0.96)),
+        #f2f4f7;
+    }
+
+    .title {
+      margin: 2px 0 12px;
+      font-size: 24px;
+      line-height: 1.12;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .card {
+      width: 100%;
+      border: 1px solid rgba(38, 52, 70, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 22px rgba(35, 48, 64, 0.08);
+      padding: 10px;
+    }
+
+    .card + .card {
+      margin-top: 12px;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .kicker {
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .sub {
+      margin-top: 1px;
+      font-size: 12px;
+      line-height: 1.25;
+      color: #637184;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding-top: 3px;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .badge.run {
+      color: #2d67b1;
+    }
+
+    .badge.ready {
+      color: #1f9155;
+    }
+
+    .detail {
+      margin-bottom: 8px;
+      font-size: 12px;
+      line-height: 1.28;
+      color: #637184;
+      overflow-wrap: anywhere;
+    }
+
+    .rows {
+      display: grid;
+      gap: 6px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 10px minmax(0, 1fr);
+      column-gap: 8px;
+      align-items: start;
+      min-height: 24px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: #8b97a6;
+    }
+
+    .dot.run {
+      background: #2d67b1;
+    }
+
+    .dot.ready {
+      background: #1f9155;
+    }
+
+    .row-title {
+      font-size: 11px;
+      line-height: 1.22;
+      font-weight: 700;
+      color: #334156;
+      overflow-wrap: anywhere;
+    }
+
+    .row-detail {
+      margin-top: 1px;
+      font-size: 10.5px;
+      line-height: 1.22;
+      color: #667386;
+      overflow-wrap: anywhere;
+    }
+
+    .privacy {
+      margin-top: 8px;
+      font-size: 10.5px;
+      line-height: 1.25;
+      color: #7a8795;
+    }
+
+    .mini {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .metric {
+      border-radius: 8px;
+      border: 1px solid rgba(38, 52, 70, 0.12);
+      background: rgba(247, 249, 251, 0.82);
+      padding: 8px;
+      min-height: 48px;
+    }
+
+    .metric-label {
+      font-size: 10px;
+      line-height: 1.2;
+      color: #7a8795;
+      font-weight: 700;
+    }
+
+    .metric-value {
+      margin-top: 4px;
+      font-size: 14px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: #253247;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <h1 class="title">Personal Myth Forge</h1>
+
+    <section class="card">
+      <div class="top">
+        <div>
+          <div class="kicker">Forge Progress</div>
+          <div class="sub">Forge running</div>
+        </div>
+        <div class="badge run">RUN</div>
+      </div>
+
+      <div class="detail">Uploading capture before myth generation.</div>
+
+      <div class="rows">
+        <div class="row">
+          <span class="dot run"></span>
+          <div>
+            <div class="row-title">Capture upload running</div>
+            <div class="row-detail">Uploading guided scan reference images.</div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="dot"></span>
+          <div>
+            <div class="row-title">Myth session waiting</div>
+            <div class="row-detail">Waiting for uploaded capture.</div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="dot"></span>
+          <div>
+            <div class="row-title">3D generation waiting</div>
+            <div class="row-detail">Route multi_image queued for provider generation.</div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="dot"></span>
+          <div>
+            <div class="row-title">NPC Agent waiting</div>
+            <div class="row-detail">NPC interpretation starts after session creation.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="privacy">
+        Raw capture media stays off this receipt. Provider keys and local paths are redacted.
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="top">
+        <div>
+          <div class="kicker">Forge Progress</div>
+          <div class="sub">Forge ready</div>
+        </div>
+        <div class="badge ready">READY</div>
+      </div>
+
+      <div class="detail">Myth session, generated 3D asset, and NPC interpretation are ready.</div>
+
+      <div class="rows">
+        <div class="row">
+          <span class="dot ready"></span>
+          <div>
+            <div class="row-title">Capture upload uploaded</div>
+            <div class="row-detail">Capture accepted for myth session.</div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="dot ready"></span>
+          <div>
+            <div class="row-title">3D generation ready</div>
+            <div class="row-detail">local_stub multi_image /openapi/v1/multi-image-to-3d</div>
+          </div>
+        </div>
+        <div class="row">
+          <span class="dot ready"></span>
+          <div>
+            <div class="row-title">NPC Agent ready</div>
+            <div class="row-detail">local_agent_runtime, 3 reactions.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mini">
+        <div class="metric">
+          <div class="metric-label">Provider</div>
+          <div class="metric-value">local_stub</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Route</div>
+          <div class="metric-value">multi_image</div>
+        </div>
+      </div>
+
+      <div class="privacy">
+        NPC Agent context uses approved capsule summaries only. Raw media URIs remain withheld.
+      </div>
+    </section>
+  </main>
+</body>
+</html>

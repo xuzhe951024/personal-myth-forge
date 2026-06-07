@@ -106,6 +106,7 @@ struct ForgeRootView: View {
                         contextCapsuleReview: contextCapsuleReview,
                         forgeReadinessSummary: forgeReadinessSummary,
                         forgeActionGate: forgeActionGate,
+                        forgeProgressReceipt: forgeProgressReceipt,
                         captureInputError: captureInputError,
                         isMediaReadyForUpload: mediaSelection.isReadyForUpload,
                         chooseCapture: chooseCapture,
@@ -627,6 +628,13 @@ struct ForgeRootView: View {
             isMediaReadyForUpload: mediaSelection.isReadyForUpload,
             contextCapsuleReview: contextCapsuleReview,
             forgeReadinessSummary: forgeReadinessSummary
+        )
+    }
+
+    private var forgeProgressReceipt: ForgeProgressReceipt {
+        ForgeProgressReceiptBuilder.build(
+            state: state,
+            captureGenerationReadiness: captureGenerationReadiness
         )
     }
 
