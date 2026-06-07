@@ -16,7 +16,7 @@ IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION = (
     "rerun make ios-device-launch-rehearsal to regenerate "
     "services/backend/.local/ios-device-launch-rehearsal.json for the current git revision"
 )
-IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT = 12
+IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT = 20
 
 
 @dataclass(frozen=True)
