@@ -2010,6 +2010,46 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="final_showcase_readiness_ledger",
+        label="Final showcase readiness ledger",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "final_showcase_readiness_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "final_showcase_readiness",
+            ),
+            SourceRequirement("services/backend/src/myth_forge_api/cli.py", "final-showcase-readiness"),
+            SourceRequirement("Makefile", "final-showcase-readiness:"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalShowcaseReadinessReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "finalShowcaseReadiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "showcaseReadinessRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Showcase Readiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesFinalShowcaseReadinessFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="deploy_config",
         label="Deploy config",
         requirements=(

@@ -136,6 +136,23 @@ tick, print fulfillment, live provider consent, iOS launch rehearsal, and final
 launch visual handoff. It remains read-only and does not call providers, run
 Xcode, install to a device, or mutate global machine state.
 
+P0.122 adds the final showcase readiness ledger:
+
+```bash
+make final-showcase-readiness
+cat services/backend/.local/final-showcase-readiness.json
+```
+
+The ledger maps the final C-path objective to evidence for iOS deployability,
+capture/scanning, 3D generation, AI Agent NPCs, provider/key handoff, functional
+regression, visual regression, and privacy safety. It is read-only and does not
+call providers, apply secrets, start servers, run Xcode, touch signing/keychain,
+or mutate global machine state. Exit `2` means the ledger was written but the
+full final showcase is not yet completely proven; exit `0` means every required
+capability is ready. `/v1/final-demo-launch` embeds the same report under
+`final_showcase_readiness`, and the iPhone Final Launch panel renders it under
+`Showcase Readiness`.
+
 For the final key-backed handoff, fill the one-file resource bundle, apply it,
 then run the configured launch report:
 
