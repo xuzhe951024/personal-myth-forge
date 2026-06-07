@@ -1239,6 +1239,12 @@ do {
         "resourceRequirementRows",
         "final launch resource requirements row rendering"
     )
+    try requireContains(finalLaunchStatusView, "Apply Preview", "final launch apply preview section")
+    try requireContains(
+        finalLaunchStatusView,
+        "applyPreviewRows",
+        "final launch apply preview row rendering"
+    )
     try requireContains(finalLaunchStatusView, "Acceptance", "final launch acceptance section")
     try requireContains(
         finalLaunchStatusView,
@@ -1288,6 +1294,16 @@ do {
         pmfModels,
         "finalResourceRequirements",
         "final demo launch final resource requirements field"
+    )
+    try requireContains(
+        pmfModels,
+        "FinalResourceApplyPreviewReport",
+        "final resource apply preview report model"
+    )
+    try requireContains(
+        pmfModels,
+        "finalResourceApplyPreview",
+        "final demo launch final resource apply preview field"
     )
     try requireContains(
         pmfModels,
@@ -1410,6 +1426,16 @@ do {
         finalLaunchMobileSummary,
         "resourceRequirementRows(",
         "final launch resource requirements row builder"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "applyPreviewRows",
+        "final launch apply preview rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Apply preview",
+        "final launch apply preview summary copy"
     )
     try requireContains(liveProviderConsentSummary, "LiveProviderConsentSummaryBuilder", "live provider consent builder")
     try requireContains(liveProviderConsentSummary, "LiveProviderConsentStatus", "live provider consent status")
@@ -1843,6 +1869,16 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements",
         "final resource requirements summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload",
+        "final resource apply preview decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsResourceApplyPreview",
+        "final resource apply preview summary test"
     )
     try requireContains(
         contractTests,

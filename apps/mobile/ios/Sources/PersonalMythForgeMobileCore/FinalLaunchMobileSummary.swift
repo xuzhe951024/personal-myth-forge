@@ -29,6 +29,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var modePolicyRows: [String]
     public var resourceChecklistRows: [String]
     public var resourceRequirementRows: [String]
+    public var applyPreviewRows: [String]
     public var resourceHandoffRows: [String]
     public var resourceHandoffBackendRows: [String]
     public var resourceHandoffIOSRows: [String]
@@ -57,6 +58,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         modePolicyRows: [String] = [],
         resourceChecklistRows: [String] = [],
         resourceRequirementRows: [String] = [],
+        applyPreviewRows: [String] = [],
         resourceHandoffRows: [String] = [],
         resourceHandoffBackendRows: [String] = [],
         resourceHandoffIOSRows: [String] = [],
@@ -84,6 +86,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.modePolicyRows = modePolicyRows
         self.resourceChecklistRows = resourceChecklistRows
         self.resourceRequirementRows = resourceRequirementRows
+        self.applyPreviewRows = applyPreviewRows
         self.resourceHandoffRows = resourceHandoffRows
         self.resourceHandoffBackendRows = resourceHandoffBackendRows
         self.resourceHandoffIOSRows = resourceHandoffIOSRows
@@ -159,6 +162,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             resourceRequirementRows: resourceRequirementRows(
                 from: report.finalResourceRequirements
             ),
+            applyPreviewRows: applyPreviewRows(from: report.finalResourceApplyPreview),
             resourceHandoffRows: resourceHandoffRows(from: report.resourceReport),
             resourceHandoffBackendRows: resourceHandoffBackendRows(from: report.resourceReport),
             resourceHandoffIOSRows: resourceHandoffIOSRows(from: report.resourceReport),
@@ -359,6 +363,38 @@ public enum FinalLaunchMobileSummaryBuilder {
         }
         parts.append("| \(requirement.validationCommand)")
         return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func applyPreviewRows(
+        from report: FinalResourceApplyPreviewReport?
+    ) -> [String] {
+        guard let report else {
+            return ["Final resource apply preview has not loaded."]
+        }
+        var rows = [
+            "Apply preview \(sanitize(report.status)): targets \(report.summary.writeTargets), missing \(report.summary.missing), blocked \(report.summary.blocked), secret \(report.summary.secret)."
+        ]
+        let attention = report.writeTargets.filter { target in
+            target.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready"
+        }
+        let selected = attention.isEmpty ? report.writeTargets : attention
+        rows.append(contentsOf: selected.prefix(3).map(applyPreviewTargetRow))
+        if let command = report.commands.first, !command.isEmpty {
+            rows.append("Validate: \(sanitize(command))")
+        }
+        return rows.map(sanitize)
+    }
+
+    private static func applyPreviewTargetRow(
+        _ target: FinalResourceApplyPreviewTarget
+    ) -> String {
+        var parts = ["\(target.id): \(target.status)", target.destination]
+        if !target.blockedBy.isEmpty {
+            parts.append("blocked by \(target.blockedBy.joined(separator: ", "))")
+        } else if let firstSlot = target.slots.first {
+            parts.append("writes \(firstSlot.writes.joined(separator: ", "))")
+        }
+        return sanitize(parts.joined(separator: " | "))
     }
 
     private static func resourceActions(from preflight: FinalResourcesPreflightReport?) -> [String] {
