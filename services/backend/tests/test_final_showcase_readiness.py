@@ -181,6 +181,86 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     )
 
 
+def test_final_showcase_readiness_gates_provider_handoff_on_configured_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+        ),
+    )
+    _write_capture_source_acceptance(repo_root)
+    _write_final_resources(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance_ready(repo_root)
+    _write_live_provider_evidence_ready(repo_root)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+        ),
+        repo_root=repo_root,
+    )
+    provider_handoff = result.report["capabilities_by_id"]["provider_key_handoff"]
+
+    assert result.exit_code == 2
+    assert provider_handoff["status"] == "partial"
+    assert provider_handoff["classification"] == "configured_evidence_bundle_unproven"
+    assert provider_handoff["command"] == "make configured-live-evidence-bundle"
+    assert "configured_live_evidence_bundle:missing" in provider_handoff["evidence"]
+    assert result.report["evidence"]["configured_live_evidence_bundle"]["status"] == "missing"
+    assert any(
+        "configured evidence bundle" in action
+        for action in result.report["operator_actions"]
+    )
+
+
+def test_final_showcase_readiness_marks_provider_handoff_ready_with_configured_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+        ),
+    )
+    _write_capture_source_acceptance(repo_root)
+    _write_final_resources(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance_ready(repo_root)
+    _write_live_provider_evidence_ready(repo_root)
+    _write_configured_live_evidence_bundle(repo_root, status="ready")
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+        ),
+        repo_root=repo_root,
+    )
+    provider_handoff = result.report["capabilities_by_id"]["provider_key_handoff"]
+
+    assert provider_handoff["status"] == "ready"
+    assert provider_handoff["classification"] == "provider_handoff_ready"
+    assert "configured_live_evidence_bundle:ready" in provider_handoff["evidence"]
+    assert result.report["evidence"]["configured_live_evidence_bundle"]["status"] == "ready"
+    assert "make configured-live-evidence-bundle" in result.report["commands"]
+
+
 def test_final_showcase_readiness_promotes_nested_operator_actions(
     tmp_path: Path,
 ) -> None:
@@ -286,6 +366,39 @@ def test_final_showcase_readiness_sanitizes_secrets_paths_and_private_context(
     assert "private_message:" not in report_text
     assert "raw_context:" not in report_text
     assert "[redacted]" in report_text or "[home]" in report_text
+
+
+def test_final_showcase_readiness_sanitizes_configured_bundle_detail(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    unsafe_detail = (
+        "Authorization Bearer sk-provider /Users/zhexu/private "
+        "file:///tmp/private.glb checkout_url"
+    )
+    _write_live_provider_evidence_ready(repo_root)
+    _write_configured_live_evidence_bundle(
+        repo_root,
+        status="blocked",
+        detail=unsafe_detail,
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+        ),
+        repo_root=repo_root,
+    )
+    report_text = json.dumps(result.report)
+
+    assert "sk-provider" not in report_text
+    assert "sk-meshy-test" not in report_text
+    assert "/Users/" not in report_text
+    assert "file:///" not in report_text
+    assert "checkout_url" not in report_text
 
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:
@@ -670,6 +783,113 @@ def _write_final_acceptance_blocked_with_unsafe_detail(repo_root: Path) -> None:
                     ),
                 }
             ],
+        },
+    )
+
+
+def _write_live_provider_evidence_ready(
+    repo_root: Path,
+    *,
+    configured_launch_status: str = "ready",
+    provider_detail: str = "Meshy and OpenAI providers are ready.",
+) -> None:
+    local_dir = repo_root / "services/backend/.local"
+    _write_json(
+        local_dir / "provider-handoff.json",
+        {
+            "kind": "provider_handoff_report",
+            "core_real_ready": True,
+            "missing_env": [],
+            "detail": provider_detail,
+        },
+    )
+    _write_json(
+        local_dir / "3d-evaluation-configured.json",
+        {
+            "kind": "three_d_evaluation_report",
+            "provider": "meshy",
+            "succeeded": 20,
+            "failed": 0,
+        },
+    )
+    _write_json(
+        local_dir / "npc-evaluation-configured.json",
+        {
+            "kind": "npc_agent_evaluation_report",
+            "provider": "openai",
+            "succeeded": 6,
+            "failed": 0,
+        },
+    )
+    _write_json(
+        local_dir / "final-acceptance-configured.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "passed",
+            "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
+        },
+    )
+    _write_json(
+        local_dir / "final-demo-launch-configured.json",
+        {
+            "kind": "final_demo_launch_report",
+            "mode": "configured",
+            "overall_status": configured_launch_status,
+        },
+    )
+
+
+def _write_configured_live_evidence_bundle(
+    repo_root: Path,
+    *,
+    status: str,
+    detail: str = "Configured evidence bundle is ready.",
+) -> None:
+    operator_actions = []
+    current_blocker = None
+    if status != "ready":
+        operator_actions = [
+            f"run make configured-live-evidence-bundle to refresh configured evidence bundle: {detail}"
+        ]
+        current_blocker = {
+            "id": "configured_live_evidence_bundle",
+            "label": "Configured live evidence bundle",
+            "status": status,
+            "command": "make configured-live-evidence-bundle",
+            "detail": detail,
+        }
+    _write_json(
+        repo_root / "services/backend/.local/configured-live-evidence-bundle.json",
+        {
+            "kind": "configured_live_evidence_bundle_report",
+            "status": status,
+            "summary": {
+                "evidence_files": 5,
+                "evidence_ready": 5 if status == "ready" else 4,
+                "evidence_missing": 0,
+                "evidence_blocked": 0 if status == "ready" else 1,
+                "commands": 10,
+                "commands_ready": 10 if status == "ready" else 9,
+                "commands_run": 0,
+            },
+            "current_blocker": current_blocker,
+            "operator_actions": operator_actions,
+            "commands": ["make configured-live-evidence-bundle"],
+            "safety": {
+                "commands_run": False,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "raw_private_context_in_report": False,
+                "raw_media_in_report": False,
+                "payment_links_in_report": False,
+                "local_paths_in_report": False,
+            },
         },
     )
 

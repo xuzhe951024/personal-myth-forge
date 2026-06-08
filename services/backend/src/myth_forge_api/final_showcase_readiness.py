@@ -65,6 +65,9 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES = (
     "final_handoff_index:",
     "ios_device_launch_certificate:",
 )
+CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
+    "services/backend/.local/configured-live-evidence-bundle.json"
+)
 
 
 @dataclass(frozen=True)
@@ -97,6 +100,9 @@ def build_final_showcase_readiness_report(
     live_provider_evidence = build_live_provider_evidence_report(
         repo_root=selected_repo_root,
     ).report
+    configured_live_evidence_bundle = _load_configured_live_evidence_bundle_report(
+        selected_repo_root,
+    )
     print_fulfillment_readiness = build_print_fulfillment_readiness_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
@@ -126,6 +132,7 @@ def build_final_showcase_readiness_report(
         npc_evaluation=npc_evaluation,
         visual_regression=visual_regression,
         live_provider_evidence=live_provider_evidence,
+        configured_live_evidence_bundle=configured_live_evidence_bundle,
         print_fulfillment_readiness=print_fulfillment_readiness,
         ios_deploy_runbook=ios_deploy_runbook,
         ios_device_launch_rehearsal=ios_device_launch_rehearsal,
@@ -147,6 +154,7 @@ def build_final_showcase_readiness_report(
             action_reports=[
                 ios_device_launch_rehearsal,
                 live_provider_evidence,
+                configured_live_evidence_bundle,
                 print_fulfillment_readiness,
                 final_resource_apply_preview,
                 final_resources,
@@ -164,6 +172,9 @@ def build_final_showcase_readiness_report(
             "npc_agent_evaluation_readiness": _evidence_summary(npc_evaluation),
             "visual_regression_readiness": _evidence_summary(visual_regression),
             "live_provider_evidence": _evidence_summary(live_provider_evidence),
+            "configured_live_evidence_bundle": _evidence_summary(
+                configured_live_evidence_bundle,
+            ),
             "print_fulfillment_readiness": _evidence_summary(
                 print_fulfillment_readiness,
             ),
@@ -209,6 +220,7 @@ def _capabilities(
     npc_evaluation: dict[str, Any],
     visual_regression: dict[str, Any],
     live_provider_evidence: dict[str, Any],
+    configured_live_evidence_bundle: dict[str, Any],
     print_fulfillment_readiness: dict[str, Any],
     ios_deploy_runbook: dict[str, Any],
     ios_device_launch_rehearsal: dict[str, Any],
@@ -237,6 +249,7 @@ def _capabilities(
             final_resource_apply_preview=final_resource_apply_preview,
             resource_handoff=resource_handoff,
             live_provider_evidence=live_provider_evidence,
+            configured_live_evidence_bundle=configured_live_evidence_bundle,
         ),
         _simple_report_capability(
             capability_id="functional_regression",
@@ -264,6 +277,7 @@ def _capabilities(
             npc_evaluation=npc_evaluation,
             visual_regression=visual_regression,
             live_provider_evidence=live_provider_evidence,
+            configured_live_evidence_bundle=configured_live_evidence_bundle,
             print_fulfillment_readiness=print_fulfillment_readiness,
             ios_deploy_runbook=ios_deploy_runbook,
             ios_device_launch_rehearsal=ios_device_launch_rehearsal,
@@ -526,6 +540,7 @@ def _provider_key_handoff_capability(
     final_resource_apply_preview: dict[str, Any],
     resource_handoff: dict[str, Any],
     live_provider_evidence: dict[str, Any],
+    configured_live_evidence_bundle: dict[str, Any],
 ) -> dict[str, Any]:
     final_resource_status = _normalized_status(str(final_resources.get("status", "missing")))
     apply_preview_status = _normalized_status(
@@ -535,6 +550,9 @@ def _provider_key_handoff_capability(
         str(resource_handoff.get("overall_status", "blocked")),
     )
     live_status = _normalized_status(str(live_provider_evidence.get("status", "missing")))
+    configured_bundle_status = _normalized_status(
+        str(configured_live_evidence_bundle.get("status", "missing")),
+    )
     local_resource_statuses = {
         final_resource_status,
         apply_preview_status,
@@ -542,21 +560,19 @@ def _provider_key_handoff_capability(
     }
     if "blocked" in local_resource_statuses:
         status = "blocked"
-    elif live_status == "ready":
-        status = "ready"
-    else:
-        status = "partial"
-    if status == "partial":
-        classification = "live_provider_evidence_unproven"
-    elif status == "ready":
-        classification = "provider_handoff_ready"
-    else:
         classification = "provider_handoff_incomplete"
-    if "blocked" in local_resource_statuses:
         command = "make final-resource-apply-preview"
     elif live_status != "ready":
+        status = "partial"
+        classification = "live_provider_evidence_unproven"
         command = "make live-provider-evidence"
+    elif configured_bundle_status != "ready":
+        status = "partial"
+        classification = "configured_evidence_bundle_unproven"
+        command = "make configured-live-evidence-bundle"
     else:
+        status = "ready"
+        classification = "provider_handoff_ready"
         command = "make final-showcase-readiness"
     return _capability(
         capability_id="provider_key_handoff",
@@ -565,9 +581,9 @@ def _provider_key_handoff_capability(
         classification=classification,
         command=command,
         detail=(
-            "Final resources, apply preview, resource handoff, and live provider evidence must be ready."
+            "Final resources, apply preview, resource handoff, live provider evidence, and configured evidence bundle must be ready."
             if status != "ready"
-            else "Final resources, apply preview, resource handoff, and live provider evidence are ready."
+            else "Final resources, apply preview, resource handoff, live provider evidence, and configured evidence bundle are ready."
         ),
         evidence=[
             f"final_resources:{final_resources.get('status', 'unknown')}",
@@ -577,6 +593,10 @@ def _provider_key_handoff_capability(
             ),
             f"resource_handoff:{resource_handoff.get('overall_status', 'unknown')}",
             f"live_provider_evidence:{live_provider_evidence.get('status', 'unknown')}",
+            (
+                "configured_live_evidence_bundle:"
+                f"{configured_live_evidence_bundle.get('status', 'unknown')}"
+            ),
         ],
     )
 
@@ -664,6 +684,84 @@ def _privacy_safety_capability(**reports: dict[str, Any]) -> dict[str, Any]:
         detail="Readiness reports are sanitized and read-only.",
         evidence=["commands_run:false", "live_provider_calls:false"],
     )
+
+
+def _load_configured_live_evidence_bundle_report(repo_root: Path) -> dict[str, Any]:
+    relative_path = CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH.as_posix()
+    path = repo_root / CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH
+    if not path.exists():
+        return _configured_live_evidence_bundle_stub(
+            status="missing",
+            classification="missing_report",
+            detail=f"Missing {relative_path}.",
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return _configured_live_evidence_bundle_stub(
+            status="blocked",
+            classification="unreadable_report",
+            detail=f"{relative_path} is not valid JSON.",
+        )
+    if not isinstance(payload, dict):
+        return _configured_live_evidence_bundle_stub(
+            status="blocked",
+            classification="invalid_report_shape",
+            detail=f"{relative_path} must contain a JSON object.",
+        )
+    if payload.get("kind") != "configured_live_evidence_bundle_report":
+        return _configured_live_evidence_bundle_stub(
+            status="blocked",
+            classification="wrong_report_kind",
+            detail="Expected configured_live_evidence_bundle_report.",
+        )
+    return payload
+
+
+def _configured_live_evidence_bundle_stub(
+    *,
+    status: str,
+    classification: str,
+    detail: str,
+) -> dict[str, Any]:
+    return {
+        "kind": "configured_live_evidence_bundle_report",
+        "status": status,
+        "summary": {
+            "evidence_files": 0,
+            "evidence_ready": 0,
+            "evidence_missing": 1 if status == "missing" else 0,
+            "evidence_blocked": 1 if status != "missing" else 0,
+            "commands_run": 0,
+        },
+        "current_blocker": {
+            "id": "configured_live_evidence_bundle",
+            "label": "Configured live evidence bundle",
+            "status": status,
+            "classification": classification,
+            "command": "make configured-live-evidence-bundle",
+            "detail": detail,
+        },
+        "operator_actions": [
+            "run make configured-live-evidence-bundle to refresh configured evidence bundle"
+        ],
+        "commands": ["make configured-live-evidence-bundle"],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "raw_private_context_in_report": False,
+            "raw_media_in_report": False,
+            "payment_links_in_report": False,
+            "local_paths_in_report": False,
+        },
+    }
 
 
 def _capability(
@@ -772,6 +870,7 @@ def _commands() -> list[str]:
         "make local-showcase-smoke",
         "make ios-device-launch-rehearsal",
         "make live-provider-evidence",
+        "make configured-live-evidence-bundle",
         "make print-fulfillment-readiness",
         "make final-showcase-readiness",
         (
@@ -849,6 +948,7 @@ def _sanitize_report(report: dict[str, Any], repo_root: Path) -> dict[str, Any]:
         (r"file://[^\s,;\"']+", "file://[redacted]"),
         (r"https?://checkout\.[^\s,;\"']+", "[redacted-payment-link]"),
         (r"https?://pay\.[^\s,;\"']+", "[redacted-payment-link]"),
+        (r"checkout_url", "[redacted-payment-field]"),
     ]
     for pattern, replacement in replacements:
         sanitized = re.sub(pattern, replacement, sanitized)
