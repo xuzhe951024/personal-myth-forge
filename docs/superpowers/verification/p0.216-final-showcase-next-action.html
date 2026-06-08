@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.216 Final Showcase Next Action</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f7f3;
+      color: #151a1d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: linear-gradient(180deg, #f7f8f4 0%, #eef4f1 100%);
+    }
+    main {
+      min-height: 844px;
+      padding: 18px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    header {
+      padding: 12px 0 4px;
+    }
+    .eyebrow {
+      margin: 0 0 6px;
+      color: #51606a;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      color: #11181c;
+      font-size: 30px;
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+    .subhead {
+      margin: 8px 0 0;
+      color: #4c5962;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    section {
+      background: #ffffff;
+      border: 1px solid #d9e3df;
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 12px 28px rgba(34, 54, 61, 0.08);
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .metric {
+      border: 1px solid #e2e8e4;
+      border-radius: 8px;
+      padding: 10px 8px;
+      background: #fbfcfa;
+    }
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+      color: #0d2728;
+    }
+    .metric span {
+      display: block;
+      margin-top: 6px;
+      color: #5a666d;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+    .label {
+      margin: 0 0 8px;
+      color: #596872;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .action {
+      border-color: #c8ddd6;
+      background: #f7fbf8;
+    }
+    .action h2 {
+      margin: 0 0 10px;
+      font-size: 19px;
+      letter-spacing: 0;
+      color: #0d2728;
+    }
+    .row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 0;
+      border-top: 1px solid #e3ebe7;
+    }
+    .row:first-of-type { border-top: 0; }
+    .row b {
+      display: block;
+      color: #182126;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .row span {
+      display: block;
+      margin-top: 3px;
+      color: #61707a;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .pill {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #f0c86a;
+      color: #372b05;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .command {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #10272b;
+      color: #d9f3ec;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .safe {
+      background: #f9faf7;
+    }
+    .safe p {
+      margin: 0;
+      color: #4e5e66;
+      font-size: 12px;
+      line-height: 1.42;
+    }
+    .foot {
+      margin-top: auto;
+      color: #66757d;
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Final Launch Panel</p>
+      <h1>Showcase Readiness</h1>
+      <p class="subhead">The iPhone handoff now starts with a structured next action before the longer readiness ledger.</p>
+    </header>
+
+    <section class="summary" aria-label="readiness counts">
+      <div class="metric"><strong>4</strong><span>ready</span></div>
+      <div class="metric"><strong>3</strong><span>partial</span></div>
+      <div class="metric"><strong>3</strong><span>blocked</span></div>
+    </section>
+
+    <section class="action">
+      <p class="label">Next action</p>
+      <h2>ios_deployable blocked</h2>
+      <div class="row">
+        <div>
+          <b>Source</b>
+          <span>first_blocker from final_showcase_readiness_report</span>
+        </div>
+        <div class="pill">blocked</div>
+      </div>
+      <div class="row">
+        <div>
+          <b>Why</b>
+          <span>iOS deploy runbook and device launch rehearsal must both be ready.</span>
+        </div>
+      </div>
+      <div class="command">make ios-device-launch-rehearsal</div>
+    </section>
+
+    <section>
+      <p class="label">Supporting row</p>
+      <div class="row">
+        <div>
+          <b>Capability</b>
+          <span>ios_deployable: blocked ios_rehearsal_missing</span>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <b>Report path</b>
+          <span>next_action is sanitized before mobile rendering.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="safe">
+      <p>No providers, Xcode, signing, or global mutation.</p>
+    </section>
+
+    <p class="foot">P0.216 visual regression evidence - 390x844 static iPhone frame</p>
+  </main>
+</body>
+</html>

@@ -210,6 +210,7 @@ do {
     try testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness()
     try testDecodesFinalShowcaseReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness()
+    try testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction()
     try testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions()
     try testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness()
     try testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload()
@@ -5316,6 +5317,8 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
     try expectEqual(readiness.summary.partial, 3)
     try expectEqual(readiness.capabilities.first?.id, "ios_deployable")
     try expectEqual(readiness.firstBlocker?.id, "ios_deployable")
+    try expectEqual(readiness.nextAction?.id, "ios_deployable")
+    try expectEqual(readiness.nextAction?.source, "first_blocker")
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.liveProviderCalls)
 }
@@ -5330,6 +5333,21 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness() throws {
     try expectContains(text, "Showcase readiness partial: ready 5, partial 3, blocked 0.")
     try expectContains(text, "ios_deployable: partial")
     try expectContains(text, "make ios-device-launch-rehearsal")
+}
+
+private func testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(finalShowcaseReadinessStatus: "blocked"),
+        error: nil
+    )
+    let text = summary.showcaseReadinessRows.joined(separator: " ")
+
+    try expectContains(text, "Next action: ios_deployable blocked")
+    try expectContains(text, "make ios-device-launch-rehearsal")
+    try expectContains(
+        text,
+        "iOS deploy runbook and device launch rehearsal must both be ready."
+    )
 }
 
 private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() throws {
@@ -5358,7 +5376,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
     try expectContains(text, "run make final-resource-init")
     try expectContains(text, "make final-showcase-readiness")
     try expectNotContains(text, "extra action that should stay hidden")
-    try expectEqual(summary.showcaseReadinessRows.count, 8)
+    try expectEqual(summary.showcaseReadinessRows.count, 9)
 }
 
 private func testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness() throws {
@@ -8922,6 +8940,17 @@ private func finalDemoLaunchPayload(
               "evidence": ["ios_deploy_runbook:partial"],
               "command": "make ios-device-launch-rehearsal",
               "detail": "\(finalShowcaseReadinessFirstBlockerDetail)"
+            }
+            """),
+            "next_action": \(finalShowcaseReadinessStatus == "ready" ? "null" : """
+            {
+              "id": "ios_deployable",
+              "label": "iOS deployable",
+              "status": "\(finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+              "classification": "ios_deploy_evidence",
+              "command": "make ios-device-launch-rehearsal",
+              "detail": "\(finalShowcaseReadinessFirstBlockerDetail)",
+              "source": "first_blocker"
             }
             """),
             "operator_actions": \(finalShowcaseActionsJSON),

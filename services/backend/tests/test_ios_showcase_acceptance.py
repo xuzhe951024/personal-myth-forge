@@ -114,8 +114,12 @@ def test_showcase_visual_regression_index_requires_configured_command_scope() ->
         "p0.215_final_demo_launch_local_alias",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/visual_regression.py",
+        "p0.216_final_showcase_next_action",
+    ) in requirements
+    assert (
         "README.md",
-        "23 static 390x844 iPhone evidence artifacts",
+        "24 static 390x844 iPhone evidence artifacts",
     ) in requirements
     assert (
         "README.md",
@@ -1070,6 +1074,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket "
             "testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket "
             "testDecodesFinalShowcaseReadinessFromFinalLaunchPayload "
+            "testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction "
             "testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness "
             "testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation "
@@ -1156,7 +1161,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "FinalExternalActionLedgerReport finalExternalActionLedger "
             "FinalLaunchClosurePacketReport FinalLaunchClosurePacketBlocker "
             "firstBlocker: FinalLaunchClosurePacketBlocker? finalLaunchClosurePacket "
-            "FinalShowcaseReadinessReport finalShowcaseReadiness "
+            "FinalShowcaseReadinessReport FinalShowcaseReadinessNextAction "
+            "finalShowcaseReadiness nextAction "
             "NPCAgentEvaluationReadinessReport npcAgentEvaluationReadiness "
             "IOSDeployRunbookReport iosDeployRunbook "
             "IOSDeviceEvidenceBundleReport iosDeviceEvidenceBundle "
@@ -1180,7 +1186,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "report.finalExternalActionLedger "
             "closurePacketRows closurePacketFirstBlockerRow "
             "closurePacketRows(from: report.finalLaunchClosurePacket "
-            "showcaseReadinessRows Showcase readiness "
+            "showcaseReadinessRows Showcase readiness Next action: "
             "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
             "deviceEvidenceRows "
             "launchRehearsalRows rehearsalFreshnessRow Freshness: "
@@ -1214,6 +1220,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "p0.82_npc_agent_tick_summary p0.101_print_fulfillment_receipt "
             "p0.214_showcase_evidence_visual "
             "p0.215_final_demo_launch_local_alias "
+            "p0.216_final_showcase_next_action "
             "p0.100_live_provider_consent p0.112_ios_device_launch_rehearsal "
             "p0.119_visual_regression_handoff p0.158_local_showcase_smoke "
             "p0.186_configured_acceptance_command_visual p0.189_device_blocker_handoff"
@@ -1243,6 +1250,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/final_showcase_readiness.py": (
             "build_final_showcase_readiness_report final_showcase_readiness_report "
+            "next_action "
             "CAPABILITY_ORDER print_fulfillment make final-showcase-readiness "
             "build_final_resource_apply_preview_report final_resource_apply_preview "
             "build_local_showcase_smoke_report local_showcase_smoke"
@@ -1413,7 +1421,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "README.md": (
             "make visual-regression full-showcase visual index P0.128 P0.129 "
-            "23 static 390x844 iPhone evidence artifacts "
+            "24 static 390x844 iPhone evidence artifacts "
             "configured acceptance command visual device blocker handoff visual"
         ),
         "services/backend/tests/test_final_configured_preflight.py": (

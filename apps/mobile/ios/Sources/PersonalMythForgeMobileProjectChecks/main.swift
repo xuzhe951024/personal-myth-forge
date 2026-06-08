@@ -147,6 +147,9 @@ do {
     let finalDemoLaunch = try readText(
         repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/final_demo_launch.py")
     )
+    let finalShowcaseReadiness = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/final_showcase_readiness.py")
+    )
     let finalDemoLaunchTests = try readText(
         repositoryRoot.appendingPathComponent("services/backend/tests/test_final_demo_launch.py")
     )
@@ -428,7 +431,7 @@ do {
     )
     try requireContains(
         readme,
-        "23 static 390x844 iPhone evidence artifacts",
+        "24 static 390x844 iPhone evidence artifacts",
         "visual regression artifact count README copy"
     )
     try requireContains(
@@ -440,6 +443,26 @@ do {
         visualRegression,
         "p0.215_final_demo_launch_local_alias",
         "final demo launch local alias visual artifact"
+    )
+    try requireContains(
+        visualRegression,
+        "p0.216_final_showcase_next_action",
+        "final showcase next action visual artifact"
+    )
+    try requireContains(
+        finalShowcaseReadiness,
+        "next_action",
+        "final showcase readiness next action report field"
+    )
+    try requireContains(
+        pmfModels,
+        "FinalShowcaseReadinessNextAction",
+        "mobile final showcase next action model"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Next action:",
+        "mobile final showcase next action row"
     )
     try requireContains(
         visualRegression,

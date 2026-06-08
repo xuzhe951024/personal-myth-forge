@@ -1494,6 +1494,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.216_final_showcase_next_action",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
                 "p0.100_live_provider_consent",
             ),
             SourceRequirement(
@@ -1525,7 +1529,7 @@ FEATURES = (
                 "test_visual_regression_cli_writes_showcase_report",
             ),
             SourceRequirement("README.md", "full-showcase visual index"),
-            SourceRequirement("README.md", "23 static 390x844 iPhone evidence artifacts"),
+            SourceRequirement("README.md", "24 static 390x844 iPhone evidence artifacts"),
             SourceRequirement("README.md", "configured acceptance command visual"),
             SourceRequirement("README.md", "device blocker handoff visual"),
         ),
@@ -2599,6 +2603,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "next_action",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
                 "build_local_showcase_smoke_report",
             ),
             SourceRequirement(
@@ -2617,11 +2625,19 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalShowcaseReadinessNextAction",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "finalShowcaseReadiness",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "showcaseReadinessRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "Next action:",
             ),
             SourceRequirement(
                 "apps/mobile/ios/App/FinalLaunchStatusView.swift",
@@ -2634,6 +2650,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction",
             ),
             SourceRequirement(
                 "services/backend/tests/test_final_showcase_readiness.py",

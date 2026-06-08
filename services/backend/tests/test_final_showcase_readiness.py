@@ -66,6 +66,15 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
         for action in result.report["operator_actions"]
     )
     assert result.report["first_blocker"]["id"] == "ios_deployable"
+    assert result.report["next_action"] == {
+        "id": "ios_deployable",
+        "label": "iOS deployable",
+        "status": "blocked",
+        "classification": "ios_rehearsal_missing",
+        "command": "make ios-device-launch-rehearsal",
+        "detail": "iOS deploy runbook and device launch rehearsal must both be ready.",
+        "source": "first_blocker",
+    }
     assert "make final-rehearsal-local" in result.report["commands"]
     assert "make final-showcase-readiness" in result.report["commands"]
     assert result.report["safety"]["commands_run"] is False

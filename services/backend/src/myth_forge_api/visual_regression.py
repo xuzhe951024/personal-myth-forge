@@ -338,6 +338,28 @@ DEFAULT_VISUAL_ARTIFACTS = (
         ),
     ),
     VisualArtifactSpec(
+        id="p0.216_final_showcase_next_action",
+        html_path="docs/superpowers/verification/p0.216-final-showcase-next-action.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.216-final-showcase-next-action-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.216-final-showcase-next-action-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Showcase Readiness",
+            "Next action",
+            "ios_deployable blocked",
+            "make ios-device-launch-rehearsal",
+            "first_blocker",
+            "No providers, Xcode, signing, or global mutation.",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.160_final_showcase_ios_deploy_digest",
         html_path="docs/superpowers/verification/p0.160-final-showcase-ios-deploy-digest.html",
         png_path=(
