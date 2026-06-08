@@ -243,6 +243,7 @@ do {
     try await testGetProviderReadinessBuildsGETRequest()
     try await testGetProviderReadinessSanitizesHTTPErrorBody()
     try testDecodesFinalDemoLaunchPayload()
+    try testDecodesConfiguredFinalDemoLaunchPayloadCommands()
     try await testGetFinalDemoLaunchBuildsGETRequest()
     try await testGetConfiguredFinalDemoLaunchBuildsGETRequest()
     try await testGetFinalDemoLaunchRejectsInvalidModeBeforeNetwork()
@@ -5717,6 +5718,29 @@ private func testDecodesFinalDemoLaunchPayload() throws {
     try expectFalse(report.safety.localPathsInReport)
 }
 
+private func testDecodesConfiguredFinalDemoLaunchPayloadCommands() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(mode: "configured")
+    )
+
+    try expectEqual(report.mode, "configured")
+    try expectTrue(report.commands.contains("make final-acceptance-configured"))
+    let applyIndex = try require(
+        report.commands.firstIndex(of: "make final-apply-resources"),
+        "missing final apply command"
+    )
+    let configuredIndex = try require(
+        report.commands.firstIndex(of: "make final-acceptance-configured"),
+        "missing configured final acceptance command"
+    )
+    try expectTrue(applyIndex < configuredIndex)
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    try expectEqual(summary.commandRows.first, "make final-acceptance-configured")
+    try expectTrue(summary.commandRows.contains("make final-resource-requirements"))
+}
+
 private func testGetFinalDemoLaunchBuildsGETRequest() async throws {
     let transport = RecordingTransport(
         responses: [HTTPResponse(statusCode: 200, data: finalDemoLaunchPayload())]
@@ -5853,7 +5877,7 @@ private func finalDemoLaunchPayload(
     mode: String = "local",
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
-    commands: [String] = ["make backend-device-demo"],
+    commands: [String]? = nil,
     finalResourcesStatus: String = "missing",
     finalResourcesAction: String = "run make final-resource-init",
     finalResourcesItemsJSON: String = "[]",
@@ -6050,7 +6074,11 @@ private func finalDemoLaunchPayload(
         : printReadinessBlocked
             ? #"{"ready": 4, "partial": 0, "blocked": 1}"#
             : #"{"ready": 4, "partial": 1, "blocked": 0}"#
-    let commandsJSON = String(decoding: try! PMFJSON.encoder.encode(commands), as: UTF8.self)
+    let selectedCommands = commands ?? defaultFinalDemoLaunchCommands(mode: mode)
+    let commandsJSON = String(
+        decoding: try! PMFJSON.encoder.encode(selectedCommands),
+        as: UTF8.self
+    )
     return Data(
         """
         {
@@ -10519,11 +10547,45 @@ private func readyFinalResourceFillGuideReport() -> FinalResourceFillGuideReport
     )
 }
 
+private func defaultFinalDemoLaunchCommands(mode: String) -> [String] {
+    if mode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "configured" {
+        return configuredFinalDemoLaunchCommands()
+    }
+    return ["make backend-device-demo"]
+}
+
+private func configuredFinalDemoLaunchCommands() -> [String] {
+    [
+        "make final-resource-requirements",
+        "make final-resources-preflight",
+        "make final-resource-apply-preview",
+        "make final-apply-resources",
+        "make visual-regression-local",
+        "make live-provider-evidence",
+        "make ios-deploy-runbook",
+        "make ios-device-launch-rehearsal",
+        "make backend-device-demo",
+        (
+            "cd services/backend && uv run python -m myth_forge_api.cli "
+                + "provider-handoff --require-core-real --output .local/provider-handoff.json"
+        ),
+        (
+            "cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch "
+                + "--mode configured --repo-root ../.. "
+                + "--output .local/final-demo-launch-configured.json"
+        ),
+        "make final-acceptance-local",
+        "make final-acceptance-configured",
+        "make mobile-deploy-preflight",
+        "make mobile-xcode-build",
+    ]
+}
+
 private func finalDemoLaunchReport(
     mode: String = "local",
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
-    commands: [String] = ["make backend-device-demo"],
+    commands: [String]? = nil,
     finalResourcesStatus: String = "ready",
     finalResourcesAction: String = "run make final-resource-init",
     finalResourcesItemsJSON: String = "[]",
