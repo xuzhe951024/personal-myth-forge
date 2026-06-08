@@ -111,6 +111,7 @@ def run_final_local_report_refresh(
     report = {
         "kind": "final_local_report_refresh_report",
         "status": status,
+        "first_blocker": _first_blocker(step_results),
         "summary": summary,
         "steps": step_results,
         "steps_by_id": {step["id"]: step for step in step_results},
@@ -364,6 +365,7 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             "exit_code": _step_exit_code(status),
             "kind": report.get("kind", "unknown"),
             "summary": report.get("summary", {}),
+            "blocker_hint": _blocker_hint(report),
             "output": step.output_path.as_posix() if step.output_path else None,
             "accepted_blocked": status == "blocked",
             "writes_repo_local_report": step.output_path is not None,
@@ -378,6 +380,7 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             "exit_code": 1,
             "kind": "unknown",
             "summary": {},
+            "blocker_hint": {},
             "output": step.output_path.as_posix() if step.output_path else None,
             "accepted_blocked": False,
             "writes_repo_local_report": False,
@@ -711,6 +714,116 @@ def _operator_actions(steps: list[dict[str, Any]]) -> list[str]:
         elif step["status"] == "blocked":
             actions.append(f"review refreshed {step['id']} report")
     return actions[:12]
+
+
+def _first_blocker(steps: list[dict[str, Any]]) -> dict[str, Any] | None:
+    failed = next((step for step in steps if step.get("status") == "failed"), None)
+    blocked = next((step for step in steps if step.get("status") == "blocked"), None)
+    step = failed or blocked
+    if step is None:
+        return None
+    step_id = str(step.get("id", "step"))
+    status = str(step.get("status", "blocked"))
+    hint = step.get("blocker_hint") if isinstance(step.get("blocker_hint"), dict) else {}
+    return {
+        "id": step_id,
+        "label": str(step.get("label", step_id.replace("_", " ").title())),
+        "status": status,
+        "classification": str(
+            hint.get("classification")
+            or ("step_failed" if status == "failed" else "step_blocked")
+        ),
+        "command": _blocker_command(step, hint),
+        "detail": _blocker_detail(step, hint),
+        "output": step.get("output"),
+        "step_id": step_id,
+    }
+
+
+def _blocker_command(step: dict[str, Any], hint: dict[str, Any]) -> str:
+    hinted = str(hint.get("command", "")).strip()
+    if hinted:
+        return hinted
+    step_id = str(step.get("id", "step"))
+    if step.get("status") == "failed":
+        return f"fix final-local-report-refresh step {step_id}"
+    return f"review refreshed {step_id} report"
+
+
+def _blocker_detail(step: dict[str, Any], hint: dict[str, Any]) -> str:
+    hinted = str(hint.get("detail", "")).strip()
+    if hinted:
+        return hinted
+    if step.get("status") == "failed" and step.get("error"):
+        return str(step["error"])
+    return f"Review refreshed {step.get('id', 'step')} report."
+
+
+def _blocker_hint(report: dict[str, Any]) -> dict[str, str]:
+    first_blocker = report.get("first_blocker")
+    if isinstance(first_blocker, dict):
+        return _hint_from_mapping(first_blocker)
+
+    requirements = report.get("requirements")
+    if isinstance(requirements, list):
+        for requirement in requirements:
+            if not isinstance(requirement, dict):
+                continue
+            if requirement.get("status") not in {"missing", "blocked"}:
+                continue
+            if not bool(requirement.get("required", True)):
+                continue
+            hint = _hint_from_mapping(requirement)
+            hint["command"] = _first_operator_action(report) or str(
+                requirement.get("validation_command")
+                or requirement.get("apply_command")
+                or requirement.get("fill_action")
+                or ""
+            )
+            hint["detail"] = str(
+                requirement.get("notes")
+                or requirement.get("detail")
+                or requirement.get("classification")
+                or ""
+            )
+            return hint
+
+    checks = report.get("checks")
+    if isinstance(checks, list):
+        for check in checks:
+            if not isinstance(check, dict):
+                continue
+            if str(check.get("status", "")).lower() in {"passed", "ready"}:
+                continue
+            hint = _hint_from_mapping(check)
+            hint["command"] = _first_operator_action(report) or hint.get("command", "")
+            return hint
+
+    action = _first_operator_action(report)
+    return {"command": action} if action else {}
+
+
+def _hint_from_mapping(source: dict[str, Any]) -> dict[str, str]:
+    return {
+        "classification": str(source.get("classification") or ""),
+        "command": str(source.get("command") or ""),
+        "detail": str(
+            source.get("detail")
+            or source.get("notes")
+            or source.get("classification")
+            or ""
+        ),
+    }
+
+
+def _first_operator_action(report: dict[str, Any]) -> str:
+    actions = report.get("operator_actions")
+    if isinstance(actions, list):
+        for action in actions:
+            action_text = str(action).strip()
+            if action_text:
+                return action_text
+    return ""
 
 
 def _safety() -> dict[str, bool]:

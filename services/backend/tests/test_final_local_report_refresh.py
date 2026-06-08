@@ -5,6 +5,7 @@ import shutil
 import struct
 from pathlib import Path
 
+from myth_forge_api import final_local_report_refresh
 from myth_forge_api.final_local_report_refresh import run_final_local_report_refresh
 from myth_forge_api.visual_regression import DEFAULT_VISUAL_ARTIFACTS
 
@@ -26,6 +27,16 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert result.exit_code == 2
     assert result.report["kind"] == "final_local_report_refresh_report"
     assert result.report["status"] == "blocked"
+    assert result.report["first_blocker"] == {
+        "id": "final_resource_requirements",
+        "label": "Final resource requirements",
+        "status": "blocked",
+        "classification": "missing_required_value",
+        "command": "run make final-resource-init",
+        "detail": "Backend-only secret for live Meshy 3D generation.",
+        "output": "services/backend/.local/final-resource-requirements.json",
+        "step_id": "final_resource_requirements",
+    }
     assert result.report["summary"]["failed"] == 0
     assert result.report["summary"]["blocked"] >= 1
     assert steps["final_acceptance_local"]["status"] == "blocked"
@@ -248,6 +259,16 @@ def test_final_local_report_refresh_reports_unexpected_step_failure(
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
+    assert result.report["first_blocker"] == {
+        "id": "forced_failure",
+        "label": "Forced Failure",
+        "status": "failed",
+        "classification": "step_failed",
+        "command": "fix final-local-report-refresh step forced_failure",
+        "detail": "unexpected [redacted]",
+        "output": None,
+        "step_id": "forced_failure",
+    }
     assert steps["forced_failure"]["status"] == "failed"
     assert steps["forced_failure"]["exit_code"] == 1
     assert "unexpected" in steps["forced_failure"]["error"]
@@ -258,6 +279,25 @@ def test_final_local_report_refresh_reports_unexpected_step_failure(
     assert result.report["safety"]["live_provider_calls"] is False
     assert result.report["safety"]["global_mutation"] is False
     assert result.report["safety"]["xcode_or_signing"] is False
+
+
+def test_final_local_report_refresh_has_no_first_blocker_when_all_steps_ready() -> None:
+    assert final_local_report_refresh._first_blocker(
+        [
+            {
+                "id": "only_ready",
+                "label": "Only Ready",
+                "status": "ready",
+                "raw_status": "ready",
+                "exit_code": 0,
+                "kind": "ready_report",
+                "summary": {"ready": 1},
+                "output": None,
+                "accepted_blocked": False,
+                "writes_repo_local_report": False,
+            }
+        ]
+    ) is None
 
 
 def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(

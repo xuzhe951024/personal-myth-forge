@@ -153,6 +153,19 @@ def test_final_launch_closure_packet_source_gate_requires_first_blocker() -> Non
     ) in requirements
 
 
+def test_final_local_report_refresh_source_gate_requires_first_blocker() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_launch_closure_packet"].requirements
+    }
+
+    assert (
+        "services/backend/src/myth_forge_api/final_local_report_refresh.py",
+        "first_blocker",
+    ) in requirements
+
+
 def test_mobile_final_launch_closure_packet_source_gates_require_first_blocker() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1149,7 +1162,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "requires_cost_consent_for_live_actions first_blocker"
         ),
         "services/backend/src/myth_forge_api/final_local_report_refresh.py": (
-            "build_final_launch_closure_packet_report final-launch-closure-packet.json"
+            "build_final_launch_closure_packet_report final-launch-closure-packet.json "
+            "first_blocker"
         ),
         "services/backend/tests/test_final_showcase_readiness.py": (
             "final_resource_apply_preview:missing final_resource_apply_preview:ready "
