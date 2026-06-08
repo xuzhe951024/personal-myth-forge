@@ -1378,6 +1378,16 @@ do {
     )
     try requireContains(
         pmfModels,
+        "FinalResourceRequirementsFirstBlocker",
+        "final resource requirements first blocker model"
+    )
+    try requireContains(
+        pmfModels,
+        "firstBlocker: FinalResourceRequirementsFirstBlocker?",
+        "final resource requirements first blocker field"
+    )
+    try requireContains(
+        pmfModels,
         "finalResourceRequirements",
         "final demo launch final resource requirements field"
     )
@@ -1582,6 +1592,16 @@ do {
         finalLaunchMobileSummary,
         "resourceRequirementRows(",
         "final launch resource requirements row builder"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "report.firstBlocker",
+        "final launch resource requirements first blocker source"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "resourceRequirementFirstBlockerRow",
+        "final launch resource requirements first blocker row"
     )
     try requireContains(
         finalLaunchMobileSummary,
@@ -2097,6 +2117,11 @@ do {
         contractTests,
         "testDecodesFinalResourceRequirementsFromFinalLaunchPayload",
         "final resource requirements decode test"
+    )
+    try requireContains(
+        contractTests,
+        "provide MESHY_API_KEY in final-resources.env",
+        "final resource requirements first blocker command fixture"
     )
     try requireContains(
         contractTests,

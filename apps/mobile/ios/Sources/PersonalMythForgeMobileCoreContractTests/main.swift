@@ -3315,6 +3315,16 @@ private func testDecodesFinalResourceRequirementsFromFinalLaunchPayload() throws
 
     try expectEqual(requirements.kind, "final_resource_requirements_report")
     try expectEqual(requirements.status, "blocked")
+    let firstBlocker = try require(
+        requirements.firstBlocker,
+        "missing final resource requirements first blocker"
+    )
+    try expectEqual(firstBlocker.id, "MESHY_API_KEY")
+    try expectEqual(firstBlocker.status, "missing")
+    try expectEqual(firstBlocker.classification, "missing_required_value")
+    try expectEqual(firstBlocker.command, "provide MESHY_API_KEY in final-resources.env")
+    try expectEqual(firstBlocker.domain, "backend_provider")
+    try expectEqual(firstBlocker.validationCommand, "make final-resources-preflight")
     try expectEqual(requirements.summary.required, 5)
     try expectEqual(requirements.summary.secret, 4)
     try expectEqual(requirements.requirements.count, 2)
@@ -3350,6 +3360,8 @@ private func testFinalLaunchMobileSummaryShowsBlockedResourceRequirements() thro
     try expectContains(text, "missing")
     try expectContains(text, "PMF_BACKEND_BASE_URL")
     try expectContains(text, "loopback_url")
+    try expectContains(text, "provide MESHY_API_KEY in final-resources.env")
+    try expectContains(text, "Backend-only secret for live Meshy 3D generation.")
     try expectContains(text, "make final-resource-requirements")
 }
 
@@ -6299,6 +6311,17 @@ private func finalDemoLaunchPayload(
               "ios": 4,
               "print": 4,
               "validation_commands": 4
+            },
+            "first_blocker": {
+              "id": "MESHY_API_KEY",
+              "label": "Meshy API key",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "provide MESHY_API_KEY in final-resources.env",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "domain": "backend_provider",
+              "destination": "services/backend/.local/final-resources.env",
+              "validation_command": "make final-resources-preflight"
             },
             "requirements": [
               {
