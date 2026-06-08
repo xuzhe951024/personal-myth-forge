@@ -70,6 +70,9 @@ from myth_forge_api.mobile_xcode_build_evidence import (
 from myth_forge_api.ios_device_launch_certificate import (
     build_ios_device_launch_certificate_report,
 )
+from myth_forge_api.ios_device_evidence_bundle import (
+    build_ios_device_evidence_bundle_report,
+)
 from myth_forge_api.ios_device_launch_rehearsal import (
     build_ios_device_launch_rehearsal_report,
 )
@@ -253,6 +256,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if args.command == "ios-device-launch-certificate":
             return _ios_device_launch_certificate(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
+        if args.command == "ios-device-evidence-bundle":
+            return _ios_device_evidence_bundle(
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
@@ -453,6 +461,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     ios_device_launch_certificate_parser.add_argument("--repo-root", default=None)
     ios_device_launch_certificate_parser.add_argument("--output", default=None)
+
+    ios_device_evidence_bundle_parser = subcommands.add_parser(
+        "ios-device-evidence-bundle"
+    )
+    ios_device_evidence_bundle_parser.add_argument("--repo-root", default=None)
+    ios_device_evidence_bundle_parser.add_argument("--output", default=None)
 
     ios_device_launch_rehearsal_parser = subcommands.add_parser(
         "ios-device-launch-rehearsal"
@@ -839,6 +853,18 @@ def _ios_device_launch_certificate(
     output_path: str | None,
 ) -> int:
     result = build_ios_device_launch_certificate_report(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _ios_device_evidence_bundle(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = build_ios_device_evidence_bundle_report(
         repo_root=Path(repo_root) if repo_root else None,
     )
     _write_json_payload(result.report, output_path)

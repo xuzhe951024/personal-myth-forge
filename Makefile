@@ -155,6 +155,11 @@ ios-deploy-runbook:
 ios-deploy-runbook-local:
 	@services/backend/scripts/write_ios_deploy_runbook_local.sh
 
+.PHONY: ios-device-evidence-bundle
+
+ios-device-evidence-bundle:
+	cd services/backend && uv run python -m myth_forge_api.cli ios-device-evidence-bundle --repo-root ../.. --output .local/ios-device-evidence-bundle.json
+
 final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local
 
 .PHONY: mobile-xcode-build

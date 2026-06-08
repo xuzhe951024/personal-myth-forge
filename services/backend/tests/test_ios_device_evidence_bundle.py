@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from myth_forge_api.cli import main
 from myth_forge_api.ios_device_evidence_bundle import (
     build_ios_device_evidence_bundle_report,
 )
@@ -224,6 +225,59 @@ def test_ios_device_evidence_bundle_uses_saved_xcode_evidence(tmp_path: Path) ->
         == "services/backend/.local/mobile-xcode-build-evidence.json"
     )
     assert "mobile_xcode_build_evidence" in result.report["source_reports"]
+
+
+def test_cli_writes_ios_device_evidence_bundle_report(tmp_path: Path) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_mobile_xcode_build_evidence(
+        repo_root,
+        {
+            "kind": "mobile_xcode_build_evidence_report",
+            "status": "blocked",
+            "classification": "blocked_by_apple_sdk_license",
+            "checks": [
+                {
+                    "id": "xcode_license",
+                    "label": "Xcode license",
+                    "status": "blocked",
+                    "detail": "Apple SDK license agreement is not accepted.",
+                }
+            ],
+            "operator_actions": [
+                "accept the Xcode license outside Codex, then rerun make mobile-xcode-build-evidence"
+            ],
+        },
+    )
+    output = repo_root / "services/backend/.local/ios-device-evidence-bundle.json"
+
+    exit_code = main(
+        [
+            "ios-device-evidence-bundle",
+            "--repo-root",
+            str(repo_root),
+            "--output",
+            str(output),
+        ]
+    )
+    report = json.loads(output.read_text(encoding="utf-8"))
+    slots = {slot["id"]: slot for slot in report["evidence_slots"]}
+
+    assert exit_code == 2
+    assert report["kind"] == "ios_device_evidence_bundle_report"
+    assert slots["xcode_build_gate"]["classification"] == (
+        "blocked_by_apple_sdk_license"
+    )
+    assert report["safety"]["commands_run"] is False
+    assert report["safety"]["xcode_or_signing"] is False
+
+
+def test_makefile_exposes_ios_device_evidence_bundle_target() -> None:
+    makefile = Path(__file__).resolve().parents[3] / "Makefile"
+    text = makefile.read_text(encoding="utf-8")
+
+    assert "ios-device-evidence-bundle" in text
+    assert "myth_forge_api.cli ios-device-evidence-bundle" in text
+    assert ".local/ios-device-evidence-bundle.json" in text
 
 
 def _repo_fixture(tmp_path: Path) -> Path:
