@@ -2487,8 +2487,8 @@ private func testDecodesFinalResourceFillGuideFromFinalLaunchPayload() throws {
     try expectEqual(guide.kind, "final_resource_fill_guide_report")
     try expectEqual(guide.status, "blocked")
     try expectEqual(guide.summary.requiredInputs, 5)
-    try expectEqual(guide.summary.optionalInputs, 8)
-    try expectEqual(guide.summary.configuredInputs, 0)
+    try expectEqual(guide.summary.optionalInputs, 5)
+    try expectEqual(guide.summary.configuredInputs, 3)
     try expectEqual(guide.summary.secretInputs, 4)
     try expectEqual(guide.requiredInputs.first?.id, "MESHY_API_KEY")
     try expectEqual(guide.requiredInputs.first?.displayValue, "<secret: fill locally>")
@@ -2513,7 +2513,7 @@ private func testFinalLaunchMobileSummaryShowsResourceFillGuide() throws {
 
     try expectContains(
         text,
-        "Fill guide blocked: required 5, optional 8, configured 0, secret 4."
+        "Fill guide blocked: required 5, optional 5, configured 3, secret 4."
     )
     try expectContains(
         text,
@@ -5079,8 +5079,8 @@ private func finalDemoLaunchPayload(
             "status": "blocked",
             "summary": {
               "required_inputs": 5,
-              "optional_inputs": 8,
-              "configured_inputs": 0,
+              "optional_inputs": 5,
+              "configured_inputs": 3,
               "secret_inputs": 4
             },
             "required_inputs": [
@@ -5138,7 +5138,25 @@ private func finalDemoLaunchPayload(
                 "unblocks": ["print_fulfillment"]
               }
             ],
-            "configured_inputs": [],
+            "configured_inputs": [
+              {
+                "id": "PMF_FINAL_LAUNCH_MODE",
+                "label": "Final launch mode",
+                "domain": "final_launch",
+                "status": "ready",
+                "classification": "configured",
+                "required": false,
+                "secret": false,
+                "display_value": "<fill locally>",
+                "input_source": "services/backend/.local/final-resources.env",
+                "write_destination": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                "apply_command": "make final-apply-resources",
+                "validation_command": "make final-configured-preflight",
+                "fill_action": "fill PMF_FINAL_LAUNCH_MODE in services/backend/.local/final-resources.env",
+                "notes": "Optional local/configured switch for the iPhone launch panel.",
+                "unblocks": ["provider_key_handoff", "privacy_safety"]
+              }
+            ],
             "commands": [
               "make final-resource-requirements",
               "make final-resource-apply-preview",

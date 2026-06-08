@@ -54,7 +54,7 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "--allow-live-provider-calls" in required_text
     assert "Resource Fill Guide" in required_text
     assert "Fill guide blocked" in required_text
-    assert "required 5, optional 8, configured 0, secret 4" in required_text
+    assert "required 5, optional 5, configured 3, secret 4" in required_text
     assert "MESHY_API_KEY" in required_text
     assert "Safety: writes=false live_calls=false global_mutation=false" in required_text
 

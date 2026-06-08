@@ -162,7 +162,7 @@ DEFAULT_VISUAL_ARTIFACTS = (
         required_text=(
             "Resource Fill Guide",
             "Fill guide blocked",
-            "required 5, optional 8, configured 0, secret 4",
+            "required 5, optional 5, configured 3, secret 4",
             "MESHY_API_KEY",
             "make final-resource-requirements",
             "Safety: writes=false live_calls=false global_mutation=false",
