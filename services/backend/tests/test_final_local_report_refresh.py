@@ -32,6 +32,8 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert steps["final_acceptance_local"]["accepted_blocked"] is True
     assert steps["final_resource_fill_guide"]["status"] == "blocked"
     assert steps["final_configured_evidence_plan"]["status"] == "blocked"
+    assert steps["configured_live_evidence_bundle"]["status"] == "blocked"
+    assert steps["configured_live_evidence_bundle"]["accepted_blocked"] is True
     assert steps["mobile_deploy_preflight_evidence"]["status"] == "blocked"
     assert steps["mobile_deploy_preflight_evidence"]["accepted_blocked"] is True
     assert final_acceptance["refresh_safety"] == {
@@ -76,6 +78,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "services/backend/.local/ios-device-launch-rehearsal.json",
         "services/backend/.local/ios-device-evidence-bundle.json",
         "services/backend/.local/live-provider-evidence.json",
+        "services/backend/.local/configured-live-evidence-bundle.json",
         "services/backend/.local/print-fulfillment-readiness.json",
         "services/backend/.local/final-external-action-ledger.json",
         "services/backend/.local/final-showcase-readiness.json",
@@ -128,6 +131,11 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
             encoding="utf-8"
         )
     )
+    configured_bundle = json.loads(
+        (
+            repo_root / "services/backend/.local/configured-live-evidence-bundle.json"
+        ).read_text(encoding="utf-8")
+    )
 
     assert result.exit_code == 2
     assert steps["ios_deploy_runbook_local"] < steps["mobile_deploy_preflight_evidence"]
@@ -136,6 +144,8 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     assert steps["provider_handoff"] < steps["final_acceptance_local"]
     assert steps["ios_device_launch_rehearsal"] < steps["ios_device_evidence_bundle"]
     assert steps["ios_device_evidence_bundle"] < steps["final_showcase_readiness"]
+    assert steps["live_provider_evidence"] < steps["configured_live_evidence_bundle"]
+    assert steps["configured_live_evidence_bundle"] < steps["final_showcase_readiness"]
     assert steps["ios_device_launch_rehearsal"] < steps["final_showcase_readiness"]
     provider_handoff = json.loads(
         (repo_root / "services/backend/.local/provider-handoff.json").read_text(
@@ -153,8 +163,17 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     assert bundle["kind"] == "ios_device_evidence_bundle_report"
     assert bundle["safety"]["commands_run"] is False
     assert bundle["safety"]["xcode_or_signing"] is False
+    assert configured_bundle["kind"] == "configured_live_evidence_bundle_report"
+    assert configured_bundle["safety"]["commands_run"] is False
+    assert configured_bundle["safety"]["live_provider_calls"] is False
     assert showcase["evidence"]["ios_device_launch_rehearsal_readiness"]["kind"] == (
         "ios_device_launch_rehearsal_readiness_report"
+    )
+    assert showcase["evidence"]["configured_live_evidence_bundle"]["kind"] == (
+        "configured_live_evidence_bundle_report"
+    )
+    assert showcase["evidence"]["configured_live_evidence_bundle"]["status"] == (
+        configured_bundle["status"]
     )
     assert str(tmp_path) not in json.dumps(showcase)
 

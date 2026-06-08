@@ -8,6 +8,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from myth_forge_api.config import Settings, load_settings
+from myth_forge_api.configured_live_evidence_bundle import (
+    build_configured_live_evidence_bundle_report,
+)
 from myth_forge_api.evaluation.npc import (
     DEFAULT_NPC_AGENT_EVALUATION_SUITE,
     run_npc_agent_evaluation,
@@ -260,6 +263,15 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "Live provider evidence readiness",
             "live-provider-evidence.json",
             lambda repo_root: build_live_provider_evidence_report(
+                repo_root=repo_root,
+            ).report,
+        ),
+        _step(
+            "configured_live_evidence_bundle",
+            "Configured live evidence bundle",
+            "configured-live-evidence-bundle.json",
+            lambda repo_root: build_configured_live_evidence_bundle_report(
+                settings=LOCAL_SETTINGS,
                 repo_root=repo_root,
             ).report,
         ),
