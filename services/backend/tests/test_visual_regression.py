@@ -76,6 +76,9 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "Final closure blocked" in required_text
     assert "resource_inputs" in required_text
     assert "provide MESHY_API_KEY" in required_text
+    assert "configured_evidence_bundle" in required_text
+    assert "configured_live_evidence_bundle" in required_text
+    assert "make configured-live-evidence-bundle" in required_text
     assert "cost consent" in required_text
     assert "commands_run=false global=false live_calls=false" in required_text
     assert "Local Smoke" in required_text
