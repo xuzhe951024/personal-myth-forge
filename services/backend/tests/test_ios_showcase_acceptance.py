@@ -712,7 +712,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift": (
             "LiveProviderConsentSummaryBuilder canRunConfiguredAcceptance "
-            "no live calls by default Provider keys remain backend-only. sanitize"
+            "no live calls by default Provider keys remain backend-only. "
+            "liveEvidenceRow liveProviderEvidence sanitize"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PrintFulfillmentReceipt.swift": (
             "PrintFulfillmentReceiptBuilder Checkout/payment links stay withheld "
@@ -749,6 +750,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testGenerationResultReceiptRedactsUnsafeText "
             "testLiveProviderConsentSummaryShowsReadyConfiguredConsent "
             "testLiveProviderConsentSummaryRedactsUnsafeText "
+            "testLiveProviderConsentSummaryShowsReadyLiveEvidence "
+            "testLiveProviderConsentSummaryBlocksMissingLiveEvidence "
+            "testLiveProviderConsentSummaryRedactsUnsafeLiveEvidenceBlocker "
             "testPrintFulfillmentReceiptRequiresApprovalBeforeHandoff "
             "testPrintFulfillmentReceiptBlocksAndRedactsUnsafeText "
             "testContextCapsuleReviewMarksApprovedSummaryReady "

@@ -314,6 +314,14 @@ FEATURES = (
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
                 "Provider keys remain backend-only.",
             ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
+                "liveEvidenceRow",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
+                "liveProviderEvidence",
+            ),
             SourceRequirement("apps/mobile/ios/App/LiveProviderConsentView.swift", "Live Provider Consent"),
             SourceRequirement(
                 "apps/mobile/ios/App/LiveProviderConsentView.swift",
@@ -338,6 +346,18 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testLiveProviderConsentSummaryRedactsUnsafeText",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testLiveProviderConsentSummaryShowsReadyLiveEvidence",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testLiveProviderConsentSummaryBlocksMissingLiveEvidence",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testLiveProviderConsentSummaryRedactsUnsafeLiveEvidenceBlocker",
             ),
         ),
     ),
