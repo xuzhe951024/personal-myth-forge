@@ -3421,7 +3421,7 @@ private func testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload() throws 
 
     try expectEqual(packet.kind, "final_launch_closure_packet_report")
     try expectEqual(packet.status, "blocked")
-    try expectEqual(packet.summary.sections, 5)
+    try expectEqual(packet.summary.sections, 6)
     try expectEqual(packet.summary.requiresCostConsent, 5)
     try expectEqual(packet.sections.first?.id, "resource_inputs")
     try expectEqual(packet.sections.first?.firstAction.id, "provide_MESHY_API_KEY")
@@ -3430,6 +3430,18 @@ private func testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload() throws 
         "make ios-device-launch-rehearsal"
     )
     try expectEqual(packet.sectionsById["live_provider_consent"]?.requiresCostConsent, true)
+    let configuredBundleSection = try require(
+        packet.sectionsById["configured_evidence_bundle"],
+        "missing configured evidence bundle closure section"
+    )
+    try expectEqual(configuredBundleSection.command, "make configured-live-evidence-bundle")
+    try expectEqual(configuredBundleSection.firstAction.id, "configured_live_evidence_bundle")
+    try expectEqual(
+        configuredBundleSection.firstAction.command,
+        "make configured-live-evidence-bundle"
+    )
+    try expectFalse(configuredBundleSection.requiresCostConsent)
+    try expectFalse(configuredBundleSection.liveProviderCall)
     try expectFalse(packet.safety.commandsRun)
     try expectFalse(packet.safety.globalMutation)
     try expectFalse(packet.safety.liveProviderCalls)
@@ -3446,6 +3458,9 @@ private func testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket() throws 
     try expectContains(text, "Final closure blocked")
     try expectContains(text, "resource_inputs")
     try expectContains(text, "provide_MESHY_API_KEY")
+    try expectContains(text, "configured_evidence_bundle")
+    try expectContains(text, "configured_live_evidence_bundle")
+    try expectContains(text, "make configured-live-evidence-bundle")
     try expectContains(text, "cost consent")
     try expectContains(text, "commands_run=false global=false live_calls=false")
 }
@@ -3458,6 +3473,13 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket()
         ),
         closurePacketActionDetail: (
             "api_key=secret private_message: raw words https://checkout.example/pay"
+        ),
+        closurePacketConfiguredBundleCommand: (
+            "make configured-live-evidence-bundle sk-configured /Users/zhexu/private "
+                + "file:///tmp/private local-capture://configured checkout_url Bearer token"
+        ),
+        closurePacketConfiguredBundleDetail: (
+            "api_key=secret private_message: raw configured words https://checkout.example/pay"
         )
     )
 
@@ -3471,6 +3493,8 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket()
     try expectFalse(text.contains("checkout_url"))
     try expectFalse(text.contains("api_key=secret"))
     try expectFalse(text.contains("private_message"))
+    try expectFalse(text.contains("sk-configured"))
+    try expectFalse(text.contains("raw configured words"))
     try expectContains(text, "[withheld]")
 }
 
@@ -5877,7 +5901,10 @@ private func finalDemoLaunchPayload(
     externalActionLedgerCommand: String = "make final-external-action-ledger",
     externalActionLedgerDetail: String = "Inspect external action blockers.",
     closurePacketActionCommand: String = "make final-resource-fill-guide",
-    closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation."
+    closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation.",
+    closurePacketConfiguredBundleStatus: String = "blocked",
+    closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
+    closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready."
 ) -> Data {
     let liveEvidenceReady = liveProviderEvidenceStatus == "ready"
     let liveEvidenceBlocked = liveProviderEvidenceStatus == "blocked"
@@ -6433,7 +6460,7 @@ private func finalDemoLaunchPayload(
               "actions": 27,
               "ready": 0,
               "missing": 6,
-              "blocked": 3,
+              "blocked": 4,
               "manual": 5,
               "live": 5,
               "partial": 0,
@@ -6626,17 +6653,17 @@ private func finalDemoLaunchPayload(
             "kind": "final_launch_closure_packet_report",
             "status": "blocked",
             "summary": {
-              "sections": 5,
-              "actions": 7,
+              "sections": 6,
+              "actions": 8,
               "ready": 0,
               "missing": 0,
-              "blocked": 3,
+              "blocked": 4,
               "manual": 0,
               "live": 1,
               "partial": 1,
               "optional": 0,
-              "required_sections": 4,
-              "required_actions": 7,
+              "required_sections": 5,
+              "required_actions": 8,
               "secret_actions": 2,
               "requires_user_input": 2,
               "requires_user_confirmation": 1,
@@ -6856,6 +6883,58 @@ private func finalDemoLaunchPayload(
                 "safe_local_write": false
               },
               {
+                "id": "configured_evidence_bundle",
+                "label": "Configured evidence bundle",
+                "status": "\(closurePacketConfiguredBundleStatus)",
+                "command": "make configured-live-evidence-bundle",
+                "detail": "Build configured live evidence bundle after resource and provider evidence are ready.",
+                "required": true,
+                "actions": [
+                  {
+                    "id": "configured_live_evidence_bundle",
+                    "label": "Configured live evidence bundle",
+                    "status": "\(closurePacketConfiguredBundleStatus)",
+                    "command": "\(closurePacketConfiguredBundleCommand)",
+                    "detail": "\(closurePacketConfiguredBundleDetail)",
+                    "required": true,
+                    "secret": false,
+                    "requires_user_input": false,
+                    "requires_user_confirmation": false,
+                    "requires_cost_consent": false,
+                    "global": false,
+                    "xcode_or_signing": false,
+                    "live_provider_call": false,
+                    "safe_local_write": false,
+                    "writes_repo_local_files": false
+                  }
+                ],
+                "first_action": {
+                  "id": "configured_live_evidence_bundle",
+                  "label": "Configured live evidence bundle",
+                  "status": "\(closurePacketConfiguredBundleStatus)",
+                  "command": "\(closurePacketConfiguredBundleCommand)",
+                  "detail": "\(closurePacketConfiguredBundleDetail)",
+                  "required": true,
+                  "secret": false,
+                  "requires_user_input": false,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": false,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": false,
+                  "safe_local_write": false,
+                  "writes_repo_local_files": false
+                },
+                "blocked_by": ["configured_live_evidence_bundle"],
+                "requires_user_input": false,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": false,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": false,
+                "safe_local_write": false
+              },
+              {
                 "id": "final_acceptance",
                 "label": "Final acceptance",
                 "status": "partial",
@@ -7010,6 +7089,40 @@ private func finalDemoLaunchPayload(
                 "xcode_or_signing": false,
                 "live_provider_call": true,
                 "safe_local_write": false
+              },
+              "configured_evidence_bundle": {
+                "id": "configured_evidence_bundle",
+                "label": "Configured evidence bundle",
+                "status": "\(closurePacketConfiguredBundleStatus)",
+                "command": "make configured-live-evidence-bundle",
+                "detail": "Build configured live evidence bundle after resource and provider evidence are ready.",
+                "required": true,
+                "actions": [],
+                "first_action": {
+                  "id": "configured_live_evidence_bundle",
+                  "label": "Configured live evidence bundle",
+                  "status": "\(closurePacketConfiguredBundleStatus)",
+                  "command": "\(closurePacketConfiguredBundleCommand)",
+                  "detail": "\(closurePacketConfiguredBundleDetail)",
+                  "required": true,
+                  "secret": false,
+                  "requires_user_input": false,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": false,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": false,
+                  "safe_local_write": false,
+                  "writes_repo_local_files": false
+                },
+                "blocked_by": ["configured_live_evidence_bundle"],
+                "requires_user_input": false,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": false,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": false,
+                "safe_local_write": false
               }
             },
             "operator_actions": [
@@ -7022,6 +7135,7 @@ private func finalDemoLaunchPayload(
               "make final-external-action-ledger",
               "make ios-device-launch-rehearsal",
               "make live-provider-evidence",
+              "make configured-live-evidence-bundle",
               "make final-showcase-readiness"
             ],
             "safety": {
@@ -10455,7 +10569,10 @@ private func finalDemoLaunchReport(
     externalActionLedgerCommand: String = "make final-external-action-ledger",
     externalActionLedgerDetail: String = "Inspect external action blockers.",
     closurePacketActionCommand: String = "make final-resource-fill-guide",
-    closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation."
+    closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation.",
+    closurePacketConfiguredBundleStatus: String = "blocked",
+    closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
+    closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready."
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -10534,7 +10651,10 @@ private func finalDemoLaunchReport(
             externalActionLedgerCommand: externalActionLedgerCommand,
             externalActionLedgerDetail: externalActionLedgerDetail,
             closurePacketActionCommand: closurePacketActionCommand,
-            closurePacketActionDetail: closurePacketActionDetail
+            closurePacketActionDetail: closurePacketActionDetail,
+            closurePacketConfiguredBundleStatus: closurePacketConfiguredBundleStatus,
+            closurePacketConfiguredBundleCommand: closurePacketConfiguredBundleCommand,
+            closurePacketConfiguredBundleDetail: closurePacketConfiguredBundleDetail
         )
     )
 }

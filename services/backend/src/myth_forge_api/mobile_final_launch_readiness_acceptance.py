@@ -785,16 +785,34 @@ SOURCE_REQUIREMENTS = (
         "testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload",
     ),
     SourceRequirement(
+        "contract_final_launch_closure_packet_configured_bundle_decode",
+        "Contract test decodes closure configured evidence bundle section",
+        CORE_CONTRACT_TESTS_PATH,
+        "configured_evidence_bundle",
+    ),
+    SourceRequirement(
         "contract_final_launch_closure_packet_summary",
         "Contract test renders final launch closure packet",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket",
     ),
     SourceRequirement(
+        "contract_final_launch_closure_packet_configured_bundle_summary",
+        "Contract test renders closure configured evidence bundle section",
+        CORE_CONTRACT_TESTS_PATH,
+        "configured_live_evidence_bundle",
+    ),
+    SourceRequirement(
         "contract_final_launch_closure_packet_redaction",
         "Contract test redacts final launch closure packet",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket",
+    ),
+    SourceRequirement(
+        "contract_final_launch_closure_packet_configured_bundle_redaction",
+        "Contract test redacts closure configured evidence bundle section",
+        CORE_CONTRACT_TESTS_PATH,
+        "sk-configured",
     ),
     SourceRequirement(
         "contract_ios_device_launch_rehearsal_decode",
