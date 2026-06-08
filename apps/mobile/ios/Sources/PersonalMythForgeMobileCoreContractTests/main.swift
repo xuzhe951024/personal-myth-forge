@@ -3447,6 +3447,18 @@ private func testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload() throws 
     try expectEqual(packet.status, "blocked")
     try expectEqual(packet.summary.sections, 6)
     try expectEqual(packet.summary.requiresCostConsent, 5)
+    let firstBlocker = try require(packet.firstBlocker, "missing closure packet first blocker")
+    try expectEqual(firstBlocker.id, "resource_inputs")
+    try expectEqual(firstBlocker.label, "Resource inputs")
+    try expectEqual(firstBlocker.status, "blocked")
+    try expectEqual(firstBlocker.classification, "missing_required_value")
+    try expectEqual(firstBlocker.command, "make final-resources-preflight")
+    try expectEqual(
+        firstBlocker.detail,
+        "Backend-only secret for live Meshy 3D generation."
+    )
+    try expectEqual(firstBlocker.sectionId, "resource_inputs")
+    try expectEqual(firstBlocker.actionId, "provide_MESHY_API_KEY")
     try expectEqual(packet.sections.first?.id, "resource_inputs")
     try expectEqual(packet.sections.first?.firstAction.id, "provide_MESHY_API_KEY")
     try expectEqual(
@@ -3480,8 +3492,11 @@ private func testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket() throws 
     let text = summary.closurePacketRows.joined(separator: " ")
 
     try expectContains(text, "Final closure blocked")
+    try expectContains(text, "First blocker: resource_inputs blocked missing_required_value")
     try expectContains(text, "resource_inputs")
     try expectContains(text, "provide_MESHY_API_KEY")
+    try expectContains(text, "make final-resources-preflight")
+    try expectContains(text, "Backend-only secret for live Meshy 3D generation.")
     try expectContains(text, "configured_evidence_bundle")
     try expectContains(text, "configured_live_evidence_bundle")
     try expectContains(text, "make configured-live-evidence-bundle")
@@ -3497,6 +3512,13 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket()
         ),
         closurePacketActionDetail: (
             "api_key=secret private_message: raw words https://checkout.example/pay"
+        ),
+        closurePacketFirstBlockerCommand: (
+            "make final-resources-preflight sk-blocker /Users/zhexu/private "
+                + "file:///tmp/private local-capture://blocker checkout_url Bearer token"
+        ),
+        closurePacketFirstBlockerDetail: (
+            "api_key=secret private_message: raw blocker words https://checkout.example/pay"
         ),
         closurePacketConfiguredBundleCommand: (
             "make configured-live-evidence-bundle sk-configured /Users/zhexu/private "
@@ -3517,6 +3539,8 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket()
     try expectFalse(text.contains("checkout_url"))
     try expectFalse(text.contains("api_key=secret"))
     try expectFalse(text.contains("private_message"))
+    try expectFalse(text.contains("sk-blocker"))
+    try expectFalse(text.contains("raw blocker words"))
     try expectFalse(text.contains("sk-configured"))
     try expectFalse(text.contains("raw configured words"))
     try expectContains(text, "[withheld]")
@@ -5950,6 +5974,8 @@ private func finalDemoLaunchPayload(
     externalActionLedgerDetail: String = "Inspect external action blockers.",
     closurePacketActionCommand: String = "make final-resource-fill-guide",
     closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation.",
+    closurePacketFirstBlockerCommand: String = "make final-resources-preflight",
+    closurePacketFirstBlockerDetail: String = "Backend-only secret for live Meshy 3D generation.",
     closurePacketConfiguredBundleStatus: String = "blocked",
     closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
     closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready."
@@ -6705,6 +6731,16 @@ private func finalDemoLaunchPayload(
           "final_launch_closure_packet": {
             "kind": "final_launch_closure_packet_report",
             "status": "blocked",
+            "first_blocker": {
+              "id": "resource_inputs",
+              "label": "Resource inputs",
+              "status": "blocked",
+              "classification": "missing_required_value",
+              "command": "\(closurePacketFirstBlockerCommand)",
+              "detail": "\(closurePacketFirstBlockerDetail)",
+              "section_id": "resource_inputs",
+              "action_id": "provide_MESHY_API_KEY"
+            },
             "summary": {
               "sections": 6,
               "actions": 8,
@@ -10658,6 +10694,8 @@ private func finalDemoLaunchReport(
     externalActionLedgerDetail: String = "Inspect external action blockers.",
     closurePacketActionCommand: String = "make final-resource-fill-guide",
     closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation.",
+    closurePacketFirstBlockerCommand: String = "make final-resources-preflight",
+    closurePacketFirstBlockerDetail: String = "Backend-only secret for live Meshy 3D generation.",
     closurePacketConfiguredBundleStatus: String = "blocked",
     closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
     closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready."
@@ -10741,6 +10779,8 @@ private func finalDemoLaunchReport(
             externalActionLedgerDetail: externalActionLedgerDetail,
             closurePacketActionCommand: closurePacketActionCommand,
             closurePacketActionDetail: closurePacketActionDetail,
+            closurePacketFirstBlockerCommand: closurePacketFirstBlockerCommand,
+            closurePacketFirstBlockerDetail: closurePacketFirstBlockerDetail,
             closurePacketConfiguredBundleStatus: closurePacketConfiguredBundleStatus,
             closurePacketConfiguredBundleCommand: closurePacketConfiguredBundleCommand,
             closurePacketConfiguredBundleDetail: closurePacketConfiguredBundleDetail

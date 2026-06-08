@@ -153,6 +153,27 @@ def test_final_launch_closure_packet_source_gate_requires_first_blocker() -> Non
     ) in requirements
 
 
+def test_mobile_final_launch_closure_packet_source_gates_require_first_blocker() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["mobile_final_launch_closure_packet"].requirements
+    }
+
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "FinalLaunchClosurePacketBlocker",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "firstBlocker: FinalLaunchClosurePacketBlocker?",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+        "closurePacketFirstBlockerRow",
+    ) in requirements
+
+
 def test_ios_showcase_acceptance_allows_external_action_ledger_builder_linebreak(
     tmp_path,
 ) -> None:
@@ -1032,7 +1053,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "FinalResourceFillGuideReport finalResourceFillGuide "
             "FinalResourceApplyPreviewReport finalResourceApplyPreview "
             "FinalExternalActionLedgerReport finalExternalActionLedger "
-            "FinalLaunchClosurePacketReport finalLaunchClosurePacket "
+            "FinalLaunchClosurePacketReport FinalLaunchClosurePacketBlocker "
+            "firstBlocker: FinalLaunchClosurePacketBlocker? finalLaunchClosurePacket "
             "FinalShowcaseReadinessReport finalShowcaseReadiness "
             "NPCAgentEvaluationReadinessReport npcAgentEvaluationReadiness "
             "IOSDeployRunbookReport iosDeployRunbook "
@@ -1055,7 +1077,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "applyPreviewRows Apply preview "
             "externalActionLedgerRows externalActionLedgerRows(from: "
             "report.finalExternalActionLedger "
-            "closurePacketRows closurePacketRows(from: report.finalLaunchClosurePacket "
+            "closurePacketRows closurePacketFirstBlockerRow "
+            "closurePacketRows(from: report.finalLaunchClosurePacket "
             "showcaseReadinessRows Showcase readiness "
             "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
             "deviceEvidenceRows "

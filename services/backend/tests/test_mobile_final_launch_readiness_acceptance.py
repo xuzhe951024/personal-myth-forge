@@ -56,7 +56,10 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_ios_device_evidence_bundle_redaction" in requirement_ids
     assert "model_final_launch_closure_packet" in requirement_ids
     assert "model_final_launch_closure_packet_field" in requirement_ids
+    assert "model_final_launch_closure_packet_blocker" in requirement_ids
+    assert "model_final_launch_closure_packet_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_launch_closure_packet_rows" in requirement_ids
+    assert "mobile_summary_final_launch_closure_packet_first_blocker_row" in requirement_ids
     assert "mobile_status_view_final_launch_closure_packet" in requirement_ids
     assert "contract_final_launch_closure_packet_decode" in requirement_ids
     assert "contract_final_launch_closure_packet_configured_bundle_decode" in requirement_ids
@@ -191,6 +194,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "IOSDeviceLaunchRehearsalReadinessReport",
                 "iosDeviceLaunchRehearsalReadiness",
                 "FinalLaunchClosurePacketReport",
+                "FinalLaunchClosurePacketBlocker",
+                "firstBlocker: FinalLaunchClosurePacketBlocker?",
                 "finalLaunchClosurePacket",
                 "VisualRegressionReadinessReport",
                 "visualRegressionReadiness",
@@ -251,6 +256,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "deviceEvidenceRows",
                 "launchRehearsalRows",
                 "closurePacketRows",
+                "closurePacketFirstBlockerRow",
                 "visualRegressionRows",
                 "localShowcaseSmokeRows",
                 "provider_calls=",
@@ -328,6 +334,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle",
                 "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle",
                 "testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload",
+                "missing closure packet first blocker",
                 "configured_evidence_bundle",
                 "testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket",
                 "configured_live_evidence_bundle",

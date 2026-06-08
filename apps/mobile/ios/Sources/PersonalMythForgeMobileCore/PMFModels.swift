@@ -1645,9 +1645,41 @@ public struct FinalLaunchClosurePacketSafety: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalLaunchClosurePacketBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var sectionId: String
+    public var actionId: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        sectionId: String,
+        actionId: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.sectionId = sectionId
+        self.actionId = actionId
+    }
+}
+
 public struct FinalLaunchClosurePacketReport: Codable, Equatable, Sendable {
     public var kind: String
     public var status: String
+    public var firstBlocker: FinalLaunchClosurePacketBlocker?
     public var summary: FinalLaunchClosurePacketSummary
     public var sections: [FinalLaunchClosurePacketSection]
     public var sectionsById: [String: FinalLaunchClosurePacketSection]
@@ -1658,6 +1690,7 @@ public struct FinalLaunchClosurePacketReport: Codable, Equatable, Sendable {
     public init(
         kind: String,
         status: String,
+        firstBlocker: FinalLaunchClosurePacketBlocker? = nil,
         summary: FinalLaunchClosurePacketSummary,
         sections: [FinalLaunchClosurePacketSection],
         sectionsById: [String: FinalLaunchClosurePacketSection],
@@ -1667,6 +1700,7 @@ public struct FinalLaunchClosurePacketReport: Codable, Equatable, Sendable {
     ) {
         self.kind = kind
         self.status = status
+        self.firstBlocker = firstBlocker
         self.summary = summary
         self.sections = sections
         self.sectionsById = sectionsById
