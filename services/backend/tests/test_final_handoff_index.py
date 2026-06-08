@@ -28,6 +28,14 @@ def test_final_handoff_index_blocks_missing_reports_without_leaks(
     assert lanes["configured_preflight"]["status"] == "blocked"
     assert lanes["live_acceptance"]["status"] == "live"
     assert lanes["live_acceptance"]["requires_consent"] is True
+    assert result.report["first_blocker"] == {
+        "id": "local_rehearsal",
+        "label": "Local rehearsal",
+        "status": "missing",
+        "classification": "lane_missing",
+        "command": "make final-rehearsal-local",
+        "detail": "run make final-rehearsal-local",
+    }
     assert "make final-rehearsal-local" in result.report["commands"]
     assert "make final-configured-preflight" in result.report["commands"]
     assert "make final-handoff-index" in result.report["commands"]
@@ -84,6 +92,7 @@ def test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready(
 
     assert result.exit_code == 0
     assert result.report["status"] == "ready"
+    assert result.report["first_blocker"] is None
     assert result.report["summary"]["missing"] == 0
     assert result.report["summary"]["blocked"] == 0
     assert lanes["local_rehearsal"]["status"] == "ready"

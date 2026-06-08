@@ -416,7 +416,7 @@ do {
     )
     try requireContains(
         readme,
-        "20 static 390x844 iPhone evidence artifacts",
+        "21 static 390x844 iPhone evidence artifacts",
         "visual regression artifact count README copy"
     )
     try requireContains(
@@ -428,6 +428,11 @@ do {
         visualRegression,
         "p0.186_configured_acceptance_command_visual",
         "configured acceptance command visual artifact"
+    )
+    try requireContains(
+        visualRegression,
+        "p0.189_device_blocker_handoff",
+        "device blocker handoff visual artifact"
     )
     try requireContains(makefile, "backend-evaluate-3d:", "backend 3D evaluation Make target")
     try requireContains(makefile, "backend-evaluate-npc:", "backend NPC evaluation Make target")

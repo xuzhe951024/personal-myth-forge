@@ -1457,6 +1457,10 @@ FEATURES = (
                 "p0.186_configured_acceptance_command_visual",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.189_device_blocker_handoff",
+            ),
+            SourceRequirement(
                 "services/backend/tests/test_visual_regression.py",
                 "test_default_visual_artifacts_cover_full_showcase_flow",
             ),
@@ -1469,8 +1473,9 @@ FEATURES = (
                 "test_visual_regression_cli_writes_showcase_report",
             ),
             SourceRequirement("README.md", "full-showcase visual index"),
-            SourceRequirement("README.md", "20 static 390x844 iPhone evidence artifacts"),
+            SourceRequirement("README.md", "21 static 390x844 iPhone evidence artifacts"),
             SourceRequirement("README.md", "configured acceptance command visual"),
+            SourceRequirement("README.md", "device blocker handoff visual"),
         ),
     ),
     FeatureRequirement(
@@ -2001,6 +2006,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_handoff_index.py",
+                "first_blocker",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_handoff_index.py",
                 "visual_regression",
             ),
             SourceRequirement(
@@ -2158,6 +2167,10 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
                 "operator_actions",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+                "first_blocker",
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",

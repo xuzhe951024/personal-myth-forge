@@ -98,6 +98,7 @@ def build_ios_device_launch_rehearsal_report(
         "status": status,
         "mode": mode,
         "summary": _summary(sequence),
+        "first_blocker": _first_blocker(sequence),
         "sequence": sequence,
         "local_rehearsal_reports": local_sources,
         "configured_preflight": report_sources["final_configured_preflight"],
@@ -303,6 +304,34 @@ def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
         actions.append("continue with make backend-device-demo")
         actions.append("run make mobile-deploy-preflight after backend is running")
     return _dedupe(actions)
+
+
+def _first_blocker(sequence: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for step in sequence:
+        status = str(step.get("status", ""))
+        if status not in {"missing", "blocked"}:
+            continue
+        step_id = str(step.get("id", "step"))
+        command = str(step.get("command", ""))
+        return {
+            "id": step_id,
+            "label": str(step.get("label", step_id)),
+            "status": status,
+            "classification": f"step_{status}",
+            "command": command,
+            "detail": _step_blocker_detail(step),
+        }
+    return None
+
+
+def _step_blocker_detail(step: dict[str, Any]) -> str:
+    if step.get("status") == "missing":
+        return "run make ios-device-launch-rehearsal"
+    nested_actions = step.get("operator_actions")
+    if isinstance(nested_actions, list) and nested_actions:
+        return normalize_operator_action(f"{step['id']}: {nested_actions[0]}")
+    command = str(step.get("command", ""))
+    return f"review {step['id']}: {command}" if command else f"review {step['id']}"
 
 
 def _commands() -> list[str]:
