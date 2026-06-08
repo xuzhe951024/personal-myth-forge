@@ -29,6 +29,10 @@ struct ForgeRootView: View {
     @State private var printQuoteError: String?
     @State private var isLoadingPrintQuote = false
     @State private var isPrintQuoteApproved = false
+    @State private var sceneLoadProof = ArtifactSceneLoadProofBuilder.build(
+        preparedAsset: nil,
+        sceneLoadError: nil
+    )
     @State private var objectLabel = "old brass key"
     @State private var materials = "metal, brass"
     @State private var visualNotes = "worn teeth, circular bow, warm reflections"
@@ -71,6 +75,7 @@ struct ForgeRootView: View {
                     FinalShowcaseSummaryView(
                         summary: finalShowcaseSummary
                     )
+                    ShowcaseEvidenceView(summary: showcaseEvidenceSummary)
                     DevicePreflightView(summary: devicePreflightSummary,
                         isCheckingBackend: isCheckingBackendHealth,
                         checkBackend: checkBackendHealth
@@ -118,7 +123,13 @@ struct ForgeRootView: View {
                         forgeMyth: forgeMyth
                     )
                     CaptureGenerationReceiptView(receipt: captureGenerationReceipt)
-                    ArtifactSummaryView(session: readySession, latestTick: latestNPCTick)
+                    ArtifactSummaryView(
+                        session: readySession,
+                        latestTick: latestNPCTick,
+                        onSceneLoadProofChange: { proof in
+                            sceneLoadProof = proof
+                        }
+                    )
                     WorldResolutionView(session: readySession)
                     NPCReactionsView(session: readySession)
                     NPCAgentModeView(summary: npcAgentModeSummary)
@@ -292,6 +303,7 @@ struct ForgeRootView: View {
             state = ForgeFlowReducer.reduce(state: state, event: .sessionCreated(snapshot.session))
             npcTickHistory = snapshot.npcTicks
             restoredSnapshot = snapshot
+            sceneLoadProof = waitingSceneLoadProof()
             snapshotStatusText = "Loaded local demo state. No raw capture media was restored."
             return snapshot.session.sessionId
         } catch {
@@ -324,6 +336,7 @@ struct ForgeRootView: View {
             backendHistoryStatusText = nil
             isSyncingBackendHistory = false
             isRunningAutonomy = false
+            sceneLoadProof = waitingSceneLoadProof()
             clearPrintQuoteState()
             if readySession != nil {
                 state = ForgeFlowReducer.reduce(state: state, event: .reset)
@@ -374,6 +387,7 @@ struct ForgeRootView: View {
         isSyncingBackendHistory = false
         npcTickError = nil
         isRunningAutonomy = false
+        sceneLoadProof = waitingSceneLoadProof()
         clearPrintQuoteState()
         let draft = mediaSelection.captureDraft(
             label: objectLabel,
@@ -603,6 +617,10 @@ struct ForgeRootView: View {
         )
     }
 
+    private var generationResultReceipt: GenerationResultReceipt {
+        GenerationResultReceiptBuilder.build(session: readySession)
+    }
+
     private var threeDGenerationInputReview: ThreeDGenerationInputReview {
         ThreeDGenerationInputReviewBuilder.build(
             selection: mediaSelection,
@@ -662,6 +680,17 @@ struct ForgeRootView: View {
             isLoading: isLoadingPrintQuote,
             errorMessage: printQuoteError,
             isApproved: isPrintQuoteApproved
+        )
+    }
+
+    private var showcaseEvidenceSummary: ShowcaseEvidenceSummary {
+        ShowcaseEvidenceSummaryBuilder.build(
+            captureReceipt: captureGenerationReceipt,
+            generationReceipt: generationResultReceipt,
+            sceneLoadProof: sceneLoadProof,
+            npcTickSummary: npcAgentTickSummary,
+            tickHistoryCount: npcTickHistory.count,
+            printFulfillmentReceipt: printFulfillmentReceipt
         )
     }
 
@@ -763,6 +792,7 @@ struct ForgeRootView: View {
         state = ForgeFlowReducer.reduce(state: state, event: .sessionCreated(snapshot.session))
         npcTickHistory = snapshot.npcTicks
         restoredSnapshot = snapshot
+        sceneLoadProof = waitingSceneLoadProof()
         do {
             try demoSnapshotStore.save(snapshot)
             snapshotStatusText = "Updated local demo state from backend history."
@@ -774,6 +804,10 @@ struct ForgeRootView: View {
 
     private func currentSnapshotTimestamp() -> String {
         ISO8601DateFormatter().string(from: Date())
+    }
+
+    private func waitingSceneLoadProof() -> ArtifactSceneLoadProof {
+        ArtifactSceneLoadProofBuilder.build(preparedAsset: nil, sceneLoadError: nil)
     }
 
     private var allowedImportContentTypes: [UTType] {

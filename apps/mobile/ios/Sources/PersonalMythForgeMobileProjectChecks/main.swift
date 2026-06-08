@@ -89,6 +89,7 @@ do {
     let demoSnapshotStatusView = try readText(appRoot.appendingPathComponent("DemoSnapshotStatusView.swift"))
     let printQuoteReviewView = try readText(appRoot.appendingPathComponent("PrintQuoteReviewView.swift"))
     let finalShowcaseSummaryView = try readText(appRoot.appendingPathComponent("FinalShowcaseSummaryView.swift"))
+    let showcaseEvidenceView = try readText(appRoot.appendingPathComponent("ShowcaseEvidenceView.swift"))
     let devicePreflightView = try readText(appRoot.appendingPathComponent("DevicePreflightView.swift"))
     let finalLaunchStatusView = try readText(appRoot.appendingPathComponent("FinalLaunchStatusView.swift"))
     let contextCapsuleReviewView = try readText(appRoot.appendingPathComponent("ContextCapsuleReviewView.swift"))
@@ -110,6 +111,7 @@ do {
     let showcaseAutopilot = try readText(coreRoot.appendingPathComponent("ShowcaseAutopilot.swift"))
     let devicePreflight = try readText(coreRoot.appendingPathComponent("DevicePreflight.swift"))
     let finalShowcaseSummary = try readText(coreRoot.appendingPathComponent("FinalShowcaseSummary.swift"))
+    let showcaseEvidenceSummary = try readText(coreRoot.appendingPathComponent("ShowcaseEvidenceSummary.swift"))
     let finalLaunchMobileSummary = try readText(
         coreRoot.appendingPathComponent("FinalLaunchMobileSummary.swift")
     )
@@ -788,6 +790,12 @@ do {
     try requirePBXSectionContains(
         project,
         sectionName: "PBXSourcesBuildPhase",
+        "10A000000000000000000028 /* ShowcaseEvidenceView.swift in Sources */,",
+        "showcase evidence Xcode source membership"
+    )
+    try requirePBXSectionContains(
+        project,
+        sectionName: "PBXSourcesBuildPhase",
         "10A000000000000000000015 /* CameraCaptureView.swift in Sources */,",
         "camera capture Xcode source membership"
     )
@@ -1166,9 +1174,10 @@ do {
         "server-owned npc tick id guard"
     )
     try requireContains(forgeRootView, "NPCTickView(", "npc tick view wiring")
+    try requireContains(forgeRootView, "ArtifactSummaryView(", "artifact summary view wiring")
     try requireContains(
         forgeRootView,
-        "ArtifactSummaryView(session: readySession, latestTick: latestNPCTick)",
+        "latestTick: latestNPCTick",
         "npc ritual latest tick summary wiring"
     )
     try requireContains(forgeRootView, "demoSnapshotStore", "demo snapshot store app state")
@@ -1235,6 +1244,55 @@ do {
     try requireContains(npcTickView, "runAutonomy", "autonomy run button action")
     try requireContains(finalShowcaseSummaryView, "Final Showcase", "final showcase summary title")
     try requireContains(finalShowcaseSummaryView, "privacyNotes", "final showcase privacy note rendering")
+    try requireContains(showcaseEvidenceView, "Showcase Evidence", "showcase evidence title")
+    try requireContains(showcaseEvidenceView, "summary.items", "showcase evidence item rendering")
+    try requireContains(showcaseEvidenceView, "privacyNotes", "showcase evidence privacy note rendering")
+    try requireContains(forgeRootView, "ShowcaseEvidenceView(summary: showcaseEvidenceSummary)", "showcase evidence root view wiring")
+    try requireContains(forgeRootView, "sceneLoadProof", "showcase evidence SceneKit proof root state")
+    try requireContains(
+        forgeRootView,
+        "ShowcaseEvidenceSummaryBuilder.build",
+        "showcase evidence root builder wiring"
+    )
+    try requireContains(
+        forgeRootView,
+        "generationResultReceipt",
+        "showcase evidence generation result receipt wiring"
+    )
+    try requireContains(artifactSummaryView, "onSceneLoadProofChange", "artifact summary SceneKit proof callback")
+    try requireContains(artifact3DPreviewView, "onSceneLoadProofChange", "artifact preview SceneKit proof callback")
+    try requireContains(
+        showcaseEvidenceSummary,
+        "ShowcaseEvidenceSummaryBuilder",
+        "showcase evidence summary builder"
+    )
+    try requireContains(
+        showcaseEvidenceSummary,
+        "canClaimLocalShowcaseReady",
+        "showcase evidence ready claim flag"
+    )
+    try requireContains(showcaseEvidenceSummary, #""scene_load""#, "showcase evidence scene load item id")
+    try requireContains(showcaseEvidenceSummary, "tickHistoryCount >= 3", "showcase evidence NPC tick threshold")
+    try requireContains(
+        contractTests,
+        "testShowcaseEvidenceWaitsForSession",
+        "showcase evidence waiting contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testShowcaseEvidenceMarksReadyLocalDemo",
+        "showcase evidence ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testShowcaseEvidenceBlocksFailedSceneProof",
+        "showcase evidence SceneKit failure contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testShowcaseEvidenceRedactsUnsafeDetails",
+        "showcase evidence redaction contract test"
+    )
     try requireContains(
         finalShowcaseSummary,
         "finalLaunchSummary: FinalLaunchMobileSummary?",
@@ -2857,8 +2915,18 @@ do {
     )
     try requireContains(
         artifactSummaryView,
-        "Artifact3DPreviewView(session: session, latestTick: latestTick)",
+        "Artifact3DPreviewView(",
         "artifact summary 3D preview wiring"
+    )
+    try requireContains(
+        artifactSummaryView,
+        "latestTick: latestTick",
+        "artifact summary latest tick 3D preview wiring"
+    )
+    try requireContains(
+        artifactSummaryView,
+        "onSceneLoadProofChange: onSceneLoadProofChange",
+        "artifact summary SceneKit proof callback handoff"
     )
     try requireContains(
         artifactSummaryView,
