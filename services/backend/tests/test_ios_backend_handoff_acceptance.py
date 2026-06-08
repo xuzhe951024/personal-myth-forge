@@ -14,11 +14,13 @@ def test_ios_backend_handoff_acceptance_passes_complete_fixture(tmp_path: Path) 
     assert result.exit_code == 0
     assert result.report["kind"] == "ios_backend_handoff_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 7, "failed": 0}
+    assert result.report["summary"] == {"passed": 9, "failed": 0}
     assert [item["id"] for item in result.report["requirements"]] == [
         "backend_device_make_target",
         "backend_device_host",
         "backend_device_port",
+        "mobile_auto_config_make_target",
+        "mobile_auto_backend_url_env",
         "local_config_example",
         "deploy_preflight_loopback_guard",
         "ios_plist_backend_url",
@@ -47,10 +49,12 @@ def test_ios_backend_handoff_acceptance_fails_missing_make_target_without_paths(
 
     assert result.exit_code == 1
     assert result.report["status"] == "failed"
-    assert result.report["summary"] == {"passed": 4, "failed": 3}
+    assert result.report["summary"] == {"passed": 4, "failed": 5}
     assert requirements["backend_device_make_target"]["status"] == "failed"
     assert requirements["backend_device_host"]["status"] == "failed"
     assert requirements["backend_device_port"]["status"] == "failed"
+    assert requirements["mobile_auto_config_make_target"]["status"] == "failed"
+    assert requirements["mobile_auto_backend_url_env"]["status"] == "failed"
     assert str(tmp_path) not in report_text
     assert "/Users/" not in report_text
     assert "sk-" not in report_text
@@ -64,6 +68,10 @@ def write_complete_fixture(root: Path) -> None:
             "backend-device-demo:\n"
             "\tcd services/backend && uv run uvicorn myth_forge_api.main:app "
             "--host 0.0.0.0 --port 8080\n"
+            ".PHONY: mobile-write-deploy-config-auto\n"
+            "mobile-write-deploy-config-auto:\n"
+            "\tPMF_BACKEND_BASE_URL=auto apps/mobile/ios/scripts/"
+            "write_deploy_local_config.sh\n"
         ),
         "apps/mobile/ios/Config/Deployment.local.xcconfig.example": (
             "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"

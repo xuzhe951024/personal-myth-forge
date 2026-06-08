@@ -101,6 +101,42 @@ def test_writer_uses_environment_values(script_repo: Path) -> None:
     )
 
 
+def test_writer_resolves_auto_backend_url_from_override(script_repo: Path) -> None:
+    result = run_writer(
+        script_repo,
+        env={
+            "DEVELOPMENT_TEAM": "ABCDE12345",
+            "PRODUCT_BUNDLE_IDENTIFIER": "com.example.personalmythforge",
+            "PMF_BACKEND_BASE_URL": "auto",
+            "PMF_BACKEND_AUTO_HOST": "10.0.0.24",
+            "PMF_BACKEND_PORT": "9090",
+        },
+    )
+
+    assert result.returncode == 0
+    assert "Auto backend URL: http://10.0.0.24:9090" in result.stdout
+    assert "Backend: http://10.0.0.24:9090" in result.stdout
+    assert "PMF_BACKEND_BASE_URL = http://10.0.0.24:9090" in local_config_path(
+        script_repo
+    ).read_text(encoding="utf-8")
+
+
+def test_writer_rejects_auto_loopback_backend_host(script_repo: Path) -> None:
+    result = run_writer(
+        script_repo,
+        env={
+            "DEVELOPMENT_TEAM": "ABCDE12345",
+            "PRODUCT_BUNDLE_IDENTIFIER": "com.example.personalmythforge",
+            "PMF_BACKEND_BASE_URL": "auto",
+            "PMF_BACKEND_AUTO_HOST": "127.0.0.1",
+        },
+    )
+
+    assert result.returncode == 2
+    assert "not loopback" in result.stderr
+    assert not local_config_path(script_repo).exists()
+
+
 def test_writer_blocks_invalid_final_launch_mode(script_repo: Path) -> None:
     result = run_writer(
         script_repo,

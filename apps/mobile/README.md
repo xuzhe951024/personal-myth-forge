@@ -88,6 +88,18 @@ PMF_BACKEND_BASE_URL=http://192.168.1.10:8080 \
 make mobile-write-deploy-config
 ```
 
+For the common physical-device path, the writer can derive the Mac LAN URL:
+
+```bash
+DEVELOPMENT_TEAM=ABCDE12345 \
+PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge \
+make mobile-write-deploy-config-auto
+```
+
+This sets `PMF_BACKEND_BASE_URL=auto`, resolves a non-loopback IPv4 host, and
+writes the same ignored config. Set `PMF_BACKEND_PORT` if the backend is not on
+port `8080`.
+
 Validate the handoff before opening Xcode or connecting a device:
 
 ```bash

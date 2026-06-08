@@ -40,6 +40,18 @@ REQUIREMENTS = (
         "--port 8080",
     ),
     SourceRequirement(
+        "mobile_auto_config_make_target",
+        "Mobile auto deploy config Make target",
+        "Makefile",
+        "mobile-write-deploy-config-auto",
+    ),
+    SourceRequirement(
+        "mobile_auto_backend_url_env",
+        "Mobile auto backend URL handoff",
+        "Makefile",
+        "PMF_BACKEND_BASE_URL=auto",
+    ),
+    SourceRequirement(
         "local_config_example",
         "Local iPhone backend URL example",
         "apps/mobile/ios/Config/Deployment.local.xcconfig.example",

@@ -11,7 +11,8 @@ usage() {
 Usage: write_deploy_local_config.sh [--team TEAM_ID] [--bundle-id BUNDLE_ID] [--backend-url URL] [--final-launch-mode MODE]
 
 Values default to DEVELOPMENT_TEAM, PRODUCT_BUNDLE_IDENTIFIER, PMF_BACKEND_BASE_URL,
-and PMF_FINAL_LAUNCH_MODE.
+and PMF_FINAL_LAUNCH_MODE. Use PMF_BACKEND_BASE_URL=auto to derive the backend
+URL from this Mac's LAN address.
 EOF
 }
 
@@ -22,6 +23,49 @@ has_line_break() {
 "*) return 0 ;;
     *) return 1 ;;
   esac
+}
+
+resolve_auto_backend_url() {
+  port="${PMF_BACKEND_PORT:-8080}"
+  case "$port" in
+    ""|*[!0-9]*) return 1 ;;
+  esac
+  if [ -n "${PMF_BACKEND_AUTO_HOST:-}" ]; then
+    printf 'http://%s:%s' "$PMF_BACKEND_AUTO_HOST" "$port"
+    return 0
+  fi
+  if ! command -v python3 >/dev/null 2>&1; then
+    return 1
+  fi
+  PMF_BACKEND_PORT="$port" python3 - <<'PY'
+import os
+import socket
+import sys
+
+port = os.environ.get("PMF_BACKEND_PORT", "8080")
+hosts = []
+for target in [("8.8.8.8", 80), ("1.1.1.1", 80), ("224.0.0.1", 1)]:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.connect(target)
+        host = sock.getsockname()[0]
+        if host and not host.startswith("127.") and host != "0.0.0.0":
+            hosts.append(host)
+    except OSError:
+        pass
+    finally:
+        sock.close()
+try:
+    for host in socket.gethostbyname_ex(socket.gethostname())[2]:
+        if host and not host.startswith("127.") and host != "0.0.0.0":
+            hosts.append(host)
+except OSError:
+    pass
+for host in hosts:
+    print(f"http://{host}:{port}")
+    sys.exit(0)
+sys.exit(1)
+PY
 }
 
 team="${DEVELOPMENT_TEAM:-}"
@@ -75,6 +119,16 @@ while [ "$#" -gt 0 ]; do
 done
 
 missing=0
+if [ "$backend_url" = "auto" ]; then
+  resolved_backend_url=$(resolve_auto_backend_url || true)
+  if [ -z "$resolved_backend_url" ]; then
+    printf '%s\n' "Could not auto-detect a non-loopback backend host." >&2
+    missing=1
+  else
+    backend_url="$resolved_backend_url"
+    printf '%s\n' "Auto backend URL: $backend_url"
+  fi
+fi
 if [ -z "$team" ]; then
   printf '%s\n' "Missing DEVELOPMENT_TEAM. Set env var or pass --team." >&2
   missing=1
