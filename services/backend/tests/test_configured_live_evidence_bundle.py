@@ -146,6 +146,27 @@ def test_configured_live_evidence_bundle_redacts_unsafe_saved_report_text(
     assert str(repo_root) not in report_text
 
 
+def test_configured_live_evidence_bundle_cli_writes_report(tmp_path: Path) -> None:
+    output = tmp_path / "configured-live-evidence-bundle.json"
+
+    from myth_forge_api.cli import main
+
+    exit_code = main(
+        [
+            "configured-live-evidence-bundle",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output),
+        ]
+    )
+
+    assert exit_code == 2
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["kind"] == "configured_live_evidence_bundle_report"
+    assert payload["status"] == "blocked"
+
+
 def _configured_settings() -> Settings:
     return Settings(
         three_d_provider="meshy",

@@ -26,6 +26,9 @@ from myth_forge_api.final_configured_preflight import (
 from myth_forge_api.final_configured_evidence_plan import (
     build_final_configured_evidence_plan_report,
 )
+from myth_forge_api.configured_live_evidence_bundle import (
+    build_configured_live_evidence_bundle_report,
+)
 from myth_forge_api.final_external_action_ledger import (
     build_final_external_action_ledger_report,
 )
@@ -213,6 +216,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if args.command == "final-configured-evidence-plan":
             return _final_configured_evidence_plan(
+                repo_root=args.repo_root,
+                output_path=args.output,
+                allow_live_provider_calls=args.allow_live_provider_calls,
+            )
+        if args.command == "configured-live-evidence-bundle":
+            return _configured_live_evidence_bundle(
                 repo_root=args.repo_root,
                 output_path=args.output,
                 allow_live_provider_calls=args.allow_live_provider_calls,
@@ -415,6 +424,16 @@ def _build_parser() -> argparse.ArgumentParser:
     final_configured_evidence_plan_parser.add_argument("--repo-root", default=None)
     final_configured_evidence_plan_parser.add_argument("--output", default=None)
     final_configured_evidence_plan_parser.add_argument(
+        "--allow-live-provider-calls",
+        action="store_true",
+    )
+
+    configured_live_evidence_bundle_parser = subcommands.add_parser(
+        "configured-live-evidence-bundle"
+    )
+    configured_live_evidence_bundle_parser.add_argument("--repo-root", default=None)
+    configured_live_evidence_bundle_parser.add_argument("--output", default=None)
+    configured_live_evidence_bundle_parser.add_argument(
         "--allow-live-provider-calls",
         action="store_true",
     )
@@ -775,6 +794,20 @@ def _final_configured_evidence_plan(
     allow_live_provider_calls: bool,
 ) -> int:
     result = build_final_configured_evidence_plan_report(
+        repo_root=Path(repo_root) if repo_root else None,
+        allow_live_provider_calls=allow_live_provider_calls,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _configured_live_evidence_bundle(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+    allow_live_provider_calls: bool,
+) -> int:
+    result = build_configured_live_evidence_bundle_report(
         repo_root=Path(repo_root) if repo_root else None,
         allow_live_provider_calls=allow_live_provider_calls,
     )
