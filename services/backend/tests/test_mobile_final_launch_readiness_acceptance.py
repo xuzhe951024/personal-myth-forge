@@ -119,6 +119,10 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "preflight_ios_deploy_runbook_label" in requirement_ids
     assert "preflight_ios_deploy_runbook_source" in requirement_ids
     assert "preflight_ios_deploy_runbook_required_item" in requirement_ids
+    assert "preflight_ios_device_evidence_bundle_item" in requirement_ids
+    assert "preflight_ios_device_evidence_bundle_label" in requirement_ids
+    assert "preflight_ios_device_evidence_bundle_source" in requirement_ids
+    assert "preflight_ios_device_evidence_bundle_required_item" in requirement_ids
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
     assert "contract_final_resource_fill_guide_ready" in requirement_ids
     assert "contract_final_resource_fill_guide_redaction" in requirement_ids
@@ -135,6 +139,10 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_ios_deploy_runbook_blocked" in requirement_ids
     assert "contract_ios_deploy_runbook_ready" in requirement_ids
     assert "contract_ios_deploy_runbook_redaction" in requirement_ids
+    assert "contract_ios_device_evidence_bundle_missing_preflight" in requirement_ids
+    assert "contract_ios_device_evidence_bundle_blocked_preflight" in requirement_ids
+    assert "contract_ios_device_evidence_bundle_ready_preflight" in requirement_ids
+    assert "contract_ios_device_evidence_bundle_redaction_preflight" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_fill_guide_first_blocker_row" in requirement_ids
@@ -372,6 +380,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Deploy Runbook",
                 "report.iosDeployRunbook",
                 "\"ios_deploy_runbook\",",
+                "iosDeviceEvidenceBundleItem(report: finalDemoLaunch)",
+                "Device Evidence",
+                "report.iosDeviceEvidenceBundle",
+                "\"ios_device_evidence_bundle\",",
                 "Final launch readiness is read-only.",
                 "case \"ready\"",
                 "\"final_resource_fill_guide\"",
@@ -402,6 +414,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightBlocksOnIOSDeployRunbookCommandStep",
                 "testDevicePreflightMarksReadyIOSDeployRunbook",
                 "testDevicePreflightRedactsUnsafeIOSDeployRunbookDetail",
+                "testDevicePreflightWaitsForMissingIOSDeviceEvidenceBundle",
+                "testDevicePreflightBlocksOnIOSDeviceEvidenceSlot",
+                "testDevicePreflightMarksReadyIOSDeviceEvidenceBundle",
+                "testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
                 "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
                 "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",

@@ -110,6 +110,10 @@ do {
     try testDevicePreflightBlocksOnIOSDeployRunbookCommandStep()
     try testDevicePreflightMarksReadyIOSDeployRunbook()
     try testDevicePreflightRedactsUnsafeIOSDeployRunbookDetail()
+    try testDevicePreflightWaitsForMissingIOSDeviceEvidenceBundle()
+    try testDevicePreflightBlocksOnIOSDeviceEvidenceSlot()
+    try testDevicePreflightMarksReadyIOSDeviceEvidenceBundle()
+    try testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail()
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testFinalLaunchMobileSummaryWaitsForMissingReport()
     try testFinalLaunchMobileSummaryWaitsWithLaunchReceipt()
@@ -3019,6 +3023,89 @@ private func testDevicePreflightRedactsUnsafeIOSDeployRunbookDetail() throws {
     let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
 
     try expectEqual(summary.item(id: "ios_deploy_runbook")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
+}
+
+private func testDevicePreflightWaitsForMissingIOSDeviceEvidenceBundle() throws {
+    var report = finalDemoLaunchReport(overallStatus: "partial")
+    report.iosDeviceEvidenceBundle = nil
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+
+    try expectEqual(summary.item(id: "ios_device_evidence_bundle")?.status, .waiting)
+    try expectContains(summary.item(id: "ios_device_evidence_bundle")?.detail ?? "", "not loaded")
+}
+
+private func testDevicePreflightBlocksOnIOSDeviceEvidenceSlot() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            iosDeviceEvidenceStatus: "blocked",
+            iosDeviceEvidenceSlotStatus: "blocked",
+            iosDeviceEvidenceAction: "run make mobile-deploy-preflight after backend is running",
+            iosDeviceEvidenceDetail: "Run mobile deploy preflight after backend-device-demo is reachable.",
+            iosDeviceEvidenceCommand: "make mobile-deploy-preflight"
+        )
+    )
+    let detail = summary.item(id: "ios_device_evidence_bundle")?.detail ?? ""
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "ios_device_evidence_bundle")?.status, .blocked)
+    try expectContains(detail, "blocked")
+    try expectContains(detail, "backend_device_server")
+    try expectContains(detail, "make backend-device-demo")
+    try expectContains(detail, "backend_health_not_proven")
+    try expectContains(detail, "Run mobile deploy preflight")
+    try expectContains(detail, "Action: run make mobile-deploy-preflight")
+}
+
+private func testDevicePreflightMarksReadyIOSDeviceEvidenceBundle() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            iosDeviceEvidenceStatus: "ready",
+            iosDeviceEvidenceSlotStatus: "ready"
+        )
+    )
+    let detail = summary.item(id: "ios_device_evidence_bundle")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "ios_device_evidence_bundle")?.status, .ready)
+    try expectContains(detail, "ready")
+    try expectContains(detail, "ready 4")
+    try expectContains(detail, "blocked 0")
+    try expectContains(detail, "required 4")
+    try expectContains(detail, "global 1")
+    try expectContains(detail, "commands_run=false")
+    try expectContains(detail, "xcode=false")
+}
+
+private func testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        iosDeviceEvidenceStatus: "blocked",
+        iosDeviceEvidenceSlotStatus: "blocked",
+        iosDeviceEvidenceAction: "run sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token api_key=secret",
+        iosDeviceEvidenceDetail: "Authorization Bearer token api_key=secret checkout_url /Users/zhexu/private",
+        iosDeviceEvidenceCommand: "make mobile-deploy-preflight sk-test /Users/zhexu/private file:///tmp/private"
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.item(id: "ios_device_evidence_bundle")?.status, .blocked)
     try expectContains(text, "[withheld]")
     try expectNotContains(text, "sk-test")
     try expectNotContains(text, "/Users/")
@@ -10909,7 +10996,9 @@ private func readyDevicePreflightFinalDemoLaunchReport() -> FinalDemoLaunchRepor
         overallStatus: "ready",
         iosDeployRunbookStatus: "ready",
         iosDeployRunbookSlotStatus: "ready",
-        iosDeployRunbookThreeDSlotStatus: "ready"
+        iosDeployRunbookThreeDSlotStatus: "ready",
+        iosDeviceEvidenceStatus: "ready",
+        iosDeviceEvidenceSlotStatus: "ready"
     )
     report.finalResourceRequirements = readyFinalResourceRequirementsReport()
     report.finalResourceFillGuide = readyFinalResourceFillGuideReport()
