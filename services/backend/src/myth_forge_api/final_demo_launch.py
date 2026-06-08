@@ -112,6 +112,16 @@ def build_final_demo_launch_report(
     live_provider_evidence = build_live_provider_evidence_report(
         repo_root=selected_repo_root,
     ).report
+    configured_live_evidence_bundle: dict[str, Any] | None = None
+    if include_configured_evidence_plan:
+        from myth_forge_api.configured_live_evidence_bundle import (
+            build_configured_live_evidence_bundle_report,
+        )
+
+        configured_live_evidence_bundle = build_configured_live_evidence_bundle_report(
+            settings=selected_settings,
+            repo_root=selected_repo_root,
+        ).report
     final_configured_evidence_plan: dict[str, Any] | None = None
     if include_configured_evidence_plan:
         from myth_forge_api.final_configured_evidence_plan import (
@@ -215,6 +225,8 @@ def build_final_demo_launch_report(
     }
     if final_configured_evidence_plan is not None:
         report["final_configured_evidence_plan"] = final_configured_evidence_plan
+    if configured_live_evidence_bundle is not None:
+        report["configured_live_evidence_bundle"] = configured_live_evidence_bundle
     sanitized = _sanitize_report(report, selected_repo_root)
     return FinalDemoLaunchResult(
         exit_code=_exit_code(mode=mode, summary=phase_summary),

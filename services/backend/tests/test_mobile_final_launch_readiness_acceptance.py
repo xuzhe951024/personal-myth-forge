@@ -78,16 +78,23 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "model_configured_evidence_plan" in requirement_ids
     assert "model_configured_evidence_plan_field" in requirement_ids
     assert "model_configured_evidence_plan_planned_consent" in requirement_ids
+    assert "model_configured_evidence_bundle" in requirement_ids
+    assert "model_configured_evidence_bundle_field" in requirement_ids
     assert "mobile_summary_live_provider_evidence_rows" in requirement_ids
     assert "mobile_summary_configured_evidence_plan_rows" in requirement_ids
     assert "mobile_summary_configured_evidence_plan_planned_consent" in requirement_ids
+    assert "mobile_summary_configured_evidence_bundle_rows" in requirement_ids
     assert "mobile_status_view_live_evidence" in requirement_ids
     assert "mobile_status_view_configured_evidence" in requirement_ids
+    assert "mobile_status_view_configured_evidence_bundle" in requirement_ids
     assert "contract_live_provider_evidence_decode" in requirement_ids
     assert "contract_configured_evidence_plan_decode" in requirement_ids
     assert "contract_configured_evidence_plan_planned_consent" in requirement_ids
     assert "contract_configured_evidence_plan_summary" in requirement_ids
     assert "contract_configured_evidence_plan_redaction" in requirement_ids
+    assert "contract_configured_evidence_bundle_decode" in requirement_ids
+    assert "contract_configured_evidence_bundle_summary" in requirement_ids
+    assert "contract_configured_evidence_bundle_redaction" in requirement_ids
     assert "preflight_final_resource_fill_guide_item" in requirement_ids
     assert "preflight_final_resource_fill_guide_label" in requirement_ids
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
@@ -191,6 +198,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "FinalConfiguredEvidencePlanReport",
                 "finalConfiguredEvidencePlan",
                 "plannedConsentSteps",
+                "ConfiguredLiveEvidenceBundleReport",
+                "configuredLiveEvidenceBundle",
                 "FinalResourceFillGuideReport",
                 "finalResourceFillGuide",
                 "ResourceHandoffReport",
@@ -245,6 +254,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "liveProviderEvidenceRows",
                 "configuredEvidencePlanRows",
                 "consent now",
+                "configuredEvidenceBundleRows",
                 "rehearsalFreshnessRow",
                 "Freshness:",
                 "resourceHandoffRows",
@@ -269,6 +279,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Local Smoke",
                 "Live Evidence",
                 "Configured Evidence",
+                "Configured Evidence Bundle",
                 "Resource Fill Guide",
                 "Resource Handoff",
                 "Backend Resources",
@@ -334,6 +345,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "planned_consent_steps",
                 "testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan",
                 "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan",
+                "testDecodesConfiguredEvidenceBundleFromFinalLaunchPayload",
+                "testFinalLaunchMobileSummaryShowsConfiguredEvidenceBundle",
+                "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidenceBundle",
                 "testDecodesFinalResourceFillGuideFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsResourceFillGuide",
                 "testDecodesResourceHandoffFromFinalLaunchPayload",

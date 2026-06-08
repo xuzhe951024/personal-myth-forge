@@ -209,6 +209,18 @@ SOURCE_REQUIREMENTS = (
         "plannedConsentSteps",
     ),
     SourceRequirement(
+        "model_configured_evidence_bundle",
+        "Configured live evidence bundle model",
+        PMF_MODELS_PATH,
+        "ConfiguredLiveEvidenceBundleReport",
+    ),
+    SourceRequirement(
+        "model_configured_evidence_bundle_field",
+        "Final launch configured evidence bundle field",
+        PMF_MODELS_PATH,
+        "configuredLiveEvidenceBundle",
+    ),
+    SourceRequirement(
         "model_final_resource_fill_guide",
         "Final resource fill guide model",
         PMF_MODELS_PATH,
@@ -431,6 +443,12 @@ SOURCE_REQUIREMENTS = (
         "consent now",
     ),
     SourceRequirement(
+        "mobile_summary_configured_evidence_bundle_rows",
+        "Mobile final launch configured evidence bundle rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "configuredEvidenceBundleRows",
+    ),
+    SourceRequirement(
         "mobile_summary_resource_handoff_rows",
         "Mobile final launch resource handoff rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -543,6 +561,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch configured evidence section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Configured Evidence",
+    ),
+    SourceRequirement(
+        "mobile_status_view_configured_evidence_bundle",
+        "Mobile final launch configured evidence bundle section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Configured Evidence Bundle",
     ),
     SourceRequirement(
         "mobile_status_view_resource_fill_guide",
@@ -867,6 +891,24 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts configured evidence plan",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan",
+    ),
+    SourceRequirement(
+        "contract_configured_evidence_bundle_decode",
+        "Contract test decodes configured evidence bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesConfiguredEvidenceBundleFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_configured_evidence_bundle_summary",
+        "Contract test renders configured evidence bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsConfiguredEvidenceBundle",
+    ),
+    SourceRequirement(
+        "contract_configured_evidence_bundle_redaction",
+        "Contract test redacts configured evidence bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidenceBundle",
     ),
     SourceRequirement(
         "contract_final_resource_fill_guide_decode",

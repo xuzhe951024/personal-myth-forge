@@ -54,6 +54,27 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
     assert result.report["safety"]["live_provider_calls_by_default"] is False
 
 
+def test_final_demo_launch_embeds_configured_live_evidence_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="configured",
+    )
+    bundle = result.report["configured_live_evidence_bundle"]
+
+    assert bundle["kind"] == "configured_live_evidence_bundle_report"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"]["evidence_files"] == 5
+    assert bundle["summary"]["commands_run"] == 0
+    assert bundle["current_blocker"]["id"] == "final_resource_fill_guide"
+    assert bundle["safety"]["commands_run"] is False
+    assert bundle["safety"]["live_provider_calls"] is False
+
+
 def test_final_demo_launch_includes_sanitized_resource_fill_guide(
     tmp_path: Path,
 ) -> None:
