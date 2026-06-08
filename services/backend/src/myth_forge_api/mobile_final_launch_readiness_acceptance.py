@@ -737,6 +737,30 @@ SOURCE_REQUIREMENTS = (
         "guide.firstBlocker",
     ),
     SourceRequirement(
+        "preflight_final_resource_apply_preview_item",
+        "Device preflight final resource apply preview item",
+        DEVICE_PREFLIGHT_PATH,
+        "finalResourceApplyPreviewItem(report: finalDemoLaunch)",
+    ),
+    SourceRequirement(
+        "preflight_final_resource_apply_preview_label",
+        "Device preflight final resource apply preview label",
+        DEVICE_PREFLIGHT_PATH,
+        "Apply Preview",
+    ),
+    SourceRequirement(
+        "preflight_final_resource_apply_preview_source",
+        "Device preflight final resource apply preview source",
+        DEVICE_PREFLIGHT_PATH,
+        "report.finalResourceApplyPreview",
+    ),
+    SourceRequirement(
+        "preflight_final_resource_apply_preview_required_item",
+        "Device preflight final resource apply preview required item",
+        DEVICE_PREFLIGHT_PATH,
+        '"final_resource_apply_preview",',
+    ),
+    SourceRequirement(
         "preflight_read_only_note",
         "Device preflight read-only note",
         DEVICE_PREFLIGHT_PATH,
@@ -819,6 +843,30 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts unsafe final resource fill guide first blocker detail",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
+    ),
+    SourceRequirement(
+        "contract_final_resource_apply_preview_missing",
+        "Contract test waits for missing final resource apply preview",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightWaitsForMissingFinalResourceApplyPreview",
+    ),
+    SourceRequirement(
+        "contract_final_resource_apply_preview_blocked",
+        "Contract test blocks on final resource apply preview first blocker",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksOnFinalResourceApplyPreviewFirstBlocker",
+    ),
+    SourceRequirement(
+        "contract_final_resource_apply_preview_ready",
+        "Contract test marks ready final resource apply preview",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyFinalResourceApplyPreview",
+    ),
+    SourceRequirement(
+        "contract_final_resource_apply_preview_redaction",
+        "Contract test redacts unsafe final resource apply preview first blocker detail",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail",
     ),
     SourceRequirement(
         "contract_preflight_error",

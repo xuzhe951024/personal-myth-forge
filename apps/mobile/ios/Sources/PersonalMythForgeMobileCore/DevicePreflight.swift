@@ -100,6 +100,7 @@ public enum DevicePreflightSummaryBuilder {
             finalLaunchItem(report: finalDemoLaunch, error: finalDemoLaunchError),
             finalResourcesItem(report: finalDemoLaunch),
             finalResourceFillGuideItem(report: finalDemoLaunch),
+            finalResourceApplyPreviewItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
         ]
@@ -382,6 +383,101 @@ public enum DevicePreflightSummaryBuilder {
         "\(guide.status): required \(guide.summary.requiredInputs), optional \(guide.summary.optionalInputs), configured \(guide.summary.configuredInputs), secret \(guide.summary.secretInputs)."
     }
 
+    private static func finalResourceApplyPreviewItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "final_resource_apply_preview",
+                "Apply Preview",
+                .waiting,
+                "Final resource apply preview has not loaded."
+            )
+        }
+        guard let preview = report.finalResourceApplyPreview else {
+            return item(
+                "final_resource_apply_preview",
+                "Apply Preview",
+                .waiting,
+                "Final resource apply preview has not loaded."
+            )
+        }
+        if preview.status == "ready" {
+            return item(
+                "final_resource_apply_preview",
+                "Apply Preview",
+                .ready,
+                finalResourceApplyPreviewReadyDetail(preview)
+            )
+        }
+        if let blocker = preview.firstBlocker {
+            return item(
+                "final_resource_apply_preview",
+                "Apply Preview",
+                .blocked,
+                finalResourceApplyPreviewDetail(preview, blocker: blocker)
+            )
+        }
+        if preview.status == "blocked" {
+            return item(
+                "final_resource_apply_preview",
+                "Apply Preview",
+                .blocked,
+                finalResourceApplyPreviewSummaryDetail(preview)
+            )
+        }
+        return item(
+            "final_resource_apply_preview",
+            "Apply Preview",
+            .waiting,
+            finalResourceApplyPreviewSummaryDetail(preview)
+        )
+    }
+
+    private static func finalResourceApplyPreviewReadyDetail(
+        _ preview: FinalResourceApplyPreviewReport
+    ) -> String {
+        finalResourceApplyPreviewSummaryDetail(preview)
+    }
+
+    private static func finalResourceApplyPreviewDetail(
+        _ preview: FinalResourceApplyPreviewReport,
+        blocker: FinalResourceApplyPreviewFirstBlocker
+    ) -> String {
+        var parts = [finalResourceApplyPreviewSummaryDetail(preview)]
+        var blockerParts = ["First blocker:", blocker.id, blocker.status]
+        if let classification = blocker.classification, !classification.isEmpty {
+            blockerParts.append(classification)
+        }
+        if !blocker.command.isEmpty {
+            blockerParts.append("| \(blocker.command)")
+        }
+        if !blocker.detail.isEmpty {
+            blockerParts.append("| \(blocker.detail)")
+        }
+        if !blocker.destination.isEmpty {
+            blockerParts.append("| \(blocker.destination)")
+        }
+        if !blocker.writer.isEmpty {
+            blockerParts.append("| \(blocker.writer)")
+        }
+        if !blocker.blockedBy.isEmpty {
+            blockerParts.append("| blocked_by \(blocker.blockedBy.joined(separator: ", "))")
+        }
+        if !blocker.validationCommand.isEmpty {
+            blockerParts.append("| \(blocker.validationCommand)")
+        }
+        parts.append(blockerParts.joined(separator: " "))
+        if let command = preview.commands.first, !command.isEmpty {
+            parts.append("Command: \(command)")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func finalResourceApplyPreviewSummaryDetail(
+        _ preview: FinalResourceApplyPreviewReport
+    ) -> String {
+        "\(preview.status): ready \(preview.summary.ready), missing \(preview.summary.missing), blocked \(preview.summary.blocked), targets \(preview.summary.writeTargets), secret \(preview.summary.secret)."
+    }
+
     private static func localDemoItem(_ summary: FinalShowcaseSummary) -> DevicePreflightItem {
         switch summary.overallStatus {
         case .readyForLocalDemo:
@@ -420,6 +516,7 @@ public enum DevicePreflightSummaryBuilder {
             "final_launch",
             "final_resources",
             "final_resource_fill_guide",
+            "final_resource_apply_preview",
             "local_demo",
         ])
         let requiredReady = required.allSatisfy { id in

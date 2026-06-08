@@ -107,10 +107,18 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "preflight_final_resource_fill_guide_item" in requirement_ids
     assert "preflight_final_resource_fill_guide_label" in requirement_ids
     assert "preflight_final_resource_fill_guide_first_blocker_source" in requirement_ids
+    assert "preflight_final_resource_apply_preview_item" in requirement_ids
+    assert "preflight_final_resource_apply_preview_label" in requirement_ids
+    assert "preflight_final_resource_apply_preview_source" in requirement_ids
+    assert "preflight_final_resource_apply_preview_required_item" in requirement_ids
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
     assert "contract_final_resource_fill_guide_ready" in requirement_ids
     assert "contract_final_resource_fill_guide_redaction" in requirement_ids
     assert "contract_final_resource_fill_guide_first_blocker_redaction" in requirement_ids
+    assert "contract_final_resource_apply_preview_missing" in requirement_ids
+    assert "contract_final_resource_apply_preview_blocked" in requirement_ids
+    assert "contract_final_resource_apply_preview_ready" in requirement_ids
+    assert "contract_final_resource_apply_preview_redaction" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_fill_guide_first_blocker_row" in requirement_ids
@@ -336,6 +344,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "final_resource_fill_guide",
                 "Fill Guide",
                 "guide.firstBlocker",
+                "finalResourceApplyPreviewItem(report: finalDemoLaunch)",
+                "Apply Preview",
+                "report.finalResourceApplyPreview",
+                "\"final_resource_apply_preview\",",
                 "Final launch readiness is read-only.",
                 "case \"ready\"",
                 "\"final_resource_fill_guide\"",
@@ -354,6 +366,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightMarksReadyFinalResourceFillGuide",
                 "testDevicePreflightRedactsUnsafeFinalResourceFillGuideDetail",
                 "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
+                "testDevicePreflightWaitsForMissingFinalResourceApplyPreview",
+                "testDevicePreflightBlocksOnFinalResourceApplyPreviewFirstBlocker",
+                "testDevicePreflightMarksReadyFinalResourceApplyPreview",
+                "testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
                 "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
                 "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",
