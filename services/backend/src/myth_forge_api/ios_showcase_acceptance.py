@@ -2708,6 +2708,10 @@ FEATURES = (
                 "final-launch-closure-packet.json",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_local_report_refresh.py",
+                "first_blocker",
+            ),
+            SourceRequirement(
                 "services/backend/tests/test_final_launch_closure_packet.py",
                 "test_final_launch_closure_packet_blocks_missing_final_actions",
             ),
