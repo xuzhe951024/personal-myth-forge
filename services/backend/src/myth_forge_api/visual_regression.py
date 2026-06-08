@@ -383,6 +383,28 @@ DEFAULT_VISUAL_ARTIFACTS = (
         ),
     ),
     VisualArtifactSpec(
+        id="p0.218_final_demo_launch_next_action",
+        html_path="docs/superpowers/verification/p0.218-final-demo-launch-next-action.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.218-final-demo-launch-next-action-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.218-final-demo-launch-next-action-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Final Demo Launch",
+            "Next action",
+            "apply_final_resources blocked",
+            "make final-apply-resources",
+            "one-file backend and iOS final demo handoff",
+            "No provider calls, writes, Xcode, signing, or global mutation.",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.160_final_showcase_ios_deploy_digest",
         html_path="docs/superpowers/verification/p0.160-final-showcase-ios-deploy-digest.html",
         png_path=(

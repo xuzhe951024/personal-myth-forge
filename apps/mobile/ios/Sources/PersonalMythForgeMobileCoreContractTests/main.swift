@@ -144,6 +144,7 @@ do {
     try testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt()
     try testFinalLaunchMobileSummaryShowsResourceBlockerReceipt()
     try testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt()
+    try testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction()
     try testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt()
     try testFinalLaunchMobileSummaryRedactsUnsafeLaunchReceipt()
     try testLiveProviderConsentSummaryWaitsForProviderReadiness()
@@ -3830,6 +3831,33 @@ private func testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt() throw
     try expectContains(summary.launchReceiptRows[2], "one-file backend and iOS final demo handoff")
 }
 
+private func testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        firstBlockerJSON: finalDemoLaunchTopLevelFirstBlockerJSON(),
+        nextActionJSON: finalDemoLaunchTopLevelNextActionJSON(),
+        finalResourcesStatus: "blocked",
+        finalResourcesItemsJSON: blockedFinalResourceItemsJSON(),
+        finalAcceptanceStatus: "blocked",
+        finalOperatorHandoffStatus: "blocked"
+    )
+
+    let action = try require(report.nextAction, "missing final demo launch next action")
+    try expectEqual(action.id, "apply_final_resources")
+    try expectEqual(action.source, "first_blocker")
+    try expectEqual(action.sourceId, "apply_final_resources")
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+
+    try expectContains(
+        summary.launchReceiptRows[2],
+        "Next action: apply_final_resources missing final_demo_launch_phase"
+    )
+    try expectContains(summary.launchReceiptRows[2], "make final-apply-resources")
+    try expectContains(summary.launchReceiptRows[2], "one-file backend and iOS final demo handoff")
+    try expectContains(summary.launchReceiptRows[3], "First blocker: apply_final_resources")
+}
+
 private func testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -7120,10 +7148,26 @@ private func finalDemoLaunchTopLevelFirstBlockerJSON() -> String {
     """
 }
 
+private func finalDemoLaunchTopLevelNextActionJSON() -> String {
+    """
+    {
+      "id": "apply_final_resources",
+      "label": "Apply final resources",
+      "status": "missing",
+      "classification": "final_demo_launch_phase",
+      "command": "make final-apply-resources",
+      "detail": "one-file backend and iOS final demo handoff | Reads only ignored services/backend/.local/final-resources.env.",
+      "source": "first_blocker",
+      "source_id": "apply_final_resources"
+    }
+    """
+}
+
 private func finalDemoLaunchPayload(
     mode: String = "local",
     overallStatus: String = "partial",
     firstBlockerJSON: String = "null",
+    nextActionJSON: String = "null",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     commands: [String]? = nil,
     finalResourcesStatus: String = "missing",
@@ -7350,6 +7394,7 @@ private func finalDemoLaunchPayload(
           "mode": "\(mode)",
           "overall_status": "\(overallStatus)",
           "first_blocker": \(firstBlockerJSON),
+          "next_action": \(nextActionJSON),
           "summary": {
             "ready": 4,
             "missing": 3,
@@ -12422,6 +12467,7 @@ private func finalDemoLaunchReport(
     mode: String = "local",
     overallStatus: String = "partial",
     firstBlockerJSON: String = "null",
+    nextActionJSON: String = "null",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     commands: [String]? = nil,
     finalResourcesStatus: String = "ready",
@@ -12511,6 +12557,7 @@ private func finalDemoLaunchReport(
             mode: mode,
             overallStatus: overallStatus,
             firstBlockerJSON: firstBlockerJSON,
+            nextActionJSON: nextActionJSON,
             unsafeDetail: unsafeDetail,
             commands: commands,
             finalResourcesStatus: finalResourcesStatus,

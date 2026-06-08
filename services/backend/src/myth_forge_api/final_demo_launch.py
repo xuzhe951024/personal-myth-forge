@@ -198,6 +198,7 @@ def build_final_demo_launch_report(
         "mode": mode,
         "overall_status": overall_status,
         "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "summary": resource_summary,
         "phase_summary": phase_summary,
         "final_resources_preflight": final_resources_preflight,
@@ -528,6 +529,15 @@ def _first_blocker(
         phases=phases,
         statuses={"manual", "partial"},
     )
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    action = dict(first_blocker)
+    action["source"] = "first_blocker"
+    action["source_id"] = str(action.get("source_id") or action.get("id", ""))
+    return action
 
 
 def _first_phase_blocker(

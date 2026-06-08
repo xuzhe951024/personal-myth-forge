@@ -308,12 +308,16 @@ public enum FinalLaunchMobileSummaryBuilder {
     }
 
     private static func launchReceiptRows(from report: FinalDemoLaunchReport) -> [String] {
-        [
+        var rows = [
             receiptStatusRow(report),
             acceptanceReceiptRow(report.finalAcceptanceReadiness),
-            firstBlockerReceiptRow(report),
-            liveProviderReceiptRow(report),
-        ].map(sanitize)
+        ]
+        if let action = report.nextAction {
+            rows.append(finalDemoLaunchNextActionReceiptRow(action))
+        }
+        rows.append(firstBlockerReceiptRow(report))
+        rows.append(liveProviderReceiptRow(report))
+        return rows.map(sanitize)
     }
 
     private static func receiptStatusRow(_ report: FinalDemoLaunchReport) -> String {
@@ -347,6 +351,27 @@ public enum FinalLaunchMobileSummaryBuilder {
             return "First blocker: \(action)"
         }
         return "First blocker: none; final handoff ready."
+    }
+
+    private static func finalDemoLaunchNextActionReceiptRow(
+        _ action: FinalDemoLaunchNextAction
+    ) -> String {
+        var headingParts = [
+            "Next action:",
+            action.id,
+            action.status,
+        ]
+        if let classification = action.classification, !classification.isEmpty {
+            headingParts.append(classification)
+        }
+        var parts = [headingParts.joined(separator: " ")]
+        if !action.command.isEmpty {
+            parts.append(action.command)
+        }
+        if !action.detail.isEmpty {
+            parts.append(action.detail)
+        }
+        return parts.joined(separator: " | ")
     }
 
     private static func finalDemoLaunchFirstBlockerReceiptRow(

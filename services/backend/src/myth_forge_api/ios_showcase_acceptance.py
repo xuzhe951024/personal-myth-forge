@@ -1518,6 +1518,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.218_final_demo_launch_next_action",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
                 "p0.100_live_provider_consent",
             ),
             SourceRequirement(
@@ -1549,7 +1553,7 @@ FEATURES = (
                 "test_visual_regression_cli_writes_showcase_report",
             ),
             SourceRequirement("README.md", "full-showcase visual index"),
-            SourceRequirement("README.md", "25 static 390x844 iPhone evidence artifacts"),
+            SourceRequirement("README.md", "26 static 390x844 iPhone evidence artifacts"),
             SourceRequirement("README.md", "configured acceptance command visual"),
             SourceRequirement("README.md", "device blocker handoff visual"),
         ),
@@ -2415,6 +2419,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "next_action",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "_phase_blocker_with_nested_hint",
             ),
             SourceRequirement(
@@ -2423,15 +2431,31 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalDemoLaunchNextAction",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "firstBlocker: FinalDemoLaunchFirstBlocker?",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "nextAction: FinalDemoLaunchNextAction?",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "report.firstBlocker",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "Next action:",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
