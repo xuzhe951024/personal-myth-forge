@@ -34,6 +34,9 @@ from myth_forge_api.final_external_action_ledger import (
     build_final_external_action_ledger_report,
 )
 from myth_forge_api.final_handoff_index import build_final_handoff_index_report
+from myth_forge_api.final_launch_closure_packet import (
+    build_final_launch_closure_packet_report,
+)
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
 )
@@ -299,6 +302,14 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "final-showcase-readiness.json",
             lambda repo_root: build_final_showcase_readiness_report(
                 settings=LOCAL_SETTINGS,
+                repo_root=repo_root,
+            ).report,
+        ),
+        _step(
+            "final_launch_closure_packet",
+            "Final launch closure packet",
+            "final-launch-closure-packet.json",
+            lambda repo_root: build_final_launch_closure_packet_report(
                 repo_root=repo_root,
             ).report,
         ),

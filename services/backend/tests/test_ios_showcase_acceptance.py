@@ -1053,6 +1053,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_final_launch_closure_packet_report final_launch_closure_packet_report "
             "requires_cost_consent_for_live_actions"
         ),
+        "services/backend/src/myth_forge_api/final_local_report_refresh.py": (
+            "build_final_launch_closure_packet_report final-launch-closure-packet.json"
+        ),
         "services/backend/tests/test_final_showcase_readiness.py": (
             "final_resource_apply_preview:missing final_resource_apply_preview:ready "
             "test_final_showcase_readiness_blocks_failed_local_showcase_smoke"
