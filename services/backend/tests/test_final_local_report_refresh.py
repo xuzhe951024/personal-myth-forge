@@ -46,6 +46,8 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         ),
     }
     assert steps["final_showcase_readiness"]["status"] == "blocked"
+    assert steps["final_launch_closure_packet"]["status"] == "blocked"
+    assert steps["final_launch_closure_packet"]["accepted_blocked"] is True
     assert result.report["safety"] == {
         "live_provider_calls": False,
         "global_mutation": False,
@@ -82,6 +84,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "services/backend/.local/print-fulfillment-readiness.json",
         "services/backend/.local/final-external-action-ledger.json",
         "services/backend/.local/final-showcase-readiness.json",
+        "services/backend/.local/final-launch-closure-packet.json",
     ):
         assert (repo_root / relative_path).exists(), relative_path
     assert str(tmp_path) not in report_text
@@ -136,6 +139,11 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
             repo_root / "services/backend/.local/configured-live-evidence-bundle.json"
         ).read_text(encoding="utf-8")
     )
+    closure_packet = json.loads(
+        (
+            repo_root / "services/backend/.local/final-launch-closure-packet.json"
+        ).read_text(encoding="utf-8")
+    )
 
     assert result.exit_code == 2
     assert steps["ios_deploy_runbook_local"] < steps["mobile_deploy_preflight_evidence"]
@@ -147,6 +155,10 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     assert steps["live_provider_evidence"] < steps["configured_live_evidence_bundle"]
     assert steps["configured_live_evidence_bundle"] < steps["final_showcase_readiness"]
     assert steps["ios_device_launch_rehearsal"] < steps["final_showcase_readiness"]
+    assert steps["configured_live_evidence_bundle"] < steps["final_launch_closure_packet"]
+    assert steps["print_fulfillment_readiness"] < steps["final_launch_closure_packet"]
+    assert steps["final_external_action_ledger"] < steps["final_launch_closure_packet"]
+    assert steps["final_showcase_readiness"] < steps["final_launch_closure_packet"]
     provider_handoff = json.loads(
         (repo_root / "services/backend/.local/provider-handoff.json").read_text(
             encoding="utf-8"
@@ -175,6 +187,17 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     assert showcase["evidence"]["configured_live_evidence_bundle"]["status"] == (
         configured_bundle["status"]
     )
+    assert closure_packet["kind"] == "final_launch_closure_packet_report"
+    assert closure_packet["sections_by_id"]["configured_evidence_bundle"][
+        "first_action"
+    ]["id"] == "configured_live_evidence_bundle"
+    assert closure_packet["sections_by_id"]["configured_evidence_bundle"]["command"] == (
+        "make configured-live-evidence-bundle"
+    )
+    assert closure_packet["source_reports"]["configured_live_evidence_bundle"][
+        "status"
+    ] == configured_bundle["status"]
+    assert "make configured-live-evidence-bundle" in closure_packet["commands"]
     assert str(tmp_path) not in json.dumps(showcase)
 
 
