@@ -36,6 +36,8 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert steps["configured_live_evidence_bundle"]["accepted_blocked"] is True
     assert steps["mobile_deploy_preflight_evidence"]["status"] == "blocked"
     assert steps["mobile_deploy_preflight_evidence"]["accepted_blocked"] is True
+    assert steps["mobile_xcode_build_evidence"]["status"] == "blocked"
+    assert steps["mobile_xcode_build_evidence"]["accepted_blocked"] is True
     assert final_acceptance["refresh_safety"] == {
         "mobile_gate_commands_executed": False,
         "xcode_or_signing_executed": False,
@@ -73,6 +75,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "services/backend/.local/final-demo-launch-local.json",
         "services/backend/.local/ios-deploy-runbook-local.json",
         "services/backend/.local/mobile-deploy-preflight-evidence.json",
+        "services/backend/.local/mobile-xcode-build-evidence.json",
         "services/backend/.local/final-configured-preflight.json",
         "services/backend/.local/final-configured-evidence-plan.json",
         "services/backend/.local/final-handoff-index.json",
@@ -91,6 +94,83 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert "/Users/" not in report_text
     assert "sk-" not in report_text
     assert "meshy-secret" not in report_text
+
+
+def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    xcode_path = repo_root / "services/backend/.local/mobile-xcode-build-evidence.json"
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+    steps = {step["id"]: step for step in result.report["steps"]}
+    xcode_report = json.loads(xcode_path.read_text(encoding="utf-8"))
+
+    assert result.exit_code == 2
+    assert steps["mobile_xcode_build_evidence"]["status"] == "blocked"
+    assert steps["mobile_xcode_build_evidence"]["accepted_blocked"] is True
+    assert steps["mobile_xcode_build_evidence"]["output"] == (
+        "services/backend/.local/mobile-xcode-build-evidence.json"
+    )
+    assert xcode_report["kind"] == "mobile_xcode_build_evidence_report"
+    assert xcode_report["status"] == "blocked"
+    assert xcode_report["classification"] == (
+        "xcode_build_gate_not_run_by_final_local_report_refresh"
+    )
+    assert xcode_report["checks"][0]["id"] == "xcode_build_gate"
+    assert xcode_report["checks"][0]["status"] == "blocked"
+    assert xcode_report["operator_actions"] == [
+        "run make mobile-xcode-build-evidence outside final-local-report-refresh"
+    ]
+    assert xcode_report["safety"]["commands_run"] is False
+    assert xcode_report["safety"]["xcode_or_signing"] is False
+    assert xcode_report["safety"]["global_mutation"] is False
+    assert xcode_report["safety"]["writes_derived_data"] is False
+
+
+def test_final_local_report_refresh_preserves_existing_xcode_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    xcode_path = repo_root / "services/backend/.local/mobile-xcode-build-evidence.json"
+    xcode_path.parent.mkdir(parents=True, exist_ok=True)
+    xcode_path.write_text(
+        json.dumps(
+            {
+                "kind": "mobile_xcode_build_evidence_report",
+                "status": "blocked",
+                "classification": "blocked_by_apple_sdk_license",
+                "checks": [
+                    {
+                        "id": "xcode_license",
+                        "label": "Xcode license",
+                        "status": "blocked",
+                        "detail": "Apple SDK license agreement is not accepted.",
+                    }
+                ],
+                "operator_actions": [
+                    "accept the Xcode license outside Codex, "
+                    "then rerun make mobile-xcode-build-evidence"
+                ],
+                "safety": {
+                    "commands_run": True,
+                    "xcode_or_signing": True,
+                    "global_mutation": False,
+                    "writes_derived_data": True,
+                },
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+    preserved = json.loads(xcode_path.read_text(encoding="utf-8"))
+
+    assert result.exit_code == 2
+    assert preserved["classification"] == "blocked_by_apple_sdk_license"
+    assert preserved["checks"][0]["id"] == "xcode_license"
+    assert preserved["safety"]["commands_run"] is True
 
 
 def test_final_local_report_refresh_reports_unexpected_step_failure(
@@ -147,7 +227,9 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
 
     assert result.exit_code == 2
     assert steps["ios_deploy_runbook_local"] < steps["mobile_deploy_preflight_evidence"]
+    assert steps["mobile_deploy_preflight_evidence"] < steps["mobile_xcode_build_evidence"]
     assert steps["mobile_deploy_preflight_evidence"] < steps["ios_device_launch_rehearsal"]
+    assert steps["mobile_xcode_build_evidence"] < steps["ios_device_evidence_bundle"]
     assert steps["npc_evaluation_local"] < steps["provider_handoff"]
     assert steps["provider_handoff"] < steps["final_acceptance_local"]
     assert steps["ios_device_launch_rehearsal"] < steps["ios_device_evidence_bundle"]
