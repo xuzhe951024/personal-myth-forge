@@ -138,6 +138,7 @@ do {
     try testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness()
     try testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance()
     try testFinalLaunchMobileSummaryShowsReadyFinalAcceptance()
+    try testFinalLaunchMobileSummaryPrioritizesConfiguredAcceptanceCommand()
     try testDecodesThreeDEvaluationReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsReadyThreeDEvaluation()
     try testFinalLaunchMobileSummaryShowsBlockedThreeDEvaluation()
@@ -3116,6 +3117,28 @@ private func testFinalLaunchMobileSummaryBuildsPartialOperatorStatus() throws {
     try expectContains(summary.notes.joined(separator: " "), "read-only")
 }
 
+private func testFinalLaunchMobileSummaryPrioritizesConfiguredAcceptanceCommand() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            mode: "configured",
+            commands: [
+                "make final-resource-requirements",
+                "make final-resources-preflight",
+                "make final-resource-apply-preview",
+                "make final-apply-resources",
+                "make final-acceptance-configured",
+                "make mobile-deploy-preflight",
+            ]
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.commandRows.count, 4)
+    try expectEqual(summary.commandRows.first, "make final-acceptance-configured")
+    try expectTrue(summary.commandRows.contains("make final-resource-requirements"))
+    try expectFalse(summary.commandRows.contains("make final-apply-resources"))
+}
+
 private func testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -5830,6 +5853,7 @@ private func finalDemoLaunchPayload(
     mode: String = "local",
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
+    commands: [String] = ["make backend-device-demo"],
     finalResourcesStatus: String = "missing",
     finalResourcesAction: String = "run make final-resource-init",
     finalResourcesItemsJSON: String = "[]",
@@ -6026,6 +6050,7 @@ private func finalDemoLaunchPayload(
         : printReadinessBlocked
             ? #"{"ready": 4, "partial": 0, "blocked": 1}"#
             : #"{"ready": 4, "partial": 1, "blocked": 0}"#
+    let commandsJSON = String(decoding: try! PMFJSON.encoder.encode(commands), as: UTF8.self)
     return Data(
         """
         {
@@ -7998,7 +8023,7 @@ private func finalDemoLaunchPayload(
             }
           ],
           "operator_checklist": ["set PMF_BACKEND_BASE_URL to a LAN URL"],
-          "commands": ["make backend-device-demo"],
+          "commands": \(commandsJSON),
           "live_call_policy": {
             "live_calls_by_default": false,
             "configured_acceptance_requires_consent": true,
@@ -10498,6 +10523,7 @@ private func finalDemoLaunchReport(
     mode: String = "local",
     overallStatus: String = "partial",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
+    commands: [String] = ["make backend-device-demo"],
     finalResourcesStatus: String = "ready",
     finalResourcesAction: String = "run make final-resource-init",
     finalResourcesItemsJSON: String = "[]",
@@ -10580,6 +10606,7 @@ private func finalDemoLaunchReport(
             mode: mode,
             overallStatus: overallStatus,
             unsafeDetail: unsafeDetail,
+            commands: commands,
             finalResourcesStatus: finalResourcesStatus,
             finalResourcesAction: finalResourcesAction,
             finalResourcesItemsJSON: finalResourcesItemsJSON,

@@ -1486,6 +1486,21 @@ do {
     try requireContains(finalLaunchMobileSummary, "freshness.status == \"stale\"", "final launch stale freshness handling")
     try requireContains(finalLaunchMobileSummary, "modePolicyRows", "final launch summary mode policy rows")
     try requireContains(finalLaunchMobileSummary, "liveCallPolicy", "final launch summary live policy mapping")
+    try requireContains(
+        finalLaunchMobileSummary,
+        "commandRows(from: report)",
+        "final launch summary prioritized command row mapping"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "make final-acceptance-configured",
+        "final launch configured acceptance wrapper command"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "isConfiguredMode(report.mode)",
+        "final launch configured command priority gate"
+    )
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRows", "final launch resource checklist rows")
     try requireContains(finalLaunchMobileSummary, "resourceChecklistRow", "final launch resource checklist row builder")
     try requireContains(
