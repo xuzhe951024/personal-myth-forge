@@ -1295,7 +1295,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/src/myth_forge_api/ios_device_launch_certificate.py": (
             "build_ios_device_launch_certificate_report ios_device_launch_certificate_report "
             "build_final_handoff_index_report build_ios_deploy_runbook_report "
-            "build_final_demo_launch_report device_gates operator_sequence "
+            "build_final_demo_launch_report first_blocker device_gates operator_sequence "
             '"provider_calls": False "xcode_or_signing": False "keychain_writes": False'
         ),
         "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py": (

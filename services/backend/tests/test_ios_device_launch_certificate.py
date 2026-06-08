@@ -91,6 +91,16 @@ def test_ios_device_launch_certificate_ready_with_configured_inputs(
         runbook_commands.index("make final-apply-resources")
     )
     assert result.report["final_demo_launch"]["overall_status"] == "partial"
+    assert result.report["final_demo_launch"]["first_blocker"] == {
+        "id": "ios_deployable",
+        "label": "iOS deployable",
+        "status": "partial",
+        "classification": "ios_rehearsal_missing",
+        "command": "make ios-device-launch-rehearsal",
+        "detail": "iOS deploy runbook and device launch rehearsal must both be ready.",
+        "source": "final_showcase_readiness",
+        "source_id": "ios_deployable",
+    }
     assert gates["ios_deploy_config"]["status"] == "ready"
     assert gates["backend_device_server"]["status"] == "manual"
     assert gates["xcode_build_gate"]["status"] == "manual"

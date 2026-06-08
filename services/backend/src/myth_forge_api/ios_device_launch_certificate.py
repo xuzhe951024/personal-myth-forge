@@ -281,11 +281,32 @@ def _final_demo_launch_summary(report: dict[str, Any]) -> dict[str, Any]:
         "overall_status": report.get("overall_status", "blocked"),
         "summary": report.get("summary", {}),
         "phase_summary": report.get("phase_summary", {}),
+        "first_blocker": _first_blocker_summary(report),
         "launch_phases": [
             _compact_row(phase, fields=["id", "label", "status", "command"])
             for phase in _dict_list(report.get("launch_phases"))
         ],
     }
+
+
+def _first_blocker_summary(report: dict[str, Any]) -> dict[str, Any] | None:
+    blocker = report.get("first_blocker")
+    if not isinstance(blocker, dict):
+        return None
+    compact = _compact_row(
+        blocker,
+        fields=[
+            "id",
+            "label",
+            "status",
+            "classification",
+            "command",
+            "detail",
+            "source",
+            "source_id",
+        ],
+    )
+    return compact or None
 
 
 def _operator_sequence(
