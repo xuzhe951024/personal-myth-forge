@@ -836,12 +836,47 @@ public struct FinalResourceRequirementsSafety: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalResourceRequirementsFirstBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var domain: String
+    public var destination: String
+    public var validationCommand: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        domain: String,
+        destination: String,
+        validationCommand: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.domain = domain
+        self.destination = destination
+        self.validationCommand = validationCommand
+    }
+}
+
 public struct FinalResourceRequirementsReport: Codable, Equatable, Sendable {
     public var kind: String
     public var status: String
     public var summary: FinalResourceRequirementsSummary
     public var requirements: [FinalResourceRequirement]
     public var requirementsById: [String: FinalResourceRequirement]
+    public var firstBlocker: FinalResourceRequirementsFirstBlocker?
     public var operatorActions: [String]
     public var validationCommands: [String]
     public var resourcesFile: FinalResourcesFileStatus?
@@ -853,6 +888,7 @@ public struct FinalResourceRequirementsReport: Codable, Equatable, Sendable {
         summary: FinalResourceRequirementsSummary,
         requirements: [FinalResourceRequirement],
         requirementsById: [String: FinalResourceRequirement],
+        firstBlocker: FinalResourceRequirementsFirstBlocker? = nil,
         operatorActions: [String],
         validationCommands: [String],
         resourcesFile: FinalResourcesFileStatus? = nil,
@@ -863,6 +899,7 @@ public struct FinalResourceRequirementsReport: Codable, Equatable, Sendable {
         self.summary = summary
         self.requirements = requirements
         self.requirementsById = requirementsById
+        self.firstBlocker = firstBlocker
         self.operatorActions = operatorActions
         self.validationCommands = validationCommands
         self.resourcesFile = resourcesFile
