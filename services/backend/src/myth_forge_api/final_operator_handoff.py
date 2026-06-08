@@ -5,19 +5,16 @@ import re
 from pathlib import Path
 from typing import Any, Literal
 
+from myth_forge_api.configured_acceptance_command import (
+    CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
+    CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION,
+)
 from myth_forge_api.final_acceptance_readiness import LOCAL_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.ios_deploy_runbook import IOS_DEPLOY_RUNBOOK_COMMAND
 from myth_forge_api.npc_agent_evaluation_readiness import LOCAL_NPC_EVALUATION_COMMAND
 from myth_forge_api.three_d_evaluation_readiness import LOCAL_THREE_D_EVALUATION_COMMAND
 
 LaunchMode = Literal["local", "configured"]
-
-CONFIGURED_FINAL_ACCEPTANCE_COMMAND = (
-    "cd services/backend && uv run python -m myth_forge_api.cli "
-    "final-acceptance --profile quick --provider-mode configured "
-    "--require-real-core --allow-live-provider-calls --repo-root ../.. "
-    "--output .local/final-acceptance-configured.json"
-)
 
 STEP_ORDER = [
     "final_resources_preflight",
@@ -428,10 +425,7 @@ def _next_actions(
         step["id"] == "configured_final_acceptance" and step["status"] == "live"
         for step in steps
     ):
-        actions.append(
-            "run configured final acceptance only after live provider cost review "
-            "and --allow-live-provider-calls consent"
-        )
+        actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
     for step in steps:
         if step["status"] in {"missing", "blocked"}:
             if step["id"] in {"final_resources_preflight", "local_final_acceptance"}:

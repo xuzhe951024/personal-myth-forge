@@ -101,7 +101,9 @@ def test_ios_deploy_runbook_configured_mode_includes_live_acceptance_consent(
 
     assert report["status"] == "partial"
     assert commands["configured_final_acceptance"]["requires_consent"] is True
-    assert "--allow-live-provider-calls" in commands["configured_final_acceptance"]["command"]
+    assert commands["configured_final_acceptance"]["command"] == (
+        "make final-acceptance-configured"
+    )
     assert "live provider cost review" in " ".join(report["operator_actions"])
 
 

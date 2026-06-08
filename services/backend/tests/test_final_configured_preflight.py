@@ -38,7 +38,11 @@ def test_configured_preflight_blocks_missing_resources_without_leaks(
     assert result.report["configured_ios_deploy_runbook"]["status"] == "blocked"
     assert "make final-apply-resources" in result.report["commands"]
     assert "make final-configured-preflight" in result.report["commands"]
-    assert "--allow-live-provider-calls" in " ".join(result.report["commands"])
+    assert "make final-acceptance-configured" in result.report["commands"]
+    assert (
+        "run make final-acceptance-configured only after live provider cost review "
+        "and --allow-live-provider-calls consent"
+    ) in result.report["operator_actions"]
     assert result.report["safety"]["provider_calls"] is False
     assert result.report["safety"]["writes_backend_env"] is False
     assert result.report["safety"]["writes_ios_deploy_config"] is False

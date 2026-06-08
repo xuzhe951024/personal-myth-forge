@@ -6,6 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.configured_acceptance_command import (
+    CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
+    CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION,
+)
 from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_resources_preflight import (
@@ -149,10 +153,7 @@ def _operator_actions(
         and not provider_handoff.get("core_real_ready", False)
     ):
         actions.append("run make final-apply-resources to apply the filled resource bundle")
-    actions.append(
-        "run configured final acceptance only after live provider cost review "
-        "and --allow-live-provider-calls consent"
-    )
+    actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
     return _dedupe(actions)
 
 
@@ -180,12 +181,7 @@ def _commands() -> list[str]:
             "ios-deploy-runbook --mode configured --repo-root ../.. "
             "--output .local/ios-deploy-runbook-configured.json"
         ),
-        (
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "final-acceptance --profile quick --provider-mode configured "
-            "--require-real-core --allow-live-provider-calls --repo-root ../.. "
-            "--output .local/final-acceptance-configured.json"
-        ),
+        CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
     ]
 
 

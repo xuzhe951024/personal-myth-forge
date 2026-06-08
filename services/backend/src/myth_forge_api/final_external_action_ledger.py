@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
@@ -310,11 +311,7 @@ def _live_provider_cost_actions(
             action_id="run_configured_final_acceptance",
             label="Run configured final acceptance",
             status=live_status,
-            command=(
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-acceptance --profile quick --provider-mode configured "
-                "--require-real-core --allow-live-provider-calls --repo-root ../.."
-            ),
+            command=CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
             detail="Calls live providers only with explicit consent flag.",
         ),
         _live_action(

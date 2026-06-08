@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
+
 
 @dataclass(frozen=True)
 class LiveProviderEvidenceResult:
@@ -72,15 +74,10 @@ EVIDENCE_SLOTS = [
         label="Configured final acceptance",
         path=Path("services/backend/.local/final-acceptance-configured.json"),
         expected_kind="final_acceptance_report",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "final-acceptance --profile quick --provider-mode configured "
-            "--require-real-core --allow-live-provider-calls --repo-root ../.. "
-            "--output .local/final-acceptance-configured.json"
-        ),
+        command=CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
         proof="Configured quick acceptance ran with real providers and consent.",
         requires_live_provider_consent=True,
-        rerun_action="rerun configured final acceptance",
+        rerun_action="rerun make final-acceptance-configured",
     ),
     EvidenceSlot(
         slot_id="final_demo_launch_configured",

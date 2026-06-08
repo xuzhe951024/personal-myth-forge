@@ -6,6 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from myth_forge_api.configured_acceptance_command import (
+    CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
+    CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION,
+)
 from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_handoff_index import build_final_handoff_index_report
@@ -379,12 +383,7 @@ def _commands(mode: LaunchMode) -> list[str]:
 
 
 def _configured_acceptance_command() -> str:
-    return (
-        "cd services/backend && uv run python -m myth_forge_api.cli "
-        "final-acceptance --profile quick --provider-mode configured "
-        "--require-real-core --allow-live-provider-calls --repo-root ../.. "
-        "--output .local/final-acceptance-configured.json"
-    )
+    return CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 
 
 def _overall_status(device_gates: list[dict[str, Any]]) -> str:
@@ -425,7 +424,7 @@ def _operator_actions(device_gates: list[dict[str, Any]]) -> list[str]:
         elif gate_id == "xcode_build_gate":
             actions.append("resolve Xcode build gate outside the app")
         elif gate_id == "configured_final_acceptance":
-            actions.append("run configured final acceptance after live provider cost review")
+            actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
         elif command:
             actions.append(f"run {command}")
         else:
