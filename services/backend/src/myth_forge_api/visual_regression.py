@@ -153,6 +153,31 @@ DEFAULT_VISUAL_ARTIFACTS = (
         ),
     ),
     VisualArtifactSpec(
+        id="p0.186_configured_acceptance_command_visual",
+        html_path=(
+            "docs/superpowers/verification/"
+            "p0.186-configured-acceptance-command-visual.html"
+        ),
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.186-configured-acceptance-command-visual-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.186-configured-acceptance-command-visual-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Final Launch Status",
+            "Commands",
+            "make final-acceptance-configured",
+            "Live providers: consent required for configured acceptance.",
+            "--allow-live-provider-calls",
+            "commands_run=false live_calls=false global=false",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.154_resource_fill_guide_visual",
         html_path="docs/superpowers/verification/p0.154-resource-fill-guide-visual.html",
         png_path="docs/superpowers/verification/assets/p0.154-resource-fill-guide-visual-390x844.png",
