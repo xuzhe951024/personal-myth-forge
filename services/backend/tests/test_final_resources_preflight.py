@@ -197,6 +197,37 @@ def test_preflight_accepts_configured_final_launch_mode(tmp_path: Path) -> None:
     assert items["PMF_FINAL_LAUNCH_MODE"]["normalized_value"] == "configured"
 
 
+def test_preflight_accepts_auto_backend_url_as_apply_time_resolution(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=auto",
+        ),
+    )
+
+    result = build_final_resources_preflight_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    report_text = json.dumps(result.report)
+    items = {item["id"]: item for item in result.report["items"]}
+    backend_url = items["PMF_BACKEND_BASE_URL"]
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
+    assert backend_url["status"] == "ready"
+    assert backend_url["configured"] is True
+    assert backend_url["classification"] == "apply_time_auto_url"
+    assert backend_url["resolution_mode"] == "apply_time_auto"
+    assert "write_deploy_local_config.sh" in backend_url["apply_note"]
+    assert "10.0.0.24" not in report_text
+    assert "set PMF_BACKEND_BASE_URL" not in result.report["operator_actions"]
+
+
 def test_preflight_blocks_unsupported_final_launch_mode(tmp_path: Path) -> None:
     repo_root = tmp_path / "repo"
     resources = write_resources(

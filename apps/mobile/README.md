@@ -147,6 +147,11 @@ cd services/backend
 uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../..
 ```
 
+`PMF_BACKEND_BASE_URL=auto` is valid in the final resources file. It resolves
+through `write_deploy_local_config.sh` during `make final-apply-resources`, so
+read-only preflight and preview reports can stay sanitized while the ignored
+iOS config receives the concrete LAN URL.
+
 The read-only preflight checks the final resources file before any ignored
 config is written. The launch report then shows `final_resources_preflight` and
 `apply_final_resources`, followed by the backend device-server, provider

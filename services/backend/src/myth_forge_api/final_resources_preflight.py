@@ -40,6 +40,9 @@ SECRET_KEYS = {
 SUPPORTED_PRINT_PROVIDERS = {"local", "treatstock"}
 SUPPORTED_FINAL_LAUNCH_MODES = {"local", "configured"}
 EXAMPLE_BACKEND_BASE_URLS = {"http://192.168.1.10:8080"}
+AUTO_BACKEND_URL_APPLY_NOTE = (
+    "Resolved by write_deploy_local_config.sh during final-apply-resources."
+)
 
 
 @dataclass(frozen=True)
@@ -225,9 +228,16 @@ def _backend_url_item(values: dict[str, str]) -> dict[str, Any]:
     key = "PMF_BACKEND_BASE_URL"
     value = values.get(key, "")
     configured = bool(value)
+    resolution_mode = None
+    apply_note = None
     if not configured:
         status = "missing"
         classification = "missing_required_value"
+    elif _is_auto_backend_url(value):
+        status = "ready"
+        classification = "apply_time_auto_url"
+        resolution_mode = "apply_time_auto"
+        apply_note = AUTO_BACKEND_URL_APPLY_NOTE
     elif _is_example_backend_url(value):
         status = "blocked"
         classification = "placeholder_value"
@@ -246,6 +256,10 @@ def _backend_url_item(values: dict[str, str]) -> dict[str, Any]:
     }
     if classification:
         item["classification"] = classification
+    if resolution_mode:
+        item["resolution_mode"] = resolution_mode
+    if apply_note:
+        item["apply_note"] = apply_note
     return item
 
 
@@ -322,6 +336,10 @@ def _operator_actions(
 def _is_loopback_url(value: str) -> bool:
     lowered = value.lower()
     return "://127.0.0.1" in lowered or "://localhost" in lowered
+
+
+def _is_auto_backend_url(value: str) -> bool:
+    return value.strip().lower() == "auto"
 
 
 def _is_example_backend_url(value: str) -> bool:

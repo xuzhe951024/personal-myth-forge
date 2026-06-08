@@ -222,7 +222,7 @@ def _slot(
         status = "optional"
         classification = "optional_value_not_required"
     secret = slot_id in SECRET_KEYS
-    return {
+    slot = {
         "id": slot_id,
         "status": status,
         "required": required,
@@ -232,6 +232,13 @@ def _slot(
         "redacted": secret,
         "writes": writes,
     }
+    for metadata_key in ("resolution_mode", "apply_note"):
+        metadata_value = (
+            preflight_item.get(metadata_key) if preflight_item is not None else None
+        )
+        if metadata_value is not None:
+            slot[metadata_key] = metadata_value
+    return slot
 
 
 def _status(*, preflight_status: str, targets: list[dict[str, Any]]) -> str:

@@ -324,6 +324,12 @@ def _requirement_row(
         "PMF_FINAL_LAUNCH_MODE",
     }:
         row["normalized_value"] = normalized_value
+    for metadata_key in ("resolution_mode", "apply_note"):
+        metadata_value = (
+            preflight_item.get(metadata_key) if preflight_item is not None else None
+        )
+        if metadata_value is not None:
+            row[metadata_key] = metadata_value
     return row
 
 
