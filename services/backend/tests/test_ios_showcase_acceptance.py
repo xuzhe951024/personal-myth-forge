@@ -786,6 +786,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             '"local_smoke" "provider_handoff" "ios_deploy" "three_d_evaluation" '
             '"npc_evaluation" "operator_handoff" "final_launch"'
         ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift": (
+            "final-local-report-refresh-local: "
+            "services/backend/scripts/write_final_local_report_refresh.sh "
+            "final-rehearsal-local: backend-evaluate-local visual-regression-local "
+            "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+            "final-local-report-refresh-local "
+            "build_provider_handoff_report"
+        ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
             "testARKitScanPackageBuilderBuildsReadySelection "
             "testCaptureGenerationReadinessMarksGuidedScanMultiImageRoute "
