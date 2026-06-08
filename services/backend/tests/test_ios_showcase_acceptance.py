@@ -140,6 +140,19 @@ def test_ios_device_handoff_source_gates_require_first_blocker() -> None:
     ) in rehearsal_requirements
 
 
+def test_final_launch_closure_packet_source_gate_requires_first_blocker() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_launch_closure_packet"].requirements
+    }
+
+    assert (
+        "services/backend/src/myth_forge_api/final_launch_closure_packet.py",
+        "first_blocker",
+    ) in requirements
+
+
 def test_ios_showcase_acceptance_allows_external_action_ledger_builder_linebreak(
     tmp_path,
 ) -> None:
@@ -1110,7 +1123,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/final_launch_closure_packet.py": (
             "build_final_launch_closure_packet_report final_launch_closure_packet_report "
-            "requires_cost_consent_for_live_actions"
+            "requires_cost_consent_for_live_actions first_blocker"
         ),
         "services/backend/src/myth_forge_api/final_local_report_refresh.py": (
             "build_final_launch_closure_packet_report final-launch-closure-packet.json"

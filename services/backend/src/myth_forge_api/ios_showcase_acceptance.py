@@ -2683,6 +2683,10 @@ FEATURES = (
                 "requires_cost_consent_for_live_actions",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_launch_closure_packet.py",
+                "first_blocker",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_launch_closure_packet",
             ),

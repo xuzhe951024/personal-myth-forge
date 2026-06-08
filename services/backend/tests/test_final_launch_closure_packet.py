@@ -38,6 +38,16 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert report["summary"]["sections"] == 6
     assert report["summary"]["secret_actions"] >= 2
     assert report["summary"]["requires_cost_consent"] >= 1
+    assert report["first_blocker"] == {
+        "id": "resource_inputs",
+        "label": "Resource inputs",
+        "status": "blocked",
+        "classification": "missing_required_value",
+        "command": "make final-resources-preflight",
+        "detail": "Backend-only secret for live Meshy 3D generation.",
+        "section_id": "resource_inputs",
+        "action_id": "provide_MESHY_API_KEY",
+    }
     assert [section["id"] for section in report["sections"]] == [
         "resource_inputs",
         "safe_local_writes",
@@ -104,6 +114,9 @@ def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     text = json.dumps(report)
 
     assert sections["resource_inputs"]["status"] == "ready"
+    assert report["first_blocker"] is None or report["first_blocker"]["status"] == (
+        "blocked"
+    )
     assert sections["safe_local_writes"]["status"] == "ready"
     assert sections["device_evidence"]["status"] == "ready"
     assert sections["live_provider_consent"]["status"] in {"ready", "live"}
@@ -128,6 +141,10 @@ def test_final_launch_closure_packet_redacts_unsafe_source_details(
     tmp_path: Path,
 ) -> None:
     repo_root = _repo_fixture(tmp_path)
+    _write_final_resources(repo_root, VALID_FINAL_RESOURCES)
+    _write_final_acceptance_ready(repo_root)
+    _write_ios_device_launch_rehearsal_ready(repo_root)
+    _write_configured_live_evidence_ready(repo_root)
     _write_final_acceptance(
         repo_root,
         {
@@ -208,6 +225,8 @@ def test_final_launch_closure_packet_redacts_unsafe_source_details(
     text = json.dumps(result.report)
 
     assert result.exit_code == 2
+    assert result.report["first_blocker"] is not None
+    assert "[redacted]" in json.dumps(result.report["first_blocker"])
     assert "[redacted]" in text
     assert "sk-secret" not in text
     assert "sk-configured" not in text
