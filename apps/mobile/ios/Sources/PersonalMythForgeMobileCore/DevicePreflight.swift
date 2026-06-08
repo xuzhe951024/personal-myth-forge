@@ -183,6 +183,9 @@ public enum DevicePreflightSummaryBuilder {
     }
 
     private static func finalLaunchDetail(_ report: FinalDemoLaunchReport) -> String {
+        if let blocker = report.firstBlocker {
+            return finalLaunchFirstBlockerDetail(blocker, overallStatus: report.overallStatus)
+        }
         if let firstAction = report.operatorChecklist.first {
             return "\(report.overallStatus): \(firstAction)"
         }
@@ -192,6 +195,29 @@ public enum DevicePreflightSummaryBuilder {
             return "\(report.overallStatus): \(firstBlockedPhase.label)"
         }
         return "Final launch report \(report.overallStatus)."
+    }
+
+    private static func finalLaunchFirstBlockerDetail(
+        _ blocker: FinalDemoLaunchFirstBlocker,
+        overallStatus: String
+    ) -> String {
+        var headingParts = [
+            overallStatus,
+            blocker.id,
+            blocker.status,
+        ]
+        if let classification = blocker.classification, !classification.isEmpty {
+            headingParts.append(classification)
+        }
+
+        var parts = [headingParts.joined(separator: ": ")]
+        if !blocker.command.isEmpty {
+            parts.append(blocker.command)
+        }
+        if !blocker.detail.isEmpty {
+            parts.append(blocker.detail)
+        }
+        return parts.joined(separator: " | ")
     }
 
     private static func finalResourcesItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {

@@ -1341,6 +1341,7 @@ do {
     try requireContains(devicePreflight, "final_resources", "device preflight final resources item")
     try requireContains(devicePreflight, "Final Resources", "device preflight final resources label")
     try requireContains(devicePreflight, "FinalDemoLaunchReport", "device preflight final launch model")
+    try requireContains(devicePreflight, "report.firstBlocker", "device preflight final launch first blocker source")
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")
     try requireContains(apiClient, "getFinalDemoLaunch", "final demo launch API client method")
@@ -2271,6 +2272,11 @@ do {
         contractTests,
         "testLiveProviderConsentSummaryRedactsUnsafeText",
         "live provider consent redaction test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightUsesFinalLaunchFirstBlockerDetail",
+        "device preflight final launch first blocker contract test"
     )
     try requireContains(
         finalLaunchMobileSummary,

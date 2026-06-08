@@ -87,6 +87,7 @@ do {
     try testDevicePreflightWaitsForProviderReadiness()
     try testDevicePreflightBlocksAndRedactsProviderError()
     try testDevicePreflightWaitsForFinalLaunchReport()
+    try testDevicePreflightUsesFinalLaunchFirstBlockerDetail()
     try testDevicePreflightMapsFinalLaunchPartialToWaiting()
     try testDevicePreflightMapsMissingFinalResourcesPreflightToWaiting()
     try testDevicePreflightMarksReadyFinalResourcesPreflight()
@@ -2551,6 +2552,25 @@ private func testDevicePreflightWaitsForFinalLaunchReport() throws {
     try expectEqual(summary.overallStatus, .waiting)
     try expectEqual(summary.item(id: "final_launch")?.status, .waiting)
     try expectContains(summary.item(id: "final_launch")?.detail ?? "", "launch")
+}
+
+private func testDevicePreflightUsesFinalLaunchFirstBlockerDetail() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        firstBlockerJSON: finalDemoLaunchTopLevelFirstBlockerJSON(),
+        finalResourcesStatus: "blocked"
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        backendHealthProbe: BackendHealthProbe(status: .reachable, detail: "Backend /health returned ok."),
+        finalDemoLaunch: report
+    )
+    let detail = summary.item(id: "final_launch")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "final_launch")?.status, .blocked)
+    try expectContains(detail, "apply_final_resources")
+    try expectContains(detail, "final_demo_launch_phase")
+    try expectContains(detail, "make final-apply-resources")
 }
 
 private func testDevicePreflightMapsFinalLaunchPartialToWaiting() throws {
