@@ -131,6 +131,10 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "preflight_final_closure_packet_label" in requirement_ids
     assert "preflight_final_closure_packet_source" in requirement_ids
     assert "preflight_final_closure_packet_required_item" in requirement_ids
+    assert "preflight_final_operator_handoff_item" in requirement_ids
+    assert "preflight_final_operator_handoff_label" in requirement_ids
+    assert "preflight_final_operator_handoff_source" in requirement_ids
+    assert "preflight_final_operator_handoff_required_item" in requirement_ids
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
     assert "contract_final_resource_fill_guide_ready" in requirement_ids
     assert "contract_final_resource_fill_guide_redaction" in requirement_ids
@@ -161,6 +165,11 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_final_closure_packet_ready_preflight" in requirement_ids
     assert "contract_final_closure_packet_configured_section_preflight" in requirement_ids
     assert "contract_final_closure_packet_redaction_preflight" in requirement_ids
+    assert "contract_final_operator_handoff_missing_preflight" in requirement_ids
+    assert "contract_final_operator_handoff_blocked_preflight" in requirement_ids
+    assert "contract_final_operator_handoff_ready_preflight" in requirement_ids
+    assert "contract_final_operator_handoff_live_preflight" in requirement_ids
+    assert "contract_final_operator_handoff_redaction_preflight" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_fill_guide_first_blocker_row" in requirement_ids
@@ -410,6 +419,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Final Closure",
                 "report.finalLaunchClosurePacket",
                 "\"final_launch_closure_packet\",",
+                "finalOperatorHandoffItem(report: finalDemoLaunch)",
+                "Operator Handoff",
+                "report.finalOperatorHandoff",
+                "\"final_operator_handoff\",",
                 "Final launch readiness is read-only.",
                 "case \"ready\"",
                 "\"final_resource_fill_guide\"",
@@ -454,6 +467,11 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightMarksReadyFinalClosurePacket",
                 "testDevicePreflightShowsConfiguredEvidenceClosureSection",
                 "testDevicePreflightRedactsUnsafeFinalClosurePacket",
+                "testDevicePreflightWaitsForMissingFinalOperatorHandoff",
+                "testDevicePreflightBlocksOnFinalOperatorHandoffNextAction",
+                "testDevicePreflightMarksReadyFinalOperatorHandoff",
+                "testDevicePreflightShowsLiveFinalOperatorHandoffConsent",
+                "testDevicePreflightRedactsUnsafeFinalOperatorHandoff",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
                 "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
                 "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",

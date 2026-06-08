@@ -881,6 +881,30 @@ SOURCE_REQUIREMENTS = (
         '"final_launch_closure_packet",',
     ),
     SourceRequirement(
+        "preflight_final_operator_handoff_item",
+        "Device preflight final operator handoff item",
+        DEVICE_PREFLIGHT_PATH,
+        "finalOperatorHandoffItem(report: finalDemoLaunch)",
+    ),
+    SourceRequirement(
+        "preflight_final_operator_handoff_label",
+        "Device preflight final operator handoff label",
+        DEVICE_PREFLIGHT_PATH,
+        "Operator Handoff",
+    ),
+    SourceRequirement(
+        "preflight_final_operator_handoff_source",
+        "Device preflight final operator handoff source",
+        DEVICE_PREFLIGHT_PATH,
+        "report.finalOperatorHandoff",
+    ),
+    SourceRequirement(
+        "preflight_final_operator_handoff_required_item",
+        "Device preflight final operator handoff required item",
+        DEVICE_PREFLIGHT_PATH,
+        '"final_operator_handoff",',
+    ),
+    SourceRequirement(
         "preflight_read_only_note",
         "Device preflight read-only note",
         DEVICE_PREFLIGHT_PATH,
@@ -1119,6 +1143,36 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts unsafe final closure packet",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightRedactsUnsafeFinalClosurePacket",
+    ),
+    SourceRequirement(
+        "contract_final_operator_handoff_missing_preflight",
+        "Contract test waits for missing final operator handoff",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightWaitsForMissingFinalOperatorHandoff",
+    ),
+    SourceRequirement(
+        "contract_final_operator_handoff_blocked_preflight",
+        "Contract test blocks on final operator handoff next action",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksOnFinalOperatorHandoffNextAction",
+    ),
+    SourceRequirement(
+        "contract_final_operator_handoff_ready_preflight",
+        "Contract test marks ready final operator handoff",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyFinalOperatorHandoff",
+    ),
+    SourceRequirement(
+        "contract_final_operator_handoff_live_preflight",
+        "Contract test shows live final operator handoff consent",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightShowsLiveFinalOperatorHandoffConsent",
+    ),
+    SourceRequirement(
+        "contract_final_operator_handoff_redaction_preflight",
+        "Contract test redacts unsafe final operator handoff",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeFinalOperatorHandoff",
     ),
     SourceRequirement(
         "contract_preflight_error",

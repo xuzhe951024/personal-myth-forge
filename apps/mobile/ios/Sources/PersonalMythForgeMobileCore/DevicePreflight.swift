@@ -106,6 +106,7 @@ public enum DevicePreflightSummaryBuilder {
             iosDeviceEvidenceBundleItem(report: finalDemoLaunch),
             iosLaunchRehearsalReadinessItem(report: finalDemoLaunch),
             finalClosurePacketItem(report: finalDemoLaunch),
+            finalOperatorHandoffItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
         ]
@@ -1094,6 +1095,122 @@ public enum DevicePreflightSummaryBuilder {
         "Safety: commands_run=\(safety.commandsRun) global=\(safety.globalMutation) live_calls=\(safety.liveProviderCalls)."
     }
 
+    private static func finalOperatorHandoffItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "final_operator_handoff",
+                "Operator Handoff",
+                .waiting,
+                "Final operator handoff has not loaded."
+            )
+        }
+        guard let handoff = report.finalOperatorHandoff else {
+            return item(
+                "final_operator_handoff",
+                "Operator Handoff",
+                .waiting,
+                "Final operator handoff has not loaded."
+            )
+        }
+
+        switch handoff.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            return item(
+                "final_operator_handoff",
+                "Operator Handoff",
+                .ready,
+                finalOperatorHandoffReadyDetail(handoff)
+            )
+        case "missing":
+            return item(
+                "final_operator_handoff",
+                "Operator Handoff",
+                .waiting,
+                finalOperatorHandoffAttentionDetail(handoff)
+            )
+        case "blocked", "partial", "live":
+            return item(
+                "final_operator_handoff",
+                "Operator Handoff",
+                .blocked,
+                finalOperatorHandoffAttentionDetail(handoff)
+            )
+        default:
+            return item(
+                "final_operator_handoff",
+                "Operator Handoff",
+                .waiting,
+                finalOperatorHandoffReadyDetail(handoff)
+            )
+        }
+    }
+
+    private static func finalOperatorHandoffReadyDetail(
+        _ handoff: FinalOperatorHandoffReport
+    ) -> String {
+        [
+            finalOperatorHandoffSummaryDetail(handoff),
+            finalOperatorHandoffSafetyDetail(handoff.safety),
+        ].joined(separator: " ")
+    }
+
+    private static func finalOperatorHandoffAttentionDetail(
+        _ handoff: FinalOperatorHandoffReport
+    ) -> String {
+        var parts = [finalOperatorHandoffSummaryDetail(handoff)]
+        if let action = handoff.nextActions.first, !action.isEmpty {
+            parts.append("Action: \(action)")
+        }
+        if let step = firstFinalOperatorHandoffAttentionStep(handoff) {
+            parts.append(finalOperatorHandoffStepDetail(step))
+        }
+        parts.append(finalOperatorHandoffSafetyDetail(handoff.safety))
+        return parts.joined(separator: " ")
+    }
+
+    private static func firstFinalOperatorHandoffAttentionStep(
+        _ handoff: FinalOperatorHandoffReport
+    ) -> FinalOperatorHandoffStep? {
+        let attentionSteps = handoff.steps.filter { step in
+            step.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready"
+        }
+        return attentionSteps.first(where: \.requiresConsent) ?? attentionSteps.first
+    }
+
+    private static func finalOperatorHandoffSummaryDetail(
+        _ handoff: FinalOperatorHandoffReport
+    ) -> String {
+        "\(handoff.status): ready \(handoff.summary.ready), missing \(handoff.summary.missing), blocked \(handoff.summary.blocked), manual \(handoff.summary.manual), optional \(handoff.summary.optional), partial \(handoff.summary.partial), live \(handoff.summary.live)."
+    }
+
+    private static func finalOperatorHandoffStepDetail(
+        _ step: FinalOperatorHandoffStep
+    ) -> String {
+        var parts = [
+            "Step:",
+            step.id,
+            step.status,
+            step.label,
+            "| \(step.command)",
+            "| \(step.source)",
+        ]
+        if let note = step.notes.first, !note.isEmpty {
+            parts.append("| \(note)")
+        } else if !step.requiredFor.isEmpty {
+            parts.append("| \(step.requiredFor)")
+        }
+        if step.requiresConsent {
+            parts.append("| requires consent")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func finalOperatorHandoffSafetyDetail(
+        _ safety: FinalOperatorHandoffSafety
+    ) -> String {
+        "Safety: commands_run=\(safety.commandsRun) provider_calls=\(safety.providerCalls) global=\(safety.globalMutation) app_exec=\(safety.commandExecutionFromApp)."
+    }
+
     private static func localDemoItem(_ summary: FinalShowcaseSummary) -> DevicePreflightItem {
         switch summary.overallStatus {
         case .readyForLocalDemo:
@@ -1138,6 +1255,7 @@ public enum DevicePreflightSummaryBuilder {
             "ios_device_evidence_bundle",
             "ios_device_launch_rehearsal_readiness",
             "final_launch_closure_packet",
+            "final_operator_handoff",
             "local_demo",
         ])
         let requiredReady = required.allSatisfy { id in

@@ -124,6 +124,11 @@ do {
     try testDevicePreflightMarksReadyFinalClosurePacket()
     try testDevicePreflightShowsConfiguredEvidenceClosureSection()
     try testDevicePreflightRedactsUnsafeFinalClosurePacket()
+    try testDevicePreflightWaitsForMissingFinalOperatorHandoff()
+    try testDevicePreflightBlocksOnFinalOperatorHandoffNextAction()
+    try testDevicePreflightMarksReadyFinalOperatorHandoff()
+    try testDevicePreflightShowsLiveFinalOperatorHandoffConsent()
+    try testDevicePreflightRedactsUnsafeFinalOperatorHandoff()
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testFinalLaunchMobileSummaryWaitsForMissingReport()
     try testFinalLaunchMobileSummaryWaitsWithLaunchReceipt()
@@ -3323,6 +3328,100 @@ private func testDevicePreflightRedactsUnsafeFinalClosurePacket() throws {
     try expectNotContains(text, "Bearer")
     try expectNotContains(text, "api_key")
     try expectNotContains(text, "private_message")
+}
+
+private func testDevicePreflightWaitsForMissingFinalOperatorHandoff() throws {
+    var report = finalDemoLaunchReport(overallStatus: "partial")
+    report.finalOperatorHandoff = nil
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+
+    try expectEqual(summary.item(id: "final_operator_handoff")?.status, .waiting)
+    try expectContains(summary.item(id: "final_operator_handoff")?.detail ?? "", "not loaded")
+}
+
+private func testDevicePreflightBlocksOnFinalOperatorHandoffNextAction() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalOperatorHandoffStatus: "blocked",
+            finalOperatorHandoffAction: "provide iOS deploy config and rerun mobile deploy preflight"
+        )
+    )
+    let detail = summary.item(id: "final_operator_handoff")?.detail ?? ""
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "final_operator_handoff")?.status, .blocked)
+    try expectContains(detail, "blocked")
+    try expectContains(detail, "ready 4")
+    try expectContains(detail, "blocked 1")
+    try expectContains(detail, "provide iOS deploy config")
+    try expectContains(detail, "local_final_acceptance")
+    try expectContains(detail, "make final-acceptance-local")
+    try expectContains(detail, "final_acceptance_readiness")
+    try expectContains(detail, "commands_run=false")
+}
+
+private func testDevicePreflightMarksReadyFinalOperatorHandoff() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        )
+    )
+    let detail = summary.item(id: "final_operator_handoff")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "final_operator_handoff")?.status, .ready)
+    try expectContains(detail, "ready")
+    try expectContains(detail, "ready 7")
+    try expectContains(detail, "blocked 0")
+    try expectContains(detail, "commands_run=false")
+    try expectContains(detail, "app_exec=false")
+}
+
+private func testDevicePreflightShowsLiveFinalOperatorHandoffConsent() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalOperatorHandoffStatus: "live",
+            finalOperatorHandoffAction: "run configured final acceptance with live provider consent"
+        )
+    )
+    let detail = summary.item(id: "final_operator_handoff")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "final_operator_handoff")?.status, .blocked)
+    try expectContains(detail, "live")
+    try expectContains(detail, "requires consent")
+    try expectContains(detail, "configured_final_acceptance")
+    try expectContains(detail, "allow-live-provider-calls")
+}
+
+private func testDevicePreflightRedactsUnsafeFinalOperatorHandoff() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        finalOperatorHandoffStatus: "blocked",
+        finalOperatorHandoffAction: "run sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token api_key=secret"
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.item(id: "final_operator_handoff")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
 }
 
 private func testDevicePreflightBlocksAndRedactsFinalLaunchError() throws {
@@ -11203,6 +11302,7 @@ private func devicePreflightSummary(
 private func readyDevicePreflightFinalDemoLaunchReport() -> FinalDemoLaunchReport {
     var report = finalDemoLaunchReport(
         overallStatus: "ready",
+        finalOperatorHandoffStatus: "ready",
         iosDeployRunbookStatus: "ready",
         iosDeployRunbookSlotStatus: "ready",
         iosDeployRunbookThreeDSlotStatus: "ready",
