@@ -360,6 +360,29 @@ DEFAULT_VISUAL_ARTIFACTS = (
         ),
     ),
     VisualArtifactSpec(
+        id="p0.217_final_resource_next_action",
+        html_path="docs/superpowers/verification/p0.217-final-resource-next-action.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.217-final-resource-next-action-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.217-final-resource-next-action-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Resource Requirements",
+            "Next input",
+            "MESHY_API_KEY missing",
+            "provide MESHY_API_KEY in final-resources.env",
+            "services/backend/.local/final-resources.env",
+            "make final-resources-preflight",
+            "No provider calls, writes, Xcode, signing, or global mutation.",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.160_final_showcase_ios_deploy_digest",
         html_path="docs/superpowers/verification/p0.160-final-showcase-ios-deploy-digest.html",
         png_path=(

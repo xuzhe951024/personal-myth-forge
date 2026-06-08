@@ -248,6 +248,7 @@ def build_final_resource_requirements_report(
         "requirements": requirements,
         "requirements_by_id": {item["id"]: item for item in requirements},
         "first_blocker": _first_blocker(requirements),
+        "next_action": _next_action(requirements),
         "operator_actions": _operator_actions(
             requirements=requirements,
             preflight_report=preflight_report,
@@ -389,6 +390,16 @@ def _first_blocker(requirements: list[dict[str, Any]]) -> dict[str, Any] | None:
             "validation_command": requirement["validation_command"],
         }
     return None
+
+
+def _next_action(requirements: list[dict[str, Any]]) -> dict[str, Any] | None:
+    blocker = _first_blocker(requirements)
+    if blocker is None:
+        return None
+    return {
+        **blocker,
+        "source": "first_blocker",
+    }
 
 
 def _is_blocking_requirement(requirement: dict[str, Any]) -> bool:

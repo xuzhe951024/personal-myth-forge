@@ -793,6 +793,10 @@ FEATURES = (
                 "first_blocker",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_resource_requirements.py",
+                "next_action",
+            ),
+            SourceRequirement(
                 "services/backend/scripts/init_final_resources.sh",
                 "final-resources.env initialized",
             ),
@@ -832,6 +836,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalResourceRequirementsNextAction",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "finalResourceRequirements",
             ),
             SourceRequirement(
@@ -853,6 +861,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "resourceRequirementRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "Next input:",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
@@ -885,6 +897,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsResourceRequirementsNextAction",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
@@ -1498,6 +1514,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.217_final_resource_next_action",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
                 "p0.100_live_provider_consent",
             ),
             SourceRequirement(
@@ -1529,7 +1549,7 @@ FEATURES = (
                 "test_visual_regression_cli_writes_showcase_report",
             ),
             SourceRequirement("README.md", "full-showcase visual index"),
-            SourceRequirement("README.md", "24 static 390x844 iPhone evidence artifacts"),
+            SourceRequirement("README.md", "25 static 390x844 iPhone evidence artifacts"),
             SourceRequirement("README.md", "configured acceptance command visual"),
             SourceRequirement("README.md", "device blocker handoff visual"),
         ),
