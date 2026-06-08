@@ -114,6 +114,11 @@ final-configured-preflight:
 final-configured-evidence-plan:
 	cd services/backend && uv run python -m myth_forge_api.cli final-configured-evidence-plan --repo-root ../.. --output .local/final-configured-evidence-plan.json
 
+.PHONY: configured-live-evidence-bundle
+
+configured-live-evidence-bundle:
+	cd services/backend && uv run python -m myth_forge_api.cli configured-live-evidence-bundle --repo-root ../.. --output .local/configured-live-evidence-bundle.json
+
 .PHONY: final-handoff-index
 
 final-handoff-index:
