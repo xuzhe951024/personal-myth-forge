@@ -44,6 +44,7 @@ do {
     )
 
     let packageManifest = try readText(packageFile)
+    let appCompileCheckMain = try readText(appRoot.appendingPathComponent("AppCompileCheckMain.swift"))
     let project = try readText(projectFile)
     let plist = try readPropertyList(plistFile)
     let xcodeBuildGateScript = try readText(xcodeBuildGateScriptFile)
@@ -185,13 +186,38 @@ do {
     try requireContains(packageManifest, #"path: "App""#, "SwiftPM app compile target path")
     try requireContains(
         packageManifest,
-        #"exclude: ["Info.plist"]"#,
-        "SwiftPM app compile target plist exclusion"
+        #"exclude: ["Info.plist", "PersonalMythForgeApp.swift"]"#,
+        "SwiftPM app compile target app main exclusion"
     )
     try requireContains(
         packageManifest,
         #"dependencies: ["PersonalMythForgeMobileCore"]"#,
         "SwiftPM app compile target core dependency"
+    )
+    try requireContains(
+        packageManifest,
+        #".define("PMF_APP_COMPILE_CHECK")"#,
+        "SwiftPM app compile target compile-check define"
+    )
+    try requireContains(
+        appCompileCheckMain,
+        "#if PMF_APP_COMPILE_CHECK",
+        "app compile check conditional entry guard"
+    )
+    try requireContains(
+        appCompileCheckMain,
+        "@main",
+        "app compile check main entry"
+    )
+    try requireContains(
+        appCompileCheckMain,
+        "ForgeRootView.self",
+        "app compile check root view reference"
+    )
+    try requireContains(
+        appCompileCheckMain,
+        "PersonalMythForgeMobileAppCompileCheck passed",
+        "app compile check success output"
     )
     try requireContains(project, "PersonalMythForge", "Xcode project target name")
     try requireContains(project, #"productType = "com.apple.product-type.application""#, "iOS app product type")
