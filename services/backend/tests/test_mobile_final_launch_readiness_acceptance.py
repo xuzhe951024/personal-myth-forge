@@ -59,8 +59,11 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "mobile_summary_final_launch_closure_packet_rows" in requirement_ids
     assert "mobile_status_view_final_launch_closure_packet" in requirement_ids
     assert "contract_final_launch_closure_packet_decode" in requirement_ids
+    assert "contract_final_launch_closure_packet_configured_bundle_decode" in requirement_ids
     assert "contract_final_launch_closure_packet_summary" in requirement_ids
+    assert "contract_final_launch_closure_packet_configured_bundle_summary" in requirement_ids
     assert "contract_final_launch_closure_packet_redaction" in requirement_ids
+    assert "contract_final_launch_closure_packet_configured_bundle_redaction" in requirement_ids
     assert "model_visual_regression_readiness" in requirement_ids
     assert "mobile_summary_visual_regression_rows" in requirement_ids
     assert "mobile_status_view_visual_regression" in requirement_ids
@@ -325,8 +328,11 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle",
                 "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle",
                 "testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload",
+                "configured_evidence_bundle",
                 "testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket",
+                "configured_live_evidence_bundle",
                 "testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket",
+                "sk-configured",
                 "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload",
                 "testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal",

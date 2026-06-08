@@ -535,6 +535,10 @@ public enum FinalLaunchMobileSummaryBuilder {
         if let section = selected.first {
             rows.append(closurePacketSectionRow(section))
         }
+        if let configuredBundle = packet.sectionsById["configured_evidence_bundle"],
+           configuredBundle.id != selected.first?.id {
+            rows.append(closurePacketSectionRow(configuredBundle))
+        }
         if let action = packet.operatorActions.first, !action.isEmpty {
             rows.append(sanitize(action))
         }
