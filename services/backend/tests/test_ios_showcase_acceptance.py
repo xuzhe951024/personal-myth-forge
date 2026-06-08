@@ -726,8 +726,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift": (
             "finalLaunchSummary: FinalLaunchMobileSummary? "
-            "threeDEvaluationStage npcEvaluationStage operatorHandoffStage finalLaunchStage "
-            '"three_d_evaluation" "npc_evaluation" "operator_handoff" "final_launch"'
+            "localSmokeStage Local Smoke threeDEvaluationStage npcEvaluationStage "
+            "operatorHandoffStage finalLaunchStage "
+            '"local_smoke" "three_d_evaluation" "npc_evaluation" '
+            '"operator_handoff" "final_launch"'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
             "testARKitScanPackageBuilderBuildsReadySelection "
@@ -753,6 +755,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testForgeActionGateEnablesLocalDemoForge "
             "testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest "
             "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest "
+            "testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest "
+            "testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest "
             "testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest "
             "testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest "
             "testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest "
@@ -970,7 +974,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/src/myth_forge_api/final_showcase_readiness.py": (
             "build_final_showcase_readiness_report final_showcase_readiness_report "
             "CAPABILITY_ORDER print_fulfillment make final-showcase-readiness "
-            "build_final_resource_apply_preview_report final_resource_apply_preview"
+            "build_final_resource_apply_preview_report final_resource_apply_preview "
+            "build_local_showcase_smoke_report local_showcase_smoke"
         ),
         "services/backend/src/myth_forge_api/final_external_action_ledger.py": (
             "build_final_external_action_ledger_report final_external_action_ledger_report "
@@ -981,7 +986,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "requires_cost_consent_for_live_actions"
         ),
         "services/backend/tests/test_final_showcase_readiness.py": (
-            "final_resource_apply_preview:missing final_resource_apply_preview:ready"
+            "final_resource_apply_preview:missing final_resource_apply_preview:ready "
+            "test_final_showcase_readiness_blocks_failed_local_showcase_smoke"
         ),
         "services/backend/src/myth_forge_api/ios_deploy_runbook.py": (
             "build_ios_deploy_runbook_report build_three_d_evaluation_readiness_report "

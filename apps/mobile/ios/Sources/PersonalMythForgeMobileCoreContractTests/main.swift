@@ -47,6 +47,8 @@ do {
     try testFinalShowcaseSummaryRedactsUnsafeSourceText()
     try testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest()
     try testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest()
+    try testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest()
+    try testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest()
     try testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest()
     try testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest()
     try testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest()
@@ -1448,13 +1450,93 @@ private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
         summary.stages.map(\.id),
         [
             "capture", "three_d", "npc_agent", "print", "resources",
-            "three_d_evaluation", "npc_evaluation", "operator_handoff", "final_launch",
+            "local_smoke", "three_d_evaluation", "npc_evaluation", "operator_handoff", "final_launch",
         ]
     )
+    try expectEqual(summary.stage(id: "local_smoke")?.status, .ready)
     try expectEqual(summary.stage(id: "three_d_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "npc_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "operator_handoff")?.status, .ready)
     try expectEqual(summary.stage(id: "final_launch")?.status, .ready)
+}
+
+private func testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
+            localShowcaseSmokeStatus: "succeeded",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let ids = summary.stages.map(\.id)
+    let localSmokeIndex = try require(ids.firstIndex(of: "local_smoke"), "missing local smoke stage")
+    let threeDIndex = try require(ids.firstIndex(of: "three_d_evaluation"), "missing 3D evaluation stage")
+    let localSmoke = try require(summary.stage(id: "local_smoke"), "missing local smoke stage")
+
+    try expectEqual(localSmoke.label, "Local Smoke")
+    try expectEqual(localSmoke.status, .ready)
+    try expectContains(localSmoke.detail, "Local showcase smoke ready")
+    try expectContains(localSmoke.detail, "HTTP 6")
+    try expectContains(localSmoke.detail, "NPC ticks 2")
+    try expectContains(localSmoke.detail, "downloads 3")
+    try expectTrue(localSmokeIndex < threeDIndex)
+}
+
+private func testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch blocked",
+        subtitle: "Local smoke failed",
+        phaseRows: [],
+        resourceActions: [],
+        acceptanceRows: [],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        localShowcaseSmokeRows: [
+            "Local showcase smoke failed: failed 1, HTTP 1.",
+            "upload_guided_scan_capture: failed | Authorization=Bearer sk-local data:image/png;base64,AAAA /Users/zhexu/private checkout_url",
+        ],
+        handoffRows: [],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let stage = try require(summary.stage(id: "local_smoke"), "missing local smoke stage")
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(stage.status, .needsAttention)
+    try expectContains(stage.detail, "[withheld]")
+    try expectNotContains(text, "sk-local")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "data:image")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
 }
 
 private func testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest() throws {

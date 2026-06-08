@@ -22,6 +22,7 @@ from myth_forge_api.ios_device_launch_rehearsal_readiness import (
 )
 from myth_forge_api.ios_showcase_acceptance import run_ios_showcase_acceptance
 from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
+from myth_forge_api.local_showcase_smoke import build_local_showcase_smoke_report
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
@@ -40,6 +41,7 @@ from myth_forge_api.visual_regression_readiness import (
 CAPABILITY_ORDER = [
     "ios_deployable",
     "capture_scanning",
+    "local_showcase_smoke",
     "game_asset_3d_generation",
     "ai_agent_npc",
     "print_fulfillment",
@@ -79,6 +81,7 @@ def build_final_showcase_readiness_report(
     selected_settings = settings or load_settings()
     selected_repo_root = Path(repo_root) if repo_root is not None else _default_repo_root()
     source_acceptance = run_ios_showcase_acceptance(repo_root=selected_repo_root).report
+    local_showcase_smoke = build_local_showcase_smoke_report().report
     final_acceptance = build_final_acceptance_readiness_report(
         repo_root=selected_repo_root,
     ).report
@@ -117,6 +120,7 @@ def build_final_showcase_readiness_report(
     )
     capabilities = _capabilities(
         source_acceptance=source_acceptance,
+        local_showcase_smoke=local_showcase_smoke,
         final_acceptance=final_acceptance,
         three_d_evaluation=three_d_evaluation,
         npc_evaluation=npc_evaluation,
@@ -154,6 +158,7 @@ def build_final_showcase_readiness_report(
         "commands": _commands(),
         "evidence": {
             "ios_showcase_acceptance": _evidence_summary(source_acceptance),
+            "local_showcase_smoke": _evidence_summary(local_showcase_smoke),
             "final_acceptance_readiness": _evidence_summary(final_acceptance),
             "three_d_evaluation_readiness": _evidence_summary(three_d_evaluation),
             "npc_agent_evaluation_readiness": _evidence_summary(npc_evaluation),
@@ -198,6 +203,7 @@ def build_final_showcase_readiness_report(
 def _capabilities(
     *,
     source_acceptance: dict[str, Any],
+    local_showcase_smoke: dict[str, Any],
     final_acceptance: dict[str, Any],
     three_d_evaluation: dict[str, Any],
     npc_evaluation: dict[str, Any],
@@ -216,6 +222,7 @@ def _capabilities(
             ios_device_launch_rehearsal=ios_device_launch_rehearsal,
         ),
         _capture_scanning_capability(source_acceptance),
+        _local_showcase_smoke_capability(local_showcase_smoke),
         _generated_3d_capability(
             three_d_evaluation=three_d_evaluation,
             live_provider_evidence=live_provider_evidence,
@@ -251,6 +258,7 @@ def _capabilities(
         ),
         _privacy_safety_capability(
             source_acceptance=source_acceptance,
+            local_showcase_smoke=local_showcase_smoke,
             final_acceptance=final_acceptance,
             three_d_evaluation=three_d_evaluation,
             npc_evaluation=npc_evaluation,
@@ -338,6 +346,78 @@ def _capture_scanning_capability(source_acceptance: dict[str, Any]) -> dict[str,
         detail=f"Missing source acceptance features: {', '.join(missing_features[:3])}.",
         evidence=[f"missing_source_features:{len(missing_features)}"],
     )
+
+
+def _local_showcase_smoke_capability(report: dict[str, Any]) -> dict[str, Any]:
+    summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+    safety = report.get("safety") if isinstance(report.get("safety"), dict) else {}
+    raw_status = str(report.get("status", "missing"))
+    failed = _non_negative_int(summary.get("failed"))
+    http_steps = _non_negative_int(summary.get("http_steps"))
+    npc_ticks = _non_negative_int(summary.get("npc_ticks"))
+    downloads = _non_negative_int(summary.get("downloads"))
+    evidence = [
+        f"{report.get('kind', 'local_showcase_smoke_report')}:{raw_status}",
+        f"http_steps:{http_steps}",
+        f"npc_ticks:{npc_ticks}",
+        f"downloads:{downloads}",
+    ]
+    unsafe_flags = _local_showcase_smoke_unsafe_flags(safety)
+    checks_passed = (
+        raw_status == "succeeded"
+        and failed == 0
+        and http_steps >= 6
+        and npc_ticks >= 2
+        and downloads >= 3
+    )
+    if checks_passed and not unsafe_flags:
+        return _capability(
+            capability_id="local_showcase_smoke",
+            label="Local showcase smoke",
+            status="ready",
+            classification="local_showcase_smoke_ready",
+            command="make local-showcase-smoke",
+            detail="Local capture-to-3D-to-NPC-to-print smoke proof is ready.",
+            evidence=evidence,
+        )
+    classification = (
+        "local_showcase_smoke_safety_failed"
+        if unsafe_flags
+        else "local_showcase_smoke_failed"
+    )
+    detail = "Local showcase smoke must pass before final showcase readiness."
+    if unsafe_flags:
+        detail = f"Local showcase smoke safety flags failed: {', '.join(unsafe_flags[:3])}."
+    return _capability(
+        capability_id="local_showcase_smoke",
+        label="Local showcase smoke",
+        status="blocked",
+        classification=classification,
+        command="make local-showcase-smoke",
+        detail=detail,
+        evidence=evidence + unsafe_flags[:5],
+    )
+
+
+def _local_showcase_smoke_unsafe_flags(safety: dict[str, Any]) -> list[str]:
+    unsafe_flags = [
+        key
+        for key in (
+            "provider_calls",
+            "live_provider_calls",
+            "global_mutation",
+            "starts_server",
+            "writes_repo_local_media",
+            "provider_secrets_in_report",
+            "raw_media_in_report",
+            "local_paths_in_report",
+            "payment_links_in_report",
+        )
+        if safety.get(key) is True
+    ]
+    if safety.get("uses_temporary_storage") is not True:
+        unsafe_flags.append("uses_temporary_storage:false")
+    return unsafe_flags
 
 
 def _generated_3d_capability(
@@ -689,6 +769,7 @@ def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
 def _commands() -> list[str]:
     return [
         "make final-rehearsal-local",
+        "make local-showcase-smoke",
         "make ios-device-launch-rehearsal",
         "make live-provider-evidence",
         "make print-fulfillment-readiness",
@@ -727,11 +808,19 @@ def _combined_status(statuses: list[str]) -> str:
 
 def _normalized_status(status: str) -> str:
     normalized = status.strip().lower()
-    if normalized in {"ready", "passed", "ok"}:
+    if normalized in {"ready", "passed", "ok", "succeeded"}:
         return "ready"
     if normalized in {"partial", "manual", "live", "optional", "waiting"}:
         return "partial"
     return "blocked"
+
+
+def _non_negative_int(value: Any) -> int:
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return max(value, 0)
+    return 0
 
 
 def _dedupe(items: list[str]) -> list[str]:

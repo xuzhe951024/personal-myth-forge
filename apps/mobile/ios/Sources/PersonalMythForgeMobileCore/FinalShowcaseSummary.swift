@@ -68,6 +68,7 @@ public enum FinalShowcaseSummaryBuilder {
             resourcesStage(readiness: providerReadiness, error: providerReadinessError),
         ]
         if let finalLaunchSummary {
+            stages.append(localSmokeStage(finalLaunchSummary))
             stages.append(threeDEvaluationStage(finalLaunchSummary))
             stages.append(npcEvaluationStage(finalLaunchSummary))
             stages.append(operatorHandoffStage(finalLaunchSummary))
@@ -84,6 +85,29 @@ public enum FinalShowcaseSummaryBuilder {
                 "Local file paths are withheld.",
             ]
         )
+    }
+
+    private static func localSmokeStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
+        stage(
+            "local_smoke",
+            "Local Smoke",
+            launchRowStatus(
+                summary.localShowcaseSmokeRows,
+                readyPrefix: "Local showcase smoke ready:",
+                waitingNeedle: "local showcase smoke has not loaded"
+            ),
+            localSmokeDetail(summary.localShowcaseSmokeRows)
+        )
+    }
+
+    private static func localSmokeDetail(_ rows: [String]) -> String {
+        guard let first = rows.first else {
+            return "Local showcase smoke has not loaded."
+        }
+        if first.hasPrefix("Local showcase smoke ready:") || rows.count == 1 {
+            return sanitize(first)
+        }
+        return sanitize(rows.prefix(2).joined(separator: " "))
     }
 
     private static func threeDEvaluationStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
@@ -265,7 +289,9 @@ public enum FinalShowcaseSummaryBuilder {
         let requiredReady = ["capture", "three_d", "npc_agent", "resources"].allSatisfy { id in
             stages.first(where: { $0.id == id })?.status == .ready
         }
-        let launchStageIDs = Set(["three_d_evaluation", "npc_evaluation", "operator_handoff", "final_launch"])
+        let launchStageIDs = Set([
+            "local_smoke", "three_d_evaluation", "npc_evaluation", "operator_handoff", "final_launch",
+        ])
         let launchStages = stages.filter { launchStageIDs.contains($0.id) }
         let launchReady = launchStages.allSatisfy { $0.status == .ready }
         return requiredReady && launchReady ? .readyForLocalDemo : .waiting
@@ -285,8 +311,11 @@ public enum FinalShowcaseSummaryBuilder {
         let patterns = [
             #"sk-[A-Za-z0-9._-]+"#,
             #"Bearer\s+[A-Za-z0-9._~+/\-=:-]+"#,
+            #"Authorization"#,
+            #"Bearer"#,
             #"api[_-]?key\s*[=:]\s*[^\s,;"']+"#,
             #"(private_message|raw_context|message_body)\s*:\s*[^\n]+"#,
+            #"data:[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=_-]+"#,
             #"local-capture://[^\s,;"']+"#,
             #"file://[^\s,;"']+"#,
             #"/Users/[^\s,;"']+"#,

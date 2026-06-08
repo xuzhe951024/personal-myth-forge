@@ -5,6 +5,7 @@ from myth_forge_api.config import Settings
 from myth_forge_api.final_showcase_readiness import (
     build_final_showcase_readiness_report,
 )
+from myth_forge_api.local_showcase_smoke import LocalShowcaseSmokeResult
 
 
 def test_final_showcase_readiness_blocks_missing_objective_evidence(
@@ -23,6 +24,7 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
     assert [row["id"] for row in result.report["capabilities"]] == [
         "ios_deployable",
         "capture_scanning",
+        "local_showcase_smoke",
         "game_asset_3d_generation",
         "ai_agent_npc",
         "print_fulfillment",
@@ -34,6 +36,17 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
     assert result.report["capabilities_by_id"]["capture_scanning"]["status"] == (
         "blocked"
     )
+    local_smoke = result.report["capabilities_by_id"]["local_showcase_smoke"]
+    assert local_smoke["status"] == "ready"
+    assert local_smoke["command"] == "make local-showcase-smoke"
+    assert "local_showcase_smoke_report:succeeded" in local_smoke["evidence"]
+    assert "http_steps:6" in local_smoke["evidence"]
+    assert "npc_ticks:2" in local_smoke["evidence"]
+    assert "downloads:3" in local_smoke["evidence"]
+    assert result.report["evidence"]["local_showcase_smoke"]["kind"] == (
+        "local_showcase_smoke_report"
+    )
+    assert result.report["evidence"]["local_showcase_smoke"]["status"] == "succeeded"
     assert result.report["capabilities_by_id"]["game_asset_3d_generation"][
         "status"
     ] == "blocked"
@@ -57,6 +70,65 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
     assert "make final-showcase-readiness" in result.report["commands"]
     assert result.report["safety"]["commands_run"] is False
     assert result.report["safety"]["live_provider_calls"] is False
+
+
+def test_final_showcase_readiness_blocks_failed_local_showcase_smoke(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    def fake_local_smoke() -> LocalShowcaseSmokeResult:
+        return LocalShowcaseSmokeResult(
+            exit_code=1,
+            report={
+                "kind": "local_showcase_smoke_report",
+                "status": "failed",
+                "summary": {
+                    "passed": 0,
+                    "failed": 1,
+                    "http_steps": 1,
+                    "npc_ticks": 0,
+                    "downloads": 0,
+                },
+                "steps": [
+                    {
+                        "id": "upload_guided_scan_capture",
+                        "status": "failed",
+                        "detail": "HTTP 500",
+                    }
+                ],
+                "safety": {
+                    "provider_calls": False,
+                    "live_provider_calls": False,
+                    "global_mutation": False,
+                    "starts_server": False,
+                    "writes_repo_local_media": False,
+                    "uses_temporary_storage": True,
+                    "provider_secrets_in_report": False,
+                    "raw_media_in_report": False,
+                    "local_paths_in_report": False,
+                    "payment_links_in_report": False,
+                },
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.final_showcase_readiness.build_local_showcase_smoke_report",
+        fake_local_smoke,
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    local_smoke = result.report["capabilities_by_id"]["local_showcase_smoke"]
+
+    assert result.exit_code == 2
+    assert local_smoke["status"] == "blocked"
+    assert local_smoke["classification"] == "local_showcase_smoke_failed"
+    assert local_smoke["command"] == "make local-showcase-smoke"
+    assert "local_showcase_smoke_report:failed" in local_smoke["evidence"]
 
 
 def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_device(

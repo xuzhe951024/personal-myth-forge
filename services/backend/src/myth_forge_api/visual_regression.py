@@ -238,6 +238,28 @@ DEFAULT_VISUAL_ARTIFACTS = (
             "provider_calls=false global=false temp_storage=true",
         ),
     ),
+    VisualArtifactSpec(
+        id="p0.159_final_showcase_local_smoke",
+        html_path="docs/superpowers/verification/p0.159-final-showcase-local-smoke.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.159-final-showcase-local-smoke-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.159-final-showcase-local-smoke-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Final Showcase",
+            "Local Smoke",
+            "Local smoke ready",
+            "HTTP 6",
+            "NPC ticks 2",
+            "downloads 3",
+        ),
+    ),
 )
 
 

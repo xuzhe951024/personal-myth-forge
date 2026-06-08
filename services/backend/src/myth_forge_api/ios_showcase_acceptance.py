@@ -919,6 +919,14 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                "localSmokeStage",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                "Local Smoke",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
                 "threeDEvaluationStage",
             ),
             SourceRequirement(
@@ -932,6 +940,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
                 '"npc_evaluation"',
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+                '"local_smoke"',
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
@@ -952,6 +964,14 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
@@ -2347,6 +2367,14 @@ FEATURES = (
                 "final_showcase_readiness_report",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "build_local_showcase_smoke_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "local_showcase_smoke",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_showcase_readiness",
             ),
@@ -2375,6 +2403,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_showcase_readiness.py",
+                "test_final_showcase_readiness_blocks_failed_local_showcase_smoke",
             ),
         ),
     ),
