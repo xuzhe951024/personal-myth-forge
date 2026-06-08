@@ -1443,6 +1443,26 @@ do {
         "device preflight iOS device evidence bundle required item"
     )
     try requireContains(
+        devicePreflight,
+        "iosLaunchRehearsalReadinessItem(report: finalDemoLaunch)",
+        "device preflight iOS launch rehearsal readiness item"
+    )
+    try requireContains(
+        devicePreflight,
+        "Launch Rehearsal",
+        "device preflight iOS launch rehearsal readiness label"
+    )
+    try requireContains(
+        devicePreflight,
+        "report.iosDeviceLaunchRehearsalReadiness",
+        "device preflight iOS launch rehearsal readiness source"
+    )
+    try requireContains(
+        devicePreflight,
+        #""ios_device_launch_rehearsal_readiness","#,
+        "device preflight iOS launch rehearsal readiness required item"
+    )
+    try requireContains(
         contractTests,
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
         "device preflight fill guide first blocker redaction contract test"
@@ -1526,6 +1546,31 @@ do {
         contractTests,
         "testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail",
         "device preflight iOS device evidence bundle redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightWaitsForMissingIOSLaunchRehearsalReadiness",
+        "device preflight iOS launch rehearsal readiness missing contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightBlocksOnIOSLaunchRehearsalReadiness",
+        "device preflight iOS launch rehearsal readiness blocked contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightMarksReadyIOSLaunchRehearsalReadiness",
+        "device preflight iOS launch rehearsal readiness ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness",
+        "device preflight iOS launch rehearsal readiness stale contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness",
+        "device preflight iOS launch rehearsal readiness redaction contract test"
     )
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")

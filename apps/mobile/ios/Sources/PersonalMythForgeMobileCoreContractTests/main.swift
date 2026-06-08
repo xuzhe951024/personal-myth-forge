@@ -114,6 +114,11 @@ do {
     try testDevicePreflightBlocksOnIOSDeviceEvidenceSlot()
     try testDevicePreflightMarksReadyIOSDeviceEvidenceBundle()
     try testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail()
+    try testDevicePreflightWaitsForMissingIOSLaunchRehearsalReadiness()
+    try testDevicePreflightBlocksOnIOSLaunchRehearsalReadiness()
+    try testDevicePreflightMarksReadyIOSLaunchRehearsalReadiness()
+    try testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness()
+    try testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness()
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testFinalLaunchMobileSummaryWaitsForMissingReport()
     try testFinalLaunchMobileSummaryWaitsWithLaunchReceipt()
@@ -3106,6 +3111,109 @@ private func testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail() thr
     let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
 
     try expectEqual(summary.item(id: "ios_device_evidence_bundle")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
+}
+
+private func testDevicePreflightWaitsForMissingIOSLaunchRehearsalReadiness() throws {
+    var report = finalDemoLaunchReport(overallStatus: "partial")
+    report.iosDeviceLaunchRehearsalReadiness = nil
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+
+    try expectEqual(summary.item(id: "ios_device_launch_rehearsal_readiness")?.status, .waiting)
+    try expectContains(summary.item(id: "ios_device_launch_rehearsal_readiness")?.detail ?? "", "not loaded")
+}
+
+private func testDevicePreflightBlocksOnIOSLaunchRehearsalReadiness() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchRehearsalAction: "rerun make ios-device-launch-rehearsal",
+            iosDeviceLaunchRehearsalCommand: "make final-handoff-index"
+        )
+    )
+    let detail = summary.item(id: "ios_device_launch_rehearsal_readiness")?.detail ?? ""
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "ios_device_launch_rehearsal_readiness")?.status, .blocked)
+    try expectContains(detail, "blocked")
+    try expectContains(detail, "ready 3")
+    try expectContains(detail, "blocked 1")
+    try expectContains(detail, "final_handoff_index")
+    try expectContains(detail, "make final-handoff-index")
+    try expectContains(detail, "saved_report")
+    try expectContains(detail, "rerun make ios-device-launch-rehearsal")
+    try expectContains(detail, "commands_run=false")
+}
+
+private func testDevicePreflightMarksReadyIOSLaunchRehearsalReadiness() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            iosDeviceLaunchRehearsalStatus: "ready"
+        )
+    )
+    let detail = summary.item(id: "ios_device_launch_rehearsal_readiness")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "ios_device_launch_rehearsal_readiness")?.status, .ready)
+    try expectContains(detail, "ready")
+    try expectContains(detail, "ready 4")
+    try expectContains(detail, "blocked 0")
+    try expectContains(detail, "fresh_report")
+    try expectContains(detail, "services/backend/.local/ios-device-launch-rehearsal.json")
+    try expectContains(detail, "commands_run=false")
+    try expectContains(detail, "xcode=false")
+}
+
+private func testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchRehearsalAction: "rerun make ios-device-launch-rehearsal",
+            iosDeviceLaunchRehearsalFreshnessStatus: "stale",
+            iosDeviceLaunchRehearsalFreshnessClassification: "stale_report",
+            iosDeviceLaunchSourceFreshnessStatus: "stale",
+            iosDeviceLaunchSourceFreshnessClassification: "stale_source",
+            iosDeviceLaunchSourceFreshnessSummaryJSON: #"{"fresh": 3, "stale": 1, "unknown": 0}"#
+        )
+    )
+    let detail = summary.item(id: "ios_device_launch_rehearsal_readiness")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "ios_device_launch_rehearsal_readiness")?.status, .blocked)
+    try expectContains(detail, "Freshness: stale_report")
+    try expectContains(detail, "Source freshness: 3 fresh, 1 stale, 0 unknown")
+    try expectContains(detail, "stale_source")
+}
+
+private func testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        iosDeviceLaunchRehearsalStatus: "blocked",
+        iosDeviceLaunchRehearsalAction: "rerun sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token api_key=secret",
+        iosDeviceLaunchRehearsalCommand: "make ios-device-launch-rehearsal sk-test /Users/zhexu/private file:///tmp/private",
+        iosDeviceLaunchRehearsalFreshnessClassification: "stale_report sk-test /Users/zhexu/private file:///tmp/private"
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.item(id: "ios_device_launch_rehearsal_readiness")?.status, .blocked)
     try expectContains(text, "[withheld]")
     try expectNotContains(text, "sk-test")
     try expectNotContains(text, "/Users/")
@@ -10998,7 +11106,8 @@ private func readyDevicePreflightFinalDemoLaunchReport() -> FinalDemoLaunchRepor
         iosDeployRunbookSlotStatus: "ready",
         iosDeployRunbookThreeDSlotStatus: "ready",
         iosDeviceEvidenceStatus: "ready",
-        iosDeviceEvidenceSlotStatus: "ready"
+        iosDeviceEvidenceSlotStatus: "ready",
+        iosDeviceLaunchRehearsalStatus: "ready"
     )
     report.finalResourceRequirements = readyFinalResourceRequirementsReport()
     report.finalResourceFillGuide = readyFinalResourceFillGuideReport()
