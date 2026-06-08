@@ -72,11 +72,18 @@ public enum LiveProviderConsentSummaryBuilder {
             rows.append(finalResourcesRow(finalLaunchReport.finalResourcesPreflight))
             rows.append(resourceHandoffRow(finalLaunchReport.resourceReport))
             rows.append(liveEvidenceRow(finalLaunchReport.liveProviderEvidence))
+            rows.append(configuredBundleRow(finalLaunchReport.configuredLiveEvidenceBundle))
         } else {
             rows.append(row("live_policy", "Live-call policy", .waiting, "Waiting for final launch report."))
             rows.append(row("final_resources", "Final resources", .waiting, "Waiting for final resources report."))
             rows.append(row("resource_handoff", "Resource handoff", .waiting, "Waiting for resource handoff report."))
             rows.append(row("live_evidence", "Live evidence", .waiting, "Live provider evidence report has not loaded."))
+            rows.append(row(
+                "configured_bundle",
+                "Configured bundle",
+                .waiting,
+                "Configured evidence bundle report has not loaded."
+            ))
         }
 
         let sanitizedRows = rows.map { item in
@@ -88,10 +95,14 @@ public enum LiveProviderConsentSummaryBuilder {
         let liveEvidenceReady = finalLaunchReport?.liveProviderEvidence?.status
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased() == "ready"
+        let configuredBundleReady = finalLaunchReport?.configuredLiveEvidenceBundle?.status
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased() == "ready"
         let allReady = providerReadiness?.overallRealReady == true
             && finalLaunchReport?.finalResourcesPreflight?.status == "ready"
             && finalLaunchReport?.resourceReport?.overallStatus == "ready"
             && liveEvidenceReady
+            && configuredBundleReady
             && !hasError
             && !hasBlocked
 
@@ -227,6 +238,52 @@ public enum LiveProviderConsentSummaryBuilder {
             parts.append(detail)
         }
         return sanitize(parts.joined(separator: ": "))
+    }
+
+    private static func configuredBundleRow(
+        _ bundle: ConfiguredLiveEvidenceBundleReport?
+    ) -> LiveProviderConsentRow {
+        guard let bundle else {
+            return row(
+                "configured_bundle",
+                "Configured bundle",
+                .waiting,
+                "Configured evidence bundle report has not loaded."
+            )
+        }
+
+        let prefix = (
+            "Configured bundle \(sanitize(bundle.status)): evidence ready \(bundle.summary.evidenceReady), "
+                + "missing \(bundle.summary.evidenceMissing), blocked \(bundle.summary.evidenceBlocked), "
+                + "partial \(bundle.summary.evidencePartial); commands ready \(bundle.summary.commandsReady), "
+                + "blocked \(bundle.summary.blockedSteps), consent \(bundle.summary.consentRequiredSteps)."
+        )
+        if bundle.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "ready" {
+            return row("configured_bundle", "Configured bundle", .ready, prefix)
+        }
+
+        let blockerDetail: String
+        if let blocker = bundle.currentBlocker {
+            var parts = ["\(blocker.id): \(blocker.status)"]
+            if !blocker.command.isEmpty {
+                parts.append(blocker.command)
+            }
+            if let detail = blocker.detail, !detail.isEmpty {
+                parts.append(detail)
+            }
+            blockerDetail = " " + sanitize(parts.joined(separator: " | "))
+        } else if let action = bundle.operatorActions.first, !action.isEmpty {
+            blockerDetail = " " + sanitize(action)
+        } else {
+            blockerDetail = ""
+        }
+
+        return row(
+            "configured_bundle",
+            "Configured bundle",
+            status(from: bundle.status),
+            prefix + blockerDetail
+        )
     }
 
     private static func resourceItemDetail(_ item: FinalResourcesPreflightItem) -> String {
