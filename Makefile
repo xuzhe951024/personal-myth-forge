@@ -152,7 +152,7 @@ ios-device-launch-certificate:
 ios-device-launch-rehearsal:
 	@services/backend/scripts/write_ios_device_launch_rehearsal.sh
 
-.PHONY: final-acceptance-local final-acceptance-configured final-demo-launch final-rehearsal-local
+.PHONY: final-acceptance-local final-acceptance-configured final-demo-launch final-demo-launch-local final-rehearsal-local
 
 final-acceptance-local:
 	@services/backend/scripts/write_final_acceptance_local.sh
@@ -160,7 +160,9 @@ final-acceptance-local:
 final-acceptance-configured:
 	@services/backend/scripts/write_final_acceptance_configured.sh
 
-final-demo-launch:
+final-demo-launch: final-demo-launch-local
+
+final-demo-launch-local:
 	cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../.. --output .local/final-demo-launch-local.json
 
 .PHONY: ios-deploy-runbook ios-deploy-runbook-local
@@ -176,7 +178,7 @@ ios-deploy-runbook-local:
 ios-device-evidence-bundle:
 	cd services/backend && uv run python -m myth_forge_api.cli ios-device-evidence-bundle --repo-root ../.. --output .local/ios-device-evidence-bundle.json
 
-final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local final-local-report-refresh-local
+final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch-local ios-deploy-runbook-local final-local-report-refresh-local
 
 .PHONY: mobile-xcode-build
 

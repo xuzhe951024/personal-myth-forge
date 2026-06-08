@@ -192,6 +192,8 @@ read-only `Launch Rehearsal` group reflects the newest Mac-side rehearsal run.
 P0.115 adds a freshness row to that group. If the saved rehearsal report is
 older than the current git revision, the row shows `stale_report` and the final
 launch payload tells the operator to rerun `make ios-device-launch-rehearsal`.
+Use `make final-demo-launch-local` when only the local final demo launch report
+needs to be regenerated; `make final-demo-launch` remains a compatibility alias.
 
 P0.64 exposes the same sanitized status through:
 

@@ -129,10 +129,11 @@ printf '%s\\n' "services/backend/.local/final-demo-launch-local.json"
 MAKEFILE_TEMPLATE = """.PHONY: backend-write-provider-env
 backend-write-provider-env:
 \t@services/backend/scripts/write_backend_env.sh
-.PHONY: final-acceptance-local final-demo-launch final-rehearsal-local
+.PHONY: final-acceptance-local final-demo-launch final-demo-launch-local final-rehearsal-local
 final-acceptance-local:
 \t@services/backend/scripts/write_final_acceptance_local.sh
-final-demo-launch:
+final-demo-launch: final-demo-launch-local
+final-demo-launch-local:
 \tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../.. --output .local/final-demo-launch-local.json
 .PHONY: final-apply-resources
 final-apply-resources:
@@ -160,7 +161,7 @@ ios-deploy-runbook-local:
 .PHONY: final-local-report-refresh-local
 final-local-report-refresh-local:
 \t@services/backend/scripts/write_final_local_report_refresh.sh
-final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local final-local-report-refresh-local
+final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch-local ios-deploy-runbook-local final-local-report-refresh-local
 """
 
 CLI_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
