@@ -144,7 +144,7 @@ ios-deploy-runbook:
 \tcd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
 ios-deploy-runbook-local:
 \t@services/backend/scripts/write_ios_deploy_runbook_local.sh
-final-rehearsal-local: backend-evaluate-local final-acceptance-local final-demo-launch ios-deploy-runbook-local
+final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local final-local-report-refresh
 """
 
 CLI_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
@@ -356,6 +356,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         "final_acceptance_accepts_blocked_report": True,
         "ios_deploy_runbook_accepts_blocked_report": True,
         "make_targets": True,
+        "final_local_report_refresh_dependency": True,
         "local_output_paths": True,
         "no_banned_commands": True,
     }

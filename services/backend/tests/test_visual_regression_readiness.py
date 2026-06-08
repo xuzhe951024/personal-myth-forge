@@ -166,7 +166,11 @@ def test_visual_regression_makefile_exposes_local_report_target() -> None:
 
     assert "visual-regression-local:" in makefile
     assert "--output .local/visual-regression-local.json" in makefile
-    assert "final-rehearsal-local: backend-evaluate-local visual-regression-local" in makefile
+    assert (
+        "final-rehearsal-local: backend-evaluate-local visual-regression-local "
+        "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+        "final-local-report-refresh"
+    ) in makefile
 
 
 def _write_visual_report(

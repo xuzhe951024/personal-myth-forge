@@ -1086,6 +1086,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "local-showcase-smoke: "
             "final-resource-init: services/backend/scripts/init_final_resources.sh "
             "final-rehearsal-local: backend-evaluate-local visual-regression-local "
+            "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+            "final-local-report-refresh "
             "final-configured-preflight: final-handoff-index: "
             "ios-device-launch-certificate: ios-device-launch-rehearsal: "
             "final-showcase-readiness: "
