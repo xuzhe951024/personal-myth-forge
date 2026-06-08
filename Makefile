@@ -167,6 +167,11 @@ mobile-xcode-build:
 mobile-deploy-preflight:
 	apps/mobile/ios/scripts/deploy_preflight.sh
 
+.PHONY: mobile-deploy-preflight-evidence
+
+mobile-deploy-preflight-evidence:
+	cd services/backend && uv run python -m myth_forge_api.cli mobile-deploy-preflight-evidence --repo-root ../.. --output .local/mobile-deploy-preflight-evidence.json
+
 .PHONY: mobile-write-deploy-config
 
 mobile-write-deploy-config:

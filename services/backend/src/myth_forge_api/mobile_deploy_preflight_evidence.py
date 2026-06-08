@@ -92,7 +92,7 @@ def build_mobile_deploy_preflight_evidence_report(
 
 def _run_script(repo_root: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [SCRIPT_PATH.as_posix()],
+        ["sh", SCRIPT_PATH.as_posix()],
         cwd=repo_root,
         check=False,
         capture_output=True,

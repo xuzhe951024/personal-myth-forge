@@ -4,6 +4,7 @@ import json
 import subprocess
 from pathlib import Path
 
+from myth_forge_api.cli import main
 from myth_forge_api.mobile_deploy_preflight_evidence import (
     build_mobile_deploy_preflight_evidence_report,
     run_mobile_deploy_preflight_evidence,
@@ -110,3 +111,54 @@ def test_run_preflight_evidence_uses_injected_runner(tmp_path: Path) -> None:
     assert calls == [tmp_path]
     assert result.exit_code == 0
     assert result.report["status"] == "ready"
+
+
+def test_cli_writes_mobile_deploy_preflight_evidence_blocked_report(
+    tmp_path: Path,
+) -> None:
+    repo_root = _minimal_preflight_repo(tmp_path)
+    output = repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json"
+
+    exit_code = main(
+        [
+            "mobile-deploy-preflight-evidence",
+            "--repo-root",
+            str(repo_root),
+            "--output",
+            str(output),
+        ]
+    )
+    report = json.loads(output.read_text(encoding="utf-8"))
+
+    assert exit_code == 2
+    assert report["kind"] == "mobile_deploy_preflight_evidence_report"
+    assert report["status"] == "blocked"
+    assert "Missing DEVELOPMENT_TEAM" in " ".join(report["stderr_lines"])
+    assert str(tmp_path) not in json.dumps(report)
+
+
+def test_makefile_exposes_mobile_deploy_preflight_evidence_target() -> None:
+    makefile = Path(__file__).resolve().parents[3] / "Makefile"
+    text = makefile.read_text(encoding="utf-8")
+
+    assert "mobile-deploy-preflight-evidence" in text
+    assert "myth_forge_api.cli mobile-deploy-preflight-evidence" in text
+    assert ".local/mobile-deploy-preflight-evidence.json" in text
+
+
+def _minimal_preflight_repo(tmp_path: Path) -> Path:
+    source_root = Path(__file__).resolve().parents[3]
+    repo_root = tmp_path / "repo"
+    ios_root = repo_root / "apps/mobile/ios"
+    (repo_root / "services/backend/.local").mkdir(parents=True)
+    (ios_root / "Config").mkdir(parents=True)
+    (ios_root / "scripts").mkdir(parents=True)
+    for relative_path in (
+        "apps/mobile/ios/Config/Deployment.xcconfig",
+        "apps/mobile/ios/scripts/deploy_preflight.sh",
+    ):
+        source = source_root / relative_path
+        destination = repo_root / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    return repo_root
