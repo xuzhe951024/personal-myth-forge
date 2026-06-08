@@ -177,10 +177,23 @@ def build_final_demo_launch_report(
     resource_summary = dict(resource_report["summary"])
     phase_summary = _summary(phases)
     overall_status = _overall_status(mode=mode, summary=phase_summary)
+    first_blocker = _first_blocker(
+        phases=phases,
+        nested_reports=[
+            ("final_acceptance_readiness", final_acceptance_readiness),
+            ("final_showcase_readiness", final_showcase_readiness),
+            ("final_launch_closure_packet", final_launch_closure_packet),
+            ("live_provider_evidence", live_provider_evidence),
+            ("print_fulfillment_readiness", print_fulfillment_readiness),
+            ("configured_live_evidence_bundle", configured_live_evidence_bundle),
+            ("final_operator_handoff", final_operator_handoff),
+        ],
+    )
     report = {
         "kind": "final_demo_launch_report",
         "mode": mode,
         "overall_status": overall_status,
+        "first_blocker": first_blocker,
         "summary": resource_summary,
         "phase_summary": phase_summary,
         "final_resources_preflight": final_resources_preflight,
@@ -479,6 +492,130 @@ def _overall_status(*, mode: LaunchMode, summary: dict[str, int]) -> str:
     if summary["manual"] or summary["optional"] or summary["partial"] or summary["blocked"]:
         return "partial"
     return "ready"
+
+
+def _first_blocker(
+    *,
+    phases: list[dict[str, Any]],
+    nested_reports: list[tuple[str, dict[str, Any] | None]],
+) -> dict[str, Any] | None:
+    phase_blocker = _first_phase_blocker(
+        phases=phases,
+        statuses={"failed", "blocked", "missing"},
+    )
+    if phase_blocker is not None:
+        return phase_blocker
+    nested_blocker = _first_nested_blocker(nested_reports)
+    if nested_blocker is not None:
+        return nested_blocker
+    return _first_phase_blocker(
+        phases=phases,
+        statuses={"manual", "partial"},
+    )
+
+
+def _first_phase_blocker(
+    *,
+    phases: list[dict[str, Any]],
+    statuses: set[str],
+) -> dict[str, Any] | None:
+    for phase in phases:
+        if phase.get("status") in statuses:
+            return _phase_blocker(phase)
+    return None
+
+
+def _phase_blocker(phase: dict[str, Any]) -> dict[str, Any]:
+    notes = phase.get("notes", [])
+    note = notes[0] if notes else ""
+    detail_parts = [
+        str(phase.get("required_for", "")),
+        str(note),
+    ]
+    return {
+        "id": str(phase.get("id", "unknown_phase")),
+        "label": str(phase.get("label", "Unknown phase")),
+        "status": str(phase.get("status", "blocked")),
+        "classification": "final_demo_launch_phase",
+        "command": str(phase.get("command", "")),
+        "detail": " | ".join(part for part in detail_parts if part),
+        "source": "final_demo_launch_phase",
+        "source_id": str(phase.get("id", "unknown_phase")),
+    }
+
+
+def _first_nested_blocker(
+    nested_reports: list[tuple[str, dict[str, Any] | None]],
+) -> dict[str, Any] | None:
+    for source, report in nested_reports:
+        if not isinstance(report, dict):
+            continue
+        blocker = _nested_report_blocker(source=source, report=report)
+        if blocker is not None:
+            return blocker
+    return None
+
+
+def _nested_report_blocker(
+    *,
+    source: str,
+    report: dict[str, Any],
+) -> dict[str, Any] | None:
+    raw_blocker = report.get("first_blocker")
+    if not isinstance(raw_blocker, dict):
+        raw_blockers = report.get("blockers")
+        if isinstance(raw_blockers, list) and raw_blockers:
+            candidate = raw_blockers[0]
+            raw_blocker = candidate if isinstance(candidate, dict) else None
+    if not isinstance(raw_blocker, dict):
+        current_blocker = report.get("current_blocker")
+        raw_blocker = current_blocker if isinstance(current_blocker, dict) else None
+    if isinstance(raw_blocker, dict):
+        return _compact_nested_blocker(source=source, blocker=raw_blocker)
+    next_actions = report.get("next_actions")
+    if isinstance(next_actions, list) and next_actions:
+        first_action = str(next_actions[0])
+        if first_action:
+            return {
+                "id": source,
+                "label": _source_label(source),
+                "status": str(report.get("status", "blocked")),
+                "classification": "operator_action",
+                "command": first_action,
+                "detail": first_action,
+                "source": source,
+                "source_id": source,
+            }
+    return None
+
+
+def _compact_nested_blocker(*, source: str, blocker: dict[str, Any]) -> dict[str, Any]:
+    blocker_id = str(blocker.get("id", source))
+    result = {
+        "id": blocker_id,
+        "label": str(blocker.get("label", blocker_id)),
+        "status": str(blocker.get("status", "blocked")),
+        "command": _command_text(blocker.get("command")),
+        "detail": str(blocker.get("detail", "")),
+        "source": source,
+        "source_id": blocker_id,
+    }
+    classification = blocker.get("classification")
+    if classification is not None:
+        result["classification"] = str(classification)
+    return result
+
+
+def _command_text(value: Any) -> str:
+    if isinstance(value, list):
+        return " ".join(str(part) for part in value)
+    if value is None:
+        return ""
+    return str(value)
+
+
+def _source_label(source: str) -> str:
+    return source.replace("_", " ").capitalize()
 
 
 def _exit_code(*, mode: LaunchMode, summary: dict[str, int]) -> int:

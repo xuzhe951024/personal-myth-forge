@@ -187,6 +187,35 @@ def test_mobile_final_launch_closure_packet_source_gates_require_first_blocker()
     ) in requirements
 
 
+def test_mobile_final_demo_launch_first_blocker_source_gates() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["mobile_final_launch_mode"].requirements
+    }
+
+    assert (
+        "services/backend/src/myth_forge_api/final_demo_launch.py",
+        "first_blocker",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "FinalDemoLaunchFirstBlocker",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "firstBlocker: FinalDemoLaunchFirstBlocker?",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+        "report.firstBlocker",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+        "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt",
+    ) in requirements
+
+
 def test_ios_showcase_acceptance_allows_external_action_ledger_builder_linebreak(
     tmp_path,
 ) -> None:
@@ -1013,6 +1042,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchModeDefaultsToLocalForUnsafeValues "
             "testGetConfiguredFinalDemoLaunchBuildsGETRequest "
             "testFinalLaunchMobileSummaryShowsConfiguredModePolicy "
+            "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt "
             "testArtifactSceneLoadProofMarksLoadedScene "
             "testArtifactSceneLoadProofRedactsFailedSceneLoad "
             "testArtifactHandoffActionsOfferRetryAfterSceneLoadFailure"
@@ -1056,6 +1086,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift": (
             "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff "
+            "FinalDemoLaunchFirstBlocker firstBlocker: FinalDemoLaunchFirstBlocker? "
             "FinalLaunchMode displayLabel FinalResourcesPreflightItem FinalAcceptanceFreshness "
             "ThreeDEvaluationReadinessReport threeDEvaluationReadiness "
             "VisualRegressionReadinessReport visualRegressionReadiness "
@@ -1079,7 +1110,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
             "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows "
-            "launchReceiptRows firstBlockerReceiptRow freshness.status == \"stale\" "
+            "launchReceiptRows firstBlockerReceiptRow report.firstBlocker freshness.status == \"stale\" "
             "threeDEvaluationRows threeDEvaluationRows(from: "
             "visualRegressionRows visualRegressionRows(from: "
             "localShowcaseSmokeRows provider_calls= "
@@ -1230,6 +1261,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final_resource_apply_preview "
             "final_external_action_ledger "
             "final_launch_closure_packet "
+            "first_blocker "
             "local_showcase_smoke "
             "final_showcase_readiness "
             "final_operator_handoff three_d_evaluation_readiness=three_d_evaluation_readiness "
