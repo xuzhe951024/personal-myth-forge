@@ -128,6 +128,31 @@ def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
     assert xcode_report["safety"]["writes_derived_data"] is False
 
 
+def test_final_local_report_refresh_preserves_existing_mobile_deploy_preflight_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    evidence_path = (
+        repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json"
+    )
+    evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    evidence_path.write_text(
+        json.dumps(_ready_mobile_deploy_preflight_evidence(), indent=2),
+        encoding="utf-8",
+    )
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+    preserved = json.loads(evidence_path.read_text(encoding="utf-8"))
+    steps = {step["id"]: step for step in result.report["steps"]}
+
+    assert result.exit_code == 2
+    assert steps["mobile_deploy_preflight_evidence"]["status"] == "ready"
+    assert steps["mobile_deploy_preflight_evidence"]["accepted_blocked"] is False
+    assert preserved["status"] == "ready"
+    assert preserved["checks"][0]["id"] == "deploy_preflight"
+    assert preserved["safety"]["commands_run"] is True
+
+
 def test_final_local_report_refresh_preserves_existing_xcode_evidence(
     tmp_path: Path,
 ) -> None:
@@ -171,6 +196,39 @@ def test_final_local_report_refresh_preserves_existing_xcode_evidence(
     assert preserved["classification"] == "blocked_by_apple_sdk_license"
     assert preserved["checks"][0]["id"] == "xcode_license"
     assert preserved["safety"]["commands_run"] is True
+
+
+def test_final_local_report_refresh_reuses_ready_device_gate_evidence_for_final_acceptance(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True, exist_ok=True)
+    (local_dir / "mobile-deploy-preflight-evidence.json").write_text(
+        json.dumps(_ready_mobile_deploy_preflight_evidence(), indent=2),
+        encoding="utf-8",
+    )
+    (local_dir / "mobile-xcode-build-evidence.json").write_text(
+        json.dumps(_ready_mobile_xcode_build_evidence(), indent=2),
+        encoding="utf-8",
+    )
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+    final_acceptance = json.loads(
+        (local_dir / "final-acceptance-local.json").read_text(encoding="utf-8")
+    )
+    checks = {check["id"]: check for check in final_acceptance["checks"]}
+
+    assert result.exit_code == 2
+    assert checks["mobile_deploy_preflight"]["status"] == "passed"
+    assert checks["mobile_deploy_preflight"]["classification"] == "command_succeeded"
+    assert checks["mobile_deploy_preflight"]["exit_code"] == 0
+    assert "Backend health: ok" in checks["mobile_deploy_preflight"]["stdout_tail"]
+    assert checks["mobile_xcode_build"]["status"] == "passed"
+    assert checks["mobile_xcode_build"]["classification"] == "command_succeeded"
+    assert checks["mobile_xcode_build"]["exit_code"] == 0
+    assert final_acceptance["refresh_safety"]["mobile_gate_commands_executed"] is False
+    assert final_acceptance["refresh_safety"]["xcode_or_signing_executed"] is False
 
 
 def test_final_local_report_refresh_reports_unexpected_step_failure(
@@ -335,6 +393,92 @@ def _write_visual_artifacts(repo_root: Path) -> None:
             notes_path = repo_root / spec.notes_path
             notes_path.parent.mkdir(parents=True, exist_ok=True)
             notes_path.write_text("visual regression fixture", encoding="utf-8")
+
+
+def _ready_mobile_deploy_preflight_evidence() -> dict[str, object]:
+    return {
+        "kind": "mobile_deploy_preflight_evidence_report",
+        "status": "ready",
+        "command": "make mobile-deploy-preflight",
+        "script": "apps/mobile/ios/scripts/deploy_preflight.sh",
+        "exit_code": 0,
+        "checks": [
+            {
+                "id": "deploy_preflight",
+                "label": "iOS deploy preflight",
+                "status": "ready",
+                "detail": "iOS deploy preflight passed.",
+            },
+            {
+                "id": "backend_health",
+                "label": "Backend health",
+                "status": "ready",
+                "detail": "Backend health: ok",
+            },
+            {
+                "id": "final_launch_mode",
+                "label": "Final launch mode",
+                "status": "ready",
+                "detail": "Final launch mode: local",
+            },
+        ],
+        "stdout_lines": [
+            "iOS deploy preflight passed.",
+            "Backend health: ok",
+            "Final launch mode: local",
+        ],
+        "stderr_lines": [],
+        "operator_actions": [],
+        "safety": {
+            "commands_run": True,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "local_paths_in_report": False,
+        },
+    }
+
+
+def _ready_mobile_xcode_build_evidence() -> dict[str, object]:
+    return {
+        "kind": "mobile_xcode_build_evidence_report",
+        "status": "ready",
+        "classification": "ready",
+        "command": "make mobile-xcode-build",
+        "script": "apps/mobile/ios/scripts/xcode_build_gate.sh",
+        "exit_code": 0,
+        "checks": [
+            {
+                "id": "xcode_build_gate",
+                "label": "Xcode build gate",
+                "status": "ready",
+                "detail": "Xcode build gate passed with code signing disabled.",
+            }
+        ],
+        "stdout_lines": ["Xcode build gate passed with code signing disabled."],
+        "stderr_lines": [],
+        "operator_actions": [],
+        "safety": {
+            "commands_run": True,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": True,
+            "code_signing_allowed": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "local_paths_in_report": False,
+            "writes_derived_data": True,
+            "derived_data_path": "apps/mobile/ios/.build/xcode-derived-data",
+        },
+    }
 
 
 def _png_header(width: int, height: int) -> bytes:

@@ -209,9 +209,7 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "mobile_deploy_preflight_evidence",
             "Mobile deploy preflight evidence",
             "mobile-deploy-preflight-evidence.json",
-            lambda repo_root: run_mobile_deploy_preflight_evidence(
-                repo_root=repo_root,
-            ).report,
+            _mobile_deploy_preflight_evidence_snapshot,
         ),
         _step(
             "mobile_xcode_build_evidence",
@@ -436,7 +434,11 @@ def _safe_final_acceptance_report(repo_root: Path) -> dict[str, Any]:
         allow_live_provider_calls=False,
         npc_steps=3,
         repo_root=repo_root,
-        command_runner=_blocked_final_acceptance_command_runner,
+        command_runner=lambda command, cwd: _final_acceptance_refresh_command_runner(
+            command,
+            cwd,
+            repo_root=repo_root,
+        ),
     ).report
     report["refresh_safety"] = {
         "mobile_gate_commands_executed": False,
@@ -450,15 +452,20 @@ def _safe_final_acceptance_report(repo_root: Path) -> dict[str, Any]:
     return report
 
 
+def _mobile_deploy_preflight_evidence_snapshot(repo_root: Path) -> dict[str, Any]:
+    existing = _load_local_report(
+        repo_root,
+        "mobile-deploy-preflight-evidence.json",
+    )
+    if isinstance(existing, dict):
+        return existing
+    return run_mobile_deploy_preflight_evidence(repo_root=repo_root).report
+
+
 def _mobile_xcode_build_evidence_snapshot(repo_root: Path) -> dict[str, Any]:
-    existing_path = repo_root / LOCAL_REPORT_DIR / "mobile-xcode-build-evidence.json"
-    if existing_path.exists():
-        try:
-            loaded = json.loads(existing_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            loaded = None
-        if isinstance(loaded, dict):
-            return loaded
+    existing = _load_local_report(repo_root, "mobile-xcode-build-evidence.json")
+    if isinstance(existing, dict):
+        return existing
 
     return {
         "kind": "mobile_xcode_build_evidence_report",
@@ -534,6 +541,92 @@ def _blocked_final_acceptance_command_runner(
         stderr="",
         elapsed_seconds=0.0,
     )
+
+
+def _final_acceptance_refresh_command_runner(
+    command: list[str],
+    cwd: Path,
+    *,
+    repo_root: Path,
+) -> CommandExecutionResult:
+    joined = " ".join(command)
+    if "mobile-deploy-preflight" in joined:
+        evidence = _load_local_report(repo_root, "mobile-deploy-preflight-evidence.json")
+        if _is_ready_mobile_deploy_preflight_evidence(evidence):
+            return _ready_command_result_from_evidence(
+                evidence,
+                fallback_stdout="iOS deploy preflight passed.",
+            )
+    if "mobile-xcode-build" in joined:
+        evidence = _load_local_report(repo_root, "mobile-xcode-build-evidence.json")
+        if _is_ready_mobile_xcode_build_evidence(evidence):
+            return _ready_command_result_from_evidence(
+                evidence,
+                fallback_stdout="Xcode build gate passed with code signing disabled.",
+            )
+    return _blocked_final_acceptance_command_runner(command, cwd)
+
+
+def _is_ready_mobile_deploy_preflight_evidence(evidence: Any) -> bool:
+    return (
+        isinstance(evidence, dict)
+        and evidence.get("kind") == "mobile_deploy_preflight_evidence_report"
+        and evidence.get("status") == "ready"
+        and evidence.get("exit_code") == 0
+        and bool(evidence.get("safety", {}).get("commands_run"))
+        and not bool(evidence.get("safety", {}).get("global_mutation"))
+        and not bool(evidence.get("safety", {}).get("live_provider_calls"))
+        and not bool(evidence.get("safety", {}).get("xcode_or_signing"))
+    )
+
+
+def _is_ready_mobile_xcode_build_evidence(evidence: Any) -> bool:
+    return (
+        isinstance(evidence, dict)
+        and evidence.get("kind") == "mobile_xcode_build_evidence_report"
+        and evidence.get("status") == "ready"
+        and evidence.get("classification") == "ready"
+        and evidence.get("exit_code") == 0
+        and bool(evidence.get("safety", {}).get("commands_run"))
+        and not bool(evidence.get("safety", {}).get("global_mutation"))
+        and not bool(evidence.get("safety", {}).get("live_provider_calls"))
+    )
+
+
+def _ready_command_result_from_evidence(
+    evidence: dict[str, Any],
+    *,
+    fallback_stdout: str,
+) -> CommandExecutionResult:
+    stdout_lines = evidence.get("stdout_lines")
+    stderr_lines = evidence.get("stderr_lines")
+    stdout = (
+        "\n".join(str(line) for line in stdout_lines)
+        if isinstance(stdout_lines, list)
+        else fallback_stdout
+    )
+    stderr = (
+        "\n".join(str(line) for line in stderr_lines)
+        if isinstance(stderr_lines, list)
+        else ""
+    )
+    return CommandExecutionResult(
+        exit_code=0,
+        stdout=stdout,
+        stderr=stderr,
+        elapsed_seconds=0.0,
+    )
+
+
+def _load_local_report(repo_root: Path, output_name: str) -> dict[str, Any] | None:
+    existing_path = repo_root / LOCAL_REPORT_DIR / output_name
+    if not existing_path.exists():
+        return None
+    try:
+        loaded = json.loads(existing_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return loaded if isinstance(loaded, dict) else None
 
 
 def _write_json(
