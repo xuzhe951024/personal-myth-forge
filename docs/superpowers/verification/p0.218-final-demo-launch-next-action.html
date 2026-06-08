@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.218 Final Demo Launch Next Action</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f6f8;
+      color: #14191f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: #eef3f6;
+    }
+    main {
+      min-height: 844px;
+      padding: 18px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .eyebrow {
+      margin: 12px 0 6px;
+      color: #5c6872;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      color: #10161d;
+      font-size: 30px;
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+    .intro {
+      margin: 8px 0 2px;
+      color: #53606b;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    section {
+      border: 1px solid #d8e1e6;
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: 0 12px 26px rgba(30, 45, 55, 0.08);
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      padding: 10px;
+    }
+    .metric {
+      border: 1px solid #e0e7eb;
+      border-radius: 8px;
+      padding: 9px 6px;
+      background: #fbfcfd;
+    }
+    .metric strong {
+      display: block;
+      color: #122232;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .metric span {
+      display: block;
+      margin-top: 5px;
+      color: #5f6b73;
+      font-size: 10px;
+      line-height: 1.15;
+    }
+    .label {
+      margin: 0 0 8px;
+      color: #5d6870;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .action {
+      border-color: #cbdce5;
+      background: #f9fbfc;
+    }
+    .action h2 {
+      margin: 0 0 10px;
+      color: #12202c;
+      font-size: 19px;
+      line-height: 1.15;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+    .row {
+      padding: 10px 0;
+      border-top: 1px solid #e2e9ed;
+    }
+    .row:first-of-type { border-top: 0; }
+    .row b {
+      display: block;
+      color: #1b2228;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .row span {
+      display: block;
+      margin-top: 4px;
+      color: #5e6b74;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .command {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #0f2633;
+      color: #dff3f8;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .safe {
+      background: #fbfcfd;
+      color: #52616b;
+      font-size: 12px;
+      line-height: 1.42;
+    }
+    .foot {
+      margin-top: auto;
+      color: #68757d;
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Launch Receipt</p>
+      <h1>Final Demo Launch</h1>
+      <p class="intro">The top-level launch report now exposes one structured next action.</p>
+    </header>
+
+    <section class="summary">
+      <div class="metric"><strong>3</strong><span>ready</span></div>
+      <div class="metric"><strong>1</strong><span>blocked</span></div>
+      <div class="metric"><strong>2</strong><span>manual</span></div>
+      <div class="metric"><strong>0</strong><span>failed</span></div>
+    </section>
+
+    <section class="action">
+      <p class="label">Next action</p>
+      <h2>apply_final_resources blocked</h2>
+      <div class="row">
+        <b>Command</b>
+        <span>make final-apply-resources</span>
+      </div>
+      <div class="row">
+        <b>Why</b>
+        <span>one-file backend and iOS final demo handoff</span>
+      </div>
+      <div class="row">
+        <b>Source</b>
+        <span>first_blocker -> apply_final_resources</span>
+      </div>
+      <div class="command">Next action: apply_final_resources blocked | make final-apply-resources</div>
+    </section>
+
+    <section>
+      <p class="label">Receipt context</p>
+      <div class="row">
+        <b>First blocker remains visible</b>
+        <span>The launch receipt still keeps the detailed first blocker row for audit context.</span>
+      </div>
+      <div class="row">
+        <b>Mobile summary</b>
+        <span>iPhone users see the next action before the longer blocker details.</span>
+      </div>
+    </section>
+
+    <section class="safe">
+      No provider calls, writes, Xcode, signing, or global mutation.
+    </section>
+
+    <p class="foot">P0.218 visual regression evidence - 390x844 static iPhone frame</p>
+  </main>
+</body>
+</html>

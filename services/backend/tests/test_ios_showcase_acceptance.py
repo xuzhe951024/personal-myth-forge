@@ -122,8 +122,12 @@ def test_showcase_visual_regression_index_requires_configured_command_scope() ->
         "p0.217_final_resource_next_action",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/visual_regression.py",
+        "p0.218_final_demo_launch_next_action",
+    ) in requirements
+    assert (
         "README.md",
-        "25 static 390x844 iPhone evidence artifacts",
+        "26 static 390x844 iPhone evidence artifacts",
     ) in requirements
     assert (
         "README.md",
@@ -215,12 +219,24 @@ def test_mobile_final_demo_launch_first_blocker_source_gates() -> None:
         "first_blocker",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/final_demo_launch.py",
+        "next_action",
+    ) in requirements
+    assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
         "FinalDemoLaunchFirstBlocker",
     ) in requirements
     assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "FinalDemoLaunchNextAction",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
         "firstBlocker: FinalDemoLaunchFirstBlocker?",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "nextAction: FinalDemoLaunchNextAction?",
     ) in requirements
     assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
@@ -229,6 +245,10 @@ def test_mobile_final_demo_launch_first_blocker_source_gates() -> None:
     assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
         "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+        "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction",
     ) in requirements
 
 
@@ -1048,6 +1068,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsHandoffNextActions "
             "testFinalLaunchMobileSummaryShowsMissingResourceChecklist "
             "testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt "
+            "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction "
             "testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt "
             "testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness "
@@ -1152,6 +1173,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift": (
             "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff "
             "FinalDemoLaunchFirstBlocker firstBlocker: FinalDemoLaunchFirstBlocker? "
+            "FinalDemoLaunchNextAction nextAction: FinalDemoLaunchNextAction? "
             "FinalLaunchMode displayLabel FinalResourcesPreflightItem FinalAcceptanceFreshness "
             "ThreeDEvaluationReadinessReport threeDEvaluationReadiness "
             "VisualRegressionReadinessReport visualRegressionReadiness "
@@ -1179,7 +1201,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
             "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows "
-            "launchReceiptRows firstBlockerReceiptRow report.firstBlocker freshness.status == \"stale\" "
+            "launchReceiptRows Next action: firstBlockerReceiptRow report.firstBlocker freshness.status == \"stale\" "
             "threeDEvaluationRows threeDEvaluationRows(from: "
             "visualRegressionRows visualRegressionRows(from: "
             "localShowcaseSmokeRows provider_calls= "
@@ -1228,6 +1250,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "p0.215_final_demo_launch_local_alias "
             "p0.216_final_showcase_next_action "
             "p0.217_final_resource_next_action "
+            "p0.218_final_demo_launch_next_action "
             "p0.100_live_provider_consent p0.112_ios_device_launch_rehearsal "
             "p0.119_visual_regression_handoff p0.158_local_showcase_smoke "
             "p0.186_configured_acceptance_command_visual p0.189_device_blocker_handoff"
@@ -1339,6 +1362,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final_resource_requirements "
             "final_resource_fill_guide "
             "final_resource_apply_preview "
+            "next_action "
             "final_external_action_ledger "
             "final_launch_closure_packet "
             "first_blocker _phase_blocker_with_nested_hint "
@@ -1428,7 +1452,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "README.md": (
             "make visual-regression full-showcase visual index P0.128 P0.129 "
-            "25 static 390x844 iPhone evidence artifacts "
+            "26 static 390x844 iPhone evidence artifacts "
             "configured acceptance command visual device blocker handoff visual"
         ),
         "services/backend/tests/test_final_configured_preflight.py": (

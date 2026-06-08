@@ -77,6 +77,16 @@ def test_final_demo_launch_exposes_top_level_phase_first_blocker(
     assert "one-file backend and iOS final demo handoff" in blocker["detail"]
     assert "provide MESHY_API_KEY in final-resources.env" in blocker["detail"]
     assert "Backend-only secret for live Meshy 3D generation." in blocker["detail"]
+    action = result.report["next_action"]
+    assert action["id"] == "apply_final_resources"
+    assert action["label"] == "Apply final resources"
+    assert action["status"] == "missing"
+    assert action["classification"] == "final_demo_launch_phase"
+    assert action["command"] == "make final-apply-resources"
+    assert action["source"] == "first_blocker"
+    assert action["source_id"] == "apply_final_resources"
+    assert "one-file backend and iOS final demo handoff" in action["detail"]
+    assert "provide MESHY_API_KEY in final-resources.env" in action["detail"]
     report_text = json.dumps(result.report)
     assert "sk-" not in report_text
     assert str(tmp_path) not in report_text

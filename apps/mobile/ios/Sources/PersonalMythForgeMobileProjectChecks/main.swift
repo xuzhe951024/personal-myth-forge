@@ -434,7 +434,7 @@ do {
     )
     try requireContains(
         readme,
-        "25 static 390x844 iPhone evidence artifacts",
+        "26 static 390x844 iPhone evidence artifacts",
         "visual regression artifact count README copy"
     )
     try requireContains(
@@ -456,6 +456,11 @@ do {
         visualRegression,
         "p0.217_final_resource_next_action",
         "final resource next action visual artifact"
+    )
+    try requireContains(
+        visualRegression,
+        "p0.218_final_demo_launch_next_action",
+        "final demo launch next action visual artifact"
     )
     try requireContains(
         finalShowcaseReadiness,
@@ -2048,8 +2053,18 @@ do {
     )
     try requireContains(
         pmfModels,
+        "FinalDemoLaunchNextAction",
+        "final demo launch next action model"
+    )
+    try requireContains(
+        pmfModels,
         "firstBlocker: FinalDemoLaunchFirstBlocker?",
         "final demo launch first blocker field"
+    )
+    try requireContains(
+        pmfModels,
+        "nextAction: FinalDemoLaunchNextAction?",
+        "final demo launch next action field"
     )
     try requireContains(
         pmfModels,
@@ -2071,6 +2086,11 @@ do {
         finalLaunchMobileSummary,
         "report.firstBlocker",
         "final demo launch first blocker receipt source"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Next action:",
+        "final demo launch next action receipt row"
     )
     try requireContains(
         finalLaunchMobileSummary,
@@ -2595,6 +2615,16 @@ do {
         finalDemoLaunchTests,
         "test_final_demo_launch_embeds_configured_evidence_plan",
         "final demo launch configured evidence plan test"
+    )
+    try requireContains(
+        finalDemoLaunchTests,
+        "next_action",
+        "final demo launch next action backend test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction",
+        "mobile final demo launch next action test"
     )
     try requireContains(
         contractTests,
