@@ -66,6 +66,11 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_configured_evidence_plan_planned_consent" in requirement_ids
     assert "contract_configured_evidence_plan_summary" in requirement_ids
     assert "contract_configured_evidence_plan_redaction" in requirement_ids
+    assert "preflight_final_resource_fill_guide_item" in requirement_ids
+    assert "preflight_final_resource_fill_guide_label" in requirement_ids
+    assert "contract_final_resource_fill_guide_blocked" in requirement_ids
+    assert "contract_final_resource_fill_guide_ready" in requirement_ids
+    assert "contract_final_resource_fill_guide_redaction" in requirement_ids
     assert result.report["safety"] == {
         "global_mutation": False,
         "live_provider_calls_by_default": False,
@@ -243,9 +248,11 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "FinalDemoLaunchReport",
                 "final_resources",
                 "Final Resources",
+                "final_resource_fill_guide",
+                "Fill Guide",
                 "Final launch readiness is read-only.",
                 "case \"ready\"",
-                "required = Set([\"backend_url\", \"providers\", \"final_launch\", \"final_resources\", \"local_demo\"])",
+                "\"final_resource_fill_guide\"",
             ]
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": "\n".join(
@@ -257,6 +264,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightMapsMissingFinalResourcesPreflightToWaiting",
                 "testDevicePreflightMarksReadyFinalResourcesPreflight",
                 "testDevicePreflightBlocksAndRedactsFinalResourcesPreflight",
+                "testDevicePreflightBlocksOnRequiredFinalResourceFillGuideInputs",
+                "testDevicePreflightMarksReadyFinalResourceFillGuide",
+                "testDevicePreflightRedactsUnsafeFinalResourceFillGuideDetail",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
                 "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
                 "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",

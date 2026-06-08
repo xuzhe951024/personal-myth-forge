@@ -168,6 +168,22 @@ DEFAULT_VISUAL_ARTIFACTS = (
             "Safety: writes=false live_calls=false global_mutation=false",
         ),
     ),
+    VisualArtifactSpec(
+        id="p0.155_device_fill_guide_preflight",
+        html_path="docs/superpowers/verification/p0.155-device-fill-guide-preflight.html",
+        png_path="docs/superpowers/verification/assets/p0.155-device-fill-guide-preflight-390x844.png",
+        notes_path="docs/superpowers/verification/2026-06-08-p0.155-device-fill-guide-preflight-regression.md",
+        width=390,
+        height=844,
+        required_text=(
+            "Device Preflight",
+            "Fill Guide",
+            "blocked: required 5, optional 5, configured 3, secret 4",
+            "MESHY_API_KEY",
+            "make final-resource-requirements",
+            "Provider keys stay backend-only",
+        ),
+    ),
 )
 
 

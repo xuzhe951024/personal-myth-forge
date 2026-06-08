@@ -521,6 +521,18 @@ SOURCE_REQUIREMENTS = (
         "Final Resources",
     ),
     SourceRequirement(
+        "preflight_final_resource_fill_guide_item",
+        "Device preflight final resource fill guide item",
+        DEVICE_PREFLIGHT_PATH,
+        "final_resource_fill_guide",
+    ),
+    SourceRequirement(
+        "preflight_final_resource_fill_guide_label",
+        "Device preflight final resource fill guide label",
+        DEVICE_PREFLIGHT_PATH,
+        "Fill Guide",
+    ),
+    SourceRequirement(
         "preflight_read_only_note",
         "Device preflight read-only note",
         DEVICE_PREFLIGHT_PATH,
@@ -536,7 +548,7 @@ SOURCE_REQUIREMENTS = (
         "preflight_required_item",
         "Device preflight required item",
         DEVICE_PREFLIGHT_PATH,
-        'Set(["backend_url", "providers", "final_launch", "final_resources", "local_demo"])',
+        '"final_resource_fill_guide"',
     ),
     SourceRequirement(
         "contract_decode",
@@ -579,6 +591,24 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts blocked final resources",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightBlocksAndRedactsFinalResourcesPreflight",
+    ),
+    SourceRequirement(
+        "contract_final_resource_fill_guide_blocked",
+        "Contract test blocks required final resource fill guide inputs",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksOnRequiredFinalResourceFillGuideInputs",
+    ),
+    SourceRequirement(
+        "contract_final_resource_fill_guide_ready",
+        "Contract test marks ready final resource fill guide",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyFinalResourceFillGuide",
+    ),
+    SourceRequirement(
+        "contract_final_resource_fill_guide_redaction",
+        "Contract test redacts unsafe final resource fill guide detail",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeFinalResourceFillGuideDetail",
     ),
     SourceRequirement(
         "contract_preflight_error",

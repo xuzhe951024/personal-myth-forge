@@ -99,6 +99,7 @@ public enum DevicePreflightSummaryBuilder {
             providerItem(readiness: providerReadiness, error: providerReadinessError),
             finalLaunchItem(report: finalDemoLaunch, error: finalDemoLaunchError),
             finalResourcesItem(report: finalDemoLaunch),
+            finalResourceFillGuideItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
         ]
@@ -244,6 +245,84 @@ public enum DevicePreflightSummaryBuilder {
         return "Final resources preflight \(report.status)."
     }
 
+    private static func finalResourceFillGuideItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "final_resource_fill_guide",
+                "Fill Guide",
+                .waiting,
+                "Final resource fill guide has not loaded."
+            )
+        }
+        guard let guide = report.finalResourceFillGuide else {
+            return item(
+                "final_resource_fill_guide",
+                "Fill Guide",
+                .waiting,
+                "Final resource fill guide has not loaded."
+            )
+        }
+        let requiredBlocker = guide.requiredInputs.first { input in
+            input.required && (input.status == "missing" || input.status == "blocked")
+        }
+        if guide.status == "ready" {
+            return item(
+                "final_resource_fill_guide",
+                "Fill Guide",
+                .ready,
+                finalResourceFillGuideReadyDetail(guide)
+            )
+        }
+        if let requiredBlocker {
+            return item(
+                "final_resource_fill_guide",
+                "Fill Guide",
+                .blocked,
+                finalResourceFillGuideDetail(guide, input: requiredBlocker)
+            )
+        }
+        if guide.status == "blocked" {
+            return item(
+                "final_resource_fill_guide",
+                "Fill Guide",
+                .blocked,
+                finalResourceFillGuideDetail(guide, input: guide.requiredInputs.first)
+            )
+        }
+        return item(
+            "final_resource_fill_guide",
+            "Fill Guide",
+            .waiting,
+            finalResourceFillGuideSummaryDetail(guide)
+        )
+    }
+
+    private static func finalResourceFillGuideReadyDetail(
+        _ guide: FinalResourceFillGuideReport
+    ) -> String {
+        "\(guide.status): required \(guide.summary.requiredInputs), optional \(guide.summary.optionalInputs), configured \(guide.summary.configuredInputs), secret \(guide.summary.secretInputs)."
+    }
+
+    private static func finalResourceFillGuideDetail(
+        _ guide: FinalResourceFillGuideReport,
+        input: FinalResourceFillGuideItem?
+    ) -> String {
+        var parts = [finalResourceFillGuideSummaryDetail(guide)]
+        if let input {
+            parts.append("\(input.id) \(input.status): \(input.fillAction)")
+        }
+        if let command = guide.commands.first, !command.isEmpty {
+            parts.append("Command: \(command)")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func finalResourceFillGuideSummaryDetail(
+        _ guide: FinalResourceFillGuideReport
+    ) -> String {
+        "\(guide.status): required \(guide.summary.requiredInputs), optional \(guide.summary.optionalInputs), configured \(guide.summary.configuredInputs), secret \(guide.summary.secretInputs)."
+    }
+
     private static func localDemoItem(_ summary: FinalShowcaseSummary) -> DevicePreflightItem {
         switch summary.overallStatus {
         case .readyForLocalDemo:
@@ -276,7 +355,14 @@ public enum DevicePreflightSummaryBuilder {
         if items.contains(where: { $0.status == .blocked }) {
             return .blocked
         }
-        let required = Set(["backend_url", "providers", "final_launch", "final_resources", "local_demo"])
+        let required = Set([
+            "backend_url",
+            "providers",
+            "final_launch",
+            "final_resources",
+            "final_resource_fill_guide",
+            "local_demo",
+        ])
         let requiredReady = required.allSatisfy { id in
             items.first(where: { $0.id == id })?.status == .ready
         }
@@ -300,7 +386,7 @@ public enum DevicePreflightSummaryBuilder {
 
     private static func sanitize(_ value: String) -> String {
         let lowered = value.lowercased()
-        let apiKeyMarker = "api" + "_key"
+        let apiKeyAssignmentMarker = "api" + "_key="
         let bearerMarker = "Bearer" + " "
         if value.contains("sk-")
             || value.contains("/Users/")
@@ -308,7 +394,7 @@ public enum DevicePreflightSummaryBuilder {
             || value.contains("local-capture://")
             || value.contains("Authorization")
             || value.contains(bearerMarker)
-            || lowered.contains(apiKeyMarker)
+            || lowered.contains(apiKeyAssignmentMarker)
             || lowered.contains("checkout")
         {
             return "[withheld]"
