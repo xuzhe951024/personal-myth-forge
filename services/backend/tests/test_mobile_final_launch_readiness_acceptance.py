@@ -109,6 +109,11 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
     assert "contract_final_resource_fill_guide_ready" in requirement_ids
     assert "contract_final_resource_fill_guide_redaction" in requirement_ids
+    assert "model_final_resource_requirements_first_blocker" in requirement_ids
+    assert "model_final_resource_requirements_first_blocker_field" in requirement_ids
+    assert "mobile_summary_final_resource_requirements_source" in requirement_ids
+    assert "mobile_summary_final_resource_requirements_first_blocker_row" in requirement_ids
+    assert "contract_final_resource_requirements_first_blocker_fixture" in requirement_ids
     assert "contract_final_demo_launch_first_blocker_receipt" in requirement_ids
     assert result.report["safety"] == {
         "global_mutation": False,
@@ -216,6 +221,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "configuredLiveEvidenceBundle",
                 "FinalResourceFillGuideReport",
                 "finalResourceFillGuide",
+                "FinalResourceRequirementsFirstBlocker",
+                "firstBlocker: FinalResourceRequirementsFirstBlocker?",
                 "ResourceHandoffReport",
                 "resourceReport",
             ]
@@ -278,6 +285,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "resourceHandoffIOSRows",
                 "resourceFillGuideRows",
                 "Fill guide",
+                "report.finalResourceRequirements",
+                "resourceRequirementFirstBlockerRow",
                 "sanitize",
             ]
         ),
@@ -371,6 +380,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidenceBundle",
                 "testDecodesFinalResourceFillGuideFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsResourceFillGuide",
+                "provide MESHY_API_KEY in final-resources.env",
                 "testDecodesResourceHandoffFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsMissingResourceHandoff",
                 "testFinalLaunchMobileSummaryShowsReadyResourceHandoff",
