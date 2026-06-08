@@ -31,6 +31,42 @@ def test_write_final_acceptance_local_fails_unusable_exit_code(
     assert "failed before writing a usable report: exit 1" in result.stderr
 
 
+def test_write_final_acceptance_configured_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_final_acceptance_configured.sh")
+
+    assert result.returncode == 0
+    assert "accepted configured final acceptance exit code 2" in result.stdout
+    assert "services/backend/.local/final-acceptance-configured.json" in result.stdout
+    fake_uv_args = (
+        script_repo / "services/backend/.local/fake-uv-args.txt"
+    ).read_text(encoding="utf-8")
+    assert "final-acceptance" in fake_uv_args
+    assert "--profile quick" in fake_uv_args
+    assert "--provider-mode configured" in fake_uv_args
+    assert "--require-real-core" in fake_uv_args
+    assert "--allow-live-provider-calls" in fake_uv_args
+    assert "--repo-root ../.." in fake_uv_args
+    assert "--output .local/final-acceptance-configured.json" in fake_uv_args
+
+
+def test_write_final_acceptance_configured_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_final_acceptance_configured.sh")
+
+    assert result.returncode == 1
+    assert (
+        "configured final acceptance failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
 def test_write_ios_deploy_runbook_local_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:
@@ -173,6 +209,7 @@ def test_final_rehearsal_make_targets_dry_run_expected_order() -> None:
     assert "evaluate-3d" in output
     assert "evaluate-npc" in output
     assert "write_final_acceptance_local.sh" in output
+    assert "write_final_acceptance_configured.sh" not in output
     assert "final-demo-launch" in output
     assert "write_ios_deploy_runbook_local.sh" in output
     assert "final-local-report-refresh-local:" in makefile
@@ -203,6 +240,28 @@ def test_ios_device_launch_rehearsal_make_target_dry_run_uses_wrapper() -> None:
     assert "ios-device-launch-rehearsal:" in makefile
     assert "services/backend/scripts/write_ios_device_launch_rehearsal.sh" in makefile
     assert "write_ios_device_launch_rehearsal.sh" in result.stdout
+
+
+def test_final_acceptance_configured_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "final-acceptance-configured"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    assert (
+        ".PHONY: final-acceptance-local final-acceptance-configured "
+        "final-demo-launch final-rehearsal-local"
+    ) in makefile
+    assert "final-acceptance-configured:" in makefile
+    assert "services/backend/scripts/write_final_acceptance_configured.sh" in makefile
+    assert "write_final_acceptance_configured.sh" in result.stdout
 
 
 def test_final_local_report_refresh_make_target_dry_run_uses_cli() -> None:

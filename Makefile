@@ -152,10 +152,13 @@ ios-device-launch-certificate:
 ios-device-launch-rehearsal:
 	@services/backend/scripts/write_ios_device_launch_rehearsal.sh
 
-.PHONY: final-acceptance-local final-demo-launch final-rehearsal-local
+.PHONY: final-acceptance-local final-acceptance-configured final-demo-launch final-rehearsal-local
 
 final-acceptance-local:
 	@services/backend/scripts/write_final_acceptance_local.sh
+
+final-acceptance-configured:
+	@services/backend/scripts/write_final_acceptance_configured.sh
 
 final-demo-launch:
 	cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../.. --output .local/final-demo-launch-local.json
