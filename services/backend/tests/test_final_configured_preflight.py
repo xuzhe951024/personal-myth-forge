@@ -23,6 +23,16 @@ def test_configured_preflight_blocks_missing_resources_without_leaks(
     assert result.report["status"] == "blocked"
     assert result.report["final_resources_preflight"]["status"] == "missing"
     assert result.report["provider_handoff"]["core_real_ready"] is False
+    provider_handoff = result.report["provider_handoff"]
+    assert provider_handoff["status"] == "blocked"
+    assert provider_handoff["classification"] == "core_real_providers_not_ready"
+    assert provider_handoff["summary"]["providers"] >= 4
+    assert provider_handoff["summary"]["core_total"] == 3
+    assert provider_handoff["summary"]["core_real_ready"] == 1
+    assert (
+        "curl http://127.0.0.1:8080/v1/provider-readiness"
+        in provider_handoff["next_commands"]
+    )
     assert result.report["resource_handoff"]["summary"]["missing"] >= 3
     assert result.report["configured_final_launch"]["overall_status"] == "blocked"
     assert result.report["configured_ios_deploy_runbook"]["status"] == "blocked"
@@ -75,6 +85,13 @@ def test_configured_preflight_is_ready_with_configured_handoff_inputs(
     assert result.report["summary"]["missing"] == 0
     assert result.report["final_resources_preflight"]["status"] == "ready"
     assert result.report["provider_handoff"]["core_real_ready"] is True
+    provider_handoff = result.report["provider_handoff"]
+    assert provider_handoff["status"] == "ready"
+    assert provider_handoff["classification"] == "core_real_providers_ready"
+    assert provider_handoff["summary"]["providers"] >= 4
+    assert provider_handoff["summary"]["core_total"] == 3
+    assert provider_handoff["summary"]["core_real_ready"] == 3
+    assert provider_handoff["summary"]["missing_env"] == 0
     assert result.report["resource_handoff"]["summary"]["missing"] == 0
     assert result.report["resource_handoff"]["summary"]["blocked"] == 0
     assert result.report["configured_final_launch"]["mode"] == "configured"

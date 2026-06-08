@@ -12,16 +12,8 @@ from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
-from myth_forge_api.providers.readiness import build_provider_readiness
+from myth_forge_api.provider_handoff import build_provider_handoff_report
 from myth_forge_api.resource_handoff import build_resource_handoff_report
-
-CORE_PROVIDER_KINDS = ["three_d", "npc", "capture_storage"]
-BACKEND_ONLY_ENV = [
-    "MESHY_API_KEY",
-    "OPENAI_API_KEY",
-    "TREATSTOCK_API_KEY",
-    "SCULPTEO_API_KEY",
-]
 
 
 @dataclass(frozen=True)
@@ -40,7 +32,7 @@ def build_final_configured_preflight_report(
     final_resources_preflight = build_final_resources_preflight_report(
         repo_root=selected_repo_root,
     ).report
-    provider_handoff = _provider_handoff_report(selected_settings)
+    provider_handoff = build_provider_handoff_report(selected_settings)
     resource_handoff = build_resource_handoff_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
@@ -92,48 +84,6 @@ def build_final_configured_preflight_report(
         exit_code=0 if sanitized["status"] == "ready" else 2,
         report=sanitized,
     )
-
-
-def _provider_handoff_report(settings: Settings) -> dict[str, Any]:
-    readiness = build_provider_readiness(settings)
-    provider_items = [item.model_dump(mode="json") for item in readiness.providers]
-    provider_by_kind = {item["kind"]: item for item in provider_items}
-    core_items = [
-        provider_by_kind[kind]
-        for kind in CORE_PROVIDER_KINDS
-        if kind in provider_by_kind
-    ]
-    missing_env = sorted(
-        {
-            env_name
-            for provider in provider_items
-            for env_name in provider.get("missing_env", [])
-        }
-    )
-    return {
-        "kind": "provider_handoff_report",
-        "mode": "configuration",
-        "overall_demo_ready": readiness.overall_demo_ready,
-        "overall_real_ready": readiness.overall_real_ready,
-        "core_real_ready": all(provider["is_real_provider_ready"] for provider in core_items),
-        "core_provider_kinds": CORE_PROVIDER_KINDS,
-        "missing_env": missing_env,
-        "backend_only_env": BACKEND_ONLY_ENV,
-        "mobile_secret_policy": (
-            "Provider secrets stay on the backend; mobile clients only see readiness metadata."
-        ),
-        "providers": provider_items,
-        "next_commands": [
-            "make final-apply-resources",
-            "make backend-dev",
-            (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "provider-handoff --require-core-real --output .local/provider-handoff.json"
-            ),
-            "make final-configured-preflight",
-        ],
-    }
-
 
 def _overall_status(
     *,
