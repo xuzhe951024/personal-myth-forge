@@ -2069,6 +2069,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
+                "first_blocker",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_launch_certificate.py",
                 "device_gates",
             ),
             SourceRequirement(
