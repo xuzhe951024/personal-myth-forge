@@ -1108,6 +1108,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             "Showcase readiness \(sanitize(readiness.status)): ready \(readiness.summary.ready), partial \(readiness.summary.partial), blocked \(readiness.summary.blocked)."
         ]
         if readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" {
+            if let action = readiness.nextAction {
+                rows.append(showcaseReadinessNextActionRow(action))
+            }
             if let blocker = readiness.firstBlocker {
                 rows.append(showcaseReadinessCapabilityRow(blocker))
             } else if let capability = readiness.capabilities.first(where: { status(from: $0.status) != .ready }) {
@@ -1135,6 +1138,20 @@ public enum FinalLaunchMobileSummaryBuilder {
             return priorityFragments.contains { lowered.contains($0) }
         })
         return deduped(selected).prefix(6).map(sanitize)
+    }
+
+    private static func showcaseReadinessNextActionRow(
+        _ action: FinalShowcaseReadinessNextAction
+    ) -> String {
+        var parts = ["Next action: \(action.id) \(action.status)"]
+        if let classification = action.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        parts.append("| \(action.command)")
+        if !action.detail.isEmpty {
+            parts.append("| \(action.detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
     }
 
     private static func showcaseReadinessCapabilityRow(

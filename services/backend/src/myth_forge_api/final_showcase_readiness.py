@@ -149,6 +149,7 @@ def build_final_showcase_readiness_report(
         "capabilities": capabilities,
         "capabilities_by_id": {row["id"]: row for row in capabilities},
         "first_blocker": _first_blocker(capabilities),
+        "next_action": _next_action(capabilities),
         "operator_actions": _operator_actions(
             capabilities,
             action_reports=[
@@ -809,6 +810,21 @@ def _first_blocker(capabilities: list[dict[str, Any]]) -> dict[str, Any] | None:
         if capability.get("required", True) and capability.get("status") != "ready":
             return capability
     return None
+
+
+def _next_action(capabilities: list[dict[str, Any]]) -> dict[str, Any] | None:
+    blocker = _first_blocker(capabilities)
+    if blocker is None:
+        return None
+    return {
+        "id": str(blocker.get("id", "")),
+        "label": str(blocker.get("label", "")),
+        "status": str(blocker.get("status", "")),
+        "classification": str(blocker.get("classification", "")),
+        "command": str(blocker.get("command", "")),
+        "detail": str(blocker.get("detail", "")),
+        "source": "first_blocker",
+    }
 
 
 def _operator_actions(

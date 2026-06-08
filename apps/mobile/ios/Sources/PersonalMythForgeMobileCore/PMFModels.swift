@@ -3874,6 +3874,34 @@ public struct FinalShowcaseReadinessCapability: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalShowcaseReadinessNextAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var source: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        source: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.source = source
+    }
+}
+
 public struct FinalShowcaseReadinessSafety: Codable, Equatable, Sendable {
     public var commandsRun: Bool
     public var providerCalls: Bool
@@ -3926,6 +3954,7 @@ public struct FinalShowcaseReadinessReport: Codable, Equatable, Sendable {
     public var summary: FinalShowcaseReadinessSummary
     public var capabilities: [FinalShowcaseReadinessCapability]
     public var firstBlocker: FinalShowcaseReadinessCapability?
+    public var nextAction: FinalShowcaseReadinessNextAction?
     public var operatorActions: [String]
     public var commands: [String]
     public var safety: FinalShowcaseReadinessSafety
@@ -3936,6 +3965,7 @@ public struct FinalShowcaseReadinessReport: Codable, Equatable, Sendable {
         summary: FinalShowcaseReadinessSummary,
         capabilities: [FinalShowcaseReadinessCapability],
         firstBlocker: FinalShowcaseReadinessCapability? = nil,
+        nextAction: FinalShowcaseReadinessNextAction? = nil,
         operatorActions: [String],
         commands: [String],
         safety: FinalShowcaseReadinessSafety
@@ -3945,6 +3975,7 @@ public struct FinalShowcaseReadinessReport: Codable, Equatable, Sendable {
         self.summary = summary
         self.capabilities = capabilities
         self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.operatorActions = operatorActions
         self.commands = commands
         self.safety = safety
