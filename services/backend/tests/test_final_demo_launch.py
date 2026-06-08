@@ -477,6 +477,33 @@ def test_final_demo_launch_embeds_final_external_action_ledger(
     assert ledger["safety"]["provider_secrets_in_report"] is False
 
 
+def test_final_demo_launch_embeds_final_launch_closure_packet(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    packet = result.report["final_launch_closure_packet"]
+
+    assert packet["kind"] == "final_launch_closure_packet_report"
+    assert packet["status"] in {"blocked", "partial", "ready"}
+    assert packet["sections"][0]["id"] == "resource_inputs"
+    assert packet["sections_by_id"]["device_evidence"]["command"] == (
+        "make ios-device-launch-rehearsal"
+    )
+    assert packet["sections_by_id"]["live_provider_consent"][
+        "requires_cost_consent"
+    ] is True
+    assert packet["safety"]["commands_run"] is False
+    assert packet["safety"]["global_mutation"] is False
+    assert packet["safety"]["live_provider_calls"] is False
+
+
 def test_final_demo_launch_embeds_live_provider_evidence(
     tmp_path: Path,
 ) -> None:

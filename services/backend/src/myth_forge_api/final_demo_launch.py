@@ -14,6 +14,9 @@ from myth_forge_api.final_acceptance_readiness import (
 from myth_forge_api.final_external_action_ledger import (
     build_final_external_action_ledger_report,
 )
+from myth_forge_api.final_launch_closure_packet import (
+    build_final_launch_closure_packet_report,
+)
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
 )
@@ -137,6 +140,10 @@ def build_final_demo_launch_report(
     ios_device_evidence_bundle = build_ios_device_evidence_bundle_report(
         repo_root=selected_repo_root,
     ).report
+    final_launch_closure_packet = build_final_launch_closure_packet_report(
+        settings=selected_settings,
+        repo_root=selected_repo_root,
+    ).report
     phases = _launch_phases(
         mode=mode,
         resource_report=resource_report,
@@ -166,6 +173,7 @@ def build_final_demo_launch_report(
         "final_resource_apply_preview": final_resource_apply_preview,
         "final_resource_fill_guide": final_resource_fill_guide,
         "final_external_action_ledger": final_external_action_ledger,
+        "final_launch_closure_packet": final_launch_closure_packet,
         "final_acceptance_readiness": final_acceptance_readiness,
         "three_d_evaluation_readiness": three_d_evaluation_readiness,
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,

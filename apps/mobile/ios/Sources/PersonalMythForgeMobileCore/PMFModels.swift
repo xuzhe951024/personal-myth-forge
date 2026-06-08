@@ -1416,6 +1416,266 @@ public struct FinalExternalActionLedgerReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalLaunchClosurePacketSummary: Codable, Equatable, Sendable {
+    public var sections: Int
+    public var actions: Int
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var manual: Int
+    public var live: Int
+    public var partial: Int
+    public var optional: Int
+    public var requiredSections: Int
+    public var requiredActions: Int
+    public var secretActions: Int
+    public var requiresUserInput: Int
+    public var requiresUserConfirmation: Int
+    public var requiresCostConsent: Int
+    public var globalActions: Int
+    public var xcodeOrSigningActions: Int
+    public var safeLocalWrites: Int
+    public var liveProviderCalls: Int
+
+    public init(
+        sections: Int,
+        actions: Int,
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        manual: Int,
+        live: Int,
+        partial: Int,
+        optional: Int,
+        requiredSections: Int,
+        requiredActions: Int,
+        secretActions: Int,
+        requiresUserInput: Int,
+        requiresUserConfirmation: Int,
+        requiresCostConsent: Int,
+        globalActions: Int,
+        xcodeOrSigningActions: Int,
+        safeLocalWrites: Int,
+        liveProviderCalls: Int
+    ) {
+        self.sections = sections
+        self.actions = actions
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.manual = manual
+        self.live = live
+        self.partial = partial
+        self.optional = optional
+        self.requiredSections = requiredSections
+        self.requiredActions = requiredActions
+        self.secretActions = secretActions
+        self.requiresUserInput = requiresUserInput
+        self.requiresUserConfirmation = requiresUserConfirmation
+        self.requiresCostConsent = requiresCostConsent
+        self.globalActions = globalActions
+        self.xcodeOrSigningActions = xcodeOrSigningActions
+        self.safeLocalWrites = safeLocalWrites
+        self.liveProviderCalls = liveProviderCalls
+    }
+}
+
+public struct FinalLaunchClosurePacketAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var command: String
+    public var detail: String
+    public var required: Bool
+    public var secret: Bool
+    public var requiresUserInput: Bool
+    public var requiresUserConfirmation: Bool
+    public var requiresCostConsent: Bool
+    public var global: Bool
+    public var xcodeOrSigning: Bool
+    public var liveProviderCall: Bool
+    public var safeLocalWrite: Bool
+    public var writesRepoLocalFiles: Bool
+    public var classification: String?
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        command: String,
+        detail: String,
+        required: Bool,
+        secret: Bool,
+        requiresUserInput: Bool,
+        requiresUserConfirmation: Bool,
+        requiresCostConsent: Bool,
+        global: Bool,
+        xcodeOrSigning: Bool,
+        liveProviderCall: Bool,
+        safeLocalWrite: Bool,
+        writesRepoLocalFiles: Bool,
+        classification: String? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.command = command
+        self.detail = detail
+        self.required = required
+        self.secret = secret
+        self.requiresUserInput = requiresUserInput
+        self.requiresUserConfirmation = requiresUserConfirmation
+        self.requiresCostConsent = requiresCostConsent
+        self.global = global
+        self.xcodeOrSigning = xcodeOrSigning
+        self.liveProviderCall = liveProviderCall
+        self.safeLocalWrite = safeLocalWrite
+        self.writesRepoLocalFiles = writesRepoLocalFiles
+        self.classification = classification
+    }
+}
+
+public struct FinalLaunchClosurePacketSection: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var command: String
+    public var detail: String
+    public var required: Bool
+    public var actions: [FinalLaunchClosurePacketAction]
+    public var firstAction: FinalLaunchClosurePacketAction
+    public var blockedBy: [String]
+    public var requiresUserInput: Bool
+    public var requiresUserConfirmation: Bool
+    public var requiresCostConsent: Bool
+    public var globalAction: Bool
+    public var xcodeOrSigning: Bool
+    public var liveProviderCall: Bool
+    public var safeLocalWrite: Bool
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        command: String,
+        detail: String,
+        required: Bool,
+        actions: [FinalLaunchClosurePacketAction],
+        firstAction: FinalLaunchClosurePacketAction,
+        blockedBy: [String],
+        requiresUserInput: Bool,
+        requiresUserConfirmation: Bool,
+        requiresCostConsent: Bool,
+        globalAction: Bool,
+        xcodeOrSigning: Bool,
+        liveProviderCall: Bool,
+        safeLocalWrite: Bool
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.command = command
+        self.detail = detail
+        self.required = required
+        self.actions = actions
+        self.firstAction = firstAction
+        self.blockedBy = blockedBy
+        self.requiresUserInput = requiresUserInput
+        self.requiresUserConfirmation = requiresUserConfirmation
+        self.requiresCostConsent = requiresCostConsent
+        self.globalAction = globalAction
+        self.xcodeOrSigning = xcodeOrSigning
+        self.liveProviderCall = liveProviderCall
+        self.safeLocalWrite = safeLocalWrite
+    }
+}
+
+public struct FinalLaunchClosurePacketSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var runsShellWriters: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+    public var providerSecretsInReport: Bool
+    public var rawPrivateContextInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+    public var describesGlobalActions: Bool
+    public var requiresCostConsentForLiveActions: Bool
+
+    public init(
+        commandsRun: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        runsShellWriters: Bool,
+        providerCalls: Bool,
+        liveProviderCalls: Bool,
+        globalMutation: Bool,
+        xcodeOrSigning: Bool,
+        keychainWrites: Bool,
+        providerSecretsInReport: Bool,
+        rawPrivateContextInReport: Bool,
+        rawMediaInReport: Bool,
+        paymentLinksInReport: Bool,
+        localPathsInReport: Bool,
+        describesGlobalActions: Bool,
+        requiresCostConsentForLiveActions: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.runsShellWriters = runsShellWriters
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.globalMutation = globalMutation
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawPrivateContextInReport = rawPrivateContextInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.localPathsInReport = localPathsInReport
+        self.describesGlobalActions = describesGlobalActions
+        self.requiresCostConsentForLiveActions = requiresCostConsentForLiveActions
+    }
+}
+
+public struct FinalLaunchClosurePacketReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: FinalLaunchClosurePacketSummary
+    public var sections: [FinalLaunchClosurePacketSection]
+    public var sectionsById: [String: FinalLaunchClosurePacketSection]
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var safety: FinalLaunchClosurePacketSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: FinalLaunchClosurePacketSummary,
+        sections: [FinalLaunchClosurePacketSection],
+        sectionsById: [String: FinalLaunchClosurePacketSection],
+        operatorActions: [String],
+        commands: [String],
+        safety: FinalLaunchClosurePacketSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.sections = sections
+        self.sectionsById = sectionsById
+        self.operatorActions = operatorActions
+        self.commands = commands
+        self.safety = safety
+    }
+}
+
 public struct FinalAcceptanceSourceFile: Codable, Equatable, Sendable {
     public var path: String
     public var exists: Bool
@@ -3082,6 +3342,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var finalResourceApplyPreview: FinalResourceApplyPreviewReport?
     public var finalResourceFillGuide: FinalResourceFillGuideReport?
     public var finalExternalActionLedger: FinalExternalActionLedgerReport?
+    public var finalLaunchClosurePacket: FinalLaunchClosurePacketReport?
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
     public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
@@ -3112,6 +3373,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         finalResourceApplyPreview: FinalResourceApplyPreviewReport? = nil,
         finalResourceFillGuide: FinalResourceFillGuideReport? = nil,
         finalExternalActionLedger: FinalExternalActionLedgerReport? = nil,
+        finalLaunchClosurePacket: FinalLaunchClosurePacketReport? = nil,
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
         threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
@@ -3141,6 +3403,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.finalResourceApplyPreview = finalResourceApplyPreview
         self.finalResourceFillGuide = finalResourceFillGuide
         self.finalExternalActionLedger = finalExternalActionLedger
+        self.finalLaunchClosurePacket = finalLaunchClosurePacket
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
         self.threeDEvaluationReadiness = threeDEvaluationReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness

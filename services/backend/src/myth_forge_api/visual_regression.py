@@ -200,6 +200,25 @@ DEFAULT_VISUAL_ARTIFACTS = (
             "Safety: commands_run=false xcode=false global=false",
         ),
     ),
+    VisualArtifactSpec(
+        id="p0.157_final_launch_closure_packet",
+        html_path="docs/superpowers/verification/p0.157-final-launch-closure-packet.html",
+        png_path="docs/superpowers/verification/assets/p0.157-final-launch-closure-packet-390x844.png",
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.157-final-launch-closure-packet-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Closure Packet",
+            "Final closure blocked",
+            "resource_inputs",
+            "provide MESHY_API_KEY",
+            "cost consent",
+            "commands_run=false global=false live_calls=false",
+        ),
+    ),
 )
 
 

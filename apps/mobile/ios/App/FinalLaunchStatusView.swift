@@ -37,6 +37,10 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "Mode", lines: summary.modePolicyRows)
             }
 
+            if !summary.closurePacketRows.isEmpty {
+                groupedLines(title: "Closure Packet", lines: summary.closurePacketRows)
+            }
+
             if !summary.externalActionLedgerRows.isEmpty {
                 groupedLines(title: "External Actions", lines: summary.externalActionLedgerRows)
             }

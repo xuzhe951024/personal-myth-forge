@@ -11,6 +11,7 @@ from myth_forge_api.final_configured_evidence_plan import (
 )
 from myth_forge_api.final_external_action_ledger import FinalExternalActionLedgerResult
 from myth_forge_api.final_handoff_index import FinalHandoffIndexResult
+from myth_forge_api.final_launch_closure_packet import FinalLaunchClosurePacketResult
 from myth_forge_api.final_local_report_refresh import FinalLocalReportRefreshResult
 from myth_forge_api.final_resource_fill_guide import FinalResourceFillGuideResult
 from myth_forge_api.final_resource_apply_preview import FinalResourceApplyPreviewResult
@@ -790,6 +791,50 @@ def test_cli_final_external_action_ledger_writes_report_and_returns_result_code(
     assert exit_code == 2
     assert calls == [{"repo_root": tmp_path}]
     assert report["kind"] == "final_external_action_ledger_report"
+    assert report["status"] == "blocked"
+
+
+def test_cli_final_launch_closure_packet_writes_report_and_returns_result_code(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "final-launch-closure-packet.json"
+    calls = []
+
+    def fake_build_final_launch_closure_packet_report(**kwargs):
+        calls.append(kwargs)
+        return FinalLaunchClosurePacketResult(
+            exit_code=2,
+            report={
+                "kind": "final_launch_closure_packet_report",
+                "status": "blocked",
+                "summary": {"sections": 5, "blocked": 3},
+                "sections": [],
+                "sections_by_id": {},
+                "operator_actions": ["provide MESHY_API_KEY"],
+                "safety": {"commands_run": False, "global_mutation": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_final_launch_closure_packet_report",
+        fake_build_final_launch_closure_packet_report,
+    )
+
+    exit_code = main(
+        [
+            "final-launch-closure-packet",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 2
+    assert calls == [{"repo_root": tmp_path}]
+    assert report["kind"] == "final_launch_closure_packet_report"
     assert report["status"] == "blocked"
 
 

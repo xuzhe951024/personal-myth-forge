@@ -110,6 +110,9 @@ do {
     try testDecodesFinalExternalActionLedgerFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsExternalActionLedger()
     try testFinalLaunchMobileSummaryRedactsUnsafeExternalActionLedger()
+    try testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket()
+    try testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket()
     try testDecodesResourceHandoffFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsMissingResourceHandoff()
     try testFinalLaunchMobileSummaryShowsReadyResourceHandoff()
@@ -2704,6 +2707,72 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeExternalActionLedger() thr
     try expectContains(text, "[withheld]")
 }
 
+private func testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload()
+    )
+
+    let packet = try require(
+        report.finalLaunchClosurePacket,
+        "missing final launch closure packet"
+    )
+
+    try expectEqual(packet.kind, "final_launch_closure_packet_report")
+    try expectEqual(packet.status, "blocked")
+    try expectEqual(packet.summary.sections, 5)
+    try expectEqual(packet.summary.requiresCostConsent, 5)
+    try expectEqual(packet.sections.first?.id, "resource_inputs")
+    try expectEqual(packet.sections.first?.firstAction.id, "provide_MESHY_API_KEY")
+    try expectEqual(
+        packet.sectionsById["device_evidence"]?.command,
+        "make ios-device-launch-rehearsal"
+    )
+    try expectEqual(packet.sectionsById["live_provider_consent"]?.requiresCostConsent, true)
+    try expectFalse(packet.safety.commandsRun)
+    try expectFalse(packet.safety.globalMutation)
+    try expectFalse(packet.safety.liveProviderCalls)
+    try expectTrue(packet.safety.describesGlobalActions)
+}
+
+private func testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(),
+        error: nil
+    )
+    let text = summary.closurePacketRows.joined(separator: " ")
+
+    try expectContains(text, "Final closure blocked")
+    try expectContains(text, "resource_inputs")
+    try expectContains(text, "provide_MESHY_API_KEY")
+    try expectContains(text, "cost consent")
+    try expectContains(text, "commands_run=false global=false live_calls=false")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket() throws {
+    let report = finalDemoLaunchReport(
+        closurePacketActionCommand: (
+            "make final-launch-closure-packet sk-test /Users/zhexu/private "
+                + "file:///tmp/private local-capture://cap checkout_url Bearer token"
+        ),
+        closurePacketActionDetail: (
+            "api_key=secret private_message: raw words https://checkout.example/pay"
+        )
+    )
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = summary.closurePacketRows.joined(separator: " ")
+
+    try expectFalse(text.contains("sk-test"))
+    try expectFalse(text.contains("/Users/"))
+    try expectFalse(text.contains("file:///"))
+    try expectFalse(text.contains("local-capture://"))
+    try expectFalse(text.contains("checkout_url"))
+    try expectFalse(text.contains("api_key=secret"))
+    try expectFalse(text.contains("private_message"))
+    try expectContains(text, "[withheld]")
+}
+
 private func testDecodesResourceHandoffFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4976,7 +5045,9 @@ private func finalDemoLaunchPayload(
     resourceHandoffAction: String = "provide MESHY_API_KEY",
     resourceHandoffDestination: String = "services/backend/.env",
     externalActionLedgerCommand: String = "make final-external-action-ledger",
-    externalActionLedgerDetail: String = "Inspect external action blockers."
+    externalActionLedgerDetail: String = "Inspect external action blockers.",
+    closurePacketActionCommand: String = "make final-resource-fill-guide",
+    closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation."
 ) -> Data {
     let liveEvidenceReady = liveProviderEvidenceStatus == "ready"
     let liveEvidenceBlocked = liveProviderEvidenceStatus == "blocked"
@@ -5670,6 +5741,427 @@ private func finalDemoLaunchPayload(
               "provider_secrets_in_report": false,
               "local_paths_in_report": false,
               "requires_user_confirmation_for_global_actions": true,
+              "requires_cost_consent_for_live_actions": true
+            }
+          },
+          "final_launch_closure_packet": {
+            "kind": "final_launch_closure_packet_report",
+            "status": "blocked",
+            "summary": {
+              "sections": 5,
+              "actions": 7,
+              "ready": 0,
+              "missing": 0,
+              "blocked": 3,
+              "manual": 0,
+              "live": 1,
+              "partial": 1,
+              "optional": 0,
+              "required_sections": 4,
+              "required_actions": 7,
+              "secret_actions": 2,
+              "requires_user_input": 2,
+              "requires_user_confirmation": 1,
+              "requires_cost_consent": 5,
+              "global_actions": 1,
+              "xcode_or_signing_actions": 1,
+              "safe_local_writes": 2,
+              "live_provider_calls": 5
+            },
+            "sections": [
+              {
+                "id": "resource_inputs",
+                "label": "Resource inputs",
+                "status": "blocked",
+                "command": "make final-resource-fill-guide",
+                "detail": "Fill required final resource inputs.",
+                "required": true,
+                "actions": [
+                  {
+                    "id": "provide_MESHY_API_KEY",
+                    "label": "Meshy API key",
+                    "status": "missing",
+                    "command": "\(closurePacketActionCommand)",
+                    "detail": "\(closurePacketActionDetail)",
+                    "required": true,
+                    "secret": true,
+                    "requires_user_input": true,
+                    "requires_user_confirmation": false,
+                    "requires_cost_consent": false,
+                    "global": false,
+                    "xcode_or_signing": false,
+                    "live_provider_call": false,
+                    "safe_local_write": false,
+                    "writes_repo_local_files": false
+                  }
+                ],
+                "first_action": {
+                  "id": "provide_MESHY_API_KEY",
+                  "label": "Meshy API key",
+                  "status": "missing",
+                  "command": "\(closurePacketActionCommand)",
+                  "detail": "\(closurePacketActionDetail)",
+                  "required": true,
+                  "secret": true,
+                  "requires_user_input": true,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": false,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": false,
+                  "safe_local_write": false,
+                  "writes_repo_local_files": false
+                },
+                "blocked_by": ["provide_MESHY_API_KEY"],
+                "requires_user_input": true,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": false,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": false,
+                "safe_local_write": false
+              },
+              {
+                "id": "safe_local_writes",
+                "label": "Safe local writes",
+                "status": "blocked",
+                "command": "make final-resource-apply-preview",
+                "detail": "Preview and apply ignored backend/iOS local resource files.",
+                "required": true,
+                "actions": [
+                  {
+                    "id": "apply_final_resources",
+                    "label": "Apply final resources",
+                    "status": "blocked",
+                    "command": "make final-apply-resources",
+                    "detail": "Write ignored backend and iOS local config files after preview is ready.",
+                    "required": true,
+                    "secret": false,
+                    "requires_user_input": false,
+                    "requires_user_confirmation": false,
+                    "requires_cost_consent": false,
+                    "global": false,
+                    "xcode_or_signing": false,
+                    "live_provider_call": false,
+                    "safe_local_write": true,
+                    "writes_repo_local_files": true
+                  }
+                ],
+                "first_action": {
+                  "id": "apply_final_resources",
+                  "label": "Apply final resources",
+                  "status": "blocked",
+                  "command": "make final-apply-resources",
+                  "detail": "Write ignored backend and iOS local config files after preview is ready.",
+                  "required": true,
+                  "secret": false,
+                  "requires_user_input": false,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": false,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": false,
+                  "safe_local_write": true,
+                  "writes_repo_local_files": true
+                },
+                "blocked_by": ["apply_final_resources"],
+                "requires_user_input": false,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": false,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": false,
+                "safe_local_write": true
+              },
+              {
+                "id": "device_evidence",
+                "label": "Device evidence",
+                "status": "blocked",
+                "command": "make ios-device-launch-rehearsal",
+                "detail": "Collect backend LAN, deploy preflight, Xcode, and rehearsal proof.",
+                "required": true,
+                "actions": [
+                  {
+                    "id": "mobile_deploy_preflight",
+                    "label": "Mobile deploy preflight",
+                    "status": "blocked",
+                    "command": "make mobile-deploy-preflight",
+                    "detail": "Run mobile deploy preflight after backend-device-demo is reachable.",
+                    "required": true,
+                    "secret": false,
+                    "requires_user_input": false,
+                    "requires_user_confirmation": false,
+                    "requires_cost_consent": false,
+                    "global": false,
+                    "xcode_or_signing": false,
+                    "live_provider_call": false,
+                    "safe_local_write": false,
+                    "writes_repo_local_files": false
+                  }
+                ],
+                "first_action": {
+                  "id": "mobile_deploy_preflight",
+                  "label": "Mobile deploy preflight",
+                  "status": "blocked",
+                  "command": "make mobile-deploy-preflight",
+                  "detail": "Run mobile deploy preflight after backend-device-demo is reachable.",
+                  "required": true,
+                  "secret": false,
+                  "requires_user_input": false,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": false,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": false,
+                  "safe_local_write": false,
+                  "writes_repo_local_files": false
+                },
+                "blocked_by": ["mobile_deploy_preflight"],
+                "requires_user_input": false,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": false,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": false,
+                "safe_local_write": false
+              },
+              {
+                "id": "live_provider_consent",
+                "label": "Live provider consent",
+                "status": "live",
+                "command": "make live-provider-evidence",
+                "detail": "Run Meshy, OpenAI, and print-provider evidence only after cost consent.",
+                "required": false,
+                "actions": [
+                  {
+                    "id": "run_live_provider_evidence",
+                    "label": "Refresh live provider evidence",
+                    "status": "live",
+                    "command": "make live-provider-evidence",
+                    "detail": "Refresh configured Meshy/OpenAI evidence after cost consent.",
+                    "required": true,
+                    "secret": false,
+                    "requires_user_input": false,
+                    "requires_user_confirmation": false,
+                    "requires_cost_consent": true,
+                    "global": false,
+                    "xcode_or_signing": false,
+                    "live_provider_call": true,
+                    "safe_local_write": false,
+                    "writes_repo_local_files": false
+                  }
+                ],
+                "first_action": {
+                  "id": "run_live_provider_evidence",
+                  "label": "Refresh live provider evidence",
+                  "status": "live",
+                  "command": "make live-provider-evidence",
+                  "detail": "Refresh configured Meshy/OpenAI evidence after cost consent.",
+                  "required": true,
+                  "secret": false,
+                  "requires_user_input": false,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": true,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": true,
+                  "safe_local_write": false,
+                  "writes_repo_local_files": false
+                },
+                "blocked_by": [],
+                "requires_user_input": false,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": true,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": true,
+                "safe_local_write": false
+              },
+              {
+                "id": "final_acceptance",
+                "label": "Final acceptance",
+                "status": "partial",
+                "command": "make final-showcase-readiness",
+                "detail": "Rerun final acceptance and showcase readiness after evidence is ready.",
+                "required": true,
+                "actions": [
+                  {
+                    "id": "final_showcase_readiness",
+                    "label": "Final showcase readiness",
+                    "status": "partial",
+                    "command": "make final-showcase-readiness",
+                    "detail": "iOS deploy runbook and device launch rehearsal must both be ready.",
+                    "required": true,
+                    "secret": false,
+                    "requires_user_input": false,
+                    "requires_user_confirmation": false,
+                    "requires_cost_consent": false,
+                    "global": false,
+                    "xcode_or_signing": false,
+                    "live_provider_call": false,
+                    "safe_local_write": false,
+                    "writes_repo_local_files": false
+                  }
+                ],
+                "first_action": {
+                  "id": "final_showcase_readiness",
+                  "label": "Final showcase readiness",
+                  "status": "partial",
+                  "command": "make final-showcase-readiness",
+                  "detail": "iOS deploy runbook and device launch rehearsal must both be ready.",
+                  "required": true,
+                  "secret": false,
+                  "requires_user_input": false,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": false,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": false,
+                  "safe_local_write": false,
+                  "writes_repo_local_files": false
+                },
+                "blocked_by": [],
+                "requires_user_input": false,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": false,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": false,
+                "safe_local_write": false
+              }
+            ],
+            "sections_by_id": {
+              "resource_inputs": {
+                "id": "resource_inputs",
+                "label": "Resource inputs",
+                "status": "blocked",
+                "command": "make final-resource-fill-guide",
+                "detail": "Fill required final resource inputs.",
+                "required": true,
+                "actions": [],
+                "first_action": {
+                  "id": "provide_MESHY_API_KEY",
+                  "label": "Meshy API key",
+                  "status": "missing",
+                  "command": "\(closurePacketActionCommand)",
+                  "detail": "\(closurePacketActionDetail)",
+                  "required": true,
+                  "secret": true,
+                  "requires_user_input": true,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": false,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": false,
+                  "safe_local_write": false,
+                  "writes_repo_local_files": false
+                },
+                "blocked_by": ["provide_MESHY_API_KEY"],
+                "requires_user_input": true,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": false,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": false,
+                "safe_local_write": false
+              },
+              "device_evidence": {
+                "id": "device_evidence",
+                "label": "Device evidence",
+                "status": "blocked",
+                "command": "make ios-device-launch-rehearsal",
+                "detail": "Collect backend LAN, deploy preflight, Xcode, and rehearsal proof.",
+                "required": true,
+                "actions": [],
+                "first_action": {
+                  "id": "mobile_deploy_preflight",
+                  "label": "Mobile deploy preflight",
+                  "status": "blocked",
+                  "command": "make mobile-deploy-preflight",
+                  "detail": "Run mobile deploy preflight after backend-device-demo is reachable.",
+                  "required": true,
+                  "secret": false,
+                  "requires_user_input": false,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": false,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": false,
+                  "safe_local_write": false,
+                  "writes_repo_local_files": false
+                },
+                "blocked_by": ["mobile_deploy_preflight"],
+                "requires_user_input": false,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": false,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": false,
+                "safe_local_write": false
+              },
+              "live_provider_consent": {
+                "id": "live_provider_consent",
+                "label": "Live provider consent",
+                "status": "live",
+                "command": "make live-provider-evidence",
+                "detail": "Run Meshy, OpenAI, and print-provider evidence only after cost consent.",
+                "required": false,
+                "actions": [],
+                "first_action": {
+                  "id": "run_live_provider_evidence",
+                  "label": "Refresh live provider evidence",
+                  "status": "live",
+                  "command": "make live-provider-evidence",
+                  "detail": "Refresh configured Meshy/OpenAI evidence after cost consent.",
+                  "required": true,
+                  "secret": false,
+                  "requires_user_input": false,
+                  "requires_user_confirmation": false,
+                  "requires_cost_consent": true,
+                  "global": false,
+                  "xcode_or_signing": false,
+                  "live_provider_call": true,
+                  "safe_local_write": false,
+                  "writes_repo_local_files": false
+                },
+                "blocked_by": [],
+                "requires_user_input": false,
+                "requires_user_confirmation": false,
+                "requires_cost_consent": true,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "live_provider_call": true,
+                "safe_local_write": false
+              }
+            },
+            "operator_actions": [
+              "provide MESHY_API_KEY",
+              "run make ios-device-launch-rehearsal",
+              "approve live provider cost before make live-provider-evidence"
+            ],
+            "commands": [
+              "make final-resource-fill-guide",
+              "make final-external-action-ledger",
+              "make ios-device-launch-rehearsal",
+              "make live-provider-evidence",
+              "make final-showcase-readiness"
+            ],
+            "safety": {
+              "commands_run": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "runs_shell_writers": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
+              "provider_secrets_in_report": false,
+              "raw_private_context_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false,
+              "describes_global_actions": true,
               "requires_cost_consent_for_live_actions": true
             }
           },
@@ -8969,7 +9461,9 @@ private func finalDemoLaunchReport(
     resourceHandoffAction: String = "provide MESHY_API_KEY",
     resourceHandoffDestination: String = "services/backend/.env",
     externalActionLedgerCommand: String = "make final-external-action-ledger",
-    externalActionLedgerDetail: String = "Inspect external action blockers."
+    externalActionLedgerDetail: String = "Inspect external action blockers.",
+    closurePacketActionCommand: String = "make final-resource-fill-guide",
+    closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation."
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -9036,7 +9530,9 @@ private func finalDemoLaunchReport(
             resourceHandoffAction: resourceHandoffAction,
             resourceHandoffDestination: resourceHandoffDestination,
             externalActionLedgerCommand: externalActionLedgerCommand,
-            externalActionLedgerDetail: externalActionLedgerDetail
+            externalActionLedgerDetail: externalActionLedgerDetail,
+            closurePacketActionCommand: closurePacketActionCommand,
+            closurePacketActionDetail: closurePacketActionDetail
         )
     )
 }

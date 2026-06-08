@@ -131,6 +131,18 @@ SOURCE_REQUIREMENTS = (
         "iosDeviceEvidenceBundle",
     ),
     SourceRequirement(
+        "model_final_launch_closure_packet",
+        "Final launch closure packet model",
+        PMF_MODELS_PATH,
+        "FinalLaunchClosurePacketReport",
+    ),
+    SourceRequirement(
+        "model_final_launch_closure_packet_field",
+        "Final launch closure packet field",
+        PMF_MODELS_PATH,
+        "finalLaunchClosurePacket",
+    ),
+    SourceRequirement(
         "model_ios_device_launch_rehearsal",
         "iOS device launch rehearsal readiness model",
         PMF_MODELS_PATH,
@@ -359,6 +371,12 @@ SOURCE_REQUIREMENTS = (
         "deviceEvidenceRows",
     ),
     SourceRequirement(
+        "mobile_summary_final_launch_closure_packet_rows",
+        "Mobile final launch closure packet rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "closurePacketRows",
+    ),
+    SourceRequirement(
         "mobile_summary_launch_rehearsal_rows",
         "Mobile final launch rehearsal rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -465,6 +483,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch iOS device evidence section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Device Evidence",
+    ),
+    SourceRequirement(
+        "mobile_status_view_final_launch_closure_packet",
+        "Mobile final launch closure packet section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Closure Packet",
     ),
     SourceRequirement(
         "mobile_status_view_launch_rehearsal",
@@ -699,6 +723,24 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts iOS device evidence bundle",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle",
+    ),
+    SourceRequirement(
+        "contract_final_launch_closure_packet_decode",
+        "Contract test decodes final launch closure packet",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_final_launch_closure_packet_summary",
+        "Contract test renders final launch closure packet",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket",
+    ),
+    SourceRequirement(
+        "contract_final_launch_closure_packet_redaction",
+        "Contract test redacts final launch closure packet",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket",
     ),
     SourceRequirement(
         "contract_ios_device_launch_rehearsal_decode",

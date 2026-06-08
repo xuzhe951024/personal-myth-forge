@@ -208,6 +208,26 @@ def test_final_resource_fill_guide_make_target_dry_run_uses_cli() -> None:
     assert "--markdown-output .local/final-resource-fill-guide.md" in result.stdout
 
 
+def test_final_launch_closure_packet_make_target_dry_run_uses_cli() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "final-launch-closure-packet"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    assert ".PHONY: final-launch-closure-packet" in makefile
+    assert "final-launch-closure-packet:" in makefile
+    assert "myth_forge_api.cli final-launch-closure-packet" in result.stdout
+    assert "--repo-root ../.." in result.stdout
+    assert "--output .local/final-launch-closure-packet.json" in result.stdout
+
+
 def test_final_configured_evidence_plan_make_target_dry_run_uses_cli() -> None:
     repo_root = Path(__file__).resolve().parents[3]
 

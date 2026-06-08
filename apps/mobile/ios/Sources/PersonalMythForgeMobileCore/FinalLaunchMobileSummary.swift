@@ -32,6 +32,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var resourceFillGuideRows: [String]
     public var applyPreviewRows: [String]
     public var externalActionLedgerRows: [String]
+    public var closurePacketRows: [String]
     public var resourceHandoffRows: [String]
     public var resourceHandoffBackendRows: [String]
     public var resourceHandoffIOSRows: [String]
@@ -65,6 +66,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         resourceFillGuideRows: [String] = [],
         applyPreviewRows: [String] = [],
         externalActionLedgerRows: [String] = [],
+        closurePacketRows: [String] = [],
         resourceHandoffRows: [String] = [],
         resourceHandoffBackendRows: [String] = [],
         resourceHandoffIOSRows: [String] = [],
@@ -97,6 +99,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.resourceFillGuideRows = resourceFillGuideRows
         self.applyPreviewRows = applyPreviewRows
         self.externalActionLedgerRows = externalActionLedgerRows
+        self.closurePacketRows = closurePacketRows
         self.resourceHandoffRows = resourceHandoffRows
         self.resourceHandoffBackendRows = resourceHandoffBackendRows
         self.resourceHandoffIOSRows = resourceHandoffIOSRows
@@ -180,6 +183,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             applyPreviewRows: applyPreviewRows(from: report.finalResourceApplyPreview),
             externalActionLedgerRows: externalActionLedgerRows(
                 from: report.finalExternalActionLedger
+            ),
+            closurePacketRows: closurePacketRows(
+                from: report.finalLaunchClosurePacket
             ),
             resourceHandoffRows: resourceHandoffRows(from: report.resourceReport),
             resourceHandoffBackendRows: resourceHandoffBackendRows(from: report.resourceReport),
@@ -495,6 +501,49 @@ public enum FinalLaunchMobileSummaryBuilder {
         ]
         if let action = group.actions.first {
             parts.append("\(action.id) | \(action.command) | \(action.detail)")
+        }
+        return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func closurePacketRows(
+        from packet: FinalLaunchClosurePacketReport?
+    ) -> [String] {
+        guard let packet else {
+            return ["Final launch closure packet has not loaded."]
+        }
+        var rows = [
+            "Final closure \(sanitize(packet.status)): sections \(packet.summary.sections), blocked \(packet.summary.blocked), live \(packet.summary.live), cost consent \(packet.summary.requiresCostConsent)."
+        ]
+        let attention = packet.sections.filter { section in
+            status(from: section.status) != .ready
+        }
+        let selected = attention.isEmpty ? packet.sections : attention
+        if let section = selected.first {
+            rows.append(closurePacketSectionRow(section))
+        }
+        if let action = packet.operatorActions.first, !action.isEmpty {
+            rows.append(sanitize(action))
+        }
+        rows.append(
+            "Consent: cost consent \(flag(packet.summary.requiresCostConsent > 0)), global confirmation \(flag(packet.summary.requiresUserConfirmation > 0))."
+        )
+        rows.append(
+            "Safety: commands_run=\(flag(packet.safety.commandsRun)) global=\(flag(packet.safety.globalMutation)) live_calls=\(flag(packet.safety.liveProviderCalls))"
+        )
+        return rows.map(sanitize)
+    }
+
+    private static func closurePacketSectionRow(
+        _ section: FinalLaunchClosurePacketSection
+    ) -> String {
+        let action = section.firstAction
+        var parts = [
+            "\(section.id): \(section.status)",
+            "\(action.id): \(action.status)",
+            action.command,
+        ]
+        if !action.detail.isEmpty {
+            parts.append(action.detail)
         }
         return sanitize(parts.joined(separator: " | "))
     }

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.157 Final Launch Closure Packet</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #f4f6f8;
+      color: #182329;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #eef3f0;
+    }
+    main {
+      width: 390px;
+      height: 844px;
+      padding: 18px 14px;
+      overflow: hidden;
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      height: 22px;
+      margin-bottom: 12px;
+      color: #334149;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    h1 {
+      margin: 0 0 3px;
+      font-size: 22px;
+      line-height: 1.12;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .subhead {
+      margin: 0 0 14px;
+      color: #637178;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .panel {
+      border: 1px solid #d4dde0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 10px 24px rgba(33, 45, 52, 0.08);
+      padding: 12px;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    h2 {
+      flex: 1;
+      min-width: 0;
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .badge {
+      flex: 0 0 auto;
+      color: #a13b3b;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .phase {
+      display: grid;
+      grid-template-columns: 8px 116px 1fr;
+      gap: 8px;
+      align-items: start;
+      min-height: 24px;
+      padding: 4px 0;
+      border-top: 1px solid #ecf0f1;
+    }
+    .phase:first-of-type { border-top: 0; }
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 99px;
+      background: #8d989d;
+    }
+    .dot.good { background: #3b8a62; }
+    .dot.bad { background: #c85252; }
+    .dot.warn { background: #b98224; }
+    .label {
+      color: #2f3c42;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .detail {
+      color: #68757a;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .group {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #e3e9eb;
+    }
+    .group h3 {
+      margin: 0 0 5px;
+      color: #26343b;
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .line {
+      margin: 0 0 4px;
+      color: #68757a;
+      font-family: "SF Mono", ui-monospace, Menlo, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .line.strong { color: #9b3e3e; }
+    .line.warn { color: #8a5b18; }
+    .line.good { color: #276b48; }
+    .foot {
+      margin-top: 10px;
+      color: #798488;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>PMF</span>
+    </div>
+    <h1>Final Launch Status</h1>
+    <p class="subhead">The launch card now gathers every remaining closeout action into one read-only packet.</p>
+
+    <section class="panel" aria-label="Final launch closure packet panel">
+      <div class="panel-head">
+        <h2>Final closure blocked</h2>
+        <div class="badge">BLOCKED</div>
+      </div>
+
+      <div class="phase">
+        <span class="dot bad"></span>
+        <span class="label">resource_inputs</span>
+        <span class="detail">blocked: provide MESHY_API_KEY and run the fill guide on Mac.</span>
+      </div>
+      <div class="phase">
+        <span class="dot warn"></span>
+        <span class="label">device_evidence</span>
+        <span class="detail">waiting for device preflight proof and Xcode build gate evidence.</span>
+      </div>
+      <div class="phase">
+        <span class="dot warn"></span>
+        <span class="label">cost consent</span>
+        <span class="detail">live provider calls and paid print actions need explicit consent.</span>
+      </div>
+
+      <div class="group">
+        <h3>Closure Packet</h3>
+        <p class="line strong">Final closure blocked: sections 5, ready 0, blocked 5, required actions 12.</p>
+        <p class="line strong">Next action: resource_inputs | provide MESHY_API_KEY | make final-resource-fill-guide</p>
+        <p class="line warn">Operator action: run make final-launch-closure-packet after local resources change.</p>
+        <p class="line">Consent: live provider consent missing; cost consent required before Meshy or print fulfillment.</p>
+        <p class="line good">Safety: commands_run=false global=false live_calls=false</p>
+      </div>
+
+      <div class="group">
+        <h3>Acceptance</h3>
+        <p class="line">safe_local_writes: pending final apply preview.</p>
+        <p class="line">live_provider_consent: blocked until explicit approval.</p>
+        <p class="line">final_acceptance: blocked until visual, device, and live evidence are complete.</p>
+      </div>
+
+      <p class="foot">Static visual proof only. The packet reads sanitized reports and does not write env files, change iOS config, run Xcode, touch keychain, call providers, or open payment flows.</p>
+    </section>
+  </main>
+</body>
+</html>

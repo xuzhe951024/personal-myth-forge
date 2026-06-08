@@ -2429,6 +2429,91 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="final_launch_closure_packet",
+        label="Final launch closure packet",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_launch_closure_packet.py",
+                "build_final_launch_closure_packet_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_launch_closure_packet.py",
+                "final_launch_closure_packet_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_launch_closure_packet.py",
+                "requires_cost_consent_for_live_actions",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "final_launch_closure_packet",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "final-launch-closure-packet",
+            ),
+            SourceRequirement("Makefile", "final-launch-closure-packet:"),
+            SourceRequirement(
+                "Makefile",
+                ".local/final-launch-closure-packet.json",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_launch_closure_packet.py",
+                "test_final_launch_closure_packet_blocks_missing_final_actions",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_cli.py",
+                "test_cli_final_launch_closure_packet_writes_report_and_returns_result_code",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_final_demo_launch_embeds_final_launch_closure_packet",
+            ),
+        ),
+    ),
+    FeatureRequirement(
+        id="mobile_final_launch_closure_packet",
+        label="Mobile final launch closure packet",
+        requirements=(
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalLaunchClosurePacketReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "finalLaunchClosurePacket",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "closurePacketRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "closurePacketRows && from: report.finalLaunchClosurePacket",
+                (
+                    "closurePacketRows",
+                    "from: report.finalLaunchClosurePacket",
+                ),
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Closure Packet",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="deploy_config",
         label="Deploy config",
         requirements=(
