@@ -1982,6 +1982,21 @@ do {
         "test_final_demo_launch_embeds_configured_evidence_plan",
         "final demo launch configured evidence plan test"
     )
+    try requireContains(
+        contractTests,
+        "testDecodesConfiguredFinalDemoLaunchPayloadCommands",
+        "mobile configured final launch payload command parity test"
+    )
+    try requireContains(
+        contractTests,
+        "configuredFinalDemoLaunchCommands",
+        "mobile configured final launch backend-like command fixture"
+    )
+    try requireContains(
+        contractTests,
+        "make final-acceptance-configured",
+        "mobile configured final launch acceptance command fixture"
+    )
     try requireContains(finalLaunchStatusView, "Launch Receipt", "final launch receipt section")
     try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")
     try requireContains(finalLaunchStatusView, "Resource Requirements", "final launch resource requirements section")
