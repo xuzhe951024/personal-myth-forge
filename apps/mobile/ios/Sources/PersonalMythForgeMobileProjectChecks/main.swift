@@ -1503,6 +1503,16 @@ do {
     )
     try requireContains(
         pmfModels,
+        "FinalDemoLaunchFirstBlocker",
+        "final demo launch first blocker model"
+    )
+    try requireContains(
+        pmfModels,
+        "firstBlocker: FinalDemoLaunchFirstBlocker?",
+        "final demo launch first blocker field"
+    )
+    try requireContains(
+        pmfModels,
         "firstBlocker: FinalLaunchClosurePacketBlocker?",
         "closure packet first blocker field"
     )
@@ -1517,6 +1527,11 @@ do {
     try requireContains(finalLaunchMobileSummary, "launchReceiptRows", "final launch receipt rows")
     try requireContains(finalLaunchMobileSummary, "launchReceiptRows(from:", "final launch receipt builder")
     try requireContains(finalLaunchMobileSummary, "firstBlockerReceiptRow", "final launch receipt blocker row")
+    try requireContains(
+        finalLaunchMobileSummary,
+        "report.firstBlocker",
+        "final demo launch first blocker receipt source"
+    )
     try requireContains(
         finalLaunchMobileSummary,
         "closurePacketFirstBlockerRow",
@@ -2266,6 +2281,11 @@ do {
         finalLaunchMobileSummary,
         "Final operator handoff ready.",
         "final launch operator handoff ready copy"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt",
+        "final demo launch first blocker receipt contract test"
     )
     try requireContains(finalLaunchMobileSummary, "sanitize", "final launch summary redaction")
     try requireContains(contextCapsuleReview, "ContextCapsuleReviewBuilder", "context capsule review builder")
