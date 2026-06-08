@@ -2149,6 +2149,142 @@ public struct IOSDeployRunbookReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct IOSDeviceEvidenceBundleSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var manual: Int
+    public var required: Int
+    public var globalActions: Int
+
+    public init(
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        manual: Int,
+        required: Int,
+        globalActions: Int
+    ) {
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.manual = manual
+        self.required = required
+        self.globalActions = globalActions
+    }
+}
+
+public struct IOSDeviceEvidenceSlot: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var command: String
+    public var detail: String
+    public var classification: String?
+    public var evidenceSource: String?
+    public var required: Bool
+    public var globalAction: Bool
+    public var xcodeOrSigning: Bool
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        command: String,
+        detail: String,
+        classification: String? = nil,
+        evidenceSource: String? = nil,
+        required: Bool,
+        globalAction: Bool,
+        xcodeOrSigning: Bool
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.command = command
+        self.detail = detail
+        self.classification = classification
+        self.evidenceSource = evidenceSource
+        self.required = required
+        self.globalAction = globalAction
+        self.xcodeOrSigning = xcodeOrSigning
+    }
+}
+
+public struct IOSDeviceEvidenceBundleSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+    public var providerSecretsInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+    public var describesGlobalActions: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        liveProviderCalls: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        globalMutation: Bool,
+        xcodeOrSigning: Bool,
+        keychainWrites: Bool,
+        providerSecretsInReport: Bool,
+        rawMediaInReport: Bool,
+        paymentLinksInReport: Bool,
+        localPathsInReport: Bool,
+        describesGlobalActions: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.globalMutation = globalMutation
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.localPathsInReport = localPathsInReport
+        self.describesGlobalActions = describesGlobalActions
+    }
+}
+
+public struct IOSDeviceEvidenceBundleReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: IOSDeviceEvidenceBundleSummary
+    public var evidenceSlots: [IOSDeviceEvidenceSlot]
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var safety: IOSDeviceEvidenceBundleSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: IOSDeviceEvidenceBundleSummary,
+        evidenceSlots: [IOSDeviceEvidenceSlot],
+        operatorActions: [String],
+        commands: [String],
+        safety: IOSDeviceEvidenceBundleSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.evidenceSlots = evidenceSlots
+        self.operatorActions = operatorActions
+        self.commands = commands
+        self.safety = safety
+    }
+}
+
 public struct IOSDeviceLaunchRehearsalReadinessSummary: Codable, Equatable, Sendable {
     public var ready: Int
     public var missing: Int
@@ -2956,6 +3092,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var finalShowcaseReadiness: FinalShowcaseReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
     public var iosDeployRunbook: IOSDeployRunbookReport?
+    public var iosDeviceEvidenceBundle: IOSDeviceEvidenceBundleReport?
     public var iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport?
     public var resourceReport: ResourceHandoffReport?
     public var launchPhases: [FinalDemoLaunchPhase]
@@ -2985,6 +3122,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         finalShowcaseReadiness: FinalShowcaseReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
         iosDeployRunbook: IOSDeployRunbookReport? = nil,
+        iosDeviceEvidenceBundle: IOSDeviceEvidenceBundleReport? = nil,
         iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport? = nil,
         resourceReport: ResourceHandoffReport? = nil,
         launchPhases: [FinalDemoLaunchPhase],
@@ -3013,6 +3151,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.finalShowcaseReadiness = finalShowcaseReadiness
         self.finalOperatorHandoff = finalOperatorHandoff
         self.iosDeployRunbook = iosDeployRunbook
+        self.iosDeviceEvidenceBundle = iosDeviceEvidenceBundle
         self.iosDeviceLaunchRehearsalReadiness = iosDeviceLaunchRehearsalReadiness
         self.resourceReport = resourceReport
         self.launchPhases = launchPhases

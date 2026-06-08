@@ -117,6 +117,10 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "Deploy Safety", lines: summary.deployRunbookSafetyRows)
             }
 
+            if !summary.deviceEvidenceRows.isEmpty {
+                groupedLines(title: "Device Evidence", lines: summary.deviceEvidenceRows)
+            }
+
             if !summary.launchRehearsalRows.isEmpty {
                 groupedLines(title: "Launch Rehearsal", lines: summary.launchRehearsalRows)
             }

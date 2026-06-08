@@ -154,6 +154,9 @@ do {
     try testFinalLaunchMobileSummaryShowsThreeDEvaluationIOSDeployRunbookSlot()
     try testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook()
     try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook()
+    try testDecodesIOSDeviceEvidenceBundleFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle()
+    try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle()
     try testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload()
     try testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload()
     try testDecodesIOSDeviceLaunchRehearsalSourceFreshnessFromFinalLaunchPayload()
@@ -3501,6 +3504,69 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook() throws 
     try expectNotContains(text, "Bearer")
 }
 
+private func testDecodesIOSDeviceEvidenceBundleFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            iosDeviceEvidenceStatus: "blocked",
+            iosDeviceEvidenceSlotStatus: "blocked"
+        )
+    )
+
+    let bundle = try require(
+        report.iosDeviceEvidenceBundle,
+        "missing iOS device evidence bundle"
+    )
+    try expectEqual(bundle.kind, "ios_device_evidence_bundle_report")
+    try expectEqual(bundle.status, "blocked")
+    try expectEqual(bundle.summary.required, 4)
+    try expectEqual(bundle.summary.globalActions, 1)
+    try expectEqual(bundle.evidenceSlots[1].id, "mobile_deploy_preflight")
+    try expectEqual(bundle.evidenceSlots[1].command, "make mobile-deploy-preflight")
+    try expectEqual(bundle.evidenceSlots[2].globalAction, true)
+    try expectEqual(bundle.evidenceSlots[2].xcodeOrSigning, true)
+    try expectFalse(bundle.safety.commandsRun)
+    try expectFalse(bundle.safety.xcodeOrSigning)
+    try expectTrue(bundle.safety.describesGlobalActions)
+}
+
+private func testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            iosDeviceEvidenceStatus: "blocked",
+            iosDeviceEvidenceSlotStatus: "blocked",
+            iosDeviceEvidenceAction: "run make mobile-deploy-preflight after backend is running"
+        ),
+        error: nil
+    )
+    let text = summary.deviceEvidenceRows.joined(separator: " ")
+
+    try expectContains(text, "iOS device evidence blocked")
+    try expectContains(text, "mobile_deploy_preflight")
+    try expectContains(text, "make mobile-deploy-preflight")
+    try expectContains(text, "commands_run=false xcode=false global=false")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle() throws {
+    let report = finalDemoLaunchReport(
+        iosDeviceEvidenceStatus: "blocked",
+        iosDeviceEvidenceSlotStatus: "blocked",
+        iosDeviceEvidenceAction: "run sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
+        iosDeviceEvidenceDetail: "Authorization Bearer sk-test /Users/zhexu/private file:///tmp/private checkout_url"
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "Authorization")
+}
+
 private func testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -4888,6 +4954,11 @@ private func finalDemoLaunchPayload(
     iosDeployRunbookThreeDSlotStatus: String = "ready",
     iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
+    iosDeviceEvidenceStatus: String = "blocked",
+    iosDeviceEvidenceSlotStatus: String = "missing",
+    iosDeviceEvidenceAction: String = "run make mobile-deploy-preflight after backend is running",
+    iosDeviceEvidenceDetail: String = "Run mobile deploy preflight after backend-device-demo is reachable.",
+    iosDeviceEvidenceCommand: String = "make mobile-deploy-preflight",
     iosDeviceLaunchRehearsalStatus: String = "missing",
     iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
     iosDeviceLaunchRehearsalActions: [String]? = nil,
@@ -4918,6 +4989,10 @@ private func finalDemoLaunchPayload(
         decoding: try! PMFJSON.encoder.encode(iosDeviceLaunchActions),
         as: UTF8.self
     )
+    let iosDeviceEvidenceReady = iosDeviceEvidenceStatus == "ready"
+    let iosDeviceEvidenceSummaryJSON = iosDeviceEvidenceReady
+        ? #"{"ready": 4, "missing": 0, "blocked": 0, "manual": 0, "required": 4, "global_actions": 1}"#
+        : #"{"ready": 0, "missing": 1, "blocked": 3, "manual": 0, "required": 4, "global_actions": 1}"#
     let finalShowcaseActions = finalShowcaseReadinessActions ?? [
         finalShowcaseReadinessAction
     ]
@@ -6114,6 +6189,83 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "payment_links_in_report": false,
               "local_paths_in_report": false
+            }
+          },
+          "ios_device_evidence_bundle": {
+            "kind": "ios_device_evidence_bundle_report",
+            "status": "\(iosDeviceEvidenceStatus)",
+            "summary": \(iosDeviceEvidenceSummaryJSON),
+            "evidence_slots": [
+              {
+                "id": "backend_device_server",
+                "label": "Backend device server",
+                "status": "\(iosDeviceEvidenceReady ? "ready" : iosDeviceEvidenceSlotStatus)",
+                "command": "make backend-device-demo",
+                "detail": "\(iosDeviceEvidenceReady ? "Final acceptance recorded iPhone-reachable backend health." : iosDeviceEvidenceDetail)",
+                "classification": "\(iosDeviceEvidenceReady ? "ready" : "backend_health_not_proven")",
+                "evidence_source": "services/backend/.local/final-acceptance-local.json",
+                "required": true,
+                "global_action": false,
+                "xcode_or_signing": false
+              },
+              {
+                "id": "mobile_deploy_preflight",
+                "label": "Mobile deploy preflight",
+                "status": "\(iosDeviceEvidenceReady ? "ready" : iosDeviceEvidenceSlotStatus)",
+                "command": "\(iosDeviceEvidenceCommand)",
+                "detail": "\(iosDeviceEvidenceReady ? "Final acceptance recorded a passing mobile deploy preflight." : iosDeviceEvidenceDetail)",
+                "classification": "\(iosDeviceEvidenceReady ? "ready" : "mobile_deploy_preflight_not_proven")",
+                "evidence_source": "services/backend/.local/final-acceptance-local.json",
+                "required": true,
+                "global_action": false,
+                "xcode_or_signing": false
+              },
+              {
+                "id": "xcode_build_gate",
+                "label": "Xcode build gate",
+                "status": "\(iosDeviceEvidenceReady ? "ready" : "blocked")",
+                "command": "make mobile-xcode-build",
+                "detail": "\(iosDeviceEvidenceReady ? "Final acceptance recorded a passing Xcode build gate." : "Run the Xcode build gate on the Mac after deploy preflight passes.")",
+                "classification": "\(iosDeviceEvidenceReady ? "ready" : "xcode_build_gate_not_proven")",
+                "evidence_source": "services/backend/.local/final-acceptance-local.json",
+                "required": true,
+                "global_action": true,
+                "xcode_or_signing": true
+              },
+              {
+                "id": "ios_device_launch_rehearsal",
+                "label": "iOS device launch rehearsal",
+                "status": "\(iosDeviceEvidenceReady ? "ready" : "blocked")",
+                "command": "make ios-device-launch-rehearsal",
+                "detail": "\(iosDeviceEvidenceReady ? "Saved iOS device launch rehearsal evidence is ready." : "Run iOS device launch rehearsal to refresh final device evidence.")",
+                "classification": "\(iosDeviceEvidenceReady ? "ready" : "blocked_rehearsal")",
+                "evidence_source": "services/backend/.local/ios-device-launch-rehearsal.json",
+                "required": true,
+                "global_action": false,
+                "xcode_or_signing": false
+              }
+            ],
+            "operator_actions": ["\(iosDeviceEvidenceAction)"],
+            "commands": [
+              "make backend-device-demo",
+              "make mobile-deploy-preflight",
+              "make mobile-xcode-build",
+              "make ios-device-launch-rehearsal"
+            ],
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
+              "provider_secrets_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false,
+              "describes_global_actions": true
             }
           },
           "ios_device_launch_rehearsal_readiness": {
@@ -8795,6 +8947,11 @@ private func finalDemoLaunchReport(
     iosDeployRunbookThreeDSlotStatus: String = "ready",
     iosDeployRunbookAction: String = "set PMF_BACKEND_BASE_URL to the Mac LAN URL",
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
+    iosDeviceEvidenceStatus: String = "blocked",
+    iosDeviceEvidenceSlotStatus: String = "missing",
+    iosDeviceEvidenceAction: String = "run make mobile-deploy-preflight after backend is running",
+    iosDeviceEvidenceDetail: String = "Run mobile deploy preflight after backend-device-demo is reachable.",
+    iosDeviceEvidenceCommand: String = "make mobile-deploy-preflight",
     iosDeviceLaunchRehearsalStatus: String = "missing",
     iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
     iosDeviceLaunchRehearsalActions: [String]? = nil,
@@ -8857,6 +9014,11 @@ private func finalDemoLaunchReport(
             iosDeployRunbookThreeDSlotStatus: iosDeployRunbookThreeDSlotStatus,
             iosDeployRunbookAction: iosDeployRunbookAction,
             iosDeployRunbookCommand: iosDeployRunbookCommand,
+            iosDeviceEvidenceStatus: iosDeviceEvidenceStatus,
+            iosDeviceEvidenceSlotStatus: iosDeviceEvidenceSlotStatus,
+            iosDeviceEvidenceAction: iosDeviceEvidenceAction,
+            iosDeviceEvidenceDetail: iosDeviceEvidenceDetail,
+            iosDeviceEvidenceCommand: iosDeviceEvidenceCommand,
             iosDeviceLaunchRehearsalStatus: iosDeviceLaunchRehearsalStatus,
             iosDeviceLaunchRehearsalAction: iosDeviceLaunchRehearsalAction,
             iosDeviceLaunchRehearsalActions: iosDeviceLaunchRehearsalActions,

@@ -47,6 +47,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var deployRunbookRows: [String]
     public var deployRunbookCommandRows: [String]
     public var deployRunbookSafetyRows: [String]
+    public var deviceEvidenceRows: [String]
     public var launchRehearsalRows: [String]
     public var handoffRows: [String]
     public var commandRows: [String]
@@ -79,6 +80,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         deployRunbookRows: [String] = [],
         deployRunbookCommandRows: [String] = [],
         deployRunbookSafetyRows: [String] = [],
+        deviceEvidenceRows: [String] = [],
         launchRehearsalRows: [String] = [],
         handoffRows: [String] = [],
         commandRows: [String],
@@ -110,6 +112,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.deployRunbookRows = deployRunbookRows
         self.deployRunbookCommandRows = deployRunbookCommandRows
         self.deployRunbookSafetyRows = deployRunbookSafetyRows
+        self.deviceEvidenceRows = deviceEvidenceRows
         self.launchRehearsalRows = launchRehearsalRows
         self.handoffRows = handoffRows
         self.commandRows = commandRows
@@ -201,6 +204,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             deployRunbookRows: deployRunbookRows(from: report.iosDeployRunbook),
             deployRunbookCommandRows: deployRunbookCommandRows(from: report.iosDeployRunbook),
             deployRunbookSafetyRows: deployRunbookSafetyRows(from: report.iosDeployRunbook),
+            deviceEvidenceRows: deviceEvidenceRows(from: report.iosDeviceEvidenceBundle),
             launchRehearsalRows: launchRehearsalRows(
                 from: report.iosDeviceLaunchRehearsalReadiness
             ),
@@ -932,6 +936,49 @@ public enum FinalLaunchMobileSummaryBuilder {
         ].map(sanitize)
     }
 
+    private static func deviceEvidenceRows(
+        from bundle: IOSDeviceEvidenceBundleReport?
+    ) -> [String] {
+        guard let bundle else {
+            return ["iOS device evidence has not loaded."]
+        }
+
+        var rows = [
+            "iOS device evidence \(sanitize(bundle.status)): ready \(bundle.summary.ready), missing \(bundle.summary.missing), blocked \(bundle.summary.blocked), manual \(bundle.summary.manual), required \(bundle.summary.required), global \(bundle.summary.globalActions)."
+        ]
+        let attention = bundle.evidenceSlots.filter { slot in
+            status(from: slot.status) != .ready
+        }
+        let slots = attention.isEmpty
+            ? Array(bundle.evidenceSlots.prefix(3))
+            : Array(attention.prefix(3))
+        rows.append(contentsOf: slots.map(deviceEvidenceSlotRow))
+        if let action = bundle.operatorActions.first, !action.isEmpty {
+            rows.append(sanitize(action))
+        }
+        rows.append(deviceEvidenceSafetyRow(bundle.safety))
+        return rows.map(sanitize)
+    }
+
+    private static func deviceEvidenceSlotRow(_ slot: IOSDeviceEvidenceSlot) -> String {
+        var parts = ["\(slot.id): \(slot.status)", slot.command]
+        if let classification = slot.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        if !slot.detail.isEmpty {
+            parts.append(slot.detail)
+        }
+        return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func deviceEvidenceSafetyRow(
+        _ safety: IOSDeviceEvidenceBundleSafety
+    ) -> String {
+        sanitize(
+            "Safety: commands_run=\(flag(safety.commandsRun)) xcode=\(flag(safety.xcodeOrSigning)) global=\(flag(safety.globalMutation))"
+        )
+    }
+
     private static func launchRehearsalRows(
         from readiness: IOSDeviceLaunchRehearsalReadinessReport?
     ) -> [String] {
@@ -1034,6 +1081,8 @@ public enum FinalLaunchMobileSummaryBuilder {
         let patterns = [
             #"sk-[A-Za-z0-9._-]+"#,
             #"Bearer\s+[A-Za-z0-9._~+/\-=:-]+"#,
+            #"Authorization"#,
+            #"Bearer"#,
             #"api[_-]?key\s*[=:]\s*[^\s,;"']+"#,
             #"(private_message|raw_context|message_body)\s*:\s*[^\n]+"#,
             #"local-capture://[^\s,;"']+"#,

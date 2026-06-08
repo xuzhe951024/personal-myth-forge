@@ -119,6 +119,18 @@ SOURCE_REQUIREMENTS = (
         "iosDeployRunbook",
     ),
     SourceRequirement(
+        "model_ios_device_evidence_bundle",
+        "iOS device evidence bundle model",
+        PMF_MODELS_PATH,
+        "IOSDeviceEvidenceBundleReport",
+    ),
+    SourceRequirement(
+        "model_ios_device_evidence_bundle_field",
+        "Final launch iOS device evidence bundle field",
+        PMF_MODELS_PATH,
+        "iosDeviceEvidenceBundle",
+    ),
+    SourceRequirement(
         "model_ios_device_launch_rehearsal",
         "iOS device launch rehearsal readiness model",
         PMF_MODELS_PATH,
@@ -341,6 +353,12 @@ SOURCE_REQUIREMENTS = (
         "deployRunbookSafetyRows",
     ),
     SourceRequirement(
+        "mobile_summary_ios_device_evidence_rows",
+        "Mobile final launch iOS device evidence rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "deviceEvidenceRows",
+    ),
+    SourceRequirement(
         "mobile_summary_launch_rehearsal_rows",
         "Mobile final launch rehearsal rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -441,6 +459,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch iOS deploy safety section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Deploy Safety",
+    ),
+    SourceRequirement(
+        "mobile_status_view_ios_device_evidence",
+        "Mobile final launch iOS device evidence section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Device Evidence",
     ),
     SourceRequirement(
         "mobile_status_view_launch_rehearsal",
@@ -657,6 +681,24 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts iOS deploy runbook",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
+    ),
+    SourceRequirement(
+        "contract_ios_device_evidence_bundle_decode",
+        "Contract test decodes iOS device evidence bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesIOSDeviceEvidenceBundleFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_ios_device_evidence_bundle_summary",
+        "Contract test renders iOS device evidence bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle",
+    ),
+    SourceRequirement(
+        "contract_ios_device_evidence_bundle_redaction",
+        "Contract test redacts iOS device evidence bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle",
     ),
     SourceRequirement(
         "contract_ios_device_launch_rehearsal_decode",

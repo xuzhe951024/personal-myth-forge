@@ -35,6 +35,7 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
         "p0.153_configured_evidence_visual",
         "p0.154_resource_fill_guide_visual",
         "p0.155_device_fill_guide_preflight",
+        "p0.156_ios_device_evidence_bundle",
     ]
     assert all((spec.width, spec.height) == (390, 844) for spec in DEFAULT_VISUAL_ARTIFACTS)
     required_text = " ".join(
@@ -61,6 +62,11 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "Device Preflight" in required_text
     assert "Fill Guide" in required_text
     assert "Provider keys stay backend-only" in required_text
+    assert "Device Evidence" in required_text
+    assert "iOS device evidence blocked" in required_text
+    assert "mobile_deploy_preflight" in required_text
+    assert "make mobile-deploy-preflight" in required_text
+    assert "Safety: commands_run=false xcode=false global=false" in required_text
 
 
 def test_visual_regression_default_passes_checked_in_showcase_artifacts() -> None:
@@ -69,7 +75,7 @@ def test_visual_regression_default_passes_checked_in_showcase_artifacts() -> Non
     result = check_visual_artifacts(repo_root)
 
     assert result.exit_code == 0
-    assert result.report["summary"] == {"passed": 13, "failed": 0}
+    assert result.report["summary"] == {"passed": 14, "failed": 0}
     assert [artifact["id"] for artifact in result.report["artifacts"]] == [
         spec.id for spec in DEFAULT_VISUAL_ARTIFACTS
     ]
@@ -171,7 +177,7 @@ def test_visual_regression_cli_writes_showcase_report(tmp_path: Path, monkeypatc
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["kind"] == "visual_regression_report"
     assert report["status"] == "passed"
-    assert report["summary"] == {"passed": 13, "failed": 0}
+    assert report["summary"] == {"passed": 14, "failed": 0}
 
 
 def _spec() -> VisualArtifactSpec:

@@ -31,6 +31,9 @@ from myth_forge_api.final_showcase_readiness import (
 )
 from myth_forge_api.final_operator_handoff import build_final_operator_handoff_report
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
+from myth_forge_api.ios_device_evidence_bundle import (
+    build_ios_device_evidence_bundle_report,
+)
 from myth_forge_api.ios_device_launch_rehearsal_readiness import (
     build_ios_device_launch_rehearsal_readiness_report,
 )
@@ -131,6 +134,9 @@ def build_final_demo_launch_report(
         mode=mode,
         repo_root=selected_repo_root,
     )
+    ios_device_evidence_bundle = build_ios_device_evidence_bundle_report(
+        repo_root=selected_repo_root,
+    ).report
     phases = _launch_phases(
         mode=mode,
         resource_report=resource_report,
@@ -171,6 +177,7 @@ def build_final_demo_launch_report(
             ios_device_launch_rehearsal_readiness
         ),
         "ios_deploy_runbook": ios_deploy_runbook,
+        "ios_device_evidence_bundle": ios_device_evidence_bundle,
         "final_operator_handoff": final_operator_handoff,
         "resource_report": resource_report,
         "launch_phases": phases,

@@ -654,7 +654,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/FinalShowcaseSummaryView.swift": "Final Showcase",
         "apps/mobile/ios/App/FinalLaunchStatusView.swift": (
             "Mode Acceptance 3D Evaluation Visual Regression Live Evidence Print Fulfillment Showcase Readiness NPC Evaluation iOS Deploy Runbook Deploy Commands Deploy Safety "
-            "Launch Rehearsal Resource Handoff Backend Resources iOS Resources Next handoffRows Launch Receipt "
+            "Device Evidence Launch Rehearsal Resource Handoff Backend Resources iOS Resources Next handoffRows Launch Receipt "
             "Resource Checklist Resource Requirements resourceRequirementRows Resource Fill Guide resourceFillGuideRows Apply Preview applyPreviewRows "
             "External Actions"
         ),
@@ -809,6 +809,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsThreeDEvaluationIOSDeployRunbookSlot "
             "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook "
             "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook "
+            "testDecodesIOSDeviceEvidenceBundleFromFinalLaunchPayload "
+            "testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle "
+            "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle "
             "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload "
             "testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload "
             "testDecodesIOSDeviceLaunchRehearsalSourceFreshnessFromFinalLaunchPayload "
@@ -879,6 +882,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "FinalShowcaseReadinessReport finalShowcaseReadiness "
             "NPCAgentEvaluationReadinessReport npcAgentEvaluationReadiness "
             "IOSDeployRunbookReport iosDeployRunbook "
+            "IOSDeviceEvidenceBundleReport iosDeviceEvidenceBundle "
             "IOSDeviceLaunchRehearsalReadinessReport iosDeviceLaunchRehearsalReadiness "
             "ResourceHandoffReport resourceReport "
             "items: [FinalResourcesPreflightItem] freshness: FinalAcceptanceFreshness? "
@@ -898,6 +902,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "report.finalExternalActionLedger "
             "showcaseReadinessRows Showcase readiness "
             "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
+            "deviceEvidenceRows "
             "launchRehearsalRows rehearsalFreshnessRow Freshness: "
             "launchRehearsalSourceFreshnessRows Source freshness: "
             "resourceHandoffRows resourceHandoffBackendRows resourceHandoffIOSRows"
@@ -1011,7 +1016,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final_showcase_readiness "
             "final_operator_handoff three_d_evaluation_readiness=three_d_evaluation_readiness "
             "npc_agent_evaluation_readiness=npc_agent_evaluation_readiness ios_deploy_runbook "
-            "ios_device_launch_rehearsal_readiness"
+            "ios_device_launch_rehearsal_readiness ios_device_evidence_bundle"
+        ),
+        "services/backend/src/myth_forge_api/ios_device_evidence_bundle.py": (
+            "build_ios_device_evidence_bundle_report ios_device_evidence_bundle_report"
         ),
         "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py": (
             "build_ios_device_launch_rehearsal_readiness_report "
@@ -1061,7 +1069,13 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "test_final_demo_launch_operator_handoff_includes_three_d_evaluation_step "
             "test_final_demo_launch_operator_handoff_includes_npc_evaluation_step "
             "test_final_demo_launch_embeds_ios_deploy_runbook "
+            "test_final_demo_launch_includes_ios_device_evidence_bundle "
             "test_final_demo_launch_embeds_final_external_action_ledger"
+        ),
+        "services/backend/tests/test_ios_device_evidence_bundle.py": (
+            "test_ios_device_evidence_bundle_blocks_missing_local_device_evidence "
+            "test_ios_device_evidence_bundle_marks_ready_saved_device_evidence "
+            "test_ios_device_evidence_bundle_redacts_unsafe_saved_details"
         ),
         "services/backend/tests/test_final_external_action_ledger.py": (
             "test_external_action_ledger_blocks_missing_resources_without_running_actions"

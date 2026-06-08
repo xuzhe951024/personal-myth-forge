@@ -599,6 +599,27 @@ def test_final_demo_launch_embeds_ios_deploy_runbook(tmp_path: Path) -> None:
     )
 
 
+def test_final_demo_launch_includes_ios_device_evidence_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    bundle = result.report["ios_device_evidence_bundle"]
+
+    assert bundle["kind"] == "ios_device_evidence_bundle_report"
+    assert bundle["status"] == "blocked"
+    assert bundle["evidence_slots"][1]["id"] == "mobile_deploy_preflight"
+    assert bundle["evidence_slots"][1]["command"] == "make mobile-deploy-preflight"
+    assert bundle["safety"]["commands_run"] is False
+    assert bundle["safety"]["describes_global_actions"] is True
+
+
 def test_ios_device_launch_rehearsal_readiness_missing_without_leaks(
     tmp_path: Path,
 ) -> None:

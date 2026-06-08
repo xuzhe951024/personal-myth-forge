@@ -184,6 +184,22 @@ DEFAULT_VISUAL_ARTIFACTS = (
             "Provider keys stay backend-only",
         ),
     ),
+    VisualArtifactSpec(
+        id="p0.156_ios_device_evidence_bundle",
+        html_path="docs/superpowers/verification/p0.156-ios-device-evidence-bundle.html",
+        png_path="docs/superpowers/verification/assets/p0.156-ios-device-evidence-bundle-390x844.png",
+        notes_path="docs/superpowers/verification/2026-06-08-p0.156-ios-device-evidence-bundle-regression.md",
+        width=390,
+        height=844,
+        required_text=(
+            "Final Launch Status",
+            "Device Evidence",
+            "iOS device evidence blocked",
+            "mobile_deploy_preflight",
+            "make mobile-deploy-preflight",
+            "Safety: commands_run=false xcode=false global=false",
+        ),
+    ),
 )
 
 

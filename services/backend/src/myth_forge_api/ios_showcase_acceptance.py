@@ -1403,6 +1403,18 @@ FEATURES = (
                 "ios_device_launch_rehearsal_readiness",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "ios_device_evidence_bundle",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_evidence_bundle.py",
+                "build_ios_device_evidence_bundle_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/ios_device_evidence_bundle.py",
+                "ios_device_evidence_bundle_report",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/ios_device_launch_rehearsal_readiness.py",
                 "build_ios_device_launch_rehearsal_readiness_report",
             ),
@@ -1460,6 +1472,14 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "IOSDeviceEvidenceBundleReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "iosDeviceEvidenceBundle",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "IOSDeviceLaunchRehearsalReadinessReport",
             ),
             SourceRequirement(
@@ -1477,6 +1497,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "deployRunbookSafetyRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "deviceEvidenceRows",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
@@ -1504,6 +1528,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Device Evidence",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
                 "Launch Rehearsal",
             ),
             SourceRequirement(
@@ -1525,6 +1553,18 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesIOSDeviceEvidenceBundleFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",

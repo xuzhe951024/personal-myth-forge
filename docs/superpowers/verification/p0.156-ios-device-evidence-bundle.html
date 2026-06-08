@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.156 iOS Device Evidence Bundle</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #f4f6f8;
+      color: #182329;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #edf2f4;
+    }
+    main {
+      width: 390px;
+      height: 844px;
+      padding: 18px 14px;
+      overflow: hidden;
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      height: 22px;
+      margin-bottom: 12px;
+      color: #334149;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    h1 {
+      margin: 0 0 3px;
+      font-size: 22px;
+      line-height: 1.12;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .subhead {
+      margin: 0 0 14px;
+      color: #637178;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .panel {
+      border: 1px solid #d4dde0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 10px 24px rgba(33, 45, 52, 0.08);
+      padding: 12px;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    h2 {
+      flex: 1;
+      min-width: 0;
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .badge {
+      flex: 0 0 auto;
+      color: #a13b3b;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .phase {
+      display: grid;
+      grid-template-columns: 8px 112px 1fr;
+      gap: 8px;
+      align-items: start;
+      min-height: 24px;
+      padding: 4px 0;
+      border-top: 1px solid #ecf0f1;
+    }
+    .phase:first-of-type { border-top: 0; }
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 99px;
+      background: #8d989d;
+    }
+    .dot.good { background: #3b8a62; }
+    .dot.bad { background: #c85252; }
+    .label {
+      color: #2f3c42;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .detail {
+      color: #68757a;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .group {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #e3e9eb;
+    }
+    .group h3 {
+      margin: 0 0 5px;
+      color: #26343b;
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .line {
+      margin: 0 0 4px;
+      color: #68757a;
+      font-family: "SF Mono", ui-monospace, Menlo, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .line.strong { color: #9b3e3e; }
+    .foot {
+      margin-top: 10px;
+      color: #798488;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>PMF</span>
+    </div>
+    <h1>Final Launch Status</h1>
+    <p class="subhead">The launch card now concentrates the iOS device proof gates before a phone demo.</p>
+
+    <section class="panel" aria-label="Final launch device evidence panel">
+      <div class="panel-head">
+        <h2>Final launch partial</h2>
+        <div class="badge">WAITING</div>
+      </div>
+
+      <div class="phase">
+        <span class="dot good"></span>
+        <span class="label">Start backend</span>
+        <span class="detail">make backend-device-demo | LAN API for the phone.</span>
+      </div>
+      <div class="phase">
+        <span class="dot bad"></span>
+        <span class="label">Deploy preflight</span>
+        <span class="detail">blocked until the backend health URL is reachable from iPhone.</span>
+      </div>
+      <div class="phase">
+        <span class="dot bad"></span>
+        <span class="label">Xcode gate</span>
+        <span class="detail">manual local signing gate remains outside the app.</span>
+      </div>
+
+      <div class="group">
+        <h3>Device Evidence</h3>
+        <p class="line strong">iOS device evidence blocked: ready 0, missing 1, blocked 3, manual 0, required 4, global 1.</p>
+        <p class="line">backend_device_server: missing | make backend-device-demo | final_acceptance_missing</p>
+        <p class="line">mobile_deploy_preflight: missing | make mobile-deploy-preflight | mobile_deploy_preflight_not_proven</p>
+        <p class="line">xcode_build_gate: blocked | make mobile-xcode-build | xcode_build_gate_not_proven</p>
+        <p class="line">run make mobile-deploy-preflight after backend is running</p>
+        <p class="line">Safety: commands_run=false xcode=false global=false</p>
+      </div>
+
+      <div class="group">
+        <h3>Launch Rehearsal</h3>
+        <p class="line">Run iOS device launch rehearsal to refresh final evidence.</p>
+        <p class="line">Freshness: source_missing</p>
+      </div>
+
+      <p class="foot">Commands are for the Mac operator; the app only reads sanitized evidence and never runs Xcode, signing, keychain, provider, or payment actions.</p>
+    </section>
+  </main>
+</body>
+</html>

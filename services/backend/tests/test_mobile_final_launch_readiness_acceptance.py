@@ -47,6 +47,13 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "mobile_summary_launch_rehearsal_rows" in requirement_ids
     assert "mobile_status_view_launch_rehearsal" in requirement_ids
     assert "contract_ios_device_launch_rehearsal_decode" in requirement_ids
+    assert "model_ios_device_evidence_bundle" in requirement_ids
+    assert "model_ios_device_evidence_bundle_field" in requirement_ids
+    assert "mobile_summary_ios_device_evidence_rows" in requirement_ids
+    assert "mobile_status_view_ios_device_evidence" in requirement_ids
+    assert "contract_ios_device_evidence_bundle_decode" in requirement_ids
+    assert "contract_ios_device_evidence_bundle_summary" in requirement_ids
+    assert "contract_ios_device_evidence_bundle_redaction" in requirement_ids
     assert "model_visual_regression_readiness" in requirement_ids
     assert "mobile_summary_visual_regression_rows" in requirement_ids
     assert "mobile_status_view_visual_regression" in requirement_ids
@@ -154,6 +161,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "displayLabel",
                 "IOSDeployRunbookReport",
                 "iosDeployRunbook",
+                "IOSDeviceEvidenceBundleReport",
+                "iosDeviceEvidenceBundle",
                 "IOSDeviceLaunchRehearsalReadinessReport",
                 "iosDeviceLaunchRehearsalReadiness",
                 "VisualRegressionReadinessReport",
@@ -208,6 +217,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "deployRunbookRows",
                 "deployRunbookCommandRows",
                 "deployRunbookSafetyRows",
+                "deviceEvidenceRows",
                 "launchRehearsalRows",
                 "visualRegressionRows",
                 "liveProviderEvidenceRows",
@@ -230,6 +240,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "iOS Deploy Runbook",
                 "Deploy Commands",
                 "Deploy Safety",
+                "Device Evidence",
                 "Launch Rehearsal",
                 "Visual Regression",
                 "Live Evidence",
@@ -275,6 +286,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook",
                 "testFinalLaunchMobileSummaryShowsBlockedIOSDeployRunbook",
                 "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeployRunbook",
+                "testDecodesIOSDeviceEvidenceBundleFromFinalLaunchPayload",
+                "testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle",
+                "testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle",
                 "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload",
                 "testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal",
