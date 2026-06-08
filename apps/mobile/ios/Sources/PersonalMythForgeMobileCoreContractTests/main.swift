@@ -46,6 +46,7 @@ do {
     try testFinalShowcaseSummaryMarksProviderErrorNeedsAttention()
     try testFinalShowcaseSummaryRedactsUnsafeSourceText()
     try testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest()
+    try testFinalShowcaseFinalLaunchStageUsesReceiptFirstBlocker()
     try testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest()
     try testFinalShowcaseSummaryIncludesReadyProviderHandoffDigest()
     try testFinalShowcaseSummaryBlocksProviderHandoffDigest()
@@ -208,6 +209,7 @@ do {
     try testDemoScriptBlocksOnProviderReadinessError()
     try testDemoScriptRedactsUnsafeDetail()
     try testDemoScriptShowsBlockedFinalLaunch()
+    try testDemoScriptFinalLaunchDetailUsesReceiptFirstBlocker()
     try testDemoScriptCompletesWithReadyFinalLaunch()
     try testDemoScriptRedactsUnsafeFinalLaunchDetail()
     try testDemoScriptShowsReadyThreeDEvaluationBeforeNPCEvaluation()
@@ -1439,6 +1441,37 @@ private func testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest() throws {
     try expectEqual(summary.overallStatus, .needsAttention)
     try expectEqual(summary.stage(id: "final_launch")?.status, .needsAttention)
     try expectContains(summary.stage(id: "final_launch")?.detail ?? "", "Final launch blocked")
+}
+
+private func testFinalShowcaseFinalLaunchStageUsesReceiptFirstBlocker() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            firstBlockerJSON: finalDemoLaunchTopLevelFirstBlockerJSON(),
+            finalResourcesStatus: "blocked",
+            finalAcceptanceStatus: "blocked",
+            threeDEvaluationStatus: "ready",
+            npcEvaluationStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let detail = summary.stage(id: "final_launch")?.detail ?? ""
+
+    try expectEqual(summary.stage(id: "final_launch")?.status, .needsAttention)
+    try expectContains(detail, "apply_final_resources")
+    try expectContains(detail, "final_demo_launch_phase")
+    try expectContains(detail, "make final-apply-resources")
 }
 
 private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
@@ -4943,6 +4976,37 @@ private func testDemoScriptShowsBlockedFinalLaunch() throws {
     try expectEqual(script.step(id: "final_launch")?.status, .blocked)
     try expectContains(script.step(id: "final_launch")?.detail ?? "", "blocked")
     try expectContains(script.nextAction, "final launch")
+}
+
+private func testDemoScriptFinalLaunchDetailUsesReceiptFirstBlocker() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            firstBlockerJSON: finalDemoLaunchTopLevelFirstBlockerJSON(),
+            finalResourcesStatus: "blocked",
+            finalAcceptanceStatus: "blocked",
+            threeDEvaluationStatus: "ready",
+            npcEvaluationStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let script = DemoScriptBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let detail = script.step(id: "final_launch")?.detail ?? ""
+
+    try expectEqual(script.step(id: "final_launch")?.status, .blocked)
+    try expectContains(detail, "apply_final_resources")
+    try expectContains(detail, "final_demo_launch_phase")
+    try expectContains(detail, "make final-apply-resources")
 }
 
 private func testDemoScriptCompletesWithReadyFinalLaunch() throws {

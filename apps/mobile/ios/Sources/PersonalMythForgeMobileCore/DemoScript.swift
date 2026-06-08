@@ -281,11 +281,18 @@ public enum DemoScriptBuilder {
     }
 
     private static func finalLaunchDetail(_ summary: FinalLaunchMobileSummary) -> String {
-        let firstProblem = summary.phaseRows.first { $0.status != .ready }?.detail
+        let firstProblem = launchReceiptFirstBlocker(from: summary)
+            ?? summary.phaseRows.first { $0.status != .ready }?.detail
             ?? summary.acceptanceRows.first
             ?? summary.handoffRows.first
             ?? summary.subtitle
         return "\(summary.title): \(firstProblem)"
+    }
+
+    private static func launchReceiptFirstBlocker(from summary: FinalLaunchMobileSummary) -> String? {
+        summary.launchReceiptRows.first { row in
+            row.hasPrefix("First blocker:") && !row.lowercased().contains("none;")
+        }
     }
 
     private static func nextAction(
