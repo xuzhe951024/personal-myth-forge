@@ -238,6 +238,8 @@ def _detail_from_payload(
         missing = payload.get("missing_env")
         if isinstance(missing, list) and missing:
             return "Missing provider env: " + ", ".join(str(item) for item in missing)
+        if payload.get("core_real_ready") is False:
+            return "Core real providers are not ready for live evidence."
     return "Saved report is not ready."
 
 

@@ -60,6 +60,30 @@ def test_live_provider_evidence_ready_from_configured_fixtures(
     assert evidence["final_demo_launch_configured"]["status"] == "ready"
 
 
+def test_live_provider_evidence_blocks_saved_non_real_provider_handoff(
+    tmp_path: Path,
+) -> None:
+    _write_json(
+        tmp_path / "services/backend/.local/provider-handoff.json",
+        {
+            "kind": "provider_handoff_report",
+            "status": "blocked",
+            "classification": "core_real_providers_not_ready",
+            "core_real_ready": False,
+            "missing_env": [],
+        },
+    )
+
+    result = build_live_provider_evidence_report(repo_root=tmp_path)
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert result.report["first_blocker"]["id"] == "provider_handoff"
+    assert result.report["first_blocker"]["detail"] == (
+        "Core real providers are not ready for live evidence."
+    )
+
+
 def test_live_provider_evidence_blocks_failed_report_and_redacts(
     tmp_path: Path,
 ) -> None:
