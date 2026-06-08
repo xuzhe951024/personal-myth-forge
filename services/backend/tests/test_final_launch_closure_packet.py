@@ -35,7 +35,7 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert result.exit_code == 2
     assert report["kind"] == "final_launch_closure_packet_report"
     assert report["status"] == "blocked"
-    assert report["summary"]["sections"] == 5
+    assert report["summary"]["sections"] == 6
     assert report["summary"]["secret_actions"] >= 2
     assert report["summary"]["requires_cost_consent"] >= 1
     assert [section["id"] for section in report["sections"]] == [
@@ -43,6 +43,7 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
         "safe_local_writes",
         "device_evidence",
         "live_provider_consent",
+        "configured_evidence_bundle",
         "final_acceptance",
     ]
     assert sections["resource_inputs"]["status"] == "blocked"
@@ -50,15 +51,28 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert sections["safe_local_writes"]["command"] == "make final-resource-apply-preview"
     assert sections["device_evidence"]["command"] == "make ios-device-launch-rehearsal"
     assert sections["live_provider_consent"]["requires_cost_consent"] is True
+    assert sections["configured_evidence_bundle"]["status"] == "blocked"
+    assert sections["configured_evidence_bundle"]["command"] == (
+        "make configured-live-evidence-bundle"
+    )
+    assert sections["configured_evidence_bundle"]["first_action"]["id"] == (
+        "configured_live_evidence_bundle"
+    )
     assert sections["final_acceptance"]["required"] is True
     actions = " ".join(report["operator_actions"])
     assert "provide MESHY_API_KEY" in actions
     assert "make ios-device-launch-rehearsal" in actions
-    assert report["commands"][:3] == [
+    assert "make configured-live-evidence-bundle" in actions
+    assert report["commands"][:5] == [
         "make final-resource-fill-guide",
         "make final-external-action-ledger",
         "make ios-device-launch-rehearsal",
+        "make live-provider-evidence",
+        "make configured-live-evidence-bundle",
     ]
+    assert report["source_reports"]["configured_live_evidence_bundle"]["status"] == (
+        "missing"
+    )
     assert report["safety"]["commands_run"] is False
     assert report["safety"]["global_mutation"] is False
     assert report["safety"]["live_provider_calls"] is False
@@ -73,6 +87,7 @@ def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     _write_final_acceptance_ready(repo_root)
     _write_ios_device_launch_rehearsal_ready(repo_root)
     _write_configured_live_evidence_ready(repo_root)
+    _write_configured_live_evidence_bundle_ready(repo_root)
 
     result = build_final_launch_closure_packet_report(
         settings=Settings(
@@ -92,7 +107,14 @@ def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     assert sections["safe_local_writes"]["status"] == "ready"
     assert sections["device_evidence"]["status"] == "ready"
     assert sections["live_provider_consent"]["status"] in {"ready", "live"}
+    assert sections["configured_evidence_bundle"]["status"] == "ready"
+    assert sections["configured_evidence_bundle"]["first_action"]["id"] == (
+        "configured_live_evidence_bundle"
+    )
     assert sections["final_acceptance"]["status"] in {"ready", "blocked", "partial"}
+    assert report["source_reports"]["configured_live_evidence_bundle"]["status"] == (
+        "ready"
+    )
     assert sections["resource_inputs"]["first_action"]["status"] == "ready"
     assert sections["device_evidence"]["first_action"]["id"] == "backend_device_server"
     assert report["summary"]["ready"] >= 3
@@ -171,6 +193,13 @@ def test_final_launch_closure_packet_redacts_unsafe_source_details(
             },
         },
     )
+    _write_configured_live_evidence_bundle_blocked(
+        repo_root,
+        detail=(
+            "Configured bundle blocked sk-configured /Users/zhexu/private "
+            "file:///tmp/private checkout_url Bearer token"
+        ),
+    )
 
     result = build_final_launch_closure_packet_report(
         settings=Settings(),
@@ -181,6 +210,7 @@ def test_final_launch_closure_packet_redacts_unsafe_source_details(
     assert result.exit_code == 2
     assert "[redacted]" in text
     assert "sk-secret" not in text
+    assert "sk-configured" not in text
     assert "/Users/" not in text
     assert "file:///" not in text
     assert "checkout_url" not in text
@@ -349,6 +379,91 @@ def _write_configured_live_evidence_ready(repo_root: Path) -> None:
             "mode": "configured",
             "overall_status": "ready",
             "summary": {"ready": 9, "missing": 0, "blocked": 0, "manual": 0},
+        },
+    )
+
+
+def _write_configured_live_evidence_bundle_ready(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/configured-live-evidence-bundle.json",
+        {
+            "kind": "configured_live_evidence_bundle_report",
+            "status": "ready",
+            "summary": {
+                "evidence_files": 5,
+                "evidence_ready": 5,
+                "evidence_missing": 0,
+                "evidence_blocked": 0,
+                "commands": 10,
+                "commands_ready": 10,
+                "commands_run": 0,
+            },
+            "current_blocker": None,
+            "operator_actions": [],
+            "commands": ["make configured-live-evidence-bundle"],
+            "safety": {
+                "commands_run": False,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "raw_private_context_in_report": False,
+                "raw_media_in_report": False,
+                "payment_links_in_report": False,
+                "local_paths_in_report": False,
+            },
+        },
+    )
+
+
+def _write_configured_live_evidence_bundle_blocked(
+    repo_root: Path,
+    *,
+    detail: str,
+) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/configured-live-evidence-bundle.json",
+        {
+            "kind": "configured_live_evidence_bundle_report",
+            "status": "blocked",
+            "summary": {
+                "evidence_files": 5,
+                "evidence_ready": 4,
+                "evidence_missing": 0,
+                "evidence_blocked": 1,
+                "commands": 10,
+                "commands_ready": 9,
+                "commands_run": 0,
+            },
+            "current_blocker": {
+                "id": "final_resource_fill_guide",
+                "label": "Final resource fill guide",
+                "status": "blocked",
+                "classification": "configured_bundle_blocked",
+                "command": "make configured-live-evidence-bundle",
+                "detail": detail,
+            },
+            "operator_actions": [detail],
+            "commands": ["make configured-live-evidence-bundle"],
+            "safety": {
+                "commands_run": False,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "raw_private_context_in_report": False,
+                "raw_media_in_report": False,
+                "payment_links_in_report": False,
+                "local_paths_in_report": False,
+            },
         },
     )
 

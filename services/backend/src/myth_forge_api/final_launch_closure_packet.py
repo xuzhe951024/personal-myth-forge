@@ -30,9 +30,13 @@ COMMANDS = [
     "make final-external-action-ledger",
     "make ios-device-launch-rehearsal",
     "make live-provider-evidence",
+    "make configured-live-evidence-bundle",
     "make final-showcase-readiness",
     "make final-acceptance-local",
 ]
+CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
+    "services/backend/.local/configured-live-evidence-bundle.json"
+)
 
 
 @dataclass(frozen=True)
@@ -62,6 +66,9 @@ def build_final_launch_closure_packet_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
     ).report
+    configured_live_evidence_bundle = _load_configured_live_evidence_bundle_report(
+        selected_repo_root,
+    )
     final_acceptance = build_final_acceptance_readiness_report(
         repo_root=selected_repo_root,
     ).report
@@ -70,6 +77,7 @@ def build_final_launch_closure_packet_report(
         action_ledger=action_ledger,
         device_evidence=device_evidence,
         showcase_readiness=showcase_readiness,
+        configured_live_evidence_bundle=configured_live_evidence_bundle,
         final_acceptance=final_acceptance,
     )
     status = _overall_status(sections)
@@ -86,6 +94,9 @@ def build_final_launch_closure_packet_report(
             "final_external_action_ledger": _source_summary(action_ledger),
             "ios_device_evidence_bundle": _source_summary(device_evidence),
             "final_showcase_readiness": _source_summary(showcase_readiness),
+            "configured_live_evidence_bundle": _source_summary(
+                configured_live_evidence_bundle
+            ),
             "final_acceptance_readiness": _source_summary(final_acceptance),
         },
         "safety": _safety(),
@@ -103,6 +114,7 @@ def _sections(
     action_ledger: dict[str, Any],
     device_evidence: dict[str, Any],
     showcase_readiness: dict[str, Any],
+    configured_live_evidence_bundle: dict[str, Any],
     final_acceptance: dict[str, Any],
 ) -> list[dict[str, Any]]:
     groups = {
@@ -136,6 +148,7 @@ def _sections(
             group=groups.get("live_provider_costs", {}),
             required=False,
         ),
+        _configured_evidence_bundle_section(configured_live_evidence_bundle),
         _final_acceptance_section(
             showcase_readiness=showcase_readiness,
             final_acceptance=final_acceptance,
@@ -256,6 +269,59 @@ def _device_action(slot: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def _configured_evidence_bundle_section(
+    configured_live_evidence_bundle: dict[str, Any],
+) -> dict[str, Any]:
+    action = _configured_evidence_bundle_action(configured_live_evidence_bundle)
+    summary = configured_live_evidence_bundle.get("summary", {})
+    detail = "Refresh configured evidence bundle before final acceptance."
+    if isinstance(summary, dict):
+        detail = (
+            "Configured evidence bundle: "
+            f"ready {summary.get('evidence_ready', 0)}, "
+            f"missing {summary.get('evidence_missing', 0)}, "
+            f"blocked {summary.get('evidence_blocked', 0)}."
+        )
+    return _section(
+        section_id="configured_evidence_bundle",
+        label="Configured evidence bundle",
+        status=str(configured_live_evidence_bundle.get("status", "missing")),
+        command="make configured-live-evidence-bundle",
+        detail=detail,
+        required=True,
+        actions=[action],
+        blocked_by=_blocked_by([action]),
+    )
+
+
+def _configured_evidence_bundle_action(
+    configured_live_evidence_bundle: dict[str, Any],
+) -> dict[str, Any]:
+    blocker = configured_live_evidence_bundle.get("current_blocker")
+    blocker_dict = blocker if isinstance(blocker, dict) else {}
+    status = str(
+        blocker_dict.get("status")
+        or configured_live_evidence_bundle.get("status", "missing")
+    )
+    command = str(
+        blocker_dict.get("command") or "make configured-live-evidence-bundle"
+    )
+    detail = str(
+        blocker_dict.get("detail")
+        or _first_operator_action(configured_live_evidence_bundle)
+        or "Run configured evidence bundle after live provider evidence is refreshed."
+    )
+    return _closure_action(
+        action_id="configured_live_evidence_bundle",
+        label="Configured live evidence bundle",
+        status=status,
+        command=command,
+        detail=detail,
+        required=True,
+        classification=_optional_string(blocker_dict.get("classification")),
+    )
+
+
 def _final_acceptance_section(
     *,
     showcase_readiness: dict[str, Any],
@@ -313,6 +379,15 @@ def _showcase_readiness_action(showcase_readiness: dict[str, Any]) -> dict[str, 
         required=True,
         classification=_optional_string(blocker.get("classification")),
     )
+
+
+def _first_operator_action(report: dict[str, Any]) -> str | None:
+    actions = report.get("operator_actions")
+    if isinstance(actions, list) and actions:
+        first = actions[0]
+        if isinstance(first, str) and first:
+            return first
+    return None
 
 
 def _first_detail(*, report: dict[str, Any], fallback: str) -> str:
@@ -543,6 +618,84 @@ def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
         "kind": report.get("kind", "unknown"),
         "status": report.get("status") or report.get("overall_status") or "unknown",
         "summary": report.get("summary", {}),
+    }
+
+
+def _load_configured_live_evidence_bundle_report(repo_root: Path) -> dict[str, Any]:
+    relative_path = CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH.as_posix()
+    path = repo_root / CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH
+    if not path.exists():
+        return _configured_live_evidence_bundle_stub(
+            status="missing",
+            classification="missing_report",
+            detail=f"Missing {relative_path}.",
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return _configured_live_evidence_bundle_stub(
+            status="blocked",
+            classification="unreadable_report",
+            detail=f"{relative_path} is not valid JSON.",
+        )
+    if not isinstance(payload, dict):
+        return _configured_live_evidence_bundle_stub(
+            status="blocked",
+            classification="invalid_report_shape",
+            detail=f"{relative_path} must contain a JSON object.",
+        )
+    if payload.get("kind") != "configured_live_evidence_bundle_report":
+        return _configured_live_evidence_bundle_stub(
+            status="blocked",
+            classification="wrong_report_kind",
+            detail="Expected configured_live_evidence_bundle_report.",
+        )
+    return payload
+
+
+def _configured_live_evidence_bundle_stub(
+    *,
+    status: str,
+    classification: str,
+    detail: str,
+) -> dict[str, Any]:
+    return {
+        "kind": "configured_live_evidence_bundle_report",
+        "status": status,
+        "summary": {
+            "evidence_files": 0,
+            "evidence_ready": 0,
+            "evidence_missing": 1 if status == "missing" else 0,
+            "evidence_blocked": 1 if status != "missing" else 0,
+            "commands_run": 0,
+        },
+        "current_blocker": {
+            "id": "configured_live_evidence_bundle",
+            "label": "Configured live evidence bundle",
+            "status": status,
+            "classification": classification,
+            "command": "make configured-live-evidence-bundle",
+            "detail": detail,
+        },
+        "operator_actions": [
+            "run make configured-live-evidence-bundle to refresh configured evidence bundle"
+        ],
+        "commands": ["make configured-live-evidence-bundle"],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "raw_private_context_in_report": False,
+            "raw_media_in_report": False,
+            "payment_links_in_report": False,
+            "local_paths_in_report": False,
+        },
     }
 
 
