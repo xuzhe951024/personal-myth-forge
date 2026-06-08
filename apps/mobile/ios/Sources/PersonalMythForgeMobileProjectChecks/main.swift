@@ -1234,6 +1234,16 @@ do {
     try requireContains(finalShowcaseSummary, "threeDEvaluationStage", "final showcase 3D evaluation digest")
     try requireContains(finalShowcaseSummary, "operatorHandoffStage", "final showcase operator handoff digest")
     try requireContains(finalShowcaseSummary, "finalLaunchStage", "final showcase final launch digest")
+    try requireContains(
+        finalShowcaseSummary,
+        "launchReceiptFirstBlocker(from:",
+        "final showcase launch receipt first blocker preference"
+    )
+    try requireContains(
+        finalShowcaseSummary,
+        "launchReceiptRows.first",
+        "final showcase launch receipt row lookup"
+    )
     try requireContains(finalShowcaseSummary, #""three_d_evaluation""#, "final showcase 3D evaluation stage id")
     try requireContains(finalShowcaseSummary, #""npc_evaluation""#, "final showcase npc evaluation stage id")
     try requireContains(finalShowcaseSummary, #""operator_handoff""#, "final showcase handoff stage id")
@@ -1242,6 +1252,11 @@ do {
         contractTests,
         "testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest",
         "blocked final showcase launch digest contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalShowcaseFinalLaunchStageUsesReceiptFirstBlocker",
+        "final showcase launch first blocker digest contract test"
     )
     try requireContains(
         contractTests,
@@ -2279,6 +2294,11 @@ do {
         "device preflight final launch first blocker contract test"
     )
     try requireContains(
+        contractTests,
+        "testDemoScriptFinalLaunchDetailUsesReceiptFirstBlocker",
+        "demo script final launch first blocker contract test"
+    )
+    try requireContains(
         finalLaunchMobileSummary,
         "Final acceptance ready.",
         "final launch acceptance ready copy"
@@ -2718,6 +2738,12 @@ do {
     try requireContains(demoScript, "threeDEvaluationStep", "demo script 3D evaluation builder")
     try requireContains(demoScript, "npcEvaluationStep", "demo script NPC evaluation builder")
     try requireContains(demoScript, "FinalLaunchMobileSummary", "demo script final launch summary input")
+    try requireContains(
+        demoScript,
+        "launchReceiptFirstBlocker(from:",
+        "demo script launch receipt first blocker preference"
+    )
+    try requireContains(demoScript, "launchReceiptRows.first", "demo script launch receipt row lookup")
     try requireContains(showcaseAutopilot, "ShowcaseAutopilotPlanner", "showcase autopilot core planner")
     try requireContains(
         showcaseAutopilot,

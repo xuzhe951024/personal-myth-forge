@@ -384,11 +384,18 @@ public enum FinalShowcaseSummaryBuilder {
         case .waiting:
             status = .waiting
         }
-        let detail = summary.phaseRows.first { $0.status != .ready }?.detail
+        let detail = launchReceiptFirstBlocker(from: summary)
+            ?? summary.phaseRows.first { $0.status != .ready }?.detail
             ?? summary.acceptanceRows.first
             ?? summary.handoffRows.first
             ?? summary.subtitle
         return stage("final_launch", "Launch", status, "\(summary.title): \(detail)")
+    }
+
+    private static func launchReceiptFirstBlocker(from summary: FinalLaunchMobileSummary) -> String? {
+        summary.launchReceiptRows.first { row in
+            row.hasPrefix("First blocker:") && !row.lowercased().contains("none;")
+        }
     }
 
     private static func launchRowStatus(
