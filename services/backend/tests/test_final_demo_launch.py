@@ -35,7 +35,7 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
         result.report["operator_checklist"]
     )
     assert result.report["final_resources_preflight"]["status"] == "missing"
-    assert any("--allow-live-provider-calls" in command for command in result.report["commands"])
+    assert "make final-acceptance-configured" in result.report["commands"]
     phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
     assert phases["apply_final_resources"]["status"] == "missing"
     assert phases["apply_final_resources"]["command"] == "make final-apply-resources"
@@ -174,7 +174,7 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
     assert handoff_steps["configured_final_acceptance"]["requires_consent"] is True
     assert handoff["next_actions"] == [
         (
-            "run configured final acceptance only after live provider cost review "
+            "run make final-acceptance-configured only after live provider cost review "
             "and --allow-live-provider-calls consent"
         ),
         "run Xcode build gate manually on the Mac: make mobile-xcode-build",

@@ -116,10 +116,12 @@ def test_operator_handoff_marks_configured_acceptance_as_live_consent_gate(
     assert report["summary"]["live"] == 1
     assert steps["configured_final_acceptance"]["status"] == "live"
     assert steps["configured_final_acceptance"]["requires_consent"] is True
-    assert "--allow-live-provider-calls" in steps["configured_final_acceptance"]["command"]
+    assert steps["configured_final_acceptance"]["command"] == (
+        "make final-acceptance-configured"
+    )
     assert report["next_actions"] == [
         (
-            "run configured final acceptance only after live provider cost review "
+            "run make final-acceptance-configured only after live provider cost review "
             "and --allow-live-provider-calls consent"
         ),
         "run Xcode build gate manually on the Mac: make mobile-xcode-build",
@@ -594,11 +596,7 @@ def _local_launch_phases(
         _phase(
             "configured_final_acceptance",
             "optional",
-            (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-acceptance --profile quick --provider-mode configured "
-                "--require-real-core --allow-live-provider-calls --repo-root ../.."
-            ),
+            "make final-acceptance-configured",
         ),
         _phase(
             "mobile_deploy_preflight",
@@ -622,11 +620,7 @@ def _configured_launch_phases() -> list[dict[str, object]]:
         _phase(
             "configured_final_acceptance",
             "ready",
-            (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-acceptance --profile quick --provider-mode configured "
-                "--require-real-core --allow-live-provider-calls --repo-root ../.."
-            ),
+            "make final-acceptance-configured",
         ),
         _phase("mobile_deploy_preflight", "ready", "make mobile-deploy-preflight"),
         _phase("xcode_build_gate", "manual", "make mobile-xcode-build"),

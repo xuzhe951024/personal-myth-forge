@@ -5,6 +5,10 @@ import re
 from pathlib import Path
 from typing import Any, Literal
 
+from myth_forge_api.configured_acceptance_command import (
+    CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
+    CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION,
+)
 from myth_forge_api.final_acceptance_readiness import (
     LOCAL_FINAL_ACCEPTANCE_COMMAND,
     build_final_acceptance_readiness_report,
@@ -356,12 +360,7 @@ def _command_sequence(
                 "configured_final_acceptance",
                 "Run configured final acceptance",
                 "live",
-                (
-                    "cd services/backend && uv run python -m myth_forge_api.cli "
-                    "final-acceptance --profile quick --provider-mode configured "
-                    "--require-real-core --allow-live-provider-calls --repo-root ../.. "
-                    "--output .local/final-acceptance-configured.json"
-                ),
+                CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
                 "May call live providers and spend credits.",
                 requires_consent=True,
             )
@@ -430,10 +429,7 @@ def _operator_actions(
         if slot["status"] in {"missing", "blocked"}:
             actions.append(str(slot["operator_action"]))
     if mode == "configured":
-        actions.append(
-            "run configured final acceptance only after live provider cost review "
-            "and --allow-live-provider-calls consent"
-        )
+        actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
     for step in command_sequence:
         if step["status"] in {"missing", "blocked"}:
             actions.append(f"unblock {step['id']}: {step['command']}")

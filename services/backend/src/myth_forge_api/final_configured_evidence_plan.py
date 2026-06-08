@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_configured_preflight import (
     build_final_configured_preflight_report,
@@ -101,12 +102,7 @@ STEPS = [
     StepDefinition(
         step_id="final_acceptance_configured",
         label="Configured final acceptance",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "final-acceptance --profile quick --provider-mode configured "
-            "--require-real-core --allow-live-provider-calls --repo-root ../.. "
-            "--output .local/final-acceptance-configured.json"
-        ),
+        command=CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
         requires_live_provider_consent=True,
         may_call_live_provider=True,
         cost_risk=True,

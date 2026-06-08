@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.config import Settings, load_settings
 
 Status = str
@@ -333,12 +334,7 @@ def _commands() -> list[str]:
             "final-demo-launch --mode configured --repo-root ../.. "
             "--output .local/final-demo-launch-configured.json"
         ),
-        (
-            "cd services/backend && uv run python -m myth_forge_api.cli final-acceptance "
-            "--profile quick --provider-mode configured --require-real-core "
-            "--allow-live-provider-calls "
-            "--output .local/final-acceptance-configured.json"
-        ),
+        CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
         "make mobile-deploy-preflight",
         "make mobile-xcode-build",
     ]

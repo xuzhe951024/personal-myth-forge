@@ -8,6 +8,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.configured_acceptance_command import (
+    CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
+    CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION,
+)
 from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_configured_preflight import (
     build_final_configured_preflight_report,
@@ -371,12 +375,7 @@ def _commands() -> list[str]:
 
 
 def _configured_acceptance_command() -> str:
-    return (
-        "cd services/backend && uv run python -m myth_forge_api.cli "
-        "final-acceptance --profile quick --provider-mode configured "
-        "--require-real-core --allow-live-provider-calls --repo-root ../.. "
-        "--output .local/final-acceptance-configured.json"
-    )
+    return CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 
 
 def _overall_status(lanes: list[dict[str, Any]]) -> str:
@@ -409,7 +408,7 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
         elif lane_id == "device_deploy":
             actions.append("run make mobile-deploy-preflight after backend is running")
         elif lane_id == "live_acceptance":
-            actions.append("run configured final acceptance after live provider cost review")
+            actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
         elif command:
             actions.append(f"run {command}")
         else:
