@@ -33,6 +33,7 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
         "p0.112_ios_device_launch_rehearsal",
         "p0.119_visual_regression_handoff",
         "p0.153_configured_evidence_visual",
+        "p0.186_configured_acceptance_command_visual",
         "p0.154_resource_fill_guide_visual",
         "p0.155_device_fill_guide_preflight",
         "p0.156_ios_device_evidence_bundle",
@@ -59,6 +60,9 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "Configured Evidence" in required_text
     assert "consent now 0, planned 3" in required_text
     assert "--allow-live-provider-calls" in required_text
+    assert "make final-acceptance-configured" in required_text
+    assert "Live providers: consent required for configured acceptance." in required_text
+    assert "commands_run=false live_calls=false global=false" in required_text
     assert "Resource Fill Guide" in required_text
     assert "Fill guide blocked" in required_text
     assert "required 5, optional 5, configured 3, secret 4" in required_text
@@ -103,7 +107,7 @@ def test_visual_regression_default_passes_checked_in_showcase_artifacts() -> Non
     result = check_visual_artifacts(repo_root)
 
     assert result.exit_code == 0
-    assert result.report["summary"] == {"passed": 19, "failed": 0}
+    assert result.report["summary"] == {"passed": 20, "failed": 0}
     assert [artifact["id"] for artifact in result.report["artifacts"]] == [
         spec.id for spec in DEFAULT_VISUAL_ARTIFACTS
     ]
@@ -205,7 +209,7 @@ def test_visual_regression_cli_writes_showcase_report(tmp_path: Path, monkeypatc
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["kind"] == "visual_regression_report"
     assert report["status"] == "passed"
-    assert report["summary"] == {"passed": 19, "failed": 0}
+    assert report["summary"] == {"passed": 20, "failed": 0}
 
 
 def _spec() -> VisualArtifactSpec:

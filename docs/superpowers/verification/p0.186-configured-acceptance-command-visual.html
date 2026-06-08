@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.186 Configured Acceptance Command Visual</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #eef2f4;
+      color: #172026;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #f8faf8;
+    }
+    main {
+      width: 390px;
+      height: 844px;
+      padding: 18px 14px;
+      overflow: hidden;
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 22px;
+      margin-bottom: 12px;
+      color: #334149;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .screen-title {
+      margin: 0 0 3px;
+      font-size: 22px;
+      line-height: 1.12;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .subhead {
+      margin: 0 0 14px;
+      color: #68757a;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .panel {
+      border: 1px solid #d7dedf;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 10px 24px rgba(44, 55, 60, 0.08);
+      padding: 12px;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .panel-title {
+      flex: 1;
+      min-width: 0;
+    }
+    h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .caption {
+      margin-top: 2px;
+      color: #6f7b80;
+      font-size: 11px;
+      line-height: 1.25;
+    }
+    .badge {
+      flex: 0 0 auto;
+      color: #9b3e3e;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .section {
+      margin-top: 11px;
+    }
+    .section h3 {
+      margin: 0 0 5px;
+      font-size: 12px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .row {
+      padding: 2px 0;
+      color: #627076;
+      font-family: "SF Mono", ui-monospace, Menlo, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .row.good { color: #276b48; }
+    .row.warn { color: #8a5b18; }
+    .row.bad { color: #9b3e3e; }
+    .receipt {
+      display: grid;
+      grid-template-columns: 8px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 6px 0;
+      border-bottom: 1px solid #edf0f1;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 50%;
+      background: #9b3e3e;
+    }
+    .dot.ready { background: #2e9b60; }
+    .dot.wait { background: #8b9497; }
+    .receipt span {
+      color: #667277;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+    .foot {
+      margin-top: 10px;
+      color: #798488;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>PMF</span>
+    </div>
+    <h1 class="screen-title">Final Launch Status</h1>
+    <p class="subhead">Configured mode shows the Mac operator which acceptance command to run after cost consent.</p>
+
+    <section class="panel" aria-label="Configured final launch commands panel">
+      <div class="panel-head">
+        <div class="panel-title">
+          <h2>Final launch blocked</h2>
+          <div class="caption">mode configured; ready 4, blocked 2, manual 1</div>
+        </div>
+        <div class="badge">BLOCKED</div>
+      </div>
+
+      <div class="section">
+        <h3>Mode</h3>
+        <div class="row">Mode: Configured</div>
+        <div class="row">Live providers: consent required for configured acceptance.</div>
+        <div class="row">Consent flag: --allow-live-provider-calls</div>
+      </div>
+
+      <div class="section">
+        <h3>Launch Receipt</h3>
+        <div class="receipt">
+          <div class="dot"></div>
+          <span>Receipt: configured launch blocked.</span>
+        </div>
+        <div class="receipt">
+          <div class="dot wait"></div>
+          <span>Acceptance: 4 passed, 1 blocked, 0 failed.</span>
+        </div>
+        <div class="receipt">
+          <div class="dot ready"></div>
+          <span>First blocker: final_resource_fill_guide blocked missing_required_value</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Commands</h3>
+        <div class="row bad">make final-acceptance-configured</div>
+        <div class="row">make final-resource-requirements</div>
+        <div class="row">make final-resources-preflight</div>
+        <div class="row">make final-resource-apply-preview</div>
+      </div>
+
+      <div class="section">
+        <h3>Configured Evidence</h3>
+        <div class="row warn">Configured evidence blocked until Meshy/OpenAI/Treatstock resources are provided.</div>
+        <div class="row">Live provider consent commands: 3.</div>
+      </div>
+
+      <div class="section">
+        <h3>Safety</h3>
+        <div class="row good">commands_run=false live_calls=false global=false</div>
+      </div>
+
+      <p class="foot">Static visual proof only. The iPhone presents read-only launch evidence and never runs provider, Xcode, signing, or resource write commands.</p>
+    </section>
+  </main>
+</body>
+</html>
