@@ -177,6 +177,17 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
         },
     )
     _write_json(
+        local_dir / "mobile-deploy-preflight-evidence.json",
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "blocked",
+            "operator_actions": [
+                "start backend-device-demo and rerun mobile deploy preflight"
+            ],
+            "summary": {"blocked": 1},
+        },
+    )
+    _write_json(
         local_dir / "final-configured-preflight.json",
         {"kind": "final_configured_preflight_report", "status": "ready"},
     )
@@ -210,6 +221,10 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
             "mobile deploy preflight"
         ),
         "ios_deploy_runbook_local: resolve Xcode build gate outside the app",
+        (
+            "mobile_deploy_preflight_evidence: start backend-device-demo and "
+            "rerun mobile deploy preflight"
+        ),
     ]
     assert result.report["operator_actions"][0] == (
         "final_rehearsal_local: ios_deploy_runbook_local: provide iOS deploy "
@@ -750,6 +765,14 @@ def _write_local_rehearsal_reports(local_dir: Path) -> None:
             "kind": "ios_deploy_runbook_report",
             "mode": "local",
             "status": "partial",
+        },
+    )
+    _write_json(
+        local_dir / "mobile-deploy-preflight-evidence.json",
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "ready",
+            "summary": {"ready": 1, "blocked": 0},
         },
     )
 

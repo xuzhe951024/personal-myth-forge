@@ -39,6 +39,11 @@ LOCAL_REPORT_SOURCES = [
         "path": "services/backend/.local/ios-deploy-runbook-local.json",
         "command": "make ios-deploy-runbook-local",
     },
+    {
+        "id": "mobile_deploy_preflight_evidence",
+        "path": "services/backend/.local/mobile-deploy-preflight-evidence.json",
+        "command": "make mobile-deploy-preflight-evidence",
+    },
 ]
 
 REHEARSAL_REPORT_SOURCES = [
@@ -233,6 +238,8 @@ def _saved_report_status(payload: dict[str, Any]) -> str:
         return _normalized_status(str(payload.get("overall_status", "ready")))
     if kind == "final_demo_launch_report":
         return _normalized_status(str(payload.get("overall_status", "ready")))
+    if kind == "mobile_deploy_preflight_evidence_report":
+        return _normalized_status(str(payload.get("status", "blocked")))
     if kind in {
         "ios_deploy_runbook_report",
         "final_configured_preflight_report",

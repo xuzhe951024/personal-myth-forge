@@ -52,6 +52,9 @@ from myth_forge_api.ios_device_launch_rehearsal import (
     build_ios_device_launch_rehearsal_report,
 )
 from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
+from myth_forge_api.mobile_deploy_preflight_evidence import (
+    run_mobile_deploy_preflight_evidence,
+)
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
 )
@@ -185,6 +188,14 @@ def _default_steps() -> list[RefreshStepDefinition]:
                 mode="local",
                 repo_root=repo_root,
             ),
+        ),
+        _step(
+            "mobile_deploy_preflight_evidence",
+            "Mobile deploy preflight evidence",
+            "mobile-deploy-preflight-evidence.json",
+            lambda repo_root: run_mobile_deploy_preflight_evidence(
+                repo_root=repo_root,
+            ).report,
         ),
         _step(
             "final_configured_preflight",

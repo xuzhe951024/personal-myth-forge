@@ -32,6 +32,8 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert steps["final_acceptance_local"]["accepted_blocked"] is True
     assert steps["final_resource_fill_guide"]["status"] == "blocked"
     assert steps["final_configured_evidence_plan"]["status"] == "blocked"
+    assert steps["mobile_deploy_preflight_evidence"]["status"] == "blocked"
+    assert steps["mobile_deploy_preflight_evidence"]["accepted_blocked"] is True
     assert final_acceptance["refresh_safety"] == {
         "mobile_gate_commands_executed": False,
         "xcode_or_signing_executed": False,
@@ -65,6 +67,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "services/backend/.local/final-acceptance-local.json",
         "services/backend/.local/final-demo-launch-local.json",
         "services/backend/.local/ios-deploy-runbook-local.json",
+        "services/backend/.local/mobile-deploy-preflight-evidence.json",
         "services/backend/.local/final-configured-preflight.json",
         "services/backend/.local/final-configured-evidence-plan.json",
         "services/backend/.local/final-handoff-index.json",
@@ -125,6 +128,8 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     )
 
     assert result.exit_code == 2
+    assert steps["ios_deploy_runbook_local"] < steps["mobile_deploy_preflight_evidence"]
+    assert steps["mobile_deploy_preflight_evidence"] < steps["ios_device_launch_rehearsal"]
     assert steps["ios_device_launch_rehearsal"] < steps["final_showcase_readiness"]
     assert showcase["evidence"]["ios_device_launch_rehearsal_readiness"]["kind"] == (
         "ios_device_launch_rehearsal_readiness_report"
