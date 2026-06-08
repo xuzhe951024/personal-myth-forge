@@ -60,6 +60,7 @@ from myth_forge_api.print_fulfillment_readiness import (
 from myth_forge_api.live_provider_evidence import (
     build_live_provider_evidence_report,
 )
+from myth_forge_api.local_showcase_smoke import build_local_showcase_smoke_report
 from myth_forge_api.ios_device_launch_certificate import (
     build_ios_device_launch_certificate_report,
 )
@@ -196,6 +197,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
+        if args.command == "local-showcase-smoke":
+            return _local_showcase_smoke(output_path=args.output)
         if args.command == "final-local-report-refresh":
             return _final_local_report_refresh(
                 repo_root=args.repo_root,
@@ -371,6 +374,9 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     final_launch_closure_packet_parser.add_argument("--repo-root", default=None)
     final_launch_closure_packet_parser.add_argument("--output", default=None)
+
+    local_showcase_smoke_parser = subcommands.add_parser("local-showcase-smoke")
+    local_showcase_smoke_parser.add_argument("--output", default=None)
 
     final_local_report_refresh_parser = subcommands.add_parser(
         "final-local-report-refresh"
@@ -679,6 +685,12 @@ def _final_launch_closure_packet(
     result = build_final_launch_closure_packet_report(
         repo_root=Path(repo_root) if repo_root else None,
     )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _local_showcase_smoke(*, output_path: str | None) -> int:
+    result = build_local_showcase_smoke_report()
     _write_json_payload(result.report, output_path)
     return result.exit_code
 

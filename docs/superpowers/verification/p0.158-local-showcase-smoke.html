@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.158 Local Showcase Smoke</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #171717;
+      --muted: #5f6368;
+      --line: #d9ded7;
+      --panel: #f7f8f3;
+      --paper: #fffefd;
+      --ok: #27744f;
+      --warn: #a35f1d;
+      --accent: #2f6f86;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #fbfbf7 0%, #eef3ee 100%);
+      color: var(--ink);
+    }
+
+    main {
+      width: 390px;
+      min-height: 844px;
+      padding: 18px 14px;
+    }
+
+    .status {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--paper) 88%, #eef3ee);
+      box-shadow: 0 8px 20px rgba(23, 23, 23, 0.08);
+      padding: 14px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      color: var(--ok);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+      padding-top: 1px;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 9px 110px minmax(0, 1fr);
+      gap: 7px;
+      align-items: baseline;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(217, 222, 215, 0.75);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+    }
+
+    .phase-label {
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.25;
+    }
+
+    .phase-detail {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .section {
+      margin-top: 12px;
+    }
+
+    .section h2 {
+      margin: 0 0 5px;
+      font-size: 12px;
+      line-height: 1.25;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .line {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      font-size: 10.5px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .callout {
+      margin-top: 12px;
+      border-left: 3px solid var(--accent);
+      background: var(--panel);
+      padding: 8px 10px;
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="status" aria-label="Final launch status local smoke">
+      <div class="topline">
+        <div>
+          <h1>Final Launch Status</h1>
+          <p class="subtitle">local mode partial | launch receipt ready</p>
+        </div>
+        <div class="badge">READY</div>
+      </div>
+
+      <div class="phase">
+        <span class="dot"></span>
+        <span class="phase-label">Local acceptance</span>
+        <span class="phase-detail">no-key deterministic smoke</span>
+      </div>
+      <div class="phase">
+        <span class="dot"></span>
+        <span class="phase-label">Provider readiness</span>
+        <span class="phase-detail">local 3D and NPC runtime</span>
+      </div>
+
+      <div class="section">
+        <h2>Visual Regression</h2>
+        <p class="line">Visual regression ready: 16 artifacts passed, 0 failed.</p>
+      </div>
+
+      <div class="section">
+        <h2>Local Smoke</h2>
+        <p class="line">Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3.</p>
+        <p class="line">3D local_stub via multi_image; scene dae.</p>
+        <p class="line">Print draft_quote; game glTF, scene COLLADA, print PK.</p>
+        <p class="line">provider_calls=false global=false temp_storage=true</p>
+      </div>
+
+      <div class="section">
+        <h2>NPC Evaluation</h2>
+        <p class="line">NPC Agent evaluation ready: 6 cases, 12 ticks.</p>
+      </div>
+
+      <div class="section">
+        <h2>Commands</h2>
+        <p class="line">make local-showcase-smoke</p>
+        <p class="line">make final-acceptance-local</p>
+      </div>
+
+      <div class="callout">
+        Smoke proof uses temporary backend storage and local providers only; no live provider calls,
+        raw media, provider secrets, payment links, or global machine changes.
+      </div>
+    </section>
+  </main>
+</body>
+</html>

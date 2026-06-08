@@ -167,6 +167,18 @@ SOURCE_REQUIREMENTS = (
         "visualRegressionReadiness",
     ),
     SourceRequirement(
+        "model_local_showcase_smoke",
+        "Local showcase smoke report model",
+        PMF_MODELS_PATH,
+        "LocalShowcaseSmokeReport",
+    ),
+    SourceRequirement(
+        "model_local_showcase_smoke_field",
+        "Final launch local showcase smoke field",
+        PMF_MODELS_PATH,
+        "localShowcaseSmoke",
+    ),
+    SourceRequirement(
         "model_live_provider_evidence",
         "Live provider evidence model",
         PMF_MODELS_PATH,
@@ -389,6 +401,18 @@ SOURCE_REQUIREMENTS = (
         "visualRegressionRows",
     ),
     SourceRequirement(
+        "mobile_summary_local_showcase_smoke_rows",
+        "Mobile final launch local showcase smoke rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "localShowcaseSmokeRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_local_showcase_smoke_safety",
+        "Mobile final launch local showcase smoke safety copy",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "provider_calls=",
+    ),
+    SourceRequirement(
         "mobile_summary_live_provider_evidence_rows",
         "Mobile final launch live provider evidence rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -501,6 +525,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch visual regression section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Visual Regression",
+    ),
+    SourceRequirement(
+        "mobile_status_view_local_smoke",
+        "Mobile final launch local smoke section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Local Smoke",
     ),
     SourceRequirement(
         "mobile_status_view_live_evidence",
@@ -789,6 +819,24 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts visual regression",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression",
+    ),
+    SourceRequirement(
+        "contract_local_showcase_smoke_decode",
+        "Contract test decodes local showcase smoke",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesLocalShowcaseSmokeFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_local_showcase_smoke_summary",
+        "Contract test renders local showcase smoke",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsLocalShowcaseSmoke",
+    ),
+    SourceRequirement(
+        "contract_local_showcase_smoke_redaction",
+        "Contract test redacts local showcase smoke",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryRedactsUnsafeLocalShowcaseSmoke",
     ),
     SourceRequirement(
         "contract_live_provider_evidence_decode",

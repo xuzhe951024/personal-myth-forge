@@ -251,6 +251,22 @@ def test_local_final_demo_launch_marks_unified_apply_ready_with_preflight(
     assert phases["mobile_deploy_preflight"]["status"] == "blocked"
 
 
+def test_final_demo_launch_embeds_local_showcase_smoke(tmp_path: Path) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    smoke = result.report["local_showcase_smoke"]
+
+    assert smoke["kind"] == "local_showcase_smoke_report"
+    assert smoke["summary"]["http_steps"] == 6
+    assert smoke["safety"]["provider_calls"] is False
+
+
 def test_final_demo_launch_embeds_saved_final_acceptance_readiness(
     tmp_path: Path,
 ) -> None:

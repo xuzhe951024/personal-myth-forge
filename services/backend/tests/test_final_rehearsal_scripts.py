@@ -228,6 +228,25 @@ def test_final_launch_closure_packet_make_target_dry_run_uses_cli() -> None:
     assert "--output .local/final-launch-closure-packet.json" in result.stdout
 
 
+def test_local_showcase_smoke_make_target_dry_run_uses_cli() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "local-showcase-smoke"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    assert ".PHONY: local-showcase-smoke" in makefile
+    assert "local-showcase-smoke:" in makefile
+    assert "myth_forge_api.cli local-showcase-smoke" in result.stdout
+    assert "--output .local/local-showcase-smoke.json" in result.stdout
+
+
 def test_final_configured_evidence_plan_make_target_dry_run_uses_cli() -> None:
     repo_root = Path(__file__).resolve().parents[3]
 

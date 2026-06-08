@@ -65,6 +65,14 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "mobile_summary_visual_regression_rows" in requirement_ids
     assert "mobile_status_view_visual_regression" in requirement_ids
     assert "contract_visual_regression_decode" in requirement_ids
+    assert "model_local_showcase_smoke" in requirement_ids
+    assert "model_local_showcase_smoke_field" in requirement_ids
+    assert "mobile_summary_local_showcase_smoke_rows" in requirement_ids
+    assert "mobile_summary_local_showcase_smoke_safety" in requirement_ids
+    assert "mobile_status_view_local_smoke" in requirement_ids
+    assert "contract_local_showcase_smoke_decode" in requirement_ids
+    assert "contract_local_showcase_smoke_summary" in requirement_ids
+    assert "contract_local_showcase_smoke_redaction" in requirement_ids
     assert "model_live_provider_evidence" in requirement_ids
     assert "model_live_provider_evidence_field" in requirement_ids
     assert "model_configured_evidence_plan" in requirement_ids
@@ -176,6 +184,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "finalLaunchClosurePacket",
                 "VisualRegressionReadinessReport",
                 "visualRegressionReadiness",
+                "LocalShowcaseSmokeReport",
+                "localShowcaseSmoke",
                 "LiveProviderEvidenceReport",
                 "liveProviderEvidence",
                 "FinalConfiguredEvidencePlanReport",
@@ -230,6 +240,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "launchRehearsalRows",
                 "closurePacketRows",
                 "visualRegressionRows",
+                "localShowcaseSmokeRows",
+                "provider_calls=",
                 "liveProviderEvidenceRows",
                 "configuredEvidencePlanRows",
                 "consent now",
@@ -254,6 +266,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Launch Rehearsal",
                 "Closure Packet",
                 "Visual Regression",
+                "Local Smoke",
                 "Live Evidence",
                 "Configured Evidence",
                 "Resource Fill Guide",
@@ -313,6 +326,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryShowsReadyVisualRegression",
                 "testFinalLaunchMobileSummaryShowsBlockedVisualRegression",
                 "testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression",
+                "testDecodesLocalShowcaseSmokeFromFinalLaunchPayload",
+                "testFinalLaunchMobileSummaryShowsLocalShowcaseSmoke",
+                "testFinalLaunchMobileSummaryRedactsUnsafeLocalShowcaseSmoke",
                 "testDecodesLiveProviderEvidenceFromFinalLaunchPayload",
                 "testDecodesConfiguredEvidencePlanFromFinalLaunchPayload",
                 "planned_consent_steps",

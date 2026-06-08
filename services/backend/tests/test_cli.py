@@ -18,6 +18,7 @@ from myth_forge_api.final_resource_apply_preview import FinalResourceApplyPrevie
 from myth_forge_api.final_resource_requirements import FinalResourceRequirementsResult
 from myth_forge_api.final_showcase_readiness import FinalShowcaseReadinessResult
 from myth_forge_api.final_acceptance import FinalAcceptanceResult
+from myth_forge_api.local_showcase_smoke import LocalShowcaseSmokeResult
 from myth_forge_api.print_fulfillment_readiness import PrintFulfillmentReadinessResult
 from myth_forge_api.resource_template_acceptance import ResourceTemplateAcceptanceResult
 from myth_forge_api.cli import main
@@ -836,6 +837,37 @@ def test_cli_final_launch_closure_packet_writes_report_and_returns_result_code(
     assert calls == [{"repo_root": tmp_path}]
     assert report["kind"] == "final_launch_closure_packet_report"
     assert report["status"] == "blocked"
+
+
+def test_cli_local_showcase_smoke_writes_report(tmp_path, monkeypatch) -> None:
+    output_file = tmp_path / "local-showcase-smoke.json"
+    calls = []
+
+    def fake_build_local_showcase_smoke_report(**kwargs):
+        calls.append(kwargs)
+        return LocalShowcaseSmokeResult(
+            exit_code=0,
+            report={
+                "kind": "local_showcase_smoke_report",
+                "status": "succeeded",
+                "summary": {"passed": 10, "failed": 0, "http_steps": 6},
+                "steps": [],
+                "safety": {"provider_calls": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_local_showcase_smoke_report",
+        fake_build_local_showcase_smoke_report,
+    )
+
+    exit_code = main(["local-showcase-smoke", "--output", str(output_file)])
+
+    report = json.loads(output_file.read_text(encoding="utf-8"))
+    assert exit_code == 0
+    assert calls == [{}]
+    assert report["kind"] == "local_showcase_smoke_report"
+    assert report["summary"]["http_steps"] == 6
 
 
 def test_cli_final_local_report_refresh_writes_report(

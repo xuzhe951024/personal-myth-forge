@@ -41,6 +41,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var threeDEvaluationRows: [String]
     public var npcEvaluationRows: [String]
     public var visualRegressionRows: [String]
+    public var localShowcaseSmokeRows: [String]
     public var liveProviderEvidenceRows: [String]
     public var configuredEvidencePlanRows: [String]
     public var printFulfillmentReadinessRows: [String]
@@ -75,6 +76,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         threeDEvaluationRows: [String] = [],
         npcEvaluationRows: [String] = [],
         visualRegressionRows: [String] = [],
+        localShowcaseSmokeRows: [String] = [],
         liveProviderEvidenceRows: [String] = [],
         configuredEvidencePlanRows: [String] = [],
         printFulfillmentReadinessRows: [String] = [],
@@ -108,6 +110,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.threeDEvaluationRows = threeDEvaluationRows
         self.npcEvaluationRows = npcEvaluationRows
         self.visualRegressionRows = visualRegressionRows
+        self.localShowcaseSmokeRows = localShowcaseSmokeRows
         self.liveProviderEvidenceRows = liveProviderEvidenceRows
         self.configuredEvidencePlanRows = configuredEvidencePlanRows
         self.printFulfillmentReadinessRows = printFulfillmentReadinessRows
@@ -195,6 +198,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             threeDEvaluationRows: threeDEvaluationRows(from: report.threeDEvaluationReadiness),
             npcEvaluationRows: npcEvaluationRows(from: report.npcAgentEvaluationReadiness),
             visualRegressionRows: visualRegressionRows(from: report.visualRegressionReadiness),
+            localShowcaseSmokeRows: localShowcaseSmokeRows(from: report.localShowcaseSmoke),
             liveProviderEvidenceRows: liveProviderEvidenceRows(
                 from: report.liveProviderEvidence
             ),
@@ -244,6 +248,10 @@ public enum FinalLaunchMobileSummaryBuilder {
 
     private static func yesNo(_ value: Bool) -> String {
         value ? "yes" : "no"
+    }
+
+    private static func boolText(_ value: Bool) -> String {
+        value ? "true" : "false"
     }
 
     private static func status(from raw: String) -> FinalLaunchMobileStatus {
@@ -734,6 +742,39 @@ public enum FinalLaunchMobileSummaryBuilder {
         return rows.map(sanitize)
     }
 
+    private static func localShowcaseSmokeRows(
+        from smoke: LocalShowcaseSmokeReport?
+    ) -> [String] {
+        guard let smoke else {
+            return ["Local showcase smoke has not loaded."]
+        }
+        let normalizedStatus = smoke.status
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        var rows: [String]
+        if normalizedStatus == "succeeded" || normalizedStatus == "passed" || normalizedStatus == "ready" {
+            rows = [
+                "Local showcase smoke ready: HTTP \(smoke.summary.httpSteps), NPC ticks \(smoke.summary.npcTicks), downloads \(smoke.summary.downloads).",
+                "3D \(smoke.session.generatedAssetProvider) via \(smoke.session.generationInputMode); scene \(smoke.session.sceneVariantFormat).",
+                "Print \(smoke.print.quoteStatus); game \(smoke.downloads.gameGlb.contentProof), scene \(smoke.downloads.sceneDae.contentProof), print \(smoke.downloads.print3mf.contentProof).",
+            ]
+        } else {
+            rows = [
+                "Local showcase smoke \(sanitize(smoke.status)): failed \(smoke.summary.failed), HTTP \(smoke.summary.httpSteps).",
+            ]
+            if let failedStep = smoke.steps.first(where: {
+                status(from: $0.status) == .blocked
+            }) ?? smoke.steps.first {
+                let detail = failedStep.detail ?? "no detail"
+                rows.append("\(failedStep.id): \(failedStep.status) | \(detail)")
+            }
+        }
+        rows.append(
+            "provider_calls=\(boolText(smoke.safety.providerCalls)) global=\(boolText(smoke.safety.globalMutation)) temp_storage=\(boolText(smoke.safety.usesTemporaryStorage))"
+        )
+        return rows.map(sanitize)
+    }
+
     private static func liveProviderEvidenceRows(
         from evidence: LiveProviderEvidenceReport?
     ) -> [String] {
@@ -1134,6 +1175,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             #"Bearer"#,
             #"api[_-]?key\s*[=:]\s*[^\s,;"']+"#,
             #"(private_message|raw_context|message_body)\s*:\s*[^\n]+"#,
+            #"data:[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=_-]+"#,
             #"local-capture://[^\s,;"']+"#,
             #"file://[^\s,;"']+"#,
             #"/Users/[^\s,;"']+"#,

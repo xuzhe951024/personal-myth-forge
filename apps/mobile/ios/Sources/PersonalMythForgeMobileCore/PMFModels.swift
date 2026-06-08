@@ -2061,6 +2061,201 @@ public struct VisualRegressionReadinessReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct LocalShowcaseSmokeSummary: Codable, Equatable, Sendable {
+    public var passed: Int
+    public var failed: Int
+    public var httpSteps: Int
+    public var npcTicks: Int
+    public var downloads: Int
+
+    public init(
+        passed: Int,
+        failed: Int,
+        httpSteps: Int,
+        npcTicks: Int,
+        downloads: Int
+    ) {
+        self.passed = passed
+        self.failed = failed
+        self.httpSteps = httpSteps
+        self.npcTicks = npcTicks
+        self.downloads = downloads
+    }
+}
+
+public struct LocalShowcaseSmokeStep: Codable, Equatable, Sendable {
+    public var id: String
+    public var status: String
+    public var detail: String?
+
+    public init(id: String, status: String, detail: String? = nil) {
+        self.id = id
+        self.status = status
+        self.detail = detail
+    }
+}
+
+public struct LocalShowcaseSmokeSession: Codable, Equatable, Sendable {
+    public var sessionId: String
+    public var generatedAssetProvider: String
+    public var generationInputMode: String
+    public var sceneVariantFormat: String
+
+    public init(
+        sessionId: String,
+        generatedAssetProvider: String,
+        generationInputMode: String,
+        sceneVariantFormat: String
+    ) {
+        self.sessionId = sessionId
+        self.generatedAssetProvider = generatedAssetProvider
+        self.generationInputMode = generationInputMode
+        self.sceneVariantFormat = sceneVariantFormat
+    }
+}
+
+public struct LocalShowcaseSmokeNPC: Codable, Equatable, Sendable {
+    public var completedSteps: Int
+    public var latestTickId: String?
+
+    public init(completedSteps: Int, latestTickId: String? = nil) {
+        self.completedSteps = completedSteps
+        self.latestTickId = latestTickId
+    }
+}
+
+public struct LocalShowcaseSmokePrint: Codable, Equatable, Sendable {
+    public var quoteStatus: String
+    public var provider: String?
+
+    public init(quoteStatus: String, provider: String? = nil) {
+        self.quoteStatus = quoteStatus
+        self.provider = provider
+    }
+}
+
+public struct LocalShowcaseSmokeDownload: Codable, Equatable, Sendable {
+    public var status: String
+    public var contentProof: String
+
+    public init(status: String, contentProof: String) {
+        self.status = status
+        self.contentProof = contentProof
+    }
+}
+
+public struct LocalShowcaseSmokeDownloads: Codable, Equatable, Sendable {
+    public var gameGlb: LocalShowcaseSmokeDownload
+    public var sceneDae: LocalShowcaseSmokeDownload
+    public var print3mf: LocalShowcaseSmokeDownload
+
+    private enum CodingKeys: String, CodingKey {
+        case gameGlb
+        case sceneDae
+        case print3mf
+        case print3Mf
+    }
+
+    public init(
+        gameGlb: LocalShowcaseSmokeDownload,
+        sceneDae: LocalShowcaseSmokeDownload,
+        print3mf: LocalShowcaseSmokeDownload
+    ) {
+        self.gameGlb = gameGlb
+        self.sceneDae = sceneDae
+        self.print3mf = print3mf
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        gameGlb = try container.decode(LocalShowcaseSmokeDownload.self, forKey: .gameGlb)
+        sceneDae = try container.decode(LocalShowcaseSmokeDownload.self, forKey: .sceneDae)
+        if let value = try? container.decode(LocalShowcaseSmokeDownload.self, forKey: .print3mf) {
+            print3mf = value
+        } else {
+            print3mf = try container.decode(LocalShowcaseSmokeDownload.self, forKey: .print3Mf)
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(gameGlb, forKey: .gameGlb)
+        try container.encode(sceneDae, forKey: .sceneDae)
+        try container.encode(print3mf, forKey: .print3mf)
+    }
+}
+
+public struct LocalShowcaseSmokeSafety: Codable, Equatable, Sendable {
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var globalMutation: Bool
+    public var startsServer: Bool
+    public var writesRepoLocalMedia: Bool
+    public var usesTemporaryStorage: Bool
+    public var providerSecretsInReport: Bool
+    public var rawMediaInReport: Bool
+    public var localPathsInReport: Bool
+    public var paymentLinksInReport: Bool
+
+    public init(
+        providerCalls: Bool,
+        liveProviderCalls: Bool,
+        globalMutation: Bool,
+        startsServer: Bool,
+        writesRepoLocalMedia: Bool,
+        usesTemporaryStorage: Bool,
+        providerSecretsInReport: Bool,
+        rawMediaInReport: Bool,
+        localPathsInReport: Bool,
+        paymentLinksInReport: Bool
+    ) {
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.globalMutation = globalMutation
+        self.startsServer = startsServer
+        self.writesRepoLocalMedia = writesRepoLocalMedia
+        self.usesTemporaryStorage = usesTemporaryStorage
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.localPathsInReport = localPathsInReport
+        self.paymentLinksInReport = paymentLinksInReport
+    }
+}
+
+public struct LocalShowcaseSmokeReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: LocalShowcaseSmokeSummary
+    public var steps: [LocalShowcaseSmokeStep]
+    public var session: LocalShowcaseSmokeSession
+    public var npc: LocalShowcaseSmokeNPC
+    public var print: LocalShowcaseSmokePrint
+    public var downloads: LocalShowcaseSmokeDownloads
+    public var safety: LocalShowcaseSmokeSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: LocalShowcaseSmokeSummary,
+        steps: [LocalShowcaseSmokeStep],
+        session: LocalShowcaseSmokeSession,
+        npc: LocalShowcaseSmokeNPC,
+        print: LocalShowcaseSmokePrint,
+        downloads: LocalShowcaseSmokeDownloads,
+        safety: LocalShowcaseSmokeSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.steps = steps
+        self.session = session
+        self.npc = npc
+        self.print = print
+        self.downloads = downloads
+        self.safety = safety
+    }
+}
+
 public struct NPCAgentEvaluationReadinessCoverage: Codable, Equatable, Sendable {
     public var expectedNpcSets: Int
     public var traceSets: Int
@@ -3347,6 +3542,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
     public var visualRegressionReadiness: VisualRegressionReadinessReport?
+    public var localShowcaseSmoke: LocalShowcaseSmokeReport?
     public var liveProviderEvidence: LiveProviderEvidenceReport?
     public var finalConfiguredEvidencePlan: FinalConfiguredEvidencePlanReport?
     public var printFulfillmentReadiness: PrintFulfillmentReadinessReport?
@@ -3378,6 +3574,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
         visualRegressionReadiness: VisualRegressionReadinessReport? = nil,
+        localShowcaseSmoke: LocalShowcaseSmokeReport? = nil,
         liveProviderEvidence: LiveProviderEvidenceReport? = nil,
         finalConfiguredEvidencePlan: FinalConfiguredEvidencePlanReport? = nil,
         printFulfillmentReadiness: PrintFulfillmentReadinessReport? = nil,
@@ -3408,6 +3605,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.threeDEvaluationReadiness = threeDEvaluationReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
         self.visualRegressionReadiness = visualRegressionReadiness
+        self.localShowcaseSmoke = localShowcaseSmoke
         self.liveProviderEvidence = liveProviderEvidence
         self.finalConfiguredEvidencePlan = finalConfiguredEvidencePlan
         self.printFulfillmentReadiness = printFulfillmentReadiness

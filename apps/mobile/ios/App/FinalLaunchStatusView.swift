@@ -105,6 +105,10 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "Visual Regression", lines: summary.visualRegressionRows)
             }
 
+            if !summary.localShowcaseSmokeRows.isEmpty {
+                groupedLines(title: "Local Smoke", lines: summary.localShowcaseSmokeRows)
+            }
+
             if !summary.npcEvaluationRows.isEmpty {
                 groupedLines(title: "NPC Evaluation", lines: summary.npcEvaluationRows)
             }

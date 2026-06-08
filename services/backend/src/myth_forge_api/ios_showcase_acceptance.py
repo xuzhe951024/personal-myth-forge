@@ -1216,6 +1216,69 @@ FEATURES = (
         ),
     ),
     FeatureRequirement(
+        id="mobile_local_showcase_smoke",
+        label="Mobile local showcase smoke",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/local_showcase_smoke.py",
+                "build_local_showcase_smoke_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/local_showcase_smoke.py",
+                "local_showcase_smoke_report",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/cli.py",
+                "local-showcase-smoke",
+            ),
+            SourceRequirement("Makefile", "local-showcase-smoke:"),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "local_showcase_smoke",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_local_showcase_smoke.py",
+                "test_local_showcase_smoke_runs_full_http_loop",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_final_demo_launch_embeds_local_showcase_smoke",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "LocalShowcaseSmokeReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "localShowcaseSmoke",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "localShowcaseSmokeRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "provider_calls=",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Local Smoke",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesLocalShowcaseSmokeFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsLocalShowcaseSmoke",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryRedactsUnsafeLocalShowcaseSmoke",
+            ),
+        ),
+    ),
+    FeatureRequirement(
         id="showcase_visual_regression_index",
         label="Showcase visual regression index",
         requirements=(

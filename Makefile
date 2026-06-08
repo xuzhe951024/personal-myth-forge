@@ -89,6 +89,11 @@ final-external-action-ledger:
 final-launch-closure-packet:
 	cd services/backend && uv run python -m myth_forge_api.cli final-launch-closure-packet --repo-root ../.. --output .local/final-launch-closure-packet.json
 
+.PHONY: local-showcase-smoke
+
+local-showcase-smoke:
+	cd services/backend && uv run python -m myth_forge_api.cli local-showcase-smoke --output .local/local-showcase-smoke.json
+
 .PHONY: final-local-report-refresh
 
 final-local-report-refresh:

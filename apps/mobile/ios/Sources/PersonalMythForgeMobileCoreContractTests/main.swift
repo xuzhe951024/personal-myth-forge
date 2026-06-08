@@ -131,6 +131,9 @@ do {
     try testFinalLaunchMobileSummaryShowsBlockedVisualRegression()
     try testFinalLaunchMobileSummaryShowsStaleVisualRegressionFreshness()
     try testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression()
+    try testDecodesLocalShowcaseSmokeFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsLocalShowcaseSmoke()
+    try testFinalLaunchMobileSummaryRedactsUnsafeLocalShowcaseSmoke()
     try testDecodesLiveProviderEvidenceFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsReadyLiveProviderEvidence()
     try testFinalLaunchMobileSummaryShowsMissingLiveProviderEvidence()
@@ -3097,6 +3100,65 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeVisualRegression() throws 
     try expectNotContains(text, "Bearer")
 }
 
+private func testDecodesLocalShowcaseSmokeFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(localShowcaseSmokeStatus: "succeeded")
+    )
+
+    let smoke = try require(
+        report.localShowcaseSmoke,
+        "missing local showcase smoke"
+    )
+    try expectEqual(smoke.kind, "local_showcase_smoke_report")
+    try expectEqual(smoke.status, "succeeded")
+    try expectEqual(smoke.summary.httpSteps, 6)
+    try expectEqual(smoke.summary.npcTicks, 2)
+    try expectEqual(smoke.summary.downloads, 3)
+    try expectEqual(smoke.session.generatedAssetProvider, "local_stub")
+    try expectEqual(smoke.session.generationInputMode, "multi_image")
+    try expectEqual(smoke.session.sceneVariantFormat, "dae")
+    try expectEqual(smoke.npc.completedSteps, 2)
+    try expectEqual(smoke.print.quoteStatus, "draft_quote")
+    try expectEqual(smoke.downloads.gameGlb.contentProof, "glTF")
+    try expectFalse(smoke.safety.providerCalls)
+    try expectTrue(smoke.safety.usesTemporaryStorage)
+}
+
+private func testFinalLaunchMobileSummaryShowsLocalShowcaseSmoke() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(localShowcaseSmokeStatus: "succeeded"),
+        error: nil
+    )
+    let text = summary.localShowcaseSmokeRows.joined(separator: " ")
+
+    try expectContains(text, "Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3.")
+    try expectContains(text, "3D local_stub via multi_image; scene dae.")
+    try expectContains(text, "Print draft_quote; game glTF, scene COLLADA, print PK.")
+    try expectContains(text, "provider_calls=false global=false temp_storage=true")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeLocalShowcaseSmoke() throws {
+    let report = finalDemoLaunchReport(
+        localShowcaseSmokeStatus: "failed",
+        localShowcaseSmokeFailureDetail: (
+            "Authorization=Bearer sk-local data:image/png;base64,AAAA "
+            + "/Users/zhexu/private /tmp/private local-capture://cap checkout_url"
+        )
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-local")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "/tmp/")
+    try expectNotContains(text, "data:image")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesLiveProviderEvidenceFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -5002,6 +5064,8 @@ private func finalDemoLaunchPayload(
     visualRegressionBlockerClassification: String = "visual_regression_failed",
     visualRegressionBlockerDetail: String = "Visual regression report contains failed artifacts.",
     visualRegressionAction: String = "run make visual-regression-local",
+    localShowcaseSmokeStatus: String = "succeeded",
+    localShowcaseSmokeFailureDetail: String = "Local HTTP smoke completed.",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
     configuredEvidencePlanStatus: String = "blocked",
@@ -5071,6 +5135,32 @@ private func finalDemoLaunchPayload(
         decoding: try! PMFJSON.encoder.encode(finalShowcaseActions),
         as: UTF8.self
     )
+    let localSmokeSucceeded = localShowcaseSmokeStatus == "succeeded"
+    let localSmokeSummaryJSON = localSmokeSucceeded
+        ? #"{"passed": 10, "failed": 0, "http_steps": 6, "npc_ticks": 2, "downloads": 3}"#
+        : #"{"passed": 0, "failed": 1, "http_steps": 1, "npc_ticks": 0, "downloads": 0}"#
+    let localSmokeStepsJSON = localSmokeSucceeded ? """
+    [
+      {"id": "upload_guided_scan_capture", "status": "passed", "detail": "uploaded guided scan capture"},
+      {"id": "create_session_from_capture", "status": "passed", "detail": "created local session"},
+      {"id": "download_game_asset", "status": "passed", "detail": "downloaded GLB"},
+      {"id": "download_scene_asset", "status": "passed", "detail": "downloaded DAE scene"},
+      {"id": "run_npc_autonomy", "status": "passed", "detail": "ran NPC autonomy"},
+      {"id": "create_print_quote", "status": "passed", "detail": "created print quote"},
+      {"id": "download_print_asset", "status": "passed", "detail": "downloaded 3MF"},
+      {"id": "history_contains_ticks", "status": "passed", "detail": "history includes ticks"},
+      {"id": "generation_provenance", "status": "passed", "detail": "generation provenance recorded"},
+      {"id": "report_safety", "status": "passed", "detail": "report is sanitized"}
+    ]
+    """ : """
+    [
+      {
+        "id": "upload_guided_scan_capture",
+        "status": "failed",
+        "detail": "\(localShowcaseSmokeFailureDetail)"
+      }
+    ]
+    """
     let liveEvidenceFirstID = liveEvidenceBlocked ? "three_d_evaluation_configured" : "provider_handoff"
     let liveEvidenceFirstLabel = liveEvidenceBlocked ? "Configured 3D evaluation" : "Provider handoff"
     let liveEvidenceFirstStatus = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "blocked" : "missing"
@@ -6319,6 +6409,52 @@ private func finalDemoLaunchPayload(
               "raw_media_in_report": false,
               "payment_links_in_report": false,
               "local_paths_in_report": false
+            }
+          },
+          "local_showcase_smoke": {
+            "kind": "local_showcase_smoke_report",
+            "status": "\(localShowcaseSmokeStatus)",
+            "summary": \(localSmokeSummaryJSON),
+            "steps": \(localSmokeStepsJSON),
+            "session": {
+              "session_id": "myth_local_showcase_001",
+              "generated_asset_provider": "local_stub",
+              "generation_input_mode": "multi_image",
+              "scene_variant_format": "dae"
+            },
+            "npc": {
+              "completed_steps": \(localSmokeSucceeded ? "2" : "0"),
+              "latest_tick_id": "\(localSmokeSucceeded ? "tick_002" : "")"
+            },
+            "print": {
+              "quote_status": "\(localSmokeSucceeded ? "draft_quote" : "not_requested")",
+              "provider": "local_stub"
+            },
+            "downloads": {
+              "game_glb": {
+                "status": "\(localSmokeSucceeded ? "passed" : "skipped")",
+                "content_proof": "\(localSmokeSucceeded ? "glTF" : "")"
+              },
+              "scene_dae": {
+                "status": "\(localSmokeSucceeded ? "passed" : "skipped")",
+                "content_proof": "\(localSmokeSucceeded ? "COLLADA" : "")"
+              },
+              "print_3mf": {
+                "status": "\(localSmokeSucceeded ? "passed" : "skipped")",
+                "content_proof": "\(localSmokeSucceeded ? "PK" : "")"
+              }
+            },
+            "safety": {
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "global_mutation": false,
+              "starts_server": false,
+              "writes_repo_local_media": false,
+              "uses_temporary_storage": true,
+              "provider_secrets_in_report": false,
+              "raw_media_in_report": false,
+              "local_paths_in_report": false,
+              "payment_links_in_report": false
             }
           },
           "live_provider_evidence": {
@@ -9418,6 +9554,8 @@ private func finalDemoLaunchReport(
     visualRegressionBlockerClassification: String = "visual_regression_failed",
     visualRegressionBlockerDetail: String = "Visual regression report contains failed artifacts.",
     visualRegressionAction: String = "run make visual-regression-local",
+    localShowcaseSmokeStatus: String = "succeeded",
+    localShowcaseSmokeFailureDetail: String = "Local HTTP smoke completed.",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
     configuredEvidencePlanStatus: String = "blocked",
@@ -9487,6 +9625,8 @@ private func finalDemoLaunchReport(
             visualRegressionBlockerClassification: visualRegressionBlockerClassification,
             visualRegressionBlockerDetail: visualRegressionBlockerDetail,
             visualRegressionAction: visualRegressionAction,
+            localShowcaseSmokeStatus: localShowcaseSmokeStatus,
+            localShowcaseSmokeFailureDetail: localShowcaseSmokeFailureDetail,
             liveProviderEvidenceStatus: liveProviderEvidenceStatus,
             liveProviderEvidenceBlockerDetail: liveProviderEvidenceBlockerDetail,
             configuredEvidencePlanStatus: configuredEvidencePlanStatus,
