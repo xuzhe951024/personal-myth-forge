@@ -3392,6 +3392,14 @@ private func testDecodesFinalResourceFillGuideFromFinalLaunchPayload() throws {
         guide.commands.first,
         "make final-resource-requirements"
     )
+    let firstBlocker = try require(
+        guide.firstBlocker,
+        "missing final resource fill guide first blocker"
+    )
+    try expectEqual(firstBlocker.id, "MESHY_API_KEY")
+    try expectEqual(firstBlocker.command, "fill MESHY_API_KEY in services/backend/.local/final-resources.env")
+    try expectEqual(firstBlocker.inputSource, "services/backend/.local/final-resources.env")
+    try expectEqual(firstBlocker.validationCommand, "make final-resources-preflight")
     try expectFalse(guide.safety.writesBackendEnv)
     try expectFalse(guide.safety.liveProviderCalls)
 }
@@ -3411,6 +3419,8 @@ private func testFinalLaunchMobileSummaryShowsResourceFillGuide() throws {
         text,
         "MESHY_API_KEY: missing | services/backend/.local/final-resources.env | make final-resources-preflight"
     )
+    try expectContains(text, "First blocker: MESHY_API_KEY missing")
+    try expectContains(text, "fill MESHY_API_KEY in services/backend/.local/final-resources.env")
     try expectContains(text, "Command: make final-resource-requirements")
     try expectContains(
         text,
@@ -3440,6 +3450,14 @@ private func testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload() throws
     try expectEqual(preview.writeTargetsById["backend_env"]?.slots.first?.id, "MESHY_API_KEY")
     try expectEqual(preview.writeTargetsById["backend_env"]?.slots.first?.secret, true)
     try expectEqual(preview.writeTargetsById["backend_env"]?.slots.first?.writes, ["MESHY_API_KEY"])
+    let firstBlocker = try require(
+        preview.firstBlocker,
+        "missing final resource apply preview first blocker"
+    )
+    try expectEqual(firstBlocker.id, "backend_env")
+    try expectEqual(firstBlocker.command, "make final-apply-resources")
+    try expectEqual(firstBlocker.blockedBy, ["MESHY_API_KEY"])
+    try expectEqual(firstBlocker.validationCommand, "make final-resources-preflight")
     try expectEqual(preview.commands.first, "make final-resource-apply-preview")
     try expectFalse(preview.safety.writesBackendEnv)
     try expectFalse(preview.safety.writesIosDeployConfig)
@@ -3457,6 +3475,8 @@ private func testFinalLaunchMobileSummaryShowsResourceApplyPreview() throws {
     try expectContains(text, "targets 2")
     try expectContains(text, "backend_env")
     try expectContains(text, "services/backend/.env")
+    try expectContains(text, "First blocker: backend_env missing")
+    try expectContains(text, "blocked by MESHY_API_KEY")
     try expectContains(text, "ios_deploy_config")
     try expectContains(text, "MESHY_API_KEY")
     try expectContains(text, "make final-resource-apply-preview")
@@ -6433,6 +6453,18 @@ private func finalDemoLaunchPayload(
               "configured_inputs": 3,
               "secret_inputs": 4
             },
+            "first_blocker": {
+              "id": "MESHY_API_KEY",
+              "label": "Meshy API key",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "fill MESHY_API_KEY in services/backend/.local/final-resources.env",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "domain": "backend_provider",
+              "input_source": "services/backend/.local/final-resources.env",
+              "write_destination": "services/backend/.env",
+              "validation_command": "make final-resources-preflight"
+            },
             "required_inputs": [
               {
                 "id": "MESHY_API_KEY",
@@ -6552,6 +6584,18 @@ private func finalDemoLaunchPayload(
             "resources_file": {
               "path": "services/backend/.local/final-resources.env",
               "exists": \(finalResourcesStatus == "missing" ? "false" : "true")
+            },
+            "first_blocker": {
+              "id": "backend_env",
+              "label": "Backend env",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "make final-apply-resources",
+              "detail": "blocked by MESHY_API_KEY",
+              "destination": "services/backend/.env",
+              "writer": "services/backend/scripts/write_backend_env.sh",
+              "blocked_by": ["MESHY_API_KEY"],
+              "validation_command": "make final-resources-preflight"
             },
             "write_targets": [
               {

@@ -823,6 +823,10 @@ FEATURES = (
                 "final_resource_fill_guide",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_resource_fill_guide.py",
+                "first_blocker",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "FinalResourceRequirementsReport",
             ),
@@ -836,6 +840,14 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalResourceFillGuideFirstBlocker",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "firstBlocker: FinalResourceFillGuideFirstBlocker?",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "finalResourceFillGuide",
             ),
             SourceRequirement(
@@ -845,6 +857,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "resourceFillGuideRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "resourceFillGuideFirstBlockerRow",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
@@ -893,6 +909,10 @@ FEATURES = (
                 "final_resource_apply_preview_report",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_resource_apply_preview.py",
+                "first_blocker",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/cli.py",
                 "final-resource-apply-preview",
             ),
@@ -907,11 +927,23 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalResourceApplyPreviewFirstBlocker",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "firstBlocker: FinalResourceApplyPreviewFirstBlocker?",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "finalResourceApplyPreview",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "applyPreviewRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "applyPreviewFirstBlockerRow",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",

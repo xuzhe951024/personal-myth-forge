@@ -216,6 +216,51 @@ def test_mobile_final_demo_launch_first_blocker_source_gates() -> None:
     ) in requirements
 
 
+def test_resource_handoff_first_blocker_source_gates() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements_manifest = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_resource_requirements_manifest"].requirements
+    }
+    apply_preview = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_resource_apply_preview"].requirements
+    }
+
+    assert (
+        "services/backend/src/myth_forge_api/final_resource_fill_guide.py",
+        "first_blocker",
+    ) in requirements_manifest
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "FinalResourceFillGuideFirstBlocker",
+    ) in requirements_manifest
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "firstBlocker: FinalResourceFillGuideFirstBlocker?",
+    ) in requirements_manifest
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+        "resourceFillGuideFirstBlockerRow",
+    ) in requirements_manifest
+    assert (
+        "services/backend/src/myth_forge_api/final_resource_apply_preview.py",
+        "first_blocker",
+    ) in apply_preview
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "FinalResourceApplyPreviewFirstBlocker",
+    ) in apply_preview
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "firstBlocker: FinalResourceApplyPreviewFirstBlocker?",
+    ) in apply_preview
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+        "applyPreviewFirstBlockerRow",
+    ) in apply_preview
+
+
 def test_ios_showcase_acceptance_allows_external_action_ledger_builder_linebreak(
     tmp_path,
 ) -> None:
@@ -1095,7 +1140,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "PrintFulfillmentReadinessReport printFulfillmentReadiness "
             "FinalResourceRequirementsReport finalResourceRequirements "
             "FinalResourceFillGuideReport finalResourceFillGuide "
+            "FinalResourceFillGuideFirstBlocker firstBlocker: FinalResourceFillGuideFirstBlocker? "
             "FinalResourceApplyPreviewReport finalResourceApplyPreview "
+            "FinalResourceApplyPreviewFirstBlocker firstBlocker: FinalResourceApplyPreviewFirstBlocker? "
             "FinalExternalActionLedgerReport finalExternalActionLedger "
             "FinalLaunchClosurePacketReport FinalLaunchClosurePacketBlocker "
             "firstBlocker: FinalLaunchClosurePacketBlocker? finalLaunchClosurePacket "
@@ -1117,8 +1164,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "liveProviderEvidenceRows Live evidence "
             "printFulfillmentReadinessRows Print fulfillment "
             "resourceRequirementRows Resource requirements "
-            "resourceFillGuideRows Fill guide "
-            "applyPreviewRows Apply preview "
+            "resourceFillGuideRows resourceFillGuideFirstBlockerRow Fill guide "
+            "applyPreviewRows applyPreviewFirstBlockerRow Apply preview "
             "externalActionLedgerRows externalActionLedgerRows(from: "
             "report.finalExternalActionLedger "
             "closurePacketRows closurePacketFirstBlockerRow "
@@ -1176,7 +1223,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/final_resource_apply_preview.py": (
             "build_final_resource_apply_preview_report final_resource_apply_preview_report "
-            "FinalResourceApplyPreviewResult write_targets_by_id"
+            "FinalResourceApplyPreviewResult write_targets_by_id first_blocker"
+        ),
+        "services/backend/src/myth_forge_api/final_resource_fill_guide.py": (
+            "build_final_resource_fill_guide_report final_resource_fill_guide_report "
+            "first_blocker"
         ),
         "services/backend/src/myth_forge_api/final_showcase_readiness.py": (
             "build_final_showcase_readiness_report final_showcase_readiness_report "

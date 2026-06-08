@@ -978,6 +978,43 @@ public struct FinalResourceFillGuideItem: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalResourceFillGuideFirstBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var domain: String
+    public var inputSource: String
+    public var writeDestination: String
+    public var validationCommand: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        domain: String,
+        inputSource: String,
+        writeDestination: String,
+        validationCommand: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.domain = domain
+        self.inputSource = inputSource
+        self.writeDestination = writeDestination
+        self.validationCommand = validationCommand
+    }
+}
+
 public struct FinalResourceFillGuideSafety: Codable, Equatable, Sendable {
     public var providerSecretsInReport: Bool
     public var localPathsInReport: Bool
@@ -1013,6 +1050,7 @@ public struct FinalResourceFillGuideReport: Codable, Equatable, Sendable {
     public var requiredInputs: [FinalResourceFillGuideItem]
     public var optionalInputs: [FinalResourceFillGuideItem]
     public var configuredInputs: [FinalResourceFillGuideItem]
+    public var firstBlocker: FinalResourceFillGuideFirstBlocker?
     public var commands: [String]
     public var safety: FinalResourceFillGuideSafety
 
@@ -1023,6 +1061,7 @@ public struct FinalResourceFillGuideReport: Codable, Equatable, Sendable {
         requiredInputs: [FinalResourceFillGuideItem] = [],
         optionalInputs: [FinalResourceFillGuideItem] = [],
         configuredInputs: [FinalResourceFillGuideItem] = [],
+        firstBlocker: FinalResourceFillGuideFirstBlocker? = nil,
         commands: [String] = [],
         safety: FinalResourceFillGuideSafety
     ) {
@@ -1032,6 +1071,7 @@ public struct FinalResourceFillGuideReport: Codable, Equatable, Sendable {
         self.requiredInputs = requiredInputs
         self.optionalInputs = optionalInputs
         self.configuredInputs = configuredInputs
+        self.firstBlocker = firstBlocker
         self.commands = commands
         self.safety = safety
     }
@@ -1136,6 +1176,43 @@ public struct FinalResourceApplyPreviewTarget: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalResourceApplyPreviewFirstBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var destination: String
+    public var writer: String
+    public var blockedBy: [String]
+    public var validationCommand: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        destination: String,
+        writer: String,
+        blockedBy: [String] = [],
+        validationCommand: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.destination = destination
+        self.writer = writer
+        self.blockedBy = blockedBy
+        self.validationCommand = validationCommand
+    }
+}
+
 public struct FinalResourceApplyPreviewSafety: Codable, Equatable, Sendable {
     public var providerSecretsInReport: Bool
     public var localPathsInReport: Bool
@@ -1174,6 +1251,7 @@ public struct FinalResourceApplyPreviewReport: Codable, Equatable, Sendable {
     public var resourcesFile: FinalResourcesFileStatus?
     public var writeTargets: [FinalResourceApplyPreviewTarget]
     public var writeTargetsById: [String: FinalResourceApplyPreviewTarget]
+    public var firstBlocker: FinalResourceApplyPreviewFirstBlocker?
     public var operatorActions: [String]
     public var commands: [String]
     public var safety: FinalResourceApplyPreviewSafety
@@ -1185,6 +1263,7 @@ public struct FinalResourceApplyPreviewReport: Codable, Equatable, Sendable {
         resourcesFile: FinalResourcesFileStatus? = nil,
         writeTargets: [FinalResourceApplyPreviewTarget],
         writeTargetsById: [String: FinalResourceApplyPreviewTarget],
+        firstBlocker: FinalResourceApplyPreviewFirstBlocker? = nil,
         operatorActions: [String] = [],
         commands: [String] = [],
         safety: FinalResourceApplyPreviewSafety
@@ -1195,6 +1274,7 @@ public struct FinalResourceApplyPreviewReport: Codable, Equatable, Sendable {
         self.resourcesFile = resourcesFile
         self.writeTargets = writeTargets
         self.writeTargetsById = writeTargetsById
+        self.firstBlocker = firstBlocker
         self.operatorActions = operatorActions
         self.commands = commands
         self.safety = safety

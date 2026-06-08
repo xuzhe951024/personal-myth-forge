@@ -484,6 +484,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         var rows = [
             "Fill guide \(sanitize(report.status)): required \(report.summary.requiredInputs), optional \(report.summary.optionalInputs), configured \(report.summary.configuredInputs), secret \(report.summary.secretInputs)."
         ]
+        if let blocker = report.firstBlocker {
+            rows.append(resourceFillGuideFirstBlockerRow(blocker))
+        }
         let selectedInputs: [FinalResourceFillGuideItem]
         if !report.requiredInputs.isEmpty {
             selectedInputs = report.requiredInputs
@@ -500,6 +503,25 @@ public enum FinalLaunchMobileSummaryBuilder {
             "Safety: writes=\(flag(report.safety.writesBackendEnv || report.safety.writesIosDeployConfig || report.safety.writesFinalResources)) live_calls=\(flag(report.safety.liveProviderCalls)) global_mutation=\(flag(report.safety.globalMutation))"
         )
         return rows.map(sanitize)
+    }
+
+    private static func resourceFillGuideFirstBlockerRow(
+        _ blocker: FinalResourceFillGuideFirstBlocker
+    ) -> String {
+        var parts = ["First blocker:", blocker.id, blocker.status]
+        if let classification = blocker.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        if !blocker.command.isEmpty {
+            parts.append("| \(blocker.command)")
+        }
+        if !blocker.detail.isEmpty {
+            parts.append("| \(blocker.detail)")
+        }
+        if !blocker.validationCommand.isEmpty {
+            parts.append("| \(blocker.validationCommand)")
+        }
+        return sanitize(parts.joined(separator: " "))
     }
 
     private static func resourceFillGuideInputRow(
@@ -519,6 +541,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         var rows = [
             "Apply preview \(sanitize(report.status)): targets \(report.summary.writeTargets), missing \(report.summary.missing), blocked \(report.summary.blocked), secret \(report.summary.secret)."
         ]
+        if let blocker = report.firstBlocker {
+            rows.append(applyPreviewFirstBlockerRow(blocker))
+        }
         let attention = report.writeTargets.filter { target in
             target.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready"
         }
@@ -528,6 +553,25 @@ public enum FinalLaunchMobileSummaryBuilder {
             rows.append("Validate: \(sanitize(command))")
         }
         return rows.map(sanitize)
+    }
+
+    private static func applyPreviewFirstBlockerRow(
+        _ blocker: FinalResourceApplyPreviewFirstBlocker
+    ) -> String {
+        var parts = ["First blocker:", blocker.id, blocker.status]
+        if let classification = blocker.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        if !blocker.command.isEmpty {
+            parts.append("| \(blocker.command)")
+        }
+        if !blocker.detail.isEmpty {
+            parts.append("| \(blocker.detail)")
+        }
+        if !blocker.validationCommand.isEmpty {
+            parts.append("| \(blocker.validationCommand)")
+        }
+        return sanitize(parts.joined(separator: " "))
     }
 
     private static func applyPreviewTargetRow(

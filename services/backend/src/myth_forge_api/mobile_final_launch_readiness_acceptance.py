@@ -257,6 +257,30 @@ SOURCE_REQUIREMENTS = (
         "finalResourceFillGuide",
     ),
     SourceRequirement(
+        "model_final_resource_fill_guide_first_blocker",
+        "Final resource fill guide first blocker model",
+        PMF_MODELS_PATH,
+        "FinalResourceFillGuideFirstBlocker",
+    ),
+    SourceRequirement(
+        "model_final_resource_fill_guide_first_blocker_field",
+        "Final resource fill guide first blocker field",
+        PMF_MODELS_PATH,
+        "firstBlocker: FinalResourceFillGuideFirstBlocker?",
+    ),
+    SourceRequirement(
+        "model_final_resource_apply_preview_first_blocker",
+        "Final resource apply preview first blocker model",
+        PMF_MODELS_PATH,
+        "FinalResourceApplyPreviewFirstBlocker",
+    ),
+    SourceRequirement(
+        "model_final_resource_apply_preview_first_blocker_field",
+        "Final resource apply preview first blocker field",
+        PMF_MODELS_PATH,
+        "firstBlocker: FinalResourceApplyPreviewFirstBlocker?",
+    ),
+    SourceRequirement(
         "model_final_resource_requirements_first_blocker",
         "Final resource requirements first blocker model",
         PMF_MODELS_PATH,
@@ -525,6 +549,18 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch resource fill guide copy",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
         "Fill guide",
+    ),
+    SourceRequirement(
+        "mobile_summary_final_resource_fill_guide_first_blocker_row",
+        "Mobile final resource fill guide first blocker row",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "resourceFillGuideFirstBlockerRow",
+    ),
+    SourceRequirement(
+        "mobile_summary_final_resource_apply_preview_first_blocker_row",
+        "Mobile final resource apply preview first blocker row",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "applyPreviewFirstBlockerRow",
     ),
     SourceRequirement(
         "mobile_summary_final_resource_requirements_source",

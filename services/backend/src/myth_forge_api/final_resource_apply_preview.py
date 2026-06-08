@@ -118,6 +118,7 @@ def build_final_resource_apply_preview_report(
     targets = [backend_target, ios_target]
     all_slots = [slot for target in targets for slot in target["slots"]]
     status = _status(preflight_status=str(preflight_report.get("status")), targets=targets)
+    first_blocker = _first_blocker(targets)
     report = {
         "kind": "final_resource_apply_preview_report",
         "status": status,
@@ -131,6 +132,7 @@ def build_final_resource_apply_preview_report(
         ),
         "write_targets": targets,
         "write_targets_by_id": {target["id"]: target for target in targets},
+        "first_blocker": first_blocker,
         "operator_actions": _operator_actions(
             status=status,
             preflight_report=preflight_report,
@@ -240,6 +242,39 @@ def _status(*, preflight_status: str, targets: list[dict[str, Any]]) -> str:
     if any(target["status"] == "missing" for target in targets):
         return "missing"
     return "ready"
+
+
+def _first_blocker(targets: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for target in targets:
+        if target["status"] == "ready":
+            continue
+        blocked_by = list(target["blocked_by"])
+        detail = (
+            f"blocked by {', '.join(blocked_by)}"
+            if blocked_by
+            else "target is not ready"
+        )
+        return {
+            "id": target["id"],
+            "label": target["label"],
+            "status": target["status"],
+            "classification": _target_classification(target, blocked_by),
+            "command": target["command"],
+            "detail": detail,
+            "destination": target["destination"],
+            "writer": target["writer"],
+            "blocked_by": blocked_by,
+            "validation_command": "make final-resources-preflight",
+        }
+    return None
+
+
+def _target_classification(target: dict[str, Any], blocked_by: list[str]) -> str:
+    first_blocked_id = blocked_by[0] if blocked_by else ""
+    for slot in target["slots"]:
+        if slot["id"] == first_blocked_id:
+            return str(slot["classification"])
+    return str(target["status"])
 
 
 def _summary(
