@@ -105,6 +105,7 @@ public enum DevicePreflightSummaryBuilder {
             iosDeployRunbookItem(report: finalDemoLaunch),
             iosDeviceEvidenceBundleItem(report: finalDemoLaunch),
             iosLaunchRehearsalReadinessItem(report: finalDemoLaunch),
+            finalClosurePacketItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
         ]
@@ -951,6 +952,148 @@ public enum DevicePreflightSummaryBuilder {
         "Safety: commands_run=\(safety.commandsRun) xcode=\(safety.xcodeOrSigning) global_mutation=\(safety.globalMutation)."
     }
 
+    private static func finalClosurePacketItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "final_launch_closure_packet",
+                "Final Closure",
+                .waiting,
+                "Final launch closure packet has not loaded."
+            )
+        }
+        guard let packet = report.finalLaunchClosurePacket else {
+            return item(
+                "final_launch_closure_packet",
+                "Final Closure",
+                .waiting,
+                "Final launch closure packet has not loaded."
+            )
+        }
+
+        switch packet.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            return item(
+                "final_launch_closure_packet",
+                "Final Closure",
+                .ready,
+                finalClosurePacketReadyDetail(packet)
+            )
+        case "blocked", "partial":
+            return item(
+                "final_launch_closure_packet",
+                "Final Closure",
+                .blocked,
+                finalClosurePacketAttentionDetail(packet)
+            )
+        default:
+            return item(
+                "final_launch_closure_packet",
+                "Final Closure",
+                .waiting,
+                finalClosurePacketReadyDetail(packet)
+            )
+        }
+    }
+
+    private static func finalClosurePacketReadyDetail(
+        _ packet: FinalLaunchClosurePacketReport
+    ) -> String {
+        [
+            finalClosurePacketSummaryDetail(packet),
+            finalClosurePacketConsentDetail(packet),
+            finalClosurePacketSafetyDetail(packet.safety),
+        ].joined(separator: " ")
+    }
+
+    private static func finalClosurePacketAttentionDetail(
+        _ packet: FinalLaunchClosurePacketReport
+    ) -> String {
+        var parts = [finalClosurePacketSummaryDetail(packet)]
+        if let blocker = packet.firstBlocker {
+            parts.append(finalClosurePacketFirstBlockerDetail(blocker))
+        }
+        if let section = firstFinalClosureAttentionSection(packet) {
+            parts.append(finalClosurePacketSectionDetail(section))
+        }
+        if let configuredBundle = packet.sectionsById["configured_evidence_bundle"],
+           configuredBundle.id != firstFinalClosureAttentionSection(packet)?.id {
+            parts.append(finalClosurePacketSectionDetail(configuredBundle))
+        }
+        if let action = packet.operatorActions.first, !action.isEmpty {
+            parts.append("Action: \(action)")
+        }
+        parts.append(finalClosurePacketConsentDetail(packet))
+        parts.append(finalClosurePacketSafetyDetail(packet.safety))
+        return parts.joined(separator: " ")
+    }
+
+    private static func firstFinalClosureAttentionSection(
+        _ packet: FinalLaunchClosurePacketReport
+    ) -> FinalLaunchClosurePacketSection? {
+        packet.sections.first { section in
+            section.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready"
+        }
+    }
+
+    private static func finalClosurePacketSummaryDetail(
+        _ packet: FinalLaunchClosurePacketReport
+    ) -> String {
+        "\(packet.status): sections \(packet.summary.sections), actions \(packet.summary.actions), blocked \(packet.summary.blocked), live \(packet.summary.live), cost consent \(packet.summary.requiresCostConsent)."
+    }
+
+    private static func finalClosurePacketFirstBlockerDetail(
+        _ blocker: FinalLaunchClosurePacketBlocker
+    ) -> String {
+        var parts = [
+            "First blocker:",
+            blocker.id,
+            blocker.status,
+        ]
+        if let classification = blocker.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        if !blocker.actionId.isEmpty {
+            parts.append("| \(blocker.actionId)")
+        }
+        if !blocker.command.isEmpty {
+            parts.append("| \(blocker.command)")
+        }
+        if !blocker.detail.isEmpty {
+            parts.append("| \(blocker.detail)")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func finalClosurePacketSectionDetail(
+        _ section: FinalLaunchClosurePacketSection
+    ) -> String {
+        let action = section.firstAction
+        var parts = [
+            "Section:",
+            section.id,
+            section.status,
+            "| \(action.id)",
+            action.status,
+            "| \(action.command)",
+        ]
+        if !action.detail.isEmpty {
+            parts.append("| \(action.detail)")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func finalClosurePacketConsentDetail(
+        _ packet: FinalLaunchClosurePacketReport
+    ) -> String {
+        "Consent: user input \(packet.summary.requiresUserInput), confirmation \(packet.summary.requiresUserConfirmation), cost consent \(packet.summary.requiresCostConsent), global \(packet.summary.globalActions), xcode \(packet.summary.xcodeOrSigningActions)."
+    }
+
+    private static func finalClosurePacketSafetyDetail(
+        _ safety: FinalLaunchClosurePacketSafety
+    ) -> String {
+        "Safety: commands_run=\(safety.commandsRun) global=\(safety.globalMutation) live_calls=\(safety.liveProviderCalls)."
+    }
+
     private static func localDemoItem(_ summary: FinalShowcaseSummary) -> DevicePreflightItem {
         switch summary.overallStatus {
         case .readyForLocalDemo:
@@ -994,6 +1137,7 @@ public enum DevicePreflightSummaryBuilder {
             "ios_deploy_runbook",
             "ios_device_evidence_bundle",
             "ios_device_launch_rehearsal_readiness",
+            "final_launch_closure_packet",
             "local_demo",
         ])
         let requiredReady = required.allSatisfy { id in
