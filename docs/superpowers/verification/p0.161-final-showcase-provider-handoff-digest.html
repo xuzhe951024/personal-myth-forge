@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.161 Final Showcase Provider Handoff Digest</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172126;
+      --muted: #637078;
+      --line: #d7dfe2;
+      --paper: #fbfcfc;
+      --panel: #f1f5f4;
+      --good: #2c7a55;
+      --warn: #986820;
+      --bad: #b84646;
+      --accent: #2d6f80;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      background: #edf2f3;
+      color: var(--ink);
+    }
+
+    main {
+      width: 390px;
+      min-height: 844px;
+      padding: 18px 14px;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      height: 22px;
+      margin-bottom: 10px;
+      color: #34434a;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0 0 3px;
+      font-size: 22px;
+      line-height: 1.12;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .subhead {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .summary {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 10px 24px rgba(28, 43, 49, 0.08);
+      padding: 12px;
+    }
+
+    .hero-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: start;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e5eceb;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.22;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .badge {
+      color: var(--bad);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 9px 108px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      min-height: 28px;
+      padding: 8px 0;
+      border-bottom: 1px solid #edf1f0;
+    }
+
+    .stage:last-child {
+      border-bottom: 0;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 99px;
+      background: var(--good);
+    }
+
+    .dot.bad {
+      background: var(--bad);
+    }
+
+    .dot.warn {
+      background: var(--warn);
+    }
+
+    .label {
+      color: #26343b;
+      font-size: 11px;
+      font-weight: 750;
+      line-height: 1.25;
+    }
+
+    .detail {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .handoff {
+      margin-top: 12px;
+      border: 1px solid #e2caca;
+      border-radius: 8px;
+      background: #fbf3f2;
+      padding: 10px;
+    }
+
+    .handoff h3 {
+      margin: 0 0 6px;
+      color: #3b2b2b;
+      font-size: 13px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .line {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .line.bad {
+      color: #944040;
+      font-weight: 700;
+    }
+
+    .line.good {
+      color: #276b48;
+    }
+
+    .note {
+      margin-top: 10px;
+      border-left: 3px solid var(--accent);
+      padding: 8px 0 8px 10px;
+      color: #5d6c73;
+      font-size: 10.5px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>PMF</span>
+    </div>
+
+    <h1>Final Showcase</h1>
+    <p class="subhead">The summary now exposes provider/key handoff before local smoke, deploy, and launch closeout.</p>
+
+    <section class="summary" aria-label="Final showcase provider handoff digest">
+      <div class="hero-row">
+        <h2>Needs provider handoff</h2>
+        <span class="badge">CHECK</span>
+      </div>
+
+      <div class="stage">
+        <span class="dot"></span>
+        <span class="label">Resources</span>
+        <span class="detail">Local demo providers ready.</span>
+      </div>
+      <div class="stage">
+        <span class="dot bad"></span>
+        <span class="label">Provider Handoff</span>
+        <span class="detail">provider handoff blocked: provide MESHY_API_KEY in final-resources.env</span>
+      </div>
+      <div class="stage">
+        <span class="dot"></span>
+        <span class="label">Local Smoke</span>
+        <span class="detail">HTTP 6, NPC ticks 2, downloads 3</span>
+      </div>
+      <div class="stage">
+        <span class="dot"></span>
+        <span class="label">iOS Deploy</span>
+        <span class="detail">rehearsal command visible</span>
+      </div>
+      <div class="stage">
+        <span class="dot warn"></span>
+        <span class="label">Launch</span>
+        <span class="detail">Final launch waits for provider handoff evidence</span>
+      </div>
+
+      <div class="handoff">
+        <h3>Provider Handoff</h3>
+        <p class="line bad">provider handoff blocked: live evidence missing.</p>
+        <p class="line">Live evidence missing: ready 0, missing 5, blocked 0, partial 0.</p>
+        <p class="line bad">Next: provide MESHY_API_KEY in final-resources.env</p>
+        <p class="line">Then: make final-resource-apply-preview</p>
+        <p class="line good">Safety: writes=false live_calls=false global_mutation=false</p>
+      </div>
+
+      <p class="note">
+        This digest is read-only. It does not write .env, iOS config, final resources,
+        signing data, or provider evidence, and it does not make live provider calls.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

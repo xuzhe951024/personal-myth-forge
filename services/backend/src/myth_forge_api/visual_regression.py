@@ -280,6 +280,26 @@ DEFAULT_VISUAL_ARTIFACTS = (
             "make ios-device-launch-rehearsal",
         ),
     ),
+    VisualArtifactSpec(
+        id="p0.161_final_showcase_provider_handoff_digest",
+        html_path="docs/superpowers/verification/p0.161-final-showcase-provider-handoff-digest.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.161-final-showcase-provider-handoff-digest-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.161-final-showcase-provider-handoff-digest-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Final Showcase",
+            "Provider Handoff",
+            "provider handoff blocked",
+            "provide MESHY_API_KEY",
+        ),
+    ),
 )
 
 
