@@ -257,6 +257,18 @@ SOURCE_REQUIREMENTS = (
         "finalResourceFillGuide",
     ),
     SourceRequirement(
+        "model_final_resource_requirements_first_blocker",
+        "Final resource requirements first blocker model",
+        PMF_MODELS_PATH,
+        "FinalResourceRequirementsFirstBlocker",
+    ),
+    SourceRequirement(
+        "model_final_resource_requirements_first_blocker_field",
+        "Final resource requirements first blocker field",
+        PMF_MODELS_PATH,
+        "firstBlocker: FinalResourceRequirementsFirstBlocker?",
+    ),
+    SourceRequirement(
         "model_resource_handoff",
         "Resource handoff report model",
         PMF_MODELS_PATH,
@@ -513,6 +525,18 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch resource fill guide copy",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
         "Fill guide",
+    ),
+    SourceRequirement(
+        "mobile_summary_final_resource_requirements_source",
+        "Mobile final resource requirements source",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "report.finalResourceRequirements",
+    ),
+    SourceRequirement(
+        "mobile_summary_final_resource_requirements_first_blocker_row",
+        "Mobile final resource requirements first blocker row",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "resourceRequirementFirstBlockerRow",
     ),
     SourceRequirement(
         "mobile_summary_redaction",
@@ -981,6 +1005,12 @@ SOURCE_REQUIREMENTS = (
         "Contract test renders final resource fill guide",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryShowsResourceFillGuide",
+    ),
+    SourceRequirement(
+        "contract_final_resource_requirements_first_blocker_fixture",
+        "Contract fixture includes final resource requirements first blocker command",
+        CORE_CONTRACT_TESTS_PATH,
+        "provide MESHY_API_KEY in final-resources.env",
     ),
     SourceRequirement(
         "contract_resource_handoff_decode",
