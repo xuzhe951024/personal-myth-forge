@@ -48,6 +48,9 @@ from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.ios_device_launch_certificate import (
     build_ios_device_launch_certificate_report,
 )
+from myth_forge_api.ios_device_evidence_bundle import (
+    build_ios_device_evidence_bundle_report,
+)
 from myth_forge_api.ios_device_launch_rehearsal import (
     build_ios_device_launch_rehearsal_report,
 )
@@ -234,6 +237,14 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "iOS device launch rehearsal",
             "ios-device-launch-rehearsal.json",
             lambda repo_root: build_ios_device_launch_rehearsal_report(
+                repo_root=repo_root,
+            ).report,
+        ),
+        _step(
+            "ios_device_evidence_bundle",
+            "iOS device evidence bundle",
+            "ios-device-evidence-bundle.json",
+            lambda repo_root: build_ios_device_evidence_bundle_report(
                 repo_root=repo_root,
             ).report,
         ),

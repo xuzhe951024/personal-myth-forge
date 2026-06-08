@@ -73,6 +73,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "services/backend/.local/final-handoff-index.json",
         "services/backend/.local/ios-device-launch-certificate.json",
         "services/backend/.local/ios-device-launch-rehearsal.json",
+        "services/backend/.local/ios-device-evidence-bundle.json",
         "services/backend/.local/live-provider-evidence.json",
         "services/backend/.local/print-fulfillment-readiness.json",
         "services/backend/.local/final-external-action-ledger.json",
@@ -130,7 +131,17 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     assert result.exit_code == 2
     assert steps["ios_deploy_runbook_local"] < steps["mobile_deploy_preflight_evidence"]
     assert steps["mobile_deploy_preflight_evidence"] < steps["ios_device_launch_rehearsal"]
+    assert steps["ios_device_launch_rehearsal"] < steps["ios_device_evidence_bundle"]
+    assert steps["ios_device_evidence_bundle"] < steps["final_showcase_readiness"]
     assert steps["ios_device_launch_rehearsal"] < steps["final_showcase_readiness"]
+    bundle = json.loads(
+        (
+            repo_root / "services/backend/.local/ios-device-evidence-bundle.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert bundle["kind"] == "ios_device_evidence_bundle_report"
+    assert bundle["safety"]["commands_run"] is False
+    assert bundle["safety"]["xcode_or_signing"] is False
     assert showcase["evidence"]["ios_device_launch_rehearsal_readiness"]["kind"] == (
         "ios_device_launch_rehearsal_readiness_report"
     )
