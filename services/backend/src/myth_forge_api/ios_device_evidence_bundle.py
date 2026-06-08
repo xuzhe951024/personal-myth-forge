@@ -15,6 +15,10 @@ from myth_forge_api.ios_device_launch_rehearsal_readiness import (
 )
 from myth_forge_api.operator_actions import normalize_operator_action
 
+MOBILE_XCODE_BUILD_EVIDENCE_PATH = Path(
+    "services/backend/.local/mobile-xcode-build-evidence.json"
+)
+
 
 @dataclass(frozen=True)
 class IOSDeviceEvidenceBundleResult:
@@ -37,24 +41,33 @@ def build_ios_device_evidence_bundle_report(
     launch_rehearsal = build_ios_device_launch_rehearsal_readiness_report(
         repo_root=selected_repo_root,
     ).report
+    xcode_build_evidence = _load_optional_report(
+        selected_repo_root / MOBILE_XCODE_BUILD_EVIDENCE_PATH
+    )
     evidence_slots = _evidence_slots(
         final_acceptance=final_acceptance,
         ios_deploy_runbook=ios_deploy_runbook,
         launch_rehearsal=launch_rehearsal,
+        xcode_build_evidence=xcode_build_evidence,
     )
     status = _overall_status(evidence_slots)
+    source_reports = {
+        "final_acceptance_readiness": _source_summary(final_acceptance),
+        "ios_deploy_runbook": _source_summary(ios_deploy_runbook),
+        "ios_device_launch_rehearsal_readiness": _source_summary(
+            launch_rehearsal,
+        ),
+    }
+    if xcode_build_evidence is not None:
+        source_reports["mobile_xcode_build_evidence"] = _source_summary(
+            xcode_build_evidence
+        )
     report = {
         "kind": "ios_device_evidence_bundle_report",
         "status": status,
         "summary": _summary(evidence_slots),
         "evidence_slots": evidence_slots,
-        "source_reports": {
-            "final_acceptance_readiness": _source_summary(final_acceptance),
-            "ios_deploy_runbook": _source_summary(ios_deploy_runbook),
-            "ios_device_launch_rehearsal_readiness": _source_summary(
-                launch_rehearsal,
-            ),
-        },
+        "source_reports": source_reports,
         "operator_actions": _operator_actions(status, evidence_slots),
         "commands": [
             "make backend-device-demo",
@@ -76,6 +89,7 @@ def _evidence_slots(
     final_acceptance: dict[str, Any],
     ios_deploy_runbook: dict[str, Any],
     launch_rehearsal: dict[str, Any],
+    xcode_build_evidence: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
     blockers = _blockers_by_id(final_acceptance)
     final_acceptance_status = str(final_acceptance.get("status", "missing"))
@@ -83,6 +97,26 @@ def _evidence_slots(
     mobile_blocker = blockers.get("mobile_deploy_preflight")
     xcode_blocker = blockers.get("mobile_xcode_build")
     launch_status = str(launch_rehearsal.get("status", "missing"))
+    xcode_status = _xcode_evidence_status(
+        xcode_build_evidence,
+        acceptance_ready=acceptance_ready,
+        final_acceptance_status=final_acceptance_status,
+        xcode_blocker=xcode_blocker,
+    )
+    xcode_detail = _xcode_evidence_detail(
+        xcode_build_evidence,
+        xcode_blocker=xcode_blocker,
+    )
+    xcode_classification = _xcode_evidence_classification(
+        xcode_build_evidence,
+        xcode_blocker=xcode_blocker,
+        final_acceptance_status=final_acceptance_status,
+    )
+    xcode_evidence_source = (
+        MOBILE_XCODE_BUILD_EVIDENCE_PATH.as_posix()
+        if xcode_build_evidence is not None
+        else "services/backend/.local/final-acceptance-local.json"
+    )
 
     return [
         _slot(
@@ -131,24 +165,11 @@ def _evidence_slots(
         _slot(
             slot_id="xcode_build_gate",
             label="Xcode build gate",
-            status=_gate_status(
-                acceptance_ready=acceptance_ready,
-                final_acceptance_status=final_acceptance_status,
-                blocker=xcode_blocker,
-            ),
+            status=xcode_status,
             command="make mobile-xcode-build",
-            detail=_gate_detail(
-                blocker=xcode_blocker,
-                ready_detail="Final acceptance recorded a passing Xcode build gate.",
-                missing_detail="Run the Xcode build gate on the Mac after deploy preflight passes.",
-            ),
-            classification=_classification(
-                xcode_blocker,
-                default="final_acceptance_missing"
-                if final_acceptance_status == "missing"
-                else "xcode_build_gate_not_proven",
-            ),
-            evidence_source="services/backend/.local/final-acceptance-local.json",
+            detail=xcode_detail,
+            classification=xcode_classification,
+            evidence_source=xcode_evidence_source,
             global_action=True,
             xcode_or_signing=True,
         ),
@@ -254,6 +275,62 @@ def _classification(blocker: dict[str, Any] | None, *, default: str) -> str:
     return default
 
 
+def _xcode_evidence_status(
+    evidence: dict[str, Any] | None,
+    *,
+    acceptance_ready: bool,
+    final_acceptance_status: str,
+    xcode_blocker: dict[str, Any] | None,
+) -> str:
+    if evidence is not None:
+        return str(evidence.get("status", "blocked"))
+    return _gate_status(
+        acceptance_ready=acceptance_ready,
+        final_acceptance_status=final_acceptance_status,
+        blocker=xcode_blocker,
+    )
+
+
+def _xcode_evidence_detail(
+    evidence: dict[str, Any] | None,
+    *,
+    xcode_blocker: dict[str, Any] | None,
+) -> str:
+    if evidence is not None:
+        checks = evidence.get("checks")
+        if isinstance(checks, list):
+            for check in checks:
+                if isinstance(check, dict) and str(check.get("detail", "")).strip():
+                    return str(check["detail"])
+        actions = evidence.get("operator_actions")
+        if isinstance(actions, list) and actions:
+            return str(actions[0])
+        classification = evidence.get("classification")
+        if classification:
+            return str(classification)
+    return _gate_detail(
+        blocker=xcode_blocker,
+        ready_detail="Final acceptance recorded a passing Xcode build gate.",
+        missing_detail="Run the Xcode build gate on the Mac after deploy preflight passes.",
+    )
+
+
+def _xcode_evidence_classification(
+    evidence: dict[str, Any] | None,
+    *,
+    xcode_blocker: dict[str, Any] | None,
+    final_acceptance_status: str,
+) -> str:
+    if evidence is not None and evidence.get("classification"):
+        return str(evidence["classification"])
+    return _classification(
+        xcode_blocker,
+        default="final_acceptance_missing"
+        if final_acceptance_status == "missing"
+        else "xcode_build_gate_not_proven",
+    )
+
+
 def _launch_rehearsal_detail(report: dict[str, Any]) -> str:
     status = str(report.get("status", "missing"))
     if status == "ready":
@@ -329,6 +406,16 @@ def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
         "status": report.get("status") or report.get("overall_status"),
         "summary": report.get("summary", {}),
     }
+
+
+def _load_optional_report(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return loaded if isinstance(loaded, dict) else None
 
 
 def _safety() -> dict[str, bool]:

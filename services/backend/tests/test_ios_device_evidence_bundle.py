@@ -161,6 +161,71 @@ def test_ios_device_evidence_bundle_redacts_unsafe_saved_details(tmp_path: Path)
     assert "checkout_url" not in text
 
 
+def test_ios_device_evidence_bundle_uses_saved_xcode_evidence(tmp_path: Path) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_final_acceptance(
+        repo_root,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 2, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": "mobile_deploy_preflight",
+                    "label": "iOS deploy preflight",
+                    "status": "blocked",
+                    "classification": "blocked_by_local_ios_backend_health",
+                    "command": ["make", "mobile-deploy-preflight"],
+                    "stderr_tail": "Backend health check failed.",
+                },
+                {
+                    "id": "mobile_xcode_build",
+                    "label": "Xcode build gate",
+                    "status": "blocked",
+                    "classification": "command_failed",
+                    "command": ["make", "mobile-xcode-build"],
+                    "stderr_tail": "generic Xcode failure",
+                },
+            ],
+        },
+    )
+    _write_mobile_xcode_build_evidence(
+        repo_root,
+        {
+            "kind": "mobile_xcode_build_evidence_report",
+            "status": "blocked",
+            "classification": "blocked_by_apple_sdk_license",
+            "checks": [
+                {
+                    "id": "xcode_license",
+                    "label": "Xcode license",
+                    "status": "blocked",
+                    "detail": "Apple SDK license agreement is not accepted.",
+                }
+            ],
+            "operator_actions": [
+                "accept the Xcode license outside Codex, then rerun make mobile-xcode-build-evidence"
+            ],
+        },
+    )
+
+    result = build_ios_device_evidence_bundle_report(repo_root=repo_root)
+    slots = {slot["id"]: slot for slot in result.report["evidence_slots"]}
+
+    assert result.exit_code == 2
+    assert slots["xcode_build_gate"]["status"] == "blocked"
+    assert slots["xcode_build_gate"]["classification"] == "blocked_by_apple_sdk_license"
+    assert (
+        slots["xcode_build_gate"]["detail"]
+        == "Apple SDK license agreement is not accepted."
+    )
+    assert (
+        slots["xcode_build_gate"]["evidence_source"]
+        == "services/backend/.local/mobile-xcode-build-evidence.json"
+    )
+    assert "mobile_xcode_build_evidence" in result.report["source_reports"]
+
+
 def _repo_fixture(tmp_path: Path) -> Path:
     repo_root = tmp_path / "repo"
     (repo_root / "apps/mobile/ios/Config").mkdir(parents=True)
@@ -183,5 +248,14 @@ def _write_ios_device_launch_rehearsal(
     payload: dict[str, object],
 ) -> None:
     path = repo_root / "services/backend/.local/ios-device-launch-rehearsal.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _write_mobile_xcode_build_evidence(
+    repo_root: Path,
+    payload: dict[str, object],
+) -> None:
+    path = repo_root / "services/backend/.local/mobile-xcode-build-evidence.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload), encoding="utf-8")
