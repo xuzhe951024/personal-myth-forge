@@ -137,6 +137,18 @@ SOURCE_REQUIREMENTS = (
         "FinalLaunchClosurePacketReport",
     ),
     SourceRequirement(
+        "model_final_launch_closure_packet_blocker",
+        "Final launch closure packet blocker model",
+        PMF_MODELS_PATH,
+        "FinalLaunchClosurePacketBlocker",
+    ),
+    SourceRequirement(
+        "model_final_launch_closure_packet_first_blocker_field",
+        "Final launch closure packet first blocker field",
+        PMF_MODELS_PATH,
+        "firstBlocker: FinalLaunchClosurePacketBlocker?",
+    ),
+    SourceRequirement(
         "model_final_launch_closure_packet_field",
         "Final launch closure packet field",
         PMF_MODELS_PATH,
@@ -399,6 +411,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch closure packet rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
         "closurePacketRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_final_launch_closure_packet_first_blocker_row",
+        "Mobile final launch closure packet first blocker row",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "closurePacketFirstBlockerRow",
     ),
     SourceRequirement(
         "mobile_summary_launch_rehearsal_rows",

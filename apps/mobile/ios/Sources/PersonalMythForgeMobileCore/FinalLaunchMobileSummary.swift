@@ -550,6 +550,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         var rows = [
             "Final closure \(sanitize(packet.status)): sections \(packet.summary.sections), blocked \(packet.summary.blocked), live \(packet.summary.live), cost consent \(packet.summary.requiresCostConsent)."
         ]
+        if let firstBlocker = packet.firstBlocker {
+            rows.append(closurePacketFirstBlockerRow(firstBlocker))
+        }
         let attention = packet.sections.filter { section in
             status(from: section.status) != .ready
         }
@@ -571,6 +574,31 @@ public enum FinalLaunchMobileSummaryBuilder {
             "Safety: commands_run=\(flag(packet.safety.commandsRun)) global=\(flag(packet.safety.globalMutation)) live_calls=\(flag(packet.safety.liveProviderCalls))"
         )
         return rows.map(sanitize)
+    }
+
+    private static func closurePacketFirstBlockerRow(
+        _ blocker: FinalLaunchClosurePacketBlocker
+    ) -> String {
+        var headingParts = [
+            "First blocker:",
+            blocker.id,
+            blocker.status,
+        ]
+        if let classification = blocker.classification, !classification.isEmpty {
+            headingParts.append(classification)
+        }
+
+        var parts = [headingParts.joined(separator: " ")]
+        if !blocker.actionId.isEmpty {
+            parts.append(blocker.actionId)
+        }
+        if !blocker.command.isEmpty {
+            parts.append(blocker.command)
+        }
+        if !blocker.detail.isEmpty {
+            parts.append(blocker.detail)
+        }
+        return sanitize(parts.joined(separator: " | "))
     }
 
     private static func closurePacketSectionRow(

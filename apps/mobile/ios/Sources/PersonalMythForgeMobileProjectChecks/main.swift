@@ -1496,6 +1496,16 @@ do {
         "resourceReport",
         "final demo launch resource handoff field"
     )
+    try requireContains(
+        pmfModels,
+        "FinalLaunchClosurePacketBlocker",
+        "closure packet first blocker model"
+    )
+    try requireContains(
+        pmfModels,
+        "firstBlocker: FinalLaunchClosurePacketBlocker?",
+        "closure packet first blocker field"
+    )
     try requireContains(pmfModels, "FinalResourcesPreflightItem", "final resources preflight item model")
     try requireContains(
         pmfModels,
@@ -1507,6 +1517,11 @@ do {
     try requireContains(finalLaunchMobileSummary, "launchReceiptRows", "final launch receipt rows")
     try requireContains(finalLaunchMobileSummary, "launchReceiptRows(from:", "final launch receipt builder")
     try requireContains(finalLaunchMobileSummary, "firstBlockerReceiptRow", "final launch receipt blocker row")
+    try requireContains(
+        finalLaunchMobileSummary,
+        "closurePacketFirstBlockerRow",
+        "closure packet first blocker row"
+    )
     try requireContains(finalLaunchMobileSummary, "freshness.status == \"stale\"", "final launch stale freshness handling")
     try requireContains(finalLaunchMobileSummary, "modePolicyRows", "final launch summary mode policy rows")
     try requireContains(finalLaunchMobileSummary, "liveCallPolicy", "final launch summary live policy mapping")
