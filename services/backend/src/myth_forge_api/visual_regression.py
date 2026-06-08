@@ -110,6 +110,31 @@ DEFAULT_VISUAL_ARTIFACTS = (
         required_text=("Print Fulfillment", "Approve Print Handoff"),
     ),
     VisualArtifactSpec(
+        id="p0.214_showcase_evidence_visual",
+        html_path="docs/superpowers/verification/p0.214-showcase-evidence-visual.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.214-showcase-evidence-visual-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.214-showcase-evidence-visual-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Showcase Evidence",
+            "Showcase evidence ready",
+            "Capture-to-3D",
+            "Generation Result",
+            "SceneKit Load",
+            "NPC Agent",
+            "Print Handoff",
+            "3 saved ticks",
+            "Local file paths and payment links are withheld.",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.100_live_provider_consent",
         html_path="docs/superpowers/verification/p0.100-live-provider-consent.html",
         png_path="docs/superpowers/verification/assets/p0.100-live-provider-consent-390x844.png",

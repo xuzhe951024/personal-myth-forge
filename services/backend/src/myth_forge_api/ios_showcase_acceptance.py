@@ -569,11 +569,11 @@ FEATURES = (
             SourceRequirement("apps/mobile/ios/App/Artifact3DPreviewView.swift", "addNPCRitualOverlay"),
             SourceRequirement(
                 "apps/mobile/ios/App/ArtifactSummaryView.swift",
-                "Artifact3DPreviewView(session: session, latestTick: latestTick)",
+                "onSceneLoadProofChange: onSceneLoadProofChange",
             ),
             SourceRequirement(
                 "apps/mobile/ios/App/ForgeRootView.swift",
-                "ArtifactSummaryView(session: readySession, latestTick: latestNPCTick)",
+                "sceneLoadProof = proof",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/NPCRitualScene.swift",
@@ -1478,6 +1478,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.214_showcase_evidence_visual",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
                 "p0.100_live_provider_consent",
             ),
             SourceRequirement(
@@ -1509,7 +1513,7 @@ FEATURES = (
                 "test_visual_regression_cli_writes_showcase_report",
             ),
             SourceRequirement("README.md", "full-showcase visual index"),
-            SourceRequirement("README.md", "21 static 390x844 iPhone evidence artifacts"),
+            SourceRequirement("README.md", "22 static 390x844 iPhone evidence artifacts"),
             SourceRequirement("README.md", "configured acceptance command visual"),
             SourceRequirement("README.md", "device blocker handoff visual"),
         ),

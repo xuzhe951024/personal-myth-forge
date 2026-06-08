@@ -29,6 +29,7 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
         "p0.118_scene_load_proof",
         "p0.82_npc_agent_tick_summary",
         "p0.101_print_fulfillment_receipt",
+        "p0.214_showcase_evidence_visual",
         "p0.100_live_provider_consent",
         "p0.112_ios_device_launch_rehearsal",
         "p0.119_visual_regression_handoff",
@@ -55,6 +56,12 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "SceneKit load proof: Loaded" in required_text
     assert "NPC Agent tick resolved" in required_text
     assert "Print Fulfillment" in required_text
+    assert "Showcase Evidence" in required_text
+    assert "Showcase evidence ready" in required_text
+    assert "Generation Result" in required_text
+    assert "SceneKit Load" in required_text
+    assert "3 saved ticks" in required_text
+    assert "Local file paths and payment links are withheld." in required_text
     assert "Live Provider Consent" in required_text
     assert "iOS Device Launch Rehearsal" in required_text
     assert "Visual Regression" in required_text
@@ -120,7 +127,7 @@ def test_visual_regression_default_passes_checked_in_showcase_artifacts() -> Non
     result = check_visual_artifacts(repo_root)
 
     assert result.exit_code == 0
-    assert result.report["summary"] == {"passed": 21, "failed": 0}
+    assert result.report["summary"] == {"passed": 22, "failed": 0}
     assert [artifact["id"] for artifact in result.report["artifacts"]] == [
         spec.id for spec in DEFAULT_VISUAL_ARTIFACTS
     ]
@@ -222,7 +229,7 @@ def test_visual_regression_cli_writes_showcase_report(tmp_path: Path, monkeypatc
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["kind"] == "visual_regression_report"
     assert report["status"] == "passed"
-    assert report["summary"] == {"passed": 21, "failed": 0}
+    assert report["summary"] == {"passed": 22, "failed": 0}
 
 
 def _spec() -> VisualArtifactSpec:

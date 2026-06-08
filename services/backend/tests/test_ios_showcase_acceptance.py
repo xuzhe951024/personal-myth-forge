@@ -106,8 +106,12 @@ def test_showcase_visual_regression_index_requires_configured_command_scope() ->
         "p0.189_device_blocker_handoff",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/visual_regression.py",
+        "p0.214_showcase_evidence_visual",
+    ) in requirements
+    assert (
         "README.md",
-        "21 static 390x844 iPhone evidence artifacts",
+        "22 static 390x844 iPhone evidence artifacts",
     ) in requirements
     assert (
         "README.md",
@@ -825,7 +829,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "runMythSessionAutonomy createPrintQuote FinalShowcaseSummaryBuilder "
             "DevicePreflightSummaryBuilder.build DevicePreflightView(summary: "
             "getBackendHealth() checkBackendHealth backendHealthProbe "
-            "DemoScriptBuilder.build ArtifactSummaryView(session: readySession, latestTick: latestNPCTick) "
+            "DemoScriptBuilder.build ArtifactSummaryView( sceneLoadProof = proof "
             "finalLaunchSummary: finalLaunchMobileSummary "
             "ShowcaseAutopilotPlanner.plan runShowcaseAutopilot "
             "finalLaunchMode Picker(\"Final launch mode\" FinalLaunchMode.allCases "
@@ -852,7 +856,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "ObjectCaptureSession ObjectCaptureView(session:"
         ),
         "apps/mobile/ios/App/ArtifactSummaryView.swift": (
-            "Artifact3DPreviewView(session: session, latestTick: latestTick) "
+            "Artifact3DPreviewView( onSceneLoadProofChange: onSceneLoadProofChange "
             "GenerationResultReceiptBuilder.build(session: session) "
             "ArtifactGenerationProvenanceSummaryBuilder.build"
         ),
@@ -1202,6 +1206,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "p0.19_guided_scan_entry p0.98_capture_generation_receipt "
             "p0.103_generation_result_receipt p0.118_scene_load_proof "
             "p0.82_npc_agent_tick_summary p0.101_print_fulfillment_receipt "
+            "p0.214_showcase_evidence_visual "
             "p0.100_live_provider_consent p0.112_ios_device_launch_rehearsal "
             "p0.119_visual_regression_handoff p0.158_local_showcase_smoke "
             "p0.186_configured_acceptance_command_visual p0.189_device_blocker_handoff"
@@ -1399,7 +1404,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "README.md": (
             "make visual-regression full-showcase visual index P0.128 P0.129 "
-            "21 static 390x844 iPhone evidence artifacts "
+            "22 static 390x844 iPhone evidence artifacts "
             "configured acceptance command visual device blocker handoff visual"
         ),
         "services/backend/tests/test_final_configured_preflight.py": (

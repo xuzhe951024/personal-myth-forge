@@ -129,12 +129,12 @@ providers, apply secrets, start servers, run Xcode, accept Apple licenses, or
 mutate global machine state.
 
 P0.121 expands `make visual-regression` into the full-showcase visual index. The
-gate now checks 21 static 390x844 iPhone evidence artifacts covering scan input,
+gate now checks 22 static 390x844 iPhone evidence artifacts covering scan input,
 guided scan, capture-to-3D, generation result, SceneKit load proof, NPC Agent
-tick, print fulfillment, live provider consent, local showcase smoke, configured
-evidence, resource fill guide, device evidence, closure packet, final launch
-visual handoff, and the device blocker handoff visual. The index also includes
-the configured acceptance command visual proof showing
+tick, print fulfillment, showcase evidence, live provider consent, local
+showcase smoke, configured evidence, resource fill guide, device evidence,
+closure packet, final launch visual handoff, and the device blocker handoff visual.
+The index also includes the configured acceptance command visual proof showing
 `make final-acceptance-configured` as the operator-facing command for
 consent-gated configured acceptance. It remains read-only and does not call
 providers, run Xcode, install to a device, or mutate global machine state.
