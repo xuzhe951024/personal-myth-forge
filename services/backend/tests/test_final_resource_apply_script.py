@@ -75,6 +75,16 @@ def test_root_readme_uses_final_resource_init_for_current_handoffs() -> None:
     ) not in readme
 
 
+def test_final_resources_template_documents_auto_backend_url() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+    template = (repo_root / "services/backend/final-resources.env.example").read_text(
+        encoding="utf-8"
+    )
+
+    assert "PMF_BACKEND_BASE_URL=auto" in template
+    assert "final-apply-resources" in template
+
+
 def test_apply_blocks_unknown_key_without_writing_outputs(script_repo: Path) -> None:
     resources = write_resources(script_repo, FULL_RESOURCES + "UNKNOWN_PROVIDER_KEY=value\n")
 
@@ -217,6 +227,36 @@ def test_apply_writes_backend_and_ios_configs_with_redacted_output(
     assert "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080" in ios_text
 
 
+def test_apply_accepts_auto_backend_url_and_resolves_through_ios_writer(
+    script_repo: Path,
+) -> None:
+    resources = write_resources(
+        script_repo,
+        FULL_RESOURCES.replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=auto",
+        ),
+    )
+
+    result = run_apply(
+        script_repo,
+        "--resources-file",
+        str(resources),
+        env={
+            "PMF_BACKEND_AUTO_HOST": "10.0.0.24",
+            "PMF_BACKEND_PORT": "9090",
+        },
+    )
+
+    combined_output = result.stdout + result.stderr
+    assert result.returncode == 0
+    assert "Auto backend URL: http://10.0.0.24:9090" in result.stdout
+    assert "Final resources applied." in result.stdout
+    assert "meshy-secret-test" not in combined_output
+    ios_text = ios_local_config_path(script_repo).read_text(encoding="utf-8")
+    assert "PMF_BACKEND_BASE_URL = http://10.0.0.24:9090" in ios_text
+
+
 def test_apply_output_can_be_loaded_as_final_settings(
     script_repo: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -240,14 +280,21 @@ def test_apply_output_can_be_loaded_as_final_settings(
 def run_apply(
     root: Path,
     *args: str,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    process_env = {
+        "PATH": os.environ.get("PATH", ""),
+        "HOME": os.environ.get("HOME", ""),
+    }
+    if env is not None:
+        process_env.update(env)
     return subprocess.run(
         ["sh", "services/backend/scripts/apply_final_resources.sh", *args],
         cwd=root,
         check=False,
         capture_output=True,
         text=True,
-        env={"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "")},
+        env=process_env,
     )
 
 

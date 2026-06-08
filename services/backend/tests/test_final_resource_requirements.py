@@ -154,6 +154,35 @@ def test_requirements_report_is_ready_for_valid_local_resources(tmp_path: Path) 
     assert str(tmp_path) not in report_text
 
 
+def test_requirements_report_marks_auto_backend_url_as_apply_time_resolution(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=auto",
+        ),
+    )
+
+    result = build_final_resource_requirements_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    report = result.report
+    report_text = json.dumps(report)
+    row = report["requirements_by_id"]["PMF_BACKEND_BASE_URL"]
+
+    assert result.exit_code == 0
+    assert report["status"] == "ready"
+    assert row["status"] == "ready"
+    assert row["classification"] == "apply_time_auto_url"
+    assert row["resolution_mode"] == "apply_time_auto"
+    assert "write_deploy_local_config.sh" in row["apply_note"]
+    assert "10.0.0.24" not in report_text
+
+
 def test_requirements_report_requires_treatstock_key_when_provider_selected(
     tmp_path: Path,
 ) -> None:

@@ -89,6 +89,11 @@ make final-resources-preflight
 make final-apply-resources
 ```
 
+In `services/backend/.local/final-resources.env`, `PMF_BACKEND_BASE_URL=auto`
+is valid for the iPhone path. It is resolved by the iOS deploy config writer
+during `make final-apply-resources`; read-only reports mark it as
+`apply_time_auto` and do not resolve or print the LAN IP.
+
 `final-resources-preflight` is read-only: it checks missing keys, unknown keys,
 loopback iPhone backend URLs, and Treatstock key dependencies without writing
 config files or calling providers. `final-apply-resources` writes only

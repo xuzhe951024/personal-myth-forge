@@ -304,6 +304,41 @@ def test_apply_preview_is_ready_for_valid_local_resources_without_secret_leak(
     assert not ios_local_config_path(repo_root).exists()
 
 
+def test_apply_preview_marks_auto_backend_url_ready_for_apply_time_resolution(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=auto",
+        ),
+    )
+
+    result = build_final_resource_apply_preview_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    report = result.report
+    report_text = json.dumps(report)
+    ios_target = report["write_targets_by_id"]["ios_deploy_config"]
+    ios_slots = {slot["id"]: slot for slot in ios_target["slots"]}
+    backend_url = ios_slots["PMF_BACKEND_BASE_URL"]
+
+    assert result.exit_code == 0
+    assert report["status"] == "ready"
+    assert ios_target["status"] == "ready"
+    assert "PMF_BACKEND_BASE_URL" not in ios_target["blocked_by"]
+    assert backend_url["status"] == "ready"
+    assert backend_url["classification"] == "apply_time_auto_url"
+    assert backend_url["resolution_mode"] == "apply_time_auto"
+    assert "write_deploy_local_config.sh" in backend_url["apply_note"]
+    assert "10.0.0.24" not in report_text
+    assert not backend_env_path(repo_root).exists()
+    assert not ios_local_config_path(repo_root).exists()
+
+
 def write_resources(root: Path, text: str) -> Path:
     path = root / "services/backend/.local/final-resources.env"
     path.parent.mkdir(parents=True, exist_ok=True)
