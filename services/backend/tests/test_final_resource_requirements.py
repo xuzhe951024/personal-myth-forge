@@ -48,6 +48,17 @@ def test_requirements_report_lists_missing_required_resources_without_leaks(
     assert "make final-resources-preflight" in report["validation_commands"]
     assert "make final-resource-requirements" in report["validation_commands"]
     assert report["operator_actions"][0] == "run make final-resource-init"
+    assert report["first_blocker"] == {
+        "id": "MESHY_API_KEY",
+        "label": "Meshy API key",
+        "status": "missing",
+        "classification": "missing_required_value",
+        "command": "provide MESHY_API_KEY in final-resources.env",
+        "detail": "Backend-only secret for live Meshy 3D generation.",
+        "domain": "backend_provider",
+        "destination": "services/backend/.local/final-resources.env",
+        "validation_command": "make final-resources-preflight",
+    }
     assert str(tmp_path) not in report_text
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
@@ -112,6 +123,7 @@ def test_requirements_report_is_ready_for_valid_local_resources(tmp_path: Path) 
 
     assert result.exit_code == 0
     assert report["status"] == "ready"
+    assert report["first_blocker"] is None
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["missing"] == 0
     assert report["summary"]["ready"] >= 8
@@ -150,6 +162,11 @@ def test_requirements_report_requires_treatstock_key_when_provider_selected(
     assert rows["TREATSTOCK_API_KEY"]["required"] is True
     assert rows["TREATSTOCK_API_KEY"]["status"] == "missing"
     assert rows["TREATSTOCK_API_KEY"]["classification"] == "missing_required_value"
+    assert result.report["first_blocker"]["id"] == "TREATSTOCK_API_KEY"
+    assert result.report["first_blocker"]["domain"] == "print_provider"
+    assert result.report["first_blocker"]["command"] == (
+        "provide TREATSTOCK_API_KEY in final-resources.env"
+    )
     assert "provide TREATSTOCK_API_KEY in final-resources.env" in result.report[
         "operator_actions"
     ]

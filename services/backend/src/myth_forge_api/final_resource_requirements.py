@@ -247,6 +247,7 @@ def build_final_resource_requirements_report(
         "summary": summary,
         "requirements": requirements,
         "requirements_by_id": {item["id"]: item for item in requirements},
+        "first_blocker": _first_blocker(requirements),
         "operator_actions": _operator_actions(
             requirements=requirements,
             preflight_report=preflight_report,
@@ -372,6 +373,38 @@ def _status(requirements: list[dict[str, Any]]) -> str:
     return "ready"
 
 
+def _first_blocker(requirements: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for requirement in requirements:
+        if not _is_blocking_requirement(requirement):
+            continue
+        return {
+            "id": requirement["id"],
+            "label": requirement["label"],
+            "status": requirement["status"],
+            "classification": requirement["classification"],
+            "command": _blocker_command(requirement),
+            "detail": requirement["notes"],
+            "domain": requirement["domain"],
+            "destination": requirement["destination"],
+            "validation_command": requirement["validation_command"],
+        }
+    return None
+
+
+def _is_blocking_requirement(requirement: dict[str, Any]) -> bool:
+    if requirement["status"] == "blocked":
+        return True
+    return bool(requirement["required"] and requirement["status"] == "missing")
+
+
+def _blocker_command(requirement: dict[str, Any]) -> str:
+    if requirement["status"] == "blocked" and requirement["id"] == "PMF_BACKEND_BASE_URL":
+        return "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    if requirement["status"] == "blocked":
+        return f"fix {requirement['id']} in final-resources.env"
+    return f"provide {requirement['id']} in final-resources.env"
+
+
 def _operator_actions(
     *,
     requirements: list[dict[str, Any]],
@@ -381,12 +414,8 @@ def _operator_actions(
     if preflight_report.get("status") == "missing":
         actions.append("run make final-resource-init")
     for requirement in requirements:
-        if requirement["status"] == "blocked" and requirement["id"] == "PMF_BACKEND_BASE_URL":
-            actions.append("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
-        elif requirement["status"] == "blocked":
-            actions.append(f"fix {requirement['id']} in final-resources.env")
-        elif requirement["required"] and requirement["status"] == "missing":
-            actions.append(f"provide {requirement['id']} in final-resources.env")
+        if _is_blocking_requirement(requirement):
+            actions.append(_blocker_command(requirement))
     actions.extend(str(action) for action in preflight_report.get("operator_actions", []))
     actions.append("run make final-resource-requirements after filling resources")
     return _dedupe(actions)
