@@ -655,7 +655,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/App/FinalLaunchStatusView.swift": (
             "Mode Acceptance 3D Evaluation Visual Regression Live Evidence Print Fulfillment Showcase Readiness NPC Evaluation iOS Deploy Runbook Deploy Commands Deploy Safety "
             "Launch Rehearsal Resource Handoff Backend Resources iOS Resources Next handoffRows Launch Receipt "
-            "Resource Checklist Resource Requirements resourceRequirementRows Apply Preview applyPreviewRows "
+            "Resource Checklist Resource Requirements resourceRequirementRows Resource Fill Guide resourceFillGuideRows Apply Preview applyPreviewRows "
             "External Actions"
         ),
         "apps/mobile/ios/App/DevicePreflightView.swift": (
@@ -792,6 +792,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness "
             "testDecodesFinalResourceRequirementsFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements "
+            "testDecodesFinalResourceFillGuideFromFinalLaunchPayload "
+            "testFinalLaunchMobileSummaryShowsResourceFillGuide "
             "testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsResourceApplyPreview "
             "testDecodesFinalExternalActionLedgerFromFinalLaunchPayload "
@@ -871,6 +873,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "LiveProviderEvidenceReport liveProviderEvidence "
             "PrintFulfillmentReadinessReport printFulfillmentReadiness "
             "FinalResourceRequirementsReport finalResourceRequirements "
+            "FinalResourceFillGuideReport finalResourceFillGuide "
             "FinalResourceApplyPreviewReport finalResourceApplyPreview "
             "FinalExternalActionLedgerReport finalExternalActionLedger "
             "FinalShowcaseReadinessReport finalShowcaseReadiness "
@@ -889,6 +892,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "liveProviderEvidenceRows Live evidence "
             "printFulfillmentReadinessRows Print fulfillment "
             "resourceRequirementRows Resource requirements "
+            "resourceFillGuideRows Fill guide "
             "applyPreviewRows Apply preview "
             "externalActionLedgerRows externalActionLedgerRows(from: "
             "report.finalExternalActionLedger "
@@ -1001,6 +1005,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "visual_regression_readiness live_provider_evidence "
             "print_fulfillment_readiness "
             "final_resource_requirements "
+            "final_resource_fill_guide "
             "final_resource_apply_preview "
             "final_external_action_ledger "
             "final_showcase_readiness "

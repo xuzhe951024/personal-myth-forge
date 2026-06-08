@@ -17,6 +17,9 @@ from myth_forge_api.final_external_action_ledger import (
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
 )
+from myth_forge_api.final_resource_fill_guide import (
+    build_final_resource_fill_guide_report,
+)
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
@@ -77,6 +80,9 @@ def build_final_demo_launch_report(
         repo_root=selected_repo_root,
     ).report
     final_resource_apply_preview = build_final_resource_apply_preview_report(
+        repo_root=selected_repo_root,
+    ).report
+    final_resource_fill_guide = build_final_resource_fill_guide_report(
         repo_root=selected_repo_root,
     ).report
     final_external_action_ledger = build_final_external_action_ledger_report(
@@ -152,6 +158,7 @@ def build_final_demo_launch_report(
         "final_resources_preflight": final_resources_preflight,
         "final_resource_requirements": final_resource_requirements,
         "final_resource_apply_preview": final_resource_apply_preview,
+        "final_resource_fill_guide": final_resource_fill_guide,
         "final_external_action_ledger": final_external_action_ledger,
         "final_acceptance_readiness": final_acceptance_readiness,
         "three_d_evaluation_readiness": three_d_evaluation_readiness,

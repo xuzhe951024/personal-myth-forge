@@ -779,6 +779,10 @@ FEATURES = (
                 "final_resource_requirements",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "final_resource_fill_guide",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "FinalResourceRequirementsReport",
             ),
@@ -787,16 +791,36 @@ FEATURES = (
                 "finalResourceRequirements",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalResourceFillGuideReport",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "finalResourceFillGuide",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "resourceRequirementRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "resourceFillGuideRows",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "Resource requirements",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "Fill guide",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/App/FinalLaunchStatusView.swift",
                 "Resource Requirements",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/App/FinalLaunchStatusView.swift",
+                "Resource Fill Guide",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
@@ -805,6 +829,14 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesFinalResourceFillGuideFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsResourceFillGuide",
             ),
         ),
     ),

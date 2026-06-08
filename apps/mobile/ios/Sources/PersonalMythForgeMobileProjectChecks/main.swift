@@ -1239,6 +1239,16 @@ do {
         "resourceRequirementRows",
         "final launch resource requirements row rendering"
     )
+    try requireContains(
+        finalLaunchStatusView,
+        "Resource Fill Guide",
+        "final launch resource fill guide section"
+    )
+    try requireContains(
+        finalLaunchStatusView,
+        "resourceFillGuideRows",
+        "final launch resource fill guide row rendering"
+    )
     try requireContains(finalLaunchStatusView, "Apply Preview", "final launch apply preview section")
     try requireContains(
         finalLaunchStatusView,
@@ -1294,6 +1304,16 @@ do {
         pmfModels,
         "finalResourceRequirements",
         "final demo launch final resource requirements field"
+    )
+    try requireContains(
+        pmfModels,
+        "FinalResourceFillGuideReport",
+        "final resource fill guide report model"
+    )
+    try requireContains(
+        pmfModels,
+        "finalResourceFillGuide",
+        "final demo launch final resource fill guide field"
     )
     try requireContains(
         pmfModels,
@@ -1441,6 +1461,21 @@ do {
         finalLaunchMobileSummary,
         "resourceRequirementRows(",
         "final launch resource requirements row builder"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "resourceFillGuideRows",
+        "final launch resource fill guide rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "resourceFillGuideRows(",
+        "final launch resource fill guide row builder"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Fill guide",
+        "final launch resource fill guide summary copy"
     )
     try requireContains(
         finalLaunchMobileSummary,
@@ -1899,6 +1934,7 @@ do {
     try requireContains(finalLaunchStatusView, "Launch Receipt", "final launch receipt section")
     try requireContains(finalLaunchStatusView, "Resource Checklist", "final launch resource checklist section")
     try requireContains(finalLaunchStatusView, "Resource Requirements", "final launch resource requirements section")
+    try requireContains(finalLaunchStatusView, "Resource Fill Guide", "final launch resource fill guide section")
     try requireContains(finalLaunchStatusView, "Resource Handoff", "final launch resource handoff section")
     try requireContains(finalLaunchStatusView, "Backend Resources", "final launch backend resources section")
     try requireContains(finalLaunchStatusView, "iOS Resources", "final launch iOS resources section")
@@ -1930,6 +1966,16 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements",
         "final resource requirements summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesFinalResourceFillGuideFromFinalLaunchPayload",
+        "final resource fill guide decode test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsResourceFillGuide",
+        "final resource fill guide summary test"
     )
     try requireContains(
         contractTests,

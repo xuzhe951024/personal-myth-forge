@@ -173,6 +173,18 @@ SOURCE_REQUIREMENTS = (
         "plannedConsentSteps",
     ),
     SourceRequirement(
+        "model_final_resource_fill_guide",
+        "Final resource fill guide model",
+        PMF_MODELS_PATH,
+        "FinalResourceFillGuideReport",
+    ),
+    SourceRequirement(
+        "model_final_resource_fill_guide_field",
+        "Final launch resource fill guide field",
+        PMF_MODELS_PATH,
+        "finalResourceFillGuide",
+    ),
+    SourceRequirement(
         "model_resource_handoff",
         "Resource handoff report model",
         PMF_MODELS_PATH,
@@ -377,6 +389,18 @@ SOURCE_REQUIREMENTS = (
         "resourceHandoffIOSRows",
     ),
     SourceRequirement(
+        "mobile_summary_resource_fill_guide_rows",
+        "Mobile final launch resource fill guide rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "resourceFillGuideRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_resource_fill_guide_copy",
+        "Mobile final launch resource fill guide copy",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "Fill guide",
+    ),
+    SourceRequirement(
         "mobile_summary_redaction",
         "Mobile final launch summary redaction",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -441,6 +465,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch configured evidence section",
         FINAL_LAUNCH_STATUS_VIEW_PATH,
         "Configured Evidence",
+    ),
+    SourceRequirement(
+        "mobile_status_view_resource_fill_guide",
+        "Mobile final launch resource fill guide section",
+        FINAL_LAUNCH_STATUS_VIEW_PATH,
+        "Resource Fill Guide",
     ),
     SourceRequirement(
         "mobile_status_view_resource_handoff",
@@ -675,6 +705,18 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts configured evidence plan",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan",
+    ),
+    SourceRequirement(
+        "contract_final_resource_fill_guide_decode",
+        "Contract test decodes final resource fill guide",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesFinalResourceFillGuideFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_final_resource_fill_guide_summary",
+        "Contract test renders final resource fill guide",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsResourceFillGuide",
     ),
     SourceRequirement(
         "contract_resource_handoff_decode",

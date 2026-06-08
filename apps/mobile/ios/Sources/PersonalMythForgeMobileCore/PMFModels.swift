@@ -870,6 +870,136 @@ public struct FinalResourceRequirementsReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalResourceFillGuideSummary: Codable, Equatable, Sendable {
+    public var requiredInputs: Int
+    public var optionalInputs: Int
+    public var configuredInputs: Int
+    public var secretInputs: Int
+
+    public init(
+        requiredInputs: Int,
+        optionalInputs: Int,
+        configuredInputs: Int,
+        secretInputs: Int
+    ) {
+        self.requiredInputs = requiredInputs
+        self.optionalInputs = optionalInputs
+        self.configuredInputs = configuredInputs
+        self.secretInputs = secretInputs
+    }
+}
+
+public struct FinalResourceFillGuideItem: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var domain: String
+    public var status: String
+    public var classification: String?
+    public var required: Bool
+    public var secret: Bool
+    public var displayValue: String
+    public var inputSource: String
+    public var writeDestination: String
+    public var applyCommand: String
+    public var validationCommand: String
+    public var fillAction: String
+    public var notes: String
+    public var unblocks: [String]
+
+    public init(
+        id: String,
+        label: String,
+        domain: String,
+        status: String,
+        classification: String? = nil,
+        required: Bool,
+        secret: Bool,
+        displayValue: String,
+        inputSource: String,
+        writeDestination: String,
+        applyCommand: String,
+        validationCommand: String,
+        fillAction: String,
+        notes: String,
+        unblocks: [String] = []
+    ) {
+        self.id = id
+        self.label = label
+        self.domain = domain
+        self.status = status
+        self.classification = classification
+        self.required = required
+        self.secret = secret
+        self.displayValue = displayValue
+        self.inputSource = inputSource
+        self.writeDestination = writeDestination
+        self.applyCommand = applyCommand
+        self.validationCommand = validationCommand
+        self.fillAction = fillAction
+        self.notes = notes
+        self.unblocks = unblocks
+    }
+}
+
+public struct FinalResourceFillGuideSafety: Codable, Equatable, Sendable {
+    public var providerSecretsInReport: Bool
+    public var localPathsInReport: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var writesFinalResources: Bool
+    public var liveProviderCalls: Bool
+    public var globalMutation: Bool
+
+    public init(
+        providerSecretsInReport: Bool,
+        localPathsInReport: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        writesFinalResources: Bool,
+        liveProviderCalls: Bool,
+        globalMutation: Bool
+    ) {
+        self.providerSecretsInReport = providerSecretsInReport
+        self.localPathsInReport = localPathsInReport
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.writesFinalResources = writesFinalResources
+        self.liveProviderCalls = liveProviderCalls
+        self.globalMutation = globalMutation
+    }
+}
+
+public struct FinalResourceFillGuideReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: FinalResourceFillGuideSummary
+    public var requiredInputs: [FinalResourceFillGuideItem]
+    public var optionalInputs: [FinalResourceFillGuideItem]
+    public var configuredInputs: [FinalResourceFillGuideItem]
+    public var commands: [String]
+    public var safety: FinalResourceFillGuideSafety
+
+    public init(
+        kind: String,
+        status: String,
+        summary: FinalResourceFillGuideSummary,
+        requiredInputs: [FinalResourceFillGuideItem] = [],
+        optionalInputs: [FinalResourceFillGuideItem] = [],
+        configuredInputs: [FinalResourceFillGuideItem] = [],
+        commands: [String] = [],
+        safety: FinalResourceFillGuideSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.requiredInputs = requiredInputs
+        self.optionalInputs = optionalInputs
+        self.configuredInputs = configuredInputs
+        self.commands = commands
+        self.safety = safety
+    }
+}
+
 public struct FinalResourceApplyPreviewSummary: Codable, Equatable, Sendable {
     public var ready: Int
     public var missing: Int
@@ -2814,6 +2944,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var finalResourcesPreflight: FinalResourcesPreflightReport?
     public var finalResourceRequirements: FinalResourceRequirementsReport?
     public var finalResourceApplyPreview: FinalResourceApplyPreviewReport?
+    public var finalResourceFillGuide: FinalResourceFillGuideReport?
     public var finalExternalActionLedger: FinalExternalActionLedgerReport?
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
     public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
@@ -2842,6 +2973,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
         finalResourceRequirements: FinalResourceRequirementsReport? = nil,
         finalResourceApplyPreview: FinalResourceApplyPreviewReport? = nil,
+        finalResourceFillGuide: FinalResourceFillGuideReport? = nil,
         finalExternalActionLedger: FinalExternalActionLedgerReport? = nil,
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
         threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
@@ -2869,6 +3001,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.finalResourcesPreflight = finalResourcesPreflight
         self.finalResourceRequirements = finalResourceRequirements
         self.finalResourceApplyPreview = finalResourceApplyPreview
+        self.finalResourceFillGuide = finalResourceFillGuide
         self.finalExternalActionLedger = finalExternalActionLedger
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
         self.threeDEvaluationReadiness = threeDEvaluationReadiness

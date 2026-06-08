@@ -54,6 +54,34 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
     assert result.report["safety"]["live_provider_calls_by_default"] is False
 
 
+def test_final_demo_launch_includes_sanitized_resource_fill_guide(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="configured",
+    )
+
+    guide = result.report["final_resource_fill_guide"]
+    assert guide["kind"] == "final_resource_fill_guide_report"
+    assert guide["status"] == "blocked"
+    assert guide["summary"]["required_inputs"] == 5
+    assert guide["summary"]["secret_inputs"] == 4
+    assert guide["required_inputs"][0]["id"] == "MESHY_API_KEY"
+    assert guide["required_inputs"][0]["display_value"] == "<secret: fill locally>"
+    assert guide["commands"][:2] == [
+        "make final-resource-requirements",
+        "make final-resource-apply-preview",
+    ]
+    text = json.dumps(guide, sort_keys=True)
+    assert "/Users/" not in text
+    assert "sk-" not in text
+    assert "meshy-secret" not in text
+
+
 def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
     tmp_path: Path,
 ) -> None:

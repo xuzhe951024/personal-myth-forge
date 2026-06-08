@@ -29,6 +29,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var modePolicyRows: [String]
     public var resourceChecklistRows: [String]
     public var resourceRequirementRows: [String]
+    public var resourceFillGuideRows: [String]
     public var applyPreviewRows: [String]
     public var externalActionLedgerRows: [String]
     public var resourceHandoffRows: [String]
@@ -60,6 +61,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         modePolicyRows: [String] = [],
         resourceChecklistRows: [String] = [],
         resourceRequirementRows: [String] = [],
+        resourceFillGuideRows: [String] = [],
         applyPreviewRows: [String] = [],
         externalActionLedgerRows: [String] = [],
         resourceHandoffRows: [String] = [],
@@ -90,6 +92,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.modePolicyRows = modePolicyRows
         self.resourceChecklistRows = resourceChecklistRows
         self.resourceRequirementRows = resourceRequirementRows
+        self.resourceFillGuideRows = resourceFillGuideRows
         self.applyPreviewRows = applyPreviewRows
         self.externalActionLedgerRows = externalActionLedgerRows
         self.resourceHandoffRows = resourceHandoffRows
@@ -167,6 +170,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             resourceChecklistRows: resourceChecklistRows(from: report.finalResourcesPreflight),
             resourceRequirementRows: resourceRequirementRows(
                 from: report.finalResourceRequirements
+            ),
+            resourceFillGuideRows: resourceFillGuideRows(
+                from: report.finalResourceFillGuide
             ),
             applyPreviewRows: applyPreviewRows(from: report.finalResourceApplyPreview),
             externalActionLedgerRows: externalActionLedgerRows(
@@ -375,6 +381,41 @@ public enum FinalLaunchMobileSummaryBuilder {
         }
         parts.append("| \(requirement.validationCommand)")
         return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func resourceFillGuideRows(
+        from report: FinalResourceFillGuideReport?
+    ) -> [String] {
+        guard let report else {
+            return ["Final resource fill guide has not loaded."]
+        }
+        var rows = [
+            "Fill guide \(sanitize(report.status)): required \(report.summary.requiredInputs), optional \(report.summary.optionalInputs), configured \(report.summary.configuredInputs), secret \(report.summary.secretInputs)."
+        ]
+        let selectedInputs: [FinalResourceFillGuideItem]
+        if !report.requiredInputs.isEmpty {
+            selectedInputs = report.requiredInputs
+        } else if !report.optionalInputs.isEmpty {
+            selectedInputs = report.optionalInputs
+        } else {
+            selectedInputs = report.configuredInputs
+        }
+        rows.append(contentsOf: selectedInputs.prefix(3).map(resourceFillGuideInputRow))
+        if let command = report.commands.first, !command.isEmpty {
+            rows.append("Command: \(sanitize(command))")
+        }
+        rows.append(
+            "Safety: writes=\(flag(report.safety.writesBackendEnv || report.safety.writesIosDeployConfig || report.safety.writesFinalResources)) live_calls=\(flag(report.safety.liveProviderCalls)) global_mutation=\(flag(report.safety.globalMutation))"
+        )
+        return rows.map(sanitize)
+    }
+
+    private static func resourceFillGuideInputRow(
+        _ input: FinalResourceFillGuideItem
+    ) -> String {
+        sanitize(
+            "\(input.id): \(input.status) | \(input.inputSource) | \(input.validationCommand)"
+        )
     }
 
     private static func applyPreviewRows(

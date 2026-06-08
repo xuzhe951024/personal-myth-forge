@@ -99,6 +99,8 @@ do {
     try testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist()
     try testDecodesFinalResourceRequirementsFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsBlockedResourceRequirements()
+    try testDecodesFinalResourceFillGuideFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsResourceFillGuide()
     try testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsResourceApplyPreview()
     try testDecodesFinalExternalActionLedgerFromFinalLaunchPayload()
@@ -2469,6 +2471,59 @@ private func testFinalLaunchMobileSummaryShowsBlockedResourceRequirements() thro
     try expectContains(text, "PMF_BACKEND_BASE_URL")
     try expectContains(text, "loopback_url")
     try expectContains(text, "make final-resource-requirements")
+}
+
+private func testDecodesFinalResourceFillGuideFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload()
+    )
+
+    let guide = try require(
+        report.finalResourceFillGuide,
+        "missing final resource fill guide"
+    )
+
+    try expectEqual(guide.kind, "final_resource_fill_guide_report")
+    try expectEqual(guide.status, "blocked")
+    try expectEqual(guide.summary.requiredInputs, 5)
+    try expectEqual(guide.summary.optionalInputs, 8)
+    try expectEqual(guide.summary.configuredInputs, 0)
+    try expectEqual(guide.summary.secretInputs, 4)
+    try expectEqual(guide.requiredInputs.first?.id, "MESHY_API_KEY")
+    try expectEqual(guide.requiredInputs.first?.displayValue, "<secret: fill locally>")
+    try expectEqual(
+        guide.requiredInputs.first?.inputSource,
+        "services/backend/.local/final-resources.env"
+    )
+    try expectEqual(
+        guide.commands.first,
+        "make final-resource-requirements"
+    )
+    try expectFalse(guide.safety.writesBackendEnv)
+    try expectFalse(guide.safety.liveProviderCalls)
+}
+
+private func testFinalLaunchMobileSummaryShowsResourceFillGuide() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(),
+        error: nil
+    )
+    let text = summary.resourceFillGuideRows.joined(separator: " ")
+
+    try expectContains(
+        text,
+        "Fill guide blocked: required 5, optional 8, configured 0, secret 4."
+    )
+    try expectContains(
+        text,
+        "MESHY_API_KEY: missing | services/backend/.local/final-resources.env | make final-resources-preflight"
+    )
+    try expectContains(text, "Command: make final-resource-requirements")
+    try expectContains(
+        text,
+        "Safety: writes=false live_calls=false global_mutation=false"
+    )
 }
 
 private func testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload() throws {
@@ -5015,6 +5070,99 @@ private func finalDemoLaunchPayload(
               "local_paths_in_report": false,
               "writes_backend_env": false,
               "writes_ios_deploy_config": false,
+              "live_provider_calls": false,
+              "global_mutation": false
+            }
+          },
+          "final_resource_fill_guide": {
+            "kind": "final_resource_fill_guide_report",
+            "status": "blocked",
+            "summary": {
+              "required_inputs": 5,
+              "optional_inputs": 8,
+              "configured_inputs": 0,
+              "secret_inputs": 4
+            },
+            "required_inputs": [
+              {
+                "id": "MESHY_API_KEY",
+                "label": "Meshy API key",
+                "domain": "backend_provider",
+                "status": "missing",
+                "classification": "missing_required_value",
+                "required": true,
+                "secret": true,
+                "display_value": "<secret: fill locally>",
+                "input_source": "services/backend/.local/final-resources.env",
+                "write_destination": "services/backend/.env",
+                "apply_command": "make final-apply-resources",
+                "validation_command": "make final-resources-preflight",
+                "fill_action": "fill MESHY_API_KEY in services/backend/.local/final-resources.env",
+                "notes": "Backend-only secret for live Meshy 3D generation.",
+                "unblocks": ["game_asset_3d_generation", "provider_key_handoff"]
+              },
+              {
+                "id": "OPENAI_API_KEY",
+                "label": "OpenAI API key",
+                "domain": "backend_provider",
+                "status": "missing",
+                "classification": "missing_required_value",
+                "required": true,
+                "secret": true,
+                "display_value": "<secret: fill locally>",
+                "input_source": "services/backend/.local/final-resources.env",
+                "write_destination": "services/backend/.env",
+                "apply_command": "make final-apply-resources",
+                "validation_command": "make final-resources-preflight",
+                "fill_action": "fill OPENAI_API_KEY in services/backend/.local/final-resources.env",
+                "notes": "Backend-only secret for live AI NPC Agent behavior.",
+                "unblocks": ["ai_agent_npc", "provider_key_handoff"]
+              }
+            ],
+            "optional_inputs": [
+              {
+                "id": "PRINT_PROVIDER",
+                "label": "Print provider",
+                "domain": "print_provider",
+                "status": "optional",
+                "classification": "optional_value_not_required",
+                "required": false,
+                "secret": false,
+                "display_value": "<fill locally>",
+                "input_source": "services/backend/.local/final-resources.env",
+                "write_destination": "services/backend/.env",
+                "apply_command": "make final-apply-resources",
+                "validation_command": "make print-fulfillment-readiness",
+                "fill_action": "fill PRINT_PROVIDER in services/backend/.local/final-resources.env",
+                "notes": "Use local for demo quote stubs or treatstock for configured quote checks.",
+                "unblocks": ["print_fulfillment"]
+              }
+            ],
+            "configured_inputs": [],
+            "commands": [
+              "make final-resource-requirements",
+              "make final-resource-apply-preview",
+              "make final-apply-resources",
+              "make final-local-report-refresh"
+            ],
+            "markdown": "# Final Resource Fill Guide",
+            "source_reports": {
+              "final_resource_requirements": {
+                "kind": "final_resource_requirements_report",
+                "status": "blocked",
+                "summary": {
+                  "total": 13,
+                  "missing": 5,
+                  "blocked": 1
+                }
+              }
+            },
+            "safety": {
+              "provider_secrets_in_report": false,
+              "local_paths_in_report": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "writes_final_resources": false,
               "live_provider_calls": false,
               "global_mutation": false
             }

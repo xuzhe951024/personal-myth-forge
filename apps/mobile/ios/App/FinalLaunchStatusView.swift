@@ -65,6 +65,10 @@ struct FinalLaunchStatusView: View {
                 groupedLines(title: "Resource Requirements", lines: summary.resourceRequirementRows)
             }
 
+            if !summary.resourceFillGuideRows.isEmpty {
+                groupedLines(title: "Resource Fill Guide", lines: summary.resourceFillGuideRows)
+            }
+
             if !summary.applyPreviewRows.isEmpty {
                 groupedLines(title: "Apply Preview", lines: summary.applyPreviewRows)
             }

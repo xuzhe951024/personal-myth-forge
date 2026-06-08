@@ -152,6 +152,22 @@ DEFAULT_VISUAL_ARTIFACTS = (
             "commands_run=false live_calls=false",
         ),
     ),
+    VisualArtifactSpec(
+        id="p0.154_resource_fill_guide_visual",
+        html_path="docs/superpowers/verification/p0.154-resource-fill-guide-visual.html",
+        png_path="docs/superpowers/verification/assets/p0.154-resource-fill-guide-visual-390x844.png",
+        notes_path="docs/superpowers/verification/2026-06-08-p0.154-resource-fill-guide-visual-regression.md",
+        width=390,
+        height=844,
+        required_text=(
+            "Resource Fill Guide",
+            "Fill guide blocked",
+            "required 5, optional 8, configured 0, secret 4",
+            "MESHY_API_KEY",
+            "make final-resource-requirements",
+            "Safety: writes=false live_calls=false global_mutation=false",
+        ),
+    ),
 )
 
 
