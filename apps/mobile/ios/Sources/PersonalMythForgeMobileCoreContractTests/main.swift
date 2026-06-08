@@ -97,6 +97,7 @@ do {
     try testDevicePreflightBlocksOnRequiredFinalResourceFillGuideInputs()
     try testDevicePreflightMarksReadyFinalResourceFillGuide()
     try testDevicePreflightRedactsUnsafeFinalResourceFillGuideDetail()
+    try testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail()
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testFinalLaunchMobileSummaryWaitsForMissingReport()
     try testFinalLaunchMobileSummaryWaitsWithLaunchReceipt()
@@ -2738,6 +2739,39 @@ private func testDevicePreflightRedactsUnsafeFinalResourceFillGuideDetail() thro
     try expectNotContains(text, "local-capture://")
     try expectNotContains(text, "checkout")
     try expectNotContains(text, "Bearer")
+}
+
+private func testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail() throws {
+    var report = finalDemoLaunchReport()
+    report.finalResourceFillGuide = blockedFinalResourceFillGuideReport(
+        firstBlocker: FinalResourceFillGuideFirstBlocker(
+            id: "MESHY_API_KEY",
+            label: "Meshy API key",
+            status: "missing",
+            classification: "missing_required_value",
+            command: "paste sk-test from /Users/zhexu/private file:///tmp local-capture://cap checkout_url Bearer token",
+            detail: "Authorization Bearer token api_key=secret checkout_url /Users/zhexu/private",
+            domain: "backend_provider",
+            inputSource: "services/backend/.local/final-resources.env",
+            writeDestination: "services/backend/.env",
+            validationCommand: "make final-resources-preflight"
+        )
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.item(id: "final_resource_fill_guide")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
 }
 
 private func testDevicePreflightBlocksAndRedactsFinalLaunchError() throws {
@@ -10689,7 +10723,8 @@ private func readyFinalResourceItemsJSON() -> String {
 }
 
 private func blockedFinalResourceFillGuideReport(
-    fillAction: String = "fill MESHY_API_KEY in services/backend/.local/final-resources.env"
+    fillAction: String = "fill MESHY_API_KEY in services/backend/.local/final-resources.env",
+    firstBlocker: FinalResourceFillGuideFirstBlocker? = nil
 ) -> FinalResourceFillGuideReport {
     FinalResourceFillGuideReport(
         kind: "final_resource_fill_guide_report",
@@ -10719,6 +10754,7 @@ private func blockedFinalResourceFillGuideReport(
                 unblocks: ["game_asset_3d_generation", "provider_key_handoff"]
             )
         ],
+        firstBlocker: firstBlocker,
         commands: ["make final-resource-requirements"],
         safety: FinalResourceFillGuideSafety(
             providerSecretsInReport: false,

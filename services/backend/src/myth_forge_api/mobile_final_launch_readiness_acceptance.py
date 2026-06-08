@@ -815,6 +815,12 @@ SOURCE_REQUIREMENTS = (
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideDetail",
     ),
     SourceRequirement(
+        "contract_final_resource_fill_guide_first_blocker_redaction",
+        "Contract test redacts unsafe final resource fill guide first blocker detail",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
+    ),
+    SourceRequirement(
         "contract_preflight_error",
         "Contract test redacts launch errors",
         CORE_CONTRACT_TESTS_PATH,
