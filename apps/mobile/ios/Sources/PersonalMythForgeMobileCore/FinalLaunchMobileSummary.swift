@@ -225,9 +225,31 @@ public enum FinalLaunchMobileSummaryBuilder {
                 from: report.iosDeviceLaunchRehearsalReadiness
             ),
             handoffRows: handoffRows(from: report.finalOperatorHandoff),
-            commandRows: report.commands.prefix(4).map(sanitize),
+            commandRows: commandRows(from: report),
             notes: baseNotes()
         )
+    }
+
+    private static func commandRows(from report: FinalDemoLaunchReport) -> [String] {
+        let configuredAcceptanceCommand = "make final-acceptance-configured"
+        var selected: [String] = []
+
+        if isConfiguredMode(report.mode),
+           report.commands.contains(configuredAcceptanceCommand) {
+            selected.append(configuredAcceptanceCommand)
+        }
+
+        for command in report.commands where selected.count < 4 {
+            if !selected.contains(command) {
+                selected.append(command)
+            }
+        }
+
+        return selected.map(sanitize)
+    }
+
+    private static func isConfiguredMode(_ mode: String) -> Bool {
+        mode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "configured"
     }
 
     private static func modePolicyRows(from report: FinalDemoLaunchReport) -> [String] {
