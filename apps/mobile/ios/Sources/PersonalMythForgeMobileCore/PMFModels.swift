@@ -3268,6 +3268,96 @@ public struct FinalConfiguredEvidencePlanReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct ConfiguredLiveEvidenceBundleSummary: Codable, Equatable, Sendable {
+    public var evidenceFiles: Int
+    public var evidenceReady: Int
+    public var evidenceMissing: Int
+    public var evidenceBlocked: Int
+    public var evidencePartial: Int
+    public var commands: Int
+    public var commandsReady: Int
+    public var commandsReadyToRun: Int
+    public var blockedSteps: Int
+    public var consentRequiredSteps: Int
+    public var liveProviderSteps: Int
+    public var costSteps: Int
+    public var repoLocalWriteSteps: Int
+    public var commandsRun: Int
+}
+
+public struct ConfiguredLiveEvidenceBundleBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String?
+    public var blockedBy: [String]?
+}
+
+public struct ConfiguredLiveEvidenceBundleEvidenceFile: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var path: String
+    public var status: String
+    public var classification: String?
+    public var expectedKind: String
+    public var command: String
+    public var requiresLiveProviderConsent: Bool
+    public var detail: String
+}
+
+public struct ConfiguredLiveEvidenceBundleCommand: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var command: String
+    public var requiresLiveProviderConsent: Bool
+    public var mayCallLiveProvider: Bool
+    public var costRisk: Bool
+    public var repoLocalWrite: Bool
+    public var wouldWriteBackendEnv: Bool
+    public var wouldWriteIosDeployConfig: Bool
+    public var blockedBy: [String]
+}
+
+public struct ConfiguredLiveEvidenceBundleLiveCallPolicy: Codable, Equatable, Sendable {
+    public var bundleCallsLiveProviders: Bool
+    public var liveCallsByDefault: Bool
+    public var allowLiveProviderCalls: Bool
+    public var consentFlag: String
+    public var consentRequiredFor: [String]
+}
+
+public struct ConfiguredLiveEvidenceBundleSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+    public var providerSecretsInReport: Bool
+    public var rawPrivateContextInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+}
+
+public struct ConfiguredLiveEvidenceBundleReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: ConfiguredLiveEvidenceBundleSummary
+    public var currentBlocker: ConfiguredLiveEvidenceBundleBlocker?
+    public var evidenceFiles: [ConfiguredLiveEvidenceBundleEvidenceFile]
+    public var commandSequence: [ConfiguredLiveEvidenceBundleCommand]
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var liveCallPolicy: ConfiguredLiveEvidenceBundleLiveCallPolicy
+    public var safety: ConfiguredLiveEvidenceBundleSafety
+}
+
 public struct PrintFulfillmentReadinessSummary: Codable, Equatable, Sendable {
     public var ready: Int
     public var partial: Int
@@ -3545,6 +3635,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var localShowcaseSmoke: LocalShowcaseSmokeReport?
     public var liveProviderEvidence: LiveProviderEvidenceReport?
     public var finalConfiguredEvidencePlan: FinalConfiguredEvidencePlanReport?
+    public var configuredLiveEvidenceBundle: ConfiguredLiveEvidenceBundleReport?
     public var printFulfillmentReadiness: PrintFulfillmentReadinessReport?
     public var finalShowcaseReadiness: FinalShowcaseReadinessReport?
     public var finalOperatorHandoff: FinalOperatorHandoffReport?
@@ -3577,6 +3668,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         localShowcaseSmoke: LocalShowcaseSmokeReport? = nil,
         liveProviderEvidence: LiveProviderEvidenceReport? = nil,
         finalConfiguredEvidencePlan: FinalConfiguredEvidencePlanReport? = nil,
+        configuredLiveEvidenceBundle: ConfiguredLiveEvidenceBundleReport? = nil,
         printFulfillmentReadiness: PrintFulfillmentReadinessReport? = nil,
         finalShowcaseReadiness: FinalShowcaseReadinessReport? = nil,
         finalOperatorHandoff: FinalOperatorHandoffReport? = nil,
@@ -3608,6 +3700,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.localShowcaseSmoke = localShowcaseSmoke
         self.liveProviderEvidence = liveProviderEvidence
         self.finalConfiguredEvidencePlan = finalConfiguredEvidencePlan
+        self.configuredLiveEvidenceBundle = configuredLiveEvidenceBundle
         self.printFulfillmentReadiness = printFulfillmentReadiness
         self.finalShowcaseReadiness = finalShowcaseReadiness
         self.finalOperatorHandoff = finalOperatorHandoff

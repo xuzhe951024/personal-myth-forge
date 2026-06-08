@@ -153,6 +153,9 @@ do {
     try testDecodesConfiguredEvidencePlanFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan()
     try testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan()
+    try testDecodesConfiguredEvidenceBundleFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsConfiguredEvidenceBundle()
+    try testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidenceBundle()
     try testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness()
     try testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness()
@@ -3819,6 +3822,66 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan() t
     try expectNotContains(text, "Bearer")
 }
 
+private func testDecodesConfiguredEvidenceBundleFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(configuredEvidenceBundleStatus: "blocked")
+    )
+
+    let bundle = try require(
+        report.configuredLiveEvidenceBundle,
+        "missing configured evidence bundle"
+    )
+    try expectEqual(bundle.kind, "configured_live_evidence_bundle_report")
+    try expectEqual(bundle.status, "blocked")
+    try expectEqual(bundle.summary.evidenceFiles, 5)
+    try expectEqual(bundle.summary.commands, 6)
+    try expectEqual(bundle.currentBlocker?.id, "final_resource_fill_guide")
+    try expectEqual(bundle.evidenceFiles.first?.id, "provider_handoff")
+    try expectEqual(bundle.commandSequence.first?.id, "final_resource_fill_guide")
+    try expectFalse(bundle.liveCallPolicy.liveCallsByDefault)
+    try expectFalse(bundle.safety.commandsRun)
+    try expectFalse(bundle.safety.liveProviderCalls)
+}
+
+private func testFinalLaunchMobileSummaryShowsConfiguredEvidenceBundle() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(configuredEvidenceBundleStatus: "blocked"),
+        error: nil
+    )
+    let text = summary.configuredEvidenceBundleRows.joined(separator: " ")
+
+    try expectContains(text, "Configured bundle blocked")
+    try expectContains(text, "evidence ready 0, missing 5")
+    try expectContains(text, "commands ready 3, blocked 2, consent 1")
+    try expectContains(text, "final_resource_fill_guide: blocked")
+    try expectContains(text, "make configured-live-evidence-bundle")
+    try expectContains(text, "live calls by default no")
+    try expectContains(text, "commands_run=false live_calls=false")
+}
+
+private func testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidenceBundle() throws {
+    let report = finalDemoLaunchReport(
+        configuredEvidenceBundleStatus: "blocked",
+        configuredEvidenceBundleBlockerDetail: (
+            "sk-test /Users/zhexu/private file:///tmp/private "
+            + "local-capture://cap checkout_url https://checkout.example/pay "
+            + "http://10.0.0.24:8080 Bearer token"
+        )
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "10.0.0.24")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -5597,6 +5660,8 @@ private func finalDemoLaunchPayload(
     liveProviderEvidenceCommand: String? = nil,
     configuredEvidencePlanStatus: String = "blocked",
     configuredEvidencePlanBlockerDetail: String = "Configured 3D evidence requires MESHY_API_KEY and live provider consent.",
+    configuredEvidenceBundleStatus: String = "blocked",
+    configuredEvidenceBundleBlockerDetail: String = "Final resource fill guide is blocked before configured evidence bundle.",
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
     printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
@@ -5725,6 +5790,23 @@ private func finalDemoLaunchPayload(
     let configuredEvidencePlanOperatorActionsJSON = configuredEvidencePlanReady
         ? #"[]"#
         : #"["provide MESHY_API_KEY in services/backend/.env", "rerun configured 3D evidence after consent"]"#
+    let configuredEvidenceBundleReady = configuredEvidenceBundleStatus == "ready"
+    let configuredEvidenceBundleBlockerJSON = configuredEvidenceBundleReady ? "null" : """
+    {
+      "id": "final_resource_fill_guide",
+      "label": "Final resource fill guide",
+      "status": "blocked",
+      "command": "make final-resource-fill-guide",
+      "detail": "\(configuredEvidenceBundleBlockerDetail)",
+      "blocked_by": ["MESHY_API_KEY"]
+    }
+    """
+    let configuredEvidenceBundleSummaryJSON = configuredEvidenceBundleReady
+        ? #"{"evidence_files": 5, "evidence_ready": 5, "evidence_missing": 0, "evidence_blocked": 0, "evidence_partial": 0, "commands": 6, "commands_ready": 6, "commands_ready_to_run": 0, "blocked_steps": 0, "consent_required_steps": 0, "live_provider_steps": 3, "cost_steps": 3, "repo_local_write_steps": 1, "commands_run": 0}"#
+        : #"{"evidence_files": 5, "evidence_ready": 0, "evidence_missing": 5, "evidence_blocked": 0, "evidence_partial": 0, "commands": 6, "commands_ready": 3, "commands_ready_to_run": 0, "blocked_steps": 2, "consent_required_steps": 1, "live_provider_steps": 3, "cost_steps": 3, "repo_local_write_steps": 1, "commands_run": 0}"#
+    let configuredEvidenceBundleOperatorActionsJSON = configuredEvidenceBundleReady
+        ? #"[]"#
+        : #"["unblock final_resource_fill_guide before configured evidence bundle", "make configured-live-evidence-bundle"]"#
     let printReadinessFirstStatus = printReadinessReady ? "ready" : printReadinessBlocked ? "blocked" : "partial"
     let printReadinessFirstClassification = printReadinessReady
         ? "draft_quote_requires_user_approval"
@@ -7066,6 +7148,64 @@ private func finalDemoLaunchPayload(
               "allow_live_provider_calls": false,
               "consent_flag": "PMF_ALLOW_LIVE_PROVIDER_CALLS",
               "consent_required_for": ["three_d_evaluation_configured", "print_quote_configured"]
+            },
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
+              "provider_secrets_in_report": false,
+              "raw_private_context_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false
+            }
+          },
+          "configured_live_evidence_bundle": {
+            "kind": "configured_live_evidence_bundle_report",
+            "status": "\(configuredEvidenceBundleStatus)",
+            "summary": \(configuredEvidenceBundleSummaryJSON),
+            "current_blocker": \(configuredEvidenceBundleBlockerJSON),
+            "evidence_files": [
+              {
+                "id": "provider_handoff",
+                "label": "Provider handoff",
+                "path": "services/backend/.local/provider-handoff.json",
+                "status": "\(configuredEvidenceBundleReady ? "ready" : "missing")",
+                "classification": "\(configuredEvidenceBundleReady ? "ready" : "missing_report")",
+                "expected_kind": "provider_handoff_report",
+                "command": "make provider-handoff",
+                "requires_live_provider_consent": false,
+                "detail": "\(configuredEvidenceBundleReady ? "Meshy and OpenAI core provider config is real-provider-ready." : "Missing provider handoff.")"
+              }
+            ],
+            "command_sequence": [
+              {
+                "id": "final_resource_fill_guide",
+                "label": "Final resource fill guide",
+                "status": "\(configuredEvidenceBundleReady ? "ready" : "blocked")",
+                "command": "make final-resource-fill-guide",
+                "requires_live_provider_consent": false,
+                "may_call_live_provider": false,
+                "cost_risk": false,
+                "repo_local_write": false,
+                "would_write_backend_env": false,
+                "would_write_ios_deploy_config": false,
+                "blocked_by": \(configuredEvidenceBundleReady ? "[]" : #"["MESHY_API_KEY"]"#)
+              }
+            ],
+            "operator_actions": \(configuredEvidenceBundleOperatorActionsJSON),
+            "commands": ["make configured-live-evidence-bundle"],
+            "live_call_policy": {
+              "bundle_calls_live_providers": false,
+              "live_calls_by_default": false,
+              "allow_live_provider_calls": false,
+              "consent_flag": "--allow-live-provider-calls",
+              "consent_required_for": ["three_d_evaluation_configured"]
             },
             "safety": {
               "commands_run": false,
@@ -10098,6 +10238,8 @@ private func finalDemoLaunchReport(
     liveProviderEvidenceCommand: String? = nil,
     configuredEvidencePlanStatus: String = "blocked",
     configuredEvidencePlanBlockerDetail: String = "Configured 3D evidence requires MESHY_API_KEY and live provider consent.",
+    configuredEvidenceBundleStatus: String = "blocked",
+    configuredEvidenceBundleBlockerDetail: String = "Final resource fill guide is blocked before configured evidence bundle.",
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
     printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
@@ -10175,6 +10317,8 @@ private func finalDemoLaunchReport(
             liveProviderEvidenceCommand: liveProviderEvidenceCommand,
             configuredEvidencePlanStatus: configuredEvidencePlanStatus,
             configuredEvidencePlanBlockerDetail: configuredEvidencePlanBlockerDetail,
+            configuredEvidenceBundleStatus: configuredEvidenceBundleStatus,
+            configuredEvidenceBundleBlockerDetail: configuredEvidenceBundleBlockerDetail,
             printFulfillmentReadinessStatus: printFulfillmentReadinessStatus,
             printFulfillmentReadinessBlockerDetail: printFulfillmentReadinessBlockerDetail,
             printFulfillmentReadinessAction: printFulfillmentReadinessAction,

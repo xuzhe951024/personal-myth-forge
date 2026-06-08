@@ -44,6 +44,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var localShowcaseSmokeRows: [String]
     public var liveProviderEvidenceRows: [String]
     public var configuredEvidencePlanRows: [String]
+    public var configuredEvidenceBundleRows: [String]
     public var printFulfillmentReadinessRows: [String]
     public var showcaseReadinessRows: [String]
     public var deployRunbookRows: [String]
@@ -79,6 +80,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         localShowcaseSmokeRows: [String] = [],
         liveProviderEvidenceRows: [String] = [],
         configuredEvidencePlanRows: [String] = [],
+        configuredEvidenceBundleRows: [String] = [],
         printFulfillmentReadinessRows: [String] = [],
         showcaseReadinessRows: [String] = [],
         deployRunbookRows: [String] = [],
@@ -113,6 +115,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.localShowcaseSmokeRows = localShowcaseSmokeRows
         self.liveProviderEvidenceRows = liveProviderEvidenceRows
         self.configuredEvidencePlanRows = configuredEvidencePlanRows
+        self.configuredEvidenceBundleRows = configuredEvidenceBundleRows
         self.printFulfillmentReadinessRows = printFulfillmentReadinessRows
         self.showcaseReadinessRows = showcaseReadinessRows
         self.deployRunbookRows = deployRunbookRows
@@ -204,6 +207,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             ),
             configuredEvidencePlanRows: configuredEvidencePlanRows(
                 from: report.finalConfiguredEvidencePlan
+            ),
+            configuredEvidenceBundleRows: configuredEvidenceBundleRows(
+                from: report.configuredLiveEvidenceBundle
             ),
             printFulfillmentReadinessRows: printFulfillmentReadinessRows(
                 from: report.printFulfillmentReadiness
@@ -846,6 +852,74 @@ public enum FinalLaunchMobileSummaryBuilder {
         return sanitize(parts.joined(separator: " "))
     }
 
+    private static func configuredEvidenceBundleRows(
+        from bundle: ConfiguredLiveEvidenceBundleReport?
+    ) -> [String] {
+        guard let bundle else {
+            return ["Configured evidence bundle has not loaded."]
+        }
+        var rows = [
+            "Configured bundle \(sanitize(bundle.status)): evidence ready \(bundle.summary.evidenceReady), missing \(bundle.summary.evidenceMissing), blocked \(bundle.summary.evidenceBlocked), partial \(bundle.summary.evidencePartial).",
+            "Bundle commands ready \(bundle.summary.commandsReady), blocked \(bundle.summary.blockedSteps), consent \(bundle.summary.consentRequiredSteps), ready-to-run \(bundle.summary.commandsReadyToRun).",
+        ]
+        if bundle.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" {
+            if let blocker = bundle.currentBlocker {
+                rows.append(configuredEvidenceBundleBlockerRow(blocker))
+            } else if let command = bundle.commandSequence.first(where: { status(from: $0.status) != .ready }) {
+                rows.append(configuredEvidenceBundleCommandRow(command))
+            } else if let evidence = bundle.evidenceFiles.first(where: { status(from: $0.status) != .ready }) {
+                rows.append(configuredEvidenceBundleEvidenceRow(evidence))
+            }
+            rows.append(contentsOf: bundle.operatorActions.prefix(2).map(sanitize))
+        }
+        rows.append(
+            "Policy: live calls by default \(yesNo(bundle.liveCallPolicy.liveCallsByDefault)); bundle calls live providers \(yesNo(bundle.liveCallPolicy.bundleCallsLiveProviders)); consent flag \(sanitize(bundle.liveCallPolicy.consentFlag))."
+        )
+        rows.append(
+            "Safety: commands_run=\(flag(bundle.safety.commandsRun)) live_calls=\(flag(bundle.safety.liveProviderCalls))."
+        )
+        return rows.map(sanitize)
+    }
+
+    private static func configuredEvidenceBundleBlockerRow(
+        _ blocker: ConfiguredLiveEvidenceBundleBlocker
+    ) -> String {
+        var parts = ["\(blocker.id): \(blocker.status)", "| \(blocker.command)"]
+        if let classification = blocker.classification, !classification.isEmpty {
+            parts.append("| \(classification)")
+        }
+        if let blockedBy = blocker.blockedBy, !blockedBy.isEmpty {
+            parts.append("| blocked by \(blockedBy.joined(separator: ", "))")
+        }
+        if let detail = blocker.detail, !detail.isEmpty {
+            parts.append("| \(detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func configuredEvidenceBundleCommandRow(
+        _ command: ConfiguredLiveEvidenceBundleCommand
+    ) -> String {
+        var parts = ["\(command.id): \(command.status)", "| \(command.command)"]
+        if !command.blockedBy.isEmpty {
+            parts.append("| blocked by \(command.blockedBy.joined(separator: ", "))")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func configuredEvidenceBundleEvidenceRow(
+        _ evidence: ConfiguredLiveEvidenceBundleEvidenceFile
+    ) -> String {
+        var parts = ["\(evidence.id): \(evidence.status)", "| \(evidence.command)"]
+        if let classification = evidence.classification, !classification.isEmpty {
+            parts.append("| \(classification)")
+        }
+        if !evidence.detail.isEmpty {
+            parts.append("| \(evidence.detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
     private static func printFulfillmentReadinessRows(
         from readiness: PrintFulfillmentReadinessReport?
     ) -> [String] {
@@ -1183,6 +1257,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             #"checkout_url"#,
             #"https?://checkout\.[^\s,;"']+"#,
             #"https?://pay\.[^\s,;"']+"#,
+            #"https?://10\.[^\s,;"']+"#,
+            #"https?://192\.168\.[^\s,;"']+"#,
+            #"https?://172\.(1[6-9]|2[0-9]|3[01])\.[^\s,;"']+"#,
         ]
         for pattern in patterns {
             sanitized = sanitized.replacingOccurrences(
