@@ -26,6 +26,14 @@ def test_ios_device_launch_rehearsal_blocks_missing_reports_without_leaks(
     assert result.report["kind"] == "ios_device_launch_rehearsal_report"
     assert result.report["status"] == "blocked"
     assert result.report["summary"]["missing"] >= 1
+    assert result.report["first_blocker"] == {
+        "id": "final_rehearsal_local",
+        "label": "Local final rehearsal",
+        "status": "missing",
+        "classification": "step_missing",
+        "command": "make final-rehearsal-local",
+        "detail": "run make ios-device-launch-rehearsal",
+    }
     assert result.report["sequence"][0]["id"] == "final_rehearsal_local"
     assert sequence["final_configured_preflight"]["status"] == "missing"
     assert sequence["final_handoff_index"]["status"] == "missing"
@@ -80,6 +88,7 @@ def test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_m
 
     assert result.exit_code == 0
     assert result.report["status"] == "partial"
+    assert result.report["first_blocker"] is None
     assert result.report["mode"] == "configured"
     assert result.report["configured_preflight"]["status"] == "ready"
     assert result.report["final_handoff_index"]["status"] == "ready"
@@ -215,6 +224,11 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
 
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
+    assert result.report["first_blocker"]["id"] == "final_rehearsal_local"
+    assert result.report["first_blocker"]["detail"] == (
+        "final_rehearsal_local: ios_deploy_runbook_local: provide iOS deploy "
+        "config and rerun mobile deploy preflight"
+    )
     assert sequence["final_rehearsal_local"]["operator_actions"] == [
         (
             "ios_deploy_runbook_local: provide iOS deploy config and rerun "

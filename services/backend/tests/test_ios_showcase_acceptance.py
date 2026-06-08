@@ -102,13 +102,42 @@ def test_showcase_visual_regression_index_requires_configured_command_scope() ->
         "p0.186_configured_acceptance_command_visual",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/visual_regression.py",
+        "p0.189_device_blocker_handoff",
+    ) in requirements
+    assert (
         "README.md",
-        "20 static 390x844 iPhone evidence artifacts",
+        "21 static 390x844 iPhone evidence artifacts",
     ) in requirements
     assert (
         "README.md",
         "configured acceptance command visual",
     ) in requirements
+    assert (
+        "README.md",
+        "device blocker handoff visual",
+    ) in requirements
+
+
+def test_ios_device_handoff_source_gates_require_first_blocker() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    final_handoff_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_handoff_index"].requirements
+    }
+    rehearsal_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["ios_device_launch_rehearsal"].requirements
+    }
+
+    assert (
+        "services/backend/src/myth_forge_api/final_handoff_index.py",
+        "first_blocker",
+    ) in final_handoff_requirements
+    assert (
+        "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py",
+        "first_blocker",
+    ) in rehearsal_requirements
 
 
 def test_ios_showcase_acceptance_allows_external_action_ledger_builder_linebreak(
@@ -1048,7 +1077,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "p0.82_npc_agent_tick_summary p0.101_print_fulfillment_receipt "
             "p0.100_live_provider_consent p0.112_ios_device_launch_rehearsal "
             "p0.119_visual_regression_handoff p0.158_local_showcase_smoke "
-            "p0.186_configured_acceptance_command_visual"
+            "p0.186_configured_acceptance_command_visual p0.189_device_blocker_handoff"
         ),
         "services/backend/src/myth_forge_api/live_provider_evidence.py": (
             "build_live_provider_evidence_report live_provider_evidence_report "
@@ -1176,7 +1205,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/src/myth_forge_api/final_handoff_index.py": (
             "build_final_handoff_index_report final_handoff_index_report "
             "build_final_configured_preflight_report operator_sequence source_reports "
-            "visual_regression "
+            "first_blocker visual_regression "
             "_freshness_report _freshness_summary stale_report checked_against "
             '"provider_calls": False "writes_backend_env": False '
             '"writes_ios_deploy_config": False'
@@ -1191,7 +1220,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_ios_device_launch_rehearsal_report ios_device_launch_rehearsal_report "
             "LOCAL_REPORT_SOURCES visual_regression REHEARSAL_REPORT_SOURCES final_configured_preflight "
             "final_handoff_index ios_device_launch_certificate operator_actions "
-            "freshness_summary freshness_status freshness_classification "
+            "first_blocker freshness_summary freshness_status freshness_classification "
             '"provider_calls": False "xcode_or_signing": False "keychain_writes": False'
         ),
         "services/backend/scripts/write_ios_device_launch_rehearsal.sh": (
@@ -1237,8 +1266,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "README.md": (
             "make visual-regression full-showcase visual index P0.128 P0.129 "
-            "20 static 390x844 iPhone evidence artifacts "
-            "configured acceptance command visual"
+            "21 static 390x844 iPhone evidence artifacts "
+            "configured acceptance command visual device blocker handoff visual"
         ),
         "services/backend/tests/test_final_configured_preflight.py": (
             "test_configured_preflight_is_ready_with_configured_handoff_inputs"

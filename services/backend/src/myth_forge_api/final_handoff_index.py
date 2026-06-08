@@ -91,6 +91,7 @@ def build_final_handoff_index_report(
         "kind": "final_handoff_index_report",
         "status": status,
         "summary": _summary(lanes),
+        "first_blocker": _first_blocker(lanes),
         "lanes": lanes,
         "lanes_by_id": {lane["id"]: lane for lane in lanes},
         "source_reports": source_reports,
@@ -414,6 +415,36 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
         else:
             actions.append(f"unblock {lane_id}")
     return _dedupe(actions)[:6]
+
+
+def _first_blocker(lanes: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for lane in lanes:
+        status = str(lane.get("status", ""))
+        if status not in {"missing", "blocked"}:
+            continue
+        lane_id = str(lane.get("id", "lane"))
+        command = str(lane.get("command", ""))
+        return {
+            "id": lane_id,
+            "label": str(lane.get("label", lane_id)),
+            "status": status,
+            "classification": f"lane_{status}",
+            "command": command,
+            "detail": _lane_blocker_detail(lane),
+        }
+    return None
+
+
+def _lane_blocker_detail(lane: dict[str, Any]) -> str:
+    lane_id = str(lane.get("id", "lane"))
+    command = str(lane.get("command", ""))
+    if lane_id == "local_rehearsal":
+        return "run make final-rehearsal-local"
+    if lane_id == "configured_preflight":
+        return "run make final-configured-preflight"
+    if lane_id == "device_deploy":
+        return "run make mobile-deploy-preflight after backend is running"
+    return f"run {command}" if command else f"unblock {lane_id}"
 
 
 def _dedupe(values: list[str]) -> list[str]:

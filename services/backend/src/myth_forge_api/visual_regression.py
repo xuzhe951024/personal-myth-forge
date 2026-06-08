@@ -309,6 +309,29 @@ DEFAULT_VISUAL_ARTIFACTS = (
         ),
     ),
     VisualArtifactSpec(
+        id="p0.189_device_blocker_handoff",
+        html_path="docs/superpowers/verification/p0.189-device-blocker-handoff.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.189-device-blocker-handoff-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.189-device-blocker-handoff-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Device Blocker Handoff",
+            "first_blocker",
+            "local_rehearsal",
+            "make final-rehearsal-local",
+            "make mobile-deploy-preflight-evidence",
+            "make mobile-xcode-build-evidence",
+            "commands_run=false xcode=false global=false",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.161_final_showcase_provider_handoff_digest",
         html_path="docs/superpowers/verification/p0.161-final-showcase-provider-handoff-digest.html",
         png_path=(
