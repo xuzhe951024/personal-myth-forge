@@ -299,6 +299,14 @@ public enum DevicePreflightSummaryBuilder {
                 finalResourceFillGuideReadyDetail(guide)
             )
         }
+        if let blocker = guide.firstBlocker {
+            return item(
+                "final_resource_fill_guide",
+                "Fill Guide",
+                .blocked,
+                finalResourceFillGuideDetail(guide, blocker: blocker)
+            )
+        }
         if let requiredBlocker {
             return item(
                 "final_resource_fill_guide",
@@ -337,6 +345,31 @@ public enum DevicePreflightSummaryBuilder {
         if let input {
             parts.append("\(input.id) \(input.status): \(input.fillAction)")
         }
+        if let command = guide.commands.first, !command.isEmpty {
+            parts.append("Command: \(command)")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func finalResourceFillGuideDetail(
+        _ guide: FinalResourceFillGuideReport,
+        blocker: FinalResourceFillGuideFirstBlocker
+    ) -> String {
+        var parts = [finalResourceFillGuideSummaryDetail(guide)]
+        var blockerParts = ["First blocker:", blocker.id, blocker.status]
+        if let classification = blocker.classification, !classification.isEmpty {
+            blockerParts.append(classification)
+        }
+        if !blocker.command.isEmpty {
+            blockerParts.append("| \(blocker.command)")
+        }
+        if !blocker.detail.isEmpty {
+            blockerParts.append("| \(blocker.detail)")
+        }
+        if !blocker.validationCommand.isEmpty {
+            blockerParts.append("| \(blocker.validationCommand)")
+        }
+        parts.append(blockerParts.joined(separator: " "))
         if let command = guide.commands.first, !command.isEmpty {
             parts.append("Command: \(command)")
         }

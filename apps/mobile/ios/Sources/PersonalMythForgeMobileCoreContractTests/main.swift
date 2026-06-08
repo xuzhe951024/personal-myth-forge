@@ -2688,7 +2688,19 @@ private func testDevicePreflightBlocksOnRequiredFinalResourceFillGuideInputs() t
     try expectEqual(summary.overallStatus, .blocked)
     try expectEqual(summary.item(id: "final_resource_fill_guide")?.status, .blocked)
     try expectContains(summary.item(id: "final_resource_fill_guide")?.detail ?? "", "required 5")
+    try expectContains(
+        summary.item(id: "final_resource_fill_guide")?.detail ?? "",
+        "First blocker: MESHY_API_KEY missing"
+    )
     try expectContains(summary.item(id: "final_resource_fill_guide")?.detail ?? "", "MESHY_API_KEY")
+    try expectContains(
+        summary.item(id: "final_resource_fill_guide")?.detail ?? "",
+        "Backend-only secret for live Meshy 3D generation."
+    )
+    try expectContains(
+        summary.item(id: "final_resource_fill_guide")?.detail ?? "",
+        "make final-resources-preflight"
+    )
     try expectContains(
         summary.item(id: "final_resource_fill_guide")?.detail ?? "",
         "make final-resource-requirements"

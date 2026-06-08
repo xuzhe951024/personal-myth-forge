@@ -1357,6 +1357,11 @@ do {
     try requireContains(devicePreflight, "Final Resources", "device preflight final resources label")
     try requireContains(devicePreflight, "FinalDemoLaunchReport", "device preflight final launch model")
     try requireContains(devicePreflight, "report.firstBlocker", "device preflight final launch first blocker source")
+    try requireContains(
+        devicePreflight,
+        "guide.firstBlocker",
+        "device preflight final resource fill guide first blocker source"
+    )
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")
     try requireContains(apiClient, "getFinalDemoLaunch", "final demo launch API client method")
@@ -2167,6 +2172,11 @@ do {
         contractTests,
         "fill MESHY_API_KEY in services/backend/.local/final-resources.env",
         "final resource fill guide first blocker command fixture"
+    )
+    try requireContains(
+        contractTests,
+        "First blocker: MESHY_API_KEY missing",
+        "device preflight final resource fill guide first blocker detail"
     )
     try requireContains(
         contractTests,
