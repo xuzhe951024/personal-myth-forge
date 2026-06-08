@@ -726,9 +726,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift": (
             "finalLaunchSummary: FinalLaunchMobileSummary? "
-            "localSmokeStage Local Smoke iosDeployStage iOS Deploy "
+            "localSmokeStage Local Smoke providerHandoffStage Provider Handoff "
+            "iosDeployStage iOS Deploy "
             "threeDEvaluationStage npcEvaluationStage operatorHandoffStage finalLaunchStage "
-            '"local_smoke" "ios_deploy" "three_d_evaluation" '
+            '"local_smoke" "provider_handoff" "ios_deploy" "three_d_evaluation" '
             '"npc_evaluation" "operator_handoff" "final_launch"'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
@@ -755,6 +756,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testForgeActionGateEnablesLocalDemoForge "
             "testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest "
             "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest "
+            "testFinalShowcaseSummaryIncludesReadyProviderHandoffDigest "
+            "testFinalShowcaseSummaryBlocksProviderHandoffDigest "
+            "testFinalShowcaseSummaryRedactsUnsafeProviderHandoffDigest "
             "testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest "
             "testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest "
             "testFinalShowcaseSummaryIncludesReadyIOSDeployDigest "
