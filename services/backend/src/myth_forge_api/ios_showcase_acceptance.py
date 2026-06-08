@@ -1855,6 +1855,20 @@ FEATURES = (
             ),
             SourceRequirement("Makefile", "final-acceptance-local:"),
             SourceRequirement("Makefile", "final-rehearsal-local:"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "final-local-report-refresh-local:",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "services/backend/scripts/write_final_local_report_refresh.sh",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "final-rehearsal-local: backend-evaluate-local visual-regression-local "
+                "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+                "final-local-report-refresh-local",
+            ),
             SourceRequirement("Makefile", "backend-evaluate-npc:"),
             SourceRequirement("Makefile", "backend-evaluate-local:"),
             SourceRequirement(
@@ -1914,6 +1928,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_configured_preflight.py",
+                "build_provider_handoff_report",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
                 "build_provider_handoff_report",
             ),
             SourceRequirement(

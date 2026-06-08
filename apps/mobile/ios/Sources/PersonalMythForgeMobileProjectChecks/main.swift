@@ -365,7 +365,17 @@ do {
     )
     try requireContains(
         makefile,
-        "final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local",
+        "final-local-report-refresh-local:",
+        "final local report refresh wrapper target"
+    )
+    try requireContains(
+        makefile,
+        "services/backend/scripts/write_final_local_report_refresh.sh",
+        "final local report refresh wrapper script"
+    )
+    try requireContains(
+        makefile,
+        "final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local final-local-report-refresh-local",
         "final rehearsal local target order"
     )
     try requireContains(makefile, "visual-regression-local:", "visual regression local Make target")
@@ -387,8 +397,8 @@ do {
     )
     try requireContains(
         finalConfiguredPreflight,
-        "build_provider_readiness",
-        "configured handoff preflight provider readiness composition"
+        "build_provider_handoff_report",
+        "configured handoff preflight provider handoff composition"
     )
     try requireContains(
         finalConfiguredPreflight,
