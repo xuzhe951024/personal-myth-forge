@@ -136,6 +136,22 @@ DEFAULT_VISUAL_ARTIFACTS = (
         height=844,
         required_text=("Final Launch Status", "Visual Regression", "make visual-regression-local"),
     ),
+    VisualArtifactSpec(
+        id="p0.153_configured_evidence_visual",
+        html_path="docs/superpowers/verification/p0.153-configured-evidence-visual.html",
+        png_path="docs/superpowers/verification/assets/p0.153-configured-evidence-visual-390x844.png",
+        notes_path="docs/superpowers/verification/2026-06-07-p0.153-configured-evidence-visual-regression.md",
+        width=390,
+        height=844,
+        required_text=(
+            "Configured Evidence",
+            "Configured evidence blocked",
+            "consent now 0, planned 3",
+            "Live steps 3, cost steps 3",
+            "--allow-live-provider-calls",
+            "commands_run=false live_calls=false",
+        ),
+    ),
 )
 
 
