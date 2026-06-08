@@ -731,6 +731,12 @@ SOURCE_REQUIREMENTS = (
         "Fill Guide",
     ),
     SourceRequirement(
+        "preflight_final_resource_fill_guide_first_blocker_source",
+        "Device preflight final resource fill guide first blocker source",
+        DEVICE_PREFLIGHT_PATH,
+        "guide.firstBlocker",
+    ),
+    SourceRequirement(
         "preflight_read_only_note",
         "Device preflight read-only note",
         DEVICE_PREFLIGHT_PATH,
