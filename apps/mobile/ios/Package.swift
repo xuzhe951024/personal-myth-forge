@@ -22,7 +22,8 @@ let package = Package(
             name: "PersonalMythForgeMobileAppCompileCheck",
             dependencies: ["PersonalMythForgeMobileCore"],
             path: "App",
-            exclude: ["Info.plist"]
+            exclude: ["Info.plist", "PersonalMythForgeApp.swift"],
+            swiftSettings: [.define("PMF_APP_COMPILE_CHECK")]
         ),
     ]
 )
