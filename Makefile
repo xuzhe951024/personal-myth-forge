@@ -41,6 +41,11 @@ backend-evaluate-local: backend-evaluate-3d backend-evaluate-npc
 backend-write-provider-env:
 	@services/backend/scripts/write_backend_env.sh
 
+.PHONY: provider-handoff
+
+provider-handoff:
+	cd services/backend && uv run python -m myth_forge_api.cli provider-handoff --require-core-real --output .local/provider-handoff.json
+
 .PHONY: final-apply-resources
 
 final-apply-resources:

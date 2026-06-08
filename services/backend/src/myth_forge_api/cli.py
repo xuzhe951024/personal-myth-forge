@@ -1010,6 +1010,11 @@ def _provider_handoff_report() -> dict[str, object]:
         for kind in CORE_PROVIDER_KINDS
         if kind in provider_by_kind
     ]
+    core_real_count = sum(
+        1 for provider in core_items if provider["is_real_provider_ready"]
+    )
+    core_total = len(core_items)
+    core_real_ready = core_real_count == core_total
     missing_env = sorted(
         {
             env_name
@@ -1020,9 +1025,21 @@ def _provider_handoff_report() -> dict[str, object]:
     return {
         "kind": "provider_handoff_report",
         "mode": "configuration",
+        "status": "ready" if core_real_ready else "blocked",
+        "classification": (
+            "core_real_providers_ready"
+            if core_real_ready
+            else "core_real_providers_not_ready"
+        ),
+        "summary": {
+            "providers": len(provider_items),
+            "core_total": core_total,
+            "core_real_ready": core_real_count,
+            "missing_env": len(missing_env),
+        },
         "overall_demo_ready": readiness.overall_demo_ready,
         "overall_real_ready": readiness.overall_real_ready,
-        "core_real_ready": all(provider["is_real_provider_ready"] for provider in core_items),
+        "core_real_ready": core_real_ready,
         "core_provider_kinds": CORE_PROVIDER_KINDS,
         "missing_env": missing_env,
         "backend_only_env": BACKEND_ONLY_ENV,

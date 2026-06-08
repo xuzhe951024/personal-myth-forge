@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -374,6 +375,11 @@ def test_cli_provider_handoff_writes_local_report(tmp_path, monkeypatch) -> None
     report = json.loads(output_file.read_text(encoding="utf-8"))
     assert report["kind"] == "provider_handoff_report"
     assert report["mode"] == "configuration"
+    assert report["status"] == "blocked"
+    assert report["classification"] == "core_real_providers_not_ready"
+    assert report["summary"]["providers"] >= 4
+    assert report["summary"]["core_real_ready"] == 1
+    assert report["summary"]["core_total"] == 3
     assert report["overall_demo_ready"] is True
     assert report["overall_real_ready"] is False
     assert report["core_real_ready"] is False
@@ -427,6 +433,10 @@ def test_cli_provider_handoff_core_real_ready_with_keys_without_secret_leak(
     report_text = output_file.read_text(encoding="utf-8")
     report = json.loads(report_text)
     assert exit_code == 0
+    assert report["status"] == "ready"
+    assert report["classification"] == "core_real_providers_ready"
+    assert report["summary"]["core_real_ready"] == 3
+    assert report["summary"]["core_total"] == 3
     assert report["core_real_ready"] is True
     assert report["overall_real_ready"] is False
     assert report["missing_env"] == []
@@ -442,6 +452,16 @@ def test_cli_provider_handoff_prints_json_to_stdout(capsys, monkeypatch) -> None
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 0
     assert payload["kind"] == "provider_handoff_report"
+
+
+def test_makefile_exposes_provider_handoff_target() -> None:
+    makefile = Path(__file__).resolve().parents[3] / "Makefile"
+    text = makefile.read_text(encoding="utf-8")
+
+    assert "provider-handoff:" in text
+    assert "myth_forge_api.cli provider-handoff" in text
+    assert "--require-core-real" in text
+    assert ".local/provider-handoff.json" in text
 
 
 def test_cli_resource_handoff_writes_report(tmp_path, monkeypatch) -> None:
