@@ -1483,6 +1483,26 @@ do {
         "device preflight final closure packet required item"
     )
     try requireContains(
+        devicePreflight,
+        "finalOperatorHandoffItem(report: finalDemoLaunch)",
+        "device preflight final operator handoff item"
+    )
+    try requireContains(
+        devicePreflight,
+        "Operator Handoff",
+        "device preflight final operator handoff label"
+    )
+    try requireContains(
+        devicePreflight,
+        "report.finalOperatorHandoff",
+        "device preflight final operator handoff source"
+    )
+    try requireContains(
+        devicePreflight,
+        #""final_operator_handoff","#,
+        "device preflight final operator handoff required item"
+    )
+    try requireContains(
         contractTests,
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
         "device preflight fill guide first blocker redaction contract test"
@@ -1616,6 +1636,31 @@ do {
         contractTests,
         "testDevicePreflightRedactsUnsafeFinalClosurePacket",
         "device preflight final closure packet redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightWaitsForMissingFinalOperatorHandoff",
+        "device preflight final operator handoff missing contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightBlocksOnFinalOperatorHandoffNextAction",
+        "device preflight final operator handoff blocked contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightMarksReadyFinalOperatorHandoff",
+        "device preflight final operator handoff ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightShowsLiveFinalOperatorHandoffConsent",
+        "device preflight final operator handoff live consent contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightRedactsUnsafeFinalOperatorHandoff",
+        "device preflight final operator handoff redaction contract test"
     )
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")
