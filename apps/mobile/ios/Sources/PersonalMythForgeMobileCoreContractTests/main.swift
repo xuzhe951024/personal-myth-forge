@@ -49,6 +49,9 @@ do {
     try testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest()
     try testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest()
     try testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest()
+    try testFinalShowcaseSummaryIncludesReadyIOSDeployDigest()
+    try testFinalShowcaseSummaryBlocksIOSDeployDigest()
+    try testFinalShowcaseSummaryRedactsUnsafeIOSDeployDigest()
     try testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest()
     try testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest()
     try testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest()
@@ -1430,7 +1433,9 @@ private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "ready",
-            finalOperatorHandoffStatus: "ready"
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            iosDeviceLaunchRehearsalStatus: "ready"
         ),
         error: nil
     )
@@ -1450,10 +1455,12 @@ private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
         summary.stages.map(\.id),
         [
             "capture", "three_d", "npc_agent", "print", "resources",
-            "local_smoke", "three_d_evaluation", "npc_evaluation", "operator_handoff", "final_launch",
+            "local_smoke", "ios_deploy", "three_d_evaluation", "npc_evaluation",
+            "operator_handoff", "final_launch",
         ]
     )
     try expectEqual(summary.stage(id: "local_smoke")?.status, .ready)
+    try expectEqual(summary.stage(id: "ios_deploy")?.status, .ready)
     try expectEqual(summary.stage(id: "three_d_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "npc_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "operator_handoff")?.status, .ready)
@@ -1471,6 +1478,8 @@ private func testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest() throws {
             localShowcaseSmokeStatus: "succeeded",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            iosDeviceLaunchRehearsalStatus: "ready",
         ),
         error: nil
     )
@@ -1539,6 +1548,127 @@ private func testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest() throws {
     try expectNotContains(text, "Bearer")
 }
 
+private func testFinalShowcaseSummaryIncludesReadyIOSDeployDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
+            localShowcaseSmokeStatus: "succeeded",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            iosDeviceLaunchRehearsalStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let ids = summary.stages.map(\.id)
+    let localSmokeIndex = try require(ids.firstIndex(of: "local_smoke"), "missing local smoke stage")
+    let deployIndex = try require(ids.firstIndex(of: "ios_deploy"), "missing iOS deploy stage")
+    let threeDIndex = try require(ids.firstIndex(of: "three_d_evaluation"), "missing 3D evaluation stage")
+    let stage = try require(summary.stage(id: "ios_deploy"), "missing iOS deploy stage")
+
+    try expectEqual(stage.label, "iOS Deploy")
+    try expectEqual(stage.status, .ready)
+    try expectContains(stage.detail, "iOS launch rehearsal ready")
+    try expectContains(stage.detail, "ready 4")
+    try expectTrue(localSmokeIndex < deployIndex)
+    try expectTrue(deployIndex < threeDIndex)
+}
+
+private func testFinalShowcaseSummaryBlocksIOSDeployDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
+            localShowcaseSmokeStatus: "succeeded",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "blocked",
+            iosDeployRunbookSlotStatus: "blocked",
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchRehearsalAction: "make ios-device-launch-rehearsal"
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let stage = try require(summary.stage(id: "ios_deploy"), "missing iOS deploy stage")
+
+    try expectEqual(summary.overallStatus, .needsAttention)
+    try expectEqual(stage.status, .needsAttention)
+    try expectContains(stage.detail, "iOS launch rehearsal blocked")
+    try expectContains(stage.detail, "make final-handoff-index")
+}
+
+private func testFinalShowcaseSummaryRedactsUnsafeIOSDeployDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch blocked",
+        subtitle: "iOS deploy blocked",
+        phaseRows: [],
+        resourceActions: [],
+        acceptanceRows: [],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        localShowcaseSmokeRows: ["Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3."],
+        deployRunbookRows: [
+            "iOS deploy runbook blocked.",
+            "backend_base_url: blocked required | sk-test /Users/zhexu/private file:///tmp/private checkout_url Bearer token",
+        ],
+        launchRehearsalRows: [
+            "iOS launch rehearsal blocked: ready 3, blocked 1, partial 0.",
+            "final_handoff_index: blocked | make final-handoff-index | sk-test /Users/zhexu/private file:///tmp/private checkout_url Bearer token",
+        ],
+        handoffRows: [],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.stage(id: "ios_deploy")?.status, .needsAttention)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest() throws {
     let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
     let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
@@ -1548,7 +1678,9 @@ private func testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest() throw
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "ready",
-            finalOperatorHandoffStatus: "ready"
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            iosDeviceLaunchRehearsalStatus: "ready"
         ),
         error: nil
     )
@@ -1581,7 +1713,9 @@ private func testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest() thr
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "missing",
             npcEvaluationStatus: "ready",
-            finalOperatorHandoffStatus: "ready"
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            iosDeviceLaunchRehearsalStatus: "ready"
         ),
         error: nil
     )
@@ -1610,7 +1744,9 @@ private func testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest() throws
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "ready",
             npcEvaluationStatus: "missing",
-            finalOperatorHandoffStatus: "ready"
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            iosDeviceLaunchRehearsalStatus: "ready"
         ),
         error: nil
     )

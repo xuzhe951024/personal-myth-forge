@@ -39,6 +39,7 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
         "p0.157_final_launch_closure_packet",
         "p0.158_local_showcase_smoke",
         "p0.159_final_showcase_local_smoke",
+        "p0.160_final_showcase_ios_deploy_digest",
     ]
     assert all((spec.width, spec.height) == (390, 844) for spec in DEFAULT_VISUAL_ARTIFACTS)
     required_text = " ".join(
@@ -84,6 +85,9 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "provider_calls=false global=false temp_storage=true" in required_text
     assert "Final Showcase" in required_text
     assert "Local smoke ready" in required_text
+    assert "iOS Deploy" in required_text
+    assert "iOS deploy blocked" in required_text
+    assert "make ios-device-launch-rehearsal" in required_text
 
 
 def test_visual_regression_default_passes_checked_in_showcase_artifacts() -> None:
@@ -92,7 +96,7 @@ def test_visual_regression_default_passes_checked_in_showcase_artifacts() -> Non
     result = check_visual_artifacts(repo_root)
 
     assert result.exit_code == 0
-    assert result.report["summary"] == {"passed": 17, "failed": 0}
+    assert result.report["summary"] == {"passed": 18, "failed": 0}
     assert [artifact["id"] for artifact in result.report["artifacts"]] == [
         spec.id for spec in DEFAULT_VISUAL_ARTIFACTS
     ]
@@ -194,7 +198,7 @@ def test_visual_regression_cli_writes_showcase_report(tmp_path: Path, monkeypatc
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["kind"] == "visual_regression_report"
     assert report["status"] == "passed"
-    assert report["summary"] == {"passed": 17, "failed": 0}
+    assert report["summary"] == {"passed": 18, "failed": 0}
 
 
 def _spec() -> VisualArtifactSpec:

@@ -260,6 +260,26 @@ DEFAULT_VISUAL_ARTIFACTS = (
             "downloads 3",
         ),
     ),
+    VisualArtifactSpec(
+        id="p0.160_final_showcase_ios_deploy_digest",
+        html_path="docs/superpowers/verification/p0.160-final-showcase-ios-deploy-digest.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.160-final-showcase-ios-deploy-digest-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.160-final-showcase-ios-deploy-digest-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Final Showcase",
+            "iOS Deploy",
+            "iOS deploy blocked",
+            "make ios-device-launch-rehearsal",
+        ),
+    ),
 )
 
 

@@ -69,6 +69,7 @@ public enum FinalShowcaseSummaryBuilder {
         ]
         if let finalLaunchSummary {
             stages.append(localSmokeStage(finalLaunchSummary))
+            stages.append(iosDeployStage(finalLaunchSummary))
             stages.append(threeDEvaluationStage(finalLaunchSummary))
             stages.append(npcEvaluationStage(finalLaunchSummary))
             stages.append(operatorHandoffStage(finalLaunchSummary))
@@ -108,6 +109,75 @@ public enum FinalShowcaseSummaryBuilder {
             return sanitize(first)
         }
         return sanitize(rows.prefix(2).joined(separator: " "))
+    }
+
+    private static func iosDeployStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
+        let rows = iosDeployRows(summary)
+        return stage(
+            "ios_deploy",
+            "iOS Deploy",
+            iosDeployStatus(rows),
+            iosDeployDetail(rows)
+        )
+    }
+
+    private static func iosDeployRows(_ summary: FinalLaunchMobileSummary) -> [String] {
+        if !summary.launchRehearsalRows.isEmpty {
+            return summary.launchRehearsalRows
+        }
+        return summary.deployRunbookRows
+    }
+
+    private static func iosDeployStatus(_ rows: [String]) -> FinalShowcaseStageStatus {
+        guard let first = rows.first else {
+            return .waiting
+        }
+        if first.hasPrefix("iOS launch rehearsal ready:")
+            || first.hasPrefix("iOS deploy runbook ready.")
+        {
+            return .ready
+        }
+        let text = rows.joined(separator: " ").lowercased()
+        if text.contains("has not loaded")
+            || text.contains("run ios device launch rehearsal")
+            || text.contains("waiting")
+        {
+            return .waiting
+        }
+        if text.contains("blocked")
+            || text.contains("failed")
+            || text.contains("missing")
+            || text.contains("stale")
+            || text.contains("partial")
+        {
+            return .needsAttention
+        }
+        return .needsAttention
+    }
+
+    private static func iosDeployDetail(_ rows: [String]) -> String {
+        guard let first = rows.first else {
+            return "iOS deploy evidence has not loaded."
+        }
+        if rows.count == 1 || iosDeployStatus(rows) == .ready {
+            return sanitize(first)
+        }
+        if let actionable = rows.dropFirst().first(where: iosDeployActionableRow) {
+            return sanitize([first, actionable].joined(separator: " "))
+        }
+        return sanitize(rows.prefix(2).joined(separator: " "))
+    }
+
+    private static func iosDeployActionableRow(_ row: String) -> Bool {
+        let text = row.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if text.hasPrefix("freshness:") || text.hasPrefix("source freshness:") {
+            return false
+        }
+        return text.contains("blocked")
+            || text.contains("failed")
+            || text.contains("missing")
+            || text.contains("make ")
+            || text.contains("run ")
     }
 
     private static func threeDEvaluationStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
@@ -290,7 +360,8 @@ public enum FinalShowcaseSummaryBuilder {
             stages.first(where: { $0.id == id })?.status == .ready
         }
         let launchStageIDs = Set([
-            "local_smoke", "three_d_evaluation", "npc_evaluation", "operator_handoff", "final_launch",
+            "local_smoke", "ios_deploy", "three_d_evaluation", "npc_evaluation",
+            "operator_handoff", "final_launch",
         ])
         let launchStages = stages.filter { launchStageIDs.contains($0.id) }
         let launchReady = launchStages.allSatisfy { $0.status == .ready }

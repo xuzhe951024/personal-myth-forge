@@ -726,10 +726,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift": (
             "finalLaunchSummary: FinalLaunchMobileSummary? "
-            "localSmokeStage Local Smoke threeDEvaluationStage npcEvaluationStage "
-            "operatorHandoffStage finalLaunchStage "
-            '"local_smoke" "three_d_evaluation" "npc_evaluation" '
-            '"operator_handoff" "final_launch"'
+            "localSmokeStage Local Smoke iosDeployStage iOS Deploy "
+            "threeDEvaluationStage npcEvaluationStage operatorHandoffStage finalLaunchStage "
+            '"local_smoke" "ios_deploy" "three_d_evaluation" '
+            '"npc_evaluation" "operator_handoff" "final_launch"'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": (
             "testARKitScanPackageBuilderBuildsReadySelection "
@@ -757,6 +757,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest "
             "testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest "
             "testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest "
+            "testFinalShowcaseSummaryIncludesReadyIOSDeployDigest "
+            "testFinalShowcaseSummaryBlocksIOSDeployDigest "
+            "testFinalShowcaseSummaryRedactsUnsafeIOSDeployDigest "
             "testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest "
             "testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest "
             "testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest "
