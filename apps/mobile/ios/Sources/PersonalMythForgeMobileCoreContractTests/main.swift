@@ -103,6 +103,9 @@ do {
     try testLiveProviderConsentSummaryWaitsForProviderReadiness()
     try testLiveProviderConsentSummaryBlocksMissingConfiguredProviders()
     try testLiveProviderConsentSummaryShowsReadyConfiguredConsent()
+    try testLiveProviderConsentSummaryShowsReadyLiveEvidence()
+    try testLiveProviderConsentSummaryBlocksMissingLiveEvidence()
+    try testLiveProviderConsentSummaryRedactsUnsafeLiveEvidenceBlocker()
     try testLiveProviderConsentSummaryRedactsUnsafeText()
     try testFinalLaunchMobileSummaryBuildsPartialOperatorStatus()
     try testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload()
@@ -2735,6 +2738,7 @@ private func testLiveProviderConsentSummaryShowsReadyConfiguredConsent() throws 
             finalResourcesStatus: "ready",
             finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
             finalAcceptanceStatus: "ready",
+            liveProviderEvidenceStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
             iosDeployRunbookStatus: "ready",
@@ -2756,6 +2760,119 @@ private func testLiveProviderConsentSummaryShowsReadyConfiguredConsent() throws 
     try expectContains(rowText, "print")
     try expectContains(rowText, "Final resources ready")
     try expectContains(summary.privacyNotes.joined(separator: " "), "does not call live providers by default")
+}
+
+private func testLiveProviderConsentSummaryShowsReadyLiveEvidence() throws {
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: readyConfiguredProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchReport: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
+            finalAcceptanceStatus: "ready",
+            liveProviderEvidenceStatus: "ready",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready",
+            resourceHandoffAction: "final resource handoff ready"
+        ),
+        finalLaunchError: nil
+    )
+
+    let row: LiveProviderConsentRow = try require(
+        summary.rows.first { $0.id == "live_evidence" },
+        "missing live evidence row"
+    )
+
+    try expectEqual(summary.status, .ready)
+    try expectEqual(summary.canRunConfiguredAcceptance, true)
+    try expectEqual(row.status, .ready)
+    try expectEqual(row.label, "Live evidence")
+    try expectContains(row.detail, "Live evidence ready")
+    try expectContains(row.detail, "ready 5")
+}
+
+private func testLiveProviderConsentSummaryBlocksMissingLiveEvidence() throws {
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: readyConfiguredProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchReport: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "blocked",
+            finalResourcesStatus: "ready",
+            finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
+            finalAcceptanceStatus: "ready",
+            liveProviderEvidenceStatus: "blocked",
+            liveProviderEvidenceBlockerDetail: "Core real providers are not ready for live evidence.",
+            liveProviderEvidenceFirstID: "provider_handoff",
+            liveProviderEvidenceFirstLabel: "Provider handoff",
+            liveProviderEvidenceFirstStatus: "blocked",
+            liveProviderEvidenceFirstClassification: "report_not_ready",
+            liveProviderEvidenceCommand: "make provider-handoff",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready",
+            resourceHandoffAction: "final resource handoff ready"
+        ),
+        finalLaunchError: nil
+    )
+
+    let row: LiveProviderConsentRow = try require(
+        summary.rows.first { $0.id == "live_evidence" },
+        "missing live evidence row"
+    )
+
+    try expectEqual(summary.status, .blocked)
+    try expectEqual(summary.canRunConfiguredAcceptance, false)
+    try expectEqual(row.status, .blocked)
+    try expectContains(row.detail, "provider_handoff")
+    try expectContains(row.detail, "Core real providers are not ready for live evidence.")
+}
+
+private func testLiveProviderConsentSummaryRedactsUnsafeLiveEvidenceBlocker() throws {
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: readyConfiguredProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchReport: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "blocked",
+            finalResourcesStatus: "ready",
+            finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
+            liveProviderEvidenceStatus: "blocked",
+            liveProviderEvidenceBlockerDetail: (
+                "Authorization Bearer sk-live /Users/zhexu/private "
+                    + "/tmp/private file:///tmp/private.glb checkout_url https://pay.example/order"
+            ),
+            liveProviderEvidenceFirstID: "provider_handoff",
+            liveProviderEvidenceFirstLabel: "Provider handoff",
+            liveProviderEvidenceFirstStatus: "blocked",
+            liveProviderEvidenceFirstClassification: "report_not_ready",
+            liveProviderEvidenceCommand: "make provider-handoff",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready"
+        ),
+        finalLaunchError: nil
+    )
+
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-live")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "/tmp/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "pay.example")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
 }
 
 private func testLiveProviderConsentSummaryRedactsUnsafeText() throws {
@@ -5473,6 +5590,11 @@ private func finalDemoLaunchPayload(
     localShowcaseSmokeFailureDetail: String = "Local HTTP smoke completed.",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
+    liveProviderEvidenceFirstID: String? = nil,
+    liveProviderEvidenceFirstLabel: String? = nil,
+    liveProviderEvidenceFirstStatus: String? = nil,
+    liveProviderEvidenceFirstClassification: String? = nil,
+    liveProviderEvidenceCommand: String? = nil,
     configuredEvidencePlanStatus: String = "blocked",
     configuredEvidencePlanBlockerDetail: String = "Configured 3D evidence requires MESHY_API_KEY and live provider consent.",
     printFulfillmentReadinessStatus: String = "partial",
@@ -5567,13 +5689,18 @@ private func finalDemoLaunchPayload(
       }
     ]
     """
-    let liveEvidenceFirstID = liveEvidenceBlocked ? "three_d_evaluation_configured" : "provider_handoff"
-    let liveEvidenceFirstLabel = liveEvidenceBlocked ? "Configured 3D evaluation" : "Provider handoff"
-    let liveEvidenceFirstStatus = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "blocked" : "missing"
-    let liveEvidenceFirstClassification = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "report_not_ready" : "missing_report"
-    let liveEvidenceCommand = liveEvidenceBlocked
+    let defaultLiveEvidenceFirstID = liveEvidenceBlocked ? "three_d_evaluation_configured" : "provider_handoff"
+    let defaultLiveEvidenceFirstLabel = liveEvidenceBlocked ? "Configured 3D evaluation" : "Provider handoff"
+    let defaultLiveEvidenceFirstStatus = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "blocked" : "missing"
+    let defaultLiveEvidenceFirstClassification = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "report_not_ready" : "missing_report"
+    let defaultLiveEvidenceCommand = liveEvidenceBlocked
         ? "cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider meshy --suite default-v0 --output .local/3d-evaluation-configured.json"
         : "make live-provider-evidence"
+    let liveEvidenceFirstID = liveProviderEvidenceFirstID ?? defaultLiveEvidenceFirstID
+    let liveEvidenceFirstLabel = liveProviderEvidenceFirstLabel ?? defaultLiveEvidenceFirstLabel
+    let liveEvidenceFirstStatus = liveProviderEvidenceFirstStatus ?? defaultLiveEvidenceFirstStatus
+    let liveEvidenceFirstClassification = liveProviderEvidenceFirstClassification ?? defaultLiveEvidenceFirstClassification
+    let liveEvidenceCommand = liveProviderEvidenceCommand ?? defaultLiveEvidenceCommand
     let liveEvidenceFirstBlockerJSON = liveEvidenceReady ? "null" : """
     {
       "id": "\(liveEvidenceFirstID)",
@@ -9964,6 +10091,11 @@ private func finalDemoLaunchReport(
     localShowcaseSmokeFailureDetail: String = "Local HTTP smoke completed.",
     liveProviderEvidenceStatus: String = "missing",
     liveProviderEvidenceBlockerDetail: String = "Missing provider handoff.",
+    liveProviderEvidenceFirstID: String? = nil,
+    liveProviderEvidenceFirstLabel: String? = nil,
+    liveProviderEvidenceFirstStatus: String? = nil,
+    liveProviderEvidenceFirstClassification: String? = nil,
+    liveProviderEvidenceCommand: String? = nil,
     configuredEvidencePlanStatus: String = "blocked",
     configuredEvidencePlanBlockerDetail: String = "Configured 3D evidence requires MESHY_API_KEY and live provider consent.",
     printFulfillmentReadinessStatus: String = "partial",
@@ -10036,6 +10168,11 @@ private func finalDemoLaunchReport(
             localShowcaseSmokeFailureDetail: localShowcaseSmokeFailureDetail,
             liveProviderEvidenceStatus: liveProviderEvidenceStatus,
             liveProviderEvidenceBlockerDetail: liveProviderEvidenceBlockerDetail,
+            liveProviderEvidenceFirstID: liveProviderEvidenceFirstID,
+            liveProviderEvidenceFirstLabel: liveProviderEvidenceFirstLabel,
+            liveProviderEvidenceFirstStatus: liveProviderEvidenceFirstStatus,
+            liveProviderEvidenceFirstClassification: liveProviderEvidenceFirstClassification,
+            liveProviderEvidenceCommand: liveProviderEvidenceCommand,
             configuredEvidencePlanStatus: configuredEvidencePlanStatus,
             configuredEvidencePlanBlockerDetail: configuredEvidencePlanBlockerDetail,
             printFulfillmentReadinessStatus: printFulfillmentReadinessStatus,

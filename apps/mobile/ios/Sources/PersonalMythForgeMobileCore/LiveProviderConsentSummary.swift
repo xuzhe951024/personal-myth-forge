@@ -71,10 +71,12 @@ public enum LiveProviderConsentSummaryBuilder {
             rows.append(livePolicyRow(finalLaunchReport.liveCallPolicy))
             rows.append(finalResourcesRow(finalLaunchReport.finalResourcesPreflight))
             rows.append(resourceHandoffRow(finalLaunchReport.resourceReport))
+            rows.append(liveEvidenceRow(finalLaunchReport.liveProviderEvidence))
         } else {
             rows.append(row("live_policy", "Live-call policy", .waiting, "Waiting for final launch report."))
             rows.append(row("final_resources", "Final resources", .waiting, "Waiting for final resources report."))
             rows.append(row("resource_handoff", "Resource handoff", .waiting, "Waiting for resource handoff report."))
+            rows.append(row("live_evidence", "Live evidence", .waiting, "Live provider evidence report has not loaded."))
         }
 
         let sanitizedRows = rows.map { item in
@@ -83,9 +85,13 @@ public enum LiveProviderConsentSummaryBuilder {
         let hasMissingData = providerReadiness == nil || finalLaunchReport == nil
         let hasError = providerReadinessError != nil || finalLaunchError != nil
         let hasBlocked = sanitizedRows.contains { $0.status == .blocked }
+        let liveEvidenceReady = finalLaunchReport?.liveProviderEvidence?.status
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased() == "ready"
         let allReady = providerReadiness?.overallRealReady == true
             && finalLaunchReport?.finalResourcesPreflight?.status == "ready"
             && finalLaunchReport?.resourceReport?.overallStatus == "ready"
+            && liveEvidenceReady
             && !hasError
             && !hasBlocked
 
@@ -183,6 +189,44 @@ public enum LiveProviderConsentSummaryBuilder {
             status(from: report.overallStatus),
             "Resource handoff \(report.overallStatus): ready \(report.summary.ready), missing \(report.summary.missing), blocked \(report.summary.blocked). \(report.operatorActions.first ?? "")"
         )
+    }
+
+    private static func liveEvidenceRow(
+        _ evidence: LiveProviderEvidenceReport?
+    ) -> LiveProviderConsentRow {
+        guard let evidence else {
+            return row("live_evidence", "Live evidence", .waiting, "Live provider evidence report has not loaded.")
+        }
+
+        let detailPrefix = (
+            "Live evidence \(sanitize(evidence.status)): ready \(evidence.summary.ready), "
+                + "missing \(evidence.summary.missing), blocked \(evidence.summary.blocked), "
+                + "partial \(evidence.summary.partial)."
+        )
+        if evidence.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "ready" {
+            return row("live_evidence", "Live evidence", .ready, detailPrefix)
+        }
+
+        let blockerDetail: String
+        if let blocker = evidence.firstBlocker {
+            blockerDetail = " " + liveEvidenceBlockerDetail(blocker)
+        } else if let slot = evidence.evidence.first(where: { status(from: $0.status) != .ready }) {
+            blockerDetail = " " + liveEvidenceBlockerDetail(slot)
+        } else {
+            blockerDetail = ""
+        }
+        return row("live_evidence", "Live evidence", status(from: evidence.status), detailPrefix + blockerDetail)
+    }
+
+    private static func liveEvidenceBlockerDetail(_ slot: LiveProviderEvidenceSlot) -> String {
+        var parts = ["\(slot.id) \(slot.status)"]
+        if let classification = slot.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        if let detail = slot.detail, !detail.isEmpty {
+            parts.append(detail)
+        }
+        return sanitize(parts.joined(separator: ": "))
     }
 
     private static func resourceItemDetail(_ item: FinalResourcesPreflightItem) -> String {
