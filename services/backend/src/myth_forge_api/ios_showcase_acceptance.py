@@ -1876,7 +1876,7 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_configured_preflight.py",
-                "build_provider_readiness",
+                "build_provider_handoff_report",
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_configured_preflight.py",

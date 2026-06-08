@@ -633,7 +633,7 @@ def _final_configured_preflight_checks(
             text in module_text
             for text in [
                 "build_final_resources_preflight_report",
-                "build_provider_readiness",
+                "build_provider_handoff_report",
                 "build_resource_handoff_report",
                 "build_final_demo_launch_report",
                 "build_ios_deploy_runbook_report",

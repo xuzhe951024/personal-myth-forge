@@ -175,12 +175,12 @@ FINAL_RESOURCES_PREFLIGHT_TEMPLATE = """def build_final_resources_preflight_repo
 FINAL_CONFIGURED_PREFLIGHT_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_resources_preflight import build_final_resources_preflight_report
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
-from myth_forge_api.providers.readiness import build_provider_readiness
+from myth_forge_api.provider_handoff import build_provider_handoff_report
 from myth_forge_api.resource_handoff import build_resource_handoff_report
 
 def build_final_configured_preflight_report():
     build_final_resources_preflight_report()
-    build_provider_readiness()
+    build_provider_handoff_report()
     build_resource_handoff_report()
     build_final_demo_launch_report()
     build_ios_deploy_runbook_report()

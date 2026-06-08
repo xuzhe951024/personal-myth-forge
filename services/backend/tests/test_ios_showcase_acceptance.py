@@ -1075,7 +1075,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/final_configured_preflight.py": (
             "build_final_configured_preflight_report final_configured_preflight_report "
-            "build_provider_readiness build_ios_deploy_runbook_report "
+            "build_provider_handoff_report build_ios_deploy_runbook_report "
             '"provider_calls": False "writes_backend_env": False '
             '"writes_ios_deploy_config": False'
         ),
