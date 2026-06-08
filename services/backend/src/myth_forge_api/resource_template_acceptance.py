@@ -61,6 +61,12 @@ IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH = (
 FINAL_ACCEPTANCE_LOCAL_MAKE_TARGET = "final-acceptance-local"
 IOS_DEPLOY_RUNBOOK_LOCAL_MAKE_TARGET = "ios-deploy-runbook-local"
 FINAL_REHEARSAL_LOCAL_MAKE_TARGET = "final-rehearsal-local"
+FINAL_LOCAL_REPORT_REFRESH_MAKE_TARGET = "final-local-report-refresh"
+FINAL_REHEARSAL_LOCAL_REFRESH_DEPENDENCY = (
+    "final-rehearsal-local: backend-evaluate-local visual-regression-local "
+    "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+    "final-local-report-refresh"
+)
 BANNED_WRITER_TEXT = [
     "sudo",
     "xcode-select",
@@ -890,6 +896,9 @@ def _final_rehearsal_local_checks(
         and IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH in makefile_text
         and "backend-evaluate-local" in makefile_text
         and FINAL_DEMO_LAUNCH_MAKE_TARGET in makefile_text,
+        "final_local_report_refresh_dependency": makefile_exists
+        and FINAL_LOCAL_REPORT_REFRESH_MAKE_TARGET in makefile_text
+        and FINAL_REHEARSAL_LOCAL_REFRESH_DEPENDENCY in makefile_text,
         "local_output_paths": FINAL_DEMO_LAUNCH_LOCAL_OUTPUT in makefile_text
         and "final-acceptance-local.json" in final_acceptance_script_text
         and "ios-deploy-runbook-local.json" in ios_deploy_runbook_script_text,

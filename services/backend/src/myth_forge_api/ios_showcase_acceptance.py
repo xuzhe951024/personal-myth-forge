@@ -1275,7 +1275,9 @@ FEATURES = (
             ),
             SourceRequirement(
                 "Makefile",
-                "final-rehearsal-local: backend-evaluate-local visual-regression-local",
+                "final-rehearsal-local: backend-evaluate-local visual-regression-local "
+                "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+                "final-local-report-refresh",
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_handoff_index.py",
