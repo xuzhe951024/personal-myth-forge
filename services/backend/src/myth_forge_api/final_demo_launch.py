@@ -74,6 +74,7 @@ def build_final_demo_launch_report(
     settings: Settings | None = None,
     repo_root: Path | str | None = None,
     include_configured_evidence_plan: bool = True,
+    include_ios_device_launch_certificate: bool = True,
 ) -> FinalDemoLaunchResult:
     if mode not in ("local", "configured"):
         raise ValueError(f"Unsupported final demo launch mode: {mode}")
@@ -246,6 +247,18 @@ def build_final_demo_launch_report(
         report["final_configured_evidence_plan"] = final_configured_evidence_plan
     if configured_live_evidence_bundle is not None:
         report["configured_live_evidence_bundle"] = configured_live_evidence_bundle
+    if include_ios_device_launch_certificate:
+        from myth_forge_api.ios_device_launch_certificate import (
+            build_ios_device_launch_certificate_report,
+        )
+
+        report["ios_device_launch_certificate"] = (
+            build_ios_device_launch_certificate_report(
+                settings=selected_settings,
+                repo_root=selected_repo_root,
+                final_demo_launch_report=report,
+            ).report
+        )
     sanitized = _sanitize_report(report, selected_repo_root)
     return FinalDemoLaunchResult(
         exit_code=_exit_code(mode=mode, summary=phase_summary),

@@ -50,6 +50,7 @@ FINAL_LAUNCH_STATUS_VIEW_PATH = "apps/mobile/ios/App/FinalLaunchStatusView.swift
 CORE_CONTRACT_TESTS_PATH = (
     "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift"
 )
+FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.py"
 
 SOURCE_REQUIREMENTS = (
     SourceRequirement(
@@ -177,6 +178,18 @@ SOURCE_REQUIREMENTS = (
         "Final launch iOS device launch rehearsal field",
         PMF_MODELS_PATH,
         "iosDeviceLaunchRehearsalReadiness",
+    ),
+    SourceRequirement(
+        "model_ios_device_launch_certificate",
+        "iOS device launch certificate model",
+        PMF_MODELS_PATH,
+        "IOSDeviceLaunchCertificateReport",
+    ),
+    SourceRequirement(
+        "model_ios_device_launch_certificate_field",
+        "Final launch iOS device launch certificate field",
+        PMF_MODELS_PATH,
+        "iosDeviceLaunchCertificate",
     ),
     SourceRequirement(
         "model_visual_regression_readiness",
@@ -857,6 +870,42 @@ SOURCE_REQUIREMENTS = (
         '"ios_device_launch_rehearsal_readiness",',
     ),
     SourceRequirement(
+        "final_demo_launch_ios_device_launch_certificate",
+        "Final demo launch embeds iOS device launch certificate",
+        FINAL_DEMO_LAUNCH_PATH,
+        '"ios_device_launch_certificate"',
+    ),
+    SourceRequirement(
+        "final_demo_launch_ios_device_launch_certificate_injected",
+        "Final demo launch injects base report into iOS device launch certificate",
+        FINAL_DEMO_LAUNCH_PATH,
+        "final_demo_launch_report=report",
+    ),
+    SourceRequirement(
+        "preflight_ios_device_launch_certificate_item",
+        "Device preflight iOS device launch certificate item",
+        DEVICE_PREFLIGHT_PATH,
+        "iosDeviceLaunchCertificateItem(report: finalDemoLaunch)",
+    ),
+    SourceRequirement(
+        "preflight_ios_device_launch_certificate_label",
+        "Device preflight iOS device launch certificate label",
+        DEVICE_PREFLIGHT_PATH,
+        "Launch Certificate",
+    ),
+    SourceRequirement(
+        "preflight_ios_device_launch_certificate_source",
+        "Device preflight iOS device launch certificate source",
+        DEVICE_PREFLIGHT_PATH,
+        "report.iosDeviceLaunchCertificate",
+    ),
+    SourceRequirement(
+        "preflight_ios_device_launch_certificate_required_item",
+        "Device preflight iOS device launch certificate required item",
+        DEVICE_PREFLIGHT_PATH,
+        '"ios_device_launch_certificate",',
+    ),
+    SourceRequirement(
         "preflight_final_closure_packet_item",
         "Device preflight final closure packet item",
         DEVICE_PREFLIGHT_PATH,
@@ -1113,6 +1162,42 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts unsafe iOS launch rehearsal readiness",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_certificate_decode",
+        "Contract test decodes iOS device launch certificate",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesIOSDeviceLaunchCertificateFromFinalLaunchPayload",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_certificate_missing_preflight",
+        "Contract test waits for missing iOS device launch certificate",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightWaitsForMissingIOSDeviceLaunchCertificate",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_certificate_blocked_preflight",
+        "Contract test blocks on iOS device launch certificate gate",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksOnIOSDeviceLaunchCertificateGate",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_certificate_ready_preflight",
+        "Contract test marks ready iOS device launch certificate",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyIOSDeviceLaunchCertificate",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_certificate_consent_preflight",
+        "Contract test shows iOS device launch certificate consent gate",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightShowsIOSDeviceLaunchCertificateConsentGate",
+    ),
+    SourceRequirement(
+        "contract_ios_device_launch_certificate_redaction_preflight",
+        "Contract test redacts unsafe iOS device launch certificate",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeIOSDeviceLaunchCertificate",
     ),
     SourceRequirement(
         "contract_final_closure_packet_missing_preflight",

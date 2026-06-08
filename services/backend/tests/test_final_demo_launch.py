@@ -135,6 +135,33 @@ def test_final_demo_launch_embeds_configured_live_evidence_bundle(
     assert bundle["safety"]["live_provider_calls"] is False
 
 
+def test_final_demo_launch_embeds_ios_device_launch_certificate(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    certificate = result.report["ios_device_launch_certificate"]
+    report_text = json.dumps(certificate, sort_keys=True)
+
+    assert certificate["kind"] == "ios_device_launch_certificate_report"
+    assert certificate["status"] == "blocked"
+    assert certificate["mode"] == "local"
+    assert certificate["summary"]["blocked"] >= 1
+    assert certificate["device_gates"][0]["id"] == "final_handoff_index"
+    assert "run make final-handoff-index" in " ".join(
+        certificate["operator_actions"]
+    )
+    assert certificate["safety"]["commands_run"] is False
+    assert certificate["safety"]["xcode_or_signing"] is False
+    assert "sk-" not in report_text
+    assert str(tmp_path) not in report_text
+
+
 def test_final_demo_launch_includes_sanitized_resource_fill_guide(
     tmp_path: Path,
 ) -> None:
