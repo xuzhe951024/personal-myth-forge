@@ -157,9 +157,13 @@ do {
     let visualRegressionReadiness = try readText(
         repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/visual_regression_readiness.py")
     )
+    let visualRegression = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/visual_regression.py")
+    )
     let visualRegressionReadinessTests = try readText(
         repositoryRoot.appendingPathComponent("services/backend/tests/test_visual_regression_readiness.py")
     )
+    let readme = try readText(repositoryRoot.appendingPathComponent("README.md"))
     let npcAgentEvaluationReadiness = try readText(
         repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py")
     )
@@ -409,6 +413,21 @@ do {
         makefile,
         "--output .local/visual-regression-local.json",
         "visual regression local report output"
+    )
+    try requireContains(
+        readme,
+        "20 static 390x844 iPhone evidence artifacts",
+        "visual regression artifact count README copy"
+    )
+    try requireContains(
+        readme,
+        "configured acceptance command visual",
+        "configured acceptance visual README copy"
+    )
+    try requireContains(
+        visualRegression,
+        "p0.186_configured_acceptance_command_visual",
+        "configured acceptance command visual artifact"
     )
     try requireContains(makefile, "backend-evaluate-3d:", "backend 3D evaluation Make target")
     try requireContains(makefile, "backend-evaluate-npc:", "backend NPC evaluation Make target")

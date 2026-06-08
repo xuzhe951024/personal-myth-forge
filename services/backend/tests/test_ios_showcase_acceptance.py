@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from myth_forge_api.ios_showcase_acceptance import run_ios_showcase_acceptance
+from myth_forge_api.ios_showcase_acceptance import FEATURES, run_ios_showcase_acceptance
 
 
 def test_ios_showcase_acceptance_passes_complete_fixture(tmp_path) -> None:
@@ -88,6 +88,27 @@ def test_ios_showcase_acceptance_passes_current_repo_source_gates() -> None:
         item["status"] == "passed"
         for item in result.report["required_features"]
     )
+
+
+def test_showcase_visual_regression_index_requires_configured_command_scope() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["showcase_visual_regression_index"].requirements
+    }
+
+    assert (
+        "services/backend/src/myth_forge_api/visual_regression.py",
+        "p0.186_configured_acceptance_command_visual",
+    ) in requirements
+    assert (
+        "README.md",
+        "20 static 390x844 iPhone evidence artifacts",
+    ) in requirements
+    assert (
+        "README.md",
+        "configured acceptance command visual",
+    ) in requirements
 
 
 def test_ios_showcase_acceptance_allows_external_action_ledger_builder_linebreak(
@@ -1026,7 +1047,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "p0.103_generation_result_receipt p0.118_scene_load_proof "
             "p0.82_npc_agent_tick_summary p0.101_print_fulfillment_receipt "
             "p0.100_live_provider_consent p0.112_ios_device_launch_rehearsal "
-            "p0.119_visual_regression_handoff p0.158_local_showcase_smoke"
+            "p0.119_visual_regression_handoff p0.158_local_showcase_smoke "
+            "p0.186_configured_acceptance_command_visual"
         ),
         "services/backend/src/myth_forge_api/live_provider_evidence.py": (
             "build_live_provider_evidence_report live_provider_evidence_report "
@@ -1213,7 +1235,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/tests/test_live_provider_evidence.py": (
             "test_live_provider_evidence_missing_reports_without_running_commands"
         ),
-        "README.md": "make visual-regression full-showcase visual index P0.128 P0.129",
+        "README.md": (
+            "make visual-regression full-showcase visual index P0.128 P0.129 "
+            "20 static 390x844 iPhone evidence artifacts "
+            "configured acceptance command visual"
+        ),
         "services/backend/tests/test_final_configured_preflight.py": (
             "test_configured_preflight_is_ready_with_configured_handoff_inputs"
         ),
