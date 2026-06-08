@@ -785,6 +785,30 @@ SOURCE_REQUIREMENTS = (
         '"final_resource_apply_preview",',
     ),
     SourceRequirement(
+        "preflight_ios_deploy_runbook_item",
+        "Device preflight iOS deploy runbook item",
+        DEVICE_PREFLIGHT_PATH,
+        "iosDeployRunbookItem(report: finalDemoLaunch)",
+    ),
+    SourceRequirement(
+        "preflight_ios_deploy_runbook_label",
+        "Device preflight iOS deploy runbook label",
+        DEVICE_PREFLIGHT_PATH,
+        "Deploy Runbook",
+    ),
+    SourceRequirement(
+        "preflight_ios_deploy_runbook_source",
+        "Device preflight iOS deploy runbook source",
+        DEVICE_PREFLIGHT_PATH,
+        "report.iosDeployRunbook",
+    ),
+    SourceRequirement(
+        "preflight_ios_deploy_runbook_required_item",
+        "Device preflight iOS deploy runbook required item",
+        DEVICE_PREFLIGHT_PATH,
+        '"ios_deploy_runbook",',
+    ),
+    SourceRequirement(
         "preflight_read_only_note",
         "Device preflight read-only note",
         DEVICE_PREFLIGHT_PATH,
@@ -915,6 +939,30 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts unsafe final resource apply preview first blocker detail",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail",
+    ),
+    SourceRequirement(
+        "contract_ios_deploy_runbook_missing",
+        "Contract test waits for missing iOS deploy runbook",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightWaitsForMissingIOSDeployRunbook",
+    ),
+    SourceRequirement(
+        "contract_ios_deploy_runbook_blocked",
+        "Contract test blocks on iOS deploy runbook command step",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksOnIOSDeployRunbookCommandStep",
+    ),
+    SourceRequirement(
+        "contract_ios_deploy_runbook_ready",
+        "Contract test marks ready iOS deploy runbook",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyIOSDeployRunbook",
+    ),
+    SourceRequirement(
+        "contract_ios_deploy_runbook_redaction",
+        "Contract test redacts unsafe iOS deploy runbook detail",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeIOSDeployRunbookDetail",
     ),
     SourceRequirement(
         "contract_preflight_error",

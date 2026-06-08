@@ -1403,6 +1403,26 @@ do {
         "device preflight final resource apply preview required item"
     )
     try requireContains(
+        devicePreflight,
+        "iosDeployRunbookItem(report: finalDemoLaunch)",
+        "device preflight iOS deploy runbook item"
+    )
+    try requireContains(
+        devicePreflight,
+        "Deploy Runbook",
+        "device preflight iOS deploy runbook label"
+    )
+    try requireContains(
+        devicePreflight,
+        "report.iosDeployRunbook",
+        "device preflight iOS deploy runbook source"
+    )
+    try requireContains(
+        devicePreflight,
+        #""ios_deploy_runbook","#,
+        "device preflight iOS deploy runbook required item"
+    )
+    try requireContains(
         contractTests,
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
         "device preflight fill guide first blocker redaction contract test"
@@ -1446,6 +1466,26 @@ do {
         contractTests,
         "testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail",
         "device preflight apply preview redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightWaitsForMissingIOSDeployRunbook",
+        "device preflight iOS deploy runbook missing contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightBlocksOnIOSDeployRunbookCommandStep",
+        "device preflight iOS deploy runbook blocked contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightMarksReadyIOSDeployRunbook",
+        "device preflight iOS deploy runbook ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightRedactsUnsafeIOSDeployRunbookDetail",
+        "device preflight iOS deploy runbook redaction contract test"
     )
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")

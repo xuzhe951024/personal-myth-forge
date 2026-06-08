@@ -115,6 +115,10 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "preflight_final_resource_apply_preview_label" in requirement_ids
     assert "preflight_final_resource_apply_preview_source" in requirement_ids
     assert "preflight_final_resource_apply_preview_required_item" in requirement_ids
+    assert "preflight_ios_deploy_runbook_item" in requirement_ids
+    assert "preflight_ios_deploy_runbook_label" in requirement_ids
+    assert "preflight_ios_deploy_runbook_source" in requirement_ids
+    assert "preflight_ios_deploy_runbook_required_item" in requirement_ids
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
     assert "contract_final_resource_fill_guide_ready" in requirement_ids
     assert "contract_final_resource_fill_guide_redaction" in requirement_ids
@@ -127,6 +131,10 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_final_resource_apply_preview_blocked" in requirement_ids
     assert "contract_final_resource_apply_preview_ready" in requirement_ids
     assert "contract_final_resource_apply_preview_redaction" in requirement_ids
+    assert "contract_ios_deploy_runbook_missing" in requirement_ids
+    assert "contract_ios_deploy_runbook_blocked" in requirement_ids
+    assert "contract_ios_deploy_runbook_ready" in requirement_ids
+    assert "contract_ios_deploy_runbook_redaction" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_fill_guide_first_blocker_row" in requirement_ids
@@ -360,6 +368,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Apply Preview",
                 "report.finalResourceApplyPreview",
                 "\"final_resource_apply_preview\",",
+                "iosDeployRunbookItem(report: finalDemoLaunch)",
+                "Deploy Runbook",
+                "report.iosDeployRunbook",
+                "\"ios_deploy_runbook\",",
                 "Final launch readiness is read-only.",
                 "case \"ready\"",
                 "\"final_resource_fill_guide\"",
@@ -386,6 +398,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightBlocksOnFinalResourceApplyPreviewFirstBlocker",
                 "testDevicePreflightMarksReadyFinalResourceApplyPreview",
                 "testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail",
+                "testDevicePreflightWaitsForMissingIOSDeployRunbook",
+                "testDevicePreflightBlocksOnIOSDeployRunbookCommandStep",
+                "testDevicePreflightMarksReadyIOSDeployRunbook",
+                "testDevicePreflightRedactsUnsafeIOSDeployRunbookDetail",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
                 "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
                 "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",
