@@ -1362,6 +1362,11 @@ do {
         "guide.firstBlocker",
         "device preflight final resource fill guide first blocker source"
     )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
+        "device preflight fill guide first blocker redaction contract test"
+    )
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")
     try requireContains(apiClient, "getFinalDemoLaunch", "final demo launch API client method")

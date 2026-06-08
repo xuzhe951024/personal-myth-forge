@@ -110,6 +110,7 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
     assert "contract_final_resource_fill_guide_ready" in requirement_ids
     assert "contract_final_resource_fill_guide_redaction" in requirement_ids
+    assert "contract_final_resource_fill_guide_first_blocker_redaction" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_fill_guide_first_blocker_row" in requirement_ids
@@ -352,6 +353,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightBlocksOnRequiredFinalResourceFillGuideInputs",
                 "testDevicePreflightMarksReadyFinalResourceFillGuide",
                 "testDevicePreflightRedactsUnsafeFinalResourceFillGuideDetail",
+                "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
                 "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
                 "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",
