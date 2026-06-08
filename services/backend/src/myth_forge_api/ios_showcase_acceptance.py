@@ -1453,6 +1453,10 @@ FEATURES = (
                 "p0.119_visual_regression_handoff",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.186_configured_acceptance_command_visual",
+            ),
+            SourceRequirement(
                 "services/backend/tests/test_visual_regression.py",
                 "test_default_visual_artifacts_cover_full_showcase_flow",
             ),
@@ -1465,6 +1469,8 @@ FEATURES = (
                 "test_visual_regression_cli_writes_showcase_report",
             ),
             SourceRequirement("README.md", "full-showcase visual index"),
+            SourceRequirement("README.md", "20 static 390x844 iPhone evidence artifacts"),
+            SourceRequirement("README.md", "configured acceptance command visual"),
         ),
     ),
     FeatureRequirement(
