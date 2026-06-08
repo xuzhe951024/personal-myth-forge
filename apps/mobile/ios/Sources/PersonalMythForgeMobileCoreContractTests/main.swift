@@ -47,6 +47,9 @@ do {
     try testFinalShowcaseSummaryRedactsUnsafeSourceText()
     try testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest()
     try testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest()
+    try testFinalShowcaseSummaryIncludesReadyProviderHandoffDigest()
+    try testFinalShowcaseSummaryBlocksProviderHandoffDigest()
+    try testFinalShowcaseSummaryRedactsUnsafeProviderHandoffDigest()
     try testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest()
     try testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest()
     try testFinalShowcaseSummaryIncludesReadyIOSDeployDigest()
@@ -1426,18 +1429,25 @@ private func testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest() throws {
 
 private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
     let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
-    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
-        report: finalDemoLaunchReport(
-            overallStatus: "ready",
-            finalResourcesStatus: "ready",
-            finalAcceptanceStatus: "ready",
-            threeDEvaluationStatus: "ready",
-            npcEvaluationStatus: "ready",
-            finalOperatorHandoffStatus: "ready",
-            iosDeployRunbookStatus: "ready",
-            iosDeviceLaunchRehearsalStatus: "ready"
-        ),
-        error: nil
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .ready,
+        title: "Final launch ready",
+        subtitle: "All final launch evidence is ready.",
+        phaseRows: [],
+        resourceFillGuideRows: ["Fill guide ready: required 2, optional 0, configured 2, secret 1."],
+        applyPreviewRows: ["Apply preview ready: targets 2, missing 0, blocked 0, secret 4."],
+        resourceHandoffRows: ["Resource handoff ready: ready 6, missing 0, blocked 0, manual 0."],
+        resourceActions: [],
+        acceptanceRows: ["Final acceptance ready."],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        localShowcaseSmokeRows: ["Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3."],
+        liveProviderEvidenceRows: ["Live evidence ready: ready 5, missing 0, blocked 0, partial 0."],
+        deployRunbookRows: ["iOS deploy runbook ready."],
+        launchRehearsalRows: ["iOS launch rehearsal ready: ready 4, blocked 0, partial 0."],
+        handoffRows: ["Final operator handoff ready."],
+        commandRows: [],
+        notes: []
     )
 
     let summary = FinalShowcaseSummaryBuilder.build(
@@ -1455,16 +1465,151 @@ private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
         summary.stages.map(\.id),
         [
             "capture", "three_d", "npc_agent", "print", "resources",
-            "local_smoke", "ios_deploy", "three_d_evaluation", "npc_evaluation",
-            "operator_handoff", "final_launch",
+            "provider_handoff", "local_smoke", "ios_deploy", "three_d_evaluation",
+            "npc_evaluation", "operator_handoff", "final_launch",
         ]
     )
+    try expectEqual(summary.stage(id: "provider_handoff")?.status, .ready)
     try expectEqual(summary.stage(id: "local_smoke")?.status, .ready)
     try expectEqual(summary.stage(id: "ios_deploy")?.status, .ready)
     try expectEqual(summary.stage(id: "three_d_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "npc_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "operator_handoff")?.status, .ready)
     try expectEqual(summary.stage(id: "final_launch")?.status, .ready)
+}
+
+private func testFinalShowcaseSummaryIncludesReadyProviderHandoffDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .ready,
+        title: "Final launch ready",
+        subtitle: "Provider handoff ready",
+        phaseRows: [],
+        resourceFillGuideRows: ["Fill guide ready: required 2, optional 0, configured 2, secret 1."],
+        applyPreviewRows: ["Apply preview ready: targets 2, missing 0, blocked 0, secret 4."],
+        resourceHandoffRows: ["Resource handoff ready: ready 6, missing 0, blocked 0, manual 0."],
+        resourceActions: [],
+        acceptanceRows: ["Final acceptance ready."],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        localShowcaseSmokeRows: ["Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3."],
+        liveProviderEvidenceRows: ["Live evidence ready: ready 5, missing 0, blocked 0, partial 0."],
+        deployRunbookRows: ["iOS deploy runbook ready."],
+        launchRehearsalRows: ["iOS launch rehearsal ready: ready 4, blocked 0, partial 0."],
+        handoffRows: ["Final operator handoff ready."],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let ids = summary.stages.map(\.id)
+    let resourcesIndex = try require(ids.firstIndex(of: "resources"), "missing resources stage")
+    let providerIndex = try require(ids.firstIndex(of: "provider_handoff"), "missing provider handoff stage")
+    let localSmokeIndex = try require(ids.firstIndex(of: "local_smoke"), "missing local smoke stage")
+    let stage = try require(summary.stage(id: "provider_handoff"), "missing provider handoff stage")
+
+    try expectEqual(stage.label, "Provider Handoff")
+    try expectEqual(stage.status, .ready)
+    try expectContains(stage.detail, "Live evidence ready")
+    try expectTrue(resourcesIndex < providerIndex)
+    try expectTrue(providerIndex < localSmokeIndex)
+}
+
+private func testFinalShowcaseSummaryBlocksProviderHandoffDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalResourcesStatus: "missing",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
+            localShowcaseSmokeStatus: "succeeded",
+            liveProviderEvidenceStatus: "missing",
+            liveProviderEvidenceBlockerDetail: "Provider handoff requires configured evidence.",
+            configuredEvidencePlanStatus: "blocked",
+            printFulfillmentReadinessStatus: "partial",
+            finalShowcaseReadinessStatus: "blocked",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            iosDeviceLaunchRehearsalStatus: "ready",
+            resourceHandoffStatus: "blocked",
+            resourceHandoffBackendStatus: "missing",
+            resourceHandoffIOSStatus: "ready",
+            resourceHandoffAction: "provide MESHY_API_KEY in final-resources.env"
+        ),
+        error: nil
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let stage = try require(summary.stage(id: "provider_handoff"), "missing provider handoff stage")
+
+    try expectEqual(summary.overallStatus, .needsAttention)
+    try expectEqual(stage.status, .needsAttention)
+    try expectContains(stage.detail, "Live evidence missing")
+    try expectContains(stage.detail, "provide MESHY_API_KEY")
+}
+
+private func testFinalShowcaseSummaryRedactsUnsafeProviderHandoffDigest() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch blocked",
+        subtitle: "Provider handoff blocked",
+        phaseRows: [],
+        resourceFillGuideRows: [
+            "Fill guide blocked: required 5, optional 5, configured 3, secret 4.",
+            "MESHY_API_KEY: missing required secret | provide sk-test /Users/zhexu/private file:///tmp/private checkout_url Bearer token",
+        ],
+        resourceActions: [],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        localShowcaseSmokeRows: ["Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3."],
+        liveProviderEvidenceRows: [
+            "Live evidence missing: ready 0, missing 5, blocked 0, partial 0. sk-test /Users/zhexu/private file:///tmp/private checkout_url Bearer token",
+            "provider_handoff: missing | make live-provider-evidence | sk-test /Users/zhexu/private file:///tmp/private checkout_url Bearer token",
+        ],
+        deployRunbookRows: ["iOS deploy runbook ready."],
+        launchRehearsalRows: ["iOS launch rehearsal ready: ready 4, blocked 0, partial 0."],
+        handoffRows: ["Final operator handoff ready."],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.stage(id: "provider_handoff")?.status, .needsAttention)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
 }
 
 private func testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest() throws {
@@ -1476,10 +1621,17 @@ private func testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest() throws {
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "ready",
             localShowcaseSmokeStatus: "succeeded",
+            liveProviderEvidenceStatus: "ready",
+            configuredEvidencePlanStatus: "ready",
+            printFulfillmentReadinessStatus: "ready",
+            finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
             iosDeployRunbookStatus: "ready",
             iosDeviceLaunchRehearsalStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready",
         ),
         error: nil
     )
@@ -1557,10 +1709,17 @@ private func testFinalShowcaseSummaryIncludesReadyIOSDeployDigest() throws {
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "ready",
             localShowcaseSmokeStatus: "succeeded",
+            liveProviderEvidenceStatus: "ready",
+            configuredEvidencePlanStatus: "ready",
+            printFulfillmentReadinessStatus: "ready",
+            finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
             iosDeployRunbookStatus: "ready",
-            iosDeviceLaunchRehearsalStatus: "ready"
+            iosDeviceLaunchRehearsalStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready"
         ),
         error: nil
     )
@@ -1597,12 +1756,19 @@ private func testFinalShowcaseSummaryBlocksIOSDeployDigest() throws {
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "ready",
             localShowcaseSmokeStatus: "succeeded",
+            liveProviderEvidenceStatus: "ready",
+            configuredEvidencePlanStatus: "ready",
+            printFulfillmentReadinessStatus: "ready",
+            finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
             iosDeployRunbookStatus: "blocked",
             iosDeployRunbookSlotStatus: "blocked",
             iosDeviceLaunchRehearsalStatus: "blocked",
-            iosDeviceLaunchRehearsalAction: "make ios-device-launch-rehearsal"
+            iosDeviceLaunchRehearsalAction: "make ios-device-launch-rehearsal",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready"
         ),
         error: nil
     )
@@ -1677,10 +1843,17 @@ private func testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest() throw
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "ready",
+            liveProviderEvidenceStatus: "ready",
+            configuredEvidencePlanStatus: "ready",
+            printFulfillmentReadinessStatus: "ready",
+            finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
             iosDeployRunbookStatus: "ready",
-            iosDeviceLaunchRehearsalStatus: "ready"
+            iosDeviceLaunchRehearsalStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready"
         ),
         error: nil
     )
@@ -1712,10 +1885,17 @@ private func testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest() thr
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "missing",
+            liveProviderEvidenceStatus: "ready",
+            configuredEvidencePlanStatus: "ready",
+            printFulfillmentReadinessStatus: "ready",
+            finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
             iosDeployRunbookStatus: "ready",
-            iosDeviceLaunchRehearsalStatus: "ready"
+            iosDeviceLaunchRehearsalStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready"
         ),
         error: nil
     )
@@ -1743,10 +1923,17 @@ private func testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest() throws
             finalResourcesStatus: "ready",
             finalAcceptanceStatus: "ready",
             threeDEvaluationStatus: "ready",
+            liveProviderEvidenceStatus: "ready",
+            configuredEvidencePlanStatus: "ready",
+            printFulfillmentReadinessStatus: "ready",
+            finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "missing",
             finalOperatorHandoffStatus: "ready",
             iosDeployRunbookStatus: "ready",
-            iosDeviceLaunchRehearsalStatus: "ready"
+            iosDeviceLaunchRehearsalStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready"
         ),
         error: nil
     )
@@ -5291,6 +5478,7 @@ private func finalDemoLaunchPayload(
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
     printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
+    finalResourceApplyPreviewStatus: String = "missing",
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
@@ -5707,10 +5895,10 @@ private func finalDemoLaunchPayload(
           },
           "final_resource_apply_preview": {
             "kind": "final_resource_apply_preview_report",
-            "status": "missing",
+            "status": "\(finalResourceApplyPreviewStatus)",
             "summary": {
-              "ready": 0,
-              "missing": 5,
+              "ready": \(finalResourceApplyPreviewStatus == "ready" ? "8" : "0"),
+              "missing": \(finalResourceApplyPreviewStatus == "ready" ? "0" : "5"),
               "blocked": 0,
               "optional": 8,
               "secret": 4,
@@ -9781,6 +9969,7 @@ private func finalDemoLaunchReport(
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
     printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
+    finalResourceApplyPreviewStatus: String = "missing",
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
@@ -9852,6 +10041,7 @@ private func finalDemoLaunchReport(
             printFulfillmentReadinessStatus: printFulfillmentReadinessStatus,
             printFulfillmentReadinessBlockerDetail: printFulfillmentReadinessBlockerDetail,
             printFulfillmentReadinessAction: printFulfillmentReadinessAction,
+            finalResourceApplyPreviewStatus: finalResourceApplyPreviewStatus,
             finalShowcaseReadinessStatus: finalShowcaseReadinessStatus,
             finalShowcaseReadinessFirstBlockerDetail: finalShowcaseReadinessFirstBlockerDetail,
             finalShowcaseReadinessAction: finalShowcaseReadinessAction,

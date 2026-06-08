@@ -68,6 +68,7 @@ public enum FinalShowcaseSummaryBuilder {
             resourcesStage(readiness: providerReadiness, error: providerReadinessError),
         ]
         if let finalLaunchSummary {
+            stages.append(providerHandoffStage(finalLaunchSummary))
             stages.append(localSmokeStage(finalLaunchSummary))
             stages.append(iosDeployStage(finalLaunchSummary))
             stages.append(threeDEvaluationStage(finalLaunchSummary))
@@ -86,6 +87,138 @@ public enum FinalShowcaseSummaryBuilder {
                 "Local file paths are withheld.",
             ]
         )
+    }
+
+    private static func providerHandoffStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
+        let statusRows = providerHandoffStatusRows(summary)
+        let combinedRows = providerHandoffCombinedRows(summary)
+        return stage(
+            "provider_handoff",
+            "Provider Handoff",
+            providerHandoffStatus(statusRows),
+            providerHandoffDetail(statusRows: statusRows, combinedRows: combinedRows)
+        )
+    }
+
+    private static func providerHandoffStatusRows(_ summary: FinalLaunchMobileSummary) -> [String] {
+        let liveRows = summary.liveProviderEvidenceRows
+        if !liveRows.isEmpty, providerHandoffStatus(liveRows) != .ready {
+            return liveRows
+        }
+        let applyRows = summary.applyPreviewRows
+        if !applyRows.isEmpty {
+            if providerHandoffStatus(applyRows) == .ready {
+                return liveRows.isEmpty ? applyRows : liveRows
+            }
+            return applyRows
+        }
+        let candidates = [
+            summary.resourceFillGuideRows,
+            summary.resourceHandoffRows,
+        ].filter { !$0.isEmpty }
+        if let firstNotReady = candidates.first(where: { providerHandoffStatus($0) != .ready }) {
+            return firstNotReady
+        }
+        return liveRows.isEmpty ? candidates.first ?? [] : liveRows
+    }
+
+    private static func providerHandoffCombinedRows(_ summary: FinalLaunchMobileSummary) -> [String] {
+        providerHandoffCandidateRows(summary).flatMap { $0 }
+    }
+
+    private static func providerHandoffCandidateRows(_ summary: FinalLaunchMobileSummary) -> [[String]] {
+        [
+            summary.liveProviderEvidenceRows,
+            summary.applyPreviewRows,
+            summary.resourceFillGuideRows,
+            summary.resourceHandoffRows,
+        ].filter { !$0.isEmpty }
+    }
+
+    private static func providerHandoffStatus(_ rows: [String]) -> FinalShowcaseStageStatus {
+        guard let first = rows.first else {
+            return .waiting
+        }
+        if first.hasPrefix("Live evidence ready")
+            || first.hasPrefix("Apply preview ready")
+            || first.hasPrefix("Fill guide ready")
+            || first.hasPrefix("Resource handoff ready")
+        {
+            return .ready
+        }
+        let text = rows.joined(separator: " ").lowercased()
+        if text.contains("has not loaded") || text.contains("waiting") {
+            return .waiting
+        }
+        if text.contains("blocked")
+            || text.contains("failed")
+            || text.contains("missing")
+            || text.contains("partial")
+            || text.contains("consent")
+            || text.contains("required")
+        {
+            return .needsAttention
+        }
+        return .needsAttention
+    }
+
+    private static func providerHandoffDetail(statusRows: [String], combinedRows: [String]) -> String {
+        guard let first = statusRows.first else {
+            return "Provider handoff evidence has not loaded."
+        }
+        if statusRows.count == 1 || providerHandoffStatus(statusRows) == .ready {
+            return sanitize(first)
+        }
+        let candidates = combinedRows.filter { $0 != first }
+        if let inputAction = candidates.first(where: providerHandoffInputActionRow) {
+            return sanitize([first, providerHandoffActionDetail(inputAction)].joined(separator: " "))
+        }
+        if let actionable = candidates.first(where: providerHandoffActionableRow) {
+            return sanitize([first, actionable].joined(separator: " "))
+        }
+        return sanitize(statusRows.prefix(2).joined(separator: " "))
+    }
+
+    private static func providerHandoffInputActionRow(_ row: String) -> Bool {
+        let text = row.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if text.hasPrefix("freshness:") || text.hasPrefix("source freshness:") {
+            return false
+        }
+        return text.contains("provide ")
+            || text.contains("fill ")
+            || text.contains("meshy_api_key")
+            || text.contains("openai_api_key")
+            || text.contains("final-resources.env")
+    }
+
+    private static func providerHandoffActionableRow(_ row: String) -> Bool {
+        let text = row.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if text.hasPrefix("freshness:") || text.hasPrefix("source freshness:") {
+            return false
+        }
+        return text.contains("provide ")
+            || text.contains("fill ")
+            || text.contains("make ")
+            || text.contains("run ")
+            || text.contains("consent")
+            || text.contains("missing")
+            || text.contains("blocked")
+            || text.contains("required")
+    }
+
+    private static func providerHandoffActionDetail(_ row: String) -> String {
+        let trimmed = row.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lowered = trimmed.lowercased()
+        if lowered.contains("provide ") || lowered.contains("fill ") {
+            return trimmed
+        }
+        if lowered.contains("meshy_api_key") {
+            return "provide MESHY_API_KEY in final-resources.env"
+        }
+        if lowered.contains("openai_api_key") {
+            return "provide OPENAI_API_KEY in final-resources.env"
+        }
+        return trimmed
     }
 
     private static func localSmokeStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
@@ -360,8 +493,8 @@ public enum FinalShowcaseSummaryBuilder {
             stages.first(where: { $0.id == id })?.status == .ready
         }
         let launchStageIDs = Set([
-            "local_smoke", "ios_deploy", "three_d_evaluation", "npc_evaluation",
-            "operator_handoff", "final_launch",
+            "provider_handoff", "local_smoke", "ios_deploy", "three_d_evaluation",
+            "npc_evaluation", "operator_handoff", "final_launch",
         ])
         let launchStages = stages.filter { launchStageIDs.contains($0.id) }
         let launchReady = launchStages.allSatisfy { $0.status == .ready }
