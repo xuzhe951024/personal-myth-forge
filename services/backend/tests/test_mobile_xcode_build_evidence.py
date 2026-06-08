@@ -4,6 +4,7 @@ import json
 import subprocess
 from pathlib import Path
 
+from myth_forge_api.cli import main
 from myth_forge_api.mobile_xcode_build_evidence import (
     build_mobile_xcode_build_evidence_report,
     run_mobile_xcode_build_evidence,
@@ -124,3 +125,51 @@ def test_run_xcode_build_evidence_uses_injected_runner(tmp_path: Path) -> None:
     assert calls == [tmp_path]
     assert result.exit_code == 0
     assert result.report["status"] == "ready"
+
+
+def test_cli_writes_mobile_xcode_build_evidence_blocked_report(
+    tmp_path: Path,
+) -> None:
+    repo_root = _minimal_xcode_gate_repo(tmp_path)
+    output = repo_root / "services/backend/.local/mobile-xcode-build-evidence.json"
+
+    exit_code = main(
+        [
+            "mobile-xcode-build-evidence",
+            "--repo-root",
+            str(repo_root),
+            "--output",
+            str(output),
+        ]
+    )
+    report = json.loads(output.read_text(encoding="utf-8"))
+
+    assert exit_code == 2
+    assert report["kind"] == "mobile_xcode_build_evidence_report"
+    assert report["status"] == "blocked"
+    assert report["classification"] == "blocked_by_apple_sdk_license"
+    assert "license" in " ".join(report["stderr_lines"]).lower()
+    assert str(tmp_path) not in json.dumps(report)
+
+
+def test_makefile_exposes_mobile_xcode_build_evidence_target() -> None:
+    makefile = Path(__file__).resolve().parents[3] / "Makefile"
+    text = makefile.read_text(encoding="utf-8")
+
+    assert "mobile-xcode-build-evidence" in text
+    assert "myth_forge_api.cli mobile-xcode-build-evidence" in text
+    assert ".local/mobile-xcode-build-evidence.json" in text
+
+
+def _minimal_xcode_gate_repo(tmp_path: Path) -> Path:
+    repo_root = tmp_path / "repo"
+    script = repo_root / "apps/mobile/ios/scripts/xcode_build_gate.sh"
+    (repo_root / "services/backend/.local").mkdir(parents=True)
+    script.parent.mkdir(parents=True)
+    script.write_text(
+        "#!/usr/bin/env sh\n"
+        "printf '%s\\n' 'You have not agreed to the Xcode license agreements.' >&2\n"
+        "exit 69\n",
+        encoding="utf-8",
+    )
+    return repo_root

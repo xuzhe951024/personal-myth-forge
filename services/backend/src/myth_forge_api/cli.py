@@ -64,6 +64,9 @@ from myth_forge_api.local_showcase_smoke import build_local_showcase_smoke_repor
 from myth_forge_api.mobile_deploy_preflight_evidence import (
     run_mobile_deploy_preflight_evidence,
 )
+from myth_forge_api.mobile_xcode_build_evidence import (
+    run_mobile_xcode_build_evidence,
+)
 from myth_forge_api.ios_device_launch_certificate import (
     build_ios_device_launch_certificate_report,
 )
@@ -209,6 +212,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if args.command == "mobile-deploy-preflight-evidence":
             return _mobile_deploy_preflight_evidence(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
+        if args.command == "mobile-xcode-build-evidence":
+            return _mobile_xcode_build_evidence(
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
@@ -397,6 +405,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     mobile_deploy_preflight_evidence_parser.add_argument("--repo-root", default=None)
     mobile_deploy_preflight_evidence_parser.add_argument("--output", default=None)
+
+    mobile_xcode_build_evidence_parser = subcommands.add_parser(
+        "mobile-xcode-build-evidence"
+    )
+    mobile_xcode_build_evidence_parser.add_argument("--repo-root", default=None)
+    mobile_xcode_build_evidence_parser.add_argument("--output", default=None)
 
     final_configured_preflight_parser = subcommands.add_parser(
         "final-configured-preflight"
@@ -727,6 +741,18 @@ def _mobile_deploy_preflight_evidence(
     output_path: str | None,
 ) -> int:
     result = run_mobile_deploy_preflight_evidence(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _mobile_xcode_build_evidence(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = run_mobile_xcode_build_evidence(
         repo_root=Path(repo_root) if repo_root else None,
     )
     _write_json_payload(result.report, output_path)

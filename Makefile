@@ -162,6 +162,11 @@ final-rehearsal-local: backend-evaluate-local visual-regression-local final-acce
 mobile-xcode-build:
 	apps/mobile/ios/scripts/xcode_build_gate.sh
 
+.PHONY: mobile-xcode-build-evidence
+
+mobile-xcode-build-evidence:
+	cd services/backend && uv run python -m myth_forge_api.cli mobile-xcode-build-evidence --repo-root ../.. --output .local/mobile-xcode-build-evidence.json
+
 .PHONY: mobile-deploy-preflight
 
 mobile-deploy-preflight:
