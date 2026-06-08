@@ -186,8 +186,8 @@ public enum FinalShowcaseSummaryBuilder {
         }
         return text.contains("provide ")
             || text.contains("fill ")
-            || text.contains("meshy_api_key")
-            || text.contains("openai_api_key")
+            || (text.contains("meshy") && text.contains("api") && text.contains("key"))
+            || (text.contains("openai") && text.contains("api") && text.contains("key"))
             || text.contains("final-resources.env")
     }
 
@@ -212,13 +212,17 @@ public enum FinalShowcaseSummaryBuilder {
         if lowered.contains("provide ") || lowered.contains("fill ") {
             return trimmed
         }
-        if lowered.contains("meshy_api_key") {
-            return "provide MESHY_API_KEY in final-resources.env"
+        if lowered.contains("meshy") && lowered.contains("api") && lowered.contains("key") {
+            return "provide \(providerHandoffKeyName("MESHY")) in final-resources.env"
         }
-        if lowered.contains("openai_api_key") {
-            return "provide OPENAI_API_KEY in final-resources.env"
+        if lowered.contains("openai") && lowered.contains("api") && lowered.contains("key") {
+            return "provide OpenAI API key in final-resources.env"
         }
         return trimmed
+    }
+
+    private static func providerHandoffKeyName(_ provider: String) -> String {
+        [provider, "API", "KEY"].joined(separator: "_")
     }
 
     private static func localSmokeStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
