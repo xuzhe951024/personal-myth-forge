@@ -238,6 +238,7 @@ DEFAULT_VISUAL_ARTIFACTS = (
         required_text=(
             "Closure Packet",
             "Final closure blocked",
+            "first_blocker",
             "resource_inputs",
             "provide MESHY_API_KEY",
             "configured_evidence_bundle",

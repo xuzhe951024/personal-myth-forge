@@ -79,6 +79,7 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "Safety: commands_run=false xcode=false global=false" in required_text
     assert "Closure Packet" in required_text
     assert "Final closure blocked" in required_text
+    assert "first_blocker" in required_text
     assert "resource_inputs" in required_text
     assert "provide MESHY_API_KEY" in required_text
     assert "configured_evidence_bundle" in required_text
@@ -86,6 +87,12 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "make configured-live-evidence-bundle" in required_text
     assert "cost consent" in required_text
     assert "commands_run=false global=false live_calls=false" in required_text
+    closure_packet_spec = next(
+        spec
+        for spec in DEFAULT_VISUAL_ARTIFACTS
+        if spec.id == "p0.157_final_launch_closure_packet"
+    )
+    assert "first_blocker" in closure_packet_spec.required_text
     assert "Local Smoke" in required_text
     assert "Local showcase smoke ready" in required_text
     assert "HTTP 6" in required_text
