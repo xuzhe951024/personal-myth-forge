@@ -2334,6 +2334,10 @@ FEATURES = (
                 "first_blocker",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "_phase_blocker_with_nested_hint",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "FinalDemoLaunchFirstBlocker",
             ),

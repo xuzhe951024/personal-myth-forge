@@ -180,6 +180,9 @@ def build_final_demo_launch_report(
     first_blocker = _first_blocker(
         phases=phases,
         nested_reports=[
+            ("final_resource_requirements", final_resource_requirements),
+            ("final_resource_apply_preview", final_resource_apply_preview),
+            ("final_resource_fill_guide", final_resource_fill_guide),
             ("final_acceptance_readiness", final_acceptance_readiness),
             ("final_showcase_readiness", final_showcase_readiness),
             ("final_launch_closure_packet", final_launch_closure_packet),
@@ -499,13 +502,13 @@ def _first_blocker(
     phases: list[dict[str, Any]],
     nested_reports: list[tuple[str, dict[str, Any] | None]],
 ) -> dict[str, Any] | None:
+    nested_blocker = _first_nested_blocker(nested_reports)
     phase_blocker = _first_phase_blocker(
         phases=phases,
         statuses={"failed", "blocked", "missing"},
     )
     if phase_blocker is not None:
-        return phase_blocker
-    nested_blocker = _first_nested_blocker(nested_reports)
+        return _phase_blocker_with_nested_hint(phase_blocker, nested_blocker)
     if nested_blocker is not None:
         return nested_blocker
     return _first_phase_blocker(
@@ -542,6 +545,34 @@ def _phase_blocker(phase: dict[str, Any]) -> dict[str, Any]:
         "source": "final_demo_launch_phase",
         "source_id": str(phase.get("id", "unknown_phase")),
     }
+
+
+def _phase_blocker_with_nested_hint(
+    phase_blocker: dict[str, Any],
+    nested_blocker: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if nested_blocker is None:
+        return phase_blocker
+    hint = _nested_blocker_hint(nested_blocker)
+    if not hint:
+        return phase_blocker
+    result = dict(phase_blocker)
+    detail = str(result.get("detail", ""))
+    result["detail"] = " | ".join(part for part in [detail, hint] if part)
+    return result
+
+
+def _nested_blocker_hint(blocker: dict[str, Any]) -> str:
+    source = str(blocker.get("source", "nested_report"))
+    blocker_id = str(blocker.get("source_id", blocker.get("id", source)))
+    parts = [f"Blocked by {source}:{blocker_id}"]
+    command = str(blocker.get("command", ""))
+    detail = str(blocker.get("detail", ""))
+    if command:
+        parts.append(command)
+    if detail:
+        parts.append(detail)
+    return " | ".join(parts)
 
 
 def _first_nested_blocker(

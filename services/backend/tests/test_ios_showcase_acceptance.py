@@ -1261,7 +1261,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final_resource_apply_preview "
             "final_external_action_ledger "
             "final_launch_closure_packet "
-            "first_blocker "
+            "first_blocker _phase_blocker_with_nested_hint "
             "local_showcase_smoke "
             "final_showcase_readiness "
             "final_operator_handoff three_d_evaluation_readiness=three_d_evaluation_readiness "
