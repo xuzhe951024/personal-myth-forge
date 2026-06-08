@@ -44,6 +44,7 @@ def build_final_resource_fill_guide_report(
     required_inputs = _required_inputs(requirements)
     optional_inputs = _optional_inputs(requirements)
     configured_inputs = _configured_inputs(requirements)
+    first_blocker = _first_blocker(required_inputs)
     status = "blocked" if required_inputs else "ready"
     report = {
         "kind": "final_resource_fill_guide_report",
@@ -57,6 +58,7 @@ def build_final_resource_fill_guide_report(
         "required_inputs": required_inputs,
         "optional_inputs": optional_inputs,
         "configured_inputs": configured_inputs,
+        "first_blocker": first_blocker,
         "commands": COMMANDS,
         "markdown": _markdown(
             status=status,
@@ -172,6 +174,24 @@ def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
         "kind": report.get("kind", "unknown"),
         "status": report.get("status", "unknown"),
         "summary": report.get("summary", {}),
+    }
+
+
+def _first_blocker(required_inputs: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not required_inputs:
+        return None
+    item = required_inputs[0]
+    return {
+        "id": item["id"],
+        "label": item["label"],
+        "status": item["status"],
+        "classification": item["classification"],
+        "command": item["fill_action"],
+        "detail": item["notes"],
+        "domain": item["domain"],
+        "input_source": item["input_source"],
+        "write_destination": item["write_destination"],
+        "validation_command": item["validation_command"],
     }
 
 

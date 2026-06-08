@@ -36,10 +36,23 @@ def test_fill_guide_lists_required_inputs_without_secret_or_path_leak(
     markdown = report["markdown"]
     report_text = json.dumps(report)
     required_ids = [item["id"] for item in report["required_inputs"]]
+    first_blocker = report["first_blocker"]
 
     assert result.exit_code == 2
     assert report["kind"] == "final_resource_fill_guide_report"
     assert report["status"] == "blocked"
+    assert first_blocker == {
+        "id": "MESHY_API_KEY",
+        "label": "Meshy API key",
+        "status": "missing",
+        "classification": "missing_required_value",
+        "command": "fill MESHY_API_KEY in services/backend/.local/final-resources.env",
+        "detail": "Backend-only secret for live Meshy 3D generation.",
+        "domain": "backend_provider",
+        "input_source": "services/backend/.local/final-resources.env",
+        "write_destination": "services/backend/.env",
+        "validation_command": "make final-resources-preflight",
+    }
     assert required_ids == [
         "MESHY_API_KEY",
         "OPENAI_API_KEY",
@@ -86,6 +99,7 @@ def test_fill_guide_ready_resources_do_not_leak_secret_or_backend_url(
 
     assert result.exit_code == 0
     assert report["status"] == "ready"
+    assert report["first_blocker"] is None
     assert report["required_inputs"] == []
     assert "MESHY_API_KEY" in configured_ids
     assert "MESHY_API_KEY" in markdown

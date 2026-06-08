@@ -151,6 +151,10 @@ def test_final_demo_launch_includes_sanitized_resource_fill_guide(
     assert guide["status"] == "blocked"
     assert guide["summary"]["required_inputs"] == 5
     assert guide["summary"]["secret_inputs"] == 4
+    assert guide["first_blocker"]["id"] == "MESHY_API_KEY"
+    assert guide["first_blocker"]["command"] == (
+        "fill MESHY_API_KEY in services/backend/.local/final-resources.env"
+    )
     assert guide["required_inputs"][0]["id"] == "MESHY_API_KEY"
     assert guide["required_inputs"][0]["display_value"] == "<secret: fill locally>"
     assert guide["commands"][:2] == [
@@ -539,6 +543,12 @@ def test_final_demo_launch_embeds_final_resource_apply_preview(
 
     assert preview["kind"] == "final_resource_apply_preview_report"
     assert preview["status"] == "missing"
+    assert preview["first_blocker"]["id"] == "backend_env"
+    assert preview["first_blocker"]["command"] == "make final-apply-resources"
+    assert preview["first_blocker"]["blocked_by"] == [
+        "MESHY_API_KEY",
+        "OPENAI_API_KEY",
+    ]
     assert preview["write_targets_by_id"]["backend_env"]["destination"] == (
         "services/backend/.env"
     )

@@ -34,10 +34,23 @@ def test_apply_preview_reports_missing_resources_without_writing_outputs(
     result = build_final_resource_apply_preview_report(repo_root=repo_root)
     report_text = json.dumps(result.report)
     targets = result.report["write_targets_by_id"]
+    first_blocker = result.report["first_blocker"]
 
     assert result.exit_code == 2
     assert result.report["kind"] == "final_resource_apply_preview_report"
     assert result.report["status"] == "missing"
+    assert first_blocker == {
+        "id": "backend_env",
+        "label": "Backend env",
+        "status": "missing",
+        "classification": "missing_required_value",
+        "command": "make final-apply-resources",
+        "detail": "blocked by MESHY_API_KEY, OPENAI_API_KEY",
+        "destination": "services/backend/.env",
+        "writer": "services/backend/scripts/write_backend_env.sh",
+        "blocked_by": ["MESHY_API_KEY", "OPENAI_API_KEY"],
+        "validation_command": "make final-resources-preflight",
+    }
     assert result.report["summary"]["missing"] >= 5
     assert result.report["summary"]["write_targets"] == 2
     assert targets["backend_env"]["status"] == "missing"
@@ -263,6 +276,7 @@ def test_apply_preview_is_ready_for_valid_local_resources_without_secret_leak(
 
     assert result.exit_code == 0
     assert report["status"] == "ready"
+    assert report["first_blocker"] is None
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["missing"] == 0
     assert report["summary"]["ready"] >= 9

@@ -1398,6 +1398,16 @@ do {
     )
     try requireContains(
         pmfModels,
+        "FinalResourceFillGuideFirstBlocker",
+        "final resource fill guide first blocker model"
+    )
+    try requireContains(
+        pmfModels,
+        "firstBlocker: FinalResourceFillGuideFirstBlocker?",
+        "final resource fill guide first blocker field"
+    )
+    try requireContains(
+        pmfModels,
         "finalResourceFillGuide",
         "final demo launch final resource fill guide field"
     )
@@ -1405,6 +1415,16 @@ do {
         pmfModels,
         "FinalResourceApplyPreviewReport",
         "final resource apply preview report model"
+    )
+    try requireContains(
+        pmfModels,
+        "FinalResourceApplyPreviewFirstBlocker",
+        "final resource apply preview first blocker model"
+    )
+    try requireContains(
+        pmfModels,
+        "firstBlocker: FinalResourceApplyPreviewFirstBlocker?",
+        "final resource apply preview first blocker field"
     )
     try requireContains(
         pmfModels,
@@ -1615,6 +1635,11 @@ do {
     )
     try requireContains(
         finalLaunchMobileSummary,
+        "resourceFillGuideFirstBlockerRow",
+        "final launch resource fill guide first blocker row"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
         "Fill guide",
         "final launch resource fill guide summary copy"
     )
@@ -1622,6 +1647,11 @@ do {
         finalLaunchMobileSummary,
         "applyPreviewRows",
         "final launch apply preview rows"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "applyPreviewFirstBlockerRow",
+        "final launch apply preview first blocker row"
     )
     try requireContains(
         finalLaunchMobileSummary,
@@ -2135,6 +2165,11 @@ do {
     )
     try requireContains(
         contractTests,
+        "fill MESHY_API_KEY in services/backend/.local/final-resources.env",
+        "final resource fill guide first blocker command fixture"
+    )
+    try requireContains(
+        contractTests,
         "testFinalLaunchMobileSummaryShowsResourceFillGuide",
         "final resource fill guide summary test"
     )
@@ -2142,6 +2177,11 @@ do {
         contractTests,
         "testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload",
         "final resource apply preview decode test"
+    )
+    try requireContains(
+        contractTests,
+        "blocked by MESHY_API_KEY",
+        "final resource apply preview first blocker fixture"
     )
     try requireContains(
         contractTests,

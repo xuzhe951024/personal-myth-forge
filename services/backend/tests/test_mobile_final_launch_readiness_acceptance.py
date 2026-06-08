@@ -109,6 +109,12 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
     assert "contract_final_resource_fill_guide_ready" in requirement_ids
     assert "contract_final_resource_fill_guide_redaction" in requirement_ids
+    assert "model_final_resource_fill_guide_first_blocker" in requirement_ids
+    assert "model_final_resource_fill_guide_first_blocker_field" in requirement_ids
+    assert "mobile_summary_final_resource_fill_guide_first_blocker_row" in requirement_ids
+    assert "model_final_resource_apply_preview_first_blocker" in requirement_ids
+    assert "model_final_resource_apply_preview_first_blocker_field" in requirement_ids
+    assert "mobile_summary_final_resource_apply_preview_first_blocker_row" in requirement_ids
     assert "model_final_resource_requirements_first_blocker" in requirement_ids
     assert "model_final_resource_requirements_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_requirements_source" in requirement_ids
@@ -221,6 +227,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "configuredLiveEvidenceBundle",
                 "FinalResourceFillGuideReport",
                 "finalResourceFillGuide",
+                "FinalResourceFillGuideFirstBlocker",
+                "firstBlocker: FinalResourceFillGuideFirstBlocker?",
+                "FinalResourceApplyPreviewFirstBlocker",
+                "firstBlocker: FinalResourceApplyPreviewFirstBlocker?",
                 "FinalResourceRequirementsFirstBlocker",
                 "firstBlocker: FinalResourceRequirementsFirstBlocker?",
                 "ResourceHandoffReport",
@@ -285,6 +295,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "resourceHandoffIOSRows",
                 "resourceFillGuideRows",
                 "Fill guide",
+                "resourceFillGuideFirstBlockerRow",
+                "applyPreviewFirstBlockerRow",
                 "report.finalResourceRequirements",
                 "resourceRequirementFirstBlockerRow",
                 "sanitize",
