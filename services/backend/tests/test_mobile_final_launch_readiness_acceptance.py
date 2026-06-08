@@ -37,11 +37,14 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
         for requirement in result.report["mobile_source"]["requirements"]
     }
     assert "model_final_launch_mode" in requirement_ids
+    assert "model_final_demo_launch_first_blocker" in requirement_ids
+    assert "model_final_demo_launch_first_blocker_field" in requirement_ids
     assert "app_configuration_final_launch_mode" in requirement_ids
     assert "root_view_mode_picker" in requirement_ids
     assert "root_view_configured_mode" in requirement_ids
     assert "root_view_mode_reload" in requirement_ids
     assert "mobile_summary_mode_policy_rows" in requirement_ids
+    assert "mobile_summary_final_demo_launch_first_blocker_row" in requirement_ids
     assert "mobile_status_view_mode_section" in requirement_ids
     assert "model_ios_device_launch_rehearsal" in requirement_ids
     assert "mobile_summary_launch_rehearsal_rows" in requirement_ids
@@ -106,6 +109,7 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
     assert "contract_final_resource_fill_guide_ready" in requirement_ids
     assert "contract_final_resource_fill_guide_redaction" in requirement_ids
+    assert "contract_final_demo_launch_first_blocker_receipt" in requirement_ids
     assert result.report["safety"] == {
         "global_mutation": False,
         "live_provider_calls_by_default": False,
@@ -180,6 +184,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
             [
                 "FinalDemoLaunchReport",
                 "FinalDemoLaunchPhase",
+                "FinalDemoLaunchFirstBlocker",
+                "firstBlocker: FinalDemoLaunchFirstBlocker?",
                 "FinalDemoLaunchLiveCallPolicy",
                 "FinalDemoLaunchSafety",
                 "FinalResourcesPreflightReport",
@@ -257,6 +263,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "launchRehearsalRows",
                 "closurePacketRows",
                 "closurePacketFirstBlockerRow",
+                "report.firstBlocker",
                 "visualRegressionRows",
                 "localShowcaseSmokeRows",
                 "provider_calls=",
@@ -340,6 +347,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "configured_live_evidence_bundle",
                 "testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket",
                 "sk-configured",
+                "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt",
                 "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload",
                 "testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal",

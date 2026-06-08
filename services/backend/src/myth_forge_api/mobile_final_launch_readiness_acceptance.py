@@ -65,6 +65,18 @@ SOURCE_REQUIREMENTS = (
         "FinalDemoLaunchPhase",
     ),
     SourceRequirement(
+        "model_final_demo_launch_first_blocker",
+        "Final demo launch first blocker model",
+        PMF_MODELS_PATH,
+        "FinalDemoLaunchFirstBlocker",
+    ),
+    SourceRequirement(
+        "model_final_demo_launch_first_blocker_field",
+        "Final demo launch first blocker field",
+        PMF_MODELS_PATH,
+        "firstBlocker: FinalDemoLaunchFirstBlocker?",
+    ),
+    SourceRequirement(
         "model_live_call_policy",
         "Final launch live call policy model",
         PMF_MODELS_PATH,
@@ -417,6 +429,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final launch closure packet first blocker row",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
         "closurePacketFirstBlockerRow",
+    ),
+    SourceRequirement(
+        "mobile_summary_final_demo_launch_first_blocker_row",
+        "Mobile final demo launch first blocker row",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "report.firstBlocker",
     ),
     SourceRequirement(
         "mobile_summary_launch_rehearsal_rows",
@@ -831,6 +849,12 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts closure configured evidence bundle section",
         CORE_CONTRACT_TESTS_PATH,
         "sk-configured",
+    ),
+    SourceRequirement(
+        "contract_final_demo_launch_first_blocker_receipt",
+        "Contract test final demo launch first blocker receipt",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt",
     ),
     SourceRequirement(
         "contract_ios_device_launch_rehearsal_decode",
