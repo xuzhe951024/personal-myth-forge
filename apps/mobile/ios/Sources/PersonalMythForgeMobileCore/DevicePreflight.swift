@@ -102,6 +102,7 @@ public enum DevicePreflightSummaryBuilder {
             finalResourceRequirementsItem(report: finalDemoLaunch),
             finalResourceFillGuideItem(report: finalDemoLaunch),
             finalResourceApplyPreviewItem(report: finalDemoLaunch),
+            iosDeployRunbookItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
         ]
@@ -571,6 +572,109 @@ public enum DevicePreflightSummaryBuilder {
         "\(preview.status): ready \(preview.summary.ready), missing \(preview.summary.missing), blocked \(preview.summary.blocked), targets \(preview.summary.writeTargets), secret \(preview.summary.secret)."
     }
 
+    private static func iosDeployRunbookItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "ios_deploy_runbook",
+                "Deploy Runbook",
+                .waiting,
+                "iOS deploy runbook has not loaded."
+            )
+        }
+        guard let runbook = report.iosDeployRunbook else {
+            return item(
+                "ios_deploy_runbook",
+                "Deploy Runbook",
+                .waiting,
+                "iOS deploy runbook has not loaded."
+            )
+        }
+        if runbook.status == "ready" {
+            return item(
+                "ios_deploy_runbook",
+                "Deploy Runbook",
+                .ready,
+                iosDeployRunbookReadyDetail(runbook)
+            )
+        }
+        if runbook.status == "blocked" || runbook.status == "partial" {
+            return item(
+                "ios_deploy_runbook",
+                "Deploy Runbook",
+                .blocked,
+                iosDeployRunbookBlockedDetail(runbook)
+            )
+        }
+        return item(
+            "ios_deploy_runbook",
+            "Deploy Runbook",
+            .waiting,
+            iosDeployRunbookSummaryDetail(runbook)
+        )
+    }
+
+    private static func iosDeployRunbookReadyDetail(
+        _ runbook: IOSDeployRunbookReport
+    ) -> String {
+        var parts = [iosDeployRunbookSummaryDetail(runbook)]
+        parts.append(iosDeployRunbookSafetyDetail(runbook.safety))
+        return parts.joined(separator: " ")
+    }
+
+    private static func iosDeployRunbookBlockedDetail(
+        _ runbook: IOSDeployRunbookReport
+    ) -> String {
+        var parts = [iosDeployRunbookSummaryDetail(runbook)]
+        if let step = firstDeployRunbookAttentionStep(runbook) {
+            parts.append(iosDeployRunbookStepDetail(step))
+        }
+        if let action = runbook.operatorActions.first, !action.isEmpty {
+            parts.append("Action: \(action)")
+        }
+        parts.append(iosDeployRunbookSafetyDetail(runbook.safety))
+        return parts.joined(separator: " ")
+    }
+
+    private static func firstDeployRunbookAttentionStep(
+        _ runbook: IOSDeployRunbookReport
+    ) -> IOSDeployRunbookCommandStep? {
+        runbook.commandSequence.first { step in
+            step.status != "ready" && step.status != "manual"
+        }
+    }
+
+    private static func iosDeployRunbookStepDetail(
+        _ step: IOSDeployRunbookCommandStep
+    ) -> String {
+        var parts = [
+            "Step:",
+            step.id,
+            step.status,
+            step.label,
+            "| \(step.command)",
+        ]
+        if let note = step.notes.first, !note.isEmpty {
+            parts.append("| \(note)")
+        }
+        if step.requiresConsent {
+            parts.append("| consent required")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func iosDeployRunbookSummaryDetail(
+        _ runbook: IOSDeployRunbookReport
+    ) -> String {
+        let requiredSlots = runbook.inputSlots.filter(\.required).count
+        return "\(runbook.status): mode \(runbook.mode), required slots \(requiredSlots), commands \(runbook.commandSequence.count)."
+    }
+
+    private static func iosDeployRunbookSafetyDetail(
+        _ safety: IOSDeployRunbookSafety
+    ) -> String {
+        "Safety: commands_run=\(safety.commandsRun) provider_calls=\(safety.providerCalls) global_mutation=\(safety.globalMutation)."
+    }
+
     private static func localDemoItem(_ summary: FinalShowcaseSummary) -> DevicePreflightItem {
         switch summary.overallStatus {
         case .readyForLocalDemo:
@@ -611,6 +715,7 @@ public enum DevicePreflightSummaryBuilder {
             "final_resource_requirements",
             "final_resource_fill_guide",
             "final_resource_apply_preview",
+            "ios_deploy_runbook",
             "local_demo",
         ])
         let requiredReady = required.allSatisfy { id in
