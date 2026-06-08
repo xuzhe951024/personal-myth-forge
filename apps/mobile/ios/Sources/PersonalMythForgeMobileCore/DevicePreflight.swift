@@ -105,6 +105,7 @@ public enum DevicePreflightSummaryBuilder {
             iosDeployRunbookItem(report: finalDemoLaunch),
             iosDeviceEvidenceBundleItem(report: finalDemoLaunch),
             iosLaunchRehearsalReadinessItem(report: finalDemoLaunch),
+            iosDeviceLaunchCertificateItem(report: finalDemoLaunch),
             finalClosurePacketItem(report: finalDemoLaunch),
             finalOperatorHandoffItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
@@ -953,6 +954,142 @@ public enum DevicePreflightSummaryBuilder {
         "Safety: commands_run=\(safety.commandsRun) xcode=\(safety.xcodeOrSigning) global_mutation=\(safety.globalMutation)."
     }
 
+    private static func iosDeviceLaunchCertificateItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "ios_device_launch_certificate",
+                "Launch Certificate",
+                .waiting,
+                "iOS device launch certificate has not loaded."
+            )
+        }
+        guard let certificate = report.iosDeviceLaunchCertificate else {
+            return item(
+                "ios_device_launch_certificate",
+                "Launch Certificate",
+                .waiting,
+                "iOS device launch certificate has not loaded."
+            )
+        }
+
+        switch certificate.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            return item(
+                "ios_device_launch_certificate",
+                "Launch Certificate",
+                .ready,
+                iosDeviceLaunchCertificateReadyDetail(certificate)
+            )
+        case "missing":
+            return item(
+                "ios_device_launch_certificate",
+                "Launch Certificate",
+                .waiting,
+                iosDeviceLaunchCertificateAttentionDetail(certificate)
+            )
+        case "blocked", "partial", "manual", "live":
+            return item(
+                "ios_device_launch_certificate",
+                "Launch Certificate",
+                .blocked,
+                iosDeviceLaunchCertificateAttentionDetail(certificate)
+            )
+        default:
+            return item(
+                "ios_device_launch_certificate",
+                "Launch Certificate",
+                .waiting,
+                iosDeviceLaunchCertificateReadyDetail(certificate)
+            )
+        }
+    }
+
+    private static func iosDeviceLaunchCertificateReadyDetail(
+        _ certificate: IOSDeviceLaunchCertificateReport
+    ) -> String {
+        var parts = [
+            iosDeviceLaunchCertificateSummaryDetail(certificate),
+            iosDeviceLaunchCertificateSafetyDetail(certificate.safety),
+        ]
+        if let gate = certificate.deviceGates.first {
+            parts.insert(iosDeviceLaunchCertificateGateDetail(gate), at: 1)
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func iosDeviceLaunchCertificateAttentionDetail(
+        _ certificate: IOSDeviceLaunchCertificateReport
+    ) -> String {
+        var parts = [iosDeviceLaunchCertificateSummaryDetail(certificate)]
+        if let action = certificate.operatorActions.first, !action.isEmpty {
+            parts.append("Action: \(action)")
+        }
+        if let gate = firstIOSDeviceLaunchCertificateAttentionGate(certificate) {
+            parts.append(iosDeviceLaunchCertificateGateDetail(gate))
+        }
+        if let consentGate = firstIOSDeviceLaunchCertificateConsentGate(certificate),
+           consentGate.id != firstIOSDeviceLaunchCertificateAttentionGate(certificate)?.id {
+            parts.append(iosDeviceLaunchCertificateGateDetail(consentGate))
+        }
+        parts.append(iosDeviceLaunchCertificateSafetyDetail(certificate.safety))
+        return parts.joined(separator: " ")
+    }
+
+    private static func firstIOSDeviceLaunchCertificateAttentionGate(
+        _ certificate: IOSDeviceLaunchCertificateReport
+    ) -> IOSDeviceLaunchCertificateGate? {
+        let nonReadyRequired = certificate.deviceGates.filter { gate in
+            gate.required
+                && gate.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready"
+        }
+        if let gate = nonReadyRequired.first {
+            return gate
+        }
+        return certificate.deviceGates.first { gate in
+            gate.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready"
+        }
+    }
+
+    private static func firstIOSDeviceLaunchCertificateConsentGate(
+        _ certificate: IOSDeviceLaunchCertificateReport
+    ) -> IOSDeviceLaunchCertificateGate? {
+        certificate.deviceGates.first { gate in
+            gate.requiresConsent
+                && gate.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready"
+        }
+    }
+
+    private static func iosDeviceLaunchCertificateSummaryDetail(
+        _ certificate: IOSDeviceLaunchCertificateReport
+    ) -> String {
+        "\(certificate.status): mode \(certificate.mode), ready \(certificate.summary.ready), missing \(certificate.summary.missing), blocked \(certificate.summary.blocked), manual \(certificate.summary.manual), partial \(certificate.summary.partial), live \(certificate.summary.live)."
+    }
+
+    private static func iosDeviceLaunchCertificateGateDetail(
+        _ gate: IOSDeviceLaunchCertificateGate
+    ) -> String {
+        var parts = [
+            "Gate:",
+            gate.id,
+            gate.status,
+            gate.label,
+            "| \(gate.command)",
+        ]
+        if let note = gate.notes.first, !note.isEmpty {
+            parts.append("| \(note)")
+        }
+        if gate.requiresConsent {
+            parts.append("| requires consent")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func iosDeviceLaunchCertificateSafetyDetail(
+        _ safety: IOSDeviceLaunchCertificateSafety
+    ) -> String {
+        "Safety: commands_run=\(safety.commandsRun) provider_calls=\(safety.providerCalls) writes_env=\(safety.writesBackendEnv) writes_ios_config=\(safety.writesIosDeployConfig) global=\(safety.globalMutation) xcode=\(safety.xcodeOrSigning) keychain=\(safety.keychainWrites)."
+    }
+
     private static func finalClosurePacketItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
         guard let report else {
             return item(
@@ -1254,6 +1391,7 @@ public enum DevicePreflightSummaryBuilder {
             "ios_deploy_runbook",
             "ios_device_evidence_bundle",
             "ios_device_launch_rehearsal_readiness",
+            "ios_device_launch_certificate",
             "final_launch_closure_packet",
             "final_operator_handoff",
             "local_demo",

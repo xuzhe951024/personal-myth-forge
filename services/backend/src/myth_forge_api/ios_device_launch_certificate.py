@@ -31,6 +31,7 @@ def build_ios_device_launch_certificate_report(
     *,
     settings: Settings | None = None,
     repo_root: Path | str | None = None,
+    final_demo_launch_report: dict[str, Any] | None = None,
 ) -> IOSDeviceLaunchCertificateResult:
     selected_settings = settings or load_settings()
     selected_repo_root = Path(repo_root) if repo_root is not None else _default_repo_root()
@@ -45,10 +46,11 @@ def build_ios_device_launch_certificate_report(
         mode=mode,
         repo_root=selected_repo_root,
     )
-    final_demo_launch = build_final_demo_launch_report(
+    final_demo_launch = final_demo_launch_report or build_final_demo_launch_report(
         mode=mode,
         settings=selected_settings,
         repo_root=selected_repo_root,
+        include_ios_device_launch_certificate=False,
     ).report
     device_gates = _device_gates(
         final_handoff_index=final_handoff_index,

@@ -119,6 +119,11 @@ do {
     try testDevicePreflightMarksReadyIOSLaunchRehearsalReadiness()
     try testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness()
     try testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness()
+    try testDevicePreflightWaitsForMissingIOSDeviceLaunchCertificate()
+    try testDevicePreflightBlocksOnIOSDeviceLaunchCertificateGate()
+    try testDevicePreflightMarksReadyIOSDeviceLaunchCertificate()
+    try testDevicePreflightShowsIOSDeviceLaunchCertificateConsentGate()
+    try testDevicePreflightRedactsUnsafeIOSDeviceLaunchCertificate()
     try testDevicePreflightWaitsForMissingFinalClosurePacket()
     try testDevicePreflightBlocksOnFinalClosurePacketFirstBlocker()
     try testDevicePreflightMarksReadyFinalClosurePacket()
@@ -220,6 +225,7 @@ do {
     try testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload()
     try testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload()
     try testDecodesIOSDeviceLaunchRehearsalSourceFreshnessFromFinalLaunchPayload()
+    try testDecodesIOSDeviceLaunchCertificateFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal()
     try testFinalLaunchMobileSummaryShowsMultipleIOSDeviceLaunchRehearsalActions()
     try testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal()
@@ -3234,6 +3240,103 @@ private func testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness() throw
     try expectNotContains(text, "api_key")
 }
 
+private func testDevicePreflightWaitsForMissingIOSDeviceLaunchCertificate() throws {
+    var report = finalDemoLaunchReport(overallStatus: "partial")
+    report.iosDeviceLaunchCertificate = nil
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+
+    try expectEqual(summary.item(id: "ios_device_launch_certificate")?.status, .waiting)
+    try expectContains(summary.item(id: "ios_device_launch_certificate")?.detail ?? "", "not loaded")
+}
+
+private func testDevicePreflightBlocksOnIOSDeviceLaunchCertificateGate() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            iosDeviceLaunchCertificateStatus: "blocked",
+            iosDeviceLaunchCertificateGateStatus: "blocked",
+            iosDeviceLaunchCertificateAction: "provide iOS deploy config and rerun mobile deploy preflight"
+        )
+    )
+    let detail = summary.item(id: "ios_device_launch_certificate")?.detail ?? ""
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "ios_device_launch_certificate")?.status, .blocked)
+    try expectContains(detail, "blocked")
+    try expectContains(detail, "ready 4")
+    try expectContains(detail, "blocked 1")
+    try expectContains(detail, "provide iOS deploy config")
+    try expectContains(detail, "final_handoff_index")
+    try expectContains(detail, "make final-handoff-index")
+    try expectContains(detail, "commands_run=false")
+}
+
+private func testDevicePreflightMarksReadyIOSDeviceLaunchCertificate() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            iosDeviceLaunchCertificateStatus: "ready",
+            iosDeviceLaunchCertificateGateStatus: "ready"
+        )
+    )
+    let detail = summary.item(id: "ios_device_launch_certificate")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "ios_device_launch_certificate")?.status, .ready)
+    try expectContains(detail, "ready")
+    try expectContains(detail, "mode local")
+    try expectContains(detail, "ready 8")
+    try expectContains(detail, "blocked 0")
+    try expectContains(detail, "writes_ios_config=false")
+    try expectContains(detail, "xcode=false")
+}
+
+private func testDevicePreflightShowsIOSDeviceLaunchCertificateConsentGate() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            iosDeviceLaunchCertificateStatus: "blocked",
+            iosDeviceLaunchCertificateGateStatus: "ready",
+            iosDeviceLaunchCertificateAction: "run configured final acceptance with live provider consent"
+        )
+    )
+    let detail = summary.item(id: "ios_device_launch_certificate")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "ios_device_launch_certificate")?.status, .blocked)
+    try expectContains(detail, "configured_final_acceptance")
+    try expectContains(detail, "requires consent")
+    try expectContains(detail, "final-acceptance-configured")
+}
+
+private func testDevicePreflightRedactsUnsafeIOSDeviceLaunchCertificate() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        iosDeviceLaunchCertificateStatus: "blocked",
+        iosDeviceLaunchCertificateGateStatus: "blocked",
+        iosDeviceLaunchCertificateAction: "run sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token api_key=secret"
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.item(id: "ios_device_launch_certificate")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
+}
+
 private func testDevicePreflightWaitsForMissingFinalClosurePacket() throws {
     var report = finalDemoLaunchReport(overallStatus: "partial")
     report.finalLaunchClosurePacket = nil
@@ -5396,6 +5499,33 @@ private func testDecodesIOSDeviceLaunchRehearsalSourceFreshnessFromFinalLaunchPa
     try expectEqual(row.freshnessSummary?["stale"], 1)
 }
 
+private func testDecodesIOSDeviceLaunchCertificateFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            iosDeviceLaunchCertificateStatus: "blocked",
+            iosDeviceLaunchCertificateGateStatus: "blocked"
+        )
+    )
+
+    let certificate = try require(
+        report.iosDeviceLaunchCertificate,
+        "missing iOS device launch certificate"
+    )
+    try expectEqual(certificate.kind, "ios_device_launch_certificate_report")
+    try expectEqual(certificate.status, "blocked")
+    try expectEqual(certificate.mode, "local")
+    try expectEqual(certificate.summary.blocked, 1)
+    try expectEqual(certificate.certificate.developmentTeam.key, "DEVELOPMENT_TEAM")
+    try expectEqual(certificate.certificate.backendBaseURL.classification, "loopback_url")
+    try expectEqual(certificate.deviceGates.first?.id, "final_handoff_index")
+    try expectEqual(certificate.deviceGates.first?.command, "make final-handoff-index")
+    try expectTrue(certificate.deviceGates.last?.requiresConsent ?? false)
+    try expectEqual(certificate.operatorActions.first, "run make final-handoff-index")
+    try expectFalse(certificate.safety.commandsRun)
+    try expectFalse(certificate.safety.xcodeOrSigning)
+}
+
 private func testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -6823,6 +6953,9 @@ private func finalDemoLaunchPayload(
     iosDeviceLaunchSourceFreshnessStatus: String = "fresh",
     iosDeviceLaunchSourceFreshnessClassification: String = "fresh_report",
     iosDeviceLaunchSourceFreshnessSummaryJSON: String = #"{"fresh": 1, "stale": 0, "unknown": 0}"#,
+    iosDeviceLaunchCertificateStatus: String = "blocked",
+    iosDeviceLaunchCertificateGateStatus: String = "blocked",
+    iosDeviceLaunchCertificateAction: String = "run make final-handoff-index",
     resourceHandoffStatus: String = "blocked",
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
@@ -6847,6 +6980,17 @@ private func finalDemoLaunchPayload(
     ]
     let iosDeviceLaunchActionsJSON = String(
         decoding: try! PMFJSON.encoder.encode(iosDeviceLaunchActions),
+        as: UTF8.self
+    )
+    let iosDeviceLaunchCertificateReady = iosDeviceLaunchCertificateStatus == "ready"
+    let iosDeviceLaunchCertificateGateEffectiveStatus = iosDeviceLaunchCertificateReady
+        ? "ready"
+        : iosDeviceLaunchCertificateGateStatus
+    let iosDeviceLaunchCertificateActions = iosDeviceLaunchCertificateReady
+        ? []
+        : [iosDeviceLaunchCertificateAction]
+    let iosDeviceLaunchCertificateActionsJSON = String(
+        decoding: try! PMFJSON.encoder.encode(iosDeviceLaunchCertificateActions),
         as: UTF8.self
     )
     let iosDeviceEvidenceReady = iosDeviceEvidenceStatus == "ready"
@@ -8883,6 +9027,110 @@ private func finalDemoLaunchPayload(
               "commands_run": false,
               "provider_calls": false,
               "live_provider_calls": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "global_mutation": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false,
+              "provider_secrets_in_report": false,
+              "raw_media_in_report": false,
+              "payment_links_in_report": false,
+              "local_paths_in_report": false
+            }
+          },
+          "ios_device_launch_certificate": {
+            "kind": "ios_device_launch_certificate_report",
+            "status": "\(iosDeviceLaunchCertificateStatus)",
+            "mode": "local",
+            "summary": {
+              "ready": \(iosDeviceLaunchCertificateReady ? "8" : "4"),
+              "missing": \(iosDeviceLaunchCertificateStatus == "missing" ? "1" : "0"),
+              "blocked": \(iosDeviceLaunchCertificateStatus == "blocked" ? "1" : "0"),
+              "manual": \(iosDeviceLaunchCertificateReady ? "0" : "2"),
+              "partial": \(iosDeviceLaunchCertificateStatus == "partial" ? "1" : "0"),
+              "live": \(iosDeviceLaunchCertificateReady ? "0" : "1")
+            },
+            "certificate": {
+              "development_team": {
+                "key": "DEVELOPMENT_TEAM",
+                "status": "\(iosDeviceLaunchCertificateReady ? "ready" : "missing")",
+                "configured": \(iosDeviceLaunchCertificateReady ? "true" : "false"),
+                "source": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                "redacted": \(iosDeviceLaunchCertificateReady ? "true" : "false")
+              },
+              "product_bundle_identifier": {
+                "key": "PRODUCT_BUNDLE_IDENTIFIER",
+                "status": "ready",
+                "configured": true,
+                "source": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                "redacted": true
+              },
+              "backend_base_url": {
+                "key": "PMF_BACKEND_BASE_URL",
+                "status": "\(iosDeviceLaunchCertificateReady ? "ready" : "blocked")",
+                "configured": \(iosDeviceLaunchCertificateReady ? "true" : "false"),
+                "source": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                "redacted": true,
+                "classification": "\(iosDeviceLaunchCertificateReady ? "ready" : "loopback_url")"
+              },
+              "final_launch_mode": {
+                "key": "PMF_FINAL_LAUNCH_MODE",
+                "status": "ready",
+                "configured": true,
+                "mode": "local",
+                "source": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+                "redacted": false
+              }
+            },
+            "device_gates": [
+              {
+                "id": "final_handoff_index",
+                "label": "Final handoff index",
+                "status": "\(iosDeviceLaunchCertificateGateEffectiveStatus)",
+                "command": "make final-handoff-index",
+                "required": true,
+                "requires_consent": false,
+                "notes": ["Refreshes the unified local/configured handoff index."]
+              },
+              {
+                "id": "ios_deploy_config",
+                "label": "iOS deploy config",
+                "status": "\(iosDeviceLaunchCertificateGateEffectiveStatus)",
+                "command": "make mobile-deploy-preflight",
+                "required": true,
+                "requires_consent": false,
+                "notes": ["Requires Team ID, bundle id, final launch mode, and LAN backend URL."]
+              },
+              {
+                "id": "backend_device_server",
+                "label": "Backend device server",
+                "status": "\(iosDeviceLaunchCertificateReady ? "ready" : "manual")",
+                "command": "make backend-device-demo",
+                "required": false,
+                "requires_consent": false,
+                "notes": ["Starts FastAPI on 0.0.0.0:8080 for iPhone LAN access."]
+              },
+              {
+                "id": "configured_final_acceptance",
+                "label": "Configured final acceptance",
+                "status": "\(iosDeviceLaunchCertificateReady ? "ready" : "live")",
+                "command": "make final-acceptance-configured",
+                "required": false,
+                "requires_consent": \(iosDeviceLaunchCertificateReady ? "false" : "true"),
+                "notes": ["May call live providers and spend provider credits."]
+              }
+            ],
+            "operator_actions": \(iosDeviceLaunchCertificateActionsJSON),
+            "commands": [
+              "make ios-device-launch-certificate",
+              "make final-handoff-index",
+              "make backend-device-demo",
+              "make mobile-deploy-preflight"
+            ],
+            "safety": {
+              "commands_run": false,
+              "provider_calls": false,
+              "writes_local_config": false,
               "writes_backend_env": false,
               "writes_ios_deploy_config": false,
               "global_mutation": false,
@@ -11308,7 +11556,9 @@ private func readyDevicePreflightFinalDemoLaunchReport() -> FinalDemoLaunchRepor
         iosDeployRunbookThreeDSlotStatus: "ready",
         iosDeviceEvidenceStatus: "ready",
         iosDeviceEvidenceSlotStatus: "ready",
-        iosDeviceLaunchRehearsalStatus: "ready"
+        iosDeviceLaunchRehearsalStatus: "ready",
+        iosDeviceLaunchCertificateStatus: "ready",
+        iosDeviceLaunchCertificateGateStatus: "ready"
     )
     report.finalResourceRequirements = readyFinalResourceRequirementsReport()
     report.finalResourceFillGuide = readyFinalResourceFillGuideReport()
@@ -11936,6 +12186,9 @@ private func finalDemoLaunchReport(
     iosDeviceLaunchSourceFreshnessStatus: String = "fresh",
     iosDeviceLaunchSourceFreshnessClassification: String = "fresh_report",
     iosDeviceLaunchSourceFreshnessSummaryJSON: String = #"{"fresh": 1, "stale": 0, "unknown": 0}"#,
+    iosDeviceLaunchCertificateStatus: String = "blocked",
+    iosDeviceLaunchCertificateGateStatus: String = "blocked",
+    iosDeviceLaunchCertificateAction: String = "run make final-handoff-index",
     resourceHandoffStatus: String = "blocked",
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
@@ -12022,6 +12275,9 @@ private func finalDemoLaunchReport(
             iosDeviceLaunchSourceFreshnessStatus: iosDeviceLaunchSourceFreshnessStatus,
             iosDeviceLaunchSourceFreshnessClassification: iosDeviceLaunchSourceFreshnessClassification,
             iosDeviceLaunchSourceFreshnessSummaryJSON: iosDeviceLaunchSourceFreshnessSummaryJSON,
+            iosDeviceLaunchCertificateStatus: iosDeviceLaunchCertificateStatus,
+            iosDeviceLaunchCertificateGateStatus: iosDeviceLaunchCertificateGateStatus,
+            iosDeviceLaunchCertificateAction: iosDeviceLaunchCertificateAction,
             resourceHandoffStatus: resourceHandoffStatus,
             resourceHandoffBackendStatus: resourceHandoffBackendStatus,
             resourceHandoffIOSStatus: resourceHandoffIOSStatus,

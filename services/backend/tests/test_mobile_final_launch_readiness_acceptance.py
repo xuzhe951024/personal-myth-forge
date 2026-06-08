@@ -50,6 +50,8 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "mobile_summary_launch_rehearsal_rows" in requirement_ids
     assert "mobile_status_view_launch_rehearsal" in requirement_ids
     assert "contract_ios_device_launch_rehearsal_decode" in requirement_ids
+    assert "model_ios_device_launch_certificate" in requirement_ids
+    assert "model_ios_device_launch_certificate_field" in requirement_ids
     assert "model_ios_device_evidence_bundle" in requirement_ids
     assert "model_ios_device_evidence_bundle_field" in requirement_ids
     assert "mobile_summary_ios_device_evidence_rows" in requirement_ids
@@ -127,6 +129,12 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "preflight_ios_launch_rehearsal_readiness_label" in requirement_ids
     assert "preflight_ios_launch_rehearsal_readiness_source" in requirement_ids
     assert "preflight_ios_launch_rehearsal_readiness_required_item" in requirement_ids
+    assert "final_demo_launch_ios_device_launch_certificate" in requirement_ids
+    assert "final_demo_launch_ios_device_launch_certificate_injected" in requirement_ids
+    assert "preflight_ios_device_launch_certificate_item" in requirement_ids
+    assert "preflight_ios_device_launch_certificate_label" in requirement_ids
+    assert "preflight_ios_device_launch_certificate_source" in requirement_ids
+    assert "preflight_ios_device_launch_certificate_required_item" in requirement_ids
     assert "preflight_final_closure_packet_item" in requirement_ids
     assert "preflight_final_closure_packet_label" in requirement_ids
     assert "preflight_final_closure_packet_source" in requirement_ids
@@ -160,6 +168,12 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_ios_launch_rehearsal_readiness_ready_preflight" in requirement_ids
     assert "contract_ios_launch_rehearsal_readiness_stale_preflight" in requirement_ids
     assert "contract_ios_launch_rehearsal_readiness_redaction_preflight" in requirement_ids
+    assert "contract_ios_device_launch_certificate_decode" in requirement_ids
+    assert "contract_ios_device_launch_certificate_missing_preflight" in requirement_ids
+    assert "contract_ios_device_launch_certificate_blocked_preflight" in requirement_ids
+    assert "contract_ios_device_launch_certificate_ready_preflight" in requirement_ids
+    assert "contract_ios_device_launch_certificate_consent_preflight" in requirement_ids
+    assert "contract_ios_device_launch_certificate_redaction_preflight" in requirement_ids
     assert "contract_final_closure_packet_missing_preflight" in requirement_ids
     assert "contract_final_closure_packet_blocked_preflight" in requirement_ids
     assert "contract_final_closure_packet_ready_preflight" in requirement_ids
@@ -271,6 +285,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "iosDeviceEvidenceBundle",
                 "IOSDeviceLaunchRehearsalReadinessReport",
                 "iosDeviceLaunchRehearsalReadiness",
+                "IOSDeviceLaunchCertificateReport",
+                "iosDeviceLaunchCertificate",
                 "FinalLaunchClosurePacketReport",
                 "FinalLaunchClosurePacketBlocker",
                 "firstBlocker: FinalLaunchClosurePacketBlocker?",
@@ -415,6 +431,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Launch Rehearsal",
                 "report.iosDeviceLaunchRehearsalReadiness",
                 "\"ios_device_launch_rehearsal_readiness\",",
+                "iosDeviceLaunchCertificateItem(report: finalDemoLaunch)",
+                "Launch Certificate",
+                "report.iosDeviceLaunchCertificate",
+                "\"ios_device_launch_certificate\",",
                 "finalClosurePacketItem(report: finalDemoLaunch)",
                 "Final Closure",
                 "report.finalLaunchClosurePacket",
@@ -426,6 +446,13 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Final launch readiness is read-only.",
                 "case \"ready\"",
                 "\"final_resource_fill_guide\"",
+            ]
+        ),
+        "services/backend/src/myth_forge_api/final_demo_launch.py": "\n".join(
+            [
+                '"ios_device_launch_certificate"',
+                "build_ios_device_launch_certificate_report",
+                "final_demo_launch_report=report",
             ]
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift": "\n".join(
@@ -462,6 +489,12 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightMarksReadyIOSLaunchRehearsalReadiness",
                 "testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness",
                 "testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness",
+                "testDecodesIOSDeviceLaunchCertificateFromFinalLaunchPayload",
+                "testDevicePreflightWaitsForMissingIOSDeviceLaunchCertificate",
+                "testDevicePreflightBlocksOnIOSDeviceLaunchCertificateGate",
+                "testDevicePreflightMarksReadyIOSDeviceLaunchCertificate",
+                "testDevicePreflightShowsIOSDeviceLaunchCertificateConsentGate",
+                "testDevicePreflightRedactsUnsafeIOSDeviceLaunchCertificate",
                 "testDevicePreflightWaitsForMissingFinalClosurePacket",
                 "testDevicePreflightBlocksOnFinalClosurePacketFirstBlocker",
                 "testDevicePreflightMarksReadyFinalClosurePacket",

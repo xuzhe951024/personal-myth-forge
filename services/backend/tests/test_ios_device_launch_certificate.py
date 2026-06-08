@@ -117,6 +117,46 @@ def test_ios_device_launch_certificate_ready_with_configured_inputs(
     assert str(tmp_path) not in report_text
 
 
+def test_ios_device_launch_certificate_uses_injected_final_demo_launch_report(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    def fail_if_builder_recurses(**kwargs):
+        raise AssertionError("final demo launch builder should not be called")
+
+    monkeypatch.setattr(
+        "myth_forge_api.ios_device_launch_certificate.build_final_demo_launch_report",
+        fail_if_builder_recurses,
+    )
+
+    result = build_ios_device_launch_certificate_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        final_demo_launch_report={
+            "kind": "final_demo_launch_report",
+            "mode": "local",
+            "overall_status": "partial",
+            "first_blocker": {
+                "id": "ios_deployable",
+                "label": "iOS deployable",
+                "status": "partial",
+                "classification": "ios_rehearsal_missing",
+                "command": "make ios-device-launch-rehearsal",
+                "detail": "Injected final launch report.",
+                "source": "final_showcase_readiness",
+                "source_id": "ios_deployable",
+            },
+        },
+    )
+
+    assert result.report["final_demo_launch"]["overall_status"] == "partial"
+    assert result.report["final_demo_launch"]["first_blocker"]["detail"] == (
+        "Injected final launch report."
+    )
+
+
 def test_ios_device_launch_certificate_cli_writes_report_and_makefile_target(
     tmp_path: Path,
 ) -> None:

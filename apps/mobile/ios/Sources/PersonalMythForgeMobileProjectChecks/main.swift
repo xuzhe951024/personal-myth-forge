@@ -662,6 +662,16 @@ do {
         "final demo launch uses canonical final acceptance command"
     )
     try requireContains(
+        finalDemoLaunch,
+        "build_ios_device_launch_certificate_report",
+        "final demo launch embeds iOS device launch certificate"
+    )
+    try requireContains(
+        finalDemoLaunch,
+        "final_demo_launch_report=report",
+        "final demo launch injects base report into iOS device launch certificate"
+    )
+    try requireContains(
         finalRehearsalScriptsTests,
         "test_final_rehearsal_make_targets_dry_run_expected_order",
         "final rehearsal Make target order test"
@@ -1464,6 +1474,26 @@ do {
     )
     try requireContains(
         devicePreflight,
+        "iosDeviceLaunchCertificateItem(report: finalDemoLaunch)",
+        "device preflight iOS device launch certificate item"
+    )
+    try requireContains(
+        devicePreflight,
+        "Launch Certificate",
+        "device preflight iOS device launch certificate label"
+    )
+    try requireContains(
+        devicePreflight,
+        "report.iosDeviceLaunchCertificate",
+        "device preflight iOS device launch certificate source"
+    )
+    try requireContains(
+        devicePreflight,
+        #""ios_device_launch_certificate","#,
+        "device preflight iOS device launch certificate required item"
+    )
+    try requireContains(
+        devicePreflight,
         "finalClosurePacketItem(report: finalDemoLaunch)",
         "device preflight final closure packet item"
     )
@@ -1611,6 +1641,36 @@ do {
         contractTests,
         "testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness",
         "device preflight iOS launch rehearsal readiness redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDecodesIOSDeviceLaunchCertificateFromFinalLaunchPayload",
+        "iOS device launch certificate decode contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightWaitsForMissingIOSDeviceLaunchCertificate",
+        "device preflight iOS device launch certificate missing contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightBlocksOnIOSDeviceLaunchCertificateGate",
+        "device preflight iOS device launch certificate blocked contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightMarksReadyIOSDeviceLaunchCertificate",
+        "device preflight iOS device launch certificate ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightShowsIOSDeviceLaunchCertificateConsentGate",
+        "device preflight iOS device launch certificate consent contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightRedactsUnsafeIOSDeviceLaunchCertificate",
+        "device preflight iOS device launch certificate redaction contract test"
     )
     try requireContains(
         contractTests,
@@ -1831,6 +1891,16 @@ do {
         pmfModels,
         "iosDeviceLaunchRehearsalReadiness",
         "final demo launch iOS device launch rehearsal field"
+    )
+    try requireContains(
+        pmfModels,
+        "IOSDeviceLaunchCertificateReport",
+        "iOS device launch certificate model"
+    )
+    try requireContains(
+        pmfModels,
+        "iosDeviceLaunchCertificate",
+        "final demo launch iOS device launch certificate field"
     )
     try requireContains(
         pmfModels,

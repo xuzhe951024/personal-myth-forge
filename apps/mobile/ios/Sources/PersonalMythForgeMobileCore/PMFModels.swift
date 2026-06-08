@@ -3027,6 +3027,190 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
     }
 }
 
+public struct IOSDeviceLaunchCertificateSummary: Codable, Equatable, Sendable {
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var manual: Int
+    public var partial: Int
+    public var live: Int
+
+    public init(
+        ready: Int,
+        missing: Int,
+        blocked: Int,
+        manual: Int,
+        partial: Int,
+        live: Int
+    ) {
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.manual = manual
+        self.partial = partial
+        self.live = live
+    }
+}
+
+public struct IOSDeviceLaunchCertificateFact: Codable, Equatable, Sendable {
+    public var key: String
+    public var status: String
+    public var configured: Bool
+    public var source: String
+    public var redacted: Bool
+    public var classification: String?
+    public var mode: String?
+
+    public init(
+        key: String,
+        status: String,
+        configured: Bool,
+        source: String,
+        redacted: Bool,
+        classification: String? = nil,
+        mode: String? = nil
+    ) {
+        self.key = key
+        self.status = status
+        self.configured = configured
+        self.source = source
+        self.redacted = redacted
+        self.classification = classification
+        self.mode = mode
+    }
+}
+
+public struct IOSDeviceLaunchCertificateFacts: Codable, Equatable, Sendable {
+    public var developmentTeam: IOSDeviceLaunchCertificateFact
+    public var productBundleIdentifier: IOSDeviceLaunchCertificateFact
+    public var backendBaseURL: IOSDeviceLaunchCertificateFact
+    public var finalLaunchMode: IOSDeviceLaunchCertificateFact
+
+    private enum CodingKeys: String, CodingKey {
+        case developmentTeam
+        case productBundleIdentifier
+        case backendBaseURL = "backendBaseUrl"
+        case finalLaunchMode
+    }
+
+    public init(
+        developmentTeam: IOSDeviceLaunchCertificateFact,
+        productBundleIdentifier: IOSDeviceLaunchCertificateFact,
+        backendBaseURL: IOSDeviceLaunchCertificateFact,
+        finalLaunchMode: IOSDeviceLaunchCertificateFact
+    ) {
+        self.developmentTeam = developmentTeam
+        self.productBundleIdentifier = productBundleIdentifier
+        self.backendBaseURL = backendBaseURL
+        self.finalLaunchMode = finalLaunchMode
+    }
+}
+
+public struct IOSDeviceLaunchCertificateGate: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var command: String
+    public var required: Bool
+    public var requiresConsent: Bool
+    public var notes: [String]
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        command: String,
+        required: Bool,
+        requiresConsent: Bool,
+        notes: [String] = []
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.command = command
+        self.required = required
+        self.requiresConsent = requiresConsent
+        self.notes = notes
+    }
+}
+
+public struct IOSDeviceLaunchCertificateSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var providerCalls: Bool
+    public var writesLocalConfig: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var globalMutation: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+    public var providerSecretsInReport: Bool
+    public var rawMediaInReport: Bool
+    public var paymentLinksInReport: Bool
+    public var localPathsInReport: Bool
+
+    public init(
+        commandsRun: Bool,
+        providerCalls: Bool,
+        writesLocalConfig: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        globalMutation: Bool,
+        xcodeOrSigning: Bool,
+        keychainWrites: Bool,
+        providerSecretsInReport: Bool,
+        rawMediaInReport: Bool,
+        paymentLinksInReport: Bool,
+        localPathsInReport: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.providerCalls = providerCalls
+        self.writesLocalConfig = writesLocalConfig
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.globalMutation = globalMutation
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+        self.providerSecretsInReport = providerSecretsInReport
+        self.rawMediaInReport = rawMediaInReport
+        self.paymentLinksInReport = paymentLinksInReport
+        self.localPathsInReport = localPathsInReport
+    }
+}
+
+public struct IOSDeviceLaunchCertificateReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var mode: String
+    public var summary: IOSDeviceLaunchCertificateSummary
+    public var certificate: IOSDeviceLaunchCertificateFacts
+    public var deviceGates: [IOSDeviceLaunchCertificateGate]
+    public var operatorActions: [String]
+    public var commands: [String]
+    public var safety: IOSDeviceLaunchCertificateSafety
+
+    public init(
+        kind: String,
+        status: String,
+        mode: String,
+        summary: IOSDeviceLaunchCertificateSummary,
+        certificate: IOSDeviceLaunchCertificateFacts,
+        deviceGates: [IOSDeviceLaunchCertificateGate],
+        operatorActions: [String],
+        commands: [String],
+        safety: IOSDeviceLaunchCertificateSafety
+    ) {
+        self.kind = kind
+        self.status = status
+        self.mode = mode
+        self.summary = summary
+        self.certificate = certificate
+        self.deviceGates = deviceGates
+        self.operatorActions = operatorActions
+        self.commands = commands
+        self.safety = safety
+    }
+}
+
 public struct ResourceHandoffSummary: Codable, Equatable, Sendable {
     public var ready: Int
     public var missing: Int
@@ -3825,6 +4009,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var iosDeployRunbook: IOSDeployRunbookReport?
     public var iosDeviceEvidenceBundle: IOSDeviceEvidenceBundleReport?
     public var iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport?
+    public var iosDeviceLaunchCertificate: IOSDeviceLaunchCertificateReport?
     public var resourceReport: ResourceHandoffReport?
     public var launchPhases: [FinalDemoLaunchPhase]
     public var operatorChecklist: [String]
@@ -3859,6 +4044,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         iosDeployRunbook: IOSDeployRunbookReport? = nil,
         iosDeviceEvidenceBundle: IOSDeviceEvidenceBundleReport? = nil,
         iosDeviceLaunchRehearsalReadiness: IOSDeviceLaunchRehearsalReadinessReport? = nil,
+        iosDeviceLaunchCertificate: IOSDeviceLaunchCertificateReport? = nil,
         resourceReport: ResourceHandoffReport? = nil,
         launchPhases: [FinalDemoLaunchPhase],
         operatorChecklist: [String],
@@ -3892,6 +4078,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.iosDeployRunbook = iosDeployRunbook
         self.iosDeviceEvidenceBundle = iosDeviceEvidenceBundle
         self.iosDeviceLaunchRehearsalReadiness = iosDeviceLaunchRehearsalReadiness
+        self.iosDeviceLaunchCertificate = iosDeviceLaunchCertificate
         self.resourceReport = resourceReport
         self.launchPhases = launchPhases
         self.operatorChecklist = operatorChecklist
