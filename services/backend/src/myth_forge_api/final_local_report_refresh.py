@@ -214,6 +214,12 @@ def _default_steps() -> list[RefreshStepDefinition]:
             ).report,
         ),
         _step(
+            "mobile_xcode_build_evidence",
+            "Mobile Xcode build evidence",
+            "mobile-xcode-build-evidence.json",
+            _mobile_xcode_build_evidence_snapshot,
+        ),
+        _step(
             "final_configured_preflight",
             "Final configured preflight",
             "final-configured-preflight.json",
@@ -442,6 +448,58 @@ def _safe_final_acceptance_report(repo_root: Path) -> dict[str, Any]:
         ),
     }
     return report
+
+
+def _mobile_xcode_build_evidence_snapshot(repo_root: Path) -> dict[str, Any]:
+    existing_path = repo_root / LOCAL_REPORT_DIR / "mobile-xcode-build-evidence.json"
+    if existing_path.exists():
+        try:
+            loaded = json.loads(existing_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            loaded = None
+        if isinstance(loaded, dict):
+            return loaded
+
+    return {
+        "kind": "mobile_xcode_build_evidence_report",
+        "status": "blocked",
+        "classification": "xcode_build_gate_not_run_by_final_local_report_refresh",
+        "command": "make mobile-xcode-build",
+        "script": "apps/mobile/ios/scripts/xcode_build_gate.sh",
+        "exit_code": 2,
+        "checks": [
+            {
+                "id": "xcode_build_gate",
+                "label": "Xcode build gate",
+                "status": "blocked",
+                "detail": (
+                    "Xcode build gate was not run by final-local-report-refresh "
+                    "to avoid global Apple SDK/signing state."
+                ),
+            }
+        ],
+        "stdout_lines": [],
+        "stderr_lines": [
+            "Xcode build gate not run by final-local-report-refresh."
+        ],
+        "operator_actions": [
+            "run make mobile-xcode-build-evidence outside final-local-report-refresh"
+        ],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": False,
+            "code_signing_allowed": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "local_paths_in_report": False,
+            "writes_derived_data": False,
+        },
+    }
 
 
 def _blocked_final_acceptance_command_runner(
