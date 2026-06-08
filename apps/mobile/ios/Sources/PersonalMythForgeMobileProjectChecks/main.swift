@@ -1423,6 +1423,26 @@ do {
         "device preflight iOS deploy runbook required item"
     )
     try requireContains(
+        devicePreflight,
+        "iosDeviceEvidenceBundleItem(report: finalDemoLaunch)",
+        "device preflight iOS device evidence bundle item"
+    )
+    try requireContains(
+        devicePreflight,
+        "Device Evidence",
+        "device preflight iOS device evidence bundle label"
+    )
+    try requireContains(
+        devicePreflight,
+        "report.iosDeviceEvidenceBundle",
+        "device preflight iOS device evidence bundle source"
+    )
+    try requireContains(
+        devicePreflight,
+        #""ios_device_evidence_bundle","#,
+        "device preflight iOS device evidence bundle required item"
+    )
+    try requireContains(
         contractTests,
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
         "device preflight fill guide first blocker redaction contract test"
@@ -1486,6 +1506,26 @@ do {
         contractTests,
         "testDevicePreflightRedactsUnsafeIOSDeployRunbookDetail",
         "device preflight iOS deploy runbook redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightWaitsForMissingIOSDeviceEvidenceBundle",
+        "device preflight iOS device evidence bundle missing contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightBlocksOnIOSDeviceEvidenceSlot",
+        "device preflight iOS device evidence bundle blocked contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightMarksReadyIOSDeviceEvidenceBundle",
+        "device preflight iOS device evidence bundle ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail",
+        "device preflight iOS device evidence bundle redaction contract test"
     )
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")

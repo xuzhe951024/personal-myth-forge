@@ -809,6 +809,30 @@ SOURCE_REQUIREMENTS = (
         '"ios_deploy_runbook",',
     ),
     SourceRequirement(
+        "preflight_ios_device_evidence_bundle_item",
+        "Device preflight iOS device evidence bundle item",
+        DEVICE_PREFLIGHT_PATH,
+        "iosDeviceEvidenceBundleItem(report: finalDemoLaunch)",
+    ),
+    SourceRequirement(
+        "preflight_ios_device_evidence_bundle_label",
+        "Device preflight iOS device evidence bundle label",
+        DEVICE_PREFLIGHT_PATH,
+        "Device Evidence",
+    ),
+    SourceRequirement(
+        "preflight_ios_device_evidence_bundle_source",
+        "Device preflight iOS device evidence bundle source",
+        DEVICE_PREFLIGHT_PATH,
+        "report.iosDeviceEvidenceBundle",
+    ),
+    SourceRequirement(
+        "preflight_ios_device_evidence_bundle_required_item",
+        "Device preflight iOS device evidence bundle required item",
+        DEVICE_PREFLIGHT_PATH,
+        '"ios_device_evidence_bundle",',
+    ),
+    SourceRequirement(
         "preflight_read_only_note",
         "Device preflight read-only note",
         DEVICE_PREFLIGHT_PATH,
@@ -963,6 +987,30 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts unsafe iOS deploy runbook detail",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightRedactsUnsafeIOSDeployRunbookDetail",
+    ),
+    SourceRequirement(
+        "contract_ios_device_evidence_bundle_missing_preflight",
+        "Contract test waits for missing iOS device evidence bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightWaitsForMissingIOSDeviceEvidenceBundle",
+    ),
+    SourceRequirement(
+        "contract_ios_device_evidence_bundle_blocked_preflight",
+        "Contract test blocks on iOS device evidence slot",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksOnIOSDeviceEvidenceSlot",
+    ),
+    SourceRequirement(
+        "contract_ios_device_evidence_bundle_ready_preflight",
+        "Contract test marks ready iOS device evidence bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyIOSDeviceEvidenceBundle",
+    ),
+    SourceRequirement(
+        "contract_ios_device_evidence_bundle_redaction_preflight",
+        "Contract test redacts unsafe iOS device evidence bundle detail",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail",
     ),
     SourceRequirement(
         "contract_preflight_error",

@@ -103,6 +103,7 @@ public enum DevicePreflightSummaryBuilder {
             finalResourceFillGuideItem(report: finalDemoLaunch),
             finalResourceApplyPreviewItem(report: finalDemoLaunch),
             iosDeployRunbookItem(report: finalDemoLaunch),
+            iosDeviceEvidenceBundleItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
         ]
@@ -675,6 +676,114 @@ public enum DevicePreflightSummaryBuilder {
         "Safety: commands_run=\(safety.commandsRun) provider_calls=\(safety.providerCalls) global_mutation=\(safety.globalMutation)."
     }
 
+    private static func iosDeviceEvidenceBundleItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "ios_device_evidence_bundle",
+                "Device Evidence",
+                .waiting,
+                "iOS device evidence bundle has not loaded."
+            )
+        }
+        guard let bundle = report.iosDeviceEvidenceBundle else {
+            return item(
+                "ios_device_evidence_bundle",
+                "Device Evidence",
+                .waiting,
+                "iOS device evidence bundle has not loaded."
+            )
+        }
+        if bundle.status == "ready" {
+            return item(
+                "ios_device_evidence_bundle",
+                "Device Evidence",
+                .ready,
+                iosDeviceEvidenceReadyDetail(bundle)
+            )
+        }
+        if bundle.status == "blocked" {
+            return item(
+                "ios_device_evidence_bundle",
+                "Device Evidence",
+                .blocked,
+                iosDeviceEvidenceBlockedDetail(bundle)
+            )
+        }
+        return item(
+            "ios_device_evidence_bundle",
+            "Device Evidence",
+            .waiting,
+            iosDeviceEvidenceSummaryDetail(bundle)
+        )
+    }
+
+    private static func iosDeviceEvidenceReadyDetail(
+        _ bundle: IOSDeviceEvidenceBundleReport
+    ) -> String {
+        var parts = [iosDeviceEvidenceSummaryDetail(bundle)]
+        parts.append(iosDeviceEvidenceSafetyDetail(bundle.safety))
+        return parts.joined(separator: " ")
+    }
+
+    private static func iosDeviceEvidenceBlockedDetail(
+        _ bundle: IOSDeviceEvidenceBundleReport
+    ) -> String {
+        var parts = [iosDeviceEvidenceSummaryDetail(bundle)]
+        if let slot = firstIOSDeviceEvidenceAttentionSlot(bundle) {
+            parts.append(iosDeviceEvidenceSlotDetail(slot))
+        }
+        if let action = bundle.operatorActions.first, !action.isEmpty {
+            parts.append("Action: \(action)")
+        }
+        parts.append(iosDeviceEvidenceSafetyDetail(bundle.safety))
+        return parts.joined(separator: " ")
+    }
+
+    private static func firstIOSDeviceEvidenceAttentionSlot(
+        _ bundle: IOSDeviceEvidenceBundleReport
+    ) -> IOSDeviceEvidenceSlot? {
+        bundle.evidenceSlots.first { slot in
+            slot.status != "ready"
+        }
+    }
+
+    private static func iosDeviceEvidenceSlotDetail(
+        _ slot: IOSDeviceEvidenceSlot
+    ) -> String {
+        var parts = [
+            "Slot:",
+            slot.id,
+            slot.status,
+            slot.label,
+            "| \(slot.command)",
+        ]
+        if let classification = slot.classification, !classification.isEmpty {
+            parts.append("| \(classification)")
+        }
+        if !slot.detail.isEmpty {
+            parts.append("| \(slot.detail)")
+        }
+        if slot.globalAction {
+            parts.append("| global action")
+        }
+        if slot.xcodeOrSigning {
+            parts.append("| Xcode/signing")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func iosDeviceEvidenceSummaryDetail(
+        _ bundle: IOSDeviceEvidenceBundleReport
+    ) -> String {
+        "\(bundle.status): ready \(bundle.summary.ready), missing \(bundle.summary.missing), blocked \(bundle.summary.blocked), required \(bundle.summary.required), global \(bundle.summary.globalActions)."
+    }
+
+    private static func iosDeviceEvidenceSafetyDetail(
+        _ safety: IOSDeviceEvidenceBundleSafety
+    ) -> String {
+        "Safety: commands_run=\(safety.commandsRun) xcode=\(safety.xcodeOrSigning) global_mutation=\(safety.globalMutation)."
+    }
+
     private static func localDemoItem(_ summary: FinalShowcaseSummary) -> DevicePreflightItem {
         switch summary.overallStatus {
         case .readyForLocalDemo:
@@ -716,6 +825,7 @@ public enum DevicePreflightSummaryBuilder {
             "final_resource_fill_guide",
             "final_resource_apply_preview",
             "ios_deploy_runbook",
+            "ios_device_evidence_bundle",
             "local_demo",
         ])
         let requiredReady = required.allSatisfy { id in
