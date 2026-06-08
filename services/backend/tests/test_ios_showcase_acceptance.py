@@ -126,8 +126,12 @@ def test_showcase_visual_regression_index_requires_configured_command_scope() ->
         "p0.218_final_demo_launch_next_action",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/visual_regression.py",
+        "p0.221_mobile_auto_backend_url_handoff",
+    ) in requirements
+    assert (
         "README.md",
-        "26 static 390x844 iPhone evidence artifacts",
+        "27 static 390x844 iPhone evidence artifacts",
     ) in requirements
     assert (
         "README.md",
@@ -249,6 +253,51 @@ def test_mobile_final_demo_launch_first_blocker_source_gates() -> None:
     assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
         "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction",
+    ) in requirements
+
+
+def test_mobile_auto_backend_url_handoff_source_gates() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for feature_id in (
+            "final_resource_requirements_manifest",
+            "final_resource_apply_preview",
+        )
+        for requirement in features[feature_id].requirements
+    }
+
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "resolutionMode: String?",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "applyNote: String?",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+        "appendApplyTimeDetail",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+        "applyPreviewSlotRow",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+        "testDecodesFinalResourceAutoBackendURLHandoffFields",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+        "testFinalLaunchMobileSummaryShowsAutoBackendURLHandoff",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+        "apply_time_auto",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+        "write_deploy_local_config.sh",
     ) in requirements
 
 
@@ -1089,6 +1138,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testDecodesFinalResourceRequirementsFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements "
             "testFinalLaunchMobileSummaryShowsResourceRequirementsNextAction "
+            "testDecodesFinalResourceAutoBackendURLHandoffFields "
+            "testFinalLaunchMobileSummaryShowsAutoBackendURLHandoff "
+            "apply_time_auto write_deploy_local_config.sh "
             "testDecodesFinalResourceFillGuideFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsResourceFillGuide "
             "testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload "
@@ -1175,6 +1227,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "FinalDemoLaunchFirstBlocker firstBlocker: FinalDemoLaunchFirstBlocker? "
             "FinalDemoLaunchNextAction nextAction: FinalDemoLaunchNextAction? "
             "FinalLaunchMode displayLabel FinalResourcesPreflightItem FinalAcceptanceFreshness "
+            "resolutionMode: String? applyNote: String? "
             "ThreeDEvaluationReadinessReport threeDEvaluationReadiness "
             "VisualRegressionReadinessReport visualRegressionReadiness "
             "LocalShowcaseSmokeReport localShowcaseSmoke "
@@ -1209,7 +1262,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "printFulfillmentReadinessRows Print fulfillment "
             "resourceRequirementRows Resource requirements Next input: "
             "resourceFillGuideRows resourceFillGuideFirstBlockerRow Fill guide "
-            "applyPreviewRows applyPreviewFirstBlockerRow Apply preview "
+            "appendApplyTimeDetail "
+            "applyPreviewRows applyPreviewFirstBlockerRow applyPreviewSlotRow Apply preview "
             "externalActionLedgerRows externalActionLedgerRows(from: "
             "report.finalExternalActionLedger "
             "closurePacketRows closurePacketFirstBlockerRow "
@@ -1251,6 +1305,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "p0.216_final_showcase_next_action "
             "p0.217_final_resource_next_action "
             "p0.218_final_demo_launch_next_action "
+            "p0.221_mobile_auto_backend_url_handoff "
             "p0.100_live_provider_consent p0.112_ios_device_launch_rehearsal "
             "p0.119_visual_regression_handoff p0.158_local_showcase_smoke "
             "p0.186_configured_acceptance_command_visual p0.189_device_blocker_handoff"
@@ -1452,7 +1507,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "README.md": (
             "make visual-regression full-showcase visual index P0.128 P0.129 "
-            "26 static 390x844 iPhone evidence artifacts "
+            "27 static 390x844 iPhone evidence artifacts "
             "configured acceptance command visual device blocker handoff visual"
         ),
         "services/backend/tests/test_final_configured_preflight.py": (

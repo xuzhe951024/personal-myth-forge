@@ -677,6 +677,8 @@ public struct FinalResourcesPreflightItem: Codable, Equatable, Sendable {
     public var redacted: Bool
     public var classification: String?
     public var normalizedValue: String?
+    public var resolutionMode: String?
+    public var applyNote: String?
 
     public init(
         id: String,
@@ -685,7 +687,9 @@ public struct FinalResourcesPreflightItem: Codable, Equatable, Sendable {
         configured: Bool,
         redacted: Bool,
         classification: String? = nil,
-        normalizedValue: String? = nil
+        normalizedValue: String? = nil,
+        resolutionMode: String? = nil,
+        applyNote: String? = nil
     ) {
         self.id = id
         self.status = status
@@ -694,6 +698,8 @@ public struct FinalResourcesPreflightItem: Codable, Equatable, Sendable {
         self.redacted = redacted
         self.classification = classification
         self.normalizedValue = normalizedValue
+        self.resolutionMode = resolutionMode
+        self.applyNote = applyNote
     }
 }
 
@@ -777,6 +783,8 @@ public struct FinalResourceRequirement: Codable, Equatable, Sendable {
     public var validationCommand: String
     public var notes: String
     public var normalizedValue: String?
+    public var resolutionMode: String?
+    public var applyNote: String?
 
     public init(
         id: String,
@@ -792,7 +800,9 @@ public struct FinalResourceRequirement: Codable, Equatable, Sendable {
         unblocks: [String] = [],
         validationCommand: String,
         notes: String,
-        normalizedValue: String? = nil
+        normalizedValue: String? = nil,
+        resolutionMode: String? = nil,
+        applyNote: String? = nil
     ) {
         self.id = id
         self.label = label
@@ -808,6 +818,8 @@ public struct FinalResourceRequirement: Codable, Equatable, Sendable {
         self.validationCommand = validationCommand
         self.notes = notes
         self.normalizedValue = normalizedValue
+        self.resolutionMode = resolutionMode
+        self.applyNote = applyNote
     }
 }
 
@@ -1160,6 +1172,8 @@ public struct FinalResourceApplyPreviewSlot: Codable, Equatable, Sendable {
     public var classification: String
     public var redacted: Bool
     public var writes: [String]
+    public var resolutionMode: String?
+    public var applyNote: String?
 
     public init(
         id: String,
@@ -1169,7 +1183,9 @@ public struct FinalResourceApplyPreviewSlot: Codable, Equatable, Sendable {
         configured: Bool,
         classification: String,
         redacted: Bool,
-        writes: [String]
+        writes: [String],
+        resolutionMode: String? = nil,
+        applyNote: String? = nil
     ) {
         self.id = id
         self.status = status
@@ -1179,6 +1195,8 @@ public struct FinalResourceApplyPreviewSlot: Codable, Equatable, Sendable {
         self.classification = classification
         self.redacted = redacted
         self.writes = writes
+        self.resolutionMode = resolutionMode
+        self.applyNote = applyNote
     }
 }
 

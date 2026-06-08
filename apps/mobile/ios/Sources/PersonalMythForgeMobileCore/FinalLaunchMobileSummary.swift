@@ -416,7 +416,11 @@ public enum FinalLaunchMobileSummaryBuilder {
             return attention.prefix(5).map(resourceChecklistRow)
         }
         if preflight.status == "ready" {
-            return ["Required final resources ready."]
+            let handoffRows = preflight.items
+                .filter { hasApplyTimeDetail(resolutionMode: $0.resolutionMode, applyNote: $0.applyNote) }
+                .prefix(2)
+                .map(resourceChecklistRow)
+            return ["Required final resources ready."] + handoffRows
         }
         if preflight.items.isEmpty {
             return ["Final resources checklist is empty."]
@@ -432,6 +436,11 @@ public enum FinalLaunchMobileSummaryBuilder {
         } else if let normalizedValue = item.normalizedValue, !normalizedValue.isEmpty {
             parts.append(normalizedValue)
         }
+        appendApplyTimeDetail(
+            resolutionMode: item.resolutionMode,
+            applyNote: item.applyNote,
+            to: &parts
+        )
         return sanitize(parts.joined(separator: " "))
     }
 
@@ -521,6 +530,11 @@ public enum FinalLaunchMobileSummaryBuilder {
         } else if let normalizedValue = requirement.normalizedValue, !normalizedValue.isEmpty {
             parts.append(normalizedValue)
         }
+        appendApplyTimeDetail(
+            resolutionMode: requirement.resolutionMode,
+            applyNote: requirement.applyNote,
+            to: &parts
+        )
         parts.append("| \(requirement.validationCommand)")
         return sanitize(parts.joined(separator: " "))
     }
@@ -630,10 +644,58 @@ public enum FinalLaunchMobileSummaryBuilder {
         var parts = ["\(target.id): \(target.status)", target.destination]
         if !target.blockedBy.isEmpty {
             parts.append("blocked by \(target.blockedBy.joined(separator: ", "))")
+        } else if let applyTimeSlot = target.slots.first(where: {
+            hasApplyTimeDetail(resolutionMode: $0.resolutionMode, applyNote: $0.applyNote)
+        }) {
+            parts.append(applyPreviewSlotRow(applyTimeSlot))
         } else if let firstSlot = target.slots.first {
             parts.append("writes \(firstSlot.writes.joined(separator: ", "))")
         }
         return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func applyPreviewSlotRow(
+        _ slot: FinalResourceApplyPreviewSlot
+    ) -> String {
+        var parts = [slot.id, slot.status]
+        if !slot.classification.isEmpty {
+            parts.append(slot.classification)
+        }
+        appendApplyTimeDetail(
+            resolutionMode: slot.resolutionMode,
+            applyNote: slot.applyNote,
+            to: &parts
+        )
+        if !slot.writes.isEmpty {
+            parts.append("writes \(slot.writes.joined(separator: ", "))")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func appendApplyTimeDetail(
+        resolutionMode: String?,
+        applyNote: String?,
+        to parts: inout [String]
+    ) {
+        if let resolutionMode, !resolutionMode.isEmpty {
+            parts.append(resolutionMode)
+        }
+        if let applyNote, !applyNote.isEmpty {
+            parts.append("| \(applyNote)")
+        }
+    }
+
+    private static func hasApplyTimeDetail(
+        resolutionMode: String?,
+        applyNote: String?
+    ) -> Bool {
+        if let resolutionMode, !resolutionMode.isEmpty {
+            return true
+        }
+        if let applyNote, !applyNote.isEmpty {
+            return true
+        }
+        return false
     }
 
     private static func externalActionLedgerRows(

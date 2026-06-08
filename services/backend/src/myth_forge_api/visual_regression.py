@@ -405,6 +405,28 @@ DEFAULT_VISUAL_ARTIFACTS = (
         ),
     ),
     VisualArtifactSpec(
+        id="p0.221_mobile_auto_backend_url_handoff",
+        html_path="docs/superpowers/verification/p0.221-mobile-auto-backend-url-handoff.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.221-mobile-auto-backend-url-handoff-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.221-mobile-auto-backend-url-handoff-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Final Launch Status",
+            "Auto Backend URL",
+            "PMF_BACKEND_BASE_URL",
+            "apply_time_auto",
+            "write_deploy_local_config.sh",
+            "final-apply-resources",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.160_final_showcase_ios_deploy_digest",
         html_path="docs/superpowers/verification/p0.160-final-showcase-ios-deploy-digest.html",
         png_path=(

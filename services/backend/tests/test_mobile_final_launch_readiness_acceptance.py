@@ -190,6 +190,12 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "model_final_resource_apply_preview_first_blocker" in requirement_ids
     assert "model_final_resource_apply_preview_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_apply_preview_first_blocker_row" in requirement_ids
+    assert "model_final_resources_preflight_apply_time_handoff" in requirement_ids
+    assert "model_final_resource_requirements_apply_time_handoff" in requirement_ids
+    assert "model_final_resource_apply_preview_apply_time_handoff" in requirement_ids
+    assert "mobile_summary_auto_backend_url_handoff" in requirement_ids
+    assert "contract_final_resource_auto_backend_url_handoff_decode" in requirement_ids
+    assert "contract_final_resource_auto_backend_url_handoff_summary" in requirement_ids
     assert "model_final_resource_requirements_first_blocker" in requirement_ids
     assert "model_final_resource_requirements_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_requirements_source" in requirement_ids
@@ -310,6 +316,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "firstBlocker: FinalResourceApplyPreviewFirstBlocker?",
                 "FinalResourceRequirementsFirstBlocker",
                 "firstBlocker: FinalResourceRequirementsFirstBlocker?",
+                "resolutionMode: String?",
+                "applyNote: String?",
                 "ResourceHandoffReport",
                 "resourceReport",
             ]
@@ -374,6 +382,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Fill guide",
                 "resourceFillGuideFirstBlockerRow",
                 "applyPreviewFirstBlockerRow",
+                "appendApplyTimeDetail",
                 "report.finalResourceRequirements",
                 "resourceRequirementFirstBlockerRow",
                 "sanitize",
@@ -476,6 +485,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightBlocksOnFinalResourceApplyPreviewFirstBlocker",
                 "testDevicePreflightMarksReadyFinalResourceApplyPreview",
                 "testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail",
+                "testDecodesFinalResourceAutoBackendURLHandoffFields",
+                "testFinalLaunchMobileSummaryShowsAutoBackendURLHandoff",
                 "testDevicePreflightWaitsForMissingIOSDeployRunbook",
                 "testDevicePreflightBlocksOnIOSDeployRunbookCommandStep",
                 "testDevicePreflightMarksReadyIOSDeployRunbook",

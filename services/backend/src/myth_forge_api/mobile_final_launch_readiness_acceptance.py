@@ -108,6 +108,24 @@ SOURCE_REQUIREMENTS = (
         "FinalResourcesPreflightSummary",
     ),
     SourceRequirement(
+        "model_final_resources_preflight_apply_time_handoff",
+        "Final resources preflight apply-time handoff fields",
+        PMF_MODELS_PATH,
+        "resolutionMode: String?",
+    ),
+    SourceRequirement(
+        "model_final_resource_requirements_apply_time_handoff",
+        "Final resource requirements apply-time handoff fields",
+        PMF_MODELS_PATH,
+        "applyNote: String?",
+    ),
+    SourceRequirement(
+        "model_final_resource_apply_preview_apply_time_handoff",
+        "Final resource apply preview apply-time handoff fields",
+        PMF_MODELS_PATH,
+        "resolutionMode: String?",
+    ),
+    SourceRequirement(
         "model_final_launch_mode",
         "Final launch mode model",
         PMF_MODELS_PATH,
@@ -574,6 +592,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final resource apply preview first blocker row",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
         "applyPreviewFirstBlockerRow",
+    ),
+    SourceRequirement(
+        "mobile_summary_auto_backend_url_handoff",
+        "Mobile final launch auto backend URL handoff row",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "appendApplyTimeDetail",
     ),
     SourceRequirement(
         "mobile_summary_final_resource_requirements_source",
@@ -1084,6 +1108,18 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts unsafe final resource apply preview first blocker detail",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail",
+    ),
+    SourceRequirement(
+        "contract_final_resource_auto_backend_url_handoff_decode",
+        "Contract test decodes auto backend URL handoff fields",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDecodesFinalResourceAutoBackendURLHandoffFields",
+    ),
+    SourceRequirement(
+        "contract_final_resource_auto_backend_url_handoff_summary",
+        "Contract test renders auto backend URL handoff rows",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsAutoBackendURLHandoff",
     ),
     SourceRequirement(
         "contract_ios_deploy_runbook_missing",
