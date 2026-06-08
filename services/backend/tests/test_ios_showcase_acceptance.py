@@ -1169,7 +1169,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/final_resource_requirements.py": (
             "build_final_resource_requirements_report final_resource_requirements_report "
-            "FinalResourceRequirementsResult validation_commands"
+            "first_blocker FinalResourceRequirementsResult validation_commands"
         ),
         "services/backend/scripts/init_final_resources.sh": (
             "final-resources.env initialized make final-resource-init must stay untracked"

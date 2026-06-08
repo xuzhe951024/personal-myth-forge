@@ -789,6 +789,10 @@ FEATURES = (
                 "final_resource_requirements_report",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_resource_requirements.py",
+                "first_blocker",
+            ),
+            SourceRequirement(
                 "services/backend/scripts/init_final_resources.sh",
                 "final-resources.env initialized",
             ),
