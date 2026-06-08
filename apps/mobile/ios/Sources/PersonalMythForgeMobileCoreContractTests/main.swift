@@ -98,6 +98,10 @@ do {
     try testDevicePreflightMarksReadyFinalResourceFillGuide()
     try testDevicePreflightRedactsUnsafeFinalResourceFillGuideDetail()
     try testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail()
+    try testDevicePreflightWaitsForMissingFinalResourceApplyPreview()
+    try testDevicePreflightBlocksOnFinalResourceApplyPreviewFirstBlocker()
+    try testDevicePreflightMarksReadyFinalResourceApplyPreview()
+    try testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail()
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testFinalLaunchMobileSummaryWaitsForMissingReport()
     try testFinalLaunchMobileSummaryWaitsWithLaunchReceipt()
@@ -2764,6 +2768,87 @@ private func testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerD
     let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
 
     try expectEqual(summary.item(id: "final_resource_fill_guide")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
+}
+
+private func testDevicePreflightWaitsForMissingFinalResourceApplyPreview() throws {
+    var report = finalDemoLaunchReport(overallStatus: "partial")
+    report.finalResourceApplyPreview = nil
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+
+    try expectEqual(summary.item(id: "final_resource_apply_preview")?.status, .waiting)
+    try expectContains(summary.item(id: "final_resource_apply_preview")?.detail ?? "", "not loaded")
+}
+
+private func testDevicePreflightBlocksOnFinalResourceApplyPreviewFirstBlocker() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport()
+    )
+    let detail = summary.item(id: "final_resource_apply_preview")?.detail ?? ""
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "final_resource_apply_preview")?.status, .blocked)
+    try expectContains(detail, "missing 5")
+    try expectContains(detail, "First blocker: backend_env missing")
+    try expectContains(detail, "make final-apply-resources")
+    try expectContains(detail, "blocked by MESHY_API_KEY")
+    try expectContains(detail, "services/backend/.env")
+    try expectContains(detail, "services/backend/scripts/write_backend_env.sh")
+    try expectContains(detail, "blocked_by MESHY_API_KEY")
+    try expectContains(detail, "make final-resources-preflight")
+    try expectContains(detail, "Command: make final-resource-apply-preview")
+}
+
+private func testDevicePreflightMarksReadyFinalResourceApplyPreview() throws {
+    var report = finalDemoLaunchReport(overallStatus: "ready")
+    report.finalResourceApplyPreview = readyFinalResourceApplyPreviewReport()
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let detail = summary.item(id: "final_resource_apply_preview")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "final_resource_apply_preview")?.status, .ready)
+    try expectContains(detail, "ready")
+    try expectContains(detail, "ready 8")
+    try expectContains(detail, "missing 0")
+    try expectContains(detail, "targets 2")
+}
+
+private func testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail() throws {
+    var report = finalDemoLaunchReport()
+    report.finalResourceApplyPreview = blockedFinalResourceApplyPreviewReport(
+        firstBlocker: FinalResourceApplyPreviewFirstBlocker(
+            id: "backend_env",
+            label: "Backend env",
+            status: "blocked",
+            classification: "missing_required_value",
+            command: "paste sk-test from /Users/zhexu/private file:///tmp local-capture://cap checkout_url Bearer token",
+            detail: "Authorization Bearer token api_key=secret checkout_url /Users/zhexu/private",
+            destination: "services/backend/.env",
+            writer: "services/backend/scripts/write_backend_env.sh",
+            blockedBy: ["MESHY_API_KEY", "OPENAI_API_KEY"],
+            validationCommand: "make final-resources-preflight"
+        )
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.item(id: "final_resource_apply_preview")?.status, .blocked)
     try expectContains(text, "[withheld]")
     try expectNotContains(text, "sk-test")
     try expectNotContains(text, "/Users/")
@@ -10652,6 +10737,7 @@ private func devicePreflightSummary(
 private func readyDevicePreflightFinalDemoLaunchReport() -> FinalDemoLaunchReport {
     var report = finalDemoLaunchReport(overallStatus: "ready")
     report.finalResourceFillGuide = readyFinalResourceFillGuideReport()
+    report.finalResourceApplyPreview = readyFinalResourceApplyPreviewReport()
     return report
 }
 
@@ -10827,6 +10913,136 @@ private func readyFinalResourceFillGuideReport() -> FinalResourceFillGuideReport
             globalMutation: false
         )
     )
+}
+
+private func blockedFinalResourceApplyPreviewReport(
+    firstBlocker: FinalResourceApplyPreviewFirstBlocker = FinalResourceApplyPreviewFirstBlocker(
+        id: "backend_env",
+        label: "Backend env",
+        status: "missing",
+        classification: "missing_required_value",
+        command: "make final-apply-resources",
+        detail: "blocked by MESHY_API_KEY",
+        destination: "services/backend/.env",
+        writer: "services/backend/scripts/write_backend_env.sh",
+        blockedBy: ["MESHY_API_KEY"],
+        validationCommand: "make final-resources-preflight"
+    )
+) -> FinalResourceApplyPreviewReport {
+    let backendTarget = FinalResourceApplyPreviewTarget(
+        id: "backend_env",
+        label: "Backend env",
+        destination: "services/backend/.env",
+        writer: "services/backend/scripts/write_backend_env.sh",
+        status: "missing",
+        command: "make final-apply-resources",
+        slots: [
+            FinalResourceApplyPreviewSlot(
+                id: "MESHY_API_KEY",
+                status: "missing",
+                required: true,
+                secret: true,
+                configured: false,
+                classification: "missing_required_value",
+                redacted: true,
+                writes: ["MESHY_API_KEY"]
+            )
+        ],
+        blockedBy: ["MESHY_API_KEY"],
+        notes: ["Preview does not write services/backend/.env."]
+    )
+    let iosTarget = FinalResourceApplyPreviewTarget(
+        id: "ios_deploy_config",
+        label: "iOS deploy config",
+        destination: "apps/mobile/ios/Config/Deployment.local.xcconfig",
+        writer: "apps/mobile/ios/scripts/write_deploy_local_config.sh",
+        status: "missing",
+        command: "make final-apply-resources",
+        slots: [
+            FinalResourceApplyPreviewSlot(
+                id: "PMF_BACKEND_BASE_URL",
+                status: "missing",
+                required: true,
+                secret: false,
+                configured: false,
+                classification: "missing_required_value",
+                redacted: false,
+                writes: ["PMF_BACKEND_BASE_URL"]
+            )
+        ],
+        blockedBy: ["PMF_BACKEND_BASE_URL"],
+        notes: ["Preview does not write Deployment.local.xcconfig."]
+    )
+    return FinalResourceApplyPreviewReport(
+        kind: "final_resource_apply_preview_report",
+        status: "blocked",
+        summary: FinalResourceApplyPreviewSummary(
+            ready: 3,
+            missing: 5,
+            blocked: 0,
+            optional: 5,
+            secret: 4,
+            backend: 9,
+            ios: 4,
+            print: 4,
+            writeTargets: 2
+        ),
+        resourcesFile: FinalResourcesFileStatus(
+            path: "services/backend/.local/final-resources.env",
+            exists: true
+        ),
+        writeTargets: [backendTarget, iosTarget],
+        writeTargetsById: [
+            "backend_env": backendTarget,
+            "ios_deploy_config": iosTarget,
+        ],
+        firstBlocker: firstBlocker,
+        operatorActions: ["make final-apply-resources"],
+        commands: [
+            "make final-resource-apply-preview",
+            "make final-resources-preflight",
+            "make final-apply-resources",
+        ],
+        safety: FinalResourceApplyPreviewSafety(
+            providerSecretsInReport: false,
+            localPathsInReport: false,
+            writesBackendEnv: false,
+            writesIosDeployConfig: false,
+            runsShellWriters: false,
+            liveProviderCalls: false,
+            globalMutation: false,
+            xcodeOrSigning: false
+        )
+    )
+}
+
+private func readyFinalResourceApplyPreviewReport() -> FinalResourceApplyPreviewReport {
+    var report = blockedFinalResourceApplyPreviewReport(firstBlocker: FinalResourceApplyPreviewFirstBlocker(
+        id: "none",
+        label: "No blocker",
+        status: "ready",
+        classification: "configured",
+        command: "",
+        detail: "",
+        destination: "",
+        writer: "",
+        blockedBy: [],
+        validationCommand: "make final-resources-preflight"
+    ))
+    report.status = "ready"
+    report.summary = FinalResourceApplyPreviewSummary(
+        ready: 8,
+        missing: 0,
+        blocked: 0,
+        optional: 5,
+        secret: 4,
+        backend: 9,
+        ios: 4,
+        print: 4,
+        writeTargets: 2
+    )
+    report.firstBlocker = nil
+    return report
 }
 
 private func defaultFinalDemoLaunchCommands(mode: String) -> [String] {

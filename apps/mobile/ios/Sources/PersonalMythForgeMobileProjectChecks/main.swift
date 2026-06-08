@@ -1363,9 +1363,49 @@ do {
         "device preflight final resource fill guide first blocker source"
     )
     try requireContains(
+        devicePreflight,
+        "finalResourceApplyPreviewItem(report: finalDemoLaunch)",
+        "device preflight final resource apply preview item"
+    )
+    try requireContains(
+        devicePreflight,
+        "Apply Preview",
+        "device preflight final resource apply preview label"
+    )
+    try requireContains(
+        devicePreflight,
+        "report.finalResourceApplyPreview",
+        "device preflight final resource apply preview source"
+    )
+    try requireContains(
+        devicePreflight,
+        #""final_resource_apply_preview","#,
+        "device preflight final resource apply preview required item"
+    )
+    try requireContains(
         contractTests,
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
         "device preflight fill guide first blocker redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightWaitsForMissingFinalResourceApplyPreview",
+        "device preflight apply preview missing contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightBlocksOnFinalResourceApplyPreviewFirstBlocker",
+        "device preflight apply preview blocked contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightMarksReadyFinalResourceApplyPreview",
+        "device preflight apply preview ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightRedactsUnsafeFinalResourceApplyPreviewFirstBlockerDetail",
+        "device preflight apply preview redaction contract test"
     )
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")
