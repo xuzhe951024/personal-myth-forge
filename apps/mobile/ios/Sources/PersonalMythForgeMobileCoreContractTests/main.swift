@@ -158,8 +158,10 @@ do {
     try testLiveProviderConsentSummaryRedactsUnsafeText()
     try testFinalLaunchMobileSummaryBuildsPartialOperatorStatus()
     try testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload()
+    try testDecodesFinalResourceAutoBackendURLHandoffFields()
     try testFinalLaunchMobileSummaryShowsMissingResourceChecklist()
     try testFinalLaunchMobileSummaryShowsReadyResourceChecklist()
+    try testFinalLaunchMobileSummaryShowsAutoBackendURLHandoff()
     try testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist()
     try testDecodesFinalResourceRequirementsFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsBlockedResourceRequirements()
@@ -4271,6 +4273,71 @@ private func testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload() thr
     try expectEqual(preflight.items[2].classification, "loopback_url")
 }
 
+private func testDecodesFinalResourceAutoBackendURLHandoffFields() throws {
+    let applyNote = "Resolved by write_deploy_local_config.sh during final-apply-resources."
+    let preflight = try PMFJSON.decoder.decode(
+        FinalResourcesPreflightItem.self,
+        from: Data("""
+        {
+          "id": "PMF_BACKEND_BASE_URL",
+          "status": "ready",
+          "required": true,
+          "configured": true,
+          "redacted": true,
+          "classification": "apply_time_auto_url",
+          "resolution_mode": "apply_time_auto",
+          "apply_note": "\(applyNote)"
+        }
+        """.utf8)
+    )
+    let requirement = try PMFJSON.decoder.decode(
+        FinalResourceRequirement.self,
+        from: Data("""
+        {
+          "id": "PMF_BACKEND_BASE_URL",
+          "label": "iPhone backend URL",
+          "domain": "ios_deploy",
+          "destination": "apps/mobile/ios/Config/Deployment.local.xcconfig",
+          "source_template": "PMF_BACKEND_BASE_URL=auto",
+          "required": true,
+          "secret": false,
+          "configured": true,
+          "status": "ready",
+          "classification": "apply_time_auto_url",
+          "unblocks": ["ios_deployable"],
+          "validation_command": "make mobile-deploy-preflight",
+          "notes": "Auto backend URL is resolved while applying resources.",
+          "resolution_mode": "apply_time_auto",
+          "apply_note": "\(applyNote)"
+        }
+        """.utf8)
+    )
+    let slot = try PMFJSON.decoder.decode(
+        FinalResourceApplyPreviewSlot.self,
+        from: Data("""
+        {
+          "id": "PMF_BACKEND_BASE_URL",
+          "status": "ready",
+          "required": true,
+          "secret": false,
+          "configured": true,
+          "classification": "apply_time_auto_url",
+          "redacted": true,
+          "writes": ["PMF_BACKEND_BASE_URL"],
+          "resolution_mode": "apply_time_auto",
+          "apply_note": "\(applyNote)"
+        }
+        """.utf8)
+    )
+
+    try expectEqual(preflight.resolutionMode, "apply_time_auto")
+    try expectEqual(preflight.applyNote, applyNote)
+    try expectEqual(requirement.resolutionMode, "apply_time_auto")
+    try expectEqual(requirement.applyNote, applyNote)
+    try expectEqual(slot.resolutionMode, "apply_time_auto")
+    try expectEqual(slot.applyNote, applyNote)
+}
+
 private func testFinalLaunchMobileSummaryShowsMissingResourceChecklist() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -4301,6 +4368,28 @@ private func testFinalLaunchMobileSummaryShowsReadyResourceChecklist() throws {
     try expectEqual(summary.resourceChecklistRows.first, "Required final resources ready.")
 }
 
+private func testFinalLaunchMobileSummaryShowsAutoBackendURLHandoff() throws {
+    var report = finalDemoLaunchReport(
+        overallStatus: "ready",
+        finalResourcesStatus: "ready",
+        finalResourcesItemsJSON: autoFinalResourceItemsJSON(),
+        finalResourceApplyPreviewStatus: "ready"
+    )
+    report.finalResourceRequirements = readyFinalResourceRequirementsReport()
+    report.finalResourceApplyPreview = readyFinalResourceApplyPreviewReport()
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = (
+        summary.resourceChecklistRows
+            + summary.resourceRequirementRows
+            + summary.applyPreviewRows
+    ).joined(separator: " ")
+
+    try expectContains(text, "PMF_BACKEND_BASE_URL")
+    try expectContains(text, "apply_time_auto")
+    try expectContains(text, "write_deploy_local_config.sh")
+    try expectContains(text, "final-apply-resources")
+}
+
 private func testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist() throws {
     let unsafeItems = """
     [
@@ -4310,7 +4399,8 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist() throws
         "required": true,
         "configured": false,
         "redacted": false,
-        "classification": "api_key=secret /Users/zhexu/private checkout_url"
+        "classification": "api_key=secret /Users/zhexu/private checkout_url",
+        "apply_note": "Bearer token /Users/zhexu/private checkout_url"
       }
     ]
     """
@@ -12036,6 +12126,30 @@ private func readyFinalResourceItemsJSON() -> String {
     """
 }
 
+private func autoFinalResourceItemsJSON() -> String {
+    """
+    [
+      {
+        "id": "MESHY_API_KEY",
+        "status": "ready",
+        "required": true,
+        "configured": true,
+        "redacted": true
+      },
+      {
+        "id": "PMF_BACKEND_BASE_URL",
+        "status": "ready",
+        "required": true,
+        "configured": true,
+        "redacted": true,
+        "classification": "apply_time_auto_url",
+        "resolution_mode": "apply_time_auto",
+        "apply_note": "Resolved by write_deploy_local_config.sh during final-apply-resources."
+      }
+    ]
+    """
+}
+
 private func blockedFinalResourceRequirementsReport(
     firstBlocker: FinalResourceRequirementsFirstBlocker = FinalResourceRequirementsFirstBlocker(
         id: "MESHY_API_KEY",
@@ -12142,16 +12256,17 @@ private func readyFinalResourceRequirementsReport() -> FinalResourceRequirements
         label: "iPhone backend URL",
         domain: "ios_deploy",
         destination: "services/backend/.local/final-resources.env",
-        sourceTemplate: "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+        sourceTemplate: "PMF_BACKEND_BASE_URL=auto",
         required: true,
         secret: false,
         configured: true,
         status: "ready",
-        classification: "configured",
+        classification: "apply_time_auto_url",
         unblocks: ["ios_deployable"],
         validationCommand: "make mobile-deploy-preflight",
-        notes: "iPhone-reachable LAN URL.",
-        normalizedValue: "http://192.168.1.10:8080"
+        notes: "Auto backend URL is resolved while applying resources.",
+        resolutionMode: "apply_time_auto",
+        applyNote: "Resolved by write_deploy_local_config.sh during final-apply-resources."
     )
     return FinalResourceRequirementsReport(
         kind: "final_resource_requirements_report",
@@ -12401,32 +12516,91 @@ private func blockedFinalResourceApplyPreviewReport(
 }
 
 private func readyFinalResourceApplyPreviewReport() -> FinalResourceApplyPreviewReport {
-    var report = blockedFinalResourceApplyPreviewReport(firstBlocker: FinalResourceApplyPreviewFirstBlocker(
-        id: "none",
-        label: "No blocker",
+    let backendTarget = FinalResourceApplyPreviewTarget(
+        id: "backend_env",
+        label: "Backend env",
+        destination: "services/backend/.env",
+        writer: "services/backend/scripts/write_backend_env.sh",
         status: "ready",
-        classification: "configured",
-        command: "",
-        detail: "",
-        destination: "",
-        writer: "",
-        blockedBy: [],
-        validationCommand: "make final-resources-preflight"
-    ))
-    report.status = "ready"
-    report.summary = FinalResourceApplyPreviewSummary(
-        ready: 8,
-        missing: 0,
-        blocked: 0,
-        optional: 5,
-        secret: 4,
-        backend: 9,
-        ios: 4,
-        print: 4,
-        writeTargets: 2
+        command: "make final-apply-resources",
+        slots: [
+            FinalResourceApplyPreviewSlot(
+                id: "MESHY_API_KEY",
+                status: "ready",
+                required: true,
+                secret: true,
+                configured: true,
+                classification: "configured",
+                redacted: true,
+                writes: ["MESHY_API_KEY"]
+            )
+        ],
+        notes: ["Preview does not write services/backend/.env."]
     )
-    report.firstBlocker = nil
-    return report
+    let iosTarget = FinalResourceApplyPreviewTarget(
+        id: "ios_deploy_config",
+        label: "iOS deploy config",
+        destination: "apps/mobile/ios/Config/Deployment.local.xcconfig",
+        writer: "apps/mobile/ios/scripts/write_deploy_local_config.sh",
+        status: "ready",
+        command: "make final-apply-resources",
+        slots: [
+            FinalResourceApplyPreviewSlot(
+                id: "PMF_BACKEND_BASE_URL",
+                status: "ready",
+                required: true,
+                secret: false,
+                configured: true,
+                classification: "apply_time_auto_url",
+                redacted: true,
+                writes: ["PMF_BACKEND_BASE_URL"],
+                resolutionMode: "apply_time_auto",
+                applyNote: "Resolved by write_deploy_local_config.sh during final-apply-resources."
+            )
+        ],
+        notes: ["Preview does not write Deployment.local.xcconfig."]
+    )
+    return FinalResourceApplyPreviewReport(
+        kind: "final_resource_apply_preview_report",
+        status: "ready",
+        summary: FinalResourceApplyPreviewSummary(
+            ready: 8,
+            missing: 0,
+            blocked: 0,
+            optional: 5,
+            secret: 4,
+            backend: 9,
+            ios: 4,
+            print: 4,
+            writeTargets: 2
+        ),
+        resourcesFile: FinalResourcesFileStatus(
+            path: "services/backend/.local/final-resources.env",
+            exists: true
+        ),
+        writeTargets: [backendTarget, iosTarget],
+        writeTargetsById: [
+            "backend_env": backendTarget,
+            "ios_deploy_config": iosTarget,
+        ],
+        firstBlocker: nil,
+        operatorActions: [],
+        commands: [
+            "make final-resource-apply-preview",
+            "make final-resources-preflight",
+            "make final-apply-resources",
+        ],
+        safety: FinalResourceApplyPreviewSafety(
+            providerSecretsInReport: false,
+            localPathsInReport: false,
+            writesBackendEnv: false,
+            writesIosDeployConfig: false,
+            runsShellWriters: false,
+            liveProviderCalls: false,
+            globalMutation: false,
+            xcodeOrSigning: false
+        )
+    )
 }
 
 private func defaultFinalDemoLaunchCommands(mode: String) -> [String] {

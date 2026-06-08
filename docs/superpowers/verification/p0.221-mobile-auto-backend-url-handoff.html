@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.221 Mobile Auto Backend URL Handoff</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7f9;
+      color: #14191f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: #eef4f6;
+    }
+    main {
+      min-height: 844px;
+      padding: 18px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .eyebrow {
+      margin: 12px 0 6px;
+      color: #5e6870;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      color: #10161d;
+      font-size: 30px;
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+    .intro {
+      margin: 8px 0 2px;
+      color: #54616b;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    section {
+      border: 1px solid #d7e1e6;
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: 0 12px 26px rgba(29, 44, 54, 0.08);
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      padding: 10px;
+    }
+    .metric {
+      border: 1px solid #e0e7eb;
+      border-radius: 8px;
+      padding: 9px 6px;
+      background: #fbfcfd;
+    }
+    .metric strong {
+      display: block;
+      color: #122232;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .metric span {
+      display: block;
+      margin-top: 5px;
+      color: #5f6b73;
+      font-size: 10px;
+      line-height: 1.15;
+    }
+    .label {
+      margin: 0 0 8px;
+      color: #5d6870;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .handoff {
+      border-color: #cbdce5;
+      background: #f9fbfc;
+    }
+    .handoff h2 {
+      margin: 0 0 10px;
+      color: #12202c;
+      font-size: 20px;
+      line-height: 1.15;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+    .row {
+      padding: 10px 0;
+      border-top: 1px solid #e2e9ed;
+    }
+    .row:first-of-type { border-top: 0; }
+    .row b {
+      display: block;
+      color: #1b2228;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .row span {
+      display: block;
+      margin-top: 4px;
+      color: #5e6b74;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .command {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #102736;
+      color: #dff4f7;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .safe {
+      background: #fbfcfd;
+      color: #52616b;
+      font-size: 12px;
+      line-height: 1.42;
+    }
+    .foot {
+      margin-top: auto;
+      color: #68757d;
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Final Launch Status</p>
+      <h1>Auto Backend URL</h1>
+      <p class="intro">The iPhone panel now explains how the backend URL is resolved when final resources use auto.</p>
+    </header>
+
+    <section class="summary">
+      <div class="metric"><strong>27</strong><span>visual proofs</span></div>
+      <div class="metric"><strong>1</strong><span>auto slot</span></div>
+      <div class="metric"><strong>0</strong><span>live calls</span></div>
+    </section>
+
+    <section class="handoff">
+      <p class="label">Resource handoff</p>
+      <h2>PMF_BACKEND_BASE_URL</h2>
+      <div class="row">
+        <b>Resolution mode</b>
+        <span>apply_time_auto</span>
+      </div>
+      <div class="row">
+        <b>Apply note</b>
+        <span>Resolved by write_deploy_local_config.sh during final-apply-resources.</span>
+      </div>
+      <div class="row">
+        <b>Writer</b>
+        <span>apps/mobile/ios/scripts/write_deploy_local_config.sh</span>
+      </div>
+      <div class="command">PMF_BACKEND_BASE_URL apply_time_auto | make final-apply-resources</div>
+    </section>
+
+    <section class="safe">
+      <p class="label">Safety</p>
+      The view is read-only. It does not resolve or print the LAN IP, run shell writers, call providers, start Xcode, or mutate global machine state.
+    </section>
+
+    <p class="foot">P0.221 mobile auto backend URL handoff visual evidence</p>
+  </main>
+</body>
+</html>
