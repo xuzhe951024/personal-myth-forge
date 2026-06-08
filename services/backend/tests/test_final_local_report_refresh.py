@@ -63,6 +63,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "services/backend/.local/final-resource-fill-guide.md",
         "services/backend/.local/3d-evaluation-local.json",
         "services/backend/.local/npc-evaluation-local.json",
+        "services/backend/.local/provider-handoff.json",
         "services/backend/.local/visual-regression-local.json",
         "services/backend/.local/final-acceptance-local.json",
         "services/backend/.local/final-demo-launch-local.json",
@@ -131,9 +132,19 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     assert result.exit_code == 2
     assert steps["ios_deploy_runbook_local"] < steps["mobile_deploy_preflight_evidence"]
     assert steps["mobile_deploy_preflight_evidence"] < steps["ios_device_launch_rehearsal"]
+    assert steps["npc_evaluation_local"] < steps["provider_handoff"]
+    assert steps["provider_handoff"] < steps["final_acceptance_local"]
     assert steps["ios_device_launch_rehearsal"] < steps["ios_device_evidence_bundle"]
     assert steps["ios_device_evidence_bundle"] < steps["final_showcase_readiness"]
     assert steps["ios_device_launch_rehearsal"] < steps["final_showcase_readiness"]
+    provider_handoff = json.loads(
+        (repo_root / "services/backend/.local/provider-handoff.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert provider_handoff["kind"] == "provider_handoff_report"
+    assert provider_handoff["status"] == "blocked"
+    assert provider_handoff["classification"] == "core_real_providers_not_ready"
     bundle = json.loads(
         (
             repo_root / "services/backend/.local/ios-device-evidence-bundle.json"

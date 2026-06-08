@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from myth_forge_api.config import Settings
+from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.evaluation.npc import (
     DEFAULT_NPC_AGENT_EVALUATION_SUITE,
     run_npc_agent_evaluation,
@@ -66,6 +66,7 @@ from myth_forge_api.providers.factory import (
     build_npc_tick_runtime,
     build_three_d_provider,
 )
+from myth_forge_api.provider_handoff import build_provider_handoff_report
 from myth_forge_api.visual_regression import check_visual_artifacts
 
 LOCAL_REPORT_DIR = Path("services/backend/.local")
@@ -161,6 +162,12 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "Local NPC Agent evaluation",
             "npc-evaluation-local.json",
             _npc_evaluation_report,
+        ),
+        _step(
+            "provider_handoff",
+            "Provider handoff",
+            "provider-handoff.json",
+            lambda repo_root: build_provider_handoff_report(load_settings()),
         ),
         _step(
             "visual_regression_local",
