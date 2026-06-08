@@ -49,6 +49,8 @@ do {
     try testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest()
     try testFinalShowcaseSummaryIncludesReadyProviderHandoffDigest()
     try testFinalShowcaseSummaryBlocksProviderHandoffDigest()
+    try testFinalShowcaseSummaryBlocksProviderHandoffOnConfiguredEvidenceBundle()
+    try testFinalShowcaseSummaryRedactsUnsafeConfiguredBundleProviderHandoff()
     try testFinalShowcaseSummaryRedactsUnsafeProviderHandoffDigest()
     try testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest()
     try testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest()
@@ -104,6 +106,8 @@ do {
     try testLiveProviderConsentSummaryBlocksMissingConfiguredProviders()
     try testLiveProviderConsentSummaryShowsReadyConfiguredConsent()
     try testLiveProviderConsentSummaryShowsReadyLiveEvidence()
+    try testLiveProviderConsentSummaryShowsConfiguredBundleRow()
+    try testLiveProviderConsentSummaryBlocksConfiguredAcceptanceWithoutBundle()
     try testLiveProviderConsentSummaryBlocksMissingLiveEvidence()
     try testLiveProviderConsentSummaryRedactsUnsafeLiveEvidenceBlocker()
     try testLiveProviderConsentSummaryRedactsUnsafeText()
@@ -1572,6 +1576,97 @@ private func testFinalShowcaseSummaryBlocksProviderHandoffDigest() throws {
     try expectContains(stage.detail, "provide MESHY_API_KEY")
 }
 
+private func testFinalShowcaseSummaryBlocksProviderHandoffOnConfiguredEvidenceBundle() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch blocked",
+        subtitle: "Configured bundle blocked",
+        phaseRows: [],
+        resourceFillGuideRows: ["Fill guide ready: required 2, optional 0, configured 2, secret 1."],
+        applyPreviewRows: ["Apply preview ready: targets 2, missing 0, blocked 0, secret 4."],
+        resourceHandoffRows: ["Resource handoff ready: ready 6, missing 0, blocked 0, manual 0."],
+        resourceActions: [],
+        acceptanceRows: ["Final acceptance ready."],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        localShowcaseSmokeRows: ["Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3."],
+        liveProviderEvidenceRows: ["Live evidence ready: ready 5, missing 0, blocked 0, partial 0."],
+        configuredEvidenceBundleRows: [
+            "Configured bundle blocked: evidence ready 0, missing 5, blocked 0, partial 0; commands ready 3, blocked 2, consent 1.",
+            "final_resource_fill_guide: blocked | make configured-live-evidence-bundle",
+        ],
+        deployRunbookRows: ["iOS deploy runbook ready."],
+        launchRehearsalRows: ["iOS launch rehearsal ready: ready 4, blocked 0, partial 0."],
+        handoffRows: ["Final operator handoff ready."],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let stage = try require(summary.stage(id: "provider_handoff"), "missing provider handoff stage")
+
+    try expectEqual(summary.overallStatus, .needsAttention)
+    try expectEqual(stage.status, .needsAttention)
+    try expectContains(stage.detail, "Configured bundle blocked")
+    try expectContains(stage.detail, "make configured-live-evidence-bundle")
+}
+
+private func testFinalShowcaseSummaryRedactsUnsafeConfiguredBundleProviderHandoff() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch blocked",
+        subtitle: "Configured bundle blocked",
+        phaseRows: [],
+        resourceFillGuideRows: ["Fill guide ready: required 2, optional 0, configured 2, secret 1."],
+        applyPreviewRows: ["Apply preview ready: targets 2, missing 0, blocked 0, secret 4."],
+        resourceHandoffRows: ["Resource handoff ready: ready 6, missing 0, blocked 0, manual 0."],
+        resourceActions: [],
+        acceptanceRows: ["Final acceptance ready."],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        localShowcaseSmokeRows: ["Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3."],
+        liveProviderEvidenceRows: ["Live evidence ready: ready 5, missing 0, blocked 0, partial 0."],
+        configuredEvidenceBundleRows: [
+            "Configured bundle blocked: sk-test /Users/zhexu/private file:///tmp/private checkout_url Bearer token",
+            "final_resource_fill_guide: blocked | make configured-live-evidence-bundle | sk-test /Users/zhexu/private",
+        ],
+        deployRunbookRows: ["iOS deploy runbook ready."],
+        launchRehearsalRows: ["iOS launch rehearsal ready: ready 4, blocked 0, partial 0."],
+        handoffRows: ["Final operator handoff ready."],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.stage(id: "provider_handoff")?.status, .needsAttention)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+}
+
 private func testFinalShowcaseSummaryRedactsUnsafeProviderHandoffDigest() throws {
     let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
     let finalLaunch = FinalLaunchMobileSummary(
@@ -1629,6 +1724,7 @@ private func testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest() throws {
             localShowcaseSmokeStatus: "succeeded",
             liveProviderEvidenceStatus: "ready",
             configuredEvidencePlanStatus: "ready",
+            configuredEvidenceBundleStatus: "ready",
             printFulfillmentReadinessStatus: "ready",
             finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
@@ -1717,6 +1813,7 @@ private func testFinalShowcaseSummaryIncludesReadyIOSDeployDigest() throws {
             localShowcaseSmokeStatus: "succeeded",
             liveProviderEvidenceStatus: "ready",
             configuredEvidencePlanStatus: "ready",
+            configuredEvidenceBundleStatus: "ready",
             printFulfillmentReadinessStatus: "ready",
             finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
@@ -1764,6 +1861,7 @@ private func testFinalShowcaseSummaryBlocksIOSDeployDigest() throws {
             localShowcaseSmokeStatus: "succeeded",
             liveProviderEvidenceStatus: "ready",
             configuredEvidencePlanStatus: "ready",
+            configuredEvidenceBundleStatus: "ready",
             printFulfillmentReadinessStatus: "ready",
             finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
@@ -1851,6 +1949,7 @@ private func testFinalShowcaseSummaryIncludesReadyThreeDEvaluationDigest() throw
             threeDEvaluationStatus: "ready",
             liveProviderEvidenceStatus: "ready",
             configuredEvidencePlanStatus: "ready",
+            configuredEvidenceBundleStatus: "ready",
             printFulfillmentReadinessStatus: "ready",
             finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
@@ -1893,6 +1992,7 @@ private func testFinalShowcaseSummaryWaitsForMissingThreeDEvaluationDigest() thr
             threeDEvaluationStatus: "missing",
             liveProviderEvidenceStatus: "ready",
             configuredEvidencePlanStatus: "ready",
+            configuredEvidenceBundleStatus: "ready",
             printFulfillmentReadinessStatus: "ready",
             finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "ready",
@@ -1931,6 +2031,7 @@ private func testFinalShowcaseSummaryWaitsForMissingNPCEvaluationDigest() throws
             threeDEvaluationStatus: "ready",
             liveProviderEvidenceStatus: "ready",
             configuredEvidencePlanStatus: "ready",
+            configuredEvidenceBundleStatus: "ready",
             printFulfillmentReadinessStatus: "ready",
             finalResourceApplyPreviewStatus: "ready",
             npcEvaluationStatus: "missing",
@@ -2742,6 +2843,7 @@ private func testLiveProviderConsentSummaryShowsReadyConfiguredConsent() throws 
             finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
             finalAcceptanceStatus: "ready",
             liveProviderEvidenceStatus: "ready",
+            configuredEvidenceBundleStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
             iosDeployRunbookStatus: "ready",
@@ -2776,6 +2878,7 @@ private func testLiveProviderConsentSummaryShowsReadyLiveEvidence() throws {
             finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
             finalAcceptanceStatus: "ready",
             liveProviderEvidenceStatus: "ready",
+            configuredEvidenceBundleStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
             iosDeployRunbookStatus: "ready",
@@ -2798,6 +2901,76 @@ private func testLiveProviderConsentSummaryShowsReadyLiveEvidence() throws {
     try expectEqual(row.label, "Live evidence")
     try expectContains(row.detail, "Live evidence ready")
     try expectContains(row.detail, "ready 5")
+}
+
+private func testLiveProviderConsentSummaryShowsConfiguredBundleRow() throws {
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: readyConfiguredProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchReport: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
+            finalAcceptanceStatus: "ready",
+            liveProviderEvidenceStatus: "ready",
+            configuredEvidenceBundleStatus: "ready",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready",
+            resourceHandoffAction: "final resource handoff ready"
+        ),
+        finalLaunchError: nil
+    )
+    let row: LiveProviderConsentRow = try require(
+        summary.rows.first { $0.id == "configured_bundle" },
+        "missing configured bundle row"
+    )
+
+    try expectEqual(summary.status, .ready)
+    try expectEqual(summary.canRunConfiguredAcceptance, true)
+    try expectEqual(row.label, "Configured bundle")
+    try expectEqual(row.status, .ready)
+    try expectContains(row.detail, "Configured bundle ready")
+    try expectContains(row.detail, "evidence ready 5")
+}
+
+private func testLiveProviderConsentSummaryBlocksConfiguredAcceptanceWithoutBundle() throws {
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: readyConfiguredProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchReport: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "blocked",
+            finalResourcesStatus: "ready",
+            finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
+            finalAcceptanceStatus: "ready",
+            liveProviderEvidenceStatus: "ready",
+            configuredEvidenceBundleStatus: "blocked",
+            configuredEvidenceBundleBlockerDetail: "Final resource fill guide is blocked before configured evidence bundle.",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready",
+            resourceHandoffAction: "final resource handoff ready"
+        ),
+        finalLaunchError: nil
+    )
+    let row: LiveProviderConsentRow = try require(
+        summary.rows.first { $0.id == "configured_bundle" },
+        "missing configured bundle row"
+    )
+
+    try expectEqual(summary.status, .blocked)
+    try expectEqual(summary.canRunConfiguredAcceptance, false)
+    try expectEqual(row.status, .blocked)
+    try expectContains(row.detail, "final_resource_fill_guide")
+    try expectContains(row.detail, "Final resource fill guide is blocked")
 }
 
 private func testLiveProviderConsentSummaryBlocksMissingLiveEvidence() throws {

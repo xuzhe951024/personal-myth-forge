@@ -102,8 +102,12 @@ public enum FinalShowcaseSummaryBuilder {
 
     private static func providerHandoffStatusRows(_ summary: FinalLaunchMobileSummary) -> [String] {
         let liveRows = summary.liveProviderEvidenceRows
+        let configuredBundleRows = summary.configuredEvidenceBundleRows
         if !liveRows.isEmpty, providerHandoffStatus(liveRows) != .ready {
             return liveRows
+        }
+        if !configuredBundleRows.isEmpty, providerHandoffStatus(configuredBundleRows) != .ready {
+            return configuredBundleRows
         }
         let applyRows = summary.applyPreviewRows
         if !applyRows.isEmpty {
@@ -119,7 +123,13 @@ public enum FinalShowcaseSummaryBuilder {
         if let firstNotReady = candidates.first(where: { providerHandoffStatus($0) != .ready }) {
             return firstNotReady
         }
-        return liveRows.isEmpty ? candidates.first ?? [] : liveRows
+        if !liveRows.isEmpty {
+            return liveRows
+        }
+        if !configuredBundleRows.isEmpty {
+            return configuredBundleRows
+        }
+        return candidates.first ?? []
     }
 
     private static func providerHandoffCombinedRows(_ summary: FinalLaunchMobileSummary) -> [String] {
@@ -132,6 +142,7 @@ public enum FinalShowcaseSummaryBuilder {
             summary.applyPreviewRows,
             summary.resourceFillGuideRows,
             summary.resourceHandoffRows,
+            summary.configuredEvidenceBundleRows,
         ].filter { !$0.isEmpty }
     }
 
@@ -140,6 +151,7 @@ public enum FinalShowcaseSummaryBuilder {
             return .waiting
         }
         if first.hasPrefix("Live evidence ready")
+            || first.hasPrefix("Configured bundle ready")
             || first.hasPrefix("Apply preview ready")
             || first.hasPrefix("Fill guide ready")
             || first.hasPrefix("Resource handoff ready")
@@ -168,6 +180,12 @@ public enum FinalShowcaseSummaryBuilder {
         }
         if statusRows.count == 1 || providerHandoffStatus(statusRows) == .ready {
             return sanitize(first)
+        }
+        if first.hasPrefix("Configured bundle") {
+            let statusCandidates = statusRows.dropFirst()
+            if let actionable = statusCandidates.first(where: providerHandoffActionableRow) {
+                return sanitize([first, actionable].joined(separator: " "))
+            }
         }
         let candidates = combinedRows.filter { $0 != first }
         if let inputAction = candidates.first(where: providerHandoffInputActionRow) {

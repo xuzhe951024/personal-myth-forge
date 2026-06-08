@@ -115,6 +115,58 @@ def test_ios_showcase_acceptance_allows_external_action_ledger_builder_linebreak
     assert result.report["summary"] == {"passed": 50, "failed": 0}
 
 
+def test_ios_showcase_acceptance_requires_configured_bundle_provider_handoff_gate(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    summary_path = (
+        tmp_path
+        / "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift"
+    )
+    summary_path.write_text(
+        summary_path.read_text().replace(
+            "configuredEvidenceBundleRows",
+            "bundleRowsMissing",
+        )
+    )
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert features["final_showcase"]["status"] == "failed"
+    assert {
+        "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift",
+        "contains": "configuredEvidenceBundleRows",
+    } in features["final_showcase"]["missing"]
+
+
+def test_ios_showcase_acceptance_requires_configured_bundle_consent_row(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    consent_path = (
+        tmp_path
+        / "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift"
+    )
+    consent_path.write_text(
+        consent_path.read_text().replace(
+            "configuredBundleRow",
+            "bundleRowMissing",
+        )
+    )
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert features["live_provider_consent_interface"]["status"] == "failed"
+    assert {
+        "file": "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift",
+        "contains": "configuredBundleRow",
+    } in features["live_provider_consent_interface"]["missing"]
+
+
 def test_ios_showcase_acceptance_fails_missing_camera_without_absolute_paths(tmp_path) -> None:
     write_complete_ios_showcase_fixture(tmp_path)
     (tmp_path / "apps/mobile/ios/App/CameraCaptureView.swift").unlink()
@@ -713,7 +765,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/LiveProviderConsentSummary.swift": (
             "LiveProviderConsentSummaryBuilder canRunConfiguredAcceptance "
             "no live calls by default Provider keys remain backend-only. "
-            "liveEvidenceRow liveProviderEvidence sanitize"
+            "liveEvidenceRow configuredBundleRow liveProviderEvidence "
+            "configuredLiveEvidenceBundle sanitize"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PrintFulfillmentReceipt.swift": (
             "PrintFulfillmentReceiptBuilder Checkout/payment links stay withheld "
@@ -728,7 +781,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalShowcaseSummary.swift": (
             "finalLaunchSummary: FinalLaunchMobileSummary? "
             "localSmokeStage Local Smoke providerHandoffStage Provider Handoff "
-            "iosDeployStage iOS Deploy "
+            "configuredEvidenceBundleRows iosDeployStage iOS Deploy "
             "threeDEvaluationStage npcEvaluationStage operatorHandoffStage finalLaunchStage "
             '"local_smoke" "provider_handoff" "ios_deploy" "three_d_evaluation" '
             '"npc_evaluation" "operator_handoff" "final_launch"'
@@ -751,6 +804,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testLiveProviderConsentSummaryShowsReadyConfiguredConsent "
             "testLiveProviderConsentSummaryRedactsUnsafeText "
             "testLiveProviderConsentSummaryShowsReadyLiveEvidence "
+            "testLiveProviderConsentSummaryShowsConfiguredBundleRow "
+            "testLiveProviderConsentSummaryBlocksConfiguredAcceptanceWithoutBundle "
             "testLiveProviderConsentSummaryBlocksMissingLiveEvidence "
             "testLiveProviderConsentSummaryRedactsUnsafeLiveEvidenceBlocker "
             "testPrintFulfillmentReceiptRequiresApprovalBeforeHandoff "
@@ -762,6 +817,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest "
             "testFinalShowcaseSummaryIncludesReadyProviderHandoffDigest "
             "testFinalShowcaseSummaryBlocksProviderHandoffDigest "
+            "testFinalShowcaseSummaryBlocksProviderHandoffOnConfiguredEvidenceBundle "
+            "testFinalShowcaseSummaryRedactsUnsafeConfiguredBundleProviderHandoff "
             "testFinalShowcaseSummaryRedactsUnsafeProviderHandoffDigest "
             "testFinalShowcaseSummaryIncludesReadyLocalSmokeDigest "
             "testFinalShowcaseSummaryBlocksFailedLocalSmokeDigest "
