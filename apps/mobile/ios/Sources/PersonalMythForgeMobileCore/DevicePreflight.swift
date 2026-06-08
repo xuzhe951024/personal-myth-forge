@@ -104,6 +104,7 @@ public enum DevicePreflightSummaryBuilder {
             finalResourceApplyPreviewItem(report: finalDemoLaunch),
             iosDeployRunbookItem(report: finalDemoLaunch),
             iosDeviceEvidenceBundleItem(report: finalDemoLaunch),
+            iosLaunchRehearsalReadinessItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
             savedHistoryItem(savedNPCTickCount),
         ]
@@ -784,6 +785,172 @@ public enum DevicePreflightSummaryBuilder {
         "Safety: commands_run=\(safety.commandsRun) xcode=\(safety.xcodeOrSigning) global_mutation=\(safety.globalMutation)."
     }
 
+    private static func iosLaunchRehearsalReadinessItem(
+        report: FinalDemoLaunchReport?
+    ) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "ios_device_launch_rehearsal_readiness",
+                "Launch Rehearsal",
+                .waiting,
+                "iOS launch rehearsal readiness has not loaded."
+            )
+        }
+        guard let readiness = report.iosDeviceLaunchRehearsalReadiness else {
+            return item(
+                "ios_device_launch_rehearsal_readiness",
+                "Launch Rehearsal",
+                .waiting,
+                "iOS launch rehearsal readiness has not loaded."
+            )
+        }
+
+        switch readiness.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "ready":
+            return item(
+                "ios_device_launch_rehearsal_readiness",
+                "Launch Rehearsal",
+                .ready,
+                iosLaunchRehearsalReadyDetail(readiness)
+            )
+        case "blocked", "partial":
+            return item(
+                "ios_device_launch_rehearsal_readiness",
+                "Launch Rehearsal",
+                .blocked,
+                iosLaunchRehearsalAttentionDetail(readiness)
+            )
+        case "missing":
+            return item(
+                "ios_device_launch_rehearsal_readiness",
+                "Launch Rehearsal",
+                .waiting,
+                iosLaunchRehearsalAttentionDetail(readiness)
+            )
+        default:
+            return item(
+                "ios_device_launch_rehearsal_readiness",
+                "Launch Rehearsal",
+                .waiting,
+                iosLaunchRehearsalReadyDetail(readiness)
+            )
+        }
+    }
+
+    private static func iosLaunchRehearsalReadyDetail(
+        _ readiness: IOSDeviceLaunchRehearsalReadinessReport
+    ) -> String {
+        var parts = [
+            iosLaunchRehearsalSummaryDetail(readiness),
+            iosLaunchRehearsalFreshnessDetail(readiness),
+            "Source: \(readiness.sourceFile.path).",
+            iosLaunchRehearsalSafetyDetail(readiness.safety),
+        ]
+        if let row = readiness.sequence.first,
+           let sourceFreshness = iosLaunchRehearsalSourceFreshnessDetail(row) {
+            parts.insert(sourceFreshness, at: 2)
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func iosLaunchRehearsalAttentionDetail(
+        _ readiness: IOSDeviceLaunchRehearsalReadinessReport
+    ) -> String {
+        var parts = [
+            iosLaunchRehearsalSummaryDetail(readiness),
+            iosLaunchRehearsalFreshnessDetail(readiness),
+        ]
+        if let row = firstIOSLaunchRehearsalAttentionRow(readiness) {
+            if let sourceFreshness = iosLaunchRehearsalSourceFreshnessDetail(row) {
+                parts.append(sourceFreshness)
+            }
+            parts.append(iosLaunchRehearsalSequenceDetail(row))
+        }
+        if let blocker = readiness.blockers.first {
+            parts.append(iosLaunchRehearsalBlockerDetail(blocker))
+        } else if let action = readiness.operatorActions.first, !action.isEmpty {
+            parts.append("Action: \(action)")
+        }
+        parts.append(iosLaunchRehearsalSafetyDetail(readiness.safety))
+        return parts.joined(separator: " ")
+    }
+
+    private static func firstIOSLaunchRehearsalAttentionRow(
+        _ readiness: IOSDeviceLaunchRehearsalReadinessReport
+    ) -> IOSDeviceLaunchRehearsalSequenceRow? {
+        readiness.sequence.first { row in
+            row.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready"
+        }
+    }
+
+    private static func iosLaunchRehearsalSequenceDetail(
+        _ row: IOSDeviceLaunchRehearsalSequenceRow
+    ) -> String {
+        var parts = [
+            "Step:",
+            row.id,
+            row.status,
+            row.label,
+            "| \(row.command)",
+        ]
+        if let classification = row.classification, !classification.isEmpty {
+            parts.append("| \(classification)")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func iosLaunchRehearsalBlockerDetail(
+        _ blocker: ThreeDEvaluationReadinessBlocker
+    ) -> String {
+        [
+            "Blocker:",
+            blocker.id,
+            blocker.status,
+            blocker.classification,
+            "| \(blocker.command)",
+            "| \(blocker.detail)",
+        ].joined(separator: " ")
+    }
+
+    private static func iosLaunchRehearsalSummaryDetail(
+        _ readiness: IOSDeviceLaunchRehearsalReadinessReport
+    ) -> String {
+        "\(readiness.status): ready \(readiness.summary.ready), missing \(readiness.summary.missing), blocked \(readiness.summary.blocked), partial \(readiness.summary.partial)."
+    }
+
+    private static func iosLaunchRehearsalFreshnessDetail(
+        _ readiness: IOSDeviceLaunchRehearsalReadinessReport
+    ) -> String {
+        guard let freshness = readiness.freshness else {
+            return "Freshness: not reported."
+        }
+        return "Freshness: \(freshness.classification)"
+    }
+
+    private static func iosLaunchRehearsalSourceFreshnessDetail(
+        _ row: IOSDeviceLaunchRehearsalSequenceRow
+    ) -> String? {
+        var parts: [String] = []
+        if let summary = row.freshnessSummary {
+            parts.append(
+                "Source freshness: \(summary["fresh", default: 0]) fresh, \(summary["stale", default: 0]) stale, \(summary["unknown", default: 0]) unknown."
+            )
+        }
+        if let status = row.freshnessStatus,
+           status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "stale",
+           let classification = row.freshnessClassification,
+           !classification.isEmpty {
+            parts.append("\(row.id): \(status) | \(classification)")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
+    }
+
+    private static func iosLaunchRehearsalSafetyDetail(
+        _ safety: IOSDeviceLaunchRehearsalSafety
+    ) -> String {
+        "Safety: commands_run=\(safety.commandsRun) xcode=\(safety.xcodeOrSigning) global_mutation=\(safety.globalMutation)."
+    }
+
     private static func localDemoItem(_ summary: FinalShowcaseSummary) -> DevicePreflightItem {
         switch summary.overallStatus {
         case .readyForLocalDemo:
@@ -826,6 +993,7 @@ public enum DevicePreflightSummaryBuilder {
             "final_resource_apply_preview",
             "ios_deploy_runbook",
             "ios_device_evidence_bundle",
+            "ios_device_launch_rehearsal_readiness",
             "local_demo",
         ])
         let requiredReady = required.allSatisfy { id in

@@ -123,6 +123,10 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "preflight_ios_device_evidence_bundle_label" in requirement_ids
     assert "preflight_ios_device_evidence_bundle_source" in requirement_ids
     assert "preflight_ios_device_evidence_bundle_required_item" in requirement_ids
+    assert "preflight_ios_launch_rehearsal_readiness_item" in requirement_ids
+    assert "preflight_ios_launch_rehearsal_readiness_label" in requirement_ids
+    assert "preflight_ios_launch_rehearsal_readiness_source" in requirement_ids
+    assert "preflight_ios_launch_rehearsal_readiness_required_item" in requirement_ids
     assert "contract_final_resource_fill_guide_blocked" in requirement_ids
     assert "contract_final_resource_fill_guide_ready" in requirement_ids
     assert "contract_final_resource_fill_guide_redaction" in requirement_ids
@@ -143,6 +147,11 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_ios_device_evidence_bundle_blocked_preflight" in requirement_ids
     assert "contract_ios_device_evidence_bundle_ready_preflight" in requirement_ids
     assert "contract_ios_device_evidence_bundle_redaction_preflight" in requirement_ids
+    assert "contract_ios_launch_rehearsal_readiness_missing_preflight" in requirement_ids
+    assert "contract_ios_launch_rehearsal_readiness_blocked_preflight" in requirement_ids
+    assert "contract_ios_launch_rehearsal_readiness_ready_preflight" in requirement_ids
+    assert "contract_ios_launch_rehearsal_readiness_stale_preflight" in requirement_ids
+    assert "contract_ios_launch_rehearsal_readiness_redaction_preflight" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker" in requirement_ids
     assert "model_final_resource_fill_guide_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_fill_guide_first_blocker_row" in requirement_ids
@@ -384,6 +393,10 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "Device Evidence",
                 "report.iosDeviceEvidenceBundle",
                 "\"ios_device_evidence_bundle\",",
+                "iosLaunchRehearsalReadinessItem(report: finalDemoLaunch)",
+                "Launch Rehearsal",
+                "report.iosDeviceLaunchRehearsalReadiness",
+                "\"ios_device_launch_rehearsal_readiness\",",
                 "Final launch readiness is read-only.",
                 "case \"ready\"",
                 "\"final_resource_fill_guide\"",
@@ -418,6 +431,11 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDevicePreflightBlocksOnIOSDeviceEvidenceSlot",
                 "testDevicePreflightMarksReadyIOSDeviceEvidenceBundle",
                 "testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail",
+                "testDevicePreflightWaitsForMissingIOSLaunchRehearsalReadiness",
+                "testDevicePreflightBlocksOnIOSLaunchRehearsalReadiness",
+                "testDevicePreflightMarksReadyIOSLaunchRehearsalReadiness",
+                "testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness",
+                "testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness",
                 "testDevicePreflightBlocksAndRedactsFinalLaunchError",
                 "testFinalLaunchMobileSummaryBuildsPartialOperatorStatus",
                 "testFinalLaunchMobileSummaryShowsConfiguredModePolicy",

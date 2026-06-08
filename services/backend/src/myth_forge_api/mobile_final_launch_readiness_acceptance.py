@@ -833,6 +833,30 @@ SOURCE_REQUIREMENTS = (
         '"ios_device_evidence_bundle",',
     ),
     SourceRequirement(
+        "preflight_ios_launch_rehearsal_readiness_item",
+        "Device preflight iOS launch rehearsal readiness item",
+        DEVICE_PREFLIGHT_PATH,
+        "iosLaunchRehearsalReadinessItem(report: finalDemoLaunch)",
+    ),
+    SourceRequirement(
+        "preflight_ios_launch_rehearsal_readiness_label",
+        "Device preflight iOS launch rehearsal readiness label",
+        DEVICE_PREFLIGHT_PATH,
+        "Launch Rehearsal",
+    ),
+    SourceRequirement(
+        "preflight_ios_launch_rehearsal_readiness_source",
+        "Device preflight iOS launch rehearsal readiness source",
+        DEVICE_PREFLIGHT_PATH,
+        "report.iosDeviceLaunchRehearsalReadiness",
+    ),
+    SourceRequirement(
+        "preflight_ios_launch_rehearsal_readiness_required_item",
+        "Device preflight iOS launch rehearsal readiness required item",
+        DEVICE_PREFLIGHT_PATH,
+        '"ios_device_launch_rehearsal_readiness",',
+    ),
+    SourceRequirement(
         "preflight_read_only_note",
         "Device preflight read-only note",
         DEVICE_PREFLIGHT_PATH,
@@ -1011,6 +1035,36 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts unsafe iOS device evidence bundle detail",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightRedactsUnsafeIOSDeviceEvidenceBundleDetail",
+    ),
+    SourceRequirement(
+        "contract_ios_launch_rehearsal_readiness_missing_preflight",
+        "Contract test waits for missing iOS launch rehearsal readiness",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightWaitsForMissingIOSLaunchRehearsalReadiness",
+    ),
+    SourceRequirement(
+        "contract_ios_launch_rehearsal_readiness_blocked_preflight",
+        "Contract test blocks on iOS launch rehearsal readiness",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksOnIOSLaunchRehearsalReadiness",
+    ),
+    SourceRequirement(
+        "contract_ios_launch_rehearsal_readiness_ready_preflight",
+        "Contract test marks ready iOS launch rehearsal readiness",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyIOSLaunchRehearsalReadiness",
+    ),
+    SourceRequirement(
+        "contract_ios_launch_rehearsal_readiness_stale_preflight",
+        "Contract test shows stale iOS launch rehearsal freshness",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness",
+    ),
+    SourceRequirement(
+        "contract_ios_launch_rehearsal_readiness_redaction_preflight",
+        "Contract test redacts unsafe iOS launch rehearsal readiness",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness",
     ),
     SourceRequirement(
         "contract_preflight_error",
