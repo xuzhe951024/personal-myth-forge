@@ -22,6 +22,7 @@ struct Artifact3DPreviewView: View {
     let session: MythSession?
     let latestTick: NPCAgentTick?
     private let preparer: ArtifactAssetPreparer
+    private let onSceneLoadProofChange: @MainActor (ArtifactSceneLoadProof) -> Void
     @State private var preparedAsset: PreparedArtifactAsset?
     @State private var sceneLoadProof = ArtifactSceneLoadProofBuilder.build(
         preparedAsset: nil,
@@ -31,11 +32,13 @@ struct Artifact3DPreviewView: View {
     init(
         session: MythSession?,
         latestTick: NPCAgentTick? = nil,
-        preparer: ArtifactAssetPreparer = ArtifactAssetPreparer.live()
+        preparer: ArtifactAssetPreparer = ArtifactAssetPreparer.live(),
+        onSceneLoadProofChange: @escaping @MainActor (ArtifactSceneLoadProof) -> Void = { _ in }
     ) {
         self.session = session
         self.latestTick = latestTick
         self.preparer = preparer
+        self.onSceneLoadProofChange = onSceneLoadProofChange
     }
 
     var body: some View {
@@ -102,11 +105,13 @@ struct Artifact3DPreviewView: View {
         .task(id: session?.sessionId) {
             guard let session else {
                 await MainActor.run {
-                    preparedAsset = nil
-                    sceneLoadProof = ArtifactSceneLoadProofBuilder.build(
+                    let proof = ArtifactSceneLoadProofBuilder.build(
                         preparedAsset: nil,
                         sceneLoadError: nil
                     )
+                    preparedAsset = nil
+                    sceneLoadProof = proof
+                    onSceneLoadProofChange(proof)
                 }
                 return
             }
@@ -116,11 +121,13 @@ struct Artifact3DPreviewView: View {
 
     private func prepareAsset(for session: MythSession) async {
         await MainActor.run {
-            preparedAsset = nil
-            sceneLoadProof = ArtifactSceneLoadProofBuilder.build(
+            let proof = ArtifactSceneLoadProofBuilder.build(
                 preparedAsset: nil,
                 sceneLoadError: nil
             )
+            preparedAsset = nil
+            sceneLoadProof = proof
+            onSceneLoadProofChange(proof)
         }
         let asset = await preparer.prepare(session: session)
         guard !Task.isCancelled else {
@@ -136,6 +143,7 @@ struct Artifact3DPreviewView: View {
             }
             preparedAsset = sceneLoadResult.preparedAsset
             sceneLoadProof = sceneLoadResult.proof
+            onSceneLoadProofChange(sceneLoadResult.proof)
         }
     }
 

@@ -4,6 +4,17 @@ import SwiftUI
 struct ArtifactSummaryView: View {
     let session: MythSession?
     let latestTick: NPCAgentTick?
+    let onSceneLoadProofChange: @MainActor (ArtifactSceneLoadProof) -> Void
+
+    init(
+        session: MythSession?,
+        latestTick: NPCAgentTick?,
+        onSceneLoadProofChange: @escaping @MainActor (ArtifactSceneLoadProof) -> Void = { _ in }
+    ) {
+        self.session = session
+        self.latestTick = latestTick
+        self.onSceneLoadProofChange = onSceneLoadProofChange
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -17,7 +28,11 @@ struct ArtifactSummaryView: View {
                 Text(session.mythSeed.personalResonance)
             }
 
-            Artifact3DPreviewView(session: session, latestTick: latestTick)
+            Artifact3DPreviewView(
+                session: session,
+                latestTick: latestTick,
+                onSceneLoadProofChange: onSceneLoadProofChange
+            )
 
             GenerationResultReceiptView(
                 receipt: GenerationResultReceiptBuilder.build(session: session)

@@ -40,6 +40,10 @@ do {
     try testPrintFulfillmentReceiptShowsApprovedProviderHandoff()
     try testPrintFulfillmentReceiptHandlesNoApprovalRequiredQuote()
     try testPrintFulfillmentReceiptBlocksAndRedactsUnsafeText()
+    try testShowcaseEvidenceWaitsForSession()
+    try testShowcaseEvidenceMarksReadyLocalDemo()
+    try testShowcaseEvidenceBlocksFailedSceneProof()
+    try testShowcaseEvidenceRedactsUnsafeDetails()
     try testFinalShowcaseSummaryWaitsBeforeSession()
     try testFinalShowcaseSummaryReadyForLocalDemo()
     try testFinalShowcaseSummaryMarksPrintQuoteReady()
@@ -1336,6 +1340,204 @@ private func testPrintFulfillmentReceiptBlocksAndRedactsUnsafeText() throws {
     try expectNotContains(text, "file:///")
     try expectNotContains(text, "local-capture://")
     try expectNotContains(text, "checkout.example")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key=secret")
+}
+
+private func testShowcaseEvidenceWaitsForSession() throws {
+    let summary = ShowcaseEvidenceSummaryBuilder.build(
+        captureReceipt: CaptureGenerationReceiptBuilder.build(
+            capture: nil,
+            session: nil,
+            captureGenerationReadiness: CaptureGenerationReadinessBuilder.build(
+                selection: CaptureMediaSelection(mode: .singlePhoto),
+                providerReadiness: nil,
+                providerReadinessError: nil
+            )
+        ),
+        generationReceipt: GenerationResultReceiptBuilder.build(session: nil),
+        sceneLoadProof: ArtifactSceneLoadProofBuilder.build(preparedAsset: nil, sceneLoadError: nil),
+        npcTickSummary: NPCAgentTickSummaryBuilder.build(
+            session: nil,
+            latestTick: nil,
+            tickHistoryCount: 0,
+            isAdvancingTick: false,
+            isRunningAutonomy: false,
+            errorMessage: nil
+        ),
+        tickHistoryCount: 0,
+        printFulfillmentReceipt: PrintFulfillmentReceiptBuilder.build(
+            session: nil,
+            quote: nil,
+            isLoading: false,
+            errorMessage: nil,
+            isApproved: false
+        )
+    )
+
+    try expectEqual(summary.status, .waiting)
+    try expectEqual(summary.item(id: "capture_to_3d")?.status, .waiting)
+    try expectEqual(summary.item(id: "scene_load")?.status, .waiting)
+    try expectFalse(summary.canClaimLocalShowcaseReady)
+    try expectContains(summary.detail, "waiting")
+}
+
+private func testShowcaseEvidenceMarksReadyLocalDemo() throws {
+    let session = showcaseEvidenceReadySession()
+    let captureReceipt = CaptureGenerationReceiptBuilder.build(
+        capture: guidedScanObjectCapture(),
+        session: session,
+        captureGenerationReadiness: readyCaptureGenerationReadiness()
+    )
+    let generationReceipt = GenerationResultReceiptBuilder.build(session: session)
+    let sceneProof = ArtifactSceneLoadProof(
+        status: .loaded,
+        title: "SceneKit load proof: Loaded",
+        detail: "SceneKit parsed the generated scene asset.",
+        canOpenScene: true
+    )
+    let npcSummary = NPCAgentTickSummaryBuilder.build(
+        session: session,
+        latestTick: npcTick(sessionId: session.sessionId, tickIndex: 3),
+        tickHistoryCount: 3,
+        isAdvancingTick: false,
+        isRunningAutonomy: false,
+        errorMessage: nil
+    )
+    let printReceipt = PrintFulfillmentReceiptBuilder.build(
+        session: session,
+        quote: localPrintQuote(),
+        isLoading: false,
+        errorMessage: nil,
+        isApproved: true
+    )
+
+    let summary = ShowcaseEvidenceSummaryBuilder.build(
+        captureReceipt: captureReceipt,
+        generationReceipt: generationReceipt,
+        sceneLoadProof: sceneProof,
+        npcTickSummary: npcSummary,
+        tickHistoryCount: 3,
+        printFulfillmentReceipt: printReceipt
+    )
+
+    try expectEqual(summary.status, .ready)
+    try expectTrue(summary.canClaimLocalShowcaseReady)
+    try expectEqual(summary.item(id: "capture_to_3d")?.status, .ready)
+    try expectEqual(summary.item(id: "generation_result")?.status, .ready)
+    try expectEqual(summary.item(id: "scene_load")?.status, .ready)
+    try expectEqual(summary.item(id: "npc_agent")?.status, .ready)
+    try expectEqual(summary.item(id: "print_handoff")?.status, .ready)
+    try expectContains(summary.title, "Showcase evidence ready")
+}
+
+private func testShowcaseEvidenceBlocksFailedSceneProof() throws {
+    let session = showcaseEvidenceReadySession()
+    let summary = ShowcaseEvidenceSummaryBuilder.build(
+        captureReceipt: CaptureGenerationReceiptBuilder.build(
+            capture: guidedScanObjectCapture(),
+            session: session,
+            captureGenerationReadiness: readyCaptureGenerationReadiness()
+        ),
+        generationReceipt: GenerationResultReceiptBuilder.build(session: session),
+        sceneLoadProof: ArtifactSceneLoadProof(
+            status: .failed,
+            title: "SceneKit load proof: Failed",
+            detail: "SceneKit could not parse the generated scene asset.",
+            canOpenScene: false
+        ),
+        npcTickSummary: NPCAgentTickSummaryBuilder.build(
+            session: session,
+            latestTick: npcTick(sessionId: session.sessionId, tickIndex: 3),
+            tickHistoryCount: 3,
+            isAdvancingTick: false,
+            isRunningAutonomy: false,
+            errorMessage: nil
+        ),
+        tickHistoryCount: 3,
+        printFulfillmentReceipt: PrintFulfillmentReceiptBuilder.build(
+            session: session,
+            quote: localPrintQuote(),
+            isLoading: false,
+            errorMessage: nil,
+            isApproved: true
+        )
+    )
+
+    try expectEqual(summary.status, .needsAttention)
+    try expectEqual(summary.item(id: "scene_load")?.status, .needsAttention)
+    try expectFalse(summary.canClaimLocalShowcaseReady)
+    try expectContains(summary.item(id: "scene_load")?.detail ?? "", "could not parse")
+}
+
+private func testShowcaseEvidenceRedactsUnsafeDetails() throws {
+    let unsafe = "sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token api_key=secret"
+    let summary = ShowcaseEvidenceSummaryBuilder.build(
+        captureReceipt: CaptureGenerationReceipt(
+            status: .ready,
+            title: "Capture \(unsafe)",
+            detail: "Capture detail \(unsafe)",
+            rows: ["row \(unsafe)"],
+            privacyNotes: ["privacy \(unsafe)"]
+        ),
+        generationReceipt: GenerationResultReceipt(
+            status: .ready,
+            title: "Generation \(unsafe)",
+            detail: "Generation detail \(unsafe)",
+            routeLabel: "multi_image \(unsafe)",
+            rows: [
+                GenerationResultReceiptRow(
+                    id: "game_asset",
+                    label: "Game asset",
+                    status: .ready,
+                    detail: "ready \(unsafe)"
+                ),
+            ],
+            privacyNotes: ["generation privacy \(unsafe)"],
+            canPresentResult: true
+        ),
+        sceneLoadProof: ArtifactSceneLoadProof(
+            status: .loaded,
+            title: "Loaded \(unsafe)",
+            detail: "Scene detail \(unsafe)",
+            canOpenScene: true
+        ),
+        npcTickSummary: NPCAgentTickSummary(
+            status: .ready,
+            title: "NPC \(unsafe)",
+            detail: "NPC detail \(unsafe)",
+            runtimeLabel: "runtime \(unsafe)",
+            tickLabel: "tick 3",
+            decisionLabel: "accepted",
+            rows: ["npc row \(unsafe)"],
+            privacyNotes: ["npc privacy \(unsafe)"]
+        ),
+        tickHistoryCount: 3,
+        printFulfillmentReceipt: PrintFulfillmentReceipt(
+            status: .ready,
+            title: "Print \(unsafe)",
+            detail: "Print detail \(unsafe)",
+            rows: [
+                PrintFulfillmentReceiptRow(
+                    id: "provider",
+                    label: "Provider",
+                    status: .ready,
+                    detail: "provider \(unsafe)"
+                ),
+            ],
+            privacyNotes: ["print privacy \(unsafe)"],
+            canApprove: false,
+            canHandOffToProvider: true
+        )
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
     try expectNotContains(text, "Bearer")
     try expectNotContains(text, "api_key=secret")
 }
@@ -11371,6 +11573,48 @@ private func localPrintQuote() -> PrintQuote {
         approvalReason: "review before fulfillment",
         quoteNotes: ["local quote stub"]
     )
+}
+
+private func showcaseEvidenceReadySession() -> MythSession {
+    var session = mythSession(
+        asset: generatedAsset(
+            format: "glb",
+            uri: "https://cdn.example.com/relic.glb",
+            variants: [
+                GeneratedAssetVariant(
+                    role: "game_asset",
+                    format: "glb",
+                    uri: "https://cdn.example.com/relic.glb",
+                    isSceneLoadable: false
+                ),
+                GeneratedAssetVariant(
+                    role: "ios_scene_asset",
+                    format: "dae",
+                    uri: "https://cdn.example.com/relic.dae",
+                    isSceneLoadable: true
+                ),
+            ]
+        )
+    )
+    session.generatedAsset.provider = "meshy"
+    session.generatedAsset.generationProvenance = GeneratedAssetProvenance(
+        inputMode: "multi_image",
+        providerRoute: "/openapi/v1/multi-image-to-3d",
+        sourceImageCount: 4,
+        selectedSourceImageCount: 4,
+        sourceAssetCount: 0,
+        maxSourceImages: 4,
+        selectionReason: "selected guided scan sources",
+        rawSourcesIncluded: false
+    )
+    session.printCandidate = samplePrintCandidate()
+    session.npcAgentRuntime = "openai_structured_runtime"
+    session.npcAgentTraces = [
+        sampleNPCAgentTrace(npcId: "mara"),
+        sampleNPCAgentTrace(npcId: "ior"),
+        sampleNPCAgentTrace(npcId: "senn"),
+    ]
+    return session
 }
 
 private func readyGuidedScanSelection() -> CaptureMediaSelection {
