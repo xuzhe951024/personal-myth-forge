@@ -59,6 +59,18 @@ def test_requirements_report_lists_missing_required_resources_without_leaks(
         "destination": "services/backend/.local/final-resources.env",
         "validation_command": "make final-resources-preflight",
     }
+    assert report["next_action"] == {
+        "id": "MESHY_API_KEY",
+        "label": "Meshy API key",
+        "status": "missing",
+        "classification": "missing_required_value",
+        "command": "provide MESHY_API_KEY in final-resources.env",
+        "detail": "Backend-only secret for live Meshy 3D generation.",
+        "domain": "backend_provider",
+        "destination": "services/backend/.local/final-resources.env",
+        "validation_command": "make final-resources-preflight",
+        "source": "first_blocker",
+    }
     assert str(tmp_path) not in report_text
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
@@ -124,6 +136,7 @@ def test_requirements_report_is_ready_for_valid_local_resources(tmp_path: Path) 
     assert result.exit_code == 0
     assert report["status"] == "ready"
     assert report["first_blocker"] is None
+    assert report["next_action"] is None
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["missing"] == 0
     assert report["summary"]["ready"] >= 8

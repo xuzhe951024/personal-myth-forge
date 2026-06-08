@@ -29,14 +29,14 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert result.report["status"] == "blocked"
     assert result.report["first_blocker"] == {
         "id": "final_resource_requirements",
-        "label": "Final resource requirements",
-        "status": "blocked",
-        "classification": "missing_required_value",
-        "command": "run make final-resource-init",
-        "detail": "Backend-only secret for live Meshy 3D generation.",
-        "output": "services/backend/.local/final-resource-requirements.json",
-        "step_id": "final_resource_requirements",
-    }
+            "label": "Final resource requirements",
+            "status": "blocked",
+            "classification": "missing_required_value",
+            "command": "provide MESHY_API_KEY in final-resources.env",
+            "detail": "Backend-only secret for live Meshy 3D generation.",
+            "output": "services/backend/.local/final-resource-requirements.json",
+            "step_id": "final_resource_requirements",
+        }
     assert result.report["summary"]["failed"] == 0
     assert result.report["summary"]["blocked"] >= 1
     assert steps["final_acceptance_local"]["status"] == "blocked"

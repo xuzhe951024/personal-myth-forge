@@ -162,6 +162,7 @@ do {
     try testFinalLaunchMobileSummaryRedactsUnsafeResourceChecklist()
     try testDecodesFinalResourceRequirementsFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsBlockedResourceRequirements()
+    try testFinalLaunchMobileSummaryShowsResourceRequirementsNextAction()
     try testDecodesFinalResourceFillGuideFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsResourceFillGuide()
     try testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload()
@@ -4327,6 +4328,8 @@ private func testDecodesFinalResourceRequirementsFromFinalLaunchPayload() throws
     try expectEqual(firstBlocker.command, "provide MESHY_API_KEY in final-resources.env")
     try expectEqual(firstBlocker.domain, "backend_provider")
     try expectEqual(firstBlocker.validationCommand, "make final-resources-preflight")
+    try expectEqual(requirements.nextAction?.id, "MESHY_API_KEY")
+    try expectEqual(requirements.nextAction?.source, "first_blocker")
     try expectEqual(requirements.summary.required, 5)
     try expectEqual(requirements.summary.secret, 4)
     try expectEqual(requirements.requirements.count, 2)
@@ -4365,6 +4368,19 @@ private func testFinalLaunchMobileSummaryShowsBlockedResourceRequirements() thro
     try expectContains(text, "provide MESHY_API_KEY in final-resources.env")
     try expectContains(text, "Backend-only secret for live Meshy 3D generation.")
     try expectContains(text, "make final-resource-requirements")
+}
+
+private func testFinalLaunchMobileSummaryShowsResourceRequirementsNextAction() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(),
+        error: nil
+    )
+    let text = summary.resourceRequirementRows.joined(separator: " ")
+
+    try expectContains(text, "Next input: MESHY_API_KEY missing")
+    try expectContains(text, "provide MESHY_API_KEY in final-resources.env")
+    try expectContains(text, "services/backend/.local/final-resources.env")
+    try expectContains(text, "make final-resources-preflight")
 }
 
 private func testDecodesFinalResourceFillGuideFromFinalLaunchPayload() throws {
@@ -7402,6 +7418,18 @@ private func finalDemoLaunchPayload(
               "domain": "backend_provider",
               "destination": "services/backend/.local/final-resources.env",
               "validation_command": "make final-resources-preflight"
+            },
+            "next_action": {
+              "id": "MESHY_API_KEY",
+              "label": "Meshy API key",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "provide MESHY_API_KEY in final-resources.env",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "domain": "backend_provider",
+              "destination": "services/backend/.local/final-resources.env",
+              "validation_command": "make final-resources-preflight",
+              "source": "first_blocker"
             },
             "requirements": [
               {

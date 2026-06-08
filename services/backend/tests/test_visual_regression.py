@@ -43,6 +43,7 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
         "p0.159_final_showcase_local_smoke",
         "p0.215_final_demo_launch_local_alias",
         "p0.216_final_showcase_next_action",
+        "p0.217_final_resource_next_action",
         "p0.160_final_showcase_ios_deploy_digest",
         "p0.189_device_blocker_handoff",
         "p0.161_final_showcase_provider_handoff_digest",
@@ -118,6 +119,13 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "Next action" in required_text
     assert "ios_deployable blocked" in required_text
     assert "first_blocker" in required_text
+    assert "Resource Requirements" in required_text
+    assert "Next input" in required_text
+    assert "MESHY_API_KEY missing" in required_text
+    assert "provide MESHY_API_KEY in final-resources.env" in required_text
+    assert "services/backend/.local/final-resources.env" in required_text
+    assert "make final-resources-preflight" in required_text
+    assert "No provider calls, writes, Xcode, signing, or global mutation." in required_text
     assert "iOS Deploy" in required_text
     assert "iOS deploy blocked" in required_text
     assert "make ios-device-launch-rehearsal" in required_text
@@ -137,7 +145,7 @@ def test_visual_regression_default_passes_checked_in_showcase_artifacts() -> Non
     result = check_visual_artifacts(repo_root)
 
     assert result.exit_code == 0
-    assert result.report["summary"] == {"passed": 24, "failed": 0}
+    assert result.report["summary"] == {"passed": 25, "failed": 0}
     assert [artifact["id"] for artifact in result.report["artifacts"]] == [
         spec.id for spec in DEFAULT_VISUAL_ARTIFACTS
     ]
@@ -239,7 +247,7 @@ def test_visual_regression_cli_writes_showcase_report(tmp_path: Path, monkeypatc
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["kind"] == "visual_regression_report"
     assert report["status"] == "passed"
-    assert report["summary"] == {"passed": 24, "failed": 0}
+    assert report["summary"] == {"passed": 25, "failed": 0}
 
 
 def _spec() -> VisualArtifactSpec:

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.217 Final Resource Next Action</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7f4;
+      color: #15191c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: #f1f5f2;
+    }
+    main {
+      min-height: 844px;
+      padding: 18px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .eyebrow {
+      margin: 12px 0 6px;
+      color: #56646b;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.04;
+      letter-spacing: 0;
+      color: #101619;
+    }
+    .intro {
+      margin: 8px 0 4px;
+      color: #4d5b62;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    section {
+      border: 1px solid #d7e2db;
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: 0 12px 26px rgba(32, 51, 42, 0.08);
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      padding: 10px;
+    }
+    .metric {
+      border: 1px solid #e0e7e1;
+      border-radius: 8px;
+      padding: 9px 6px;
+      background: #fbfcfa;
+    }
+    .metric strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1;
+      color: #0f2821;
+    }
+    .metric span {
+      display: block;
+      margin-top: 5px;
+      color: #5c6870;
+      font-size: 10px;
+      line-height: 1.15;
+    }
+    .label {
+      margin: 0 0 8px;
+      color: #5c6870;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .action {
+      background: #f9fbf6;
+      border-color: #cfded3;
+    }
+    .action h2 {
+      margin: 0 0 10px;
+      font-size: 19px;
+      line-height: 1.15;
+      letter-spacing: 0;
+      color: #13241e;
+      overflow-wrap: anywhere;
+    }
+    .row {
+      padding: 10px 0;
+      border-top: 1px solid #e3ebe4;
+    }
+    .row:first-of-type { border-top: 0; }
+    .row b {
+      display: block;
+      color: #192024;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .row span {
+      display: block;
+      margin-top: 4px;
+      color: #5f6d74;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .command {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #112822;
+      color: #d9f4e9;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .safe {
+      background: #fbfcfa;
+      color: #4f5e65;
+      font-size: 12px;
+      line-height: 1.42;
+    }
+    .foot {
+      margin-top: auto;
+      color: #66757a;
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Final Resources</p>
+      <h1>Resource Requirements</h1>
+      <p class="intro">The operator gets one stable next input before the full resource ledger.</p>
+    </header>
+
+    <section class="summary">
+      <div class="metric"><strong>5</strong><span>required</span></div>
+      <div class="metric"><strong>5</strong><span>missing</span></div>
+      <div class="metric"><strong>4</strong><span>secret</span></div>
+      <div class="metric"><strong>1</strong><span>blocked</span></div>
+    </section>
+
+    <section class="action">
+      <p class="label">Next input</p>
+      <h2>MESHY_API_KEY missing</h2>
+      <div class="row">
+        <b>Command</b>
+        <span>provide MESHY_API_KEY in final-resources.env</span>
+      </div>
+      <div class="row">
+        <b>Destination</b>
+        <span>services/backend/.local/final-resources.env</span>
+      </div>
+      <div class="row">
+        <b>Validation</b>
+        <span>make final-resources-preflight</span>
+      </div>
+      <div class="command">Next input: MESHY_API_KEY missing | backend_provider | first_blocker</div>
+    </section>
+
+    <section>
+      <p class="label">Unblocks</p>
+      <div class="row">
+        <b>3D generation</b>
+        <span>Meshy game asset generation can move from local proof to configured provider evidence.</span>
+      </div>
+      <div class="row">
+        <b>Provider handoff</b>
+        <span>Final resource apply preview can validate backend provider slots.</span>
+      </div>
+    </section>
+
+    <section class="safe">
+      No provider calls, writes, Xcode, signing, or global mutation.
+    </section>
+
+    <p class="foot">P0.217 visual regression evidence - 390x844 static iPhone frame</p>
+  </main>
+</body>
+</html>

@@ -419,6 +419,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         var rows = [
             "Resource requirements \(sanitize(report.status)): required \(report.summary.required), missing \(report.summary.missing), blocked \(report.summary.blocked), secret \(report.summary.secret)."
         ]
+        if let action = report.nextAction {
+            rows.append(resourceRequirementNextActionRow(action))
+        }
         if let blocker = report.firstBlocker {
             rows.append(resourceRequirementFirstBlockerRow(blocker))
         }
@@ -437,6 +440,28 @@ public enum FinalLaunchMobileSummaryBuilder {
             rows.append(sanitize(action))
         }
         return rows.map(sanitize)
+    }
+
+    private static func resourceRequirementNextActionRow(
+        _ action: FinalResourceRequirementsNextAction
+    ) -> String {
+        var parts = ["Next input:", action.id, action.status]
+        if let classification = action.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        if !action.command.isEmpty {
+            parts.append("| \(action.command)")
+        }
+        if !action.destination.isEmpty {
+            parts.append("| \(action.destination)")
+        }
+        if !action.validationCommand.isEmpty {
+            parts.append("| \(action.validationCommand)")
+        }
+        if !action.detail.isEmpty {
+            parts.append("| \(action.detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
     }
 
     private static func resourceRequirementFirstBlockerRow(

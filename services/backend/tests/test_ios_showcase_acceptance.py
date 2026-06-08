@@ -118,8 +118,12 @@ def test_showcase_visual_regression_index_requires_configured_command_scope() ->
         "p0.216_final_showcase_next_action",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/visual_regression.py",
+        "p0.217_final_resource_next_action",
+    ) in requirements
+    assert (
         "README.md",
-        "24 static 390x844 iPhone evidence artifacts",
+        "25 static 390x844 iPhone evidence artifacts",
     ) in requirements
     assert (
         "README.md",
@@ -1063,6 +1067,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness "
             "testDecodesFinalResourceRequirementsFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements "
+            "testFinalLaunchMobileSummaryShowsResourceRequirementsNextAction "
             "testDecodesFinalResourceFillGuideFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsResourceFillGuide "
             "testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload "
@@ -1153,7 +1158,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "LocalShowcaseSmokeReport localShowcaseSmoke "
             "LiveProviderEvidenceReport liveProviderEvidence "
             "PrintFulfillmentReadinessReport printFulfillmentReadiness "
-            "FinalResourceRequirementsReport finalResourceRequirements "
+            "FinalResourceRequirementsReport FinalResourceRequirementsNextAction "
+            "finalResourceRequirements nextAction "
             "FinalResourceFillGuideReport finalResourceFillGuide "
             "FinalResourceFillGuideFirstBlocker firstBlocker: FinalResourceFillGuideFirstBlocker? "
             "FinalResourceApplyPreviewReport finalResourceApplyPreview "
@@ -1179,7 +1185,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "localShowcaseSmokeRows provider_calls= "
             "liveProviderEvidenceRows Live evidence "
             "printFulfillmentReadinessRows Print fulfillment "
-            "resourceRequirementRows Resource requirements "
+            "resourceRequirementRows Resource requirements Next input: "
             "resourceFillGuideRows resourceFillGuideFirstBlockerRow Fill guide "
             "applyPreviewRows applyPreviewFirstBlockerRow Apply preview "
             "externalActionLedgerRows externalActionLedgerRows(from: "
@@ -1221,6 +1227,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "p0.214_showcase_evidence_visual "
             "p0.215_final_demo_launch_local_alias "
             "p0.216_final_showcase_next_action "
+            "p0.217_final_resource_next_action "
             "p0.100_live_provider_consent p0.112_ios_device_launch_rehearsal "
             "p0.119_visual_regression_handoff p0.158_local_showcase_smoke "
             "p0.186_configured_acceptance_command_visual p0.189_device_blocker_handoff"
@@ -1235,7 +1242,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/final_resource_requirements.py": (
             "build_final_resource_requirements_report final_resource_requirements_report "
-            "first_blocker FinalResourceRequirementsResult validation_commands"
+            "first_blocker next_action FinalResourceRequirementsResult validation_commands"
         ),
         "services/backend/scripts/init_final_resources.sh": (
             "final-resources.env initialized make final-resource-init must stay untracked"
@@ -1421,7 +1428,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "README.md": (
             "make visual-regression full-showcase visual index P0.128 P0.129 "
-            "24 static 390x844 iPhone evidence artifacts "
+            "25 static 390x844 iPhone evidence artifacts "
             "configured acceptance command visual device blocker handoff visual"
         ),
         "services/backend/tests/test_final_configured_preflight.py": (

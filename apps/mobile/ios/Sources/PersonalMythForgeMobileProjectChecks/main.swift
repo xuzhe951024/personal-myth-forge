@@ -150,6 +150,9 @@ do {
     let finalShowcaseReadiness = try readText(
         repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/final_showcase_readiness.py")
     )
+    let finalResourceRequirements = try readText(
+        repositoryRoot.appendingPathComponent("services/backend/src/myth_forge_api/final_resource_requirements.py")
+    )
     let finalDemoLaunchTests = try readText(
         repositoryRoot.appendingPathComponent("services/backend/tests/test_final_demo_launch.py")
     )
@@ -431,7 +434,7 @@ do {
     )
     try requireContains(
         readme,
-        "24 static 390x844 iPhone evidence artifacts",
+        "25 static 390x844 iPhone evidence artifacts",
         "visual regression artifact count README copy"
     )
     try requireContains(
@@ -448,6 +451,11 @@ do {
         visualRegression,
         "p0.216_final_showcase_next_action",
         "final showcase next action visual artifact"
+    )
+    try requireContains(
+        visualRegression,
+        "p0.217_final_resource_next_action",
+        "final resource next action visual artifact"
     )
     try requireContains(
         finalShowcaseReadiness,
@@ -1844,8 +1852,23 @@ do {
     )
     try requireContains(
         pmfModels,
+        "FinalResourceRequirementsNextAction",
+        "final resource requirements next action model"
+    )
+    try requireContains(
+        finalResourceRequirements,
+        "next_action",
+        "final resource requirements next action report field"
+    )
+    try requireContains(
+        pmfModels,
         "firstBlocker: FinalResourceRequirementsFirstBlocker?",
         "final resource requirements first blocker field"
+    )
+    try requireContains(
+        pmfModels,
+        "nextAction: FinalResourceRequirementsNextAction?",
+        "final resource requirements next action field"
     )
     try requireContains(
         pmfModels,
@@ -2628,6 +2651,16 @@ do {
         contractTests,
         "testFinalLaunchMobileSummaryShowsBlockedResourceRequirements",
         "final resource requirements summary test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsResourceRequirementsNextAction",
+        "final resource requirements next action test"
+    )
+    try requireContains(
+        finalLaunchMobileSummary,
+        "Next input:",
+        "final resource requirements next input row"
     )
     try requireContains(
         contractTests,
