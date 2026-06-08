@@ -54,6 +54,69 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
     assert result.report["safety"]["live_provider_calls_by_default"] is False
 
 
+def test_final_demo_launch_exposes_top_level_phase_first_blocker(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="configured",
+    )
+
+    blocker = result.report["first_blocker"]
+
+    assert blocker == {
+        "id": "apply_final_resources",
+        "label": "Apply final resources",
+        "status": "missing",
+        "classification": "final_demo_launch_phase",
+        "command": "make final-apply-resources",
+        "detail": (
+            "one-file backend and iOS final demo handoff | "
+            "Reads only ignored services/backend/.local/final-resources.env."
+        ),
+        "source": "final_demo_launch_phase",
+        "source_id": "apply_final_resources",
+    }
+    report_text = json.dumps(result.report)
+    assert "sk-" not in report_text
+    assert str(tmp_path) not in report_text
+
+
+def test_final_demo_launch_first_blocker_falls_back_to_nested_report(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+        ),
+    )
+    _write_final_resources(repo_root)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    blocker = result.report["first_blocker"]
+
+    assert blocker["source"] == "final_showcase_readiness"
+    assert blocker["source_id"] == "ios_deployable"
+    assert blocker["id"] == "ios_deployable"
+    assert blocker["status"] == "blocked"
+    assert blocker["classification"] == "ios_rehearsal_missing"
+    assert blocker["command"] == "make ios-device-launch-rehearsal"
+    assert blocker["detail"] == (
+        "iOS deploy runbook and device launch rehearsal must both be ready."
+    )
+
+
 def test_final_demo_launch_embeds_configured_live_evidence_bundle(
     tmp_path: Path,
 ) -> None:

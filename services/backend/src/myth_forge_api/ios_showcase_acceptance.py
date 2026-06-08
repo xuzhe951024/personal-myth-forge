@@ -2322,6 +2322,26 @@ FEATURES = (
                 "firstBlockerReceiptRow",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "first_blocker",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalDemoLaunchFirstBlocker",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "firstBlocker: FinalDemoLaunchFirstBlocker?",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "report.firstBlocker",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "resourceChecklistRows",
             ),

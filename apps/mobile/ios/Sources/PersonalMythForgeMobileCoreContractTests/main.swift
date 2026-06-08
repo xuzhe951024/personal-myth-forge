@@ -100,6 +100,7 @@ do {
     try testFinalLaunchMobileSummaryWaitsWithLaunchReceipt()
     try testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt()
     try testFinalLaunchMobileSummaryShowsResourceBlockerReceipt()
+    try testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt()
     try testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt()
     try testFinalLaunchMobileSummaryRedactsUnsafeLaunchReceipt()
     try testLiveProviderConsentSummaryWaitsForProviderReadiness()
@@ -2742,6 +2743,35 @@ private func testFinalLaunchMobileSummaryShowsResourceBlockerReceipt() throws {
 
     try expectContains(summary.launchReceiptRows[2], "First blocker: MESHY_API_KEY")
     try expectContains(summary.launchReceiptRows[2], "missing")
+}
+
+private func testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        firstBlockerJSON: finalDemoLaunchTopLevelFirstBlockerJSON(),
+        finalResourcesStatus: "blocked",
+        finalResourcesItemsJSON: blockedFinalResourceItemsJSON(),
+        finalAcceptanceStatus: "blocked",
+        finalOperatorHandoffStatus: "blocked"
+    )
+
+    let blocker = try require(report.firstBlocker, "missing final demo launch first blocker")
+    try expectEqual(blocker.id, "apply_final_resources")
+    try expectEqual(blocker.label, "Apply final resources")
+    try expectEqual(blocker.status, "missing")
+    try expectEqual(blocker.classification, "final_demo_launch_phase")
+    try expectEqual(blocker.command, "make final-apply-resources")
+    try expectEqual(blocker.source, "final_demo_launch_phase")
+    try expectEqual(blocker.sourceId, "apply_final_resources")
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+
+    try expectContains(
+        summary.launchReceiptRows[2],
+        "First blocker: apply_final_resources missing final_demo_launch_phase"
+    )
+    try expectContains(summary.launchReceiptRows[2], "make final-apply-resources")
+    try expectContains(summary.launchReceiptRows[2], "one-file backend and iOS final demo handoff")
 }
 
 private func testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt() throws {
@@ -5897,9 +5927,25 @@ private func testCreatePrintQuoteBuildsJSONRequest() async throws {
     try expectNotContains(body, "checkout_url")
 }
 
+private func finalDemoLaunchTopLevelFirstBlockerJSON() -> String {
+    """
+    {
+      "id": "apply_final_resources",
+      "label": "Apply final resources",
+      "status": "missing",
+      "classification": "final_demo_launch_phase",
+      "command": "make final-apply-resources",
+      "detail": "one-file backend and iOS final demo handoff | Reads only ignored services/backend/.local/final-resources.env.",
+      "source": "final_demo_launch_phase",
+      "source_id": "apply_final_resources"
+    }
+    """
+}
+
 private func finalDemoLaunchPayload(
     mode: String = "local",
     overallStatus: String = "partial",
+    firstBlockerJSON: String = "null",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     commands: [String]? = nil,
     finalResourcesStatus: String = "missing",
@@ -6111,6 +6157,7 @@ private func finalDemoLaunchPayload(
           "kind": "final_demo_launch_report",
           "mode": "\(mode)",
           "overall_status": "\(overallStatus)",
+          "first_blocker": \(firstBlockerJSON),
           "summary": {
             "ready": 4,
             "missing": 3,
@@ -10620,6 +10667,7 @@ private func configuredFinalDemoLaunchCommands() -> [String] {
 private func finalDemoLaunchReport(
     mode: String = "local",
     overallStatus: String = "partial",
+    firstBlockerJSON: String = "null",
     unsafeDetail: String = "Launch report partial; review operator checklist.",
     commands: [String]? = nil,
     finalResourcesStatus: String = "ready",
@@ -10705,6 +10753,7 @@ private func finalDemoLaunchReport(
         from: finalDemoLaunchPayload(
             mode: mode,
             overallStatus: overallStatus,
+            firstBlockerJSON: firstBlockerJSON,
             unsafeDetail: unsafeDetail,
             commands: commands,
             finalResourcesStatus: finalResourcesStatus,

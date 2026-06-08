@@ -3650,10 +3650,42 @@ public struct FinalShowcaseReadinessReport: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalDemoLaunchFirstBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var source: String
+    public var sourceId: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        source: String,
+        sourceId: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.source = source
+        self.sourceId = sourceId
+    }
+}
+
 public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
     public var overallStatus: String
+    public var firstBlocker: FinalDemoLaunchFirstBlocker?
     public var summary: FinalDemoLaunchSummary
     public var phaseSummary: FinalDemoLaunchSummary?
     public var finalResourcesPreflight: FinalResourcesPreflightReport?
@@ -3687,6 +3719,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         kind: String,
         mode: String,
         overallStatus: String,
+        firstBlocker: FinalDemoLaunchFirstBlocker? = nil,
         summary: FinalDemoLaunchSummary,
         phaseSummary: FinalDemoLaunchSummary? = nil,
         finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
@@ -3719,6 +3752,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.kind = kind
         self.mode = mode
         self.overallStatus = overallStatus
+        self.firstBlocker = firstBlocker
         self.summary = summary
         self.phaseSummary = phaseSummary
         self.finalResourcesPreflight = finalResourcesPreflight

@@ -331,6 +331,9 @@ public enum FinalLaunchMobileSummaryBuilder {
     }
 
     private static func firstBlockerReceiptRow(_ report: FinalDemoLaunchReport) -> String {
+        if let blocker = report.firstBlocker {
+            return finalDemoLaunchFirstBlockerReceiptRow(blocker)
+        }
         if let blocker = report.finalAcceptanceReadiness?.blockers.first {
             return "First blocker: \(blocker.id) \(blocker.status) \(blocker.classification) | \(blocker.detail)"
         }
@@ -344,6 +347,27 @@ public enum FinalLaunchMobileSummaryBuilder {
             return "First blocker: \(action)"
         }
         return "First blocker: none; final handoff ready."
+    }
+
+    private static func finalDemoLaunchFirstBlockerReceiptRow(
+        _ blocker: FinalDemoLaunchFirstBlocker
+    ) -> String {
+        var headingParts = [
+            "First blocker:",
+            blocker.id,
+            blocker.status,
+        ]
+        if let classification = blocker.classification, !classification.isEmpty {
+            headingParts.append(classification)
+        }
+        var parts = [headingParts.joined(separator: " ")]
+        if !blocker.command.isEmpty {
+            parts.append(blocker.command)
+        }
+        if !blocker.detail.isEmpty {
+            parts.append(blocker.detail)
+        }
+        return parts.joined(separator: " | ")
     }
 
     private static func liveProviderReceiptRow(_ report: FinalDemoLaunchReport) -> String {
