@@ -95,6 +95,19 @@ fi
 exit "$status"
 """
 
+FINAL_LOCAL_REPORT_REFRESH_SCRIPT = """#!/usr/bin/env sh
+set -eu
+set +e
+uv run python -m myth_forge_api.cli final-local-report-refresh --output .local/final-local-report-refresh.json
+status=$?
+set -e
+if [ "$status" -eq 0 ] || [ "$status" -eq 2 ]; then
+  printf '%s\\n' "accepted final local report refresh exit code $status"
+  exit 0
+fi
+exit "$status"
+"""
+
 IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT = """#!/usr/bin/env sh
 set -eu
 run_report_command() { :; }
@@ -144,7 +157,10 @@ ios-deploy-runbook:
 \tcd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
 ios-deploy-runbook-local:
 \t@services/backend/scripts/write_ios_deploy_runbook_local.sh
-final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local final-local-report-refresh
+.PHONY: final-local-report-refresh-local
+final-local-report-refresh-local:
+\t@services/backend/scripts/write_final_local_report_refresh.sh
+final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local final-local-report-refresh-local
 """
 
 CLI_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
@@ -356,6 +372,8 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         "final_acceptance_accepts_blocked_report": True,
         "ios_deploy_runbook_accepts_blocked_report": True,
         "make_targets": True,
+        "final_local_report_refresh_script_exists": True,
+        "final_local_report_refresh_accepts_blocked_report": True,
         "final_local_report_refresh_dependency": True,
         "local_output_paths": True,
         "no_banned_commands": True,
@@ -557,6 +575,7 @@ def _write_repo(
     final_resource_apply: str = FINAL_RESOURCE_APPLY_TEMPLATE,
     final_acceptance_local_script: str = FINAL_ACCEPTANCE_LOCAL_SCRIPT,
     ios_deploy_runbook_local_script: str = IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT,
+    final_local_report_refresh_script: str = FINAL_LOCAL_REPORT_REFRESH_SCRIPT,
     ios_device_launch_rehearsal_script: str = IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT,
     final_resources_preflight: str = FINAL_RESOURCES_PREFLIGHT_TEMPLATE,
     final_configured_preflight: str = FINAL_CONFIGURED_PREFLIGHT_TEMPLATE,
@@ -593,6 +612,12 @@ def _write_repo(
         repo_root / "services/backend/scripts/write_ios_deploy_runbook_local.sh"
     ).write_text(
         ios_deploy_runbook_local_script,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/scripts/write_final_local_report_refresh.sh"
+    ).write_text(
+        final_local_report_refresh_script,
         encoding="utf-8",
     )
     (
