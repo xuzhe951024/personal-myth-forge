@@ -1359,6 +1359,26 @@ do {
     try requireContains(devicePreflight, "report.firstBlocker", "device preflight final launch first blocker source")
     try requireContains(
         devicePreflight,
+        "finalResourceRequirementsItem(report: finalDemoLaunch)",
+        "device preflight final resource requirements item"
+    )
+    try requireContains(
+        devicePreflight,
+        "Resource Requirements",
+        "device preflight final resource requirements label"
+    )
+    try requireContains(
+        devicePreflight,
+        "report.finalResourceRequirements",
+        "device preflight final resource requirements source"
+    )
+    try requireContains(
+        devicePreflight,
+        #""final_resource_requirements","#,
+        "device preflight final resource requirements required item"
+    )
+    try requireContains(
+        devicePreflight,
         "guide.firstBlocker",
         "device preflight final resource fill guide first blocker source"
     )
@@ -1386,6 +1406,26 @@ do {
         contractTests,
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
         "device preflight fill guide first blocker redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightWaitsForMissingFinalResourceRequirements",
+        "device preflight resource requirements missing contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightBlocksOnFinalResourceRequirementsFirstBlocker",
+        "device preflight resource requirements blocked contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightMarksReadyFinalResourceRequirements",
+        "device preflight resource requirements ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightRedactsUnsafeFinalResourceRequirementsFirstBlockerDetail",
+        "device preflight resource requirements redaction contract test"
     )
     try requireContains(
         contractTests,

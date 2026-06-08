@@ -93,6 +93,10 @@ do {
     try testDevicePreflightMapsMissingFinalResourcesPreflightToWaiting()
     try testDevicePreflightMarksReadyFinalResourcesPreflight()
     try testDevicePreflightBlocksAndRedactsFinalResourcesPreflight()
+    try testDevicePreflightWaitsForMissingFinalResourceRequirements()
+    try testDevicePreflightBlocksOnFinalResourceRequirementsFirstBlocker()
+    try testDevicePreflightMarksReadyFinalResourceRequirements()
+    try testDevicePreflightRedactsUnsafeFinalResourceRequirementsFirstBlockerDetail()
     try testDevicePreflightWaitsForMissingFinalResourceFillGuide()
     try testDevicePreflightBlocksOnRequiredFinalResourceFillGuideInputs()
     try testDevicePreflightMarksReadyFinalResourceFillGuide()
@@ -2670,6 +2674,87 @@ private func testDevicePreflightBlocksAndRedactsFinalResourcesPreflight() throws
     try expectNotContains(text, "local-capture://")
     try expectNotContains(text, "checkout")
     try expectNotContains(text, "Bearer")
+}
+
+private func testDevicePreflightWaitsForMissingFinalResourceRequirements() throws {
+    var report = finalDemoLaunchReport(overallStatus: "partial")
+    report.finalResourceRequirements = nil
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+
+    try expectEqual(summary.item(id: "final_resource_requirements")?.status, .waiting)
+    try expectContains(summary.item(id: "final_resource_requirements")?.detail ?? "", "not loaded")
+}
+
+private func testDevicePreflightBlocksOnFinalResourceRequirementsFirstBlocker() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport()
+    )
+    let detail = summary.item(id: "final_resource_requirements")?.detail ?? ""
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "final_resource_requirements")?.status, .blocked)
+    try expectContains(detail, "missing 5")
+    try expectContains(detail, "First blocker: MESHY_API_KEY missing")
+    try expectContains(detail, "provide MESHY_API_KEY in final-resources.env")
+    try expectContains(detail, "Backend-only secret for live Meshy 3D generation.")
+    try expectContains(detail, "backend_provider")
+    try expectContains(detail, "services/backend/.local/final-resources.env")
+    try expectContains(detail, "make final-resources-preflight")
+    try expectContains(detail, "Action: provide MESHY_API_KEY in final-resources.env")
+}
+
+private func testDevicePreflightMarksReadyFinalResourceRequirements() throws {
+    var report = finalDemoLaunchReport(overallStatus: "ready")
+    report.finalResourceRequirements = readyFinalResourceRequirementsReport()
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let detail = summary.item(id: "final_resource_requirements")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "final_resource_requirements")?.status, .ready)
+    try expectContains(detail, "ready")
+    try expectContains(detail, "total 13")
+    try expectContains(detail, "ready 13")
+    try expectContains(detail, "missing 0")
+    try expectContains(detail, "required 5")
+    try expectContains(detail, "secret 4")
+}
+
+private func testDevicePreflightRedactsUnsafeFinalResourceRequirementsFirstBlockerDetail() throws {
+    var report = finalDemoLaunchReport()
+    report.finalResourceRequirements = blockedFinalResourceRequirementsReport(
+        firstBlocker: FinalResourceRequirementsFirstBlocker(
+            id: "MESHY_API_KEY",
+            label: "Meshy API key",
+            status: "missing",
+            classification: "missing_required_value",
+            command: "paste sk-test from /Users/zhexu/private file:///tmp local-capture://cap checkout_url Bearer token",
+            detail: "Authorization Bearer token api_key=secret checkout_url /Users/zhexu/private",
+            domain: "backend_provider",
+            destination: "services/backend/.local/final-resources.env",
+            validationCommand: "make final-resources-preflight"
+        )
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.item(id: "final_resource_requirements")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
 }
 
 private func testDevicePreflightWaitsForMissingFinalResourceFillGuide() throws {
@@ -10736,6 +10821,7 @@ private func devicePreflightSummary(
 
 private func readyDevicePreflightFinalDemoLaunchReport() -> FinalDemoLaunchReport {
     var report = finalDemoLaunchReport(overallStatus: "ready")
+    report.finalResourceRequirements = readyFinalResourceRequirementsReport()
     report.finalResourceFillGuide = readyFinalResourceFillGuideReport()
     report.finalResourceApplyPreview = readyFinalResourceApplyPreviewReport()
     return report
@@ -10806,6 +10892,162 @@ private func readyFinalResourceItemsJSON() -> String {
       }
     ]
     """
+}
+
+private func blockedFinalResourceRequirementsReport(
+    firstBlocker: FinalResourceRequirementsFirstBlocker = FinalResourceRequirementsFirstBlocker(
+        id: "MESHY_API_KEY",
+        label: "Meshy API key",
+        status: "missing",
+        classification: "missing_required_value",
+        command: "provide MESHY_API_KEY in final-resources.env",
+        detail: "Backend-only secret for live Meshy 3D generation.",
+        domain: "backend_provider",
+        destination: "services/backend/.local/final-resources.env",
+        validationCommand: "make final-resources-preflight"
+    )
+) -> FinalResourceRequirementsReport {
+    let meshy = FinalResourceRequirement(
+        id: "MESHY_API_KEY",
+        label: "Meshy API key",
+        domain: "backend_provider",
+        destination: "services/backend/.local/final-resources.env",
+        sourceTemplate: "MESHY_API_KEY=<secret>",
+        required: true,
+        secret: true,
+        configured: false,
+        status: "missing",
+        classification: "missing_required_value",
+        unblocks: ["game_asset_3d_generation", "provider_key_handoff"],
+        validationCommand: "make final-resources-preflight",
+        notes: "Backend-only secret for live Meshy 3D generation."
+    )
+    let openAI = FinalResourceRequirement(
+        id: "OPENAI_API_KEY",
+        label: "OpenAI API key",
+        domain: "backend_provider",
+        destination: "services/backend/.local/final-resources.env",
+        sourceTemplate: "OPENAI_API_KEY=<secret>",
+        required: true,
+        secret: true,
+        configured: false,
+        status: "missing",
+        classification: "missing_required_value",
+        unblocks: ["npc_agent_runtime"],
+        validationCommand: "make final-resources-preflight",
+        notes: "Backend-only secret for live NPC agent runtime."
+    )
+    return FinalResourceRequirementsReport(
+        kind: "final_resource_requirements_report",
+        status: "blocked",
+        summary: FinalResourceRequirementsSummary(
+            total: 13,
+            ready: 3,
+            missing: 5,
+            blocked: 0,
+            optional: 5,
+            required: 5,
+            secret: 4,
+            backend: 10,
+            ios: 4,
+            print: 4,
+            validationCommands: 4
+        ),
+        requirements: [meshy, openAI],
+        requirementsById: [
+            "MESHY_API_KEY": meshy,
+            "OPENAI_API_KEY": openAI,
+        ],
+        firstBlocker: firstBlocker,
+        operatorActions: [
+            "provide MESHY_API_KEY in final-resources.env",
+            "provide OPENAI_API_KEY in final-resources.env",
+        ],
+        validationCommands: ["make final-resources-preflight"],
+        resourcesFile: FinalResourcesFileStatus(
+            path: "services/backend/.local/final-resources.env",
+            exists: false
+        ),
+        safety: FinalResourceRequirementsSafety(
+            providerSecretsInReport: false,
+            localPathsInReport: false,
+            writesBackendEnv: false,
+            writesIosDeployConfig: false,
+            liveProviderCalls: false,
+            globalMutation: false
+        )
+    )
+}
+
+private func readyFinalResourceRequirementsReport() -> FinalResourceRequirementsReport {
+    let meshy = FinalResourceRequirement(
+        id: "MESHY_API_KEY",
+        label: "Meshy API key",
+        domain: "backend_provider",
+        destination: "services/backend/.local/final-resources.env",
+        sourceTemplate: "MESHY_API_KEY=<secret>",
+        required: true,
+        secret: true,
+        configured: true,
+        status: "ready",
+        classification: "configured",
+        unblocks: ["game_asset_3d_generation", "provider_key_handoff"],
+        validationCommand: "make final-resources-preflight",
+        notes: "Backend-only secret for live Meshy 3D generation."
+    )
+    let backendURL = FinalResourceRequirement(
+        id: "PMF_BACKEND_BASE_URL",
+        label: "iPhone backend URL",
+        domain: "ios_deploy",
+        destination: "services/backend/.local/final-resources.env",
+        sourceTemplate: "PMF_BACKEND_BASE_URL=http://192.168.1.10:8080",
+        required: true,
+        secret: false,
+        configured: true,
+        status: "ready",
+        classification: "configured",
+        unblocks: ["ios_deployable"],
+        validationCommand: "make mobile-deploy-preflight",
+        notes: "iPhone-reachable LAN URL.",
+        normalizedValue: "http://192.168.1.10:8080"
+    )
+    return FinalResourceRequirementsReport(
+        kind: "final_resource_requirements_report",
+        status: "ready",
+        summary: FinalResourceRequirementsSummary(
+            total: 13,
+            ready: 13,
+            missing: 0,
+            blocked: 0,
+            optional: 5,
+            required: 5,
+            secret: 4,
+            backend: 10,
+            ios: 4,
+            print: 4,
+            validationCommands: 4
+        ),
+        requirements: [meshy, backendURL],
+        requirementsById: [
+            "MESHY_API_KEY": meshy,
+            "PMF_BACKEND_BASE_URL": backendURL,
+        ],
+        firstBlocker: nil,
+        operatorActions: ["run make final-resource-requirements after filling resources"],
+        validationCommands: ["make final-resources-preflight", "make mobile-deploy-preflight"],
+        resourcesFile: FinalResourcesFileStatus(
+            path: "services/backend/.local/final-resources.env",
+            exists: true
+        ),
+        safety: FinalResourceRequirementsSafety(
+            providerSecretsInReport: false,
+            localPathsInReport: false,
+            writesBackendEnv: false,
+            writesIosDeployConfig: false,
+            liveProviderCalls: false,
+            globalMutation: false
+        )
+    )
 }
 
 private func blockedFinalResourceFillGuideReport(

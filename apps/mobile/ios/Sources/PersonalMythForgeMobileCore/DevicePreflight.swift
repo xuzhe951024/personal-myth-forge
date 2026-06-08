@@ -99,6 +99,7 @@ public enum DevicePreflightSummaryBuilder {
             providerItem(readiness: providerReadiness, error: providerReadinessError),
             finalLaunchItem(report: finalDemoLaunch, error: finalDemoLaunchError),
             finalResourcesItem(report: finalDemoLaunch),
+            finalResourceRequirementsItem(report: finalDemoLaunch),
             finalResourceFillGuideItem(report: finalDemoLaunch),
             finalResourceApplyPreviewItem(report: finalDemoLaunch),
             localDemoItem(finalShowcaseSummary),
@@ -270,6 +271,98 @@ public enum DevicePreflightSummaryBuilder {
             return "\(report.status): \(firstAction)"
         }
         return "Final resources preflight \(report.status)."
+    }
+
+    private static func finalResourceRequirementsItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let report else {
+            return item(
+                "final_resource_requirements",
+                "Resource Requirements",
+                .waiting,
+                "Final resource requirements have not loaded."
+            )
+        }
+        guard let requirements = report.finalResourceRequirements else {
+            return item(
+                "final_resource_requirements",
+                "Resource Requirements",
+                .waiting,
+                "Final resource requirements have not loaded."
+            )
+        }
+        if requirements.status == "ready" {
+            return item(
+                "final_resource_requirements",
+                "Resource Requirements",
+                .ready,
+                finalResourceRequirementsReadyDetail(requirements)
+            )
+        }
+        if let blocker = requirements.firstBlocker {
+            return item(
+                "final_resource_requirements",
+                "Resource Requirements",
+                .blocked,
+                finalResourceRequirementsDetail(requirements, blocker: blocker)
+            )
+        }
+        if requirements.status == "blocked" {
+            return item(
+                "final_resource_requirements",
+                "Resource Requirements",
+                .blocked,
+                finalResourceRequirementsSummaryDetail(requirements)
+            )
+        }
+        return item(
+            "final_resource_requirements",
+            "Resource Requirements",
+            .waiting,
+            finalResourceRequirementsSummaryDetail(requirements)
+        )
+    }
+
+    private static func finalResourceRequirementsReadyDetail(
+        _ requirements: FinalResourceRequirementsReport
+    ) -> String {
+        finalResourceRequirementsSummaryDetail(requirements)
+    }
+
+    private static func finalResourceRequirementsDetail(
+        _ requirements: FinalResourceRequirementsReport,
+        blocker: FinalResourceRequirementsFirstBlocker
+    ) -> String {
+        var parts = [finalResourceRequirementsSummaryDetail(requirements)]
+        var blockerParts = ["First blocker:", blocker.id, blocker.status]
+        if let classification = blocker.classification, !classification.isEmpty {
+            blockerParts.append(classification)
+        }
+        if !blocker.command.isEmpty {
+            blockerParts.append("| \(blocker.command)")
+        }
+        if !blocker.detail.isEmpty {
+            blockerParts.append("| \(blocker.detail)")
+        }
+        if !blocker.domain.isEmpty {
+            blockerParts.append("| \(blocker.domain)")
+        }
+        if !blocker.destination.isEmpty {
+            blockerParts.append("| \(blocker.destination)")
+        }
+        if !blocker.validationCommand.isEmpty {
+            blockerParts.append("| \(blocker.validationCommand)")
+        }
+        parts.append(blockerParts.joined(separator: " "))
+        if let action = requirements.operatorActions.first, !action.isEmpty {
+            parts.append("Action: \(action)")
+        }
+        return parts.joined(separator: " ")
+    }
+
+    private static func finalResourceRequirementsSummaryDetail(
+        _ requirements: FinalResourceRequirementsReport
+    ) -> String {
+        "\(requirements.status): total \(requirements.summary.total), ready \(requirements.summary.ready), missing \(requirements.summary.missing), required \(requirements.summary.required), secret \(requirements.summary.secret)."
     }
 
     private static func finalResourceFillGuideItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
@@ -515,6 +608,7 @@ public enum DevicePreflightSummaryBuilder {
             "providers",
             "final_launch",
             "final_resources",
+            "final_resource_requirements",
             "final_resource_fill_guide",
             "final_resource_apply_preview",
             "local_demo",

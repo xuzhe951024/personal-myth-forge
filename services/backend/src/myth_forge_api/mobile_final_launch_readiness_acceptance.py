@@ -719,6 +719,30 @@ SOURCE_REQUIREMENTS = (
         "Final Resources",
     ),
     SourceRequirement(
+        "preflight_final_resource_requirements_item",
+        "Device preflight final resource requirements item",
+        DEVICE_PREFLIGHT_PATH,
+        "finalResourceRequirementsItem(report: finalDemoLaunch)",
+    ),
+    SourceRequirement(
+        "preflight_final_resource_requirements_label",
+        "Device preflight final resource requirements label",
+        DEVICE_PREFLIGHT_PATH,
+        "Resource Requirements",
+    ),
+    SourceRequirement(
+        "preflight_final_resource_requirements_source",
+        "Device preflight final resource requirements source",
+        DEVICE_PREFLIGHT_PATH,
+        "report.finalResourceRequirements",
+    ),
+    SourceRequirement(
+        "preflight_final_resource_requirements_required_item",
+        "Device preflight final resource requirements required item",
+        DEVICE_PREFLIGHT_PATH,
+        '"final_resource_requirements",',
+    ),
+    SourceRequirement(
         "preflight_final_resource_fill_guide_item",
         "Device preflight final resource fill guide item",
         DEVICE_PREFLIGHT_PATH,
@@ -843,6 +867,30 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts unsafe final resource fill guide first blocker detail",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
+    ),
+    SourceRequirement(
+        "contract_final_resource_requirements_missing",
+        "Contract test waits for missing final resource requirements",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightWaitsForMissingFinalResourceRequirements",
+    ),
+    SourceRequirement(
+        "contract_final_resource_requirements_blocked",
+        "Contract test blocks on final resource requirements first blocker",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksOnFinalResourceRequirementsFirstBlocker",
+    ),
+    SourceRequirement(
+        "contract_final_resource_requirements_ready",
+        "Contract test marks ready final resource requirements",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyFinalResourceRequirements",
+    ),
+    SourceRequirement(
+        "contract_final_resource_requirements_redaction",
+        "Contract test redacts unsafe final resource requirements first blocker detail",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeFinalResourceRequirementsFirstBlockerDetail",
     ),
     SourceRequirement(
         "contract_final_resource_apply_preview_missing",
