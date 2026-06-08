@@ -315,6 +315,29 @@ DEFAULT_VISUAL_ARTIFACTS = (
         ),
     ),
     VisualArtifactSpec(
+        id="p0.215_final_demo_launch_local_alias",
+        html_path="docs/superpowers/verification/p0.215-final-demo-launch-local-alias.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.215-final-demo-launch-local-alias-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.215-final-demo-launch-local-alias-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Final Demo Launch",
+            "Local command ready",
+            "make final-demo-launch-local",
+            "final-demo-launch-local.json",
+            "Local alias",
+            "Compatibility",
+            "No providers, Xcode, signing, or global mutation.",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.160_final_showcase_ios_deploy_digest",
         html_path="docs/superpowers/verification/p0.160-final-showcase-ios-deploy-digest.html",
         png_path=(

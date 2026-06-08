@@ -1315,12 +1315,20 @@ FEATURES = (
             ),
             SourceRequirement(
                 "Makefile",
+                "final-demo-launch-local:",
+            ),
+            SourceRequirement(
+                "Makefile",
+                "final-demo-launch: final-demo-launch-local",
+            ),
+            SourceRequirement(
+                "Makefile",
                 "services/backend/scripts/write_final_local_report_refresh.sh",
             ),
             SourceRequirement(
                 "Makefile",
                 "final-rehearsal-local: backend-evaluate-local visual-regression-local "
-                "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+                "final-acceptance-local final-demo-launch-local ios-deploy-runbook-local "
                 "final-local-report-refresh-local",
             ),
             SourceRequirement(
@@ -1482,6 +1490,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.215_final_demo_launch_local_alias",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
                 "p0.100_live_provider_consent",
             ),
             SourceRequirement(
@@ -1513,7 +1525,7 @@ FEATURES = (
                 "test_visual_regression_cli_writes_showcase_report",
             ),
             SourceRequirement("README.md", "full-showcase visual index"),
-            SourceRequirement("README.md", "22 static 390x844 iPhone evidence artifacts"),
+            SourceRequirement("README.md", "23 static 390x844 iPhone evidence artifacts"),
             SourceRequirement("README.md", "configured acceptance command visual"),
             SourceRequirement("README.md", "device blocker handoff visual"),
         ),
@@ -1912,12 +1924,20 @@ FEATURES = (
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "final-demo-launch-local:",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "final-demo-launch: final-demo-launch-local",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
                 "services/backend/scripts/write_final_local_report_refresh.sh",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
                 "final-rehearsal-local: backend-evaluate-local visual-regression-local "
-                "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+                "final-acceptance-local final-demo-launch-local ios-deploy-runbook-local "
                 "final-local-report-refresh-local",
             ),
             SourceRequirement("Makefile", "backend-evaluate-npc:"),

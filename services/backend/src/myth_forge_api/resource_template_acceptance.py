@@ -51,6 +51,7 @@ IOS_DEVICE_LAUNCH_REHEARSAL_OUTPUT = ".local/ios-device-launch-rehearsal.json"
 CLI_PATH = "services/backend/src/myth_forge_api/cli.py"
 FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.py"
 FINAL_DEMO_LAUNCH_MAKE_TARGET = "final-demo-launch"
+FINAL_DEMO_LAUNCH_LOCAL_MAKE_TARGET = "final-demo-launch-local"
 FINAL_DEMO_LAUNCH_LOCAL_OUTPUT = ".local/final-demo-launch-local.json"
 FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH = (
     "services/backend/scripts/write_final_acceptance_local.sh"
@@ -68,7 +69,7 @@ FINAL_LOCAL_REPORT_REFRESH_MAKE_TARGET = "final-local-report-refresh"
 FINAL_LOCAL_REPORT_REFRESH_LOCAL_MAKE_TARGET = "final-local-report-refresh-local"
 FINAL_REHEARSAL_LOCAL_REFRESH_DEPENDENCY = (
     "final-rehearsal-local: backend-evaluate-local visual-regression-local "
-    "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+    "final-acceptance-local final-demo-launch-local ios-deploy-runbook-local "
     "final-local-report-refresh-local"
 )
 BANNED_WRITER_TEXT = [
@@ -624,6 +625,7 @@ def _final_demo_launch_checks(
         and "build_final_demo_launch_report" in cli_text,
         "make_target": makefile_exists
         and FINAL_DEMO_LAUNCH_MAKE_TARGET in makefile_text
+        and FINAL_DEMO_LAUNCH_LOCAL_MAKE_TARGET in makefile_text
         and "myth_forge_api.cli final-demo-launch" in makefile_text,
         "local_output_path": FINAL_DEMO_LAUNCH_LOCAL_OUTPUT in makefile_text,
         "uses_resource_handoff": "build_resource_handoff_report" in module_text,
@@ -926,6 +928,7 @@ def _final_rehearsal_local_checks(
         and FINAL_REHEARSAL_LOCAL_MAKE_TARGET in makefile_text
         and IOS_DEPLOY_RUNBOOK_LOCAL_MAKE_TARGET in makefile_text
         and FINAL_LOCAL_REPORT_REFRESH_LOCAL_MAKE_TARGET in makefile_text
+        and FINAL_DEMO_LAUNCH_LOCAL_MAKE_TARGET in makefile_text
         and FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH in makefile_text
         and IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH in makefile_text
         and FINAL_LOCAL_REPORT_REFRESH_LOCAL_SCRIPT_PATH in makefile_text

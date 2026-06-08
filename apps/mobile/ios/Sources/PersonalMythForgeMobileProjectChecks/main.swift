@@ -407,7 +407,17 @@ do {
     )
     try requireContains(
         makefile,
-        "final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local final-local-report-refresh-local",
+        "final-demo-launch-local:",
+        "final demo launch local alias target"
+    )
+    try requireContains(
+        makefile,
+        "final-demo-launch: final-demo-launch-local",
+        "final demo launch compatibility alias"
+    )
+    try requireContains(
+        makefile,
+        "final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch-local ios-deploy-runbook-local final-local-report-refresh-local",
         "final rehearsal local target order"
     )
     try requireContains(makefile, "visual-regression-local:", "visual regression local Make target")
@@ -418,13 +428,18 @@ do {
     )
     try requireContains(
         readme,
-        "21 static 390x844 iPhone evidence artifacts",
+        "23 static 390x844 iPhone evidence artifacts",
         "visual regression artifact count README copy"
     )
     try requireContains(
         readme,
         "configured acceptance command visual",
         "configured acceptance visual README copy"
+    )
+    try requireContains(
+        visualRegression,
+        "p0.215_final_demo_launch_local_alias",
+        "final demo launch local alias visual artifact"
     )
     try requireContains(
         visualRegression,

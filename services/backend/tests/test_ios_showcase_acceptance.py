@@ -110,8 +110,12 @@ def test_showcase_visual_regression_index_requires_configured_command_scope() ->
         "p0.214_showcase_evidence_visual",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/visual_regression.py",
+        "p0.215_final_demo_launch_local_alias",
+    ) in requirements
+    assert (
         "README.md",
-        "22 static 390x844 iPhone evidence artifacts",
+        "23 static 390x844 iPhone evidence artifacts",
     ) in requirements
     assert (
         "README.md",
@@ -963,9 +967,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift": (
             "final-local-report-refresh-local: "
+            "final-demo-launch-local: "
+            "final-demo-launch: final-demo-launch-local "
             "services/backend/scripts/write_final_local_report_refresh.sh "
             "final-rehearsal-local: backend-evaluate-local visual-regression-local "
-            "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+            "final-acceptance-local final-demo-launch-local ios-deploy-runbook-local "
             "final-local-report-refresh-local "
             "build_provider_handoff_report"
         ),
@@ -1207,6 +1213,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "p0.103_generation_result_receipt p0.118_scene_load_proof "
             "p0.82_npc_agent_tick_summary p0.101_print_fulfillment_receipt "
             "p0.214_showcase_evidence_visual "
+            "p0.215_final_demo_launch_local_alias "
             "p0.100_live_provider_consent p0.112_ios_device_launch_rehearsal "
             "p0.119_visual_regression_handoff p0.158_local_showcase_smoke "
             "p0.186_configured_acceptance_command_visual p0.189_device_blocker_handoff"
@@ -1282,9 +1289,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "local-showcase-smoke: "
             "final-resource-init: services/backend/scripts/init_final_resources.sh "
             "final-local-report-refresh-local: "
+            "final-demo-launch-local: "
+            "final-demo-launch: final-demo-launch-local "
             "services/backend/scripts/write_final_local_report_refresh.sh "
             "final-rehearsal-local: backend-evaluate-local visual-regression-local "
-            "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
+            "final-acceptance-local final-demo-launch-local ios-deploy-runbook-local "
             "final-local-report-refresh-local "
             "final-configured-preflight: final-handoff-index: "
             "ios-device-launch-certificate: ios-device-launch-rehearsal: "
@@ -1404,7 +1413,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "README.md": (
             "make visual-regression full-showcase visual index P0.128 P0.129 "
-            "22 static 390x844 iPhone evidence artifacts "
+            "23 static 390x844 iPhone evidence artifacts "
             "configured acceptance command visual device blocker handoff visual"
         ),
         "services/backend/tests/test_final_configured_preflight.py": (

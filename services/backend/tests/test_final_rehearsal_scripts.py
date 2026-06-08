@@ -201,6 +201,8 @@ def test_final_rehearsal_make_targets_dry_run_expected_order() -> None:
     makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
     assert "final-acceptance-local:" in makefile
     assert "ios-deploy-runbook-local:" in makefile
+    assert "final-demo-launch-local:" in makefile
+    assert "final-demo-launch: final-demo-launch-local" in makefile
     assert "final-rehearsal-local:" in makefile
     assert "services/backend/scripts/write_final_acceptance_local.sh" in makefile
     assert "services/backend/scripts/write_ios_deploy_runbook_local.sh" in makefile
@@ -210,15 +212,19 @@ def test_final_rehearsal_make_targets_dry_run_expected_order() -> None:
     assert "evaluate-npc" in output
     assert "write_final_acceptance_local.sh" in output
     assert "write_final_acceptance_configured.sh" not in output
-    assert "final-demo-launch" in output
+    assert "final-demo-launch --mode local" in output
     assert "write_ios_deploy_runbook_local.sh" in output
     assert "final-local-report-refresh-local:" in makefile
     assert "services/backend/scripts/write_final_local_report_refresh.sh" in makefile
     assert "write_final_local_report_refresh.sh" in output
     assert output.index("evaluate-3d") < output.index("evaluate-npc")
     assert output.index("evaluate-npc") < output.index("write_final_acceptance_local.sh")
-    assert output.index("write_final_acceptance_local.sh") < output.index("final-demo-launch")
-    assert output.index("final-demo-launch") < output.index("write_ios_deploy_runbook_local.sh")
+    assert output.index("write_final_acceptance_local.sh") < output.index(
+        "final-demo-launch --mode local"
+    )
+    assert output.index("final-demo-launch --mode local") < output.index(
+        "write_ios_deploy_runbook_local.sh"
+    )
     assert output.index("write_ios_deploy_runbook_local.sh") < output.index(
         "write_final_local_report_refresh.sh"
     )
@@ -257,7 +263,7 @@ def test_final_acceptance_configured_make_target_dry_run_uses_wrapper() -> None:
     makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
     assert (
         ".PHONY: final-acceptance-local final-acceptance-configured "
-        "final-demo-launch final-rehearsal-local"
+        "final-demo-launch final-demo-launch-local final-rehearsal-local"
     ) in makefile
     assert "final-acceptance-configured:" in makefile
     assert "services/backend/scripts/write_final_acceptance_configured.sh" in makefile
