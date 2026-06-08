@@ -1463,6 +1463,26 @@ do {
         "device preflight iOS launch rehearsal readiness required item"
     )
     try requireContains(
+        devicePreflight,
+        "finalClosurePacketItem(report: finalDemoLaunch)",
+        "device preflight final closure packet item"
+    )
+    try requireContains(
+        devicePreflight,
+        "Final Closure",
+        "device preflight final closure packet label"
+    )
+    try requireContains(
+        devicePreflight,
+        "report.finalLaunchClosurePacket",
+        "device preflight final closure packet source"
+    )
+    try requireContains(
+        devicePreflight,
+        #""final_launch_closure_packet","#,
+        "device preflight final closure packet required item"
+    )
+    try requireContains(
         contractTests,
         "testDevicePreflightRedactsUnsafeFinalResourceFillGuideFirstBlockerDetail",
         "device preflight fill guide first blocker redaction contract test"
@@ -1571,6 +1591,31 @@ do {
         contractTests,
         "testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness",
         "device preflight iOS launch rehearsal readiness redaction contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightWaitsForMissingFinalClosurePacket",
+        "device preflight final closure packet missing contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightBlocksOnFinalClosurePacketFirstBlocker",
+        "device preflight final closure packet blocked contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightMarksReadyFinalClosurePacket",
+        "device preflight final closure packet ready contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightShowsConfiguredEvidenceClosureSection",
+        "device preflight final closure packet configured section contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightRedactsUnsafeFinalClosurePacket",
+        "device preflight final closure packet redaction contract test"
     )
     try requireContains(devicePreflight, "Final launch readiness is read-only.", "device preflight final launch safety note")
     try requireContains(apiClient, "getBackendHealth", "backend health API client method")

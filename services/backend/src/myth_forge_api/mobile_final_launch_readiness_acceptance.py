@@ -857,6 +857,30 @@ SOURCE_REQUIREMENTS = (
         '"ios_device_launch_rehearsal_readiness",',
     ),
     SourceRequirement(
+        "preflight_final_closure_packet_item",
+        "Device preflight final closure packet item",
+        DEVICE_PREFLIGHT_PATH,
+        "finalClosurePacketItem(report: finalDemoLaunch)",
+    ),
+    SourceRequirement(
+        "preflight_final_closure_packet_label",
+        "Device preflight final closure packet label",
+        DEVICE_PREFLIGHT_PATH,
+        "Final Closure",
+    ),
+    SourceRequirement(
+        "preflight_final_closure_packet_source",
+        "Device preflight final closure packet source",
+        DEVICE_PREFLIGHT_PATH,
+        "report.finalLaunchClosurePacket",
+    ),
+    SourceRequirement(
+        "preflight_final_closure_packet_required_item",
+        "Device preflight final closure packet required item",
+        DEVICE_PREFLIGHT_PATH,
+        '"final_launch_closure_packet",',
+    ),
+    SourceRequirement(
         "preflight_read_only_note",
         "Device preflight read-only note",
         DEVICE_PREFLIGHT_PATH,
@@ -1065,6 +1089,36 @@ SOURCE_REQUIREMENTS = (
         "Contract test redacts unsafe iOS launch rehearsal readiness",
         CORE_CONTRACT_TESTS_PATH,
         "testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness",
+    ),
+    SourceRequirement(
+        "contract_final_closure_packet_missing_preflight",
+        "Contract test waits for missing final closure packet",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightWaitsForMissingFinalClosurePacket",
+    ),
+    SourceRequirement(
+        "contract_final_closure_packet_blocked_preflight",
+        "Contract test blocks on final closure packet first blocker",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightBlocksOnFinalClosurePacketFirstBlocker",
+    ),
+    SourceRequirement(
+        "contract_final_closure_packet_ready_preflight",
+        "Contract test marks ready final closure packet",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightMarksReadyFinalClosurePacket",
+    ),
+    SourceRequirement(
+        "contract_final_closure_packet_configured_section_preflight",
+        "Contract test shows configured evidence closure section",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightShowsConfiguredEvidenceClosureSection",
+    ),
+    SourceRequirement(
+        "contract_final_closure_packet_redaction_preflight",
+        "Contract test redacts unsafe final closure packet",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDevicePreflightRedactsUnsafeFinalClosurePacket",
     ),
     SourceRequirement(
         "contract_preflight_error",

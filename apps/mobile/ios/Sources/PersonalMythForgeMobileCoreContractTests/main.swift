@@ -119,6 +119,11 @@ do {
     try testDevicePreflightMarksReadyIOSLaunchRehearsalReadiness()
     try testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness()
     try testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness()
+    try testDevicePreflightWaitsForMissingFinalClosurePacket()
+    try testDevicePreflightBlocksOnFinalClosurePacketFirstBlocker()
+    try testDevicePreflightMarksReadyFinalClosurePacket()
+    try testDevicePreflightShowsConfiguredEvidenceClosureSection()
+    try testDevicePreflightRedactsUnsafeFinalClosurePacket()
     try testDevicePreflightBlocksAndRedactsFinalLaunchError()
     try testFinalLaunchMobileSummaryWaitsForMissingReport()
     try testFinalLaunchMobileSummaryWaitsWithLaunchReceipt()
@@ -3222,6 +3227,102 @@ private func testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness() throw
     try expectNotContains(text, "checkout")
     try expectNotContains(text, "Bearer")
     try expectNotContains(text, "api_key")
+}
+
+private func testDevicePreflightWaitsForMissingFinalClosurePacket() throws {
+    var report = finalDemoLaunchReport(overallStatus: "partial")
+    report.finalLaunchClosurePacket = nil
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+
+    try expectEqual(summary.item(id: "final_launch_closure_packet")?.status, .waiting)
+    try expectContains(summary.item(id: "final_launch_closure_packet")?.detail ?? "", "not loaded")
+}
+
+private func testDevicePreflightBlocksOnFinalClosurePacketFirstBlocker() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(overallStatus: "ready")
+    )
+    let detail = summary.item(id: "final_launch_closure_packet")?.detail ?? ""
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectEqual(summary.item(id: "final_launch_closure_packet")?.status, .blocked)
+    try expectContains(detail, "blocked")
+    try expectContains(detail, "sections 6")
+    try expectContains(detail, "blocked 4")
+    try expectContains(detail, "First blocker:")
+    try expectContains(detail, "resource_inputs")
+    try expectContains(detail, "missing_required_value")
+    try expectContains(detail, "provide_MESHY_API_KEY")
+    try expectContains(detail, "make final-resources-preflight")
+    try expectContains(detail, "commands_run=false")
+}
+
+private func testDevicePreflightMarksReadyFinalClosurePacket() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: readyFinalClosurePacketReport()
+    )
+    let detail = summary.item(id: "final_launch_closure_packet")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "final_launch_closure_packet")?.status, .ready)
+    try expectContains(detail, "ready")
+    try expectContains(detail, "sections 6")
+    try expectContains(detail, "blocked 0")
+    try expectContains(detail, "cost consent 0")
+    try expectContains(detail, "commands_run=false")
+    try expectContains(detail, "live_calls=false")
+}
+
+private func testDevicePreflightShowsConfiguredEvidenceClosureSection() throws {
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "ready",
+            closurePacketConfiguredBundleStatus: "blocked",
+            closurePacketConfiguredBundleCommand: "make configured-live-evidence-bundle",
+            closurePacketConfiguredBundleDetail: "Build configured live evidence bundle after resource and provider evidence are ready."
+        )
+    )
+    let detail = summary.item(id: "final_launch_closure_packet")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "final_launch_closure_packet")?.status, .blocked)
+    try expectContains(detail, "configured_evidence_bundle")
+    try expectContains(detail, "configured_live_evidence_bundle")
+    try expectContains(detail, "make configured-live-evidence-bundle")
+}
+
+private func testDevicePreflightRedactsUnsafeFinalClosurePacket() throws {
+    let report = finalDemoLaunchReport(
+        overallStatus: "blocked",
+        closurePacketActionCommand: "make final-launch-closure-packet sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token api_key=secret",
+        closurePacketActionDetail: "api_key=secret private_message: raw words https://checkout.example/pay",
+        closurePacketFirstBlockerCommand: "make final-resources-preflight sk-blocker /Users/zhexu/private file:///tmp/private local-capture://blocker checkout_url Bearer token",
+        closurePacketFirstBlockerDetail: "api_key=secret private_message: raw blocker words https://checkout.example/pay",
+        closurePacketConfiguredBundleCommand: "make configured-live-evidence-bundle sk-configured /Users/zhexu/private file:///tmp/private local-capture://configured checkout_url Bearer token",
+        closurePacketConfiguredBundleDetail: "api_key=secret private_message: raw configured words https://checkout.example/pay"
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: report
+    )
+    let text = String(decoding: try PMFJSON.encoder.encode(summary), as: UTF8.self)
+
+    try expectEqual(summary.item(id: "final_launch_closure_packet")?.status, .blocked)
+    try expectContains(text, "[withheld]")
+    try expectNotContains(text, "sk-test")
+    try expectNotContains(text, "sk-blocker")
+    try expectNotContains(text, "sk-configured")
+    try expectNotContains(text, "/Users/")
+    try expectNotContains(text, "file:///")
+    try expectNotContains(text, "local-capture://")
+    try expectNotContains(text, "checkout")
+    try expectNotContains(text, "Bearer")
+    try expectNotContains(text, "api_key")
+    try expectNotContains(text, "private_message")
 }
 
 private func testDevicePreflightBlocksAndRedactsFinalLaunchError() throws {
@@ -11112,7 +11213,64 @@ private func readyDevicePreflightFinalDemoLaunchReport() -> FinalDemoLaunchRepor
     report.finalResourceRequirements = readyFinalResourceRequirementsReport()
     report.finalResourceFillGuide = readyFinalResourceFillGuideReport()
     report.finalResourceApplyPreview = readyFinalResourceApplyPreviewReport()
+    report.finalLaunchClosurePacket = readyFinalLaunchClosurePacket()
     return report
+}
+
+private func readyFinalClosurePacketReport() -> FinalDemoLaunchReport {
+    var report = readyDevicePreflightFinalDemoLaunchReport()
+    report.finalLaunchClosurePacket = readyFinalLaunchClosurePacket()
+    return report
+}
+
+private func readyFinalLaunchClosurePacket() -> FinalLaunchClosurePacketReport {
+    FinalLaunchClosurePacketReport(
+        kind: "final_launch_closure_packet_report",
+        status: "ready",
+        summary: FinalLaunchClosurePacketSummary(
+            sections: 6,
+            actions: 8,
+            ready: 8,
+            missing: 0,
+            blocked: 0,
+            manual: 0,
+            live: 0,
+            partial: 0,
+            optional: 0,
+            requiredSections: 5,
+            requiredActions: 8,
+            secretActions: 0,
+            requiresUserInput: 0,
+            requiresUserConfirmation: 0,
+            requiresCostConsent: 0,
+            globalActions: 0,
+            xcodeOrSigningActions: 0,
+            safeLocalWrites: 0,
+            liveProviderCalls: 0
+        ),
+        sections: [],
+        sectionsById: [:],
+        operatorActions: [],
+        commands: ["make final-launch-closure-packet"],
+        safety: FinalLaunchClosurePacketSafety(
+            commandsRun: false,
+            writesBackendEnv: false,
+            writesIosDeployConfig: false,
+            runsShellWriters: false,
+            providerCalls: false,
+            liveProviderCalls: false,
+            globalMutation: false,
+            xcodeOrSigning: false,
+            keychainWrites: false,
+            providerSecretsInReport: false,
+            rawPrivateContextInReport: false,
+            rawMediaInReport: false,
+            paymentLinksInReport: false,
+            localPathsInReport: false,
+            describesGlobalActions: true,
+            requiresCostConsentForLiveActions: false
+        )
+    )
 }
 
 private func blockedFinalResourceItemsJSON() -> String {
