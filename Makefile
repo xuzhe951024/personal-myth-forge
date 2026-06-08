@@ -99,10 +99,13 @@ final-launch-closure-packet:
 local-showcase-smoke:
 	cd services/backend && uv run python -m myth_forge_api.cli local-showcase-smoke --output .local/local-showcase-smoke.json
 
-.PHONY: final-local-report-refresh
+.PHONY: final-local-report-refresh final-local-report-refresh-local
 
 final-local-report-refresh:
 	cd services/backend && uv run python -m myth_forge_api.cli final-local-report-refresh --repo-root ../.. --output .local/final-local-report-refresh.json
+
+final-local-report-refresh-local:
+	@services/backend/scripts/write_final_local_report_refresh.sh
 
 .PHONY: final-configured-preflight
 
@@ -170,7 +173,7 @@ ios-deploy-runbook-local:
 ios-device-evidence-bundle:
 	cd services/backend && uv run python -m myth_forge_api.cli ios-device-evidence-bundle --repo-root ../.. --output .local/ios-device-evidence-bundle.json
 
-final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local final-local-report-refresh
+final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch ios-deploy-runbook-local final-local-report-refresh-local
 
 .PHONY: mobile-xcode-build
 

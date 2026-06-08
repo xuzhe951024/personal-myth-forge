@@ -58,14 +58,18 @@ FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH = (
 IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH = (
     "services/backend/scripts/write_ios_deploy_runbook_local.sh"
 )
+FINAL_LOCAL_REPORT_REFRESH_LOCAL_SCRIPT_PATH = (
+    "services/backend/scripts/write_final_local_report_refresh.sh"
+)
 FINAL_ACCEPTANCE_LOCAL_MAKE_TARGET = "final-acceptance-local"
 IOS_DEPLOY_RUNBOOK_LOCAL_MAKE_TARGET = "ios-deploy-runbook-local"
 FINAL_REHEARSAL_LOCAL_MAKE_TARGET = "final-rehearsal-local"
 FINAL_LOCAL_REPORT_REFRESH_MAKE_TARGET = "final-local-report-refresh"
+FINAL_LOCAL_REPORT_REFRESH_LOCAL_MAKE_TARGET = "final-local-report-refresh-local"
 FINAL_REHEARSAL_LOCAL_REFRESH_DEPENDENCY = (
     "final-rehearsal-local: backend-evaluate-local visual-regression-local "
     "final-acceptance-local final-demo-launch ios-deploy-runbook-local "
-    "final-local-report-refresh"
+    "final-local-report-refresh-local"
 )
 BANNED_WRITER_TEXT = [
     "sudo",
@@ -191,6 +195,12 @@ def run_resource_template_acceptance(
         ios_deploy_runbook_local_script_text,
         ios_deploy_runbook_local_script_exists,
     ) = _read_optional_text(selected_repo_root / IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH)
+    (
+        final_local_report_refresh_script_text,
+        final_local_report_refresh_script_exists,
+    ) = _read_optional_text(
+        selected_repo_root / FINAL_LOCAL_REPORT_REFRESH_LOCAL_SCRIPT_PATH
+    )
 
     backend_keys = _parse_assignment_keys(backend_text, comment_prefixes=("#",))
     ios_keys = _parse_assignment_keys(ios_text, comment_prefixes=("#", "//"))
@@ -286,6 +296,10 @@ def run_resource_template_acceptance(
         final_acceptance_script_exists=final_acceptance_local_script_exists,
         ios_deploy_runbook_script_text=ios_deploy_runbook_local_script_text,
         ios_deploy_runbook_script_exists=ios_deploy_runbook_local_script_exists,
+        final_local_report_refresh_script_text=final_local_report_refresh_script_text,
+        final_local_report_refresh_script_exists=(
+            final_local_report_refresh_script_exists
+        ),
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
@@ -417,6 +431,9 @@ def run_resource_template_acceptance(
             "make_target": FINAL_REHEARSAL_LOCAL_MAKE_TARGET,
             "final_acceptance_script_path": FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH,
             "ios_deploy_runbook_script_path": IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH,
+            "final_local_report_refresh_script_path": (
+                FINAL_LOCAL_REPORT_REFRESH_LOCAL_SCRIPT_PATH
+            ),
             "checks": final_rehearsal_local_checks,
         },
         "safety": safety,
@@ -870,15 +887,25 @@ def _final_rehearsal_local_checks(
     final_acceptance_script_exists: bool,
     ios_deploy_runbook_script_text: str,
     ios_deploy_runbook_script_exists: bool,
+    final_local_report_refresh_script_text: str,
+    final_local_report_refresh_script_exists: bool,
     makefile_text: str,
     makefile_exists: bool,
 ) -> dict[str, bool]:
     checked_text = "\n".join(
-        [final_acceptance_script_text, ios_deploy_runbook_script_text, makefile_text]
+        [
+            final_acceptance_script_text,
+            ios_deploy_runbook_script_text,
+            final_local_report_refresh_script_text,
+            makefile_text,
+        ]
     )
     return {
         "final_acceptance_script_exists": final_acceptance_script_exists,
         "ios_deploy_runbook_script_exists": ios_deploy_runbook_script_exists,
+        "final_local_report_refresh_script_exists": (
+            final_local_report_refresh_script_exists
+        ),
         "final_acceptance_accepts_blocked_report": (
             'accepted final acceptance exit code $status' in final_acceptance_script_text
             and "final-acceptance-local.json" in final_acceptance_script_text
@@ -888,16 +915,25 @@ def _final_rehearsal_local_checks(
             in ios_deploy_runbook_script_text
             and "ios-deploy-runbook-local.json" in ios_deploy_runbook_script_text
         ),
+        "final_local_report_refresh_accepts_blocked_report": (
+            "accepted final local report refresh exit code $status"
+            in final_local_report_refresh_script_text
+            and "final-local-report-refresh.json"
+            in final_local_report_refresh_script_text
+        ),
         "make_targets": makefile_exists
         and FINAL_ACCEPTANCE_LOCAL_MAKE_TARGET in makefile_text
         and FINAL_REHEARSAL_LOCAL_MAKE_TARGET in makefile_text
         and IOS_DEPLOY_RUNBOOK_LOCAL_MAKE_TARGET in makefile_text
+        and FINAL_LOCAL_REPORT_REFRESH_LOCAL_MAKE_TARGET in makefile_text
         and FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH in makefile_text
         and IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT_PATH in makefile_text
+        and FINAL_LOCAL_REPORT_REFRESH_LOCAL_SCRIPT_PATH in makefile_text
         and "backend-evaluate-local" in makefile_text
         and FINAL_DEMO_LAUNCH_MAKE_TARGET in makefile_text,
         "final_local_report_refresh_dependency": makefile_exists
         and FINAL_LOCAL_REPORT_REFRESH_MAKE_TARGET in makefile_text
+        and FINAL_LOCAL_REPORT_REFRESH_LOCAL_MAKE_TARGET in makefile_text
         and FINAL_REHEARSAL_LOCAL_REFRESH_DEPENDENCY in makefile_text,
         "local_output_paths": FINAL_DEMO_LAUNCH_LOCAL_OUTPUT in makefile_text
         and "final-acceptance-local.json" in final_acceptance_script_text

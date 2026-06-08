@@ -54,6 +54,38 @@ def test_write_ios_deploy_runbook_local_fails_unusable_exit_code(
     assert "failed before writing a usable report: exit 1" in result.stderr
 
 
+def test_write_final_local_report_refresh_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_final_local_report_refresh.sh")
+
+    assert result.returncode == 0
+    assert "accepted final local report refresh exit code 2" in result.stdout
+    assert "services/backend/.local/final-local-report-refresh.json" in result.stdout
+    fake_uv_args = (
+        script_repo / "services/backend/.local/fake-uv-args.txt"
+    ).read_text(encoding="utf-8")
+    assert "final-local-report-refresh" in fake_uv_args
+    assert "--repo-root ../.." in fake_uv_args
+    assert "--output .local/final-local-report-refresh.json" in fake_uv_args
+
+
+def test_write_final_local_report_refresh_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_final_local_report_refresh.sh")
+
+    assert result.returncode == 1
+    assert (
+        "final local report refresh failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
 def test_write_ios_device_launch_rehearsal_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:
@@ -143,10 +175,16 @@ def test_final_rehearsal_make_targets_dry_run_expected_order() -> None:
     assert "write_final_acceptance_local.sh" in output
     assert "final-demo-launch" in output
     assert "write_ios_deploy_runbook_local.sh" in output
+    assert "final-local-report-refresh-local:" in makefile
+    assert "services/backend/scripts/write_final_local_report_refresh.sh" in makefile
+    assert "write_final_local_report_refresh.sh" in output
     assert output.index("evaluate-3d") < output.index("evaluate-npc")
     assert output.index("evaluate-npc") < output.index("write_final_acceptance_local.sh")
     assert output.index("write_final_acceptance_local.sh") < output.index("final-demo-launch")
     assert output.index("final-demo-launch") < output.index("write_ios_deploy_runbook_local.sh")
+    assert output.index("write_ios_deploy_runbook_local.sh") < output.index(
+        "write_final_local_report_refresh.sh"
+    )
 
 
 def test_ios_device_launch_rehearsal_make_target_dry_run_uses_wrapper() -> None:
@@ -185,6 +223,24 @@ def test_final_local_report_refresh_make_target_dry_run_uses_cli() -> None:
     assert "myth_forge_api.cli final-local-report-refresh" in result.stdout
     assert "--repo-root ../.." in result.stdout
     assert "--output .local/final-local-report-refresh.json" in result.stdout
+
+
+def test_final_local_report_refresh_local_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "final-local-report-refresh-local"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    assert ".PHONY: final-local-report-refresh final-local-report-refresh-local" in makefile
+    assert "final-local-report-refresh-local:" in makefile
+    assert "write_final_local_report_refresh.sh" in result.stdout
 
 
 def test_final_resource_fill_guide_make_target_dry_run_uses_cli() -> None:
