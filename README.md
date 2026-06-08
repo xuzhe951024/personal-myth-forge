@@ -44,6 +44,18 @@ address, such as `http://192.168.1.10:8080`. `backend-dev` remains the
 localhost/browser path; `backend-device-demo` does not change firewall, signing,
 or Apple SDK license state.
 
+For the common physical-device path, let the writer derive the Mac LAN URL:
+
+```bash
+DEVELOPMENT_TEAM=ABCDE12345 \
+PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge \
+make mobile-write-deploy-config-auto
+```
+
+This sets `PMF_BACKEND_BASE_URL=auto`, resolves a non-loopback IPv4 host, and
+then writes the same ignored local config. Set `PMF_BACKEND_PORT` when the
+backend is not using port `8080`.
+
 Create or update that ignored iOS local config from explicit user-owned values:
 
 ```bash

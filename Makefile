@@ -200,7 +200,10 @@ mobile-deploy-preflight:
 mobile-deploy-preflight-evidence:
 	cd services/backend && uv run python -m myth_forge_api.cli mobile-deploy-preflight-evidence --repo-root ../.. --output .local/mobile-deploy-preflight-evidence.json
 
-.PHONY: mobile-write-deploy-config
+.PHONY: mobile-write-deploy-config mobile-write-deploy-config-auto
 
 mobile-write-deploy-config:
 	apps/mobile/ios/scripts/write_deploy_local_config.sh
+
+mobile-write-deploy-config-auto:
+	PMF_BACKEND_BASE_URL=auto apps/mobile/ios/scripts/write_deploy_local_config.sh
