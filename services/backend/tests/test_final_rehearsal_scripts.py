@@ -263,7 +263,8 @@ def test_final_acceptance_configured_make_target_dry_run_uses_wrapper() -> None:
     makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
     assert (
         ".PHONY: final-acceptance-local final-acceptance-configured "
-        "final-demo-launch final-demo-launch-local final-rehearsal-local"
+        "final-demo-launch final-demo-launch-local "
+        "final-demo-launch-configured final-rehearsal-local"
     ) in makefile
     assert "final-acceptance-configured:" in makefile
     assert "services/backend/scripts/write_final_acceptance_configured.sh" in makefile

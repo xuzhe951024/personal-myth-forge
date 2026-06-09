@@ -214,11 +214,7 @@ make final-resource-apply-preview
 make final-apply-resources
 make final-configured-preflight
 make final-handoff-index
-cd services/backend
-uv run python -m myth_forge_api.cli final-demo-launch \
-  --mode configured \
-  --repo-root ../.. \
-  --output .local/final-demo-launch-configured.json
+make final-demo-launch-configured
 ```
 
 The launch report includes the `final_resources_preflight` report and uses
@@ -248,6 +244,12 @@ not run rehearsal, apply resources, call live providers, start servers, run
 Xcode, touch signing/keychain, or write backend/iOS config files. Exit `2`
 means the index was written with remaining blockers; exit `0` means the saved
 handoff state is ready enough for the next configured operator step.
+
+`make final-demo-launch-configured` writes
+`services/backend/.local/final-demo-launch-configured.json` without calling live
+providers or applying resources. `make final-local-report-refresh-local`
+refreshes the same configured launch report alongside the local launch report,
+so live-provider evidence can inspect the latest configured handoff state.
 
 `make live-provider-evidence` writes
 `services/backend/.local/live-provider-evidence.json` as the P0.120 live

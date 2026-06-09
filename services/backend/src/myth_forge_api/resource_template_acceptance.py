@@ -57,6 +57,8 @@ FINAL_DEMO_LAUNCH_PATH = "services/backend/src/myth_forge_api/final_demo_launch.
 FINAL_DEMO_LAUNCH_MAKE_TARGET = "final-demo-launch"
 FINAL_DEMO_LAUNCH_LOCAL_MAKE_TARGET = "final-demo-launch-local"
 FINAL_DEMO_LAUNCH_LOCAL_OUTPUT = ".local/final-demo-launch-local.json"
+FINAL_DEMO_LAUNCH_CONFIGURED_MAKE_TARGET = "final-demo-launch-configured"
+FINAL_DEMO_LAUNCH_CONFIGURED_OUTPUT = ".local/final-demo-launch-configured.json"
 FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH = (
     "services/backend/scripts/write_final_acceptance_local.sh"
 )
@@ -677,8 +679,11 @@ def _final_demo_launch_checks(
         "make_target": makefile_exists
         and FINAL_DEMO_LAUNCH_MAKE_TARGET in makefile_text
         and FINAL_DEMO_LAUNCH_LOCAL_MAKE_TARGET in makefile_text
+        and FINAL_DEMO_LAUNCH_CONFIGURED_MAKE_TARGET in makefile_text
         and "myth_forge_api.cli final-demo-launch" in makefile_text,
         "local_output_path": FINAL_DEMO_LAUNCH_LOCAL_OUTPUT in makefile_text,
+        "configured_output_path": FINAL_DEMO_LAUNCH_CONFIGURED_OUTPUT
+        in makefile_text,
         "uses_resource_handoff": "build_resource_handoff_report" in module_text,
         "no_banned_commands": not any(
             banned in checked_text for banned in BANNED_WRITER_TEXT
