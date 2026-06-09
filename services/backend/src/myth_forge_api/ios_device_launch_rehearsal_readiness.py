@@ -221,6 +221,8 @@ def _sequence(raw_sequence: Any) -> list[dict[str, Any]]:
             "command": str(raw_step.get("command", IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND)),
             "classification": str(raw_step.get("classification", "saved_report")),
         }
+        if isinstance(raw_step.get("detail"), str) and raw_step["detail"]:
+            row["detail"] = str(raw_step["detail"])
         freshness_summary = _bounded_freshness_summary(
             raw_step.get("freshness_summary")
         )
