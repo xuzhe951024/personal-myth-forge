@@ -1564,6 +1564,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         if let classification = row.classification, !classification.isEmpty {
             parts.append(classification)
         }
+        if let detail = row.detail, !detail.isEmpty {
+            parts.append(detail)
+        }
         return sanitize(parts.joined(separator: " | "))
     }
 

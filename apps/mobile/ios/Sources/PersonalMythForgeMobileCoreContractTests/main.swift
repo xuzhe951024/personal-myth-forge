@@ -5872,6 +5872,10 @@ private func testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload(
     try expectEqual(readiness.summary.blocked, 1)
     try expectEqual(readiness.sequence.first?.id, "final_handoff_index")
     try expectEqual(readiness.sequence.first?.command, "make final-handoff-index")
+    try expectEqual(
+        readiness.sequence.first?.detail,
+        "Final handoff index is stale; rerun safe refresh."
+    )
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.providerCalls)
 }
@@ -5953,6 +5957,7 @@ private func testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal() 
     try expectEqual(summary.launchRehearsalRows.first, "iOS launch rehearsal blocked: ready 3, blocked 1, partial 0.")
     try expectContains(text, "final_handoff_index: blocked")
     try expectContains(text, "make final-handoff-index")
+    try expectContains(text, "Final handoff index is stale; rerun safe refresh.")
     try expectContains(text, "refresh final handoff index")
 }
 
@@ -6023,6 +6028,7 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceLaunchRehearsal()
         iosDeviceLaunchRehearsalStatus: "blocked",
         iosDeviceLaunchRehearsalAction: "rerun sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
         iosDeviceLaunchRehearsalCommand: "make ios-device-launch-rehearsal sk-test /Users/zhexu/private file:///tmp/private",
+        iosDeviceLaunchRehearsalDetail: "detail sk-test /Users/zhexu/private file:///tmp/private local-capture://cap checkout_url Bearer token",
         iosDeviceLaunchRehearsalFreshnessClassification: "stale_report sk-test /Users/zhexu/private file:///tmp/private"
     )
     let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
@@ -7376,6 +7382,7 @@ private func finalDemoLaunchPayload(
     iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
     iosDeviceLaunchRehearsalActions: [String]? = nil,
     iosDeviceLaunchRehearsalCommand: String = "make final-handoff-index",
+    iosDeviceLaunchRehearsalDetail: String = "Final handoff index is stale; rerun safe refresh.",
     iosDeviceLaunchRehearsalFreshnessStatus: String = "fresh",
     iosDeviceLaunchRehearsalFreshnessClassification: String = "fresh_report",
     iosDeviceLaunchRehearsalFreshnessSourceModifiedAt: String = "2026-06-07T12:05:00Z",
@@ -9572,6 +9579,7 @@ private func finalDemoLaunchPayload(
                 "label": "Final handoff index",
                 "status": "\(iosDeviceLaunchRehearsalStatus == "ready" ? "ready" : "blocked")",
                 "command": "\(iosDeviceLaunchRehearsalCommand)",
+                "detail": "\(iosDeviceLaunchRehearsalDetail)",
                 "classification": "saved_report",
                 "freshness_status": "\(iosDeviceLaunchSourceFreshnessStatus)",
                 "freshness_classification": "\(iosDeviceLaunchSourceFreshnessClassification)",
@@ -12858,6 +12866,7 @@ private func finalDemoLaunchReport(
     iosDeviceLaunchRehearsalAction: String = "run make ios-device-launch-rehearsal",
     iosDeviceLaunchRehearsalActions: [String]? = nil,
     iosDeviceLaunchRehearsalCommand: String = "make final-handoff-index",
+    iosDeviceLaunchRehearsalDetail: String = "Final handoff index is stale; rerun safe refresh.",
     iosDeviceLaunchRehearsalFreshnessStatus: String = "fresh",
     iosDeviceLaunchRehearsalFreshnessClassification: String = "fresh_report",
     iosDeviceLaunchRehearsalFreshnessSourceModifiedAt: String = "2026-06-07T12:05:00Z",
@@ -12948,6 +12957,7 @@ private func finalDemoLaunchReport(
             iosDeviceLaunchRehearsalAction: iosDeviceLaunchRehearsalAction,
             iosDeviceLaunchRehearsalActions: iosDeviceLaunchRehearsalActions,
             iosDeviceLaunchRehearsalCommand: iosDeviceLaunchRehearsalCommand,
+            iosDeviceLaunchRehearsalDetail: iosDeviceLaunchRehearsalDetail,
             iosDeviceLaunchRehearsalFreshnessStatus: iosDeviceLaunchRehearsalFreshnessStatus,
             iosDeviceLaunchRehearsalFreshnessClassification: iosDeviceLaunchRehearsalFreshnessClassification,
             iosDeviceLaunchRehearsalFreshnessSourceModifiedAt: iosDeviceLaunchRehearsalFreshnessSourceModifiedAt,
