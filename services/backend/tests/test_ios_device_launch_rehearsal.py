@@ -648,6 +648,49 @@ def test_ios_device_launch_rehearsal_readiness_preserves_final_handoff_source_fr
     assert row["freshness_classification"] == "stale_report"
 
 
+def test_ios_device_launch_rehearsal_readiness_preserves_sequence_detail(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"][0]["detail"] = (
+        "Final handoff index is stale; rerun safe refresh."
+    )
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+
+    assert result.report["sequence"][0]["detail"] == (
+        "Final handoff index is stale; rerun safe refresh."
+    )
+
+
+def test_ios_device_launch_rehearsal_readiness_sanitizes_sequence_detail(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"][0]["detail"] = (
+        f"detail sk-test {repo_root}/private file:///tmp/private "
+        "local-capture://cap https://checkout.example/pay Bearer token"
+    )
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    report_text = json.dumps(result.report)
+
+    assert "[redacted]" in report_text
+    assert "[repo-root]" in report_text
+    assert "sk-test" not in report_text
+    assert str(repo_root) not in report_text
+    assert "file:///" not in report_text
+    assert "local-capture://" not in report_text
+    assert "checkout.example" not in report_text
+    assert "Bearer" not in report_text
+
+
 def test_ios_device_launch_rehearsal_readiness_preserves_bounded_operator_actions(
     tmp_path: Path,
 ) -> None:
