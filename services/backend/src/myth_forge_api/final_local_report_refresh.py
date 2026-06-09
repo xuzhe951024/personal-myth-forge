@@ -376,6 +376,8 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             _write_json(repo_root=repo_root, relative_path=step.output_path, report=report)
         raw_status = _raw_status(report)
         status = _normalized_status(raw_status)
+        blocker_hint = _blocker_hint(report)
+        blocker_fields = _promoted_blocker_fields(blocker_hint)
         return {
             "id": step.id,
             "label": step.label,
@@ -384,7 +386,8 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             "exit_code": _step_exit_code(status),
             "kind": report.get("kind", "unknown"),
             "summary": report.get("summary", {}),
-            "blocker_hint": _blocker_hint(report),
+            "blocker_hint": blocker_hint,
+            **blocker_fields,
             "output": step.output_path.as_posix() if step.output_path else None,
             "accepted_blocked": status == "blocked",
             "writes_repo_local_report": step.output_path is not None,
@@ -400,12 +403,23 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             "kind": "unknown",
             "summary": {},
             "blocker_hint": {},
+            "classification": "step_failed",
+            "command": f"fix final-local-report-refresh step {step.id}",
+            "detail": str(exc),
             "output": step.output_path.as_posix() if step.output_path else None,
             "accepted_blocked": False,
             "writes_repo_local_report": False,
             "elapsed_seconds": round(time.perf_counter() - started_at, 4),
             "error": str(exc),
         }
+
+
+def _promoted_blocker_fields(hint: dict[str, Any]) -> dict[str, str]:
+    return {
+        "classification": str(hint.get("classification") or ""),
+        "command": str(hint.get("command") or ""),
+        "detail": str(hint.get("detail") or ""),
+    }
 
 
 def _three_d_evaluation_report(repo_root: Path) -> dict[str, Any]:

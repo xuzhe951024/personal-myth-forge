@@ -39,7 +39,29 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         }
     assert result.report["summary"]["failed"] == 0
     assert result.report["summary"]["blocked"] >= 1
+    assert steps["final_resource_requirements"]["classification"] == (
+        "missing_required_value"
+    )
+    assert steps["final_resource_requirements"]["command"] == (
+        "provide MESHY_API_KEY in final-resources.env"
+    )
+    assert steps["final_resource_requirements"]["detail"] == (
+        "Backend-only secret for live Meshy 3D generation."
+    )
+    assert steps["three_d_evaluation_local"]["status"] == "ready"
+    assert steps["three_d_evaluation_local"]["classification"] == ""
+    assert steps["three_d_evaluation_local"]["command"] == ""
+    assert steps["three_d_evaluation_local"]["detail"] == ""
     assert steps["final_acceptance_local"]["status"] == "blocked"
+    assert steps["final_acceptance_local"]["classification"] == (
+        "blocked_by_local_ios_backend_health"
+    )
+    assert steps["final_acceptance_local"]["command"] == (
+        "start backend-device-demo and rerun mobile deploy preflight"
+    )
+    assert steps["final_acceptance_local"]["detail"] == (
+        "blocked_by_local_ios_backend_health"
+    )
     assert steps["final_acceptance_local"]["accepted_blocked"] is True
     assert steps["final_resource_fill_guide"]["status"] == "blocked"
     assert steps["resource_handoff"]["status"] == "blocked"
@@ -50,6 +72,13 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert steps["configured_live_evidence_bundle"]["status"] == "blocked"
     assert steps["configured_live_evidence_bundle"]["accepted_blocked"] is True
     assert steps["mobile_deploy_preflight_evidence"]["status"] == "blocked"
+    assert steps["mobile_deploy_preflight_evidence"]["classification"] == ""
+    assert steps["mobile_deploy_preflight_evidence"]["command"] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    )
+    assert steps["mobile_deploy_preflight_evidence"]["detail"] == (
+        "Missing DEVELOPMENT_TEAM"
+    )
     assert steps["mobile_deploy_preflight_evidence"]["accepted_blocked"] is True
     assert steps["mobile_xcode_build_evidence"]["status"] == "blocked"
     assert steps["mobile_xcode_build_evidence"]["accepted_blocked"] is True
@@ -277,6 +306,11 @@ def test_final_local_report_refresh_reports_unexpected_step_failure(
     }
     assert steps["forced_failure"]["status"] == "failed"
     assert steps["forced_failure"]["exit_code"] == 1
+    assert steps["forced_failure"]["classification"] == "step_failed"
+    assert steps["forced_failure"]["command"] == (
+        "fix final-local-report-refresh step forced_failure"
+    )
+    assert steps["forced_failure"]["detail"] == "unexpected [redacted]"
     assert "unexpected" in steps["forced_failure"]["error"]
     assert "[redacted]" in steps["forced_failure"]["error"]
     assert "secret.txt" not in report_text
