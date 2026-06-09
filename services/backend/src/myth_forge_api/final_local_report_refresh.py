@@ -199,24 +199,6 @@ def _default_steps() -> list[RefreshStepDefinition]:
             _safe_final_acceptance_report,
         ),
         _step(
-            "final_demo_launch_local",
-            "Local final demo launch",
-            "final-demo-launch-local.json",
-            lambda repo_root: build_final_demo_launch_report(
-                mode="local",
-                repo_root=repo_root,
-            ).report,
-        ),
-        _step(
-            "final_demo_launch_configured",
-            "Configured final demo launch",
-            "final-demo-launch-configured.json",
-            lambda repo_root: build_final_demo_launch_report(
-                mode="configured",
-                repo_root=repo_root,
-            ).report,
-        ),
-        _step(
             "ios_deploy_runbook_local",
             "iOS deploy runbook",
             "ios-deploy-runbook-local.json",
@@ -334,6 +316,24 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "Final launch closure packet",
             "final-launch-closure-packet.json",
             lambda repo_root: build_final_launch_closure_packet_report(
+                repo_root=repo_root,
+            ).report,
+        ),
+        _step(
+            "final_demo_launch_local",
+            "Local final demo launch",
+            "final-demo-launch-local.json",
+            lambda repo_root: build_final_demo_launch_report(
+                mode="local",
+                repo_root=repo_root,
+            ).report,
+        ),
+        _step(
+            "final_demo_launch_configured",
+            "Configured final demo launch",
+            "final-demo-launch-configured.json",
+            lambda repo_root: build_final_demo_launch_report(
+                mode="configured",
                 repo_root=repo_root,
             ).report,
         ),
