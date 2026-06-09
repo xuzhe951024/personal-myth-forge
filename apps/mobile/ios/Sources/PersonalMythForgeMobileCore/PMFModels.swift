@@ -2979,6 +2979,7 @@ public struct IOSDeviceLaunchRehearsalSequenceRow: Codable, Equatable, Sendable 
     public var label: String
     public var status: String
     public var command: String
+    public var detail: String?
     public var classification: String?
     public var freshnessStatus: String?
     public var freshnessClassification: String?
@@ -2989,6 +2990,7 @@ public struct IOSDeviceLaunchRehearsalSequenceRow: Codable, Equatable, Sendable 
         label: String,
         status: String,
         command: String,
+        detail: String? = nil,
         classification: String? = nil,
         freshnessStatus: String? = nil,
         freshnessClassification: String? = nil,
@@ -2998,6 +3000,7 @@ public struct IOSDeviceLaunchRehearsalSequenceRow: Codable, Equatable, Sendable 
         self.label = label
         self.status = status
         self.command = command
+        self.detail = detail
         self.classification = classification
         self.freshnessStatus = freshnessStatus
         self.freshnessClassification = freshnessClassification
