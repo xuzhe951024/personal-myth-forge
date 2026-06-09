@@ -12786,15 +12786,8 @@ private func configuredFinalDemoLaunchCommands() -> [String] {
         "make ios-deploy-runbook",
         "make ios-device-launch-rehearsal",
         "make backend-device-demo",
-        (
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-                + "provider-handoff --require-core-real --output .local/provider-handoff.json"
-        ),
-        (
-            "cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch "
-                + "--mode configured --repo-root ../.. "
-                + "--output .local/final-demo-launch-configured.json"
-        ),
+        "make provider-handoff",
+        "make final-demo-launch-configured",
         "make final-acceptance-local",
         "make final-acceptance-configured",
         "make mobile-deploy-preflight",

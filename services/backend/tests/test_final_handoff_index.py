@@ -98,6 +98,7 @@ def test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready(
     assert lanes["local_rehearsal"]["status"] == "ready"
     assert lanes["configured_preflight"]["status"] == "ready"
     assert lanes["configured_launch"]["status"] == "partial"
+    assert lanes["configured_launch"]["command"] == "make final-demo-launch-configured"
     assert lanes["device_deploy"]["status"] == "partial"
     assert lanes["live_acceptance"]["status"] == "live"
     assert lanes["live_acceptance"]["requires_consent"] is True
@@ -111,6 +112,11 @@ def test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready(
     assert result.report["operator_sequence"][0]["command"] == "make final-rehearsal-local"
     assert result.report["operator_sequence"][1]["command"] == "make final-configured-preflight"
     assert result.report["operator_sequence"][2]["command"] == "make final-handoff-index"
+    assert "make final-demo-launch-configured" in result.report["commands"]
+    assert not any(
+        "final-demo-launch --mode configured" in command
+        for command in result.report["commands"]
+    )
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
     assert "sk-meshy-secret" not in report_text

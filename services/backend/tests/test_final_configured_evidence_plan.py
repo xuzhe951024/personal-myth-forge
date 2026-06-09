@@ -63,6 +63,7 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
     assert steps["final_apply_resources"]["status"] == "ready_to_run"
     assert steps["final_configured_preflight"]["status"] == "ready"
     assert steps["provider_handoff"]["status"] == "ready_to_run"
+    assert steps["provider_handoff"]["command"] == "make provider-handoff"
     assert steps["three_d_evaluation_configured"]["status"] == "consent_required"
     assert steps["three_d_evaluation_configured"]["command"] == (
         "make backend-evaluate-3d-configured"
@@ -72,7 +73,17 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
         "make backend-evaluate-npc-configured"
     )
     assert steps["final_acceptance_configured"]["status"] == "consent_required"
+    assert steps["final_demo_launch_configured"]["command"] == (
+        "make final-demo-launch-configured"
+    )
     assert steps["live_provider_evidence"]["status"] == "ready_to_run"
+    assert "make provider-handoff" in report["commands"]
+    assert "make final-demo-launch-configured" in report["commands"]
+    assert not any(
+        "myth_forge_api.cli provider-handoff" in command
+        or "final-demo-launch --mode configured" in command
+        for command in report["commands"]
+    )
     assert report["live_call_policy"]["allow_live_provider_calls"] is False
     assert report["safety"]["commands_run"] is False
     assert report["safety"]["live_provider_calls"] is False

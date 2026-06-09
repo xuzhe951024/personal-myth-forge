@@ -17,6 +17,11 @@ from myth_forge_api.final_acceptance_readiness import (
 from myth_forge_api.final_external_action_ledger import (
     build_final_external_action_ledger_report,
 )
+from myth_forge_api.final_handoff_commands import (
+    FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
+    FINAL_DEMO_LAUNCH_LOCAL_COMMAND,
+    PROVIDER_HANDOFF_COMMAND,
+)
 from myth_forge_api.final_launch_closure_packet import (
     build_final_launch_closure_packet_report,
 )
@@ -328,10 +333,7 @@ def _launch_phases(
             "Check provider readiness",
             core_backend_status if mode == "configured" else "ready",
             "real Meshy/OpenAI readiness",
-            (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "provider-handoff --require-core-real"
-            ),
+            PROVIDER_HANDOFF_COMMAND,
             ["Configuration-only report; does not call live providers."],
         ),
         _phase(
@@ -464,11 +466,7 @@ def _commands(mode: LaunchMode) -> list[str]:
             "make ios-device-launch-rehearsal",
             "make backend-device-demo",
             "make mobile-deploy-preflight",
-            (
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-demo-launch --mode local --repo-root ../.. "
-                "--output .local/final-demo-launch-local.json"
-            ),
+            FINAL_DEMO_LAUNCH_LOCAL_COMMAND,
             LOCAL_FINAL_ACCEPTANCE_COMMAND,
         ]
     return [
@@ -481,16 +479,8 @@ def _commands(mode: LaunchMode) -> list[str]:
         "make ios-deploy-runbook",
         "make ios-device-launch-rehearsal",
         "make backend-device-demo",
-        (
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "provider-handoff --require-core-real "
-            "--output .local/provider-handoff.json"
-        ),
-        (
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "final-demo-launch --mode configured --repo-root ../.. "
-            "--output .local/final-demo-launch-configured.json"
-        ),
+        PROVIDER_HANDOFF_COMMAND,
+        FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
         LOCAL_FINAL_ACCEPTANCE_COMMAND,
         CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
         "make mobile-deploy-preflight",
