@@ -119,6 +119,62 @@ def test_final_showcase_readiness_includes_ios_device_action_bundle(
     assert bundle["safety"]["provider_calls"] is False
 
 
+def test_final_showcase_readiness_maps_missing_mobile_deploy_preflight_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    evidence = result.report["evidence"]["mobile_deploy_preflight_evidence"]
+    bundle = result.report["device_action_bundle"]
+    actions = {action["id"]: action for action in bundle["actions"]}
+    preflight = actions["run_mobile_deploy_preflight"]
+
+    assert evidence["kind"] == "mobile_deploy_preflight_evidence_report"
+    assert evidence["status"] == "missing"
+    assert preflight["status"] == "blocked"
+    assert preflight["evidence_status"] == "missing"
+    assert preflight["evidence_source"] == (
+        "services/backend/.local/mobile-deploy-preflight-evidence.json"
+    )
+    assert preflight["validation_command"] == "make mobile-deploy-preflight-evidence"
+
+
+def test_final_showcase_readiness_marks_preflight_actions_ready_with_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_ready(repo_root)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    bundle = result.report["device_action_bundle"]
+    actions = {action["id"]: action for action in bundle["actions"]}
+
+    assert result.exit_code == 2
+    assert result.report["evidence"]["mobile_deploy_preflight_evidence"][
+        "status"
+    ] == "ready"
+    assert actions["start_backend_device_demo"]["status"] == "ready"
+    assert actions["start_backend_device_demo"]["evidence_status"] == "ready"
+    assert actions["run_mobile_deploy_preflight"]["status"] == "ready"
+    assert actions["run_mobile_deploy_preflight"]["evidence_status"] == "ready"
+    assert actions["run_mobile_deploy_preflight"]["evidence_detail"] == (
+        "iOS deploy preflight passed."
+    )
+    assert actions["resolve_xcode_build_gate"]["status"] == "blocked"
+    assert bundle["first_action"]["id"] == "resolve_xcode_build_gate"
+    assert bundle["summary"]["ready"] == 2
+    assert bundle["summary"]["blocked"] == 2
+
+
 def test_final_showcase_readiness_blocks_failed_local_showcase_smoke(
     tmp_path: Path,
     monkeypatch,
@@ -935,6 +991,51 @@ def _write_configured_live_evidence_bundle(
                 "raw_private_context_in_report": False,
                 "raw_media_in_report": False,
                 "payment_links_in_report": False,
+                "local_paths_in_report": False,
+            },
+        },
+    )
+
+
+def _write_mobile_deploy_preflight_evidence_ready(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json",
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "ready",
+            "command": "make mobile-deploy-preflight",
+            "script": "apps/mobile/ios/scripts/deploy_preflight.sh",
+            "exit_code": 0,
+            "checks": [
+                {
+                    "id": "deploy_preflight",
+                    "label": "iOS deploy preflight",
+                    "status": "ready",
+                    "detail": "iOS deploy preflight passed.",
+                },
+                {
+                    "id": "backend_health",
+                    "label": "Backend health",
+                    "status": "ready",
+                    "detail": "Backend health: ok",
+                },
+            ],
+            "stdout_lines": [
+                "iOS deploy preflight passed.",
+                "Backend health: ok",
+            ],
+            "stderr_lines": [],
+            "operator_actions": [],
+            "safety": {
+                "commands_run": True,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
                 "local_paths_in_report": False,
             },
         },

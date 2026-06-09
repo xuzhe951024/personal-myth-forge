@@ -5465,6 +5465,19 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
     try expectEqual(bundle.firstAction.id, "start_backend_device_demo")
     try expectEqual(bundle.firstAction.command, "make backend-device-demo")
     try expectEqual(bundle.actions[1].command, "make mobile-deploy-preflight")
+    try expectEqual(try require(bundle.actions[1].evidenceStatus, "missing evidence status"), "ready")
+    try expectEqual(
+        try require(bundle.actions[1].evidenceSource, "missing evidence source"),
+        "services/backend/.local/mobile-deploy-preflight-evidence.json"
+    )
+    try expectEqual(
+        try require(bundle.actions[1].validationCommand, "missing validation command"),
+        "make mobile-deploy-preflight-evidence"
+    )
+    try expectContains(
+        try require(bundle.actions[1].evidenceDetail, "missing evidence detail"),
+        "iOS deploy preflight passed."
+    )
     try expectFalse(bundle.safety.commandsRun)
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.liveProviderCalls)
@@ -5537,6 +5550,8 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle() 
     try expectContains(text, "start_backend_device_demo: blocked")
     try expectContains(text, "make backend-device-demo")
     try expectContains(text, "make mobile-deploy-preflight")
+    try expectContains(text, "evidence ready")
+    try expectContains(text, "make mobile-deploy-preflight-evidence")
     try expectContains(text, "commands_run=false")
 }
 
@@ -9194,6 +9209,10 @@ private func finalDemoLaunchPayload(
                   "command": "make mobile-deploy-preflight",
                   "detail": "Verify the iPhone can reach the backend and read launch config.",
                   "source": "final_showcase_readiness",
+                  "evidence_status": "ready",
+                  "evidence_source": "services/backend/.local/mobile-deploy-preflight-evidence.json",
+                  "evidence_detail": "iOS deploy preflight passed.",
+                  "validation_command": "make mobile-deploy-preflight-evidence",
                   "blocks": ["ios_deployable", "functional_regression"],
                   "manual": true,
                   "global_action": false,

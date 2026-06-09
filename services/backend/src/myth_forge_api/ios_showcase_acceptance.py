@@ -1562,6 +1562,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.223_preflight_evidence_device_actions",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
                 "p0.100_live_provider_consent",
             ),
             SourceRequirement(
@@ -1593,7 +1597,7 @@ FEATURES = (
                 "test_visual_regression_cli_writes_showcase_report",
             ),
             SourceRequirement("README.md", "full-showcase visual index"),
-            SourceRequirement("README.md", "28 static 390x844 iPhone evidence artifacts"),
+            SourceRequirement("README.md", "29 static 390x844 iPhone evidence artifacts"),
             SourceRequirement("README.md", "configured acceptance command visual"),
             SourceRequirement("README.md", "device blocker handoff visual"),
         ),
@@ -2762,12 +2766,32 @@ FEATURES = (
                 "make backend-device-demo",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "mobile_deploy_preflight_evidence",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "validation_command",
+            ),
+            SourceRequirement(
                 "services/backend/tests/test_final_showcase_readiness.py",
                 "test_final_showcase_readiness_includes_ios_device_action_bundle",
             ),
             SourceRequirement(
+                "services/backend/tests/test_final_showcase_readiness.py",
+                "test_final_showcase_readiness_marks_preflight_actions_ready_with_evidence",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "FinalShowcaseDeviceActionBundle",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "evidenceStatus: String?",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "validationCommand: String?",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
@@ -2782,8 +2806,20 @@ FEATURES = (
                 "Device actions",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "evidenceStatus",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "validationCommand",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "make mobile-deploy-preflight",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "make mobile-deploy-preflight-evidence",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
