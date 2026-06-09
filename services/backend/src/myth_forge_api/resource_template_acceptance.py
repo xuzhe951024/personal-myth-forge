@@ -20,6 +20,9 @@ BACKEND_WRITER_MAKE_TARGET = "backend-write-provider-env"
 FINAL_RESOURCE_TEMPLATE_PATH = "services/backend/final-resources.env.example"
 FINAL_RESOURCE_APPLY_PATH = "services/backend/scripts/apply_final_resources.sh"
 FINAL_RESOURCE_APPLY_MAKE_TARGET = "final-apply-resources"
+RESOURCE_HANDOFF_PATH = "services/backend/src/myth_forge_api/resource_handoff.py"
+RESOURCE_HANDOFF_MAKE_TARGET = "resource-handoff"
+RESOURCE_HANDOFF_OUTPUT = ".local/resource-handoff.json"
 FINAL_RESOURCES_PREFLIGHT_PATH = (
     "services/backend/src/myth_forge_api/final_resources_preflight.py"
 )
@@ -157,6 +160,9 @@ def run_resource_template_acceptance(
     final_resource_apply_text, final_resource_apply_exists = _read_optional_text(
         selected_repo_root / FINAL_RESOURCE_APPLY_PATH
     )
+    resource_handoff_text, resource_handoff_exists = _read_optional_text(
+        selected_repo_root / RESOURCE_HANDOFF_PATH
+    )
     final_resources_preflight_text, final_resources_preflight_exists = (
         _read_optional_text(selected_repo_root / FINAL_RESOURCES_PREFLIGHT_PATH)
     )
@@ -240,6 +246,14 @@ def run_resource_template_acceptance(
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
+    resource_handoff_checks = _resource_handoff_checks(
+        module_text=resource_handoff_text,
+        module_exists=resource_handoff_exists,
+        cli_text=cli_text,
+        cli_exists=cli_exists,
+        makefile_text=makefile_text,
+        makefile_exists=makefile_exists,
+    )
     final_resources_preflight_checks = _final_resources_preflight_checks(
         module_text=final_resources_preflight_text,
         module_exists=final_resources_preflight_exists,
@@ -316,6 +330,7 @@ def run_resource_template_acceptance(
         _check("template_safety", _templates_are_safe(safety)),
         _check("backend_writer", all(backend_writer_checks.values())),
         _check("final_resource_apply", all(final_resource_apply_checks.values())),
+        _check("resource_handoff", all(resource_handoff_checks.values())),
         _check(
             "final_resources_preflight",
             all(final_resources_preflight_checks.values()),
@@ -384,6 +399,13 @@ def run_resource_template_acceptance(
             "present_keys": sorted(final_resource_keys),
             "missing_keys": final_resource_missing,
             "checks": final_resource_apply_checks,
+        },
+        "resource_handoff": {
+            "path": RESOURCE_HANDOFF_PATH,
+            "make_target": RESOURCE_HANDOFF_MAKE_TARGET,
+            "output_path": RESOURCE_HANDOFF_OUTPUT,
+            "exists": resource_handoff_exists,
+            "checks": resource_handoff_checks,
         },
         "final_resources_preflight": {
             "path": FINAL_RESOURCES_PREFLIGHT_PATH,
@@ -606,6 +628,31 @@ def _final_resources_preflight_checks(
         "launch_integration": "build_final_resources_preflight_report"
         in final_demo_launch_text
         and "final_resources_preflight" in final_demo_launch_text,
+        "no_banned_commands": not any(
+            banned in checked_text for banned in BANNED_WRITER_TEXT
+        ),
+    }
+
+
+def _resource_handoff_checks(
+    *,
+    module_text: str,
+    module_exists: bool,
+    cli_text: str,
+    cli_exists: bool,
+    makefile_text: str,
+    makefile_exists: bool,
+) -> dict[str, bool]:
+    checked_text = makefile_text
+    return {
+        "module_exists": module_exists,
+        "cli_command": cli_exists
+        and "resource-handoff" in cli_text
+        and "build_resource_handoff_report" in cli_text,
+        "make_target": makefile_exists
+        and RESOURCE_HANDOFF_MAKE_TARGET in makefile_text
+        and "myth_forge_api.cli resource-handoff" in makefile_text,
+        "output_path": makefile_exists and RESOURCE_HANDOFF_OUTPUT in makefile_text,
         "no_banned_commands": not any(
             banned in checked_text for banned in BANNED_WRITER_TEXT
         ),

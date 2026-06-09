@@ -73,6 +73,7 @@ from myth_forge_api.providers.factory import (
     build_three_d_provider,
 )
 from myth_forge_api.provider_handoff import build_provider_handoff_report
+from myth_forge_api.resource_handoff import build_resource_handoff_report
 from myth_forge_api.visual_regression import check_visual_artifacts
 
 LOCAL_REPORT_DIR = Path("services/backend/.local")
@@ -175,6 +176,15 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "Provider handoff",
             "provider-handoff.json",
             lambda repo_root: build_provider_handoff_report(load_settings()),
+        ),
+        _step(
+            "resource_handoff",
+            "Resource handoff",
+            "resource-handoff.json",
+            lambda repo_root: build_resource_handoff_report(
+                settings=load_settings(),
+                repo_root=repo_root,
+            ),
         ),
         _step(
             "visual_regression_local",

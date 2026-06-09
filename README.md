@@ -1401,16 +1401,16 @@ gate, next commands, and safety checks.
 Run:
 
 ```bash
-cd services/backend
-uv run python -m myth_forge_api.cli resource-handoff \
-  --repo-root ../.. \
-  --output /tmp/personal-myth-forge-resource-handoff.json
+make resource-handoff
+cat services/backend/.local/resource-handoff.json
 ```
 
-The command is configuration-only: it does not call Meshy, OpenAI, Treatstock,
-Sculpteo, or Apple services; does not mutate `.env`, Xcode, signing, keychain,
-or license state; and never prints provider key values. On a default local
-checkout it exits `2` with a safe blocked report until the backend gets
+The Make target writes `services/backend/.local/resource-handoff.json`; the
+same report is also refreshed by `make final-local-report-refresh`. The command
+is configuration-only: it does not call Meshy, OpenAI, Treatstock, Sculpteo, or
+Apple services; does not mutate `.env`, Xcode, signing, keychain, or license
+state; and never prints provider key values. On a default local checkout it
+exits `2` with a safe blocked report until the backend gets
 `THREE_D_PROVIDER=meshy`, `MESHY_API_KEY`, `NPC_PROVIDER=openai`,
 `OPENAI_API_KEY`, and the ignored iOS deploy config gets a Team ID plus an
 iPhone-reachable LAN backend URL.
