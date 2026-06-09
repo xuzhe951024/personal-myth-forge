@@ -96,7 +96,10 @@ during `make final-apply-resources`; read-only reports mark it as
 
 `final-resources-preflight` is read-only: it checks missing keys, unknown keys,
 loopback iPhone backend URLs, and Treatstock key dependencies without writing
-config files or calling providers. `final-apply-resources` writes only
+config files or calling providers. It writes
+`services/backend/.local/final-resources-preflight.json` even when it exits `2`,
+so the blocked handoff state can be inspected without rerunning the check.
+`final-apply-resources` writes only
 `services/backend/.env` and
 `apps/mobile/ios/Config/Deployment.local.xcconfig`, both ignored by git. Its
 output redacts provider keys and it does not call Meshy/OpenAI/Treatstock, start
@@ -2165,6 +2168,12 @@ uv run pytest tests/test_final_resources_preflight.py \
   tests/test_final_demo_launch.py \
   tests/test_resource_template_acceptance.py -q
 ```
+
+The Make target writes
+`services/backend/.local/final-resources-preflight.json` on both ready and
+blocked outcomes. The JSON is sanitized: it records key names, statuses,
+redaction flags, and operator actions without exposing provider key values or
+local absolute paths.
 
 `final-demo-launch` now includes a top-level `final_resources_preflight` object.
 The `apply_final_resources` phase is `missing` when the final resources file is

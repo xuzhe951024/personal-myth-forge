@@ -140,7 +140,7 @@ final-apply-resources:
 \t@services/backend/scripts/apply_final_resources.sh
 .PHONY: final-resources-preflight
 final-resources-preflight:
-\tcd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../..
+\tcd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../.. --output .local/final-resources-preflight.json
 .PHONY: final-configured-preflight
 final-configured-preflight:
 \tcd services/backend && uv run python -m myth_forge_api.cli final-configured-preflight --repo-root ../.. --output .local/final-configured-preflight.json
@@ -400,9 +400,13 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.report["final_resources_preflight"]["make_target"] == (
         "final-resources-preflight"
     )
+    assert result.report["final_resources_preflight"]["output_path"] == (
+        ".local/final-resources-preflight.json"
+    )
     assert result.report["final_resources_preflight"]["checks"]["module_exists"] is True
     assert result.report["final_resources_preflight"]["checks"]["cli_command"] is True
     assert result.report["final_resources_preflight"]["checks"]["make_target"] is True
+    assert result.report["final_resources_preflight"]["checks"]["output_path"] is True
     assert (
         result.report["final_resources_preflight"]["checks"]["launch_integration"] is True
     )

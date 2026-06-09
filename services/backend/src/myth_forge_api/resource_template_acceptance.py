@@ -24,6 +24,7 @@ FINAL_RESOURCES_PREFLIGHT_PATH = (
     "services/backend/src/myth_forge_api/final_resources_preflight.py"
 )
 FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET = "final-resources-preflight"
+FINAL_RESOURCES_PREFLIGHT_OUTPUT = ".local/final-resources-preflight.json"
 FINAL_CONFIGURED_PREFLIGHT_PATH = (
     "services/backend/src/myth_forge_api/final_configured_preflight.py"
 )
@@ -387,6 +388,7 @@ def run_resource_template_acceptance(
         "final_resources_preflight": {
             "path": FINAL_RESOURCES_PREFLIGHT_PATH,
             "make_target": FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET,
+            "output_path": FINAL_RESOURCES_PREFLIGHT_OUTPUT,
             "exists": final_resources_preflight_exists,
             "checks": final_resources_preflight_checks,
         },
@@ -599,6 +601,8 @@ def _final_resources_preflight_checks(
         "make_target": makefile_exists
         and FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET in makefile_text
         and "myth_forge_api.cli final-resources-preflight" in makefile_text,
+        "output_path": makefile_exists
+        and FINAL_RESOURCES_PREFLIGHT_OUTPUT in makefile_text,
         "launch_integration": "build_final_resources_preflight_report"
         in final_demo_launch_text
         and "final_resources_preflight" in final_demo_launch_text,

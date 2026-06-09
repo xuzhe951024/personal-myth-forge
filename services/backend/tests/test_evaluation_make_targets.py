@@ -12,6 +12,7 @@ def test_evaluation_make_targets_dry_run_expected_local_commands() -> None:
             "backend-evaluate-3d",
             "backend-evaluate-npc",
             "backend-evaluate-local",
+            "final-resources-preflight",
         ],
         cwd=repo_root,
         check=False,
@@ -32,4 +33,6 @@ def test_evaluation_make_targets_dry_run_expected_local_commands() -> None:
     assert "evaluate-npc" in output
     assert "--tick-steps 2" in output
     assert "--output .local/npc-evaluation-local.json" in output
+    assert "final-resources-preflight" in output
+    assert "--output .local/final-resources-preflight.json" in output
     assert output.index("evaluate-3d") < output.rindex("evaluate-npc")
