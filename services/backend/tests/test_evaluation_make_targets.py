@@ -12,6 +12,9 @@ def test_evaluation_make_targets_dry_run_expected_local_commands() -> None:
             "backend-evaluate-3d",
             "backend-evaluate-npc",
             "backend-evaluate-local",
+            "backend-evaluate-3d-configured",
+            "backend-evaluate-npc-configured",
+            "backend-evaluate-configured",
             "final-resources-preflight",
             "resource-handoff",
             "final-demo-launch-configured",
@@ -35,6 +38,13 @@ def test_evaluation_make_targets_dry_run_expected_local_commands() -> None:
     assert "evaluate-npc" in output
     assert "--tick-steps 2" in output
     assert "--output .local/npc-evaluation-local.json" in output
+    assert "backend-evaluate-3d-configured:" in makefile
+    assert "backend-evaluate-npc-configured:" in makefile
+    assert "backend-evaluate-configured:" in makefile
+    assert "--provider meshy" in output
+    assert "--output .local/3d-evaluation-configured.json" in output
+    assert "--provider openai" in output
+    assert "--output .local/npc-evaluation-configured.json" in output
     assert "final-resources-preflight" in output
     assert "--output .local/final-resources-preflight.json" in output
     assert "resource-handoff" in output

@@ -7465,7 +7465,7 @@ private func finalDemoLaunchPayload(
     let defaultLiveEvidenceFirstStatus = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "blocked" : "missing"
     let defaultLiveEvidenceFirstClassification = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "report_not_ready" : "missing_report"
     let defaultLiveEvidenceCommand = liveEvidenceBlocked
-        ? "cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider meshy --suite default-v0 --output .local/3d-evaluation-configured.json"
+        ? "make backend-evaluate-3d-configured"
         : "make live-provider-evidence"
     let liveEvidenceFirstID = liveProviderEvidenceFirstID ?? defaultLiveEvidenceFirstID
     let liveEvidenceFirstLabel = liveProviderEvidenceFirstLabel ?? defaultLiveEvidenceFirstLabel
@@ -8964,7 +8964,7 @@ private func finalDemoLaunchPayload(
                 "id": "three_d_evaluation_configured",
                 "label": "Configured 3D evaluation",
                 "status": "\(configuredEvidencePlanStepStatus)",
-                "command": "cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider meshy --suite default-v0 --output .local/3d-evaluation-configured.json",
+                "command": "make backend-evaluate-3d-configured",
                 "requires_live_provider_consent": true,
                 "may_call_live_provider": true,
                 "cost_risk": true,
@@ -8982,7 +8982,7 @@ private func finalDemoLaunchPayload(
                 "id": "three_d_evaluation_configured",
                 "label": "Configured 3D evaluation",
                 "status": "\(configuredEvidencePlanStepStatus)",
-                "command": "cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider meshy --suite default-v0 --output .local/3d-evaluation-configured.json",
+                "command": "make backend-evaluate-3d-configured",
                 "requires_live_provider_consent": true,
                 "may_call_live_provider": true,
                 "cost_risk": true,

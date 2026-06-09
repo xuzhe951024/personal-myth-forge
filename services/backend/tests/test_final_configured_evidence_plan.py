@@ -64,7 +64,13 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
     assert steps["final_configured_preflight"]["status"] == "ready"
     assert steps["provider_handoff"]["status"] == "ready_to_run"
     assert steps["three_d_evaluation_configured"]["status"] == "consent_required"
+    assert steps["three_d_evaluation_configured"]["command"] == (
+        "make backend-evaluate-3d-configured"
+    )
     assert steps["npc_evaluation_configured"]["status"] == "consent_required"
+    assert steps["npc_evaluation_configured"]["command"] == (
+        "make backend-evaluate-npc-configured"
+    )
     assert steps["final_acceptance_configured"]["status"] == "consent_required"
     assert steps["live_provider_evidence"]["status"] == "ready_to_run"
     assert report["live_call_policy"]["allow_live_provider_calls"] is False

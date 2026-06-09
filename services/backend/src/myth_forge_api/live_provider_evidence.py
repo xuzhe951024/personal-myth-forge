@@ -46,11 +46,7 @@ EVIDENCE_SLOTS = [
         label="Configured 3D evaluation",
         path=Path("services/backend/.local/3d-evaluation-configured.json"),
         expected_kind="three_d_evaluation_report",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "evaluate-3d --provider meshy --suite default-v0 "
-            "--output .local/3d-evaluation-configured.json"
-        ),
+        command="make backend-evaluate-3d-configured",
         proof="Meshy generated the canonical 20-case 3D suite for review.",
         requires_live_provider_consent=True,
         rerun_action="rerun configured 3D evaluation",
@@ -60,11 +56,7 @@ EVIDENCE_SLOTS = [
         label="Configured NPC Agent evaluation",
         path=Path("services/backend/.local/npc-evaluation-configured.json"),
         expected_kind="npc_agent_evaluation_report",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "evaluate-npc --provider openai --suite default-v0 --tick-steps 2 "
-            "--output .local/npc-evaluation-configured.json"
-        ),
+        command="make backend-evaluate-npc-configured",
         proof="OpenAI NPC Agent ticks completed the canonical NPC suite.",
         requires_live_provider_consent=True,
         rerun_action="rerun configured NPC Agent evaluation",

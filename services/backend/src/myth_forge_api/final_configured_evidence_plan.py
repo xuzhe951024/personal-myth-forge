@@ -76,11 +76,7 @@ STEPS = [
     StepDefinition(
         step_id="three_d_evaluation_configured",
         label="Configured 3D evaluation",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "evaluate-3d --provider meshy --suite default-v0 "
-            "--output .local/3d-evaluation-configured.json"
-        ),
+        command="make backend-evaluate-3d-configured",
         requires_live_provider_consent=True,
         may_call_live_provider=True,
         cost_risk=True,
@@ -89,11 +85,7 @@ STEPS = [
     StepDefinition(
         step_id="npc_evaluation_configured",
         label="Configured NPC Agent evaluation",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "evaluate-npc --provider openai --suite default-v0 --tick-steps 2 "
-            "--output .local/npc-evaluation-configured.json"
-        ),
+        command="make backend-evaluate-npc-configured",
         requires_live_provider_consent=True,
         may_call_live_provider=True,
         cost_risk=True,

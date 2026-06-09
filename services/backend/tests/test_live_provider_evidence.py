@@ -26,7 +26,13 @@ def test_live_provider_evidence_missing_reports_without_running_commands(
     evidence = {slot["id"]: slot for slot in result.report["evidence"]}
     assert evidence["provider_handoff"]["status"] == "missing"
     assert evidence["three_d_evaluation_configured"]["status"] == "missing"
+    assert evidence["three_d_evaluation_configured"]["command"] == (
+        "make backend-evaluate-3d-configured"
+    )
     assert evidence["three_d_evaluation_configured"]["requires_live_provider_consent"] is True
+    assert evidence["npc_evaluation_configured"]["command"] == (
+        "make backend-evaluate-npc-configured"
+    )
     assert "make live-provider-evidence" in result.report["operator_actions"][0]
     assert result.report["safety"]["commands_run"] is False
     assert result.report["safety"]["provider_calls"] is False

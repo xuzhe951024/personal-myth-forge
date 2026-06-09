@@ -111,9 +111,17 @@ steps.
 Then validate configured provider readiness explicitly:
 
 ```bash
-cd services/backend
-uv run python -m myth_forge_api.cli provider-handoff --require-core-real
+make provider-handoff
+make backend-evaluate-configured
+make live-provider-evidence
 ```
+
+`make backend-evaluate-configured` runs the Meshy 3D evaluation and OpenAI NPC
+Agent evaluation targets, writing
+`services/backend/.local/3d-evaluation-configured.json` and
+`services/backend/.local/npc-evaluation-configured.json`. Run it only after the
+ignored backend env has real provider keys and after explicit cost consent; the
+read-only evidence reports list the command but never execute it by themselves.
 
 The unified resource file can set `PRINT_PROVIDER=treatstock` plus
 `TREATSTOCK_API_KEY` for live quote handoff. Use `PRINT_PROVIDER=local` for a
