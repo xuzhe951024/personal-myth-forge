@@ -457,7 +457,17 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     _write_npc_evaluation(repo_root)
     _write_visual_regression_blocked(repo_root)
     _write_final_acceptance_blocked_with_actions(repo_root)
-    _write_ios_device_launch_rehearsal_with_actions(repo_root)
+    _write_ios_device_launch_rehearsal_with_actions(
+        repo_root,
+        extra_actions=[
+            (
+                "final_handoff_index: run cd services/backend && uv run python -m "
+                "myth_forge_api.cli final-demo-launch --mode configured "
+                "--repo-root [repo-root] "
+                "--output .local/final-demo-launch-configured.json"
+            )
+        ],
+    )
 
     result = build_final_showcase_readiness_report(
         settings=Settings(),
@@ -468,6 +478,8 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert result.exit_code == 2
     assert actions[0] == "final_rehearsal_local: final_acceptance_local: action 1"
     assert "final_handoff_index: run make final-configured-preflight" in actions
+    assert "final_handoff_index: run make final-demo-launch-configured" in actions
+    assert not any("final-demo-launch --mode configured" in action for action in actions)
     assert "ios_device_launch_certificate: run make final-handoff-index" in actions
     assert (
         "run make live-provider-evidence after configured provider evidence files are refreshed"
