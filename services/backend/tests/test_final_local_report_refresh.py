@@ -44,6 +44,8 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert steps["final_resource_fill_guide"]["status"] == "blocked"
     assert steps["resource_handoff"]["status"] == "blocked"
     assert steps["resource_handoff"]["accepted_blocked"] is True
+    assert steps["final_demo_launch_configured"]["status"] == "blocked"
+    assert steps["final_demo_launch_configured"]["accepted_blocked"] is True
     assert steps["final_configured_evidence_plan"]["status"] == "blocked"
     assert steps["configured_live_evidence_bundle"]["status"] == "blocked"
     assert steps["configured_live_evidence_bundle"]["accepted_blocked"] is True
@@ -87,6 +89,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "services/backend/.local/visual-regression-local.json",
         "services/backend/.local/final-acceptance-local.json",
         "services/backend/.local/final-demo-launch-local.json",
+        "services/backend/.local/final-demo-launch-configured.json",
         "services/backend/.local/ios-deploy-runbook-local.json",
         "services/backend/.local/mobile-deploy-preflight-evidence.json",
         "services/backend/.local/mobile-xcode-build-evidence.json",

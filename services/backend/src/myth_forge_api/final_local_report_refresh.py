@@ -208,6 +208,15 @@ def _default_steps() -> list[RefreshStepDefinition]:
             ).report,
         ),
         _step(
+            "final_demo_launch_configured",
+            "Configured final demo launch",
+            "final-demo-launch-configured.json",
+            lambda repo_root: build_final_demo_launch_report(
+                mode="configured",
+                repo_root=repo_root,
+            ).report,
+        ),
+        _step(
             "ios_deploy_runbook_local",
             "iOS deploy runbook",
             "ios-deploy-runbook-local.json",

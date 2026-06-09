@@ -14,6 +14,7 @@ def test_evaluation_make_targets_dry_run_expected_local_commands() -> None:
             "backend-evaluate-local",
             "final-resources-preflight",
             "resource-handoff",
+            "final-demo-launch-configured",
         ],
         cwd=repo_root,
         check=False,
@@ -38,4 +39,6 @@ def test_evaluation_make_targets_dry_run_expected_local_commands() -> None:
     assert "--output .local/final-resources-preflight.json" in output
     assert "resource-handoff" in output
     assert "--output .local/resource-handoff.json" in output
+    assert "final-demo-launch --mode configured" in output
+    assert "--output .local/final-demo-launch-configured.json" in output
     assert output.index("evaluate-3d") < output.rindex("evaluate-npc")

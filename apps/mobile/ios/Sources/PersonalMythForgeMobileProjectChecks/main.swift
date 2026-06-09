@@ -496,6 +496,8 @@ do {
     try requireContains(makefile, "resource-handoff:", "resource handoff Make target")
     try requireContains(makefile, "--output .local/resource-handoff.json", "resource handoff report output")
     try requireContains(makefile, "--output .local/final-demo-launch-local.json", "final demo launch local report output")
+    try requireContains(makefile, "final-demo-launch-configured:", "final demo launch configured Make target")
+    try requireContains(makefile, "--output .local/final-demo-launch-configured.json", "final demo launch configured report output")
     try requireContains(
         finalConfiguredPreflight,
         "build_final_configured_preflight_report",

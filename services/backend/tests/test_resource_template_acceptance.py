@@ -135,6 +135,8 @@ final-acceptance-local:
 final-demo-launch: final-demo-launch-local
 final-demo-launch-local:
 \tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../.. --output .local/final-demo-launch-local.json
+final-demo-launch-configured:
+\tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../.. --output .local/final-demo-launch-configured.json
 .PHONY: resource-handoff
 resource-handoff:
 \tcd services/backend && uv run python -m myth_forge_api.cli resource-handoff --repo-root ../.. --output .local/resource-handoff.json
@@ -371,6 +373,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.report["final_demo_launch"]["checks"]["cli_command"] is True
     assert result.report["final_demo_launch"]["checks"]["make_target"] is True
     assert result.report["final_demo_launch"]["checks"]["local_output_path"] is True
+    assert result.report["final_demo_launch"]["checks"]["configured_output_path"] is True
     assert result.report["final_demo_launch"]["checks"]["uses_resource_handoff"] is True
     assert result.report["final_demo_launch"]["checks"]["no_banned_commands"] is True
     assert result.report["final_rehearsal_local"]["make_target"] == (
