@@ -362,6 +362,11 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
             repo_root / "services/backend/.local/final-launch-closure-packet.json"
         ).read_text(encoding="utf-8")
     )
+    demo_launch = json.loads(
+        (
+            repo_root / "services/backend/.local/final-demo-launch-local.json"
+        ).read_text(encoding="utf-8")
+    )
 
     assert result.exit_code == 2
     assert steps["ios_deploy_runbook_local"] < steps["mobile_deploy_preflight_evidence"]
@@ -379,6 +384,9 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     assert steps["print_fulfillment_readiness"] < steps["final_launch_closure_packet"]
     assert steps["final_external_action_ledger"] < steps["final_launch_closure_packet"]
     assert steps["final_showcase_readiness"] < steps["final_launch_closure_packet"]
+    assert steps["ios_device_launch_rehearsal"] < steps["final_demo_launch_local"]
+    assert steps["ios_device_launch_rehearsal"] < steps["final_demo_launch_configured"]
+    assert steps["final_showcase_readiness"] < steps["final_demo_launch_local"]
     provider_handoff = json.loads(
         (repo_root / "services/backend/.local/provider-handoff.json").read_text(
             encoding="utf-8"
@@ -401,6 +409,9 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     assert showcase["evidence"]["ios_device_launch_rehearsal_readiness"]["kind"] == (
         "ios_device_launch_rehearsal_readiness_report"
     )
+    embedded_rehearsal = demo_launch["ios_device_launch_rehearsal_readiness"]
+    assert embedded_rehearsal["kind"] == "ios_device_launch_rehearsal_readiness_report"
+    assert embedded_rehearsal["sequence"][0]["detail"]
     assert showcase["evidence"]["configured_live_evidence_bundle"]["kind"] == (
         "configured_live_evidence_bundle_report"
     )
