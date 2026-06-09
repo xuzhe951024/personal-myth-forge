@@ -434,7 +434,7 @@ do {
     )
     try requireContains(
         readme,
-        "28 static 390x844 iPhone evidence artifacts",
+        "29 static 390x844 iPhone evidence artifacts",
         "visual regression artifact count README copy"
     )
     try requireContains(

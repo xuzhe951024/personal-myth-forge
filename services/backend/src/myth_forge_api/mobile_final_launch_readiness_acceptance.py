@@ -198,6 +198,18 @@ SOURCE_REQUIREMENTS = (
         "deviceActionBundle: FinalShowcaseDeviceActionBundle?",
     ),
     SourceRequirement(
+        "model_final_showcase_device_action_evidence_status",
+        "Final showcase device action evidence status",
+        PMF_MODELS_PATH,
+        "evidenceStatus: String?",
+    ),
+    SourceRequirement(
+        "model_final_showcase_device_action_validation_command",
+        "Final showcase device action validation command",
+        PMF_MODELS_PATH,
+        "validationCommand: String?",
+    ),
+    SourceRequirement(
         "model_ios_device_launch_rehearsal",
         "iOS device launch rehearsal readiness model",
         PMF_MODELS_PATH,
@@ -520,6 +532,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final showcase device action bundle rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
         "showcaseDeviceActionBundleRows",
+    ),
+    SourceRequirement(
+        "mobile_summary_final_showcase_device_action_evidence",
+        "Mobile final showcase device action evidence rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "evidenceStatus",
     ),
     SourceRequirement(
         "mobile_summary_launch_rehearsal_rows",
@@ -1146,10 +1164,22 @@ SOURCE_REQUIREMENTS = (
         "deviceActionBundle",
     ),
     SourceRequirement(
+        "contract_final_showcase_device_action_evidence_decode",
+        "Contract test decodes final showcase device action evidence",
+        CORE_CONTRACT_TESTS_PATH,
+        "evidenceStatus",
+    ),
+    SourceRequirement(
         "contract_final_showcase_device_action_bundle_summary",
         "Contract test renders final showcase device action bundle",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle",
+    ),
+    SourceRequirement(
+        "contract_final_showcase_device_action_evidence_summary",
+        "Contract test renders final showcase device action evidence",
+        CORE_CONTRACT_TESTS_PATH,
+        "make mobile-deploy-preflight-evidence",
     ),
     SourceRequirement(
         "contract_ios_deploy_runbook_missing",

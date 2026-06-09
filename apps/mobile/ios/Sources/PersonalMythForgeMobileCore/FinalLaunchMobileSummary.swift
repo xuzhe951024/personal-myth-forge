@@ -1260,6 +1260,13 @@ public enum FinalLaunchMobileSummaryBuilder {
             parts.append(classification)
         }
         parts.append("| \(action.command)")
+        if let evidenceStatus = action.evidenceStatus, !evidenceStatus.isEmpty {
+            var evidence = "evidence \(evidenceStatus)"
+            if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
+                evidence += " | \(validationCommand)"
+            }
+            parts.append("| \(evidence)")
+        }
         if !action.detail.isEmpty {
             parts.append("| \(action.detail)")
         }

@@ -198,9 +198,14 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "contract_final_resource_auto_backend_url_handoff_summary" in requirement_ids
     assert "model_final_showcase_device_action_bundle" in requirement_ids
     assert "model_final_showcase_device_action_bundle_field" in requirement_ids
+    assert "model_final_showcase_device_action_evidence_status" in requirement_ids
+    assert "model_final_showcase_device_action_validation_command" in requirement_ids
     assert "mobile_summary_final_showcase_device_action_bundle" in requirement_ids
+    assert "mobile_summary_final_showcase_device_action_evidence" in requirement_ids
     assert "contract_final_showcase_device_action_bundle_decode" in requirement_ids
+    assert "contract_final_showcase_device_action_evidence_decode" in requirement_ids
     assert "contract_final_showcase_device_action_bundle_summary" in requirement_ids
+    assert "contract_final_showcase_device_action_evidence_summary" in requirement_ids
     assert "model_final_resource_requirements_first_blocker" in requirement_ids
     assert "model_final_resource_requirements_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_requirements_source" in requirement_ids
@@ -304,6 +309,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "finalLaunchClosurePacket",
                 "FinalShowcaseDeviceActionBundle",
                 "deviceActionBundle: FinalShowcaseDeviceActionBundle?",
+                "evidenceStatus: String?",
+                "validationCommand: String?",
                 "VisualRegressionReadinessReport",
                 "visualRegressionReadiness",
                 "LocalShowcaseSmokeReport",
@@ -374,6 +381,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "closurePacketFirstBlockerRow",
                 "report.firstBlocker",
                 "showcaseDeviceActionBundleRows",
+                "evidenceStatus",
+                "validationCommand",
                 "visualRegressionRows",
                 "localShowcaseSmokeRows",
                 "provider_calls=",
@@ -497,6 +506,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryShowsAutoBackendURLHandoff",
                 "deviceActionBundle",
                 "make mobile-deploy-preflight",
+                "evidenceStatus",
+                "make mobile-deploy-preflight-evidence",
                 "testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle",
                 "testDevicePreflightWaitsForMissingIOSDeployRunbook",
                 "testDevicePreflightBlocksOnIOSDeployRunbookCommandStep",
