@@ -81,6 +81,44 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
     assert result.report["safety"]["live_provider_calls"] is False
 
 
+def test_final_showcase_readiness_includes_ios_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    bundle = result.report["device_action_bundle"]
+    assert bundle["id"] == "ios_device_manual_actions"
+    assert bundle["label"] == "iOS Device Manual Actions"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"]["actions"] >= 4
+    assert bundle["summary"]["manual"] == bundle["summary"]["actions"]
+    assert bundle["summary"]["blocked"] >= 1
+    assert bundle["summary"]["xcode_or_signing"] == 1
+    assert bundle["summary"]["global_actions"] == 0
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["first_action"]["id"] == "start_backend_device_demo"
+    assert bundle["first_action"]["command"] == "make backend-device-demo"
+    assert [action["id"] for action in bundle["actions"][:4]] == [
+        "start_backend_device_demo",
+        "run_mobile_deploy_preflight",
+        "resolve_xcode_build_gate",
+        "run_ios_device_launch_rehearsal",
+    ]
+    assert bundle["actions"][0]["blocks"] == [
+        "ios_deployable",
+        "functional_regression",
+    ]
+    assert bundle["actions"][2]["xcode_or_signing"] is True
+    assert bundle["safety"]["commands_run"] is False
+    assert bundle["safety"]["global_mutation"] is False
+    assert bundle["safety"]["provider_calls"] is False
+
+
 def test_final_showcase_readiness_blocks_failed_local_showcase_smoke(
     tmp_path: Path,
     monkeypatch,

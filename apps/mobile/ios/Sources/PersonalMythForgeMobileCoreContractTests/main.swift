@@ -216,6 +216,7 @@ do {
     try testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction()
     try testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions()
+    try testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle()
     try testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness()
     try testDecodesNPCAgentEvaluationReadinessFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsReadyNPCAgentEvaluation()
@@ -5453,6 +5454,18 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
     try expectEqual(readiness.firstBlocker?.id, "ios_deployable")
     try expectEqual(readiness.nextAction?.id, "ios_deployable")
     try expectEqual(readiness.nextAction?.source, "first_blocker")
+    let bundle = try require(
+        readiness.deviceActionBundle,
+        "missing final showcase device action bundle"
+    )
+    try expectEqual(bundle.id, "ios_device_manual_actions")
+    try expectEqual(bundle.summary.actions, 4)
+    try expectEqual(bundle.summary.manual, 4)
+    try expectEqual(bundle.summary.xcodeOrSigning, 1)
+    try expectEqual(bundle.firstAction.id, "start_backend_device_demo")
+    try expectEqual(bundle.firstAction.command, "make backend-device-demo")
+    try expectEqual(bundle.actions[1].command, "make mobile-deploy-preflight")
+    try expectFalse(bundle.safety.commandsRun)
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.liveProviderCalls)
 }
@@ -5510,7 +5523,21 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
     try expectContains(text, "run make final-resource-init")
     try expectContains(text, "make final-showcase-readiness")
     try expectNotContains(text, "extra action that should stay hidden")
-    try expectEqual(summary.showcaseReadinessRows.count, 9)
+    try expectEqual(summary.showcaseReadinessRows.count, 13)
+}
+
+private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(finalShowcaseReadinessStatus: "blocked"),
+        error: nil
+    )
+    let text = summary.showcaseReadinessRows.joined(separator: " ")
+
+    try expectContains(text, "Device actions blocked: actions 4, manual 4, xcode 1.")
+    try expectContains(text, "start_backend_device_demo: blocked")
+    try expectContains(text, "make backend-device-demo")
+    try expectContains(text, "make mobile-deploy-preflight")
+    try expectContains(text, "commands_run=false")
 }
 
 private func testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness() throws {
@@ -9116,6 +9143,103 @@ private func finalDemoLaunchPayload(
               "source": "first_blocker"
             }
             """),
+            "device_action_bundle": {
+              "id": "ios_device_manual_actions",
+              "label": "iOS Device Manual Actions",
+              "status": "\(finalShowcaseReadinessStatus == "ready" ? "ready" : finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+              "summary": {
+                "actions": 4,
+                "ready": \(finalShowcaseReadinessStatus == "ready" ? "4" : "0"),
+                "manual": 4,
+                "blocked": \(finalShowcaseReadinessStatus == "blocked" ? "4" : "0"),
+                "partial": \(finalShowcaseReadinessStatus == "partial" ? "4" : "0"),
+                "xcode_or_signing": 1,
+                "global_actions": 0,
+                "provider_calls": 0
+              },
+              "first_action": {
+                "id": "start_backend_device_demo",
+                "label": "Start backend device demo",
+                "status": "\(finalShowcaseReadinessStatus == "ready" ? "ready" : finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+                "classification": "manual_backend_required",
+                "command": "make backend-device-demo",
+                "detail": "Start the LAN-reachable backend before running iPhone preflight.",
+                "source": "final_showcase_readiness",
+                "blocks": ["ios_deployable", "functional_regression"],
+                "manual": true,
+                "global_action": false,
+                "provider_calls": false,
+                "xcode_or_signing": false
+              },
+              "actions": [
+                {
+                  "id": "start_backend_device_demo",
+                  "label": "Start backend device demo",
+                  "status": "\(finalShowcaseReadinessStatus == "ready" ? "ready" : finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+                  "classification": "manual_backend_required",
+                  "command": "make backend-device-demo",
+                  "detail": "Start the LAN-reachable backend before running iPhone preflight.",
+                  "source": "final_showcase_readiness",
+                  "blocks": ["ios_deployable", "functional_regression"],
+                  "manual": true,
+                  "global_action": false,
+                  "provider_calls": false,
+                  "xcode_or_signing": false
+                },
+                {
+                  "id": "run_mobile_deploy_preflight",
+                  "label": "Run mobile deploy preflight",
+                  "status": "\(finalShowcaseReadinessStatus == "ready" ? "ready" : finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+                  "classification": "manual_preflight_required",
+                  "command": "make mobile-deploy-preflight",
+                  "detail": "Verify the iPhone can reach the backend and read launch config.",
+                  "source": "final_showcase_readiness",
+                  "blocks": ["ios_deployable", "functional_regression"],
+                  "manual": true,
+                  "global_action": false,
+                  "provider_calls": false,
+                  "xcode_or_signing": false
+                },
+                {
+                  "id": "resolve_xcode_build_gate",
+                  "label": "Resolve Xcode build gate",
+                  "status": "\(finalShowcaseReadinessStatus == "ready" ? "ready" : finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+                  "classification": "manual_xcode_or_signing_required",
+                  "command": "open Xcode and resolve signing/build gate",
+                  "detail": "Resolve signing or build issues in Xcode before device launch proof.",
+                  "source": "final_showcase_readiness",
+                  "blocks": ["ios_deployable"],
+                  "manual": true,
+                  "global_action": false,
+                  "provider_calls": false,
+                  "xcode_or_signing": true
+                },
+                {
+                  "id": "run_ios_device_launch_rehearsal",
+                  "label": "Run iOS device launch rehearsal",
+                  "status": "\(finalShowcaseReadinessStatus == "ready" ? "ready" : finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+                  "classification": "manual_device_rehearsal_required",
+                  "command": "make ios-device-launch-rehearsal",
+                  "detail": "Refresh the final iOS device rehearsal evidence after preflight passes.",
+                  "source": "final_showcase_readiness",
+                  "blocks": ["ios_deployable"],
+                  "manual": true,
+                  "global_action": false,
+                  "provider_calls": false,
+                  "xcode_or_signing": false
+                }
+              ],
+              "safety": {
+                "commands_run": false,
+                "global_mutation": false,
+                "provider_calls": false,
+                "live_provider_calls": false,
+                "writes_backend_env": false,
+                "writes_ios_deploy_config": false,
+                "xcode_or_signing": false,
+                "keychain_writes": false
+              }
+            },
             "operator_actions": \(finalShowcaseActionsJSON),
             "commands": [
               "make final-rehearsal-local",

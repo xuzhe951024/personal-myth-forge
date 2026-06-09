@@ -186,6 +186,18 @@ SOURCE_REQUIREMENTS = (
         "finalLaunchClosurePacket",
     ),
     SourceRequirement(
+        "model_final_showcase_device_action_bundle",
+        "Final showcase device action bundle model",
+        PMF_MODELS_PATH,
+        "FinalShowcaseDeviceActionBundle",
+    ),
+    SourceRequirement(
+        "model_final_showcase_device_action_bundle_field",
+        "Final showcase device action bundle field",
+        PMF_MODELS_PATH,
+        "deviceActionBundle: FinalShowcaseDeviceActionBundle?",
+    ),
+    SourceRequirement(
         "model_ios_device_launch_rehearsal",
         "iOS device launch rehearsal readiness model",
         PMF_MODELS_PATH,
@@ -502,6 +514,12 @@ SOURCE_REQUIREMENTS = (
         "Mobile final demo launch first blocker row",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
         "report.firstBlocker",
+    ),
+    SourceRequirement(
+        "mobile_summary_final_showcase_device_action_bundle",
+        "Mobile final showcase device action bundle rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "showcaseDeviceActionBundleRows",
     ),
     SourceRequirement(
         "mobile_summary_launch_rehearsal_rows",
@@ -1120,6 +1138,18 @@ SOURCE_REQUIREMENTS = (
         "Contract test renders auto backend URL handoff rows",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryShowsAutoBackendURLHandoff",
+    ),
+    SourceRequirement(
+        "contract_final_showcase_device_action_bundle_decode",
+        "Contract test decodes final showcase device action bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "deviceActionBundle",
+    ),
+    SourceRequirement(
+        "contract_final_showcase_device_action_bundle_summary",
+        "Contract test renders final showcase device action bundle",
+        CORE_CONTRACT_TESTS_PATH,
+        "testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle",
     ),
     SourceRequirement(
         "contract_ios_deploy_runbook_missing",

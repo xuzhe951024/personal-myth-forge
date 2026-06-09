@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0.222 Final Showcase Device Action Bundle</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f7f6;
+      color: #12181d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 390px;
+      min-height: 844px;
+      background: #eef4f2;
+    }
+    main {
+      min-height: 844px;
+      padding: 18px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .eyebrow {
+      margin: 12px 0 6px;
+      color: #5e6b68;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      color: #11191d;
+      font-size: 30px;
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+    .intro {
+      margin: 8px 0 2px;
+      color: #52625f;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    section {
+      border: 1px solid #d7e2df;
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: 0 12px 26px rgba(26, 45, 42, 0.08);
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      padding: 10px;
+    }
+    .metric {
+      border: 1px solid #e0e8e6;
+      border-radius: 8px;
+      padding: 9px 6px;
+      background: #fbfcfc;
+    }
+    .metric strong {
+      display: block;
+      color: #10231f;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .metric span {
+      display: block;
+      margin-top: 5px;
+      color: #5e6c69;
+      font-size: 10px;
+      line-height: 1.15;
+    }
+    .label {
+      margin: 0 0 8px;
+      color: #5c6a67;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    .bundle {
+      border-color: #c9ddd7;
+      background: #f9fbfa;
+    }
+    .bundle h2 {
+      margin: 0 0 10px;
+      color: #11241f;
+      font-size: 20px;
+      line-height: 1.15;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+    .row {
+      padding: 10px 0;
+      border-top: 1px solid #e1eae7;
+    }
+    .row:first-of-type { border-top: 0; }
+    .row b {
+      display: block;
+      color: #1a2421;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .row span {
+      display: block;
+      margin-top: 4px;
+      color: #5c6b68;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .command {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #102c26;
+      color: #ddf6ef;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .safe {
+      background: #fbfcfc;
+      color: #52635f;
+      font-size: 12px;
+      line-height: 1.42;
+    }
+    .foot {
+      margin-top: auto;
+      color: #687672;
+      font-size: 11px;
+      line-height: 1.35;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Final Launch Status</p>
+      <h1>Device Actions</h1>
+      <p class="intro">The iPhone panel now separates the physical-device demo actions from the longer final readiness checklist.</p>
+    </header>
+
+    <section class="summary">
+      <div class="metric"><strong>4</strong><span>manual actions</span></div>
+      <div class="metric"><strong>1</strong><span>Xcode gate</span></div>
+      <div class="metric"><strong>0</strong><span>live calls</span></div>
+    </section>
+
+    <section class="bundle">
+      <p class="label">iOS Device Manual Actions</p>
+      <h2>Blocked until the phone path is rehearsed</h2>
+      <div class="row">
+        <b>Start backend</b>
+        <span>make backend-device-demo</span>
+      </div>
+      <div class="row">
+        <b>Run preflight</b>
+        <span>make mobile-deploy-preflight</span>
+      </div>
+      <div class="row">
+        <b>Resolve signing/build</b>
+        <span>open Xcode and resolve signing/build gate</span>
+      </div>
+      <div class="command">make ios-device-launch-rehearsal</div>
+    </section>
+
+    <section class="safe">
+      <p class="label">Safety</p>
+      commands_run=false global=false provider_calls=false xcode=false. This card is read-only evidence; it does not start servers, run Xcode, write signing config, call providers, or expose secrets.
+    </section>
+
+    <p class="foot">P0.222 final showcase device action bundle visual proof.</p>
+  </main>
+</body>
+</html>

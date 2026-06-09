@@ -1228,9 +1228,50 @@ public enum FinalLaunchMobileSummaryBuilder {
             } else if let capability = readiness.capabilities.first(where: { status(from: $0.status) != .ready }) {
                 rows.append(showcaseReadinessCapabilityRow(capability))
             }
+            rows.append(contentsOf: showcaseDeviceActionBundleRows(readiness.deviceActionBundle))
             rows.append(contentsOf: showcaseReadinessActionRows(readiness.operatorActions))
         }
         return rows.map(sanitize)
+    }
+
+    private static func showcaseDeviceActionBundleRows(
+        _ bundle: FinalShowcaseDeviceActionBundle?
+    ) -> [String] {
+        guard let bundle else {
+            return []
+        }
+        var rows = [
+            "Device actions \(sanitize(bundle.status)): actions \(bundle.summary.actions), manual \(bundle.summary.manual), xcode \(bundle.summary.xcodeOrSigning).",
+        ]
+        let attention = bundle.actions.filter { action in
+            status(from: action.status) != .ready
+        }
+        let selected = attention.isEmpty ? bundle.actions : attention
+        rows.append(contentsOf: selected.prefix(2).map(showcaseDeviceActionRow))
+        rows.append(showcaseDeviceActionSafetyRow(bundle.safety))
+        return rows.map(sanitize)
+    }
+
+    private static func showcaseDeviceActionRow(
+        _ action: FinalShowcaseDeviceAction
+    ) -> String {
+        var parts = ["\(action.id): \(action.status)"]
+        if let classification = action.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        parts.append("| \(action.command)")
+        if !action.detail.isEmpty {
+            parts.append("| \(action.detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func showcaseDeviceActionSafetyRow(
+        _ safety: FinalShowcaseDeviceActionBundleSafety
+    ) -> String {
+        sanitize(
+            "Device action safety: commands_run=\(boolText(safety.commandsRun)) global=\(boolText(safety.globalMutation)) provider_calls=\(boolText(safety.providerCalls)) xcode=\(boolText(safety.xcodeOrSigning))"
+        )
     }
 
     private static func showcaseReadinessActionRows(_ actions: [String]) -> [String] {

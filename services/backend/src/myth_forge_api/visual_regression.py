@@ -427,6 +427,28 @@ DEFAULT_VISUAL_ARTIFACTS = (
         ),
     ),
     VisualArtifactSpec(
+        id="p0.222_final_showcase_device_action_bundle",
+        html_path="docs/superpowers/verification/p0.222-final-showcase-device-action-bundle.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.222-final-showcase-device-action-bundle-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-08-p0.222-final-showcase-device-action-bundle-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Final Launch Status",
+            "Device Actions",
+            "make backend-device-demo",
+            "make mobile-deploy-preflight",
+            "make ios-device-launch-rehearsal",
+            "commands_run=false",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.160_final_showcase_ios_deploy_digest",
         html_path="docs/superpowers/verification/p0.160-final-showcase-ios-deploy-digest.html",
         png_path=(
