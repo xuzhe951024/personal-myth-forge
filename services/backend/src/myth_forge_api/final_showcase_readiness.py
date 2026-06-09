@@ -150,6 +150,7 @@ def build_final_showcase_readiness_report(
         "capabilities_by_id": {row["id"]: row for row in capabilities},
         "first_blocker": _first_blocker(capabilities),
         "next_action": _next_action(capabilities),
+        "device_action_bundle": _device_action_bundle(capabilities),
         "operator_actions": _operator_actions(
             capabilities,
             action_reports=[
@@ -825,6 +826,124 @@ def _next_action(capabilities: list[dict[str, Any]]) -> dict[str, Any] | None:
         "detail": str(blocker.get("detail", "")),
         "source": "first_blocker",
     }
+
+
+def _device_action_bundle(capabilities: list[dict[str, Any]]) -> dict[str, Any]:
+    capabilities_by_id = {str(row.get("id", "")): row for row in capabilities}
+    ios_status = str(
+        capabilities_by_id.get("ios_deployable", {}).get("status", "blocked"),
+    )
+    normalized_ios_status = _normalized_status(ios_status)
+    actions = [
+        _device_action(
+            action_id="start_backend_device_demo",
+            label="Start backend device demo",
+            status=normalized_ios_status,
+            classification="manual_backend_required",
+            command="make backend-device-demo",
+            detail="Start the LAN-reachable backend before running iPhone preflight.",
+            blocks=["ios_deployable", "functional_regression"],
+        ),
+        _device_action(
+            action_id="run_mobile_deploy_preflight",
+            label="Run mobile deploy preflight",
+            status=normalized_ios_status,
+            classification="manual_preflight_required",
+            command="make mobile-deploy-preflight",
+            detail="Verify the iPhone can reach the backend and read launch config.",
+            blocks=["ios_deployable", "functional_regression"],
+        ),
+        _device_action(
+            action_id="resolve_xcode_build_gate",
+            label="Resolve Xcode build gate",
+            status=normalized_ios_status,
+            classification="manual_xcode_or_signing_required",
+            command="open Xcode and resolve signing/build gate",
+            detail="Resolve signing or build issues in Xcode before device launch proof.",
+            blocks=["ios_deployable"],
+            xcode_or_signing=True,
+        ),
+        _device_action(
+            action_id="run_ios_device_launch_rehearsal",
+            label="Run iOS device launch rehearsal",
+            status=normalized_ios_status,
+            classification="manual_device_rehearsal_required",
+            command="make ios-device-launch-rehearsal",
+            detail="Refresh the final iOS device rehearsal evidence after preflight passes.",
+            blocks=["ios_deployable"],
+        ),
+    ]
+    return {
+        "id": "ios_device_manual_actions",
+        "label": "iOS Device Manual Actions",
+        "status": normalized_ios_status,
+        "summary": _device_action_bundle_summary(actions),
+        "first_action": _first_device_action(actions),
+        "actions": actions,
+        "safety": {
+            "commands_run": False,
+            "global_mutation": False,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+        },
+    }
+
+
+def _device_action(
+    *,
+    action_id: str,
+    label: str,
+    status: str,
+    classification: str,
+    command: str,
+    detail: str,
+    blocks: list[str],
+    xcode_or_signing: bool = False,
+) -> dict[str, Any]:
+    return {
+        "id": action_id,
+        "label": label,
+        "status": _normalized_status(status),
+        "classification": classification,
+        "command": command,
+        "detail": detail,
+        "source": "final_showcase_readiness",
+        "blocks": blocks,
+        "manual": True,
+        "global_action": False,
+        "provider_calls": False,
+        "xcode_or_signing": xcode_or_signing,
+    }
+
+
+def _device_action_bundle_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action.get("status") == "ready"),
+        "manual": sum(1 for action in actions if action.get("manual") is True),
+        "blocked": sum(1 for action in actions if action.get("status") == "blocked"),
+        "partial": sum(1 for action in actions if action.get("status") == "partial"),
+        "xcode_or_signing": sum(
+            1 for action in actions if action.get("xcode_or_signing") is True
+        ),
+        "global_actions": sum(
+            1 for action in actions if action.get("global_action") is True
+        ),
+        "provider_calls": sum(
+            1 for action in actions if action.get("provider_calls") is True
+        ),
+    }
+
+
+def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for action in actions:
+        if action.get("status") != "ready":
+            return action
+    return actions[0] if actions else None
 
 
 def _operator_actions(

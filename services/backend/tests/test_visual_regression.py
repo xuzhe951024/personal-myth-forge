@@ -46,6 +46,7 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
         "p0.217_final_resource_next_action",
         "p0.218_final_demo_launch_next_action",
         "p0.221_mobile_auto_backend_url_handoff",
+        "p0.222_final_showcase_device_action_bundle",
         "p0.160_final_showcase_ios_deploy_digest",
         "p0.189_device_blocker_handoff",
         "p0.161_final_showcase_provider_handoff_digest",
@@ -136,6 +137,10 @@ def test_default_visual_artifacts_cover_full_showcase_flow() -> None:
     assert "apply_time_auto" in required_text
     assert "write_deploy_local_config.sh" in required_text
     assert "final-apply-resources" in required_text
+    assert "Device Actions" in required_text
+    assert "make backend-device-demo" in required_text
+    assert "make ios-device-launch-rehearsal" in required_text
+    assert "commands_run=false" in required_text
     assert "iOS Deploy" in required_text
     assert "iOS deploy blocked" in required_text
     assert "make ios-device-launch-rehearsal" in required_text
@@ -155,7 +160,7 @@ def test_visual_regression_default_passes_checked_in_showcase_artifacts() -> Non
     result = check_visual_artifacts(repo_root)
 
     assert result.exit_code == 0
-    assert result.report["summary"] == {"passed": 27, "failed": 0}
+    assert result.report["summary"] == {"passed": 28, "failed": 0}
     assert [artifact["id"] for artifact in result.report["artifacts"]] == [
         spec.id for spec in DEFAULT_VISUAL_ARTIFACTS
     ]
@@ -257,7 +262,7 @@ def test_visual_regression_cli_writes_showcase_report(tmp_path: Path, monkeypatc
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["kind"] == "visual_regression_report"
     assert report["status"] == "passed"
-    assert report["summary"] == {"passed": 27, "failed": 0}
+    assert report["summary"] == {"passed": 28, "failed": 0}
 
 
 def _spec() -> VisualArtifactSpec:

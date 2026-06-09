@@ -1558,6 +1558,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/visual_regression.py",
+                "p0.222_final_showcase_device_action_bundle",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/visual_regression.py",
                 "p0.100_live_provider_consent",
             ),
             SourceRequirement(
@@ -1589,7 +1593,7 @@ FEATURES = (
                 "test_visual_regression_cli_writes_showcase_report",
             ),
             SourceRequirement("README.md", "full-showcase visual index"),
-            SourceRequirement("README.md", "27 static 390x844 iPhone evidence artifacts"),
+            SourceRequirement("README.md", "28 static 390x844 iPhone evidence artifacts"),
             SourceRequirement("README.md", "configured acceptance command visual"),
             SourceRequirement("README.md", "device blocker handoff visual"),
         ),
@@ -2738,6 +2742,56 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/tests/test_final_showcase_readiness.py",
                 "test_final_showcase_readiness_blocks_failed_local_showcase_smoke",
+            ),
+        ),
+    ),
+    FeatureRequirement(
+        id="mobile_final_showcase_device_action_bundle",
+        label="Mobile final showcase device action bundle",
+        requirements=(
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "device_action_bundle",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "_device_action_bundle",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "make backend-device-demo",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_showcase_readiness.py",
+                "test_final_showcase_readiness_includes_ios_device_action_bundle",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "FinalShowcaseDeviceActionBundle",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "deviceActionBundle: FinalShowcaseDeviceActionBundle?",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "showcaseDeviceActionBundleRows",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "Device actions",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "make mobile-deploy-preflight",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testDecodesFinalShowcaseReadinessFromFinalLaunchPayload",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle",
             ),
         ),
     ),

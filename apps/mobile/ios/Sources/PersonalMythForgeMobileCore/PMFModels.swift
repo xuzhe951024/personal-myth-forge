@@ -3960,6 +3960,139 @@ public struct FinalShowcaseReadinessNextAction: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalShowcaseDeviceActionBundleSummary: Codable, Equatable, Sendable {
+    public var actions: Int
+    public var ready: Int
+    public var manual: Int
+    public var blocked: Int
+    public var partial: Int
+    public var xcodeOrSigning: Int
+    public var globalActions: Int
+    public var providerCalls: Int
+
+    public init(
+        actions: Int,
+        ready: Int,
+        manual: Int,
+        blocked: Int,
+        partial: Int,
+        xcodeOrSigning: Int,
+        globalActions: Int,
+        providerCalls: Int
+    ) {
+        self.actions = actions
+        self.ready = ready
+        self.manual = manual
+        self.blocked = blocked
+        self.partial = partial
+        self.xcodeOrSigning = xcodeOrSigning
+        self.globalActions = globalActions
+        self.providerCalls = providerCalls
+    }
+}
+
+public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var source: String
+    public var blocks: [String]
+    public var manual: Bool
+    public var globalAction: Bool
+    public var providerCalls: Bool
+    public var xcodeOrSigning: Bool
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        source: String,
+        blocks: [String],
+        manual: Bool,
+        globalAction: Bool,
+        providerCalls: Bool,
+        xcodeOrSigning: Bool
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.source = source
+        self.blocks = blocks
+        self.manual = manual
+        self.globalAction = globalAction
+        self.providerCalls = providerCalls
+        self.xcodeOrSigning = xcodeOrSigning
+    }
+}
+
+public struct FinalShowcaseDeviceActionBundleSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var globalMutation: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+
+    public init(
+        commandsRun: Bool,
+        globalMutation: Bool,
+        providerCalls: Bool,
+        liveProviderCalls: Bool,
+        writesBackendEnv: Bool,
+        writesIosDeployConfig: Bool,
+        xcodeOrSigning: Bool,
+        keychainWrites: Bool
+    ) {
+        self.commandsRun = commandsRun
+        self.globalMutation = globalMutation
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+    }
+}
+
+public struct FinalShowcaseDeviceActionBundle: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var summary: FinalShowcaseDeviceActionBundleSummary
+    public var firstAction: FinalShowcaseDeviceAction
+    public var actions: [FinalShowcaseDeviceAction]
+    public var safety: FinalShowcaseDeviceActionBundleSafety
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        summary: FinalShowcaseDeviceActionBundleSummary,
+        firstAction: FinalShowcaseDeviceAction,
+        actions: [FinalShowcaseDeviceAction],
+        safety: FinalShowcaseDeviceActionBundleSafety
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.summary = summary
+        self.firstAction = firstAction
+        self.actions = actions
+        self.safety = safety
+    }
+}
+
 public struct FinalShowcaseReadinessSafety: Codable, Equatable, Sendable {
     public var commandsRun: Bool
     public var providerCalls: Bool
@@ -4013,6 +4146,7 @@ public struct FinalShowcaseReadinessReport: Codable, Equatable, Sendable {
     public var capabilities: [FinalShowcaseReadinessCapability]
     public var firstBlocker: FinalShowcaseReadinessCapability?
     public var nextAction: FinalShowcaseReadinessNextAction?
+    public var deviceActionBundle: FinalShowcaseDeviceActionBundle?
     public var operatorActions: [String]
     public var commands: [String]
     public var safety: FinalShowcaseReadinessSafety
@@ -4024,6 +4158,7 @@ public struct FinalShowcaseReadinessReport: Codable, Equatable, Sendable {
         capabilities: [FinalShowcaseReadinessCapability],
         firstBlocker: FinalShowcaseReadinessCapability? = nil,
         nextAction: FinalShowcaseReadinessNextAction? = nil,
+        deviceActionBundle: FinalShowcaseDeviceActionBundle? = nil,
         operatorActions: [String],
         commands: [String],
         safety: FinalShowcaseReadinessSafety
@@ -4034,6 +4169,7 @@ public struct FinalShowcaseReadinessReport: Codable, Equatable, Sendable {
         self.capabilities = capabilities
         self.firstBlocker = firstBlocker
         self.nextAction = nextAction
+        self.deviceActionBundle = deviceActionBundle
         self.operatorActions = operatorActions
         self.commands = commands
         self.safety = safety
