@@ -72,6 +72,10 @@ MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH = Path(
     "services/backend/.local/mobile-deploy-preflight-evidence.json"
 )
 MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_COMMAND = "make mobile-deploy-preflight-evidence"
+MOBILE_XCODE_BUILD_EVIDENCE_PATH = Path(
+    "services/backend/.local/mobile-xcode-build-evidence.json"
+)
+MOBILE_XCODE_BUILD_EVIDENCE_COMMAND = "make mobile-xcode-build-evidence"
 
 
 @dataclass(frozen=True)
@@ -110,6 +114,9 @@ def build_final_showcase_readiness_report(
     mobile_deploy_preflight_evidence = _load_mobile_deploy_preflight_evidence_report(
         selected_repo_root,
     )
+    mobile_xcode_build_evidence = _load_mobile_xcode_build_evidence_report(
+        selected_repo_root,
+    )
     print_fulfillment_readiness = build_print_fulfillment_readiness_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
@@ -141,6 +148,7 @@ def build_final_showcase_readiness_report(
         live_provider_evidence=live_provider_evidence,
         configured_live_evidence_bundle=configured_live_evidence_bundle,
         mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
+        mobile_xcode_build_evidence=mobile_xcode_build_evidence,
         print_fulfillment_readiness=print_fulfillment_readiness,
         ios_deploy_runbook=ios_deploy_runbook,
         ios_device_launch_rehearsal=ios_device_launch_rehearsal,
@@ -161,12 +169,14 @@ def build_final_showcase_readiness_report(
         "device_action_bundle": _device_action_bundle(
             capabilities,
             mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
+            mobile_xcode_build_evidence=mobile_xcode_build_evidence,
         ),
         "operator_actions": _operator_actions(
             capabilities,
             action_reports=[
                 ios_device_launch_rehearsal,
                 mobile_deploy_preflight_evidence,
+                mobile_xcode_build_evidence,
                 live_provider_evidence,
                 configured_live_evidence_bundle,
                 print_fulfillment_readiness,
@@ -191,6 +201,9 @@ def build_final_showcase_readiness_report(
             ),
             "mobile_deploy_preflight_evidence": _evidence_summary(
                 mobile_deploy_preflight_evidence,
+            ),
+            "mobile_xcode_build_evidence": _evidence_summary(
+                mobile_xcode_build_evidence,
             ),
             "print_fulfillment_readiness": _evidence_summary(
                 print_fulfillment_readiness,
@@ -239,6 +252,7 @@ def _capabilities(
     live_provider_evidence: dict[str, Any],
     configured_live_evidence_bundle: dict[str, Any],
     mobile_deploy_preflight_evidence: dict[str, Any],
+    mobile_xcode_build_evidence: dict[str, Any],
     print_fulfillment_readiness: dict[str, Any],
     ios_deploy_runbook: dict[str, Any],
     ios_device_launch_rehearsal: dict[str, Any],
@@ -297,6 +311,7 @@ def _capabilities(
             live_provider_evidence=live_provider_evidence,
             configured_live_evidence_bundle=configured_live_evidence_bundle,
             mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
+            mobile_xcode_build_evidence=mobile_xcode_build_evidence,
             print_fulfillment_readiness=print_fulfillment_readiness,
             ios_deploy_runbook=ios_deploy_runbook,
             ios_device_launch_rehearsal=ios_device_launch_rehearsal,
@@ -737,6 +752,38 @@ def _load_mobile_deploy_preflight_evidence_report(repo_root: Path) -> dict[str, 
     return payload
 
 
+def _load_mobile_xcode_build_evidence_report(repo_root: Path) -> dict[str, Any]:
+    relative_path = MOBILE_XCODE_BUILD_EVIDENCE_PATH.as_posix()
+    path = repo_root / MOBILE_XCODE_BUILD_EVIDENCE_PATH
+    if not path.exists():
+        return _mobile_xcode_build_evidence_stub(
+            status="missing",
+            classification="missing_report",
+            detail=f"Missing {relative_path}.",
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return _mobile_xcode_build_evidence_stub(
+            status="blocked",
+            classification="unreadable_report",
+            detail=f"{relative_path} is not valid JSON.",
+        )
+    if not isinstance(payload, dict):
+        return _mobile_xcode_build_evidence_stub(
+            status="blocked",
+            classification="invalid_report_shape",
+            detail=f"{relative_path} must contain a JSON object.",
+        )
+    if payload.get("kind") != "mobile_xcode_build_evidence_report":
+        return _mobile_xcode_build_evidence_stub(
+            status="blocked",
+            classification="wrong_report_kind",
+            detail="Expected mobile_xcode_build_evidence_report.",
+        )
+    return payload
+
+
 def _mobile_deploy_preflight_evidence_stub(
     *,
     status: str,
@@ -758,6 +805,47 @@ def _mobile_deploy_preflight_evidence_stub(
         ],
         "operator_actions": [
             "run make mobile-deploy-preflight-evidence after backend-device-demo is reachable"
+        ],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "raw_private_context_in_report": False,
+            "raw_media_in_report": False,
+            "payment_links_in_report": False,
+            "local_paths_in_report": False,
+        },
+    }
+
+
+def _mobile_xcode_build_evidence_stub(
+    *,
+    status: str,
+    classification: str,
+    detail: str,
+) -> dict[str, Any]:
+    return {
+        "kind": "mobile_xcode_build_evidence_report",
+        "status": status,
+        "classification": classification,
+        "command": "make mobile-xcode-build",
+        "checks": [
+            {
+                "id": "xcode_build_gate",
+                "label": "Xcode build gate",
+                "status": status,
+                "classification": classification,
+                "detail": detail,
+            }
+        ],
+        "operator_actions": [
+            "run make mobile-xcode-build-evidence after deploy preflight is ready"
         ],
         "safety": {
             "commands_run": False,
@@ -921,6 +1009,7 @@ def _device_action_bundle(
     capabilities: list[dict[str, Any]],
     *,
     mobile_deploy_preflight_evidence: dict[str, Any],
+    mobile_xcode_build_evidence: dict[str, Any],
 ) -> dict[str, Any]:
     capabilities_by_id = {str(row.get("id", "")): row for row in capabilities}
     ios_status = str(
@@ -940,6 +1029,21 @@ def _device_action_bundle(
         "evidence_detail": preflight_detail,
         "validation_command": MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_COMMAND,
     }
+    xcode_status = _normalized_report_status(mobile_xcode_build_evidence)
+    xcode_raw_status = str(mobile_xcode_build_evidence.get("status", "missing"))
+    xcode_metadata = {
+        "evidence_status": xcode_raw_status,
+        "evidence_source": MOBILE_XCODE_BUILD_EVIDENCE_PATH.as_posix(),
+        "evidence_detail": _mobile_xcode_build_evidence_detail(
+            mobile_xcode_build_evidence
+        ),
+        "validation_command": MOBILE_XCODE_BUILD_EVIDENCE_COMMAND,
+    }
+    xcode_actions = _report_operator_actions(mobile_xcode_build_evidence)[
+        :FINAL_SHOWCASE_REPORT_ACTION_LIMIT
+    ]
+    if xcode_actions:
+        xcode_metadata["operator_actions"] = xcode_actions
     actions = [
         _device_action(
             action_id="start_backend_device_demo",
@@ -964,12 +1068,13 @@ def _device_action_bundle(
         _device_action(
             action_id="resolve_xcode_build_gate",
             label="Resolve Xcode build gate",
-            status=normalized_ios_status,
+            status=xcode_status,
             classification="manual_xcode_or_signing_required",
             command="open Xcode and resolve signing/build gate",
             detail="Resolve signing or build issues in Xcode before device launch proof.",
             blocks=["ios_deployable"],
             xcode_or_signing=True,
+            extra=xcode_metadata,
         ),
         _device_action(
             action_id="run_ios_device_launch_rehearsal",
@@ -1033,6 +1138,20 @@ def _device_action(
 
 
 def _mobile_deploy_preflight_evidence_detail(report: dict[str, Any]) -> str:
+    return _first_check_detail(
+        report,
+        fallback="Mobile deploy preflight evidence is not ready.",
+    )
+
+
+def _mobile_xcode_build_evidence_detail(report: dict[str, Any]) -> str:
+    return _first_check_detail(
+        report,
+        fallback="Xcode build evidence is not ready.",
+    )
+
+
+def _first_check_detail(report: dict[str, Any], *, fallback: str) -> str:
     checks = report.get("checks")
     if isinstance(checks, list):
         for check in checks:
@@ -1041,7 +1160,7 @@ def _mobile_deploy_preflight_evidence_detail(report: dict[str, Any]) -> str:
             detail = check.get("detail")
             if isinstance(detail, str) and detail:
                 return detail
-    return "Mobile deploy preflight evidence is not ready."
+    return fallback
 
 
 def _device_action_bundle_summary(actions: list[dict[str, Any]]) -> dict[str, int]:

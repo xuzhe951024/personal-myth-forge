@@ -175,6 +175,90 @@ def test_final_showcase_readiness_marks_preflight_actions_ready_with_evidence(
     assert bundle["summary"]["blocked"] == 2
 
 
+def test_final_showcase_readiness_maps_missing_mobile_xcode_build_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    evidence = result.report["evidence"]["mobile_xcode_build_evidence"]
+    actions = {
+        action["id"]: action
+        for action in result.report["device_action_bundle"]["actions"]
+    }
+    xcode = actions["resolve_xcode_build_gate"]
+
+    assert evidence["kind"] == "mobile_xcode_build_evidence_report"
+    assert evidence["status"] == "missing"
+    assert xcode["status"] == "blocked"
+    assert xcode["evidence_status"] == "missing"
+    assert xcode["evidence_source"] == (
+        "services/backend/.local/mobile-xcode-build-evidence.json"
+    )
+    assert xcode["validation_command"] == "make mobile-xcode-build-evidence"
+
+
+def test_final_showcase_readiness_maps_blocked_mobile_xcode_build_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_xcode_build_evidence_blocked(repo_root)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    actions = {
+        action["id"]: action
+        for action in result.report["device_action_bundle"]["actions"]
+    }
+    xcode = actions["resolve_xcode_build_gate"]
+
+    assert result.report["evidence"]["mobile_xcode_build_evidence"][
+        "status"
+    ] == "blocked"
+    assert xcode["status"] == "blocked"
+    assert xcode["evidence_status"] == "blocked"
+    assert xcode["evidence_detail"] == "Apple SDK license agreement is not accepted."
+    assert xcode["validation_command"] == "make mobile-xcode-build-evidence"
+    assert xcode["operator_actions"] == [
+        "accept the Xcode license outside Codex, then rerun make mobile-xcode-build-evidence"
+    ]
+
+
+def test_final_showcase_readiness_marks_xcode_action_ready_with_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_ready(repo_root)
+    _write_mobile_xcode_build_evidence_ready(repo_root)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    bundle = result.report["device_action_bundle"]
+    actions = {action["id"]: action for action in bundle["actions"]}
+
+    assert actions["start_backend_device_demo"]["status"] == "ready"
+    assert actions["run_mobile_deploy_preflight"]["status"] == "ready"
+    assert actions["resolve_xcode_build_gate"]["status"] == "ready"
+    assert actions["resolve_xcode_build_gate"]["evidence_status"] == "ready"
+    assert actions["resolve_xcode_build_gate"]["evidence_detail"] == (
+        "Xcode build gate passed with code signing disabled."
+    )
+    assert actions["run_ios_device_launch_rehearsal"]["status"] == "blocked"
+    assert bundle["first_action"]["id"] == "run_ios_device_launch_rehearsal"
+    assert bundle["summary"]["ready"] == 3
+    assert bundle["summary"]["blocked"] == 1
+
+
 def test_final_showcase_readiness_blocks_failed_local_showcase_smoke(
     tmp_path: Path,
     monkeypatch,
@@ -1037,6 +1121,92 @@ def _write_mobile_deploy_preflight_evidence_ready(repo_root: Path) -> None:
                 "keychain_writes": False,
                 "provider_secrets_in_report": False,
                 "local_paths_in_report": False,
+            },
+        },
+    )
+
+
+def _write_mobile_xcode_build_evidence_blocked(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/mobile-xcode-build-evidence.json",
+        {
+            "kind": "mobile_xcode_build_evidence_report",
+            "status": "blocked",
+            "classification": "blocked_by_apple_sdk_license",
+            "command": "make mobile-xcode-build",
+            "script": "apps/mobile/ios/scripts/xcode_build_gate.sh",
+            "exit_code": 69,
+            "checks": [
+                {
+                    "id": "xcode_license",
+                    "label": "Xcode license",
+                    "status": "blocked",
+                    "detail": "Apple SDK license agreement is not accepted.",
+                }
+            ],
+            "stdout_lines": [],
+            "stderr_lines": [
+                "Apple SDK license agreement is not accepted.",
+            ],
+            "operator_actions": [
+                "accept the Xcode license outside Codex, then rerun make mobile-xcode-build-evidence"
+            ],
+            "safety": {
+                "commands_run": True,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": True,
+                "code_signing_allowed": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "local_paths_in_report": False,
+                "writes_derived_data": True,
+                "derived_data_path": "apps/mobile/ios/.build/xcode-derived-data",
+            },
+        },
+    )
+
+
+def _write_mobile_xcode_build_evidence_ready(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/mobile-xcode-build-evidence.json",
+        {
+            "kind": "mobile_xcode_build_evidence_report",
+            "status": "ready",
+            "classification": "ready",
+            "command": "make mobile-xcode-build",
+            "script": "apps/mobile/ios/scripts/xcode_build_gate.sh",
+            "exit_code": 0,
+            "checks": [
+                {
+                    "id": "xcode_build_gate",
+                    "label": "Xcode build gate",
+                    "status": "ready",
+                    "detail": "Xcode build gate passed with code signing disabled.",
+                }
+            ],
+            "stdout_lines": [
+                "Xcode build gate passed with code signing disabled.",
+            ],
+            "stderr_lines": [],
+            "operator_actions": [],
+            "safety": {
+                "commands_run": True,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": True,
+                "code_signing_allowed": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "local_paths_in_report": False,
+                "writes_derived_data": True,
+                "derived_data_path": "apps/mobile/ios/.build/xcode-derived-data",
             },
         },
     )

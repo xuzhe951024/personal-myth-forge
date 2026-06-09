@@ -202,10 +202,13 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "model_final_showcase_device_action_validation_command" in requirement_ids
     assert "mobile_summary_final_showcase_device_action_bundle" in requirement_ids
     assert "mobile_summary_final_showcase_device_action_evidence" in requirement_ids
+    assert "mobile_summary_final_showcase_device_action_xcode_evidence" in requirement_ids
     assert "contract_final_showcase_device_action_bundle_decode" in requirement_ids
     assert "contract_final_showcase_device_action_evidence_decode" in requirement_ids
+    assert "contract_final_showcase_device_action_xcode_evidence_decode" in requirement_ids
     assert "contract_final_showcase_device_action_bundle_summary" in requirement_ids
     assert "contract_final_showcase_device_action_evidence_summary" in requirement_ids
+    assert "contract_final_showcase_device_action_xcode_evidence_summary" in requirement_ids
     assert "model_final_resource_requirements_first_blocker" in requirement_ids
     assert "model_final_resource_requirements_first_blocker_field" in requirement_ids
     assert "mobile_summary_final_resource_requirements_source" in requirement_ids
@@ -381,6 +384,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "closurePacketFirstBlockerRow",
                 "report.firstBlocker",
                 "showcaseDeviceActionBundleRows",
+                "selectedShowcaseDeviceActions",
                 "evidenceStatus",
                 "validationCommand",
                 "visualRegressionRows",
@@ -508,6 +512,8 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "make mobile-deploy-preflight",
                 "evidenceStatus",
                 "make mobile-deploy-preflight-evidence",
+                "evidence blocked",
+                "make mobile-xcode-build-evidence",
                 "testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle",
                 "testDevicePreflightWaitsForMissingIOSDeployRunbook",
                 "testDevicePreflightBlocksOnIOSDeployRunbookCommandStep",
