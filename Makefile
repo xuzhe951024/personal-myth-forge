@@ -59,7 +59,7 @@ final-resource-init:
 .PHONY: final-resources-preflight
 
 final-resources-preflight:
-	cd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../..
+	cd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../.. --output .local/final-resources-preflight.json
 
 .PHONY: final-resource-requirements
 
