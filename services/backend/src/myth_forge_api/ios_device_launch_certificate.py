@@ -12,6 +12,10 @@ from myth_forge_api.configured_acceptance_command import (
 )
 from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
+from myth_forge_api.final_handoff_commands import (
+    FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
+    FINAL_DEMO_LAUNCH_LOCAL_COMMAND,
+)
 from myth_forge_api.final_handoff_index import build_final_handoff_index_report
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 
@@ -388,17 +392,18 @@ def _sequence_step(
 
 
 def _commands(mode: LaunchMode) -> list[str]:
+    final_demo_launch_command = (
+        FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND
+        if mode == "configured"
+        else FINAL_DEMO_LAUNCH_LOCAL_COMMAND
+    )
     commands = [
         "make ios-device-launch-certificate",
         "make final-handoff-index",
         "make backend-device-demo",
         "make mobile-deploy-preflight",
         "make mobile-xcode-build",
-        (
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            f"final-demo-launch --mode {mode} --repo-root ../.. "
-            f"--output .local/final-demo-launch-{mode}.json"
-        ),
+        final_demo_launch_command,
     ]
     if mode == "configured":
         commands.append(_configured_acceptance_command())

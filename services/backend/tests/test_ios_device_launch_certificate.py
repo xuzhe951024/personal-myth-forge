@@ -30,6 +30,11 @@ def test_ios_device_launch_certificate_blocks_missing_inputs_without_leaks(
     assert "make ios-device-launch-certificate" in result.report["commands"]
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
+    assert "make final-demo-launch-local" in result.report["commands"]
+    assert not any(
+        "final-demo-launch --mode local" in command
+        for command in result.report["commands"]
+    )
     assert result.report["operator_actions"][:3] == [
         "run make final-handoff-index",
         "provide iOS deploy config and rerun mobile deploy preflight",
@@ -110,6 +115,11 @@ def test_ios_device_launch_certificate_ready_with_configured_inputs(
     )
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
+    assert "make final-demo-launch-configured" in result.report["commands"]
+    assert not any(
+        "final-demo-launch --mode configured" in command
+        for command in result.report["commands"]
+    )
     assert "sk-meshy-secret" not in report_text
     assert "sk-openai-secret" not in report_text
     assert "treatstock-secret" not in report_text

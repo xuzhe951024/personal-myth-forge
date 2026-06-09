@@ -30,6 +30,15 @@ do {
     let finalConfiguredPreflightFile = repositoryRoot.appendingPathComponent(
         "services/backend/src/myth_forge_api/final_configured_preflight.py"
     )
+    let finalConfiguredEvidencePlanFile = repositoryRoot.appendingPathComponent(
+        "services/backend/src/myth_forge_api/final_configured_evidence_plan.py"
+    )
+    let liveProviderEvidenceFile = repositoryRoot.appendingPathComponent(
+        "services/backend/src/myth_forge_api/live_provider_evidence.py"
+    )
+    let finalHandoffCommandsFile = repositoryRoot.appendingPathComponent(
+        "services/backend/src/myth_forge_api/final_handoff_commands.py"
+    )
     let finalHandoffIndexFile = repositoryRoot.appendingPathComponent(
         "services/backend/src/myth_forge_api/final_handoff_index.py"
     )
@@ -59,6 +68,9 @@ do {
     let gitignore = try readText(gitignoreFile)
     let makefile = try readText(makefileFile)
     let finalConfiguredPreflight = try readText(finalConfiguredPreflightFile)
+    let finalConfiguredEvidencePlan = try readText(finalConfiguredEvidencePlanFile)
+    let liveProviderEvidence = try readText(liveProviderEvidenceFile)
+    let finalHandoffCommands = try readText(finalHandoffCommandsFile)
     let finalHandoffIndex = try readText(finalHandoffIndexFile)
     let iosDeviceLaunchCertificate = try readText(iosDeviceLaunchCertificateFile)
     let iosDeviceLaunchRehearsal = try readText(iosDeviceLaunchRehearsalFile)
@@ -503,6 +515,20 @@ do {
     try requireContains(makefile, "--output .local/final-demo-launch-local.json", "final demo launch local report output")
     try requireContains(makefile, "final-demo-launch-configured:", "final demo launch configured Make target")
     try requireContains(makefile, "--output .local/final-demo-launch-configured.json", "final demo launch configured report output")
+    try requireContains(makefile, "provider-handoff:", "provider handoff Make target")
+    try requireContains(finalHandoffCommands, #"PROVIDER_HANDOFF_COMMAND = "make provider-handoff""#, "provider handoff command constant")
+    try requireContains(finalHandoffCommands, #"FINAL_DEMO_LAUNCH_LOCAL_COMMAND = "make final-demo-launch-local""#, "local final demo launch command constant")
+    try requireContains(finalHandoffCommands, #"FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND = "make final-demo-launch-configured""#, "configured final demo launch command constant")
+    try requireContains(finalConfiguredEvidencePlan, "PROVIDER_HANDOFF_COMMAND", "configured evidence plan provider Make command")
+    try requireContains(finalConfiguredEvidencePlan, "FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND", "configured evidence plan launch Make command")
+    try requireContains(liveProviderEvidence, "PROVIDER_HANDOFF_COMMAND", "live provider evidence provider Make command")
+    try requireContains(liveProviderEvidence, "FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND", "live provider evidence launch Make command")
+    try requireContains(finalDemoLaunch, "PROVIDER_HANDOFF_COMMAND", "final demo launch provider Make command")
+    try requireContains(finalDemoLaunch, "FINAL_DEMO_LAUNCH_LOCAL_COMMAND", "final demo launch local Make command")
+    try requireContains(finalDemoLaunch, "FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND", "final demo launch configured Make command")
+    try requireContains(finalHandoffIndex, "FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND", "final handoff index configured launch Make command")
+    try requireContains(iosDeviceLaunchCertificate, "FINAL_DEMO_LAUNCH_LOCAL_COMMAND", "iOS certificate local launch Make command")
+    try requireContains(iosDeviceLaunchCertificate, "FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND", "iOS certificate configured launch Make command")
     try requireContains(
         finalConfiguredPreflight,
         "build_final_configured_preflight_report",

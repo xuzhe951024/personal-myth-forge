@@ -11,6 +11,10 @@ from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_configured_preflight import (
     build_final_configured_preflight_report,
 )
+from myth_forge_api.final_handoff_commands import (
+    FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
+    PROVIDER_HANDOFF_COMMAND,
+)
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
 )
@@ -67,10 +71,7 @@ STEPS = [
     StepDefinition(
         step_id="provider_handoff",
         label="Provider handoff",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "provider-handoff --require-core-real --output .local/provider-handoff.json"
-        ),
+        command=PROVIDER_HANDOFF_COMMAND,
         evidence_slot_id="provider_handoff",
     ),
     StepDefinition(
@@ -103,11 +104,7 @@ STEPS = [
     StepDefinition(
         step_id="final_demo_launch_configured",
         label="Configured final demo launch",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "final-demo-launch --mode configured --repo-root ../.. "
-            "--output .local/final-demo-launch-configured.json"
-        ),
+        command=FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
         evidence_slot_id="final_demo_launch_configured",
     ),
     StepDefinition(

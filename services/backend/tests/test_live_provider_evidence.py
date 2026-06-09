@@ -25,6 +25,7 @@ def test_live_provider_evidence_missing_reports_without_running_commands(
     assert result.report["first_blocker"]["status"] == "missing"
     evidence = {slot["id"]: slot for slot in result.report["evidence"]}
     assert evidence["provider_handoff"]["status"] == "missing"
+    assert evidence["provider_handoff"]["command"] == "make provider-handoff"
     assert evidence["three_d_evaluation_configured"]["status"] == "missing"
     assert evidence["three_d_evaluation_configured"]["command"] == (
         "make backend-evaluate-3d-configured"
@@ -32,6 +33,16 @@ def test_live_provider_evidence_missing_reports_without_running_commands(
     assert evidence["three_d_evaluation_configured"]["requires_live_provider_consent"] is True
     assert evidence["npc_evaluation_configured"]["command"] == (
         "make backend-evaluate-npc-configured"
+    )
+    assert evidence["final_demo_launch_configured"]["command"] == (
+        "make final-demo-launch-configured"
+    )
+    assert "make provider-handoff" in result.report["commands"]
+    assert "make final-demo-launch-configured" in result.report["commands"]
+    assert not any(
+        "myth_forge_api.cli provider-handoff" in command
+        or "final-demo-launch --mode configured" in command
+        for command in result.report["commands"]
     )
     assert "make live-provider-evidence" in result.report["operator_actions"][0]
     assert result.report["safety"]["commands_run"] is False

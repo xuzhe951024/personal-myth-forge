@@ -39,6 +39,7 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
     phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
     assert phases["apply_final_resources"]["status"] == "missing"
     assert phases["apply_final_resources"]["command"] == "make final-apply-resources"
+    assert phases["provider_readiness"]["command"] == "make provider-handoff"
     assert "write_backend_env" not in phases
     assert "write_ios_deploy_config" not in phases
     assert phases["configured_final_acceptance"]["status"] == "blocked"
@@ -48,6 +49,13 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
     )
     assert "make final-acceptance-local" in result.report["commands"]
     assert "make final-apply-resources" in result.report["commands"]
+    assert "make provider-handoff" in result.report["commands"]
+    assert "make final-demo-launch-configured" in result.report["commands"]
+    assert not any(
+        "myth_forge_api.cli provider-handoff" in command
+        or "final-demo-launch --mode configured" in command
+        for command in result.report["commands"]
+    )
     assert all("backend-write-provider-env" not in command for command in result.report["commands"])
     assert all("mobile-write-deploy-config" not in command for command in result.report["commands"])
     assert result.report["safety"]["global_mutation"] is False

@@ -7,6 +7,10 @@ from pathlib import Path
 from typing import Any
 
 from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
+from myth_forge_api.final_handoff_commands import (
+    FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
+    PROVIDER_HANDOFF_COMMAND,
+)
 
 
 @dataclass(frozen=True)
@@ -33,10 +37,7 @@ EVIDENCE_SLOTS = [
         label="Provider handoff",
         path=Path("services/backend/.local/provider-handoff.json"),
         expected_kind="provider_handoff_report",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "provider-handoff --require-core-real --output .local/provider-handoff.json"
-        ),
+        command=PROVIDER_HANDOFF_COMMAND,
         proof="Meshy and OpenAI core provider config is real-provider-ready.",
         requires_live_provider_consent=False,
         rerun_action="rerun provider handoff readiness",
@@ -76,11 +77,7 @@ EVIDENCE_SLOTS = [
         label="Configured final demo launch",
         path=Path("services/backend/.local/final-demo-launch-configured.json"),
         expected_kind="final_demo_launch_report",
-        command=(
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "final-demo-launch --mode configured --repo-root ../.. "
-            "--output .local/final-demo-launch-configured.json"
-        ),
+        command=FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
         proof="Configured final launch packet was regenerated after live evidence.",
         requires_live_provider_consent=False,
         rerun_action="rerun configured final demo launch",

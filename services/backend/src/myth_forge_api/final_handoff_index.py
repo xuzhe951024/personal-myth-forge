@@ -16,6 +16,10 @@ from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.final_configured_preflight import (
     build_final_configured_preflight_report,
 )
+from myth_forge_api.final_handoff_commands import (
+    FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
+    FINAL_DEMO_LAUNCH_LOCAL_COMMAND,
+)
 
 LOCAL_REPORT_SOURCES = [
     {
@@ -41,7 +45,7 @@ LOCAL_REPORT_SOURCES = [
     {
         "id": "final_demo_launch_local",
         "path": "services/backend/.local/final-demo-launch-local.json",
-        "command": "make final-demo-launch",
+        "command": FINAL_DEMO_LAUNCH_LOCAL_COMMAND,
     },
     {
         "id": "ios_deploy_runbook_local",
@@ -241,11 +245,7 @@ def _lanes(
             lane_id="configured_launch",
             label="Configured launch report",
             status=configured_launch_status,
-            command=(
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "final-demo-launch --mode configured --repo-root ../.. "
-                "--output .local/final-demo-launch-configured.json"
-            ),
+            command=FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
             required=False,
             notes=["Read-only launch profile for the configured lane."],
         ),
@@ -366,11 +366,7 @@ def _commands() -> list[str]:
         "make final-handoff-index",
         "make backend-device-demo",
         "make mobile-deploy-preflight",
-        (
-            "cd services/backend && uv run python -m myth_forge_api.cli "
-            "final-demo-launch --mode configured --repo-root ../.. "
-            "--output .local/final-demo-launch-configured.json"
-        ),
+        FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
         _configured_acceptance_command(),
     ]
 
