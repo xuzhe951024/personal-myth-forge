@@ -493,6 +493,8 @@ do {
     try requireContains(makefile, "--output .local/3d-evaluation-local.json", "3D evaluation local report output")
     try requireContains(makefile, "--output .local/npc-evaluation-local.json", "NPC evaluation local report output")
     try requireContains(makefile, "--output .local/final-resources-preflight.json", "final resources preflight report output")
+    try requireContains(makefile, "resource-handoff:", "resource handoff Make target")
+    try requireContains(makefile, "--output .local/resource-handoff.json", "resource handoff report output")
     try requireContains(makefile, "--output .local/final-demo-launch-local.json", "final demo launch local report output")
     try requireContains(
         finalConfiguredPreflight,

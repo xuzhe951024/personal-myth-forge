@@ -135,6 +135,9 @@ final-acceptance-local:
 final-demo-launch: final-demo-launch-local
 final-demo-launch-local:
 \tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../.. --output .local/final-demo-launch-local.json
+.PHONY: resource-handoff
+resource-handoff:
+\tcd services/backend && uv run python -m myth_forge_api.cli resource-handoff --repo-root ../.. --output .local/resource-handoff.json
 .PHONY: final-apply-resources
 final-apply-resources:
 \t@services/backend/scripts/apply_final_resources.sh
@@ -170,12 +173,14 @@ from myth_forge_api.final_handoff_index import build_final_handoff_index_report
 from myth_forge_api.final_resources_preflight import build_final_resources_preflight_report
 from myth_forge_api.ios_device_launch_certificate import build_ios_device_launch_certificate_report
 from myth_forge_api.ios_device_launch_rehearsal import build_ios_device_launch_rehearsal_report
+from myth_forge_api.resource_handoff import build_resource_handoff_report
 subcommands.add_parser("final-configured-preflight")
 subcommands.add_parser("final-handoff-index")
 subcommands.add_parser("ios-device-launch-certificate")
 subcommands.add_parser("ios-device-launch-rehearsal")
 subcommands.add_parser("final-demo-launch")
 subcommands.add_parser("final-resources-preflight")
+subcommands.add_parser("resource-handoff")
 """
 
 FINAL_DEMO_LAUNCH_TEMPLATE = """from myth_forge_api.resource_handoff import build_resource_handoff_report
@@ -187,6 +192,10 @@ def build_final_demo_launch_report():
 
 FINAL_RESOURCES_PREFLIGHT_TEMPLATE = """def build_final_resources_preflight_report():
     return {"safety": {"live_provider_calls": False, "global_mutation": False}}
+"""
+
+RESOURCE_HANDOFF_TEMPLATE = """def build_resource_handoff_report():
+    return {"kind": "resource_handoff_report", "overall_status": "blocked"}
 """
 
 FINAL_CONFIGURED_PREFLIGHT_TEMPLATE = """from myth_forge_api.final_demo_launch import build_final_demo_launch_report
@@ -311,7 +320,7 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.exit_code == 0
     assert result.report["kind"] == "resource_template_acceptance_report"
     assert result.report["status"] == "succeeded"
-    assert result.report["summary"] == {"passed": 16, "failed": 0}
+    assert result.report["summary"] == {"passed": 17, "failed": 0}
     assert result.report["backend_template"]["missing_keys"] == []
     assert result.report["ios_template"]["missing_keys"] == []
     assert "OPENAI_API_KEY" in result.report["backend_template"]["required_keys"]
@@ -394,6 +403,18 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     assert result.report["final_resource_apply"]["checks"]["uses_ios_writer"] is True
     assert result.report["final_resource_apply"]["checks"]["redaction"] is True
     assert result.report["final_resource_apply"]["checks"]["no_banned_commands"] is True
+    assert result.report["resource_handoff"]["path"] == (
+        "services/backend/src/myth_forge_api/resource_handoff.py"
+    )
+    assert result.report["resource_handoff"]["make_target"] == "resource-handoff"
+    assert result.report["resource_handoff"]["output_path"] == (
+        ".local/resource-handoff.json"
+    )
+    assert result.report["resource_handoff"]["checks"]["module_exists"] is True
+    assert result.report["resource_handoff"]["checks"]["cli_command"] is True
+    assert result.report["resource_handoff"]["checks"]["make_target"] is True
+    assert result.report["resource_handoff"]["checks"]["output_path"] is True
+    assert result.report["resource_handoff"]["checks"]["no_banned_commands"] is True
     assert result.report["final_resources_preflight"]["path"] == (
         "services/backend/src/myth_forge_api/final_resources_preflight.py"
     )
@@ -582,6 +603,7 @@ def _write_repo(
     ios_deploy_runbook_local_script: str = IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT,
     final_local_report_refresh_script: str = FINAL_LOCAL_REPORT_REFRESH_SCRIPT,
     ios_device_launch_rehearsal_script: str = IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT,
+    resource_handoff: str = RESOURCE_HANDOFF_TEMPLATE,
     final_resources_preflight: str = FINAL_RESOURCES_PREFLIGHT_TEMPLATE,
     final_configured_preflight: str = FINAL_CONFIGURED_PREFLIGHT_TEMPLATE,
     final_handoff_index: str = FINAL_HANDOFF_INDEX_TEMPLATE,
@@ -644,6 +666,12 @@ def _write_repo(
         repo_root / "services/backend/src/myth_forge_api/final_demo_launch.py"
     ).write_text(
         FINAL_DEMO_LAUNCH_TEMPLATE,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/src/myth_forge_api/resource_handoff.py"
+    ).write_text(
+        resource_handoff,
         encoding="utf-8",
     )
     (

@@ -46,6 +46,11 @@ backend-write-provider-env:
 provider-handoff:
 	cd services/backend && uv run python -m myth_forge_api.cli provider-handoff --require-core-real --output .local/provider-handoff.json
 
+.PHONY: resource-handoff
+
+resource-handoff:
+	cd services/backend && uv run python -m myth_forge_api.cli resource-handoff --repo-root ../.. --output .local/resource-handoff.json
+
 .PHONY: final-apply-resources
 
 final-apply-resources:
