@@ -1246,10 +1246,28 @@ public enum FinalLaunchMobileSummaryBuilder {
         let attention = bundle.actions.filter { action in
             status(from: action.status) != .ready
         }
-        let selected = attention.isEmpty ? bundle.actions : attention
-        rows.append(contentsOf: selected.prefix(2).map(showcaseDeviceActionRow))
+        let selected = selectedShowcaseDeviceActions(
+            attention.isEmpty ? bundle.actions : attention
+        )
+        rows.append(contentsOf: selected.map(showcaseDeviceActionRow))
         rows.append(showcaseDeviceActionSafetyRow(bundle.safety))
         return rows.map(sanitize)
+    }
+
+    private static func selectedShowcaseDeviceActions(
+        _ actions: [FinalShowcaseDeviceAction]
+    ) -> [FinalShowcaseDeviceAction] {
+        var selected = Array(actions.prefix(2))
+        if let xcodeEvidence = actions.first(where: { action in
+            action.xcodeOrSigning
+                && action.evidenceStatus != nil
+                && !selected.contains(where: { selectedAction in
+                    selectedAction.id == action.id
+                })
+        }) {
+            selected.append(xcodeEvidence)
+        }
+        return selected
     }
 
     private static func showcaseDeviceActionRow(

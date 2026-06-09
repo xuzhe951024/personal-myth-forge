@@ -540,6 +540,12 @@ SOURCE_REQUIREMENTS = (
         "evidenceStatus",
     ),
     SourceRequirement(
+        "mobile_summary_final_showcase_device_action_xcode_evidence",
+        "Mobile final showcase device action Xcode evidence rows",
+        FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
+        "selectedShowcaseDeviceActions",
+    ),
+    SourceRequirement(
         "mobile_summary_launch_rehearsal_rows",
         "Mobile final launch rehearsal rows",
         FINAL_LAUNCH_MOBILE_SUMMARY_PATH,
@@ -1170,6 +1176,12 @@ SOURCE_REQUIREMENTS = (
         "evidenceStatus",
     ),
     SourceRequirement(
+        "contract_final_showcase_device_action_xcode_evidence_decode",
+        "Contract test decodes final showcase Xcode action evidence",
+        CORE_CONTRACT_TESTS_PATH,
+        "make mobile-xcode-build-evidence",
+    ),
+    SourceRequirement(
         "contract_final_showcase_device_action_bundle_summary",
         "Contract test renders final showcase device action bundle",
         CORE_CONTRACT_TESTS_PATH,
@@ -1180,6 +1192,12 @@ SOURCE_REQUIREMENTS = (
         "Contract test renders final showcase device action evidence",
         CORE_CONTRACT_TESTS_PATH,
         "make mobile-deploy-preflight-evidence",
+    ),
+    SourceRequirement(
+        "contract_final_showcase_device_action_xcode_evidence_summary",
+        "Contract test renders final showcase Xcode action evidence",
+        CORE_CONTRACT_TESTS_PATH,
+        "evidence blocked",
     ),
     SourceRequirement(
         "contract_ios_deploy_runbook_missing",

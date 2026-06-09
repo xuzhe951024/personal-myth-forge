@@ -5478,6 +5478,22 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
         try require(bundle.actions[1].evidenceDetail, "missing evidence detail"),
         "iOS deploy preflight passed."
     )
+    try expectEqual(
+        try require(bundle.actions[2].evidenceStatus, "missing xcode evidence status"),
+        "blocked"
+    )
+    try expectEqual(
+        try require(bundle.actions[2].evidenceSource, "missing xcode evidence source"),
+        "services/backend/.local/mobile-xcode-build-evidence.json"
+    )
+    try expectEqual(
+        try require(bundle.actions[2].validationCommand, "missing xcode validation command"),
+        "make mobile-xcode-build-evidence"
+    )
+    try expectContains(
+        try require(bundle.actions[2].evidenceDetail, "missing xcode evidence detail"),
+        "Apple SDK license agreement is not accepted."
+    )
     try expectFalse(bundle.safety.commandsRun)
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.liveProviderCalls)
@@ -5536,7 +5552,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
     try expectContains(text, "run make final-resource-init")
     try expectContains(text, "make final-showcase-readiness")
     try expectNotContains(text, "extra action that should stay hidden")
-    try expectEqual(summary.showcaseReadinessRows.count, 13)
+    try expectEqual(summary.showcaseReadinessRows.count, 14)
 }
 
 private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle() throws {
@@ -5552,6 +5568,8 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle() 
     try expectContains(text, "make mobile-deploy-preflight")
     try expectContains(text, "evidence ready")
     try expectContains(text, "make mobile-deploy-preflight-evidence")
+    try expectContains(text, "evidence blocked")
+    try expectContains(text, "make mobile-xcode-build-evidence")
     try expectContains(text, "commands_run=false")
 }
 
@@ -9227,6 +9245,10 @@ private func finalDemoLaunchPayload(
                   "command": "open Xcode and resolve signing/build gate",
                   "detail": "Resolve signing or build issues in Xcode before device launch proof.",
                   "source": "final_showcase_readiness",
+                  "evidence_status": "blocked",
+                  "evidence_source": "services/backend/.local/mobile-xcode-build-evidence.json",
+                  "evidence_detail": "Apple SDK license agreement is not accepted.",
+                  "validation_command": "make mobile-xcode-build-evidence",
                   "blocks": ["ios_deployable"],
                   "manual": true,
                   "global_action": false,

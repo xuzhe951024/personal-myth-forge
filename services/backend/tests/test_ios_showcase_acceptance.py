@@ -139,8 +139,12 @@ def test_showcase_visual_regression_index_requires_configured_command_scope() ->
         "p0.223_preflight_evidence_device_actions",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/visual_regression.py",
+        "p0.224_xcode_evidence_device_action",
+    ) in requirements
+    assert (
         "README.md",
-        "29 static 390x844 iPhone evidence artifacts",
+        "30 static 390x844 iPhone evidence artifacts",
     ) in requirements
     assert (
         "README.md",
@@ -1151,6 +1155,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsAutoBackendURLHandoff "
             "apply_time_auto write_deploy_local_config.sh "
             "make mobile-deploy-preflight make mobile-deploy-preflight-evidence "
+            "make mobile-xcode-build-evidence "
             "testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle "
             "testDecodesFinalResourceFillGuideFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsResourceFillGuide "
@@ -1285,6 +1290,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "showcaseReadinessRows showcaseDeviceActionBundleRows "
             "Showcase readiness Device actions Next action: "
             "make mobile-deploy-preflight evidenceStatus validationCommand "
+            "selectedShowcaseDeviceActions make mobile-xcode-build-evidence "
             "npcEvaluationRows deployRunbookRows deployRunbookCommandRows deployRunbookSafetyRows "
             "deviceEvidenceRows "
             "launchRehearsalRows rehearsalFreshnessRow Freshness: "
@@ -1324,6 +1330,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "p0.221_mobile_auto_backend_url_handoff "
             "p0.222_final_showcase_device_action_bundle "
             "p0.223_preflight_evidence_device_actions "
+            "p0.224_xcode_evidence_device_action "
             "p0.100_live_provider_consent p0.112_ios_device_launch_rehearsal "
             "p0.119_visual_regression_handoff p0.158_local_showcase_smoke "
             "p0.186_configured_acceptance_command_visual p0.189_device_blocker_handoff"
@@ -1355,6 +1362,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_final_showcase_readiness_report final_showcase_readiness_report "
             "next_action device_action_bundle _device_action_bundle "
             "mobile_deploy_preflight_evidence validation_command "
+            "mobile_xcode_build_evidence make mobile-xcode-build-evidence "
             "CAPABILITY_ORDER print_fulfillment make final-showcase-readiness "
             "make backend-device-demo "
             "build_final_resource_apply_preview_report final_resource_apply_preview "
@@ -1376,7 +1384,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final_resource_apply_preview:missing final_resource_apply_preview:ready "
             "test_final_showcase_readiness_blocks_failed_local_showcase_smoke "
             "test_final_showcase_readiness_includes_ios_device_action_bundle "
-            "test_final_showcase_readiness_marks_preflight_actions_ready_with_evidence"
+            "test_final_showcase_readiness_marks_preflight_actions_ready_with_evidence "
+            "test_final_showcase_readiness_maps_blocked_mobile_xcode_build_evidence "
+            "test_final_showcase_readiness_marks_xcode_action_ready_with_evidence"
         ),
         "services/backend/src/myth_forge_api/ios_deploy_runbook.py": (
             "build_ios_deploy_runbook_report build_three_d_evaluation_readiness_report "
@@ -1529,7 +1539,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "README.md": (
             "make visual-regression full-showcase visual index P0.128 P0.129 "
-            "29 static 390x844 iPhone evidence artifacts "
+            "30 static 390x844 iPhone evidence artifacts "
             "configured acceptance command visual device blocker handoff visual"
         ),
         "services/backend/tests/test_final_configured_preflight.py": (

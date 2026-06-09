@@ -472,6 +472,30 @@ DEFAULT_VISUAL_ARTIFACTS = (
         ),
     ),
     VisualArtifactSpec(
+        id="p0.224_xcode_evidence_device_action",
+        html_path="docs/superpowers/verification/p0.224-xcode-evidence-device-action.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.224-xcode-evidence-device-action-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-09-p0.224-xcode-evidence-device-action-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Final Launch Status",
+            "Device Actions",
+            "Xcode Evidence",
+            "make mobile-xcode-build",
+            "make mobile-xcode-build-evidence",
+            "evidence blocked",
+            "Apple SDK license agreement is not accepted.",
+            "commands_run=false",
+        ),
+    ),
+    VisualArtifactSpec(
         id="p0.160_final_showcase_ios_deploy_digest",
         html_path="docs/superpowers/verification/p0.160-final-showcase-ios-deploy-digest.html",
         png_path=(
