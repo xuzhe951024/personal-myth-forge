@@ -85,12 +85,14 @@ def build_ios_device_launch_rehearsal_report(
         source["id"]: _source_report(source=source, repo_root=selected_repo_root)
         for source in REHEARSAL_REPORT_SOURCES
     }
-    sequence = [
-        final_rehearsal_local,
-        report_sources["final_configured_preflight"],
-        report_sources["final_handoff_index"],
-        report_sources["ios_device_launch_certificate"],
-    ]
+    sequence = _sequence_with_details(
+        [
+            final_rehearsal_local,
+            report_sources["final_configured_preflight"],
+            report_sources["final_handoff_index"],
+            report_sources["ios_device_launch_certificate"],
+        ]
+    )
     status = _overall_status(sequence)
     mode = _mode_from_certificate(report_sources["ios_device_launch_certificate"])
     report = {
@@ -249,6 +251,16 @@ def _saved_report_status(payload: dict[str, Any]) -> str:
     }:
         return _normalized_status(str(payload.get("status", "ready")))
     return _normalized_status(str(payload.get("status", "ready")))
+
+
+def _sequence_with_details(sequence: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for step in sequence:
+        row = dict(step)
+        if row.get("status") in {"missing", "blocked"}:
+            row["detail"] = _step_blocker_detail(row)
+        rows.append(row)
+    return rows
 
 
 def _overall_status(sequence: list[dict[str, Any]]) -> str:

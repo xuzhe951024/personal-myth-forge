@@ -35,6 +35,9 @@ def test_ios_device_launch_rehearsal_blocks_missing_reports_without_leaks(
         "detail": "run make ios-device-launch-rehearsal",
     }
     assert result.report["sequence"][0]["id"] == "final_rehearsal_local"
+    assert sequence["final_rehearsal_local"]["detail"] == (
+        "run make ios-device-launch-rehearsal"
+    )
     assert sequence["final_configured_preflight"]["status"] == "missing"
     assert sequence["final_handoff_index"]["status"] == "missing"
     assert sequence["ios_device_launch_certificate"]["status"] == "missing"
@@ -466,8 +469,12 @@ def test_ios_device_launch_rehearsal_routes_handoff_and_certificate_actions(
     )
 
     result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
+    sequence = {step["id"]: step for step in result.report["sequence"]}
 
     assert result.exit_code == 2
+    assert sequence["final_handoff_index"]["detail"] == (
+        "final_handoff_index: run make final-configured-preflight"
+    )
     assert (
         "final_handoff_index: run make final-configured-preflight"
         in result.report["operator_actions"]
