@@ -69,6 +69,12 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert actions["apply_final_resources"]["writes_repo_local_files"] is True
     assert actions["run_live_provider_evidence"]["status"] == "live"
     assert actions["run_live_provider_evidence"]["requires_cost_consent"] is True
+    assert actions["run_configured_3d_evaluation"]["command"] == (
+        "make backend-evaluate-3d-configured"
+    )
+    assert actions["run_configured_npc_evaluation"]["command"] == (
+        "make backend-evaluate-npc-configured"
+    )
     assert actions["run_xcode_build_gate"]["status"] == "manual"
     assert actions["run_xcode_build_gate"]["global"] is True
     assert actions["run_xcode_build_gate"]["requires_user_confirmation"] is True

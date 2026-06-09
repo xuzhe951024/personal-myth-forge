@@ -289,22 +289,14 @@ def _live_provider_cost_actions(
             action_id="run_configured_3d_evaluation",
             label="Run configured 3D evaluation",
             status=live_status,
-            command=(
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "evaluate-3d --provider meshy --suite default-v0 "
-                "--output .local/3d-evaluation-configured.json"
-            ),
+            command="make backend-evaluate-3d-configured",
             detail="Calls Meshy and may spend Meshy credits.",
         ),
         _live_action(
             action_id="run_configured_npc_evaluation",
             label="Run configured NPC evaluation",
             status=live_status,
-            command=(
-                "cd services/backend && uv run python -m myth_forge_api.cli "
-                "evaluate-npc --provider openai --suite default-v0 --tick-steps 2 "
-                "--output .local/npc-evaluation-configured.json"
-            ),
+            command="make backend-evaluate-npc-configured",
             detail="Calls OpenAI and may spend API credits.",
         ),
         _live_action(

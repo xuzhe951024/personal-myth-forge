@@ -26,7 +26,7 @@ visual-regression:
 visual-regression-local:
 	cd services/backend && uv run python -m myth_forge_api.cli visual-regression --repo-root ../.. --output .local/visual-regression-local.json
 
-.PHONY: backend-evaluate-3d backend-evaluate-npc backend-evaluate-local
+.PHONY: backend-evaluate-3d backend-evaluate-npc backend-evaluate-local backend-evaluate-3d-configured backend-evaluate-npc-configured backend-evaluate-configured
 
 backend-evaluate-3d:
 	cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider local --suite default-v0 --output .local/3d-evaluation-local.json
@@ -35,6 +35,14 @@ backend-evaluate-npc:
 	cd services/backend && uv run python -m myth_forge_api.cli evaluate-npc --provider local --suite default-v0 --tick-steps 2 --output .local/npc-evaluation-local.json
 
 backend-evaluate-local: backend-evaluate-3d backend-evaluate-npc
+
+backend-evaluate-3d-configured:
+	cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider meshy --suite default-v0 --output .local/3d-evaluation-configured.json
+
+backend-evaluate-npc-configured:
+	cd services/backend && uv run python -m myth_forge_api.cli evaluate-npc --provider openai --suite default-v0 --tick-steps 2 --output .local/npc-evaluation-configured.json
+
+backend-evaluate-configured: backend-evaluate-3d-configured backend-evaluate-npc-configured
 
 .PHONY: backend-write-provider-env
 
