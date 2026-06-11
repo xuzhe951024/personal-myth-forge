@@ -406,8 +406,9 @@ def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
         "iPhone-reachable"
     )
     assert actions[1] == (
-        "run make mobile-deploy-preflight after backend is running | "
-        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     assert actions[2] == (
         "run Xcode build gate manually on the Mac: make mobile-xcode-build | "

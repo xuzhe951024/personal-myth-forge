@@ -18,6 +18,7 @@ from myth_forge_api.final_handoff_commands import (
 )
 from myth_forge_api.final_handoff_index import build_final_handoff_index_report
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
+from myth_forge_api.operator_actions import BACKEND_DEVICE_DEMO_VALIDATED_ACTION
 
 LaunchMode = Literal["local", "configured"]
 
@@ -448,7 +449,7 @@ def _operator_actions(device_gates: list[dict[str, Any]]) -> list[str]:
         elif gate_id == "backend_device_server":
             actions.append("start backend-device-demo")
         elif gate_id == "mobile_deploy_preflight":
-            actions.append("run make mobile-deploy-preflight after backend is running")
+            actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
         elif gate_id == "xcode_build_gate":
             actions.append("resolve Xcode build gate outside the app")
         elif gate_id == "configured_final_acceptance":

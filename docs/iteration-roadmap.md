@@ -204,6 +204,7 @@ Bridge deliverable:
 - P0.290 Xcode gate actions normalize to concrete evidence command
 - P0.291 final resource requirements action normalizes to make target
 - P0.292 final handoff make wrappers normalize to canonical targets
+- P0.293 mobile deploy preflight handoff action normalizes to concrete device command
 
 ## P1: Mobile Vertical Slice
 

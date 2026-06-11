@@ -16,6 +16,13 @@ PROVIDER_SELECTION_ACTION_ROOTS = (
     "set THREE_D_PROVIDER=meshy",
     "set NPC_PROVIDER=openai",
 )
+MOBILE_DEPLOY_PREFLIGHT_COMMAND = "make mobile-deploy-preflight"
+BACKEND_DEVICE_DEMO_ACTION = (
+    "start backend-device-demo before device checks: make backend-device-demo"
+)
+BACKEND_DEVICE_DEMO_VALIDATED_ACTION = (
+    f"{BACKEND_DEVICE_DEMO_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+)
 MAKE_TARGET_ACTION_REPLACEMENTS = {
     "rerun provider handoff readiness: make provider-handoff": (
         "make provider-handoff"
@@ -34,6 +41,9 @@ MAKE_TARGET_ACTION_REPLACEMENTS = {
     "run make final-demo-launch-local": "make final-demo-launch-local",
     "run make final-handoff-index": "make final-handoff-index",
     "run make ios-deploy-runbook-local": "make ios-deploy-runbook-local",
+    "run make mobile-deploy-preflight after backend is running": (
+        BACKEND_DEVICE_DEMO_VALIDATED_ACTION
+    ),
 }
 XCODE_BUILD_GATE_ACTION = (
     "accept the Xcode license outside Codex, then rerun "
@@ -61,7 +71,6 @@ FINAL_RESOURCE_VALIDATION_ACTION_ROOTS = (
     "provide PMF_BACKEND_BASE_URL in final-resources.env",
 )
 FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
-MOBILE_DEPLOY_PREFLIGHT_COMMAND = "make mobile-deploy-preflight"
 UNBLOCK_ACTION_REPLACEMENTS = {
     "unblock final_resource_fill_guide after MESHY_API_KEY": (
         "provide MESHY_API_KEY in final-resources.env; "
@@ -77,12 +86,6 @@ UNBLOCK_ACTION_REPLACEMENTS = {
         FINAL_RESOURCE_APPLY_ACTION
     ),
 }
-BACKEND_DEVICE_DEMO_ACTION = (
-    "start backend-device-demo before device checks: make backend-device-demo"
-)
-BACKEND_DEVICE_DEMO_VALIDATED_ACTION = (
-    f"{BACKEND_DEVICE_DEMO_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
-)
 IOS_DEPLOY_CONFIG_ACTION = "provide iOS deploy config in Deployment.local.xcconfig"
 IOS_DEPLOY_CONFIG_VALIDATED_ACTION = (
     f"{IOS_DEPLOY_CONFIG_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"

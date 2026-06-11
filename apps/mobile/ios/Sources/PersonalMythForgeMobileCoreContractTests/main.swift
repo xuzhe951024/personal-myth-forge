@@ -3284,7 +3284,7 @@ private func testDevicePreflightBlocksOnIOSDeviceEvidenceSlot() throws {
             overallStatus: "ready",
             iosDeviceEvidenceStatus: "blocked",
             iosDeviceEvidenceSlotStatus: "blocked",
-            iosDeviceEvidenceAction: "run make mobile-deploy-preflight after backend is running",
+            iosDeviceEvidenceAction: "start backend-device-demo before device checks: make backend-device-demo; rerun make mobile-deploy-preflight",
             iosDeviceEvidenceDetail: "Run mobile deploy preflight after backend-device-demo is reachable.",
             iosDeviceEvidenceCommand: "make mobile-deploy-preflight"
         )
@@ -3298,7 +3298,7 @@ private func testDevicePreflightBlocksOnIOSDeviceEvidenceSlot() throws {
     try expectContains(detail, "make backend-device-demo")
     try expectContains(detail, "backend_health_not_proven")
     try expectContains(detail, "Run mobile deploy preflight")
-    try expectContains(detail, "Action: run make mobile-deploy-preflight")
+    try expectContains(detail, "Action: start backend-device-demo")
 }
 
 private func testDevicePreflightMarksReadyIOSDeviceEvidenceBundle() throws {
@@ -5883,7 +5883,7 @@ private func testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle() throws {
         report: finalDemoLaunchReport(
             iosDeviceEvidenceStatus: "blocked",
             iosDeviceEvidenceSlotStatus: "blocked",
-            iosDeviceEvidenceAction: "run make mobile-deploy-preflight after backend is running"
+            iosDeviceEvidenceAction: "start backend-device-demo before device checks: make backend-device-demo; rerun make mobile-deploy-preflight"
         ),
         error: nil
     )
@@ -7437,7 +7437,7 @@ private func finalDemoLaunchPayload(
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
     iosDeviceEvidenceStatus: String = "blocked",
     iosDeviceEvidenceSlotStatus: String = "missing",
-    iosDeviceEvidenceAction: String = "run make mobile-deploy-preflight after backend is running",
+    iosDeviceEvidenceAction: String = "start backend-device-demo before device checks: make backend-device-demo; rerun make mobile-deploy-preflight",
     iosDeviceEvidenceDetail: String = "Run mobile deploy preflight after backend-device-demo is reachable.",
     iosDeviceEvidenceCommand: String = "make mobile-deploy-preflight",
     iosDeviceLaunchRehearsalStatus: String = "missing",
@@ -12935,7 +12935,7 @@ private func finalDemoLaunchReport(
     iosDeployRunbookCommand: String = "make mobile-deploy-preflight",
     iosDeviceEvidenceStatus: String = "blocked",
     iosDeviceEvidenceSlotStatus: String = "missing",
-    iosDeviceEvidenceAction: String = "run make mobile-deploy-preflight after backend is running",
+    iosDeviceEvidenceAction: String = "start backend-device-demo before device checks: make backend-device-demo; rerun make mobile-deploy-preflight",
     iosDeviceEvidenceDetail: String = "Run mobile deploy preflight after backend-device-demo is reachable.",
     iosDeviceEvidenceCommand: String = "make mobile-deploy-preflight",
     iosDeviceLaunchRehearsalStatus: String = "missing",

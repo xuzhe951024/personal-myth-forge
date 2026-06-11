@@ -13,7 +13,10 @@ from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.ios_device_launch_rehearsal_readiness import (
     build_ios_device_launch_rehearsal_readiness_report,
 )
-from myth_forge_api.operator_actions import normalize_operator_action
+from myth_forge_api.operator_actions import (
+    BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+    normalize_operator_action,
+)
 
 MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH = Path(
     "services/backend/.local/mobile-deploy-preflight-evidence.json"
@@ -536,7 +539,7 @@ def _operator_actions(status: str, slots: list[dict[str, Any]]) -> list[str]:
         elif slot["id"] == "mobile_deploy_preflight":
             actions.append(
                 _action_with_detail(
-                    "run make mobile-deploy-preflight after backend is running",
+                    BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
                     slot,
                 )
             )
