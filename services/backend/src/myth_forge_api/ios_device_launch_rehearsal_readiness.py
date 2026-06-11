@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from myth_forge_api.operator_actions import normalize_operator_action
+from myth_forge_api.operator_actions import (
+    add_final_resource_validation_command,
+    normalize_operator_action,
+)
 from myth_forge_api.source_freshness import (
     freshness_payload,
     git_product_source_metadata,
@@ -246,7 +249,7 @@ def _operator_actions(
     if freshness is not None and freshness["status"] == "stale":
         existing_actions = (
             [
-                normalize_operator_action(str(action))
+                _validation_aware_operator_action(str(action))
                 for action in raw_actions
                 if isinstance(action, str) and action
             ]
@@ -259,7 +262,7 @@ def _operator_actions(
     if not isinstance(raw_actions, list):
         return [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
     actions = [
-        normalize_operator_action(str(action))
+        _validation_aware_operator_action(str(action))
         for action in raw_actions
         if isinstance(action, str) and action
     ]
@@ -281,6 +284,10 @@ def _commands(raw_commands: Any) -> list[str]:
         )
     )
     return _dedupe(commands)
+
+
+def _validation_aware_operator_action(action: str) -> str:
+    return add_final_resource_validation_command(normalize_operator_action(action))
 
 
 def _safety(raw_safety: Any) -> dict[str, bool]:

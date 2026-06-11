@@ -180,6 +180,7 @@ Bridge deliverable:
 - P0.267 final demo launch resource actions prefer validation-aware handoff
 - P0.267b final local report refresh removes bare resource actions when validation-aware actions exist
 - P0.268 final showcase readiness adds validation commands to nested resource actions
+- P0.269 iOS device launch rehearsal resource actions retain validation commands
 
 ## P1: Mobile Vertical Slice
 

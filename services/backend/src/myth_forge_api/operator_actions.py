@@ -14,6 +14,16 @@ FINAL_DEMO_LAUNCH_LOCAL_CLI_MARKERS = (
     "myth_forge_api.cli final-demo-launch",
     "--mode local",
 )
+FINAL_RESOURCE_VALIDATION_ACTION_ROOTS = (
+    "provide MESHY_API_KEY in final-resources.env",
+    "provide OPENAI_API_KEY in final-resources.env",
+    "provide TREATSTOCK_API_KEY in final-resources.env",
+    "provide SCULPTEO_API_KEY in final-resources.env",
+    "provide DEVELOPMENT_TEAM in final-resources.env",
+    "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env",
+    "provide PMF_BACKEND_BASE_URL in final-resources.env",
+)
+FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
 
 
 def normalize_operator_action(action: str) -> str:
@@ -25,6 +35,15 @@ def normalize_operator_action(action: str) -> str:
     command = _normalized_command(normalized)
     if command is not None:
         return _replace_action_command(normalized, command)
+    return normalized
+
+
+def add_final_resource_validation_command(action: str) -> str:
+    normalized = action.strip()
+    if "; rerun " in normalized:
+        return normalized
+    if normalized.endswith(FINAL_RESOURCE_VALIDATION_ACTION_ROOTS):
+        return f"{normalized}; rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}"
     return normalized
 
 

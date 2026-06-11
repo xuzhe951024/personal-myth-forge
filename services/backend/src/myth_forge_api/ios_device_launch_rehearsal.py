@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from myth_forge_api.operator_actions import normalize_operator_action
+from myth_forge_api.operator_actions import (
+    add_final_resource_validation_command,
+    normalize_operator_action,
+)
 
 LOCAL_REPORT_SOURCES = [
     {
@@ -156,7 +159,7 @@ def _local_rehearsal_operator_actions(
         detail = source.get("detail")
         if isinstance(detail, str) and detail.strip():
             actions.append(
-                normalize_operator_action(f"{source['id']}: {detail.strip()}")
+                _validation_aware_operator_action(f"{source['id']}: {detail.strip()}")
             )
             if len(actions) >= 6:
                 break
@@ -204,7 +207,7 @@ def _local_rehearsal_action(
         return normalize_operator_action(
             f"mobile_deploy_preflight_evidence: {mobile_preflight_detail}"
         )
-    return normalize_operator_action(f"{source_id}: {action}")
+    return _validation_aware_operator_action(f"{source_id}: {action}")
 
 
 def _is_mobile_preflight_action(action: str) -> bool:
@@ -354,7 +357,7 @@ def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
         nested_actions = step.get("operator_actions")
         if isinstance(nested_actions, list) and nested_actions:
             actions.extend(
-                normalize_operator_action(f"{step['id']}: {action}")
+                _validation_aware_operator_action(f"{step['id']}: {action}")
                 for action in nested_actions
             )
         else:
@@ -391,7 +394,7 @@ def _step_blocker_detail(step: dict[str, Any]) -> str:
         return "run make ios-device-launch-rehearsal"
     nested_actions = step.get("operator_actions")
     if isinstance(nested_actions, list) and nested_actions:
-        return normalize_operator_action(f"{step['id']}: {nested_actions[0]}")
+        return _validation_aware_operator_action(f"{step['id']}: {nested_actions[0]}")
     command = str(step.get("command", ""))
     return f"review {step['id']}: {command}" if command else f"review {step['id']}"
 
@@ -491,7 +494,9 @@ def _bounded_operator_actions(raw_actions: Any, *, repo_root: Path) -> list[str]
     for action in raw_actions:
         if isinstance(action, str):
             actions.append(
-                normalize_operator_action(_clean_action(action, repo_root=repo_root))
+                _validation_aware_operator_action(
+                    _clean_action(action, repo_root=repo_root)
+                )
             )
         if len(actions) == 4:
             break
@@ -518,6 +523,10 @@ def _mobile_preflight_evidence_detail(payload: dict[str, Any]) -> str:
 
 def _clean_action(action: str, *, repo_root: Path) -> str:
     return _safe_text(action.strip(), repo_root)[:180]
+
+
+def _validation_aware_operator_action(action: str) -> str:
+    return add_final_resource_validation_command(normalize_operator_action(action))
 
 
 def _freshness_status(summary: dict[str, int]) -> str:
