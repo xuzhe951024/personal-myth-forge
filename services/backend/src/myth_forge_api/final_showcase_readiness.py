@@ -1042,12 +1042,32 @@ def _capability_with_device_action_detail(
     return result
 
 
+def _preferred_device_action_hint_source(
+    device_action_bundle: dict[str, Any],
+) -> dict[str, Any] | None:
+    actions = device_action_bundle.get("actions")
+    if isinstance(actions, list):
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            if action.get("id") != "run_mobile_deploy_preflight":
+                continue
+            if str(action.get("status", "")) == "ready":
+                continue
+            if str(action.get("evidence_status", "")) == "missing":
+                continue
+            if str(action.get("evidence_detail", "")).strip():
+                return action
+    first_action = device_action_bundle.get("first_action")
+    return first_action if isinstance(first_action, dict) else None
+
+
 def _first_device_action_hint(
     device_action_bundle: dict[str, Any] | None,
 ) -> str:
     if not isinstance(device_action_bundle, dict):
         return ""
-    action = device_action_bundle.get("first_action")
+    action = _preferred_device_action_hint_source(device_action_bundle)
     if not isinstance(action, dict):
         return ""
     if str(action.get("evidence_status", "")) == "missing":
