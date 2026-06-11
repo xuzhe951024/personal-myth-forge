@@ -145,6 +145,7 @@ def _local_rehearsal_operator_actions(
     local_sources: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
+    mobile_preflight_detail = _blocked_mobile_preflight_detail(local_sources)
     for source in local_sources:
         status = str(source["status"])
         if status == "missing":
@@ -152,17 +153,63 @@ def _local_rehearsal_operator_actions(
             continue
         if status != "blocked":
             continue
+        detail = source.get("detail")
+        if isinstance(detail, str) and detail.strip():
+            actions.append(
+                normalize_operator_action(f"{source['id']}: {detail.strip()}")
+            )
+            if len(actions) >= 6:
+                break
+            continue
         nested_actions = source.get("operator_actions")
         if isinstance(nested_actions, list) and nested_actions:
-            actions.extend(
-                normalize_operator_action(f"{source['id']}: {action}")
-                for action in nested_actions
-            )
+            for action in nested_actions:
+                actions.append(
+                    _local_rehearsal_action(
+                        source_id=str(source["id"]),
+                        action=str(action),
+                        mobile_preflight_detail=mobile_preflight_detail,
+                    )
+                )
         else:
             actions.append(f"review {source['id']}: {source['command']}")
         if len(actions) >= 6:
             break
     return _dedupe(actions)[:6]
+
+
+def _blocked_mobile_preflight_detail(local_sources: list[dict[str, Any]]) -> str:
+    for source in local_sources:
+        if source.get("id") != "mobile_deploy_preflight_evidence":
+            continue
+        if source.get("status") != "blocked":
+            continue
+        detail = source.get("detail")
+        if isinstance(detail, str) and detail.strip():
+            return detail.strip()
+    return ""
+
+
+def _local_rehearsal_action(
+    *,
+    source_id: str,
+    action: str,
+    mobile_preflight_detail: str,
+) -> str:
+    if (
+        mobile_preflight_detail
+        and source_id != "mobile_deploy_preflight_evidence"
+        and _is_mobile_preflight_action(action)
+    ):
+        return normalize_operator_action(
+            f"mobile_deploy_preflight_evidence: {mobile_preflight_detail}"
+        )
+    return normalize_operator_action(f"{source_id}: {action}")
+
+
+def _is_mobile_preflight_action(action: str) -> bool:
+    normalized = action.lower().replace("-", " ")
+    return "mobile deploy preflight" in normalized
 
 
 def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]:
@@ -212,6 +259,9 @@ def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]
     )
     if nested_actions:
         report["operator_actions"] = nested_actions
+    evidence_detail = _mobile_preflight_evidence_detail(payload)
+    if evidence_detail:
+        report["detail"] = evidence_detail
     freshness_summary = _bounded_freshness_summary(payload.get("freshness_summary"))
     if freshness_summary is not None:
         report["freshness_summary"] = freshness_summary
@@ -380,6 +430,7 @@ def _compact_source(source: dict[str, Any]) -> dict[str, Any]:
             "freshness_summary",
             "freshness_status",
             "freshness_classification",
+            "detail",
             "operator_actions",
         ]
         if key in source
@@ -445,6 +496,24 @@ def _bounded_operator_actions(raw_actions: Any, *, repo_root: Path) -> list[str]
         if len(actions) == 4:
             break
     return [action for action in actions if action]
+
+
+def _mobile_preflight_evidence_detail(payload: dict[str, Any]) -> str:
+    if payload.get("kind") != "mobile_deploy_preflight_evidence_report":
+        return ""
+    checks = payload.get("checks")
+    if not isinstance(checks, list):
+        return ""
+    details: list[str] = []
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        if str(check.get("status", "")) not in {"blocked", "missing"}:
+            continue
+        detail = str(check.get("detail", "")).strip()
+        if detail:
+            details.append(detail[:120])
+    return "; ".join(_dedupe(details))[:240]
 
 
 def _clean_action(action: str, *, repo_root: Path) -> str:

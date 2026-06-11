@@ -253,6 +253,103 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
     )
 
 
+def test_ios_device_launch_rehearsal_uses_mobile_preflight_check_details(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True)
+    _write_local_rehearsal_reports(local_dir)
+    _write_json(
+        local_dir / "final-acceptance-local.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 2, "failed": 0, "skipped": 0},
+            "operator_actions": [
+                "start backend-device-demo and rerun mobile deploy preflight",
+                "resolve Xcode build gate outside the app",
+            ],
+        },
+    )
+    _write_json(
+        local_dir / "mobile-deploy-preflight-evidence.json",
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "blocked",
+            "operator_actions": [
+                "start backend-device-demo and rerun mobile deploy preflight"
+            ],
+            "checks": [
+                {
+                    "id": "development_team",
+                    "label": "Apple Team ID",
+                    "status": "blocked",
+                    "detail": "Missing DEVELOPMENT_TEAM",
+                },
+                {
+                    "id": "backend_base_url",
+                    "label": "Backend base URL",
+                    "status": "blocked",
+                    "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                },
+            ],
+            "summary": {"blocked": 2},
+        },
+    )
+    _write_json(
+        local_dir / "final-configured-preflight.json",
+        {"kind": "final_configured_preflight_report", "status": "ready"},
+    )
+    _write_json(
+        local_dir / "final-handoff-index.json",
+        {"kind": "final_handoff_index_report", "status": "ready"},
+    )
+    _write_json(
+        local_dir / "ios-device-launch-certificate.json",
+        {
+            "kind": "ios_device_launch_certificate_report",
+            "status": "ready",
+            "mode": "local",
+            "summary": {"ready": 4, "manual": 0, "live": 0, "partial": 0},
+            "safety": {
+                "provider_calls": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+            },
+        },
+    )
+
+    result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
+    sequence = {step["id"]: step for step in result.report["sequence"]}
+    report_text = json.dumps(result.report)
+
+    expected_detail = (
+        "final_rehearsal_local: mobile_deploy_preflight_evidence: "
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    expected_source_action = (
+        "mobile_deploy_preflight_evidence: Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert result.report["first_blocker"]["detail"] == expected_detail
+    assert sequence["final_rehearsal_local"]["detail"] == expected_detail
+    assert sequence["final_rehearsal_local"]["operator_actions"][0] == (
+        expected_source_action
+    )
+    assert sequence["final_rehearsal_local"]["operator_actions"][1] == (
+        "final_acceptance_local: resolve Xcode build gate outside the app"
+    )
+    assert result.report["operator_actions"][0] == expected_detail
+    assert "start backend-device-demo and rerun mobile deploy preflight" not in (
+        result.report["operator_actions"][0]
+    )
+    assert "MESHY_API_KEY" not in report_text
+
+
 def test_ios_device_launch_rehearsal_normalizes_legacy_final_resource_copy_actions(
     tmp_path: Path,
 ) -> None:
