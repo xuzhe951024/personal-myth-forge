@@ -75,6 +75,7 @@ FINAL_RESOURCE_VALIDATION_ACTION_ROOTS = (
     "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env",
     "provide PMF_BACKEND_BASE_URL in final-resources.env",
 )
+FINAL_RESOURCE_FILL_TARGET = "services/backend/.local/final-resources.env"
 FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
 UNBLOCK_ACTION_REPLACEMENTS = {
     "unblock final_resource_fill_guide after MESHY_API_KEY": (
@@ -129,6 +130,9 @@ def normalize_operator_action(action: str) -> str:
     unblock_action = _normalize_unblock_action(command_part)
     if unblock_action is not None:
         return f"{unblock_action}{detail_suffix}"
+    final_resource_fill_action = _normalize_final_resource_fill_action(command_part)
+    if final_resource_fill_action is not None:
+        return f"{final_resource_fill_action}{detail_suffix}"
     generic_action = _normalize_generic_action(command_part)
     if generic_action is not None:
         return f"{generic_action}{detail_suffix}"
@@ -203,6 +207,19 @@ def _normalize_unblock_action(action: str) -> str | None:
             prefix = action[: -len(suffix)]
             return f"{prefix}: {replacement}"
     return None
+
+
+def _normalize_final_resource_fill_action(action: str) -> str | None:
+    command_root = action.split("; rerun ", 1)[0].strip()
+    prefix = "fill "
+    suffix = f" in {FINAL_RESOURCE_FILL_TARGET}"
+    if not command_root.startswith(prefix) or not command_root.endswith(suffix):
+        return None
+    resource_id = command_root[len(prefix) : -len(suffix)].strip()
+    canonical = f"provide {resource_id} in final-resources.env"
+    if canonical not in FINAL_RESOURCE_VALIDATION_ACTION_ROOTS:
+        return None
+    return add_final_resource_validation_command(canonical)
 
 
 def _normalize_generic_action(action: str) -> str | None:
