@@ -422,6 +422,14 @@ def _blocker_command(requirement: dict[str, Any]) -> str:
     return f"provide {requirement['id']} in final-resources.env"
 
 
+def _blocker_action(requirement: dict[str, Any]) -> str:
+    command = _blocker_command(requirement)
+    validation_command = str(requirement.get("validation_command", "")).strip()
+    if validation_command:
+        return f"{command}; rerun {validation_command}"
+    return command
+
+
 def _operator_actions(
     *,
     requirements: list[dict[str, Any]],
@@ -432,7 +440,7 @@ def _operator_actions(
         actions.append("run make final-resource-init")
     for requirement in requirements:
         if _is_blocking_requirement(requirement):
-            actions.append(_blocker_command(requirement))
+            actions.append(_blocker_action(requirement))
     actions.extend(str(action) for action in preflight_report.get("operator_actions", []))
     actions.append("run make final-resource-requirements after filling resources")
     return _dedupe(actions)

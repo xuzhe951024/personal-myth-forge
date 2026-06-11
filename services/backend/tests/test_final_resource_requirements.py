@@ -47,7 +47,11 @@ def test_requirements_report_lists_missing_required_resources_without_leaks(
     assert report["summary"]["print"] >= 2
     assert "make final-resources-preflight" in report["validation_commands"]
     assert "make final-resource-requirements" in report["validation_commands"]
-    assert report["operator_actions"][0] == "run make final-resource-init"
+    assert report["operator_actions"][:3] == [
+        "run make final-resource-init",
+        "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
+        "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight",
+    ]
     assert report["first_blocker"] == {
         "id": "MESHY_API_KEY",
         "label": "Meshy API key",
