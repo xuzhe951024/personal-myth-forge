@@ -486,6 +486,24 @@ def test_local_final_demo_launch_resource_actions_use_final_resources_preflight(
     )
 
 
+def test_local_final_demo_launch_normalizes_final_resource_requirement_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    assert "make final-resource-requirements" in result.report["operator_actions"]
+    assert not any(
+        action == "run make final-resource-requirements after filling resources"
+        for action in result.report["operator_actions"]
+    )
+
+
 def test_local_final_demo_launch_marks_unified_apply_missing_with_ios_only(
     tmp_path: Path,
 ) -> None:

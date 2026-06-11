@@ -52,6 +52,10 @@ def test_requirements_report_lists_missing_required_resources_without_leaks(
         "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
         "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight",
     ]
+    assert "make final-resource-requirements" in report["operator_actions"]
+    assert "run make final-resource-requirements after filling resources" not in (
+        report["operator_actions"]
+    )
     assert report["first_blocker"] == {
         "id": "MESHY_API_KEY",
         "label": "Meshy API key",
