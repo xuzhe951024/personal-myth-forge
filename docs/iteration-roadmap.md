@@ -169,6 +169,7 @@ Bridge deliverable:
 - P0.256 final showcase blocker detail uses concrete mobile preflight action
 - P0.257 final acceptance readiness uses concrete mobile preflight action
 - P0.258 final showcase functional regression uses concrete final acceptance action
+- P0.259 final local report refresh exposes final showcase next action separately from resource blockers
 
 ## P1: Mobile Vertical Slice
 

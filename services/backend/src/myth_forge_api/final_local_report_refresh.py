@@ -115,6 +115,7 @@ def run_final_local_report_refresh(
         "status": status,
         "first_blocker": first_blocker,
         "next_action": _next_action(first_blocker),
+        "showcase_next_action": _showcase_next_action(step_results),
         "summary": summary,
         "steps": step_results,
         "steps_by_id": {step["id"]: step for step in step_results},
@@ -767,6 +768,48 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     }
 
 
+def _showcase_next_action(steps: list[dict[str, Any]]) -> dict[str, Any] | None:
+    step = next(
+        (
+            candidate
+            for candidate in steps
+            if candidate.get("id") == "final_showcase_readiness"
+        ),
+        None,
+    )
+    if not isinstance(step, dict) or step.get("status") != "blocked":
+        return None
+
+    command = str(step.get("command") or "").strip()
+    if not command:
+        return None
+
+    action = {
+        "id": "final_showcase_readiness",
+        "label": str(step.get("label", "Final showcase readiness")),
+        "status": str(step.get("status", "")),
+        "classification": str(step.get("classification", "")),
+        "command": command,
+        "detail": str(step.get("detail", "")),
+        "source": "final_showcase_readiness",
+        "output": step.get("output"),
+        "step_id": "final_showcase_readiness",
+    }
+    validation_command = _showcase_validation_command(step)
+    if validation_command:
+        action["validation_command"] = validation_command
+    return action
+
+
+def _showcase_validation_command(step: dict[str, Any]) -> str:
+    hint = step.get("blocker_hint")
+    if isinstance(hint, dict):
+        validation_command = str(hint.get("validation_command") or "").strip()
+        if validation_command:
+            return validation_command
+    return ""
+
+
 def _first_blocker(steps: list[dict[str, Any]]) -> dict[str, Any] | None:
     failed = next((step for step in steps if step.get("status") == "failed"), None)
     blocked = next((step for step in steps if step.get("status") == "blocked"), None)
@@ -878,7 +921,7 @@ def _blocker_hint(report: dict[str, Any]) -> dict[str, str]:
 
 
 def _hint_from_mapping(source: dict[str, Any]) -> dict[str, str]:
-    return {
+    hint = {
         "classification": str(source.get("classification") or ""),
         "command": str(source.get("command") or ""),
         "detail": str(
@@ -888,6 +931,10 @@ def _hint_from_mapping(source: dict[str, Any]) -> dict[str, str]:
             or ""
         ),
     }
+    validation_command = str(source.get("validation_command") or "").strip()
+    if validation_command:
+        hint["validation_command"] = validation_command
+    return hint
 
 
 def _first_operator_action(report: dict[str, Any]) -> str:
