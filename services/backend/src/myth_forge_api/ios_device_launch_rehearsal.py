@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from myth_forge_api.operator_actions import (
+    BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
@@ -368,7 +369,7 @@ def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
 
     if all(step["status"] not in {"missing", "blocked"} for step in sequence):
         actions.append("continue with make backend-device-demo")
-        actions.append("run make mobile-deploy-preflight after backend is running")
+        actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
     return _dedupe(actions)
 
 

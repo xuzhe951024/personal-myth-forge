@@ -111,7 +111,8 @@ def test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_m
     assert result.report["operator_actions"][0] == "continue with make backend-device-demo"
     assert (
         result.report["operator_actions"][1]
-        == "run make mobile-deploy-preflight after backend is running"
+        == "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
     )
     assert "run make ios-device-launch-rehearsal" not in result.report["operator_actions"]
     assert "configured" in report_text

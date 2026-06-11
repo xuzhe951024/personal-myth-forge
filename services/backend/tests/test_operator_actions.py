@@ -173,6 +173,34 @@ def test_normalizes_final_handoff_make_wrappers_to_make_targets() -> None:
     ) == "ios_device_launch_certificate: make ios-deploy-runbook-local | stale"
 
 
+def test_normalizes_mobile_deploy_after_backend_action_to_device_handoff() -> None:
+    expected = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    assert (
+        normalize_operator_action(
+            "run make mobile-deploy-preflight after backend is running"
+        )
+        == expected
+    )
+    assert (
+        normalize_operator_action(
+            "final_handoff_index: run make mobile-deploy-preflight after backend "
+            "is running"
+        )
+        == f"final_handoff_index: {expected}"
+    )
+    assert (
+        normalize_operator_action(
+            "ios_device_launch_certificate: run make mobile-deploy-preflight after "
+            "backend is running | backend missing"
+        )
+        == f"ios_device_launch_certificate: {expected} | backend missing"
+    )
+
+
 def test_normalizes_vague_unblock_actions_to_concrete_commands() -> None:
     assert normalize_operator_action(
         "unblock final_resource_fill_guide after MESHY_API_KEY"

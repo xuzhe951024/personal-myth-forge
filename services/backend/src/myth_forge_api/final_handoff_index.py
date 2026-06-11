@@ -20,6 +20,7 @@ from myth_forge_api.final_handoff_commands import (
     FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
     FINAL_DEMO_LAUNCH_LOCAL_COMMAND,
 )
+from myth_forge_api.operator_actions import BACKEND_DEVICE_DEMO_VALIDATED_ACTION
 
 LOCAL_REPORT_SOURCES = [
     {
@@ -539,7 +540,7 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
         elif lane_id == "configured_preflight":
             actions.append("run make final-configured-preflight")
         elif lane_id == "device_deploy":
-            actions.append("run make mobile-deploy-preflight after backend is running")
+            actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
         elif lane_id == "live_acceptance":
             actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
         elif command:
@@ -575,7 +576,7 @@ def _lane_blocker_detail(lane: dict[str, Any]) -> str:
     if lane_id == "configured_preflight":
         return "run make final-configured-preflight"
     if lane_id == "device_deploy":
-        return "run make mobile-deploy-preflight after backend is running"
+        return BACKEND_DEVICE_DEMO_VALIDATED_ACTION
     return f"run {command}" if command else f"unblock {lane_id}"
 
 
