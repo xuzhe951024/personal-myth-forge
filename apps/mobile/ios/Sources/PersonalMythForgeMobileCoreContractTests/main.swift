@@ -5464,8 +5464,12 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
     try expectEqual(bundle.summary.xcodeOrSigning, 1)
     try expectEqual(bundle.firstAction.id, "start_backend_device_demo")
     try expectEqual(bundle.firstAction.command, "make backend-device-demo")
+    try expectEqual(
+        try require(bundle.firstAction.evidenceDetail, "missing first action evidence detail"),
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
     try expectEqual(bundle.actions[1].command, "make mobile-deploy-preflight")
-    try expectEqual(try require(bundle.actions[1].evidenceStatus, "missing evidence status"), "ready")
+    try expectEqual(try require(bundle.actions[1].evidenceStatus, "missing evidence status"), "blocked")
     try expectEqual(
         try require(bundle.actions[1].evidenceSource, "missing evidence source"),
         "services/backend/.local/mobile-deploy-preflight-evidence.json"
@@ -5476,7 +5480,7 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
     )
     try expectContains(
         try require(bundle.actions[1].evidenceDetail, "missing evidence detail"),
-        "iOS deploy preflight passed."
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     try expectEqual(
         try require(bundle.actions[2].evidenceStatus, "missing xcode evidence status"),
@@ -5566,7 +5570,8 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle() 
     try expectContains(text, "start_backend_device_demo: blocked")
     try expectContains(text, "make backend-device-demo")
     try expectContains(text, "make mobile-deploy-preflight")
-    try expectContains(text, "evidence ready")
+    try expectContains(text, "PMF_BACKEND_BASE_URL must be iPhone-reachable")
+    try expectContains(text, "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable")
     try expectContains(text, "make mobile-deploy-preflight-evidence")
     try expectContains(text, "evidence blocked")
     try expectContains(text, "make mobile-xcode-build-evidence")
@@ -9205,6 +9210,10 @@ private func finalDemoLaunchPayload(
                 "command": "make backend-device-demo",
                 "detail": "Start the LAN-reachable backend before running iPhone preflight.",
                 "source": "final_showcase_readiness",
+                "evidence_status": "blocked",
+                "evidence_source": "services/backend/.local/mobile-deploy-preflight-evidence.json",
+                "evidence_detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                "validation_command": "make mobile-deploy-preflight-evidence",
                 "blocks": ["ios_deployable", "functional_regression"],
                 "manual": true,
                 "global_action": false,
@@ -9220,6 +9229,10 @@ private func finalDemoLaunchPayload(
                   "command": "make backend-device-demo",
                   "detail": "Start the LAN-reachable backend before running iPhone preflight.",
                   "source": "final_showcase_readiness",
+                  "evidence_status": "blocked",
+                  "evidence_source": "services/backend/.local/mobile-deploy-preflight-evidence.json",
+                  "evidence_detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                  "validation_command": "make mobile-deploy-preflight-evidence",
                   "blocks": ["ios_deployable", "functional_regression"],
                   "manual": true,
                   "global_action": false,
@@ -9234,9 +9247,9 @@ private func finalDemoLaunchPayload(
                   "command": "make mobile-deploy-preflight",
                   "detail": "Verify the iPhone can reach the backend and read launch config.",
                   "source": "final_showcase_readiness",
-                  "evidence_status": "ready",
+                  "evidence_status": "blocked",
                   "evidence_source": "services/backend/.local/mobile-deploy-preflight-evidence.json",
-                  "evidence_detail": "iOS deploy preflight passed.",
+                  "evidence_detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
                   "validation_command": "make mobile-deploy-preflight-evidence",
                   "blocks": ["ios_deployable", "functional_regression"],
                   "manual": true,

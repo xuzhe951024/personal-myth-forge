@@ -147,6 +147,7 @@ Bridge deliverable:
 - P0.129 iPhone Final Launch `External Actions` group for the final external action ledger payload
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
+- P0.237 iPhone Final Launch summary rows surface device action evidence details
 
 ## P1: Mobile Vertical Slice
 

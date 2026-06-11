@@ -1285,6 +1285,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             }
             parts.append("| \(evidence)")
         }
+        if let evidenceDetail = action.evidenceDetail, !evidenceDetail.isEmpty {
+            parts.append("| \(evidenceDetail)")
+        }
         if !action.detail.isEmpty {
             parts.append("| \(action.detail)")
         }
