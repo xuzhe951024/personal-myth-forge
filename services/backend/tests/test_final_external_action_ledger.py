@@ -58,7 +58,7 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert actions["provide_OPENAI_API_KEY"]["secret"] is True
     assert actions["provide_DEVELOPMENT_TEAM"]["requires_user_input"] is True
     assert actions["provide_PMF_BACKEND_BASE_URL"]["command"] == (
-        "make final-resources-preflight"
+        "make mobile-deploy-preflight"
     )
     assert actions["preview_final_resource_apply"]["command"] == (
         "make final-resource-apply-preview"
@@ -116,6 +116,57 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert str(tmp_path) not in report_text
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
+
+
+def test_external_action_ledger_ios_deploy_actions_use_mobile_preflight(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["actions_by_id"]
+    operator_actions = result.report["operator_actions"]
+
+    assert actions["provide_DEVELOPMENT_TEAM"]["command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert actions["provide_PRODUCT_BUNDLE_IDENTIFIER"]["command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert actions["provide_PMF_BACKEND_BASE_URL"]["command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in operator_actions
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in operator_actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in operator_actions
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make ios-device-launch-rehearsal"
+    ) not in operator_actions
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make ios-device-launch-rehearsal"
+    ) not in operator_actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make final-resources-preflight"
+    ) not in operator_actions
+    assert actions["provide_MESHY_API_KEY"]["command"] == (
+        "make final-resources-preflight"
+    )
 
 
 def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks(

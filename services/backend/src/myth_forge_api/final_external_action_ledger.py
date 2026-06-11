@@ -34,6 +34,8 @@ OPERATOR_SEQUENCE = [
     "make print-fulfillment-readiness",
     "make final-showcase-readiness",
 ]
+IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
+IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
 
 
 @dataclass(frozen=True)
@@ -163,15 +165,21 @@ def _resource_action(requirement: dict[str, Any]) -> dict[str, Any]:
         group_id="resource_inputs",
         label=str(requirement.get("label") or slot_id),
         status=status,
-        command=str(
-            requirement.get("validation_command") or "make final-resource-requirements"
-        ),
+        command=_resource_validation_command(requirement),
         detail=detail,
         required=required,
         secret=bool(requirement.get("secret")),
         requires_user_input=required or status in {"missing", "blocked"},
         destination=str(requirement.get("destination", "")),
         classification=str(requirement.get("classification", status)),
+    )
+
+
+def _resource_validation_command(requirement: dict[str, Any]) -> str:
+    if str(requirement.get("destination", "")) == IOS_DEPLOY_DESTINATION:
+        return IOS_DEPLOY_VALIDATION_COMMAND
+    return str(
+        requirement.get("validation_command") or "make final-resource-requirements"
     )
 
 

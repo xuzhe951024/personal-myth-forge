@@ -16,6 +16,12 @@ def test_adds_mobile_deploy_validation_to_known_ios_config_actions() -> None:
         "rerun make mobile-deploy-preflight"
     )
     assert operator_actions.add_mobile_deploy_validation_command(
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig"
+    ) == (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert operator_actions.add_mobile_deploy_validation_command(
         "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
     ) == (
         "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "

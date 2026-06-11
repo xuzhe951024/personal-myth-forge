@@ -188,6 +188,7 @@ Bridge deliverable:
 - P0.274 final configured preflight provider handoff action uses make target
 - P0.275 iOS deploy config actions retain mobile preflight validation commands
 - P0.276 final apply preview and showcase readiness retain iOS validation commands
+- P0.277 final external action ledger iOS deploy config actions use mobile preflight validation
 
 ## P1: Mobile Vertical Slice
 
