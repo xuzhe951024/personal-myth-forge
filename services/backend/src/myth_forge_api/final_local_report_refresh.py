@@ -64,6 +64,7 @@ from myth_forge_api.live_provider_evidence import build_live_provider_evidence_r
 from myth_forge_api.mobile_deploy_preflight_evidence import (
     run_mobile_deploy_preflight_evidence,
 )
+from myth_forge_api.operator_actions import normalize_operator_action
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
 )
@@ -798,7 +799,7 @@ def _dedupe(values: list[str]) -> list[str]:
 
 
 def _dedupe_operator_actions(values: list[str]) -> list[str]:
-    deduped = _dedupe(values)
+    deduped = _dedupe([normalize_operator_action(value) for value in values])
     validation_aware_roots = {
         value.split("; rerun ", 1)[0].strip()
         for value in deduped
