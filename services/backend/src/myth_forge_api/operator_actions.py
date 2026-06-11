@@ -26,6 +26,9 @@ MAKE_TARGET_ACTION_REPLACEMENTS = {
     "run make live-provider-evidence to refresh live provider evidence after cost consent": (
         "make live-provider-evidence"
     ),
+    "run make final-resource-requirements after filling resources": (
+        "make final-resource-requirements"
+    ),
 }
 XCODE_BUILD_GATE_ACTION = (
     "accept the Xcode license outside Codex, then rerun "

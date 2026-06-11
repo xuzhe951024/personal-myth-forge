@@ -149,6 +149,15 @@ def test_normalizes_xcode_gate_actions_to_evidence_command() -> None:
     ) == f"{expected} | xcodebuild license blocked"
 
 
+def test_normalizes_final_resource_requirements_action_to_make_target() -> None:
+    assert normalize_operator_action(
+        "run make final-resource-requirements after filling resources"
+    ) == "make final-resource-requirements"
+    assert normalize_operator_action(
+        "run make final-resource-requirements after filling resources | resources ready"
+    ) == "make final-resource-requirements | resources ready"
+
+
 def test_normalizes_vague_unblock_actions_to_concrete_commands() -> None:
     assert normalize_operator_action(
         "unblock final_resource_fill_guide after MESHY_API_KEY"

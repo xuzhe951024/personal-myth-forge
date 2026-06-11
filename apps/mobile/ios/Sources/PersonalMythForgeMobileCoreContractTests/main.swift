@@ -12537,7 +12537,7 @@ private func readyFinalResourceRequirementsReport() -> FinalResourceRequirements
             "PMF_BACKEND_BASE_URL": backendURL,
         ],
         firstBlocker: nil,
-        operatorActions: ["run make final-resource-requirements after filling resources"],
+        operatorActions: ["make final-resource-requirements"],
         validationCommands: ["make final-resources-preflight", "make mobile-deploy-preflight"],
         resourcesFile: FinalResourcesFileStatus(
             path: "services/backend/.local/final-resources.env",
