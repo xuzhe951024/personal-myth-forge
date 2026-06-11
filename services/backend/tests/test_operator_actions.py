@@ -132,6 +132,19 @@ def test_normalizes_vague_unblock_actions_to_concrete_commands() -> None:
     ) == "final_showcase_readiness: make provider-handoff"
 
 
+def test_normalizes_resource_apply_unblock_actions_to_concrete_commands() -> None:
+    assert normalize_operator_action(
+        "unblock final_resource_apply_preview after final_resource_fill_guide"
+    ) == "make final-resource-apply-preview"
+    assert normalize_operator_action(
+        "final_showcase_readiness: unblock final_apply_resources after "
+        "final_resource_apply_preview"
+    ) == (
+        "final_showcase_readiness: run make final-apply-resources to apply the "
+        "filled resource bundle"
+    )
+
+
 def test_normalizes_provider_selection_actions_to_final_apply() -> None:
     assert normalize_operator_action("set THREE_D_PROVIDER=meshy") == (
         "run make final-apply-resources to apply the filled resource bundle"

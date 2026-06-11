@@ -44,6 +44,12 @@ UNBLOCK_ACTION_REPLACEMENTS = {
     "unblock provider_handoff before configured evidence bundle": (
         "make provider-handoff"
     ),
+    "unblock final_resource_apply_preview after final_resource_fill_guide": (
+        "make final-resource-apply-preview"
+    ),
+    "unblock final_apply_resources after final_resource_apply_preview": (
+        FINAL_RESOURCE_APPLY_ACTION
+    ),
 }
 BACKEND_DEVICE_DEMO_ACTION = (
     "start backend-device-demo before device checks: make backend-device-demo"
