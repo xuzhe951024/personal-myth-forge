@@ -81,11 +81,13 @@ def build_final_launch_closure_packet_report(
         final_acceptance=final_acceptance,
     )
     status = _overall_status(sections)
+    first_blocker = _first_blocker(sections)
     report = {
         "kind": "final_launch_closure_packet_report",
         "status": status,
         "summary": _summary(sections),
-        "first_blocker": _first_blocker(sections),
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "sections": sections,
         "sections_by_id": {section["id"]: section for section in sections},
         "operator_actions": _operator_actions(sections),
@@ -564,6 +566,22 @@ def _operator_actions(sections: list[dict[str, Any]]) -> list[str]:
     if not actions:
         return ["Final launch closure packet is ready"]
     return _dedupe(actions)
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(first_blocker, dict):
+        return None
+    return {
+        "id": str(first_blocker.get("id", "")),
+        "label": str(first_blocker.get("label", "")),
+        "status": str(first_blocker.get("status", "")),
+        "classification": str(first_blocker.get("classification", "")),
+        "command": str(first_blocker.get("command", "")),
+        "detail": str(first_blocker.get("detail", "")),
+        "source": "first_blocker",
+        "section_id": str(first_blocker.get("section_id", "")),
+        "action_id": str(first_blocker.get("action_id", "")),
+    }
 
 
 def _first_blocker(sections: list[dict[str, Any]]) -> dict[str, Any] | None:
