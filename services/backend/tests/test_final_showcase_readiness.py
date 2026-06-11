@@ -871,6 +871,45 @@ def test_final_showcase_readiness_dedupes_prefixed_device_actions(
     assert deploy_config_action in actions
 
 
+def test_final_showcase_readiness_dedupes_prefixed_xcode_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression_blocked(repo_root)
+    _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_mobile_xcode_build_evidence_blocked(repo_root)
+    _write_ios_device_launch_rehearsal_with_actions(
+        repo_root,
+        extra_actions=[
+            (
+                "final_rehearsal_local: final_acceptance_local: "
+                "resolve Xcode build gate outside the app"
+            )
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    xcode_action = (
+        "accept the Xcode license outside Codex, then rerun "
+        "make mobile-xcode-build-evidence"
+    )
+
+    assert result.exit_code == 2
+    assert actions.count(xcode_action) == 1
+    assert not any(
+        action.startswith("final_rehearsal_local: final_acceptance_local: accept")
+        for action in actions
+    )
+
+
 def test_final_showcase_readiness_normalizes_resource_apply_unblock_actions() -> None:
     actions = final_showcase_readiness._report_operator_actions(
         {

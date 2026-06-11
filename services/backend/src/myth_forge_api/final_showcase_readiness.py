@@ -87,6 +87,10 @@ FINAL_SHOWCASE_DUPLICATE_DEVICE_ROOTS = {
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
     ),
+    (
+        "accept the Xcode license outside Codex, then rerun "
+        "make mobile-xcode-build-evidence"
+    ),
 }
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
