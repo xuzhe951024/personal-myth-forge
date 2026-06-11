@@ -202,6 +202,23 @@ def test_mobile_preflight_evidence_source_gates_require_top_level_action() -> No
     ) in requirements
 
 
+def test_final_showcase_concrete_next_action_source_gate() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["mobile_final_showcase_device_action_bundle"].requirements
+    }
+
+    assert (
+        "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+        "_device_action_child_next_action",
+    ) in requirements
+    assert (
+        "services/backend/tests/test_final_showcase_readiness.py",
+        "test_final_showcase_readiness_next_action_uses_preflight_child_action",
+    ) in requirements
+
+
 def test_final_launch_closure_packet_source_gate_requires_first_blocker() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1401,6 +1418,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/src/myth_forge_api/final_showcase_readiness.py": (
             "build_final_showcase_readiness_report final_showcase_readiness_report "
             "next_action device_action_bundle _device_action_bundle "
+            "_device_action_child_next_action "
             "mobile_deploy_preflight_evidence validation_command "
             "mobile_xcode_build_evidence make mobile-xcode-build-evidence "
             "CAPABILITY_ORDER print_fulfillment make final-showcase-readiness "
@@ -1433,7 +1451,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "test_final_showcase_readiness_includes_ios_device_action_bundle "
             "test_final_showcase_readiness_marks_preflight_actions_ready_with_evidence "
             "test_final_showcase_readiness_maps_blocked_mobile_xcode_build_evidence "
-            "test_final_showcase_readiness_marks_xcode_action_ready_with_evidence"
+            "test_final_showcase_readiness_marks_xcode_action_ready_with_evidence "
+            "test_final_showcase_readiness_next_action_uses_preflight_child_action"
         ),
         "services/backend/src/myth_forge_api/ios_deploy_runbook.py": (
             "build_ios_deploy_runbook_report build_three_d_evaluation_readiness_report "

@@ -2798,6 +2798,14 @@ FEATURES = (
                 "validation_command",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "_device_action_child_next_action",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_showcase_readiness.py",
+                "test_final_showcase_readiness_next_action_uses_preflight_child_action",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/mobile_deploy_preflight_evidence.py",
                 "first_blocker",
             ),

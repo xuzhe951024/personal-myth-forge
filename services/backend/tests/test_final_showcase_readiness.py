@@ -368,6 +368,54 @@ def test_final_showcase_readiness_next_action_command_uses_preferred_device_acti
     assert "MESHY_API_KEY" not in action["detail"]
 
 
+def test_final_showcase_readiness_next_action_uses_preflight_child_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action={
+            "id": "development_team",
+            "label": "Apple Team ID",
+            "status": "blocked",
+            "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+            "detail": (
+                "Missing DEVELOPMENT_TEAM; "
+                "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            ),
+            "validation_command": "make mobile-deploy-preflight",
+            "source": "first_blocker",
+        },
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    action = result.report["next_action"]
+
+    assert action["id"] == "ios_deployable"
+    assert action["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    assert action["validation_command"] == "make mobile-deploy-preflight"
+    assert "Missing DEVELOPMENT_TEAM" in action["detail"]
+    assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in action["detail"]
+
+
 def test_final_showcase_readiness_maps_missing_mobile_xcode_build_evidence(
     tmp_path: Path,
 ) -> None:
@@ -1335,12 +1383,15 @@ def _write_mobile_deploy_preflight_evidence_blocked(
     repo_root: Path,
     *,
     checks: list[dict[str, str]],
+    next_action: dict[str, object] | None = None,
 ) -> None:
     _write_json(
         repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json",
         {
             "kind": "mobile_deploy_preflight_evidence_report",
             "status": "blocked",
+            "first_blocker": checks[0] if checks else None,
+            "next_action": next_action,
             "command": "make mobile-deploy-preflight",
             "script": "apps/mobile/ios/scripts/deploy_preflight.sh",
             "exit_code": 2,
