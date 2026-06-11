@@ -459,6 +459,33 @@ def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidenc
     ][:8]
 
 
+def test_local_final_demo_launch_resource_actions_use_final_resources_preflight(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "provide DEVELOPMENT_TEAM in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert not any(
+        " in final-resources.env; rerun " in action
+        and not action.endswith("; rerun make final-resources-preflight")
+        for action in actions
+    )
+
+
 def test_local_final_demo_launch_marks_unified_apply_missing_with_ios_only(
     tmp_path: Path,
 ) -> None:

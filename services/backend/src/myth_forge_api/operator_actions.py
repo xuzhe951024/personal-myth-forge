@@ -40,10 +40,11 @@ def normalize_operator_action(action: str) -> str:
 
 def add_final_resource_validation_command(action: str) -> str:
     normalized = action.strip()
+    root = normalized.split("; rerun ", 1)[0].strip()
+    if root.endswith(FINAL_RESOURCE_VALIDATION_ACTION_ROOTS):
+        return f"{root}; rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}"
     if "; rerun " in normalized:
         return normalized
-    if normalized.endswith(FINAL_RESOURCE_VALIDATION_ACTION_ROOTS):
-        return f"{normalized}; rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}"
     return normalized
 
 
