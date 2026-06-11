@@ -206,7 +206,10 @@ def build_final_demo_launch_report(
         "overall_status": overall_status,
         "status": overall_status,
         "first_blocker": first_blocker,
-        "next_action": _next_action(first_blocker),
+        "next_action": _next_action(
+            first_blocker,
+            final_showcase_readiness=final_showcase_readiness,
+        ),
         "summary": resource_summary,
         "phase_summary": phase_summary,
         "final_resources_preflight": final_resources_preflight,
@@ -549,13 +552,49 @@ def _first_blocker_phases(
     ]
 
 
-def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+def _next_action(
+    first_blocker: dict[str, Any] | None,
+    *,
+    final_showcase_readiness: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
     if first_blocker is None:
         return None
     action = dict(first_blocker)
+    _apply_concrete_mobile_preflight_next_action(
+        action,
+        final_showcase_readiness=final_showcase_readiness,
+    )
     action["source"] = "first_blocker"
     action["source_id"] = str(action.get("source_id") or action.get("id", ""))
     return action
+
+
+def _apply_concrete_mobile_preflight_next_action(
+    action: dict[str, Any],
+    *,
+    final_showcase_readiness: dict[str, Any] | None,
+) -> None:
+    if action.get("id") != "mobile_deploy_preflight":
+        return
+    concrete_action = _final_showcase_next_action(final_showcase_readiness)
+    if not concrete_action:
+        return
+    validation_command = str(concrete_action.get("validation_command", "")).strip()
+    if not validation_command:
+        return
+    command = str(concrete_action.get("command", "")).strip()
+    if command:
+        action["command"] = command
+    action["validation_command"] = validation_command
+
+
+def _final_showcase_next_action(
+    final_showcase_readiness: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(final_showcase_readiness, dict):
+        return {}
+    next_action = final_showcase_readiness.get("next_action")
+    return next_action if isinstance(next_action, dict) else {}
 
 
 def _first_phase_blocker(

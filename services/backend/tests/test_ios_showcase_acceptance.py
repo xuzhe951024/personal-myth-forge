@@ -282,12 +282,24 @@ def test_mobile_final_demo_launch_first_blocker_source_gates() -> None:
         "next_action",
     ) in requirements
     assert (
+        "services/backend/src/myth_forge_api/final_demo_launch.py",
+        "_apply_concrete_mobile_preflight_next_action",
+    ) in requirements
+    assert (
+        "services/backend/src/myth_forge_api/final_demo_launch.py",
+        "validation_command",
+    ) in requirements
+    assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
         "FinalDemoLaunchFirstBlocker",
     ) in requirements
     assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
         "FinalDemoLaunchNextAction",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "validationCommand: String?",
     ) in requirements
     assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
@@ -316,6 +328,10 @@ def test_mobile_final_demo_launch_first_blocker_source_gates() -> None:
     assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
         "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction",
+    ) in requirements
+    assert (
+        "services/backend/tests/test_final_demo_launch.py",
+        "test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidence_detail",
     ) in requirements
     assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
@@ -1297,7 +1313,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff "
             "FinalDemoLaunchFirstBlocker firstBlocker: FinalDemoLaunchFirstBlocker? "
             "FinalDemoLaunchNextAction nextAction: FinalDemoLaunchNextAction? "
-            "status: String? "
+            "validationCommand: String? status: String? "
             "FinalLaunchMode displayLabel FinalResourcesPreflightItem FinalAcceptanceFreshness "
             "resolutionMode: String? applyNote: String? "
             "ThreeDEvaluationReadinessReport threeDEvaluationReadiness "
@@ -1515,7 +1531,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final_resource_requirements "
             "final_resource_fill_guide "
             "final_resource_apply_preview "
-            "next_action "
+            "next_action _apply_concrete_mobile_preflight_next_action validation_command "
             "final_external_action_ledger "
             "final_launch_closure_packet "
             "first_blocker _phase_blocker_with_nested_hint "
@@ -1579,7 +1595,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "test_final_demo_launch_includes_ios_device_evidence_bundle "
             "test_final_demo_launch_embeds_final_external_action_ledger "
             "test_final_demo_launch_embeds_final_launch_closure_packet "
-            "test_final_demo_launch_embeds_local_showcase_smoke"
+            "test_final_demo_launch_embeds_local_showcase_smoke "
+            "test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidence_detail"
         ),
         "services/backend/tests/test_ios_device_evidence_bundle.py": (
             "test_ios_device_evidence_bundle_blocks_missing_local_device_evidence "
