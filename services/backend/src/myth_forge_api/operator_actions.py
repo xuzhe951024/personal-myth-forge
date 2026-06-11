@@ -68,22 +68,26 @@ MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
 
 def normalize_operator_action(action: str) -> str:
     normalized = action.strip()
-    legacy_action = _normalize_legacy_action(normalized)
+    command_part, detail_suffix = _split_detail_suffix(normalized)
+    legacy_action = _normalize_legacy_action(command_part)
     if legacy_action is not None:
-        return legacy_action
-    apply_root = normalized.split("; rerun ", 1)[0].strip()
+        return f"{legacy_action}{detail_suffix}"
+    mobile_validated_action = _add_mobile_deploy_validation_to_command(command_part)
+    if mobile_validated_action != command_part:
+        return f"{mobile_validated_action}{detail_suffix}"
+    apply_root = command_part.split("; rerun ", 1)[0].strip()
     if apply_root in FINAL_RESOURCE_APPLY_ACTION_ROOTS:
-        return FINAL_RESOURCE_APPLY_ACTION
-    if normalized in PROVIDER_SELECTION_ACTION_ROOTS:
-        return FINAL_RESOURCE_APPLY_ACTION
-    if all(marker in normalized for marker in LEGACY_FINAL_RESOURCE_COPY_MARKERS):
-        return NORMALIZED_FINAL_RESOURCE_INIT_ACTION
-    if normalized.endswith(f": {NORMALIZED_FINAL_RESOURCE_INIT_ACTION}"):
-        return NORMALIZED_FINAL_RESOURCE_INIT_ACTION
-    command = _normalized_command(normalized)
+        return f"{FINAL_RESOURCE_APPLY_ACTION}{detail_suffix}"
+    if command_part in PROVIDER_SELECTION_ACTION_ROOTS:
+        return f"{FINAL_RESOURCE_APPLY_ACTION}{detail_suffix}"
+    if all(marker in command_part for marker in LEGACY_FINAL_RESOURCE_COPY_MARKERS):
+        return f"{NORMALIZED_FINAL_RESOURCE_INIT_ACTION}{detail_suffix}"
+    if command_part.endswith(f": {NORMALIZED_FINAL_RESOURCE_INIT_ACTION}"):
+        return f"{NORMALIZED_FINAL_RESOURCE_INIT_ACTION}{detail_suffix}"
+    command = _normalized_command(command_part)
     if command is not None:
-        return _replace_action_command(normalized, command)
-    return normalized
+        return f"{_replace_action_command(command_part, command)}{detail_suffix}"
+    return f"{command_part}{detail_suffix}"
 
 
 def _normalize_legacy_action(action: str) -> str | None:
@@ -119,11 +123,24 @@ def add_final_resource_validation_command(action: str) -> str:
 
 def add_mobile_deploy_validation_command(action: str) -> str:
     normalized = action.strip()
-    if "; rerun " in normalized:
-        return normalized
-    if normalized.endswith(MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS):
-        return f"{normalized}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
-    return normalized
+    command_part, detail_suffix = _split_detail_suffix(normalized)
+    return f"{_add_mobile_deploy_validation_to_command(command_part)}{detail_suffix}"
+
+
+def _add_mobile_deploy_validation_to_command(action: str) -> str:
+    command_part = action.strip()
+    if "; rerun " in command_part:
+        return command_part
+    if command_part.endswith(MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS):
+        return f"{command_part}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+    return command_part
+
+
+def _split_detail_suffix(action: str) -> tuple[str, str]:
+    command, separator, detail = action.partition(" | ")
+    if not separator:
+        return action, ""
+    return command.strip(), f"{separator}{detail}"
 
 
 def _normalized_command(action: str) -> str | None:

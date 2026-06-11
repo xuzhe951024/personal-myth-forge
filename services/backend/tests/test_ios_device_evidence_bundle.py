@@ -401,8 +401,9 @@ def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
 
     assert result.exit_code == 2
     assert actions[0] == (
-        "start backend-device-demo before device checks: make backend-device-demo | "
-        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight | PMF_BACKEND_BASE_URL must be "
+        "iPhone-reachable"
     )
     assert actions[1] == (
         "run make mobile-deploy-preflight after backend is running | "

@@ -73,6 +73,21 @@ def test_normalizes_prefixed_backend_device_demo_action() -> None:
     )
 
 
+def test_normalizes_detail_suffixed_backend_device_demo_action() -> None:
+    action = (
+        "start backend-device-demo before device checks: make backend-device-demo "
+        "| PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    expected = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight | PMF_BACKEND_BASE_URL must be "
+        "iPhone-reachable"
+    )
+
+    assert normalize_operator_action(action) == expected
+    assert operator_actions.add_mobile_deploy_validation_command(action) == expected
+
+
 def test_normalizes_prefixed_ios_deploy_config_action() -> None:
     expected = (
         "ios_device_launch_certificate: provide iOS deploy config in "
