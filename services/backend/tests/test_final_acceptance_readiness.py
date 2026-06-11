@@ -246,6 +246,61 @@ def test_final_acceptance_readiness_blocks_from_saved_report_without_unsafe_text
     assert "file:///tmp" not in report_text
 
 
+def test_final_acceptance_readiness_enriches_mobile_preflight_blocker_with_saved_next_action(
+    tmp_path: Path,
+) -> None:
+    _write_final_acceptance_report(
+        tmp_path,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": "mobile_deploy_preflight",
+                    "label": "iOS deploy preflight",
+                    "status": "blocked",
+                    "classification": "blocked_by_local_ios_deploy_config",
+                    "command": ["make", "mobile-deploy-preflight"],
+                    "stderr_tail": "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.",
+                },
+            ],
+        },
+    )
+    _write_mobile_deploy_preflight_evidence(
+        tmp_path,
+        next_action={
+            "id": "development_team",
+            "label": "Apple Team ID",
+            "status": "blocked",
+            "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+            "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            "validation_command": "make mobile-deploy-preflight",
+            "source": "first_blocker",
+        },
+    )
+
+    result = build_final_acceptance_readiness_report(repo_root=tmp_path)
+
+    blocker = result.report["blockers"][0]
+    assert blocker["id"] == "mobile_deploy_preflight"
+    assert blocker["next_action"] == {
+        "id": "development_team",
+        "label": "Apple Team ID",
+        "status": "blocked",
+        "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+        "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+        "validation_command": "make mobile-deploy-preflight",
+        "source": "first_blocker",
+    }
+    assert result.report["operator_actions"] == [
+        (
+            "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
 def test_final_acceptance_readiness_ready_from_saved_report(tmp_path: Path) -> None:
     _write_final_acceptance_report(
         tmp_path,
@@ -387,4 +442,38 @@ def _write_final_acceptance_report(repo_root: Path, report: dict[str, object]) -
     report_path = repo_root / "services/backend/.local/final-acceptance-local.json"
     report_path.parent.mkdir(parents=True)
     report_path.write_text(json.dumps(report), encoding="utf-8")
+    return report_path
+
+
+def _write_mobile_deploy_preflight_evidence(
+    repo_root: Path,
+    *,
+    next_action: dict[str, object],
+) -> Path:
+    report_path = (
+        repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json"
+    )
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
+        json.dumps(
+            {
+                "kind": "mobile_deploy_preflight_evidence_report",
+                "status": "blocked",
+                "next_action": next_action,
+                "safety": {
+                    "commands_run": True,
+                    "provider_calls": False,
+                    "live_provider_calls": False,
+                    "writes_backend_env": False,
+                    "writes_ios_deploy_config": False,
+                    "global_mutation": False,
+                    "xcode_or_signing": False,
+                    "keychain_writes": False,
+                    "provider_secrets_in_report": False,
+                    "local_paths_in_report": False,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
     return report_path
