@@ -69,6 +69,25 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES = (
     "final_handoff_index:",
     "ios_device_launch_certificate:",
 )
+FINAL_SHOWCASE_SOURCE_ACTION_PREFIXES = (
+    "final_rehearsal_local:",
+    "mobile_deploy_preflight_evidence:",
+    "final_acceptance_local:",
+    "ios_deploy_runbook_local:",
+    "final_configured_preflight:",
+    "final_handoff_index:",
+    "ios_device_launch_certificate:",
+)
+FINAL_SHOWCASE_DUPLICATE_DEVICE_ROOTS = {
+    (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    ),
+    (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ),
+}
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
 )
@@ -1561,7 +1580,10 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
         if normalized in seen_exact:
             continue
         bare_root = _operator_action_bare_root(normalized)
-        if _is_drop_candidate_source_prefix(normalized) and bare_root in bare_roots:
+        if (
+            _is_drop_candidate_source_prefix(normalized, bare_root)
+            and bare_root in bare_roots
+        ):
             continue
         seen_exact.add(normalized)
         deduped.append(normalized)
@@ -1570,6 +1592,9 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
 
 def _operator_action_bare_root(action: str) -> str:
     command = action.split(" | ", 1)[0].strip()
+    command = _strip_final_showcase_source_prefixes(command)
+    if _looks_like_operator_command(command):
+        return command
     parts = command.split(": ")
     for index in range(len(parts) - 1, 0, -1):
         suffix = ": ".join(parts[index:]).strip()
@@ -1579,14 +1604,30 @@ def _operator_action_bare_root(action: str) -> str:
     return command
 
 
+def _strip_final_showcase_source_prefixes(command: str) -> str:
+    stripped = command
+    while True:
+        for prefix in FINAL_SHOWCASE_SOURCE_ACTION_PREFIXES:
+            marker = f"{prefix} "
+            if stripped.startswith(marker):
+                stripped = stripped[len(marker) :].strip()
+                break
+        else:
+            return stripped
+
+
 def _is_source_prefixed_action(action: str) -> bool:
     return _operator_action_bare_root(action) != action.split(" | ", 1)[0].strip()
 
 
-def _is_drop_candidate_source_prefix(action: str) -> bool:
-    return action.startswith(
+def _is_drop_candidate_source_prefix(action: str, bare_root: str) -> bool:
+    if not _is_source_prefixed_action(action):
+        return False
+    if action.startswith(
         "final_rehearsal_local: mobile_deploy_preflight_evidence: "
-    )
+    ):
+        return True
+    return bare_root in FINAL_SHOWCASE_DUPLICATE_DEVICE_ROOTS
 
 
 def _looks_like_operator_command(value: str) -> bool:

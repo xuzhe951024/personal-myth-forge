@@ -207,6 +207,7 @@ Bridge deliverable:
 - P0.293 mobile deploy preflight handoff action normalizes to concrete device command
 - P0.294 mobile preflight evidence details normalize to concrete deploy actions
 - P0.295 final showcase drops source-prefixed duplicate operator actions
+- P0.296 final showcase drops duplicate source-prefixed device actions
 
 ## P1: Mobile Vertical Slice
 
