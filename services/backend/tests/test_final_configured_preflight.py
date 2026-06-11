@@ -52,6 +52,53 @@ def test_configured_preflight_blocks_missing_resources_without_leaks(
     assert "sk-" not in report_text
 
 
+def test_configured_preflight_resource_actions_include_validation_commands(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_incomplete_final_resources(repo_root)
+
+    result = build_final_configured_preflight_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide DEVELOPMENT_TEAM in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert not any(
+        action.endswith("provide MESHY_API_KEY in final-resources.env")
+        or action.endswith("provide OPENAI_API_KEY in final-resources.env")
+        or action.endswith("provide DEVELOPMENT_TEAM in final-resources.env")
+        or action.endswith("provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env")
+        or action.endswith("provide PMF_BACKEND_BASE_URL in final-resources.env")
+        for action in actions
+    )
+    assert not any(
+        " in final-resources.env; rerun " in action
+        and not action.endswith("; rerun make final-resources-preflight")
+        for action in actions
+    )
+
+
 def test_configured_preflight_is_ready_with_configured_handoff_inputs(
     tmp_path: Path,
 ) -> None:
@@ -184,6 +231,20 @@ def _write_final_resources(repo_root: Path) -> None:
                 "DEVELOPMENT_TEAM=TEAM12345",
                 "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
                 "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+                "PMF_FINAL_LAUNCH_MODE=configured",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_incomplete_final_resources(repo_root: Path) -> None:
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "\n".join(
+            [
+                "PRINT_PROVIDER=local",
                 "PMF_FINAL_LAUNCH_MODE=configured",
             ]
         ),

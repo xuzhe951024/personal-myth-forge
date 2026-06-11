@@ -183,6 +183,7 @@ Bridge deliverable:
 - P0.269 iOS device launch rehearsal resource actions retain validation commands
 - P0.270 iOS deploy runbook resource actions retain validation commands
 - P0.271 final demo launch resource actions use final resources preflight
+- P0.272 configured preflight resource actions retain validation commands
 
 ## P1: Mobile Vertical Slice
 
