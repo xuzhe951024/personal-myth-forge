@@ -24,7 +24,16 @@ def test_resource_handoff_reports_missing_final_core_resources(tmp_path: Path) -
     assert backend["MYTH_SESSION_STORAGE_DIR"]["status"] == "ready"
     assert ios["DEVELOPMENT_TEAM"]["status"] == "missing"
     assert ios["PMF_BACKEND_BASE_URL"]["status"] == "blocked"
-    assert "provide MESHY_API_KEY" in " ".join(report["operator_actions"])
+    assert (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in report["operator_actions"]
+    assert (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in report["operator_actions"]
+    assert "provide MESHY_API_KEY" not in report["operator_actions"]
+    assert "provide OPENAI_API_KEY" not in report["operator_actions"]
     assert (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
@@ -100,7 +109,11 @@ def test_resource_handoff_blocks_treatstock_when_selected_without_key(
 
     assert backend["PRINT_PROVIDER"]["status"] == "missing"
     assert backend["TREATSTOCK_API_KEY"]["status"] == "missing"
-    assert "provide TREATSTOCK_API_KEY" in " ".join(report["operator_actions"])
+    assert (
+        "provide TREATSTOCK_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in report["operator_actions"]
+    assert "provide TREATSTOCK_API_KEY" not in report["operator_actions"]
 
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:

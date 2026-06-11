@@ -7,7 +7,10 @@ from typing import Any
 
 from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.config import Settings, load_settings
-from myth_forge_api.operator_actions import add_mobile_deploy_validation_command
+from myth_forge_api.operator_actions import (
+    add_final_resource_validation_command,
+    add_mobile_deploy_validation_command,
+)
 
 Status = str
 
@@ -292,21 +295,26 @@ def _operator_actions(
     if backend_by_id["THREE_D_PROVIDER"]["status"] != "ready":
         actions.append("set THREE_D_PROVIDER=meshy")
     if backend_by_id["MESHY_API_KEY"]["status"] != "ready":
-        actions.append("provide MESHY_API_KEY")
+        actions.append("provide MESHY_API_KEY in final-resources.env")
     if backend_by_id["NPC_PROVIDER"]["status"] != "ready":
         actions.append("set NPC_PROVIDER=openai")
     if backend_by_id["OPENAI_API_KEY"]["status"] != "ready":
-        actions.append("provide OPENAI_API_KEY")
+        actions.append("provide OPENAI_API_KEY in final-resources.env")
     if backend_by_id["PRINT_PROVIDER"]["status"] == "missing":
         actions.append("provide TREATSTOCK_API_KEY or set PRINT_PROVIDER=local")
     if backend_by_id["TREATSTOCK_API_KEY"]["status"] == "missing":
-        actions.append("provide TREATSTOCK_API_KEY")
+        actions.append("provide TREATSTOCK_API_KEY in final-resources.env")
     if ios_by_id["DEVELOPMENT_TEAM"]["status"] != "ready":
         actions.append("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
     if ios_by_id["PMF_BACKEND_BASE_URL"]["status"] != "ready":
         actions.append("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
     actions.append("accept the Apple SDK license outside this repository before Xcode build")
-    return [add_mobile_deploy_validation_command(action) for action in actions]
+    return [
+        add_final_resource_validation_command(
+            add_mobile_deploy_validation_command(action)
+        )
+        for action in actions
+    ]
 
 
 def _commands() -> list[str]:
