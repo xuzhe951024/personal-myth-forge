@@ -303,6 +303,35 @@ def test_final_local_report_refresh_operator_actions_drop_detail_duplicate_roots
     ]
 
 
+def test_final_local_report_refresh_operator_actions_normalize_fill_guide_actions() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_resource_requirements",
+                "status": "blocked",
+                "command": "provide MESHY_API_KEY in final-resources.env",
+                "validation_command": "make final-resources-preflight",
+            },
+            {
+                "id": "final_resource_fill_guide",
+                "status": "blocked",
+                "command": (
+                    "fill MESHY_API_KEY in "
+                    "services/backend/.local/final-resources.env"
+                ),
+                "validation_command": "make final-resources-preflight",
+            },
+        ],
+    )
+
+    assert actions == [
+        (
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        )
+    ]
+
+
 def test_final_local_report_refresh_operator_actions_drop_vague_unblock_actions() -> None:
     actions = final_local_report_refresh._operator_actions(
         [

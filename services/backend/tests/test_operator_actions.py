@@ -252,6 +252,15 @@ def test_normalizes_vague_unblock_actions_to_concrete_commands() -> None:
     ) == "final_showcase_readiness: make provider-handoff"
 
 
+def test_normalizes_final_resource_fill_guide_action() -> None:
+    assert normalize_operator_action(
+        "fill MESHY_API_KEY in services/backend/.local/final-resources.env"
+    ) == (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+
+
 def test_normalizes_resource_apply_unblock_actions_to_concrete_commands() -> None:
     assert normalize_operator_action(
         "unblock final_resource_apply_preview after final_resource_fill_guide"
