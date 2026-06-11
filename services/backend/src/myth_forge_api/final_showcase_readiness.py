@@ -1015,12 +1015,15 @@ def _next_action(
     )
     if blocker is None:
         return None
+    command = str(blocker.get("command", ""))
+    if blocker.get("id") == "ios_deployable":
+        command = _preferred_device_action_command(device_action_bundle) or command
     return {
         "id": str(blocker.get("id", "")),
         "label": str(blocker.get("label", "")),
         "status": str(blocker.get("status", "")),
         "classification": str(blocker.get("classification", "")),
-        "command": str(blocker.get("command", "")),
+        "command": command,
         "detail": str(blocker.get("detail", "")),
         "source": "first_blocker",
     }
@@ -1060,6 +1063,23 @@ def _preferred_device_action_hint_source(
                 return action
     first_action = device_action_bundle.get("first_action")
     return first_action if isinstance(first_action, dict) else None
+
+
+def _preferred_device_action_command(
+    device_action_bundle: dict[str, Any] | None,
+) -> str:
+    if not isinstance(device_action_bundle, dict):
+        return ""
+    action = _preferred_device_action_hint_source(device_action_bundle)
+    if not isinstance(action, dict):
+        return ""
+    command = str(action.get("command", "")).strip()
+    detail = str(action.get("evidence_detail", "")).strip()
+    if not command or not detail:
+        return ""
+    if str(action.get("evidence_status", "")) == "missing":
+        return ""
+    return command
 
 
 def _first_device_action_hint(
