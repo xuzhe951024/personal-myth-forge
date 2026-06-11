@@ -8,6 +8,7 @@ from typing import Any
 
 from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
+    add_mobile_deploy_validation_command,
     normalize_operator_action,
 )
 from myth_forge_api.source_freshness import (
@@ -287,7 +288,9 @@ def _commands(raw_commands: Any) -> list[str]:
 
 
 def _validation_aware_operator_action(action: str) -> str:
-    return add_final_resource_validation_command(normalize_operator_action(action))
+    return add_final_resource_validation_command(
+        add_mobile_deploy_validation_command(normalize_operator_action(action))
+    )
 
 
 def _safety(raw_safety: Any) -> dict[str, bool]:

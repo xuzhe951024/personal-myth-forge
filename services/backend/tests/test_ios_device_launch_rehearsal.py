@@ -505,6 +505,82 @@ def test_ios_device_launch_rehearsal_adds_validation_to_resource_actions(
     )
 
 
+def test_ios_device_launch_rehearsal_adds_mobile_validation_to_ios_config_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True)
+    _write_local_rehearsal_reports(local_dir)
+    _write_json(
+        local_dir / "ios-deploy-runbook-local.json",
+        {
+            "kind": "ios_deploy_runbook_report",
+            "mode": "local",
+            "status": "blocked",
+            "operator_actions": [
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+            ],
+        },
+    )
+    _write_json(
+        local_dir / "final-configured-preflight.json",
+        {
+            "kind": "final_configured_preflight_report",
+            "status": "blocked",
+            "operator_actions": [
+                "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
+            ],
+        },
+    )
+    _write_json(
+        local_dir / "final-handoff-index.json",
+        {"kind": "final_handoff_index_report", "status": "ready"},
+    )
+    _write_json(
+        local_dir / "ios-device-launch-certificate.json",
+        {
+            "kind": "ios_device_launch_certificate_report",
+            "status": "ready",
+            "mode": "local",
+            "summary": {"ready": 4, "manual": 0, "live": 0, "partial": 0},
+            "safety": {
+                "provider_calls": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+            },
+        },
+    )
+
+    result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
+    actions = result.report["operator_actions"]
+
+    assert (
+        "final_rehearsal_local: ios_deploy_runbook_local: "
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert (
+        "final_rehearsal_local: ios_deploy_runbook_local: "
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert (
+        "final_configured_preflight: "
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert not any(
+        action.endswith("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
+        or action.endswith("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
+        or action.endswith(
+            "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig"
+        )
+        for action in actions
+    )
+
+
 def test_ios_device_launch_rehearsal_routes_final_acceptance_source_actions(
     tmp_path: Path,
 ) -> None:
@@ -987,6 +1063,44 @@ def test_ios_device_launch_rehearsal_readiness_adds_validation_to_saved_resource
     assert not any(
         action.endswith("provide MESHY_API_KEY in final-resources.env")
         or action.endswith("provide OPENAI_API_KEY in final-resources.env")
+        for action in actions
+    )
+
+
+def test_ios_device_launch_rehearsal_readiness_adds_mobile_validation_to_saved_ios_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["operator_actions"] = [
+        (
+            "final_rehearsal_local: ios_deploy_runbook_local: "
+            "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+        ),
+        (
+            "final_rehearsal_local: ios_deploy_runbook_local: "
+            "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+        ),
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    actions = result.report["operator_actions"]
+
+    assert (
+        "final_rehearsal_local: ios_deploy_runbook_local: "
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert (
+        "final_rehearsal_local: ios_deploy_runbook_local: "
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert not any(
+        action.endswith("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
+        or action.endswith("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
         for action in actions
     )
 

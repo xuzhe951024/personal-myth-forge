@@ -189,6 +189,7 @@ Bridge deliverable:
 - P0.275 iOS deploy config actions retain mobile preflight validation commands
 - P0.276 final apply preview and showcase readiness retain iOS validation commands
 - P0.277 final external action ledger iOS deploy config actions use mobile preflight validation
+- P0.278 iOS device launch rehearsal and readiness retain iOS validation commands
 
 ## P1: Mobile Vertical Slice
 
