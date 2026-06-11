@@ -175,6 +175,80 @@ def test_final_showcase_readiness_marks_preflight_actions_ready_with_evidence(
     assert bundle["summary"]["blocked"] == 2
 
 
+def test_final_showcase_readiness_backend_action_prefers_backend_evidence_detail(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    actions = {
+        action["id"]: action
+        for action in result.report["device_action_bundle"]["actions"]
+    }
+
+    assert actions["start_backend_device_demo"]["evidence_detail"] == (
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+
+
+def test_final_showcase_readiness_preflight_action_summarizes_blocker_details(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    actions = {
+        action["id"]: action
+        for action in result.report["device_action_bundle"]["actions"]
+    }
+
+    assert actions["run_mobile_deploy_preflight"]["evidence_detail"] == (
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+
+
 def test_final_showcase_readiness_maps_missing_mobile_xcode_build_evidence(
     tmp_path: Path,
 ) -> None:
@@ -1122,6 +1196,42 @@ def _write_mobile_deploy_preflight_evidence_ready(repo_root: Path) -> None:
             ],
             "stderr_lines": [],
             "operator_actions": [],
+            "safety": {
+                "commands_run": True,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "local_paths_in_report": False,
+            },
+        },
+    )
+
+
+def _write_mobile_deploy_preflight_evidence_blocked(
+    repo_root: Path,
+    *,
+    checks: list[dict[str, str]],
+) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json",
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "blocked",
+            "command": "make mobile-deploy-preflight",
+            "script": "apps/mobile/ios/scripts/deploy_preflight.sh",
+            "exit_code": 2,
+            "checks": checks,
+            "stdout_lines": [],
+            "stderr_lines": [str(check["detail"]) for check in checks],
+            "operator_actions": [
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+            ],
             "safety": {
                 "commands_run": True,
                 "provider_calls": False,

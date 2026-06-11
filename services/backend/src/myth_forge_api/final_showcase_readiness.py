@@ -1020,6 +1020,9 @@ def _device_action_bundle(
     preflight_raw_status = str(
         mobile_deploy_preflight_evidence.get("status", "missing"),
     )
+    backend_detail = _mobile_deploy_preflight_backend_evidence_detail(
+        mobile_deploy_preflight_evidence,
+    )
     preflight_detail = _mobile_deploy_preflight_evidence_detail(
         mobile_deploy_preflight_evidence,
     )
@@ -1053,7 +1056,7 @@ def _device_action_bundle(
             command="make backend-device-demo",
             detail="Start the LAN-reachable backend before running iPhone preflight.",
             blocks=["ios_deployable", "functional_regression"],
-            extra=preflight_metadata,
+            extra={**preflight_metadata, "evidence_detail": backend_detail},
         ),
         _device_action(
             action_id="run_mobile_deploy_preflight",
@@ -1138,9 +1141,22 @@ def _device_action(
 
 
 def _mobile_deploy_preflight_evidence_detail(report: dict[str, Any]) -> str:
-    return _first_check_detail(
+    if _normalized_report_status(report) == "ready":
+        return _first_check_detail(
+            report,
+            fallback="Mobile deploy preflight evidence is not ready.",
+        )
+    return _check_detail_summary(
         report,
         fallback="Mobile deploy preflight evidence is not ready.",
+    )
+
+
+def _mobile_deploy_preflight_backend_evidence_detail(report: dict[str, Any]) -> str:
+    return _preferred_check_detail(
+        report,
+        preferred_ids=("backend_health", "backend_base_url"),
+        fallback=_mobile_deploy_preflight_evidence_detail(report),
     )
 
 
@@ -1152,15 +1168,60 @@ def _mobile_xcode_build_evidence_detail(report: dict[str, Any]) -> str:
 
 
 def _first_check_detail(report: dict[str, Any], *, fallback: str) -> str:
+    details = _check_details(report)
+    if details:
+        return details[0]
+    return fallback
+
+
+def _preferred_check_detail(
+    report: dict[str, Any],
+    *,
+    preferred_ids: tuple[str, ...],
+    fallback: str,
+) -> str:
     checks = report.get("checks")
     if isinstance(checks, list):
+        preferred = set(preferred_ids)
         for check in checks:
             if not isinstance(check, dict):
+                continue
+            if str(check.get("id", "")) not in preferred:
                 continue
             detail = check.get("detail")
             if isinstance(detail, str) and detail:
                 return detail
     return fallback
+
+
+def _check_detail_summary(report: dict[str, Any], *, fallback: str) -> str:
+    details = _check_details(report)
+    if not details:
+        return fallback
+    visible = details[:3]
+    if len(details) > len(visible):
+        visible.append(f"+{len(details) - len(visible)} more")
+    return "; ".join(visible)
+
+
+def _check_details(report: dict[str, Any]) -> list[str]:
+    checks = report.get("checks")
+    if not isinstance(checks, list):
+        return []
+    details: list[str] = []
+    seen: set[str] = set()
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        detail = check.get("detail")
+        if not isinstance(detail, str):
+            continue
+        normalized = detail.strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        details.append(normalized)
+    return details
 
 
 def _device_action_bundle_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
