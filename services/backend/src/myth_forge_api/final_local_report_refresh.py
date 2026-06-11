@@ -109,10 +109,12 @@ def run_final_local_report_refresh(
     step_results = [_run_step(step, selected_repo_root) for step in steps]
     summary = _summary(step_results)
     status = _overall_status(summary)
+    first_blocker = _first_blocker(step_results)
     report = {
         "kind": "final_local_report_refresh_report",
         "status": status,
-        "first_blocker": _first_blocker(step_results),
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "summary": summary,
         "steps": step_results,
         "steps_by_id": {step["id"]: step for step in step_results},
@@ -747,6 +749,22 @@ def _operator_actions(steps: list[dict[str, Any]]) -> list[str]:
         elif step["status"] == "blocked":
             actions.append(f"review refreshed {step['id']} report")
     return actions[:12]
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(first_blocker, dict):
+        return None
+    return {
+        "id": str(first_blocker.get("id", "")),
+        "label": str(first_blocker.get("label", "")),
+        "status": str(first_blocker.get("status", "")),
+        "classification": str(first_blocker.get("classification", "")),
+        "command": str(first_blocker.get("command", "")),
+        "detail": str(first_blocker.get("detail", "")),
+        "source": "first_blocker",
+        "output": first_blocker.get("output"),
+        "step_id": str(first_blocker.get("step_id", "")),
+    }
 
 
 def _first_blocker(steps: list[dict[str, Any]]) -> dict[str, Any] | None:

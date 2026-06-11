@@ -142,6 +142,31 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert "meshy-secret" not in report_text
 
 
+def test_final_local_report_refresh_exposes_next_action_from_first_blocker(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+
+    blocker = result.report["first_blocker"]
+    action = result.report["next_action"]
+
+    assert blocker["id"] == "final_resource_requirements"
+    assert action == {
+        "id": "final_resource_requirements",
+        "label": "Final resource requirements",
+        "status": "blocked",
+        "classification": "missing_required_value",
+        "command": "provide MESHY_API_KEY in final-resources.env",
+        "detail": "Backend-only secret for live Meshy 3D generation.",
+        "source": "first_blocker",
+        "output": "services/backend/.local/final-resource-requirements.json",
+        "step_id": "final_resource_requirements",
+    }
+    assert "meshy-secret" not in json.dumps(action)
+
+
 def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
     tmp_path: Path,
 ) -> None:
