@@ -358,6 +358,45 @@ def test_local_final_demo_launch_first_blocker_skips_continuable_apply_resources
     assert "MESHY_API_KEY" not in blocker["detail"]
 
 
+def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidence_detail(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+    )
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    blocker = result.report["first_blocker"]
+    next_action = result.report["next_action"]
+
+    assert blocker["id"] == "mobile_deploy_preflight"
+    assert "physical iPhone backend health gate" in blocker["detail"]
+    assert "Missing DEVELOPMENT_TEAM" in blocker["detail"]
+    assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in blocker["detail"]
+    assert "MESHY_API_KEY" not in blocker["detail"]
+    assert next_action["detail"] == blocker["detail"]
+
+
 def test_local_final_demo_launch_marks_unified_apply_missing_with_ios_only(
     tmp_path: Path,
 ) -> None:
@@ -992,6 +1031,42 @@ def _write_visual_regression(repo_root: Path) -> None:
     visual = repo_root / "services/backend/.local/visual-regression-local.json"
     visual.parent.mkdir(parents=True, exist_ok=True)
     visual.write_text(json.dumps(report), encoding="utf-8")
+
+
+def _write_mobile_deploy_preflight_evidence_blocked(
+    repo_root: Path,
+    *,
+    checks: list[dict[str, str]],
+) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json",
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "blocked",
+            "command": "make mobile-deploy-preflight",
+            "script": "apps/mobile/ios/scripts/deploy_preflight.sh",
+            "exit_code": 2,
+            "checks": checks,
+            "stdout_lines": [],
+            "stderr_lines": [str(check["detail"]) for check in checks],
+            "operator_actions": [
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+            ],
+            "safety": {
+                "commands_run": True,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "local_paths_in_report": False,
+            },
+        },
+    )
 
 
 def _write_configured_live_evidence(repo_root: Path) -> None:
