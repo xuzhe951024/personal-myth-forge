@@ -25,6 +25,19 @@ def test_resource_handoff_reports_missing_final_core_resources(tmp_path: Path) -
     assert ios["DEVELOPMENT_TEAM"]["status"] == "missing"
     assert ios["PMF_BACKEND_BASE_URL"]["status"] == "blocked"
     assert "provide MESHY_API_KEY" in " ".join(report["operator_actions"])
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in report["operator_actions"]
+    assert (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    ) in report["operator_actions"]
+    assert not any(
+        action.endswith("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
+        or action.endswith("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
+        for action in report["operator_actions"]
+    )
     assert "make backend-write-provider-env" in report["commands"]
     assert "make backend-device-demo" in report["commands"]
     assert any("resource-template-acceptance" in command for command in report["commands"])

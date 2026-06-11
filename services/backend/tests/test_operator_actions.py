@@ -1,4 +1,41 @@
+import myth_forge_api.operator_actions as operator_actions
 from myth_forge_api.operator_actions import normalize_operator_action
+
+
+def test_adds_mobile_deploy_validation_to_known_ios_config_actions() -> None:
+    assert operator_actions.add_mobile_deploy_validation_command(
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    ) == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert operator_actions.add_mobile_deploy_validation_command(
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig"
+    ) == (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert operator_actions.add_mobile_deploy_validation_command(
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    ) == (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert operator_actions.add_mobile_deploy_validation_command(
+        "set PMF_FINAL_LAUNCH_MODE to local or configured"
+    ) == (
+        "set PMF_FINAL_LAUNCH_MODE to local or configured; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+
+def test_mobile_deploy_validation_preserves_existing_rerun_command() -> None:
+    action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+
+    assert operator_actions.add_mobile_deploy_validation_command(action) == action
 
 
 def test_normalizes_provider_handoff_cli_action_to_make_target() -> None:

@@ -78,12 +78,21 @@ def test_ios_deploy_runbook_resource_actions_include_validation_commands(
         "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
         "rerun make final-resources-preflight"
     ) in actions
-    assert "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL" in actions
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
     assert not any(
         action.endswith("provide MESHY_API_KEY in final-resources.env")
         or action.endswith("provide OPENAI_API_KEY in final-resources.env")
         or action.endswith("provide DEVELOPMENT_TEAM in final-resources.env")
         or action.endswith("provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env")
+        or action.endswith("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
+        or action.endswith("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
         for action in actions
     )
 

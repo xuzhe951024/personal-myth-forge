@@ -24,7 +24,10 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
     LOCAL_NPC_EVALUATION_COMMAND,
     build_npc_agent_evaluation_readiness_report,
 )
-from myth_forge_api.operator_actions import add_final_resource_validation_command
+from myth_forge_api.operator_actions import (
+    add_final_resource_validation_command,
+    add_mobile_deploy_validation_command,
+)
 from myth_forge_api.three_d_evaluation_readiness import (
     LOCAL_THREE_D_EVALUATION_COMMAND,
     build_three_d_evaluation_readiness_report,
@@ -436,7 +439,14 @@ def _operator_actions(
             actions.append(f"unblock {step['id']}: {step['command']}")
         if step["status"] == "manual" and step["id"] == "xcode_build_gate":
             actions.append("run Xcode build gate manually on the Mac: make mobile-xcode-build")
-    return _dedupe([add_final_resource_validation_command(action) for action in actions])
+    return _dedupe(
+        [
+            add_final_resource_validation_command(
+                add_mobile_deploy_validation_command(action)
+            )
+            for action in actions
+        ]
+    )
 
 
 def _selected_apply_preview_actions(report: dict[str, Any]) -> list[str]:

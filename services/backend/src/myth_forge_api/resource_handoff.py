@@ -7,6 +7,7 @@ from typing import Any
 
 from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.config import Settings, load_settings
+from myth_forge_api.operator_actions import add_mobile_deploy_validation_command
 
 Status = str
 
@@ -305,7 +306,7 @@ def _operator_actions(
     if ios_by_id["PMF_BACKEND_BASE_URL"]["status"] != "ready":
         actions.append("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
     actions.append("accept the Apple SDK license outside this repository before Xcode build")
-    return actions
+    return [add_mobile_deploy_validation_command(action) for action in actions]
 
 
 def _commands() -> list[str]:

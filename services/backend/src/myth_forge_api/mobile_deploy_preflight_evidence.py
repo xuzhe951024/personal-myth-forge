@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from myth_forge_api.operator_actions import add_mobile_deploy_validation_command
+
 SCRIPT_PATH = Path("apps/mobile/ios/scripts/deploy_preflight.sh")
 COMMAND = "make mobile-deploy-preflight"
 CommandRunner = Callable[[Path], subprocess.CompletedProcess[str]]
@@ -59,9 +61,10 @@ def build_mobile_deploy_preflight_evidence_report(
     selected_repo_root = Path(repo_root) if repo_root is not None else _default_repo_root()
     status = "ready" if returncode == 0 else "blocked"
     checks = _checks(stdout=stdout, stderr=stderr, status=status)
-    actions = [] if status == "ready" else _operator_actions(checks)
+    raw_actions = [] if status == "ready" else _operator_actions(checks)
+    actions = [add_mobile_deploy_validation_command(action) for action in raw_actions]
     first_blocker = _first_blocker(checks)
-    next_action = _next_action(first_blocker, actions, checks)
+    next_action = _next_action(first_blocker, raw_actions, checks)
     report = {
         "kind": "mobile_deploy_preflight_evidence_report",
         "status": status,

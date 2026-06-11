@@ -115,6 +115,32 @@ def test_configured_preflight_operator_actions_use_make_target_for_provider_hand
     assert not any("--output .local/provider-handoff.json" in action for action in actions)
 
 
+def test_configured_preflight_ios_deploy_actions_include_validation_commands(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_configured_preflight_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert not any(
+        action.endswith("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
+        or action.endswith("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
+        for action in actions
+    )
+
+
 def test_configured_preflight_is_ready_with_configured_handoff_inputs(
     tmp_path: Path,
 ) -> None:
