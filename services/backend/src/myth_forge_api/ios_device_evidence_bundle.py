@@ -15,6 +15,9 @@ from myth_forge_api.ios_device_launch_rehearsal_readiness import (
 )
 from myth_forge_api.operator_actions import normalize_operator_action
 
+MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH = Path(
+    "services/backend/.local/mobile-deploy-preflight-evidence.json"
+)
 MOBILE_XCODE_BUILD_EVIDENCE_PATH = Path(
     "services/backend/.local/mobile-xcode-build-evidence.json"
 )
@@ -41,6 +44,9 @@ def build_ios_device_evidence_bundle_report(
     launch_rehearsal = build_ios_device_launch_rehearsal_readiness_report(
         repo_root=selected_repo_root,
     ).report
+    mobile_deploy_preflight_evidence = _load_optional_report(
+        selected_repo_root / MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH
+    )
     xcode_build_evidence = _load_optional_report(
         selected_repo_root / MOBILE_XCODE_BUILD_EVIDENCE_PATH
     )
@@ -48,6 +54,7 @@ def build_ios_device_evidence_bundle_report(
         final_acceptance=final_acceptance,
         ios_deploy_runbook=ios_deploy_runbook,
         launch_rehearsal=launch_rehearsal,
+        mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
         xcode_build_evidence=xcode_build_evidence,
     )
     status = _overall_status(evidence_slots)
@@ -58,6 +65,10 @@ def build_ios_device_evidence_bundle_report(
             launch_rehearsal,
         ),
     }
+    if mobile_deploy_preflight_evidence is not None:
+        source_reports["mobile_deploy_preflight_evidence"] = _source_summary(
+            mobile_deploy_preflight_evidence
+        )
     if xcode_build_evidence is not None:
         source_reports["mobile_xcode_build_evidence"] = _source_summary(
             xcode_build_evidence
@@ -89,6 +100,7 @@ def _evidence_slots(
     final_acceptance: dict[str, Any],
     ios_deploy_runbook: dict[str, Any],
     launch_rehearsal: dict[str, Any],
+    mobile_deploy_preflight_evidence: dict[str, Any] | None,
     xcode_build_evidence: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
     blockers = _blockers_by_id(final_acceptance)
@@ -117,6 +129,9 @@ def _evidence_slots(
         if xcode_build_evidence is not None
         else "services/backend/.local/final-acceptance-local.json"
     )
+    preflight_evidence_source = _mobile_preflight_evidence_source(
+        mobile_deploy_preflight_evidence
+    )
 
     return [
         _slot(
@@ -126,41 +141,41 @@ def _evidence_slots(
                 acceptance_ready=acceptance_ready,
                 final_acceptance_status=final_acceptance_status,
                 mobile_blocker=mobile_blocker,
+                mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
             ),
             command="make backend-device-demo",
             detail=_backend_server_detail(
                 acceptance_ready=acceptance_ready,
                 mobile_blocker=mobile_blocker,
+                mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
             ),
-            classification=_classification(
+            classification=_backend_server_classification(
                 mobile_blocker,
-                default="final_acceptance_missing"
-                if final_acceptance_status == "missing"
-                else "backend_health_not_proven",
+                final_acceptance_status=final_acceptance_status,
+                mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
             ),
-            evidence_source="services/backend/.local/final-acceptance-local.json",
+            evidence_source=preflight_evidence_source,
         ),
         _slot(
             slot_id="mobile_deploy_preflight",
             label="Mobile deploy preflight",
-            status=_gate_status(
+            status=_mobile_preflight_slot_status(
                 acceptance_ready=acceptance_ready,
                 final_acceptance_status=final_acceptance_status,
-                blocker=mobile_blocker,
+                mobile_blocker=mobile_blocker,
+                mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
             ),
             command="make mobile-deploy-preflight",
-            detail=_gate_detail(
+            detail=_mobile_preflight_slot_detail(
                 blocker=mobile_blocker,
-                ready_detail="Final acceptance recorded a passing mobile deploy preflight.",
-                missing_detail="Run mobile deploy preflight after backend-device-demo is reachable.",
+                mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
             ),
-            classification=_classification(
+            classification=_mobile_preflight_slot_classification(
                 mobile_blocker,
-                default="final_acceptance_missing"
-                if final_acceptance_status == "missing"
-                else "mobile_deploy_preflight_not_proven",
+                final_acceptance_status=final_acceptance_status,
+                mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
             ),
-            evidence_source="services/backend/.local/final-acceptance-local.json",
+            evidence_source=preflight_evidence_source,
         ),
         _slot(
             slot_id="xcode_build_gate",
@@ -217,7 +232,13 @@ def _backend_server_status(
     acceptance_ready: bool,
     final_acceptance_status: str,
     mobile_blocker: dict[str, Any] | None,
+    mobile_deploy_preflight_evidence: dict[str, Any] | None,
 ) -> str:
+    evidence_status = _mobile_preflight_evidence_status(
+        mobile_deploy_preflight_evidence
+    )
+    if evidence_status is not None:
+        return evidence_status
     if acceptance_ready:
         return "ready"
     if final_acceptance_status == "missing":
@@ -235,12 +256,141 @@ def _backend_server_detail(
     *,
     acceptance_ready: bool,
     mobile_blocker: dict[str, Any] | None,
+    mobile_deploy_preflight_evidence: dict[str, Any] | None,
 ) -> str:
     if acceptance_ready:
         return "Final acceptance recorded iPhone-reachable backend health."
+    evidence_detail = _mobile_preflight_check_detail(
+        mobile_deploy_preflight_evidence,
+        preferred_ids=("backend_health", "backend_base_url"),
+    )
+    if evidence_detail:
+        return evidence_detail
     if mobile_blocker and str(mobile_blocker.get("detail", "")).strip():
         return str(mobile_blocker["detail"])
     return "Start backend-device-demo and prove iPhone-reachable /health before device launch."
+
+
+def _backend_server_classification(
+    mobile_blocker: dict[str, Any] | None,
+    *,
+    final_acceptance_status: str,
+    mobile_deploy_preflight_evidence: dict[str, Any] | None,
+) -> str:
+    evidence_status = _mobile_preflight_evidence_status(
+        mobile_deploy_preflight_evidence
+    )
+    if evidence_status is not None:
+        return f"mobile_deploy_preflight_evidence_{_normalized_status(evidence_status)}"
+    return _classification(
+        mobile_blocker,
+        default="final_acceptance_missing"
+        if final_acceptance_status == "missing"
+        else "backend_health_not_proven",
+    )
+
+
+def _mobile_preflight_slot_status(
+    *,
+    acceptance_ready: bool,
+    final_acceptance_status: str,
+    mobile_blocker: dict[str, Any] | None,
+    mobile_deploy_preflight_evidence: dict[str, Any] | None,
+) -> str:
+    evidence_status = _mobile_preflight_evidence_status(
+        mobile_deploy_preflight_evidence
+    )
+    if evidence_status is not None:
+        return evidence_status
+    return _gate_status(
+        acceptance_ready=acceptance_ready,
+        final_acceptance_status=final_acceptance_status,
+        blocker=mobile_blocker,
+    )
+
+
+def _mobile_preflight_slot_detail(
+    *,
+    blocker: dict[str, Any] | None,
+    mobile_deploy_preflight_evidence: dict[str, Any] | None,
+) -> str:
+    evidence_detail = _mobile_preflight_detail_summary(
+        mobile_deploy_preflight_evidence
+    )
+    if evidence_detail:
+        return evidence_detail
+    return _gate_detail(
+        blocker=blocker,
+        ready_detail="Final acceptance recorded a passing mobile deploy preflight.",
+        missing_detail="Run mobile deploy preflight after backend-device-demo is reachable.",
+    )
+
+
+def _mobile_preflight_slot_classification(
+    blocker: dict[str, Any] | None,
+    *,
+    final_acceptance_status: str,
+    mobile_deploy_preflight_evidence: dict[str, Any] | None,
+) -> str:
+    evidence_status = _mobile_preflight_evidence_status(
+        mobile_deploy_preflight_evidence
+    )
+    if evidence_status is not None:
+        return f"mobile_deploy_preflight_evidence_{_normalized_status(evidence_status)}"
+    return _classification(
+        blocker,
+        default="final_acceptance_missing"
+        if final_acceptance_status == "missing"
+        else "mobile_deploy_preflight_not_proven",
+    )
+
+
+def _mobile_preflight_evidence_source(evidence: dict[str, Any] | None) -> str:
+    if _mobile_preflight_evidence_status(evidence) is not None:
+        return MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH.as_posix()
+    return "services/backend/.local/final-acceptance-local.json"
+
+
+def _mobile_preflight_evidence_status(evidence: dict[str, Any] | None) -> str | None:
+    if (
+        evidence is None
+        or evidence.get("kind") != "mobile_deploy_preflight_evidence_report"
+    ):
+        return None
+    return str(evidence.get("status", "blocked"))
+
+
+def _mobile_preflight_detail_summary(evidence: dict[str, Any] | None) -> str:
+    return _mobile_preflight_check_detail(evidence) or _first_operator_action(evidence)
+
+
+def _mobile_preflight_check_detail(
+    evidence: dict[str, Any] | None,
+    *,
+    preferred_ids: tuple[str, ...] = (),
+) -> str:
+    checks = evidence.get("checks") if isinstance(evidence, dict) else None
+    if not isinstance(checks, list):
+        return ""
+    preferred = set(preferred_ids)
+    details: list[str] = []
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        detail = str(check.get("detail", "")).strip()
+        if not detail:
+            continue
+        if preferred and str(check.get("id", "")) not in preferred:
+            continue
+        details.append(detail)
+    return "; ".join(details)
+
+
+def _first_operator_action(report: dict[str, Any] | None) -> str:
+    actions = report.get("operator_actions") if isinstance(report, dict) else None
+    if isinstance(actions, list) and actions:
+        return str(actions[0])
+    return ""
 
 
 def _gate_status(

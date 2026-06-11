@@ -227,6 +227,78 @@ def test_ios_device_evidence_bundle_uses_saved_xcode_evidence(tmp_path: Path) ->
     assert "mobile_xcode_build_evidence" in result.report["source_reports"]
 
 
+def test_ios_device_evidence_bundle_uses_saved_mobile_preflight_evidence_details(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_final_acceptance(
+        repo_root,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": "mobile_deploy_preflight",
+                    "label": "iOS deploy preflight",
+                    "status": "blocked",
+                    "classification": "blocked_by_local_ios_backend_health",
+                    "command": ["make", "mobile-deploy-preflight"],
+                    "stderr_tail": (
+                        "start backend-device-demo and rerun mobile deploy preflight"
+                    ),
+                }
+            ],
+        },
+    )
+    _write_mobile_deploy_preflight_evidence(
+        repo_root,
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "blocked",
+            "command": "make mobile-deploy-preflight",
+            "checks": [
+                {
+                    "id": "development_team",
+                    "label": "Apple Team ID",
+                    "status": "blocked",
+                    "detail": "Missing DEVELOPMENT_TEAM",
+                },
+                {
+                    "id": "backend_base_url",
+                    "label": "Backend base URL",
+                    "status": "blocked",
+                    "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                },
+            ],
+            "operator_actions": [
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+            ],
+        },
+    )
+
+    result = build_ios_device_evidence_bundle_report(repo_root=repo_root)
+    slots = {slot["id"]: slot for slot in result.report["evidence_slots"]}
+    text = json.dumps(result.report)
+
+    assert result.exit_code == 2
+    assert slots["backend_device_server"]["detail"] == (
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    assert slots["backend_device_server"]["evidence_source"] == (
+        "services/backend/.local/mobile-deploy-preflight-evidence.json"
+    )
+    assert slots["mobile_deploy_preflight"]["detail"] == (
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    assert slots["mobile_deploy_preflight"]["evidence_source"] == (
+        "services/backend/.local/mobile-deploy-preflight-evidence.json"
+    )
+    assert "mobile_deploy_preflight_evidence" in result.report["source_reports"]
+    assert "MESHY_API_KEY" not in text
+
+
 def test_cli_writes_ios_device_evidence_bundle_report(tmp_path: Path) -> None:
     repo_root = _repo_fixture(tmp_path)
     _write_mobile_xcode_build_evidence(
@@ -311,5 +383,14 @@ def _write_mobile_xcode_build_evidence(
     payload: dict[str, object],
 ) -> None:
     path = repo_root / "services/backend/.local/mobile-xcode-build-evidence.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _write_mobile_deploy_preflight_evidence(
+    repo_root: Path,
+    payload: dict[str, object],
+) -> None:
+    path = repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload), encoding="utf-8")
