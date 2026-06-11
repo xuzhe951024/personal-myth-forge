@@ -579,6 +579,10 @@ def test_final_demo_launch_embeds_saved_final_acceptance_readiness(
     )
     report_text = json.dumps(result.report)
     readiness = result.report["final_acceptance_readiness"]
+    expected_backend_action = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
 
     assert readiness["status"] == "blocked"
     assert readiness["source_file"] == {
@@ -596,9 +600,7 @@ def test_final_demo_launch_embeds_saved_final_acceptance_readiness(
             "detail": "Backend health failed at [home]/private [redacted]",
         }
     ]
-    assert readiness["operator_actions"] == [
-        "start backend-device-demo and rerun mobile deploy preflight"
-    ]
+    assert readiness["operator_actions"] == [expected_backend_action]
     assert readiness["freshness"]["status"] in {"fresh", "unknown"}
     assert readiness["freshness"]["classification"] in {"fresh_report", "git_unavailable"}
     handoff = result.report["final_operator_handoff"]
@@ -609,7 +611,7 @@ def test_final_demo_launch_embeds_saved_final_acceptance_readiness(
     assert handoff_steps["mobile_deploy_preflight"]["source"] == "final_acceptance_readiness"
     assert handoff["next_actions"][:2] == [
         "run make final-resource-init",
-        "start backend-device-demo and rerun mobile deploy preflight",
+        expected_backend_action,
     ]
     assert "run Xcode build gate manually on the Mac: make mobile-xcode-build" in handoff[
         "next_actions"

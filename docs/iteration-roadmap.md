@@ -195,6 +195,7 @@ Bridge deliverable:
 - P0.281 final local report refresh normalizes stale provider selection actions
 - P0.282 final apply operator actions normalize to explicit resource handoff
 - P0.283 final-local refresh promotes child next_commands to executable operator actions
+- P0.284 backend-device-demo operator actions use make target plus mobile preflight validation
 
 ## P1: Mobile Vertical Slice
 

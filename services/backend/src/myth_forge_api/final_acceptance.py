@@ -42,6 +42,10 @@ from myth_forge_api.npc_agent_provider_acceptance import (
     NPCAgentProviderAcceptanceResult,
     run_npc_agent_provider_acceptance,
 )
+from myth_forge_api.operator_actions import (
+    add_mobile_deploy_validation_command,
+    normalize_operator_action,
+)
 from myth_forge_api.print_acceptance import (
     PrintQuoteAcceptanceResult,
     run_print_quote_acceptance,
@@ -641,7 +645,11 @@ def _operator_actions(checks: list[dict[str, Any]]) -> list[str]:
                 actions.append(f"unblock {check_id}: {joined_command}")
             else:
                 actions.append(f"unblock {check_id}: {label}")
-    return _dedupe(actions)[:6]
+    return _dedupe([_validation_aware_action(action) for action in actions])[:6]
+
+
+def _validation_aware_action(action: str) -> str:
+    return add_mobile_deploy_validation_command(normalize_operator_action(action))
 
 
 def _dedupe(values: list[str]) -> list[str]:

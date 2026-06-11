@@ -35,18 +35,31 @@ FINAL_RESOURCE_VALIDATION_ACTION_ROOTS = (
     "provide PMF_BACKEND_BASE_URL in final-resources.env",
 )
 FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
+MOBILE_DEPLOY_PREFLIGHT_COMMAND = "make mobile-deploy-preflight"
+BACKEND_DEVICE_DEMO_ACTION = (
+    "start backend-device-demo before device checks: make backend-device-demo"
+)
+BACKEND_DEVICE_DEMO_VALIDATED_ACTION = (
+    f"{BACKEND_DEVICE_DEMO_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+)
+LEGACY_BACKEND_DEVICE_DEMO_ACTIONS = (
+    "start backend-device-demo and rerun mobile deploy preflight",
+    "continue with make backend-device-demo",
+)
 MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
+    BACKEND_DEVICE_DEMO_ACTION,
     "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
     "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
     "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig",
     "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
     "set PMF_FINAL_LAUNCH_MODE to local or configured",
 )
-MOBILE_DEPLOY_PREFLIGHT_COMMAND = "make mobile-deploy-preflight"
 
 
 def normalize_operator_action(action: str) -> str:
     normalized = action.strip()
+    if normalized in LEGACY_BACKEND_DEVICE_DEMO_ACTIONS:
+        return BACKEND_DEVICE_DEMO_VALIDATED_ACTION
     apply_root = normalized.split("; rerun ", 1)[0].strip()
     if apply_root in FINAL_RESOURCE_APPLY_ACTION_ROOTS:
         return FINAL_RESOURCE_APPLY_ACTION

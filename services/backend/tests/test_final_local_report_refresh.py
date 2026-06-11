@@ -58,7 +58,8 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "blocked_by_local_ios_backend_health"
     )
     assert steps["final_acceptance_local"]["command"] == (
-        "start backend-device-demo and rerun mobile deploy preflight"
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
     )
     assert steps["final_acceptance_local"]["detail"] == (
         "blocked_by_local_ios_backend_health; blocked_by_apple_sdk_license"

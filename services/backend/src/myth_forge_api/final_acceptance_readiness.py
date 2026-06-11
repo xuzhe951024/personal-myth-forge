@@ -6,6 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.operator_actions import (
+    add_mobile_deploy_validation_command,
+    normalize_operator_action,
+)
 from myth_forge_api.source_freshness import (
     freshness_payload,
     git_product_source_metadata,
@@ -359,7 +363,11 @@ def _operator_actions(*, status: str, blockers: list[dict[str, Any]]) -> list[st
             actions.append(f"unblock {blocker_id}: {blocker['command']}")
         else:
             actions.append(f"unblock {blocker_id}: {blocker['label']}")
-    return _dedupe(actions)
+    return _dedupe([_validation_aware_action(action) for action in actions])
+
+
+def _validation_aware_action(action: str) -> str:
+    return add_mobile_deploy_validation_command(normalize_operator_action(action))
 
 
 def _mobile_preflight_operator_action(blocker: dict[str, Any]) -> str:

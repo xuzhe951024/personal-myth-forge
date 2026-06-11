@@ -94,6 +94,12 @@ def test_preflight_evidence_blocks_missing_config_with_actions(tmp_path: Path) -
 
 
 def test_preflight_evidence_blocks_backend_health_without_leaks(tmp_path: Path) -> None:
+    expected_command = (
+        "start backend-device-demo before device checks: make backend-device-demo"
+    )
+    expected_action = (
+        f"{expected_command}; rerun make mobile-deploy-preflight"
+    )
     result = build_mobile_deploy_preflight_evidence_report(
         repo_root=tmp_path,
         returncode=2,
@@ -115,14 +121,12 @@ def test_preflight_evidence_blocks_backend_health_without_leaks(tmp_path: Path) 
         "id": "backend_health",
         "label": "Backend health",
         "status": "blocked",
-        "command": "start backend-device-demo and rerun mobile deploy preflight",
+        "command": expected_command,
         "detail": "Backend health check failed",
         "validation_command": "make mobile-deploy-preflight",
         "source": "first_blocker",
     }
-    assert result.report["operator_actions"] == [
-        "start backend-device-demo and rerun mobile deploy preflight"
-    ]
+    assert result.report["operator_actions"] == [expected_action]
     assert "sk-test" not in report_text
     assert "/Users/" not in report_text
     assert "file://" not in report_text
