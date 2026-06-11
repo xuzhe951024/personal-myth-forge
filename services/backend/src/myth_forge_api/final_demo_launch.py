@@ -184,6 +184,7 @@ def build_final_demo_launch_report(
     phase_summary = _summary(phases)
     overall_status = _overall_status(mode=mode, summary=phase_summary)
     first_blocker = _first_blocker(
+        mode=mode,
         phases=phases,
         nested_reports=[
             ("final_resource_requirements", final_resource_requirements),
@@ -503,22 +504,43 @@ def _overall_status(*, mode: LaunchMode, summary: dict[str, int]) -> str:
 
 def _first_blocker(
     *,
+    mode: LaunchMode,
     phases: list[dict[str, Any]],
     nested_reports: list[tuple[str, dict[str, Any] | None]],
 ) -> dict[str, Any] | None:
     nested_blocker = _first_nested_blocker(nested_reports)
+    candidate_phases = _first_blocker_phases(mode=mode, phases=phases)
     phase_blocker = _first_phase_blocker(
-        phases=phases,
+        phases=candidate_phases,
         statuses={"failed", "blocked", "missing"},
     )
     if phase_blocker is not None:
+        if mode == "local":
+            return phase_blocker
         return _phase_blocker_with_nested_hint(phase_blocker, nested_blocker)
     if nested_blocker is not None:
         return nested_blocker
     return _first_phase_blocker(
-        phases=phases,
+        phases=candidate_phases,
         statuses={"manual", "partial"},
     )
+
+
+def _first_blocker_phases(
+    *,
+    mode: LaunchMode,
+    phases: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if mode != "local":
+        return phases
+    return [
+        phase
+        for phase in phases
+        if not (
+            phase.get("id") == "apply_final_resources"
+            and phase.get("status") in {"missing", "blocked", "partial"}
+        )
+    ]
 
 
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:

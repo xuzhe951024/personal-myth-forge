@@ -335,6 +335,29 @@ def test_local_final_demo_launch_is_no_key_ready_but_surfaces_ios_actions(
     )
 
 
+def test_local_final_demo_launch_first_blocker_skips_continuable_apply_resources(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    blocker = result.report["first_blocker"]
+    phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
+
+    assert phases["apply_final_resources"]["status"] == "missing"
+    assert blocker["id"] == "mobile_deploy_preflight"
+    assert blocker["source"] == "final_demo_launch_phase"
+    assert blocker["source_id"] == "mobile_deploy_preflight"
+    assert blocker["command"] == "make mobile-deploy-preflight"
+    assert "physical iPhone backend health gate" in blocker["detail"]
+    assert "MESHY_API_KEY" not in blocker["detail"]
+
+
 def test_local_final_demo_launch_marks_unified_apply_missing_with_ios_only(
     tmp_path: Path,
 ) -> None:

@@ -148,6 +148,7 @@ Bridge deliverable:
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details
+- P0.238 local final demo launch first blocker prioritizes iPhone device path over continuable provider-key apply phase
 
 ## P1: Mobile Vertical Slice
 
