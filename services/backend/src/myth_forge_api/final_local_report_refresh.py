@@ -774,7 +774,11 @@ def _operator_actions(
 def _action_command(action: dict[str, Any] | None) -> str:
     if not isinstance(action, dict):
         return ""
-    return str(action.get("command") or "").strip()
+    command = str(action.get("command") or "").strip()
+    validation_command = str(action.get("validation_command") or "").strip()
+    if command and validation_command:
+        return f"{command}; rerun {validation_command}"
+    return command
 
 
 def _dedupe(values: list[str]) -> list[str]:

@@ -208,7 +208,10 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     assert result.exit_code == 2
     assert result.report["operator_actions"][:2] == [
         "provide MESHY_API_KEY in final-resources.env",
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+        (
+            "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        ),
     ]
     assert "review refreshed final_resource_requirements report" not in (
         result.report["operator_actions"][:2]

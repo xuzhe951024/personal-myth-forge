@@ -174,6 +174,7 @@ Bridge deliverable:
 - P0.261 final handoff index operator actions use concrete final demo launch next action
 - P0.262 final demo launch reports expose concrete top-level operator actions
 - P0.263 final showcase readiness operator actions start with concrete next action
+- P0.264 final local report refresh operator actions retain validation commands
 
 ## P1: Mobile Vertical Slice
 
