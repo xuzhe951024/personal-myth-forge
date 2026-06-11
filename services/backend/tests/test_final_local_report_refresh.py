@@ -167,6 +167,37 @@ def test_final_local_report_refresh_exposes_next_action_from_first_blocker(
     assert "meshy-secret" not in json.dumps(action)
 
 
+def test_final_local_report_refresh_exposes_showcase_next_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+
+    action = result.report["showcase_next_action"]
+
+    assert result.exit_code == 2
+    assert result.report["first_blocker"]["id"] == "final_resource_requirements"
+    assert result.report["next_action"]["id"] == "final_resource_requirements"
+    assert action == {
+        "id": "final_showcase_readiness",
+        "label": "Final showcase readiness",
+        "status": "blocked",
+        "classification": "ios_deploy_evidence",
+        "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+        "detail": (
+            "iOS deploy runbook and device launch rehearsal must both be ready. | "
+            "Next device action: provide DEVELOPMENT_TEAM in "
+            "Deployment.local.xcconfig | Missing DEVELOPMENT_TEAM; "
+            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        ),
+        "source": "final_showcase_readiness",
+        "output": "services/backend/.local/final-showcase-readiness.json",
+        "step_id": "final_showcase_readiness",
+        "validation_command": "make mobile-deploy-preflight",
+    }
+
+
 def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
     tmp_path: Path,
 ) -> None:
