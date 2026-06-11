@@ -62,6 +62,23 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
     assert result.report["safety"]["live_provider_calls_by_default"] is False
 
 
+def test_configured_final_demo_launch_exposes_status_alias(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="configured",
+    )
+
+    assert result.report["overall_status"] == "blocked"
+    assert result.report["status"] == result.report["overall_status"]
+    assert result.report["first_blocker"]["id"] == "apply_final_resources"
+    assert result.report["next_action"]["source"] == "first_blocker"
+
+
 def test_final_demo_launch_exposes_top_level_phase_first_blocker(
     tmp_path: Path,
 ) -> None:
@@ -333,6 +350,23 @@ def test_local_final_demo_launch_is_no_key_ready_but_surfaces_ios_actions(
         "set PMF_BACKEND_BASE_URL" in action
         for action in result.report["operator_checklist"]
     )
+
+
+def test_local_final_demo_launch_exposes_status_alias(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    assert result.report["overall_status"] == "partial"
+    assert result.report["status"] == result.report["overall_status"]
+    assert result.report["first_blocker"]["id"] == "mobile_deploy_preflight"
+    assert result.report["next_action"]["source"] == "first_blocker"
 
 
 def test_local_final_demo_launch_first_blocker_skips_continuable_apply_resources(

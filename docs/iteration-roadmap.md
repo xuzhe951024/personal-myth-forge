@@ -161,6 +161,7 @@ Bridge deliverable:
 - P0.248 final local report refresh check hints summarize every blocked check detail
 - P0.249 final launch closure packet exposes a top-level next action
 - P0.250 final local report refresh exposes a top-level next action
+- P0.251 final demo launch reports expose top-level status
 
 ## P1: Mobile Vertical Slice
 

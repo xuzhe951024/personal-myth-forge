@@ -204,6 +204,7 @@ def build_final_demo_launch_report(
         "kind": "final_demo_launch_report",
         "mode": mode,
         "overall_status": overall_status,
+        "status": overall_status,
         "first_blocker": first_blocker,
         "next_action": _next_action(first_blocker),
         "summary": resource_summary,
