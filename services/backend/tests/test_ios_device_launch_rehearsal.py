@@ -237,7 +237,10 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
     )
     assert sequence["final_rehearsal_local"]["operator_actions"] == [
         expected_runbook_action,
-        "ios_deploy_runbook_local: resolve Xcode build gate outside the app",
+        (
+            "ios_deploy_runbook_local: accept the Xcode license outside "
+            "Codex, then rerun make mobile-xcode-build-evidence"
+        ),
         (
             "mobile_deploy_preflight_evidence: start backend-device-demo before "
             "device checks: make backend-device-demo; rerun make mobile-deploy-preflight"
@@ -340,7 +343,8 @@ def test_ios_device_launch_rehearsal_uses_mobile_preflight_check_details(
         expected_source_action
     )
     assert sequence["final_rehearsal_local"]["operator_actions"][1] == (
-        "final_acceptance_local: resolve Xcode build gate outside the app"
+        "final_acceptance_local: accept the Xcode license outside Codex, then "
+        "rerun make mobile-xcode-build-evidence"
     )
     assert result.report["operator_actions"][0] == expected_detail
     assert "start backend-device-demo and rerun mobile deploy preflight" not in (
@@ -633,7 +637,10 @@ def test_ios_device_launch_rehearsal_routes_final_acceptance_source_actions(
     assert result.exit_code == 2
     assert sequence["final_rehearsal_local"]["operator_actions"][:2] == [
         expected_acceptance_action,
-        "final_acceptance_local: resolve Xcode build gate outside the app",
+        (
+            "final_acceptance_local: accept the Xcode license outside Codex, "
+            "then rerun make mobile-xcode-build-evidence"
+        ),
     ]
     assert result.report["operator_actions"][0] == (
         f"final_rehearsal_local: {expected_acceptance_action}"
