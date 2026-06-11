@@ -903,6 +903,52 @@ def test_final_showcase_readiness_adds_validation_to_nested_resource_actions(
     ) not in actions
 
 
+def test_final_showcase_readiness_adds_validation_to_ios_resource_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression_blocked(repo_root)
+    _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_ios_device_launch_rehearsal_with_actions(
+        repo_root,
+        extra_actions=[
+            (
+                "final_rehearsal_local: ios_deploy_runbook_local: "
+                "provide DEVELOPMENT_TEAM in final-resources.env"
+            ),
+            (
+                "final_rehearsal_local: ios_deploy_runbook_local: "
+                "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env"
+            ),
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "final_rehearsal_local: ios_deploy_runbook_local: "
+        "provide DEVELOPMENT_TEAM in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "final_rehearsal_local: ios_deploy_runbook_local: "
+        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert not any(
+        action.endswith("provide DEVELOPMENT_TEAM in final-resources.env")
+        or action.endswith("provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env")
+        for action in actions
+    )
+
+
 def test_final_showcase_readiness_sanitizes_secrets_paths_and_private_context(
     tmp_path: Path,
 ) -> None:

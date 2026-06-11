@@ -181,6 +181,7 @@ Bridge deliverable:
 - P0.267b final local report refresh removes bare resource actions when validation-aware actions exist
 - P0.268 final showcase readiness adds validation commands to nested resource actions
 - P0.269 iOS device launch rehearsal resource actions retain validation commands
+- P0.270 iOS deploy runbook resource actions retain validation commands
 
 ## P1: Mobile Vertical Slice
 
