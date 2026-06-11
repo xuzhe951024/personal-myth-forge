@@ -5517,7 +5517,14 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness() throws {
 
 private func testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
-        report: finalDemoLaunchReport(finalShowcaseReadinessStatus: "blocked"),
+        report: finalDemoLaunchReport(
+            finalShowcaseReadinessStatus: "blocked",
+            finalShowcaseReadinessFirstBlockerDetail: (
+                "iOS deploy runbook and device launch rehearsal must both be ready. "
+                + "| Next device action: make backend-device-demo "
+                + "| PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            )
+        ),
         error: nil
     )
     let text = summary.showcaseReadinessRows.joined(separator: " ")
@@ -5528,6 +5535,8 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction() throws {
         text,
         "iOS deploy runbook and device launch rehearsal must both be ready."
     )
+    try expectContains(text, "Next device action: make backend-device-demo")
+    try expectContains(text, "PMF_BACKEND_BASE_URL must be iPhone-reachable")
 }
 
 private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() throws {
