@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import myth_forge_api.final_showcase_readiness as final_showcase_readiness
 from myth_forge_api.config import Settings
 from myth_forge_api.final_showcase_readiness import (
     build_final_showcase_readiness_report,
@@ -750,6 +751,25 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert "make final-showcase-readiness" in actions
     assert len(actions) <= 32
     assert actions.count("make print-fulfillment-readiness") == 1
+
+
+def test_final_showcase_readiness_normalizes_resource_apply_unblock_actions() -> None:
+    actions = final_showcase_readiness._report_operator_actions(
+        {
+            "operator_actions": [
+                "unblock final_resource_apply_preview after final_resource_fill_guide",
+                (
+                    "unblock final_apply_resources after "
+                    "final_resource_apply_preview"
+                ),
+            ]
+        }
+    )
+
+    assert actions == [
+        "make final-resource-apply-preview",
+        "run make final-apply-resources to apply the filled resource bundle",
+    ]
 
 
 def test_final_showcase_readiness_normalizes_prefixed_ios_device_actions(

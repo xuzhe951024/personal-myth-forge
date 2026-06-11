@@ -199,6 +199,7 @@ Bridge deliverable:
 - P0.285 prefixed iOS device actions normalize to concrete handoff commands
 - P0.286 detail-suffixed backend-device-demo actions retain mobile preflight validation
 - P0.287 vague unblock operator actions normalize to concrete handoff commands
+- P0.288 final resource apply unblock actions normalize to concrete handoff commands
 
 ## P1: Mobile Vertical Slice
 
