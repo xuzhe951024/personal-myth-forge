@@ -424,11 +424,15 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
 
 
 def _promoted_blocker_fields(hint: dict[str, Any]) -> dict[str, str]:
-    return {
+    fields = {
         "classification": str(hint.get("classification") or ""),
         "command": str(hint.get("command") or ""),
         "detail": str(hint.get("detail") or ""),
     }
+    validation_command = str(hint.get("validation_command") or "").strip()
+    if validation_command:
+        fields["validation_command"] = validation_command
+    return fields
 
 
 def _three_d_evaluation_report(repo_root: Path) -> dict[str, Any]:
@@ -763,7 +767,7 @@ def _operator_actions(
         if step["status"] == "failed":
             actions.append(f"fix final-local-report-refresh step {step['id']}")
         elif step["status"] == "blocked":
-            command = str(step.get("command") or "").strip()
+            command = _action_command(step)
             if command:
                 actions.append(command)
             else:
@@ -796,7 +800,7 @@ def _dedupe(values: list[str]) -> list[str]:
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     if not isinstance(first_blocker, dict):
         return None
-    return {
+    action = {
         "id": str(first_blocker.get("id", "")),
         "label": str(first_blocker.get("label", "")),
         "status": str(first_blocker.get("status", "")),
@@ -807,6 +811,10 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
         "output": first_blocker.get("output"),
         "step_id": str(first_blocker.get("step_id", "")),
     }
+    validation_command = str(first_blocker.get("validation_command") or "").strip()
+    if validation_command:
+        action["validation_command"] = validation_command
+    return action
 
 
 def _showcase_next_action(steps: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -860,7 +868,7 @@ def _first_blocker(steps: list[dict[str, Any]]) -> dict[str, Any] | None:
     step_id = str(step.get("id", "step"))
     status = str(step.get("status", "blocked"))
     hint = step.get("blocker_hint") if isinstance(step.get("blocker_hint"), dict) else {}
-    return {
+    blocker = {
         "id": step_id,
         "label": str(step.get("label", step_id.replace("_", " ").title())),
         "status": status,
@@ -873,6 +881,10 @@ def _first_blocker(steps: list[dict[str, Any]]) -> dict[str, Any] | None:
         "output": step.get("output"),
         "step_id": step_id,
     }
+    validation_command = str(hint.get("validation_command") or "").strip()
+    if validation_command:
+        blocker["validation_command"] = validation_command
+    return blocker
 
 
 def _blocker_command(step: dict[str, Any], hint: dict[str, Any]) -> str:

@@ -36,6 +36,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
             "detail": "Backend-only secret for live Meshy 3D generation.",
             "output": "services/backend/.local/final-resource-requirements.json",
             "step_id": "final_resource_requirements",
+            "validation_command": "make final-resources-preflight",
         }
     assert result.report["summary"]["failed"] == 0
     assert result.report["summary"]["blocked"] >= 1
@@ -163,6 +164,7 @@ def test_final_local_report_refresh_exposes_next_action_from_first_blocker(
         "source": "first_blocker",
         "output": "services/backend/.local/final-resource-requirements.json",
         "step_id": "final_resource_requirements",
+        "validation_command": "make final-resources-preflight",
     }
     assert "meshy-secret" not in json.dumps(action)
 
@@ -207,7 +209,7 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
 
     assert result.exit_code == 2
     assert result.report["operator_actions"][:2] == [
-        "provide MESHY_API_KEY in final-resources.env",
+        "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
         (
             "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
             "rerun make mobile-deploy-preflight"
@@ -215,6 +217,9 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     ]
     assert "review refreshed final_resource_requirements report" not in (
         result.report["operator_actions"][:2]
+    )
+    assert "provide MESHY_API_KEY in final-resources.env" not in (
+        result.report["operator_actions"][:5]
     )
 
 
