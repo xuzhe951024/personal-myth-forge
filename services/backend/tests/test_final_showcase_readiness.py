@@ -748,6 +748,55 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert actions.count("make print-fulfillment-readiness") == 1
 
 
+def test_final_showcase_readiness_validates_promoted_ios_deploy_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance_ready(repo_root)
+    _write_ios_device_launch_rehearsal_with_actions(repo_root)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert not any(
+        action.endswith("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
+        or action.endswith("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
+        for action in actions
+    )
+
+
 def test_final_showcase_readiness_functional_regression_uses_concrete_preflight_action(
     tmp_path: Path,
 ) -> None:

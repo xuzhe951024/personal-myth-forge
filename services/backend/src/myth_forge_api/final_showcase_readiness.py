@@ -28,6 +28,7 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
 )
 from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
+    add_mobile_deploy_validation_command,
     normalize_operator_action,
 )
 from myth_forge_api.print_fulfillment_readiness import (
@@ -1458,7 +1459,9 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
 
 
 def _validation_aware_operator_action(action: str) -> str:
-    return add_final_resource_validation_command(action)
+    return add_final_resource_validation_command(
+        add_mobile_deploy_validation_command(action)
+    )
 
 
 def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:

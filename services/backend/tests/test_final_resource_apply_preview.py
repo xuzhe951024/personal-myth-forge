@@ -106,6 +106,34 @@ def test_apply_preview_blocks_loopback_backend_url_without_writes(
     assert not ios_local_config_path(repo_root).exists()
 
 
+def test_apply_preview_ios_actions_include_mobile_preflight_validation(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
+            "PMF_BACKEND_BASE_URL=http://127.0.0.1:8080",
+        ),
+    )
+
+    result = build_final_resource_apply_preview_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert not any(
+        action.endswith("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
+        for action in actions
+    )
+
+
 def test_apply_preview_blocks_example_backend_url_placeholder_without_writes(
     tmp_path: Path,
 ) -> None:
