@@ -790,6 +790,31 @@ def test_final_showcase_readiness_normalizes_provider_evidence_actions() -> None
     assert actions == ["make provider-handoff", "make live-provider-evidence"]
 
 
+def test_final_showcase_readiness_normalizes_xcode_gate_actions() -> None:
+    actions = final_showcase_readiness._report_operator_actions(
+        {
+            "operator_actions": [
+                "resolve Xcode build gate outside the app",
+                (
+                    "final_rehearsal_local: final_acceptance_local: resolve "
+                    "Xcode build gate outside the app"
+                ),
+            ]
+        }
+    )
+
+    assert actions == [
+        (
+            "accept the Xcode license outside Codex, then rerun "
+            "make mobile-xcode-build-evidence"
+        ),
+        (
+            "final_rehearsal_local: final_acceptance_local: accept the Xcode "
+            "license outside Codex, then rerun make mobile-xcode-build-evidence"
+        ),
+    ]
+
+
 def test_final_showcase_readiness_normalizes_prefixed_ios_device_actions(
     tmp_path: Path,
 ) -> None:

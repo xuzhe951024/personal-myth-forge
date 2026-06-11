@@ -201,6 +201,7 @@ Bridge deliverable:
 - P0.287 vague unblock operator actions normalize to concrete handoff commands
 - P0.288 final resource apply unblock actions normalize to concrete handoff commands
 - P0.289 provider evidence actions normalize to canonical make targets
+- P0.290 Xcode gate actions normalize to concrete evidence command
 
 ## P1: Mobile Vertical Slice
 

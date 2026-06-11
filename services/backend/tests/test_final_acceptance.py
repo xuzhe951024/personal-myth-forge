@@ -204,7 +204,10 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.report["operator_actions"] == [
         "provide iOS deploy config in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight",
-        "resolve Xcode build gate outside the app",
+        (
+            "accept the Xcode license outside Codex, then rerun "
+            "make mobile-xcode-build-evidence"
+        ),
     ]
     checks = {check["id"]: check for check in result.report["checks"]}
     assert list(checks) == [

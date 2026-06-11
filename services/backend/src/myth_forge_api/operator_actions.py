@@ -27,6 +27,13 @@ MAKE_TARGET_ACTION_REPLACEMENTS = {
         "make live-provider-evidence"
     ),
 }
+XCODE_BUILD_GATE_ACTION = (
+    "accept the Xcode license outside Codex, then rerun "
+    "make mobile-xcode-build-evidence"
+)
+GENERIC_ACTION_REPLACEMENTS = {
+    "resolve Xcode build gate outside the app": XCODE_BUILD_GATE_ACTION,
+}
 PROVIDER_HANDOFF_CLI_MARKERS = ("myth_forge_api.cli provider-handoff",)
 FINAL_DEMO_LAUNCH_CONFIGURED_CLI_MARKERS = (
     "myth_forge_api.cli final-demo-launch",
@@ -101,6 +108,9 @@ def normalize_operator_action(action: str) -> str:
     unblock_action = _normalize_unblock_action(command_part)
     if unblock_action is not None:
         return f"{unblock_action}{detail_suffix}"
+    generic_action = _normalize_generic_action(command_part)
+    if generic_action is not None:
+        return f"{generic_action}{detail_suffix}"
     make_target_action = _normalize_make_target_action(command_part)
     if make_target_action is not None:
         return f"{make_target_action}{detail_suffix}"
@@ -134,6 +144,17 @@ def _normalize_unblock_action(action: str) -> str | None:
     if action in UNBLOCK_ACTION_REPLACEMENTS:
         return UNBLOCK_ACTION_REPLACEMENTS[action]
     for vague, replacement in UNBLOCK_ACTION_REPLACEMENTS.items():
+        suffix = f": {vague}"
+        if action.endswith(suffix):
+            prefix = action[: -len(suffix)]
+            return f"{prefix}: {replacement}"
+    return None
+
+
+def _normalize_generic_action(action: str) -> str | None:
+    if action in GENERIC_ACTION_REPLACEMENTS:
+        return GENERIC_ACTION_REPLACEMENTS[action]
+    for vague, replacement in GENERIC_ACTION_REPLACEMENTS.items():
         suffix = f": {vague}"
         if action.endswith(suffix):
             prefix = action[: -len(suffix)]

@@ -131,6 +131,24 @@ def test_normalizes_verbose_provider_evidence_actions_to_make_targets() -> None:
     ) == "make live-provider-evidence | configured evidence stale"
 
 
+def test_normalizes_xcode_gate_actions_to_evidence_command() -> None:
+    expected = (
+        "accept the Xcode license outside Codex, then rerun "
+        "make mobile-xcode-build-evidence"
+    )
+
+    assert normalize_operator_action("resolve Xcode build gate outside the app") == (
+        expected
+    )
+    assert normalize_operator_action(
+        "final_rehearsal_local: final_acceptance_local: resolve Xcode build gate "
+        "outside the app"
+    ) == f"final_rehearsal_local: final_acceptance_local: {expected}"
+    assert normalize_operator_action(
+        "resolve Xcode build gate outside the app | xcodebuild license blocked"
+    ) == f"{expected} | xcodebuild license blocked"
+
+
 def test_normalizes_vague_unblock_actions_to_concrete_commands() -> None:
     assert normalize_operator_action(
         "unblock final_resource_fill_guide after MESHY_API_KEY"
