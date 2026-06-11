@@ -267,6 +267,28 @@ def test_final_local_report_refresh_operator_actions_normalize_provider_selector
     ]
 
 
+def test_final_local_report_refresh_operator_actions_normalize_final_apply() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_resource_apply_preview",
+                "status": "blocked",
+                "command": "make final-apply-resources",
+                "validation_command": "make final-resources-preflight",
+            },
+            {
+                "id": "resource_handoff",
+                "status": "blocked",
+                "command": "run make final-apply-resources",
+            },
+        ]
+    )
+
+    assert actions == [
+        "run make final-apply-resources to apply the filled resource bundle"
+    ]
+
+
 def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
     tmp_path: Path,
 ) -> None:

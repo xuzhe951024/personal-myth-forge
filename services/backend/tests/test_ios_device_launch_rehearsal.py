@@ -417,7 +417,8 @@ def test_ios_device_launch_rehearsal_normalizes_legacy_final_resource_copy_actio
         "config and rerun mobile deploy preflight"
     ) in result.report["operator_actions"]
     assert (
-        "final_configured_preflight: make final-apply-resources"
+        "final_configured_preflight: run make final-apply-resources "
+        "to apply the filled resource bundle"
         in result.report["operator_actions"]
     )
 

@@ -8,6 +8,10 @@ NORMALIZED_FINAL_RESOURCE_INIT_ACTION = "run make final-resource-init"
 FINAL_RESOURCE_APPLY_ACTION = (
     "run make final-apply-resources to apply the filled resource bundle"
 )
+FINAL_RESOURCE_APPLY_ACTION_ROOTS = (
+    "make final-apply-resources",
+    "run make final-apply-resources",
+)
 PROVIDER_SELECTION_ACTION_ROOTS = (
     "set THREE_D_PROVIDER=meshy",
     "set NPC_PROVIDER=openai",
@@ -43,6 +47,9 @@ MOBILE_DEPLOY_PREFLIGHT_COMMAND = "make mobile-deploy-preflight"
 
 def normalize_operator_action(action: str) -> str:
     normalized = action.strip()
+    apply_root = normalized.split("; rerun ", 1)[0].strip()
+    if apply_root in FINAL_RESOURCE_APPLY_ACTION_ROOTS:
+        return FINAL_RESOURCE_APPLY_ACTION
     if normalized in PROVIDER_SELECTION_ACTION_ROOTS:
         return FINAL_RESOURCE_APPLY_ACTION
     if all(marker in normalized for marker in LEGACY_FINAL_RESOURCE_COPY_MARKERS):
