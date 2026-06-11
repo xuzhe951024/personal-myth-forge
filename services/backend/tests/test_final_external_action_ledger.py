@@ -94,6 +94,10 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert report["source_reports"]["final_resource_apply_preview"]["status"] == "missing"
     assert report["source_reports"]["final_resource_repair"]["status"] == "missing"
     assert report["source_reports"]["live_provider_evidence"]["status"] == "missing"
+    assert report["operator_actions"][:2] == [
+        "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
+        "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight",
+    ]
     assert report["safety"] == {
         "commands_run": False,
         "writes_backend_env": False,

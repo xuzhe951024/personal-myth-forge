@@ -554,7 +554,7 @@ def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
     for group in action_groups:
         for action in group["actions"]:
             if action["status"] == "missing" and action["requires_user_input"]:
-                actions.append(f"provide {action['id'].removeprefix('provide_')}")
+                actions.append(_missing_user_input_action_text(action))
             elif action["status"] == "blocked":
                 actions.append(f"unblock {action['id']}: {action['command']}")
             elif action["requires_cost_consent"] and action["status"] == "live":
@@ -562,6 +562,18 @@ def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
             elif action["requires_user_confirmation"] and action["status"] == "manual":
                 actions.append(f"confirm global/manual action before {action['command']}")
     return _dedupe(actions)
+
+
+def _missing_user_input_action_text(action: dict[str, Any]) -> str:
+    slot = str(action["id"]).removeprefix("provide_")
+    destination = Path(str(action.get("destination", ""))).name
+    command = str(action.get("command", "")).strip()
+    parts = [f"provide {slot}"]
+    if destination:
+        parts[0] = f"{parts[0]} in {destination}"
+    if command:
+        parts.append(f"rerun {command}")
+    return "; ".join(parts)
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
