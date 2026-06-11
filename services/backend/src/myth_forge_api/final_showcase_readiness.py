@@ -65,6 +65,12 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES = (
     "final_handoff_index:",
     "ios_device_launch_certificate:",
 )
+FINAL_RESOURCE_VALIDATION_ACTION_ROOTS = (
+    "provide MESHY_API_KEY in final-resources.env",
+    "provide OPENAI_API_KEY in final-resources.env",
+    "provide PMF_BACKEND_BASE_URL in final-resources.env",
+)
+FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
 )
@@ -1445,10 +1451,18 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
     if not isinstance(raw_actions, list):
         return []
     return [
-        normalize_operator_action(str(action))
+        _validation_aware_operator_action(normalize_operator_action(str(action)))
         for action in raw_actions
         if isinstance(action, str) and action
     ]
+
+
+def _validation_aware_operator_action(action: str) -> str:
+    if "; rerun " in action:
+        return action
+    if action.endswith(FINAL_RESOURCE_VALIDATION_ACTION_ROOTS):
+        return f"{action}; rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}"
+    return action
 
 
 def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
