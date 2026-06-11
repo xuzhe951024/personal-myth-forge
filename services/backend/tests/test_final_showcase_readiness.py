@@ -807,6 +807,70 @@ def test_final_showcase_readiness_dedupes_prefixed_duplicate_actions(
     )
 
 
+def test_final_showcase_readiness_dedupes_prefixed_device_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression_blocked(repo_root)
+    _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action={
+            "id": "start_backend_device_demo",
+            "command": "make backend-device-demo",
+            "validation_command": "make mobile-deploy-preflight",
+            "source": "first_blocker",
+        },
+    )
+    _write_ios_device_launch_rehearsal_with_actions(
+        repo_root,
+        extra_actions=[
+            "start backend-device-demo",
+            "final_handoff_index: start backend-device-demo",
+            "ios_device_launch_certificate: start backend-device-demo",
+            "ios_device_launch_certificate: provide iOS deploy config",
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    backend_action = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+    deploy_config_action = (
+        "ios_device_launch_certificate: provide iOS deploy config in "
+        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+    )
+
+    assert result.exit_code == 2
+    assert actions.count(backend_action) == 1
+    assert not any(
+        action.startswith("final_handoff_index: start backend-device-demo")
+        for action in actions
+    )
+    assert not any(
+        action.startswith("ios_device_launch_certificate: start backend-device-demo")
+        for action in actions
+    )
+    assert deploy_config_action in actions
+
+
 def test_final_showcase_readiness_normalizes_resource_apply_unblock_actions() -> None:
     actions = final_showcase_readiness._report_operator_actions(
         {
