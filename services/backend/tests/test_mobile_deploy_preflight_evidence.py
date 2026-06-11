@@ -78,9 +78,18 @@ def test_preflight_evidence_blocks_missing_config_with_actions(tmp_path: Path) -
         "source": "first_blocker",
     }
     assert result.report["operator_actions"] == [
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
-        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
-        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+        (
+            "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        (
+            "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        (
+            "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+            "rerun make mobile-deploy-preflight"
+        ),
     ]
 
 

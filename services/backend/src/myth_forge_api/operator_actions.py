@@ -24,6 +24,13 @@ FINAL_RESOURCE_VALIDATION_ACTION_ROOTS = (
     "provide PMF_BACKEND_BASE_URL in final-resources.env",
 )
 FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
+MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
+    "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+    "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
+    "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+    "set PMF_FINAL_LAUNCH_MODE to local or configured",
+)
+MOBILE_DEPLOY_PREFLIGHT_COMMAND = "make mobile-deploy-preflight"
 
 
 def normalize_operator_action(action: str) -> str:
@@ -45,6 +52,15 @@ def add_final_resource_validation_command(action: str) -> str:
         return f"{root}; rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}"
     if "; rerun " in normalized:
         return normalized
+    return normalized
+
+
+def add_mobile_deploy_validation_command(action: str) -> str:
+    normalized = action.strip()
+    if "; rerun " in normalized:
+        return normalized
+    if normalized.endswith(MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS):
+        return f"{normalized}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
     return normalized
 
 

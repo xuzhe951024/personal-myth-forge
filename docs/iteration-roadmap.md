@@ -186,6 +186,7 @@ Bridge deliverable:
 - P0.272 configured preflight resource actions retain validation commands
 - P0.273 final resource source reports retain validation commands
 - P0.274 final configured preflight provider handoff action uses make target
+- P0.275 iOS deploy config actions retain mobile preflight validation commands
 
 ## P1: Mobile Vertical Slice
 

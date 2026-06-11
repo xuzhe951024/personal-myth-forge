@@ -17,6 +17,7 @@ from myth_forge_api.final_resources_preflight import (
 )
 from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
+    add_mobile_deploy_validation_command,
     normalize_operator_action,
 )
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
@@ -161,7 +162,9 @@ def _operator_actions(
     actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
     return _dedupe(
         [
-            add_final_resource_validation_command(normalize_operator_action(action))
+            add_final_resource_validation_command(
+                add_mobile_deploy_validation_command(normalize_operator_action(action))
+            )
             for action in actions
         ]
     )
