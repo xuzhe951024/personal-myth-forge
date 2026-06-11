@@ -408,10 +408,18 @@ def test_final_showcase_readiness_next_action_uses_preflight_child_action(
     )
 
     action = result.report["next_action"]
+    blocker = result.report["first_blocker"]
 
+    assert blocker["command"] == "make ios-device-launch-rehearsal"
+    assert (
+        "Next device action: provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+        in blocker["detail"]
+    )
+    assert "Next device action: make mobile-deploy-preflight" not in blocker["detail"]
     assert action["id"] == "ios_deployable"
     assert action["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
     assert action["validation_command"] == "make mobile-deploy-preflight"
+    assert action["detail"] == blocker["detail"]
     assert "Missing DEVELOPMENT_TEAM" in action["detail"]
     assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in action["detail"]
 

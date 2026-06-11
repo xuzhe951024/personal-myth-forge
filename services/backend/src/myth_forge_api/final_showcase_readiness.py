@@ -1116,7 +1116,11 @@ def _first_device_action_hint(
         return ""
     if str(action.get("evidence_status", "")) == "missing":
         return ""
-    command = str(action.get("command", ""))
+    child_next_action = _device_action_child_next_action(action)
+    command = (
+        str(child_next_action.get("command", "")).strip()
+        or str(action.get("command", "")).strip()
+    )
     detail = str(action.get("evidence_detail", ""))
     if not command or not detail:
         return ""

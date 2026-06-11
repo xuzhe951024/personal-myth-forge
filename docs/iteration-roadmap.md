@@ -166,6 +166,7 @@ Bridge deliverable:
 - P0.253 mobile deploy preflight evidence exposes top-level next action
 - P0.254 final showcase next action uses concrete mobile preflight action
 - P0.255 final demo launch next action uses concrete mobile preflight action
+- P0.256 final showcase blocker detail uses concrete mobile preflight action
 
 ## P1: Mobile Vertical Slice
 
