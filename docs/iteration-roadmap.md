@@ -182,6 +182,7 @@ Bridge deliverable:
 - P0.268 final showcase readiness adds validation commands to nested resource actions
 - P0.269 iOS device launch rehearsal resource actions retain validation commands
 - P0.270 iOS deploy runbook resource actions retain validation commands
+- P0.271 final demo launch resource actions use final resources preflight
 
 ## P1: Mobile Vertical Slice
 

@@ -53,6 +53,7 @@ from myth_forge_api.local_showcase_smoke import build_local_showcase_smoke_repor
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
+from myth_forge_api.operator_actions import add_final_resource_validation_command
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
 )
@@ -819,7 +820,7 @@ def _dedupe(values: list[str]) -> list[str]:
 
 
 def _dedupe_operator_actions(values: list[str]) -> list[str]:
-    deduped = _dedupe(values)
+    deduped = _dedupe([add_final_resource_validation_command(value) for value in values])
     validation_aware_roots = {
         value.split("; rerun ", 1)[0].strip()
         for value in deduped
