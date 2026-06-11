@@ -13,6 +13,7 @@ from myth_forge_api.final_resources_preflight import (
     SECRET_KEYS,
     build_final_resources_preflight_report,
 )
+from myth_forge_api.operator_actions import add_final_resource_validation_command
 
 BACKEND_ENV_DESTINATION = "services/backend/.env"
 IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
@@ -325,7 +326,7 @@ def _operator_actions(
                 actions.append(f"provide {slot_id} in final-resources.env")
     actions.extend(str(action) for action in preflight_report.get("operator_actions", []))
     actions.append("rerun make final-resource-apply-preview before applying resources")
-    return _dedupe(actions)
+    return _dedupe([add_final_resource_validation_command(action) for action in actions])
 
 
 def _commands(repair_report: dict[str, Any]) -> list[str]:

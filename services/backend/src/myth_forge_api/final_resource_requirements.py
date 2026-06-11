@@ -9,6 +9,7 @@ from myth_forge_api.final_resources_preflight import (
     SECRET_KEYS,
     build_final_resources_preflight_report,
 )
+from myth_forge_api.operator_actions import add_final_resource_validation_command
 
 FINAL_RESOURCE_INPUT_SOURCE = "services/backend/.local/final-resources.env"
 BACKEND_RESOURCE_DESTINATION = FINAL_RESOURCE_INPUT_SOURCE
@@ -443,7 +444,7 @@ def _operator_actions(
             actions.append(_blocker_action(requirement))
     actions.extend(str(action) for action in preflight_report.get("operator_actions", []))
     actions.append("run make final-resource-requirements after filling resources")
-    return _dedupe(actions)
+    return _dedupe([add_final_resource_validation_command(action) for action in actions])
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
