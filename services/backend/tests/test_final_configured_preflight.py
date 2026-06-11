@@ -99,6 +99,22 @@ def test_configured_preflight_resource_actions_include_validation_commands(
     )
 
 
+def test_configured_preflight_operator_actions_use_make_target_for_provider_handoff(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_configured_preflight_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert "make provider-handoff" in actions
+    assert not any("myth_forge_api.cli provider-handoff" in action for action in actions)
+    assert not any("--output .local/provider-handoff.json" in action for action in actions)
+
+
 def test_configured_preflight_is_ready_with_configured_handoff_inputs(
     tmp_path: Path,
 ) -> None:

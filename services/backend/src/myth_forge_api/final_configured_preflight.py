@@ -15,7 +15,10 @@ from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
-from myth_forge_api.operator_actions import add_final_resource_validation_command
+from myth_forge_api.operator_actions import (
+    add_final_resource_validation_command,
+    normalize_operator_action,
+)
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.provider_handoff import build_provider_handoff_report
 from myth_forge_api.resource_handoff import build_resource_handoff_report
@@ -156,7 +159,12 @@ def _operator_actions(
     ):
         actions.append("run make final-apply-resources to apply the filled resource bundle")
     actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
-    return _dedupe([add_final_resource_validation_command(action) for action in actions])
+    return _dedupe(
+        [
+            add_final_resource_validation_command(normalize_operator_action(action))
+            for action in actions
+        ]
+    )
 
 
 def _missing_provider_actions(provider_handoff: dict[str, Any]) -> list[str]:
