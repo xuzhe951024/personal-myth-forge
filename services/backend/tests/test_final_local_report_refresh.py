@@ -512,6 +512,42 @@ def test_final_local_report_refresh_step_hint_prefers_child_next_action(
     assert "make ios-device-launch-rehearsal" not in step["detail"]
 
 
+def test_final_local_report_refresh_step_hint_uses_child_next_commands(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    def child_report(_repo_root: Path) -> dict[str, object]:
+        return {
+            "kind": "child_report",
+            "status": "blocked",
+            "classification": "core_real_providers_not_ready",
+            "next_commands": [
+                (
+                    "cd services/backend && uv run python -m myth_forge_api.cli "
+                    "provider-handoff --require-core-real --output "
+                    ".local/provider-handoff.json"
+                )
+            ],
+        }
+
+    result = run_final_local_report_refresh(
+        repo_root=repo_root,
+        extra_steps={"provider_handoff": child_report},
+    )
+
+    step = result.report["steps_by_id"]["provider_handoff"]
+
+    assert result.exit_code == 2
+    assert step["status"] == "blocked"
+    assert step["next_command"] == "make provider-handoff"
+    assert step["command"] == "make provider-handoff"
+    assert "make provider-handoff" in result.report["operator_actions"]
+    assert "review refreshed provider_handoff report" not in (
+        result.report["operator_actions"]
+    )
+
+
 def test_final_local_report_refresh_step_hint_summarizes_all_blocked_check_details(
     tmp_path: Path,
 ) -> None:
