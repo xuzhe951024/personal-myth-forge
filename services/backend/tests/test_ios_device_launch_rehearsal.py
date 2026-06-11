@@ -736,14 +736,14 @@ def test_ios_device_launch_rehearsal_routes_handoff_and_certificate_actions(
 
     assert result.exit_code == 2
     assert sequence["final_handoff_index"]["detail"] == (
-        "final_handoff_index: run make final-configured-preflight"
+        "final_handoff_index: make final-configured-preflight"
     )
     assert (
-        "final_handoff_index: run make final-configured-preflight"
+        "final_handoff_index: make final-configured-preflight"
         in result.report["operator_actions"]
     )
     assert (
-        "ios_device_launch_certificate: run make final-handoff-index"
+        "ios_device_launch_certificate: make final-handoff-index"
         in result.report["operator_actions"]
     )
     assert "review final_handoff_index: make final-handoff-index" not in result.report[
@@ -997,11 +997,15 @@ def test_ios_device_launch_rehearsal_readiness_preserves_bounded_operator_action
     assert result.exit_code == 2
     assert len(result.report["operator_actions"]) == 20
     assert (
-        "final_handoff_index: run make final-configured-preflight"
+        "final_handoff_index: make final-configured-preflight"
         in result.report["operator_actions"]
     )
     assert (
-        "ios_device_launch_certificate: run make final-handoff-index"
+        "ios_device_launch_certificate: make final-handoff-index"
+        in result.report["operator_actions"]
+    )
+    assert (
+        "ios_device_launch_certificate: make ios-deploy-runbook-local"
         in result.report["operator_actions"]
     )
     assert "future_launch_group: optional action 4" not in result.report["operator_actions"]
@@ -1031,7 +1035,7 @@ def test_ios_device_launch_rehearsal_readiness_normalizes_legacy_copy_actions(
     assert "run make final-resource-init" in result.report["operator_actions"]
     assert "services/backend/final-resources.env.example" not in report_text
     assert (
-        "final_handoff_index: run make final-configured-preflight"
+        "final_handoff_index: make final-configured-preflight"
         in result.report["operator_actions"]
     )
 

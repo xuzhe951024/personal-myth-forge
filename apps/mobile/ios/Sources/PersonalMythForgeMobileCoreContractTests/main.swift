@@ -5591,8 +5591,8 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
             finalShowcaseReadinessActions: [
                 "final_rehearsal_local: final_acceptance_local: provide iOS deploy config",
                 "final_rehearsal_local: final_acceptance_local: resolve Xcode build gate",
-                "final_handoff_index: run make final-configured-preflight",
-                "ios_device_launch_certificate: run make final-handoff-index",
+                "final_handoff_index: make final-configured-preflight",
+                "ios_device_launch_certificate: make final-handoff-index",
                 "run make live-provider-evidence after configured provider evidence files are refreshed",
                 "run make final-resource-init",
                 "make final-showcase-readiness",
@@ -5604,8 +5604,8 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
     let text = summary.showcaseReadinessRows.joined(separator: " ")
 
     try expectContains(text, "final_rehearsal_local: final_acceptance_local")
-    try expectContains(text, "final_handoff_index: run make final-configured-preflight")
-    try expectContains(text, "ios_device_launch_certificate: run make final-handoff-index")
+    try expectContains(text, "final_handoff_index: make final-configured-preflight")
+    try expectContains(text, "ios_device_launch_certificate: make final-handoff-index")
     try expectContains(text, "run make live-provider-evidence")
     try expectContains(text, "run make final-resource-init")
     try expectContains(text, "make final-showcase-readiness")
@@ -6026,8 +6026,8 @@ private func testFinalLaunchMobileSummaryShowsMultipleIOSDeviceLaunchRehearsalAc
             iosDeviceLaunchRehearsalStatus: "blocked",
             iosDeviceLaunchRehearsalActions: [
                 "final_rehearsal_local: final_acceptance_local: provide iOS deploy config",
-                "final_handoff_index: run make final-configured-preflight",
-                "ios_device_launch_certificate: run make final-handoff-index",
+                "final_handoff_index: make final-configured-preflight",
+                "ios_device_launch_certificate: make final-handoff-index",
             ]
         ),
         error: nil
@@ -6035,8 +6035,8 @@ private func testFinalLaunchMobileSummaryShowsMultipleIOSDeviceLaunchRehearsalAc
     let text = summary.launchRehearsalRows.joined(separator: " ")
 
     try expectContains(text, "final_rehearsal_local: final_acceptance_local")
-    try expectContains(text, "final_handoff_index: run make final-configured-preflight")
-    try expectContains(text, "ios_device_launch_certificate: run make final-handoff-index")
+    try expectContains(text, "final_handoff_index: make final-configured-preflight")
+    try expectContains(text, "ios_device_launch_certificate: make final-handoff-index")
 }
 
 private func testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal() throws {

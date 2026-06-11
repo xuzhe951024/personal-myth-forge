@@ -29,6 +29,11 @@ MAKE_TARGET_ACTION_REPLACEMENTS = {
     "run make final-resource-requirements after filling resources": (
         "make final-resource-requirements"
     ),
+    "run make final-configured-preflight": "make final-configured-preflight",
+    "run make final-demo-launch-configured": "make final-demo-launch-configured",
+    "run make final-demo-launch-local": "make final-demo-launch-local",
+    "run make final-handoff-index": "make final-handoff-index",
+    "run make ios-deploy-runbook-local": "make ios-deploy-runbook-local",
 }
 XCODE_BUILD_GATE_ACTION = (
     "accept the Xcode license outside Codex, then rerun "
@@ -140,7 +145,14 @@ def normalize_operator_action(action: str) -> str:
 
 
 def _normalize_make_target_action(action: str) -> str | None:
-    return MAKE_TARGET_ACTION_REPLACEMENTS.get(action)
+    if action in MAKE_TARGET_ACTION_REPLACEMENTS:
+        return MAKE_TARGET_ACTION_REPLACEMENTS[action]
+    for verbose, replacement in MAKE_TARGET_ACTION_REPLACEMENTS.items():
+        suffix = f": {verbose}"
+        if action.endswith(suffix):
+            prefix = action[: -len(suffix)]
+            return f"{prefix}: {replacement}"
+    return None
 
 
 def _normalize_unblock_action(action: str) -> str | None:
