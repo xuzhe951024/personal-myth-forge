@@ -200,15 +200,27 @@ def build_final_demo_launch_report(
         ],
         final_showcase_readiness=final_showcase_readiness,
     )
+    next_action = _next_action(
+        first_blocker,
+        final_showcase_readiness=final_showcase_readiness,
+    )
+    operator_checklist = _operator_checklist(
+        mode=mode,
+        resource_report=resource_report,
+        final_resources_preflight=final_resources_preflight,
+        live_provider_evidence=live_provider_evidence,
+        phases=phases,
+    )
     report = {
         "kind": "final_demo_launch_report",
         "mode": mode,
         "overall_status": overall_status,
         "status": overall_status,
         "first_blocker": first_blocker,
-        "next_action": _next_action(
-            first_blocker,
-            final_showcase_readiness=final_showcase_readiness,
+        "next_action": next_action,
+        "operator_actions": _operator_actions(
+            next_action=next_action,
+            operator_checklist=operator_checklist,
         ),
         "summary": resource_summary,
         "phase_summary": phase_summary,
@@ -234,13 +246,7 @@ def build_final_demo_launch_report(
         "final_operator_handoff": final_operator_handoff,
         "resource_report": resource_report,
         "launch_phases": phases,
-        "operator_checklist": _operator_checklist(
-            mode=mode,
-            resource_report=resource_report,
-            final_resources_preflight=final_resources_preflight,
-            live_provider_evidence=live_provider_evidence,
-            phases=phases,
-        ),
+        "operator_checklist": operator_checklist,
         "commands": _commands(mode),
         "live_call_policy": {
             "live_calls_by_default": False,
@@ -457,6 +463,29 @@ def _operator_checklist(
             "run make live-provider-evidence after configured provider evidence files are refreshed"
         )
     return _dedupe(actions)
+
+
+def _operator_actions(
+    *,
+    next_action: dict[str, Any] | None,
+    operator_checklist: list[str],
+) -> list[str]:
+    actions: list[str] = []
+    concrete = _next_action_operator_action(next_action)
+    if concrete:
+        actions.append(concrete)
+    actions.extend(operator_checklist)
+    return _dedupe(actions)[:8]
+
+
+def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:
+    if not isinstance(next_action, dict):
+        return ""
+    command = str(next_action.get("command", "")).strip()
+    validation_command = str(next_action.get("validation_command", "")).strip()
+    if command and validation_command:
+        return f"{command}; rerun {validation_command}"
+    return command
 
 
 def _commands(mode: LaunchMode) -> list[str]:
