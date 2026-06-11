@@ -158,19 +158,26 @@ def build_final_showcase_readiness_report(
     )
     summary = _summary(capabilities)
     status = _overall_status(capabilities)
+    device_action_bundle = _device_action_bundle(
+        capabilities,
+        mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
+        mobile_xcode_build_evidence=mobile_xcode_build_evidence,
+    )
     report = {
         "kind": "final_showcase_readiness_report",
         "status": status,
         "summary": summary,
         "capabilities": capabilities,
         "capabilities_by_id": {row["id"]: row for row in capabilities},
-        "first_blocker": _first_blocker(capabilities),
-        "next_action": _next_action(capabilities),
-        "device_action_bundle": _device_action_bundle(
+        "first_blocker": _first_blocker(
             capabilities,
-            mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
-            mobile_xcode_build_evidence=mobile_xcode_build_evidence,
+            device_action_bundle=device_action_bundle,
         ),
+        "next_action": _next_action(
+            capabilities,
+            device_action_bundle=device_action_bundle,
+        ),
+        "device_action_bundle": device_action_bundle,
         "operator_actions": _operator_actions(
             capabilities,
             action_reports=[
@@ -983,15 +990,29 @@ def _overall_status(capabilities: list[dict[str, Any]]) -> str:
     return "ready"
 
 
-def _first_blocker(capabilities: list[dict[str, Any]]) -> dict[str, Any] | None:
+def _first_blocker(
+    capabilities: list[dict[str, Any]],
+    *,
+    device_action_bundle: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
     for capability in capabilities:
         if capability.get("required", True) and capability.get("status") != "ready":
-            return capability
+            return _capability_with_device_action_detail(
+                capability,
+                device_action_bundle=device_action_bundle,
+            )
     return None
 
 
-def _next_action(capabilities: list[dict[str, Any]]) -> dict[str, Any] | None:
-    blocker = _first_blocker(capabilities)
+def _next_action(
+    capabilities: list[dict[str, Any]],
+    *,
+    device_action_bundle: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    blocker = _first_blocker(
+        capabilities,
+        device_action_bundle=device_action_bundle,
+    )
     if blocker is None:
         return None
     return {
@@ -1003,6 +1024,39 @@ def _next_action(capabilities: list[dict[str, Any]]) -> dict[str, Any] | None:
         "detail": str(blocker.get("detail", "")),
         "source": "first_blocker",
     }
+
+
+def _capability_with_device_action_detail(
+    capability: dict[str, Any],
+    *,
+    device_action_bundle: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if capability.get("id") != "ios_deployable":
+        return capability
+    hint = _first_device_action_hint(device_action_bundle)
+    if not hint:
+        return capability
+    result = dict(capability)
+    detail = str(result.get("detail", ""))
+    result["detail"] = " | ".join(part for part in [detail, hint] if part)
+    return result
+
+
+def _first_device_action_hint(
+    device_action_bundle: dict[str, Any] | None,
+) -> str:
+    if not isinstance(device_action_bundle, dict):
+        return ""
+    action = device_action_bundle.get("first_action")
+    if not isinstance(action, dict):
+        return ""
+    if str(action.get("evidence_status", "")) == "missing":
+        return ""
+    command = str(action.get("command", ""))
+    detail = str(action.get("evidence_detail", ""))
+    if not command or not detail:
+        return ""
+    return f"Next device action: {command} | {detail}"
 
 
 def _device_action_bundle(

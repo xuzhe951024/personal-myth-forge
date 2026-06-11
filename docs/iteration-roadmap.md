@@ -150,6 +150,7 @@ Bridge deliverable:
 - P0.237 iPhone Final Launch summary rows surface device action evidence details
 - P0.238 local final demo launch first blocker prioritizes iPhone device path over continuable provider-key apply phase
 - P0.239 local final demo launch first blocker surfaces saved mobile preflight evidence detail
+- P0.240 final showcase readiness next action surfaces saved first device action detail
 
 ## P1: Mobile Vertical Slice
 

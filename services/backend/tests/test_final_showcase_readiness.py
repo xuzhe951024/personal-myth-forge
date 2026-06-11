@@ -249,6 +249,45 @@ def test_final_showcase_readiness_preflight_action_summarizes_blocker_details(
     )
 
 
+def test_final_showcase_readiness_top_level_ios_blocker_includes_first_device_action_detail(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    blocker = result.report["first_blocker"]
+    action = result.report["next_action"]
+
+    assert blocker["id"] == "ios_deployable"
+    assert action["id"] == "ios_deployable"
+    assert "iOS deploy runbook and device launch rehearsal" in blocker["detail"]
+    assert "Next device action: make backend-device-demo" in blocker["detail"]
+    assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in blocker["detail"]
+    assert action["detail"] == blocker["detail"]
+    assert "MESHY_API_KEY" not in blocker["detail"]
+
+
 def test_final_showcase_readiness_maps_missing_mobile_xcode_build_evidence(
     tmp_path: Path,
 ) -> None:
