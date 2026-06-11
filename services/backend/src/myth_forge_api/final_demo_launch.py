@@ -198,6 +198,7 @@ def build_final_demo_launch_report(
             ("configured_live_evidence_bundle", configured_live_evidence_bundle),
             ("final_operator_handoff", final_operator_handoff),
         ],
+        final_showcase_readiness=final_showcase_readiness,
     )
     report = {
         "kind": "final_demo_launch_report",
@@ -507,6 +508,7 @@ def _first_blocker(
     mode: LaunchMode,
     phases: list[dict[str, Any]],
     nested_reports: list[tuple[str, dict[str, Any] | None]],
+    final_showcase_readiness: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     nested_blocker = _first_nested_blocker(nested_reports)
     candidate_phases = _first_blocker_phases(mode=mode, phases=phases)
@@ -516,7 +518,10 @@ def _first_blocker(
     )
     if phase_blocker is not None:
         if mode == "local":
-            return phase_blocker
+            return _local_phase_blocker_with_device_evidence(
+                phase_blocker,
+                final_showcase_readiness=final_showcase_readiness,
+            )
         return _phase_blocker_with_nested_hint(phase_blocker, nested_blocker)
     if nested_blocker is not None:
         return nested_blocker
@@ -580,6 +585,46 @@ def _phase_blocker(phase: dict[str, Any]) -> dict[str, Any]:
         "source": "final_demo_launch_phase",
         "source_id": str(phase.get("id", "unknown_phase")),
     }
+
+
+def _local_phase_blocker_with_device_evidence(
+    phase_blocker: dict[str, Any],
+    *,
+    final_showcase_readiness: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if phase_blocker.get("id") != "mobile_deploy_preflight":
+        return phase_blocker
+    evidence_detail = _mobile_preflight_action_evidence_detail(
+        final_showcase_readiness,
+    )
+    if not evidence_detail:
+        return phase_blocker
+    result = dict(phase_blocker)
+    detail = str(result.get("detail", ""))
+    result["detail"] = " | ".join(
+        part for part in [detail, evidence_detail] if part
+    )
+    return result
+
+
+def _mobile_preflight_action_evidence_detail(
+    final_showcase_readiness: dict[str, Any] | None,
+) -> str:
+    if not isinstance(final_showcase_readiness, dict):
+        return ""
+    bundle = final_showcase_readiness.get("device_action_bundle")
+    if not isinstance(bundle, dict):
+        return ""
+    actions = bundle.get("actions")
+    if not isinstance(actions, list):
+        return ""
+    for action in actions:
+        if not isinstance(action, dict):
+            continue
+        if action.get("id") != "run_mobile_deploy_preflight":
+            continue
+        return str(action.get("evidence_detail", ""))
+    return ""
 
 
 def _phase_blocker_with_nested_hint(
