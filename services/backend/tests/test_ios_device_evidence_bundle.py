@@ -417,7 +417,9 @@ def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
     assert actions[3] == (
         "run make ios-device-launch-rehearsal | "
         "final_rehearsal_local: mobile_deploy_preflight_evidence: "
-        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
+        "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     assert "MESHY_API_KEY" not in text
 
