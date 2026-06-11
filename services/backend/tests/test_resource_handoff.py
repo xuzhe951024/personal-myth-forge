@@ -25,6 +25,18 @@ def test_resource_handoff_reports_missing_final_core_resources(tmp_path: Path) -
     assert ios["DEVELOPMENT_TEAM"]["status"] == "missing"
     assert ios["PMF_BACKEND_BASE_URL"]["status"] == "blocked"
     assert (
+        "run make final-apply-resources to apply the filled resource bundle"
+        in report["operator_actions"]
+    )
+    assert "set THREE_D_PROVIDER=meshy" not in report["operator_actions"]
+    assert "set NPC_PROVIDER=openai" not in report["operator_actions"]
+    assert (
+        report["operator_actions"].count(
+            "run make final-apply-resources to apply the filled resource bundle"
+        )
+        == 1
+    )
+    assert (
         "provide MESHY_API_KEY in final-resources.env; "
         "rerun make final-resources-preflight"
     ) in report["operator_actions"]

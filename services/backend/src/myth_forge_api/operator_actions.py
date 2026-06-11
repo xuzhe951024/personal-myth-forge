@@ -5,6 +5,13 @@ LEGACY_FINAL_RESOURCE_COPY_MARKERS = (
     "services/backend/.local/final-resources.env",
 )
 NORMALIZED_FINAL_RESOURCE_INIT_ACTION = "run make final-resource-init"
+FINAL_RESOURCE_APPLY_ACTION = (
+    "run make final-apply-resources to apply the filled resource bundle"
+)
+PROVIDER_SELECTION_ACTION_ROOTS = (
+    "set THREE_D_PROVIDER=meshy",
+    "set NPC_PROVIDER=openai",
+)
 PROVIDER_HANDOFF_CLI_MARKERS = ("myth_forge_api.cli provider-handoff",)
 FINAL_DEMO_LAUNCH_CONFIGURED_CLI_MARKERS = (
     "myth_forge_api.cli final-demo-launch",
@@ -36,6 +43,8 @@ MOBILE_DEPLOY_PREFLIGHT_COMMAND = "make mobile-deploy-preflight"
 
 def normalize_operator_action(action: str) -> str:
     normalized = action.strip()
+    if normalized in PROVIDER_SELECTION_ACTION_ROOTS:
+        return FINAL_RESOURCE_APPLY_ACTION
     if all(marker in normalized for marker in LEGACY_FINAL_RESOURCE_COPY_MARKERS):
         return NORMALIZED_FINAL_RESOURCE_INIT_ACTION
     if normalized.endswith(f": {NORMALIZED_FINAL_RESOURCE_INIT_ACTION}"):
