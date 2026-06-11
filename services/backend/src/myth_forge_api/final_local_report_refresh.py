@@ -793,6 +793,10 @@ def _blocker_detail(step: dict[str, Any], hint: dict[str, Any]) -> str:
 
 
 def _blocker_hint(report: dict[str, Any]) -> dict[str, str]:
+    next_action = report.get("next_action")
+    if isinstance(next_action, dict):
+        return _hint_from_mapping(next_action)
+
     first_blocker = report.get("first_blocker")
     if isinstance(first_blocker, dict):
         return _hint_from_mapping(first_blocker)
