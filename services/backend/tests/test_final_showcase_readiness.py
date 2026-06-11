@@ -732,10 +732,19 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert result.exit_code == 2
     assert actions[0] == "make ios-device-launch-rehearsal"
     assert "final_rehearsal_local: final_acceptance_local: action 1" in actions
-    assert "final_handoff_index: run make final-configured-preflight" in actions
-    assert "final_handoff_index: run make final-demo-launch-configured" in actions
+    assert "final_handoff_index: make final-configured-preflight" in actions
+    assert "final_handoff_index: make final-demo-launch-configured" in actions
     assert not any("final-demo-launch --mode configured" in action for action in actions)
-    assert "ios_device_launch_certificate: run make final-handoff-index" in actions
+    assert "ios_device_launch_certificate: make final-handoff-index" in actions
+    assert not any(
+        action
+        in {
+            "final_handoff_index: run make final-configured-preflight",
+            "final_handoff_index: run make final-demo-launch-configured",
+            "ios_device_launch_certificate: run make final-handoff-index",
+        }
+        for action in actions
+    )
     assert "make live-provider-evidence" in actions
     assert (
         "run make live-provider-evidence after configured provider evidence files are refreshed"
@@ -1008,8 +1017,8 @@ def test_final_showcase_readiness_normalizes_legacy_final_resource_copy_action(
     assert result.exit_code == 2
     assert "run make final-resource-init" in actions
     assert "services/backend/final-resources.env.example" not in report_text
-    assert "final_handoff_index: run make final-configured-preflight" in actions
-    assert "ios_device_launch_certificate: run make final-handoff-index" in actions
+    assert "final_handoff_index: make final-configured-preflight" in actions
+    assert "ios_device_launch_certificate: make final-handoff-index" in actions
 
 
 def test_final_showcase_readiness_adds_validation_to_nested_resource_actions(
@@ -1482,8 +1491,8 @@ def _write_ios_device_launch_rehearsal_with_actions(
         "final_configured_preflight: action 1",
         "final_configured_preflight: action 2",
         "final_handoff_index: run make final-rehearsal-local",
-        "final_handoff_index: run make final-configured-preflight",
-        "ios_device_launch_certificate: run make final-handoff-index",
+        "final_handoff_index: make final-configured-preflight",
+        "ios_device_launch_certificate: make final-handoff-index",
         "ios_device_launch_certificate: provide iOS deploy config",
     ]
     if extra_actions:

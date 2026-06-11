@@ -203,6 +203,7 @@ Bridge deliverable:
 - P0.289 provider evidence actions normalize to canonical make targets
 - P0.290 Xcode gate actions normalize to concrete evidence command
 - P0.291 final resource requirements action normalizes to make target
+- P0.292 final handoff make wrappers normalize to canonical targets
 
 ## P1: Mobile Vertical Slice
 

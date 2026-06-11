@@ -158,6 +158,21 @@ def test_normalizes_final_resource_requirements_action_to_make_target() -> None:
     ) == "make final-resource-requirements | resources ready"
 
 
+def test_normalizes_final_handoff_make_wrappers_to_make_targets() -> None:
+    assert normalize_operator_action(
+        "run make final-configured-preflight"
+    ) == "make final-configured-preflight"
+    assert normalize_operator_action(
+        "final_handoff_index: run make final-demo-launch-configured"
+    ) == "final_handoff_index: make final-demo-launch-configured"
+    assert normalize_operator_action(
+        "ios_device_launch_certificate: run make final-handoff-index"
+    ) == "ios_device_launch_certificate: make final-handoff-index"
+    assert normalize_operator_action(
+        "ios_device_launch_certificate: run make ios-deploy-runbook-local | stale"
+    ) == "ios_device_launch_certificate: make ios-deploy-runbook-local | stale"
+
+
 def test_normalizes_vague_unblock_actions_to_concrete_commands() -> None:
     assert normalize_operator_action(
         "unblock final_resource_fill_guide after MESHY_API_KEY"
@@ -214,7 +229,7 @@ def test_normalizes_configured_final_demo_launch_cli_action_to_make_target() -> 
     )
 
     assert normalize_operator_action(action) == (
-        "final_handoff_index: run make final-demo-launch-configured"
+        "final_handoff_index: make final-demo-launch-configured"
     )
 
 
@@ -226,5 +241,5 @@ def test_normalizes_local_final_demo_launch_cli_action_to_make_target() -> None:
     )
 
     assert normalize_operator_action(action) == (
-        "ios_device_launch_certificate: run make final-demo-launch-local"
+        "ios_device_launch_certificate: make final-demo-launch-local"
     )
