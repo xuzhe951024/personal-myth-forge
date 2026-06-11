@@ -388,6 +388,8 @@ def test_local_final_demo_launch_first_blocker_skips_continuable_apply_resources
     assert blocker["source"] == "final_demo_launch_phase"
     assert blocker["source_id"] == "mobile_deploy_preflight"
     assert blocker["command"] == "make mobile-deploy-preflight"
+    assert result.report["next_action"]["command"] == "make mobile-deploy-preflight"
+    assert "validation_command" not in result.report["next_action"]
     assert "physical iPhone backend health gate" in blocker["detail"]
     assert "MESHY_API_KEY" not in blocker["detail"]
 
@@ -412,6 +414,16 @@ def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidenc
                 "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
             },
         ],
+        next_action={
+            "id": "development_team",
+            "label": "Apple Team ID",
+            "status": "blocked",
+            "classification": "ios_deploy_config",
+            "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+            "detail": "Missing DEVELOPMENT_TEAM",
+            "source": "first_blocker",
+            "validation_command": "make mobile-deploy-preflight",
+        },
     )
 
     result = build_final_demo_launch_report(
@@ -429,6 +441,10 @@ def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidenc
     assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in blocker["detail"]
     assert "MESHY_API_KEY" not in blocker["detail"]
     assert next_action["detail"] == blocker["detail"]
+    assert next_action["command"] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    )
+    assert next_action["validation_command"] == "make mobile-deploy-preflight"
 
 
 def test_local_final_demo_launch_marks_unified_apply_missing_with_ios_only(
@@ -1071,35 +1087,39 @@ def _write_mobile_deploy_preflight_evidence_blocked(
     repo_root: Path,
     *,
     checks: list[dict[str, str]],
+    next_action: dict[str, object] | None = None,
 ) -> None:
+    report: dict[str, object] = {
+        "kind": "mobile_deploy_preflight_evidence_report",
+        "status": "blocked",
+        "command": "make mobile-deploy-preflight",
+        "script": "apps/mobile/ios/scripts/deploy_preflight.sh",
+        "exit_code": 2,
+        "checks": checks,
+        "stdout_lines": [],
+        "stderr_lines": [str(check["detail"]) for check in checks],
+        "operator_actions": [
+            "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+            "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+        ],
+        "safety": {
+            "commands_run": True,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "local_paths_in_report": False,
+        },
+    }
+    if next_action is not None:
+        report["next_action"] = next_action
     _write_json(
         repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json",
-        {
-            "kind": "mobile_deploy_preflight_evidence_report",
-            "status": "blocked",
-            "command": "make mobile-deploy-preflight",
-            "script": "apps/mobile/ios/scripts/deploy_preflight.sh",
-            "exit_code": 2,
-            "checks": checks,
-            "stdout_lines": [],
-            "stderr_lines": [str(check["detail"]) for check in checks],
-            "operator_actions": [
-                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
-                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
-            ],
-            "safety": {
-                "commands_run": True,
-                "provider_calls": False,
-                "live_provider_calls": False,
-                "writes_backend_env": False,
-                "writes_ios_deploy_config": False,
-                "global_mutation": False,
-                "xcode_or_signing": False,
-                "keychain_writes": False,
-                "provider_secrets_in_report": False,
-                "local_paths_in_report": False,
-            },
-        },
+        report,
     )
 
 

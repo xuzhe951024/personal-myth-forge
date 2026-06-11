@@ -2471,6 +2471,14 @@ FEATURES = (
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "_apply_concrete_mobile_preflight_next_action",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
+                "validation_command",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "_phase_blocker_with_nested_hint",
             ),
             SourceRequirement(
@@ -2480,6 +2488,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "FinalDemoLaunchNextAction",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "validationCommand: String?",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
@@ -2512,6 +2524,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_demo_launch.py",
+                "test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidence_detail",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",

@@ -380,6 +380,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         if !action.detail.isEmpty {
             parts.append(action.detail)
         }
+        if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
+            parts.append(validationCommand)
+        }
         return parts.joined(separator: " | ")
     }
 
