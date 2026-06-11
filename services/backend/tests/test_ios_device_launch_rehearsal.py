@@ -228,15 +228,15 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["first_blocker"]["id"] == "final_rehearsal_local"
+    expected_runbook_action = (
+        "ios_deploy_runbook_local: provide iOS deploy config in "
+        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+    )
     assert result.report["first_blocker"]["detail"] == (
-        "final_rehearsal_local: ios_deploy_runbook_local: provide iOS deploy "
-        "config and rerun mobile deploy preflight"
+        f"final_rehearsal_local: {expected_runbook_action}"
     )
     assert sequence["final_rehearsal_local"]["operator_actions"] == [
-        (
-            "ios_deploy_runbook_local: provide iOS deploy config and rerun "
-            "mobile deploy preflight"
-        ),
+        expected_runbook_action,
         "ios_deploy_runbook_local: resolve Xcode build gate outside the app",
         (
             "mobile_deploy_preflight_evidence: start backend-device-demo before "
@@ -244,8 +244,7 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
         ),
     ]
     assert result.report["operator_actions"][0] == (
-        "final_rehearsal_local: ios_deploy_runbook_local: provide iOS deploy "
-        "config and rerun mobile deploy preflight"
+        f"final_rehearsal_local: {expected_runbook_action}"
     )
     assert (
         "review final_rehearsal_local: make final-rehearsal-local"
@@ -414,7 +413,7 @@ def test_ios_device_launch_rehearsal_normalizes_legacy_final_resource_copy_actio
     assert "services/backend/final-resources.env.example" not in report_text
     assert (
         "final_rehearsal_local: ios_deploy_runbook_local: provide iOS deploy "
-        "config and rerun mobile deploy preflight"
+        "config in Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
     ) in result.report["operator_actions"]
     assert (
         "final_configured_preflight: run make final-apply-resources "
@@ -626,18 +625,18 @@ def test_ios_device_launch_rehearsal_routes_final_acceptance_source_actions(
 
     result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
     sequence = {step["id"]: step for step in result.report["sequence"]}
+    expected_acceptance_action = (
+        "final_acceptance_local: provide iOS deploy config in "
+        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+    )
 
     assert result.exit_code == 2
     assert sequence["final_rehearsal_local"]["operator_actions"][:2] == [
-        (
-            "final_acceptance_local: provide iOS deploy config and rerun "
-            "mobile deploy preflight"
-        ),
+        expected_acceptance_action,
         "final_acceptance_local: resolve Xcode build gate outside the app",
     ]
     assert result.report["operator_actions"][0] == (
-        "final_rehearsal_local: final_acceptance_local: provide iOS deploy "
-        "config and rerun mobile deploy preflight"
+        f"final_rehearsal_local: {expected_acceptance_action}"
     )
     assert (
         "final_rehearsal_local: review final_acceptance_local: make final-acceptance-local"

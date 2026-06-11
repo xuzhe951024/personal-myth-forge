@@ -42,12 +42,22 @@ BACKEND_DEVICE_DEMO_ACTION = (
 BACKEND_DEVICE_DEMO_VALIDATED_ACTION = (
     f"{BACKEND_DEVICE_DEMO_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
 )
+IOS_DEPLOY_CONFIG_ACTION = "provide iOS deploy config in Deployment.local.xcconfig"
+IOS_DEPLOY_CONFIG_VALIDATED_ACTION = (
+    f"{IOS_DEPLOY_CONFIG_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+)
 LEGACY_BACKEND_DEVICE_DEMO_ACTIONS = (
+    "start backend-device-demo",
     "start backend-device-demo and rerun mobile deploy preflight",
     "continue with make backend-device-demo",
 )
+LEGACY_IOS_DEPLOY_CONFIG_ACTIONS = (
+    "provide iOS deploy config",
+    "provide iOS deploy config and rerun mobile deploy preflight",
+)
 MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
     BACKEND_DEVICE_DEMO_ACTION,
+    IOS_DEPLOY_CONFIG_ACTION,
     "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
     "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
     "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig",
@@ -58,8 +68,9 @@ MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
 
 def normalize_operator_action(action: str) -> str:
     normalized = action.strip()
-    if normalized in LEGACY_BACKEND_DEVICE_DEMO_ACTIONS:
-        return BACKEND_DEVICE_DEMO_VALIDATED_ACTION
+    legacy_action = _normalize_legacy_action(normalized)
+    if legacy_action is not None:
+        return legacy_action
     apply_root = normalized.split("; rerun ", 1)[0].strip()
     if apply_root in FINAL_RESOURCE_APPLY_ACTION_ROOTS:
         return FINAL_RESOURCE_APPLY_ACTION
@@ -73,6 +84,27 @@ def normalize_operator_action(action: str) -> str:
     if command is not None:
         return _replace_action_command(normalized, command)
     return normalized
+
+
+def _normalize_legacy_action(action: str) -> str | None:
+    legacy_actions = {
+        **dict.fromkeys(
+            LEGACY_BACKEND_DEVICE_DEMO_ACTIONS,
+            BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+        ),
+        **dict.fromkeys(
+            LEGACY_IOS_DEPLOY_CONFIG_ACTIONS,
+            IOS_DEPLOY_CONFIG_VALIDATED_ACTION,
+        ),
+    }
+    if action in legacy_actions:
+        return legacy_actions[action]
+    for legacy, replacement in legacy_actions.items():
+        suffix = f": {legacy}"
+        if action.endswith(suffix):
+            prefix = action[: -len(suffix)]
+            return f"{prefix}: {replacement}"
+    return None
 
 
 def add_final_resource_validation_command(action: str) -> str:

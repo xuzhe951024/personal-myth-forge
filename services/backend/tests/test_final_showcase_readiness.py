@@ -741,11 +741,57 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     )
     assert "make print-fulfillment-readiness" in actions
     assert "run make final-resource-init" in actions
-    assert "provide iOS deploy config and rerun mobile deploy preflight" in actions
+    assert (
+        "ios_device_launch_certificate: provide iOS deploy config in "
+        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+        in actions
+    )
     assert "rerun make visual-regression-local and review failed artifacts" in actions
     assert "make final-showcase-readiness" in actions
     assert len(actions) <= 32
     assert actions.count("make print-fulfillment-readiness") == 1
+
+
+def test_final_showcase_readiness_normalizes_prefixed_ios_device_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression_blocked(repo_root)
+    _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_ios_device_launch_rehearsal_with_actions(
+        repo_root,
+        extra_actions=[
+            "ios_device_launch_certificate: provide iOS deploy config",
+            "ios_device_launch_certificate: start backend-device-demo",
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    deploy_config_action = (
+        "ios_device_launch_certificate: provide iOS deploy config in "
+        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+    )
+    backend_action = (
+        "ios_device_launch_certificate: start backend-device-demo before device "
+        "checks: make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+
+    assert result.exit_code == 2
+    assert deploy_config_action in actions
+    assert backend_action in actions
+    assert (
+        "ios_device_launch_certificate: provide iOS deploy config"
+        not in actions
+    )
+    assert "ios_device_launch_certificate: start backend-device-demo" not in actions
 
 
 def test_final_showcase_readiness_validates_promoted_ios_deploy_actions(
