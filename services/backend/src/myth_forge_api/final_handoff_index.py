@@ -162,7 +162,7 @@ def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]
         "classification": classification,
     }
     detail = _saved_report_detail(payload)
-    operator_actions = _bounded_operator_actions(payload.get("operator_actions"))
+    operator_actions = _saved_report_operator_actions(payload)
     if detail:
         report["detail"] = detail
     if operator_actions:
@@ -221,6 +221,25 @@ def _saved_report_detail(payload: dict[str, Any]) -> str:
     return _first_operator_action(payload)
 
 
+def _saved_report_operator_actions(payload: dict[str, Any]) -> list[str]:
+    next_action = _saved_report_operator_action(payload)
+    actions = [next_action] if next_action else []
+    actions.extend(_bounded_operator_actions(payload.get("operator_actions")))
+    return _dedupe(actions)[:4]
+
+
+def _saved_report_operator_action(payload: dict[str, Any]) -> str:
+    next_action = payload.get("next_action")
+    if isinstance(next_action, dict):
+        command = str(next_action.get("command", "")).strip()
+        validation_command = str(next_action.get("validation_command", "")).strip()
+        if command and validation_command:
+            return f"{command}; rerun {validation_command}"[:240]
+        if command:
+            return command[:240]
+    return _first_operator_action(payload)
+
+
 def _bounded_operator_actions(raw_actions: Any) -> list[str]:
     if not isinstance(raw_actions, list):
         return []
@@ -271,6 +290,7 @@ def _lanes(
             required=True,
             notes=["Writes local/no-key saved reports for final launch review."],
             detail=local_detail,
+            operator_action=_local_lane_operator_action(local_sources),
         ),
         _lane(
             lane_id="configured_preflight",
@@ -318,6 +338,7 @@ def _lane(
     notes: list[str],
     requires_consent: bool = False,
     detail: str = "",
+    operator_action: str = "",
 ) -> dict[str, Any]:
     lane = {
         "id": lane_id,
@@ -330,6 +351,8 @@ def _lane(
     }
     if detail:
         lane["detail"] = detail
+    if operator_action:
+        lane["operator_action"] = operator_action
     return lane
 
 
@@ -354,6 +377,30 @@ def _source_detail_by_id(local_sources: list[dict[str, Any]], source_id: str) ->
     return ""
 
 
+def _local_lane_operator_action(local_sources: list[dict[str, Any]]) -> str:
+    preferred = _source_operator_action_by_id(local_sources, "final_demo_launch_local")
+    if preferred:
+        return preferred
+    for source in local_sources:
+        if source.get("status") not in {"blocked", "missing"}:
+            continue
+        action = _source_operator_action(source)
+        if action:
+            return action
+    return ""
+
+
+def _source_operator_action_by_id(
+    local_sources: list[dict[str, Any]],
+    source_id: str,
+) -> str:
+    for source in local_sources:
+        if source.get("id") != source_id:
+            continue
+        return _source_operator_action(source)
+    return ""
+
+
 def _source_detail(source: dict[str, Any]) -> str:
     detail = str(source.get("detail", "")).strip()
     if detail:
@@ -361,6 +408,16 @@ def _source_detail(source: dict[str, Any]) -> str:
     actions = source.get("operator_actions")
     if isinstance(actions, list) and actions:
         return f"{source['id']}: {actions[0]}"
+    return ""
+
+
+def _source_operator_action(source: dict[str, Any]) -> str:
+    actions = source.get("operator_actions")
+    if not isinstance(actions, list):
+        return ""
+    for action in actions:
+        if isinstance(action, str) and action.strip():
+            return f"{source['id']}: {action.strip()}"
     return ""
 
 
@@ -473,7 +530,12 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
         lane_id = str(lane.get("id", "lane"))
         command = str(lane.get("command", ""))
         if lane_id == "local_rehearsal":
-            actions.append(_lane_detail_or_default(lane, "run make final-rehearsal-local"))
+            actions.append(
+                _lane_operator_action_or_default(
+                    lane,
+                    _lane_detail_or_default(lane, "run make final-rehearsal-local"),
+                )
+            )
         elif lane_id == "configured_preflight":
             actions.append("run make final-configured-preflight")
         elif lane_id == "device_deploy":
@@ -520,6 +582,11 @@ def _lane_blocker_detail(lane: dict[str, Any]) -> str:
 def _lane_detail_or_default(lane: dict[str, Any], default: str) -> str:
     detail = str(lane.get("detail", "")).strip()
     return detail or default
+
+
+def _lane_operator_action_or_default(lane: dict[str, Any], default: str) -> str:
+    action = str(lane.get("operator_action", "")).strip()
+    return action or default
 
 
 def _dedupe(values: list[str]) -> list[str]:

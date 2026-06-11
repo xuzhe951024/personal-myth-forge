@@ -156,6 +156,19 @@ def test_final_handoff_index_local_lane_uses_saved_blocker_detail(
                 "PMF_BACKEND_BASE_URL must be iPhone-reachable"
             ),
         },
+        next_action={
+            "id": "mobile_deploy_preflight",
+            "label": "Run iOS deploy preflight",
+            "status": "blocked",
+            "classification": "final_demo_launch_phase",
+            "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+            "detail": (
+                "physical iPhone backend health gate | Checks local config and "
+                "backend /health; does not build or sign. | Missing DEVELOPMENT_TEAM; "
+                "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            ),
+            "validation_command": "make mobile-deploy-preflight",
+        },
         operator_actions=[
             (
                 "mobile_deploy_preflight: Missing DEVELOPMENT_TEAM; "
@@ -180,7 +193,10 @@ def test_final_handoff_index_local_lane_uses_saved_blocker_detail(
     assert lanes["local_rehearsal"]["status"] == "blocked"
     assert lanes["local_rehearsal"]["detail"] == expected_detail
     assert result.report["first_blocker"]["detail"] == expected_detail
-    assert result.report["operator_actions"][0] == expected_detail
+    assert result.report["operator_actions"][0] == (
+        "final_demo_launch_local: provide DEVELOPMENT_TEAM in "
+        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+    )
     assert "MESHY_API_KEY" not in report_text
 
 
@@ -390,6 +406,7 @@ def _write_final_demo_launch(
     *,
     overall_status: str = "partial",
     first_blocker: dict[str, object] | None = None,
+    next_action: dict[str, object] | None = None,
     operator_actions: list[str] | None = None,
 ) -> None:
     report: dict[str, object] = {
@@ -400,6 +417,8 @@ def _write_final_demo_launch(
     }
     if first_blocker is not None:
         report["first_blocker"] = first_blocker
+    if next_action is not None:
+        report["next_action"] = next_action
     if operator_actions is not None:
         report["operator_actions"] = operator_actions
     _write_json(repo_root / "services/backend/.local/final-demo-launch-local.json", report)
