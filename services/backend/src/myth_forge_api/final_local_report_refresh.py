@@ -772,7 +772,7 @@ def _operator_actions(
                 actions.append(command)
             else:
                 actions.append(f"review refreshed {step['id']} report")
-    return _dedupe(actions)[:12]
+    return _dedupe_operator_actions(actions)[:12]
 
 
 def _action_command(action: dict[str, Any] | None) -> str:
@@ -795,6 +795,16 @@ def _dedupe(values: list[str]) -> list[str]:
         seen.add(normalized)
         deduped.append(normalized)
     return deduped
+
+
+def _dedupe_operator_actions(values: list[str]) -> list[str]:
+    deduped = _dedupe(values)
+    validation_aware_roots = {
+        value.split("; rerun ", 1)[0].strip()
+        for value in deduped
+        if "; rerun " in value
+    }
+    return [value for value in deduped if value not in validation_aware_roots]
 
 
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
