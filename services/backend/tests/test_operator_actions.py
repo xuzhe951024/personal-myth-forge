@@ -65,6 +65,19 @@ def test_normalizes_provider_selection_actions_to_final_apply() -> None:
     )
 
 
+def test_normalizes_final_apply_actions_to_explicit_handoff() -> None:
+    expected = "run make final-apply-resources to apply the filled resource bundle"
+
+    assert normalize_operator_action("make final-apply-resources") == expected
+    assert (
+        normalize_operator_action(
+            "make final-apply-resources; rerun make final-resources-preflight"
+        )
+        == expected
+    )
+    assert normalize_operator_action("run make final-apply-resources") == expected
+
+
 def test_normalizes_configured_final_demo_launch_cli_action_to_make_target() -> None:
     action = (
         "final_handoff_index: run cd services/backend && uv run python -m "
