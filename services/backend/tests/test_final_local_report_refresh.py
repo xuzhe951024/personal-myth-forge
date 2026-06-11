@@ -223,6 +223,29 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     )
 
 
+def test_final_local_report_refresh_operator_actions_drop_bare_action_roots() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_resource_requirements",
+                "status": "blocked",
+                "command": "provide MESHY_API_KEY in final-resources.env",
+                "validation_command": "make final-resources-preflight",
+            },
+            {
+                "id": "ios_deploy_runbook_local",
+                "status": "blocked",
+                "command": "provide MESHY_API_KEY in final-resources.env",
+            },
+        ]
+    )
+
+    assert actions == [
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ]
+
+
 def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
     tmp_path: Path,
 ) -> None:
