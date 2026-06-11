@@ -299,6 +299,127 @@ def test_ios_device_evidence_bundle_uses_saved_mobile_preflight_evidence_details
     assert "MESHY_API_KEY" not in text
 
 
+def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_final_acceptance(
+        repo_root,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 2, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": "mobile_deploy_preflight",
+                    "label": "iOS deploy preflight",
+                    "status": "blocked",
+                    "classification": "blocked_by_local_ios_backend_health",
+                    "command": ["make", "mobile-deploy-preflight"],
+                    "stderr_tail": (
+                        "start backend-device-demo and rerun mobile deploy preflight"
+                    ),
+                },
+                {
+                    "id": "mobile_xcode_build",
+                    "label": "Xcode build gate",
+                    "status": "blocked",
+                    "classification": "command_failed",
+                    "command": ["make", "mobile-xcode-build"],
+                    "stderr_tail": "generic Xcode failure",
+                },
+            ],
+        },
+    )
+    _write_mobile_deploy_preflight_evidence(
+        repo_root,
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "blocked",
+            "checks": [
+                {
+                    "id": "development_team",
+                    "label": "Apple Team ID",
+                    "status": "blocked",
+                    "detail": "Missing DEVELOPMENT_TEAM",
+                },
+                {
+                    "id": "backend_base_url",
+                    "label": "Backend base URL",
+                    "status": "blocked",
+                    "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                },
+            ],
+        },
+    )
+    _write_mobile_xcode_build_evidence(
+        repo_root,
+        {
+            "kind": "mobile_xcode_build_evidence_report",
+            "status": "blocked",
+            "classification": "blocked_by_apple_sdk_license",
+            "checks": [
+                {
+                    "id": "xcode_license",
+                    "label": "Xcode license",
+                    "status": "blocked",
+                    "detail": "Apple SDK license agreement is not accepted.",
+                }
+            ],
+        },
+    )
+    _write_ios_device_launch_rehearsal(
+        repo_root,
+        {
+            "kind": "ios_device_launch_rehearsal_report",
+            "status": "blocked",
+            "first_blocker": {
+                "id": "final_rehearsal_local",
+                "label": "Local final rehearsal",
+                "status": "blocked",
+                "classification": "step_blocked",
+                "command": "make final-rehearsal-local",
+                "detail": (
+                    "final_rehearsal_local: mobile_deploy_preflight_evidence: "
+                    "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be "
+                    "iPhone-reachable"
+                ),
+            },
+            "operator_actions": [
+                (
+                    "final_rehearsal_local: mobile_deploy_preflight_evidence: "
+                    "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be "
+                    "iPhone-reachable"
+                )
+            ],
+        },
+    )
+
+    result = build_ios_device_evidence_bundle_report(repo_root=repo_root)
+    actions = result.report["operator_actions"]
+    text = json.dumps(result.report)
+
+    assert result.exit_code == 2
+    assert actions[0] == (
+        "start backend-device-demo before device checks: make backend-device-demo | "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    assert actions[1] == (
+        "run make mobile-deploy-preflight after backend is running | "
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    assert actions[2] == (
+        "run Xcode build gate manually on the Mac: make mobile-xcode-build | "
+        "Apple SDK license agreement is not accepted."
+    )
+    assert actions[3] == (
+        "run make ios-device-launch-rehearsal | "
+        "final_rehearsal_local: mobile_deploy_preflight_evidence: "
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    assert "MESHY_API_KEY" not in text
+
+
 def test_cli_writes_ios_device_evidence_bundle_report(tmp_path: Path) -> None:
     repo_root = _repo_fixture(tmp_path)
     _write_mobile_xcode_build_evidence(
