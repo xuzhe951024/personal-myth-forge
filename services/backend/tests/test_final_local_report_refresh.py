@@ -246,6 +246,27 @@ def test_final_local_report_refresh_operator_actions_drop_bare_action_roots() ->
     ]
 
 
+def test_final_local_report_refresh_operator_actions_normalize_provider_selectors() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "resource_handoff",
+                "status": "blocked",
+                "command": "set THREE_D_PROVIDER=meshy",
+            },
+            {
+                "id": "provider_handoff",
+                "status": "blocked",
+                "command": "set NPC_PROVIDER=openai",
+            },
+        ]
+    )
+
+    assert actions == [
+        "run make final-apply-resources to apply the filled resource bundle"
+    ]
+
+
 def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
     tmp_path: Path,
 ) -> None:

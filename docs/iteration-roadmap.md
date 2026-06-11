@@ -192,6 +192,7 @@ Bridge deliverable:
 - P0.278 iOS device launch rehearsal and readiness retain iOS validation commands
 - P0.279 resource handoff backend secret actions retain final resource validation
 - P0.280 resource handoff provider selection actions use final resource apply handoff
+- P0.281 final local report refresh normalizes stale provider selection actions
 
 ## P1: Mobile Vertical Slice
 
