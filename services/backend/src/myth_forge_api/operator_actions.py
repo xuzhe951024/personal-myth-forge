@@ -16,6 +16,17 @@ PROVIDER_SELECTION_ACTION_ROOTS = (
     "set THREE_D_PROVIDER=meshy",
     "set NPC_PROVIDER=openai",
 )
+MAKE_TARGET_ACTION_REPLACEMENTS = {
+    "rerun provider handoff readiness: make provider-handoff": (
+        "make provider-handoff"
+    ),
+    "run make live-provider-evidence after configured provider evidence files are refreshed": (
+        "make live-provider-evidence"
+    ),
+    "run make live-provider-evidence to refresh live provider evidence after cost consent": (
+        "make live-provider-evidence"
+    ),
+}
 PROVIDER_HANDOFF_CLI_MARKERS = ("myth_forge_api.cli provider-handoff",)
 FINAL_DEMO_LAUNCH_CONFIGURED_CLI_MARKERS = (
     "myth_forge_api.cli final-demo-launch",
@@ -90,6 +101,9 @@ def normalize_operator_action(action: str) -> str:
     unblock_action = _normalize_unblock_action(command_part)
     if unblock_action is not None:
         return f"{unblock_action}{detail_suffix}"
+    make_target_action = _normalize_make_target_action(command_part)
+    if make_target_action is not None:
+        return f"{make_target_action}{detail_suffix}"
     mobile_validated_action = _add_mobile_deploy_validation_to_command(command_part)
     if mobile_validated_action != command_part:
         return f"{mobile_validated_action}{detail_suffix}"
@@ -104,8 +118,16 @@ def normalize_operator_action(action: str) -> str:
         return f"{NORMALIZED_FINAL_RESOURCE_INIT_ACTION}{detail_suffix}"
     command = _normalized_command(command_part)
     if command is not None:
-        return f"{_replace_action_command(command_part, command)}{detail_suffix}"
+        replaced = _replace_action_command(command_part, command)
+        make_target_action = _normalize_make_target_action(replaced)
+        if make_target_action is not None:
+            return f"{make_target_action}{detail_suffix}"
+        return f"{replaced}{detail_suffix}"
     return f"{command_part}{detail_suffix}"
+
+
+def _normalize_make_target_action(action: str) -> str | None:
+    return MAKE_TARGET_ACTION_REPLACEMENTS.get(action)
 
 
 def _normalize_unblock_action(action: str) -> str | None:
