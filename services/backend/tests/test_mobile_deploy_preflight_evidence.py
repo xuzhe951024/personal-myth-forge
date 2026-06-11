@@ -34,6 +34,8 @@ def test_preflight_evidence_ready_from_success_output(tmp_path: Path) -> None:
     assert checks["deploy_preflight"]["status"] == "ready"
     assert checks["backend_health"]["status"] == "ready"
     assert checks["final_launch_mode"]["status"] == "ready"
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert result.report["operator_actions"] == []
     assert result.report["safety"]["commands_run"] is True
     assert result.report["safety"]["xcode_or_signing"] is False
@@ -57,6 +59,24 @@ def test_preflight_evidence_blocks_missing_config_with_actions(tmp_path: Path) -
     assert checks["development_team"]["status"] == "blocked"
     assert checks["bundle_identifier"]["status"] == "blocked"
     assert checks["backend_base_url"]["status"] == "blocked"
+    assert result.report["first_blocker"] == {
+        "id": "development_team",
+        "label": "Apple Team ID",
+        "status": "blocked",
+        "detail": "Missing DEVELOPMENT_TEAM",
+    }
+    assert result.report["next_action"] == {
+        "id": "development_team",
+        "label": "Apple Team ID",
+        "status": "blocked",
+        "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+        "detail": (
+            "Missing DEVELOPMENT_TEAM; Missing PRODUCT_BUNDLE_IDENTIFIER; "
+            "Missing PMF_BACKEND_BASE_URL"
+        ),
+        "validation_command": "make mobile-deploy-preflight",
+        "source": "first_blocker",
+    }
     assert result.report["operator_actions"] == [
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
         "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
@@ -81,6 +101,16 @@ def test_preflight_evidence_blocks_backend_health_without_leaks(tmp_path: Path) 
     assert result.report["status"] == "blocked"
     assert result.report["checks"][0]["id"] == "backend_health"
     assert result.report["checks"][0]["status"] == "blocked"
+    assert result.report["first_blocker"]["id"] == "backend_health"
+    assert result.report["next_action"] == {
+        "id": "backend_health",
+        "label": "Backend health",
+        "status": "blocked",
+        "command": "start backend-device-demo and rerun mobile deploy preflight",
+        "detail": "Backend health check failed",
+        "validation_command": "make mobile-deploy-preflight",
+        "source": "first_blocker",
+    }
     assert result.report["operator_actions"] == [
         "start backend-device-demo and rerun mobile deploy preflight"
     ]

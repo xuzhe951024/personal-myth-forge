@@ -2798,6 +2798,22 @@ FEATURES = (
                 "validation_command",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/mobile_deploy_preflight_evidence.py",
+                "first_blocker",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/mobile_deploy_preflight_evidence.py",
+                "next_action",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/mobile_deploy_preflight_evidence.py",
+                "validation_command",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_mobile_deploy_preflight_evidence.py",
+                "test_preflight_evidence_blocks_missing_config_with_actions",
+            ),
+            SourceRequirement(
                 "services/backend/tests/test_final_showcase_readiness.py",
                 "test_final_showcase_readiness_includes_ios_device_action_bundle",
             ),

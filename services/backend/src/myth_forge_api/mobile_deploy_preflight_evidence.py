@@ -60,9 +60,13 @@ def build_mobile_deploy_preflight_evidence_report(
     status = "ready" if returncode == 0 else "blocked"
     checks = _checks(stdout=stdout, stderr=stderr, status=status)
     actions = [] if status == "ready" else _operator_actions(checks)
+    first_blocker = _first_blocker(checks)
+    next_action = _next_action(first_blocker, actions, checks)
     report = {
         "kind": "mobile_deploy_preflight_evidence_report",
         "status": status,
+        "first_blocker": first_blocker,
+        "next_action": next_action,
         "command": COMMAND,
         "script": SCRIPT_PATH.as_posix(),
         "exit_code": returncode,
@@ -193,6 +197,52 @@ def _checks(*, stdout: str, stderr: str, status: str) -> list[dict[str, str]]:
 
 def _check(check_id: str, label: str, status: str, detail: str) -> dict[str, str]:
     return {"id": check_id, "label": label, "status": status, "detail": detail}
+
+
+def _first_blocker(checks: list[dict[str, str]]) -> dict[str, str] | None:
+    for check in checks:
+        if check.get("status") != "ready":
+            return {
+                "id": check["id"],
+                "label": check["label"],
+                "status": check["status"],
+                "detail": check["detail"],
+            }
+    return None
+
+
+def _next_action(
+    first_blocker: dict[str, str] | None,
+    actions: list[str],
+    checks: list[dict[str, str]],
+) -> dict[str, str] | None:
+    if first_blocker is None:
+        return None
+    command = actions[0] if actions else first_blocker["detail"]
+    detail = _blocked_check_detail_summary(checks) or first_blocker["detail"]
+    return {
+        "id": first_blocker["id"],
+        "label": first_blocker["label"],
+        "status": first_blocker["status"],
+        "command": command,
+        "detail": detail,
+        "validation_command": COMMAND,
+        "source": "first_blocker",
+    }
+
+
+def _blocked_check_detail_summary(checks: list[dict[str, str]]) -> str:
+    details: list[str] = []
+    seen: set[str] = set()
+    for check in checks:
+        if check.get("status") == "ready":
+            continue
+        detail = check.get("detail", "").strip()
+        if not detail or detail in seen:
+            continue
+        seen.add(detail)
+        details.append(detail)
+    return "; ".join(details)
 
 
 def _operator_actions(checks: list[dict[str, str]]) -> list[str]:
