@@ -162,6 +162,7 @@ Bridge deliverable:
 - P0.249 final launch closure packet exposes a top-level next action
 - P0.250 final local report refresh exposes a top-level next action
 - P0.251 final demo launch reports expose top-level status
+- P0.252 iPhone final launch model decodes top-level status
 
 ## P1: Mobile Vertical Slice
 

@@ -2490,8 +2490,16 @@ FEATURES = (
                 "nextAction: FinalDemoLaunchNextAction?",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+                "status: String?",
+            ),
+            SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
                 "report.firstBlocker",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+                "launchStatus(_ report: FinalDemoLaunchReport)",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
@@ -2504,6 +2512,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+                "testFinalLaunchMobileSummaryPrefersTopLevelStatus",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",

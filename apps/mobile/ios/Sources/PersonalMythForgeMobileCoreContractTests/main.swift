@@ -157,6 +157,9 @@ do {
     try testLiveProviderConsentSummaryRedactsUnsafeLiveEvidenceBlocker()
     try testLiveProviderConsentSummaryRedactsUnsafeText()
     try testFinalLaunchMobileSummaryBuildsPartialOperatorStatus()
+    try testDecodesFinalDemoLaunchTopLevelStatus()
+    try testFinalLaunchMobileSummaryPrefersTopLevelStatus()
+    try testFinalLaunchMobileSummaryFallsBackToOverallStatus()
     try testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload()
     try testDecodesFinalResourceAutoBackendURLHandoffFields()
     try testFinalLaunchMobileSummaryShowsMissingResourceChecklist()
@@ -4235,6 +4238,46 @@ private func testFinalLaunchMobileSummaryBuildsPartialOperatorStatus() throws {
     try expectContains(summary.notes.joined(separator: " "), "read-only")
 }
 
+private func testDecodesFinalDemoLaunchTopLevelStatus() throws {
+    let report = finalDemoLaunchReport(
+        status: "blocked",
+        overallStatus: "partial"
+    )
+
+    try expectEqual(report.status, "blocked")
+    try expectEqual(report.overallStatus, "partial")
+}
+
+private func testFinalLaunchMobileSummaryPrefersTopLevelStatus() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            status: "blocked",
+            overallStatus: "partial"
+        ),
+        error: nil
+    )
+
+    try expectEqual(summary.overallStatus, .blocked)
+    try expectContains(summary.title, "Final launch blocked")
+    try expectContains(summary.launchReceiptRows.first ?? "", "launch blocked")
+}
+
+private func testFinalLaunchMobileSummaryFallsBackToOverallStatus() throws {
+    let legacyPayload = finalDemoLaunchPayload(
+        includeStatus: false,
+        overallStatus: "ready"
+    )
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: legacyPayload
+    )
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+
+    try expectEqual(report.status, nil)
+    try expectEqual(summary.overallStatus, .ready)
+    try expectContains(summary.title, "Final launch ready")
+}
+
 private func testFinalLaunchMobileSummaryPrioritizesConfiguredAcceptanceCommand() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -7335,6 +7378,8 @@ private func finalDemoLaunchTopLevelNextActionJSON() -> String {
 
 private func finalDemoLaunchPayload(
     mode: String = "local",
+    includeStatus: Bool = true,
+    status: String? = nil,
     overallStatus: String = "partial",
     firstBlockerJSON: String = "null",
     nextActionJSON: String = "null",
@@ -7558,11 +7603,15 @@ private func finalDemoLaunchPayload(
         decoding: try! PMFJSON.encoder.encode(selectedCommands),
         as: UTF8.self
     )
+    let statusLine = includeStatus
+        ? #""status": "\#(status ?? overallStatus)","#
+        : ""
     return Data(
         """
         {
           "kind": "final_demo_launch_report",
           "mode": "\(mode)",
+          \(statusLine)
           "overall_status": "\(overallStatus)",
           "first_blocker": \(firstBlockerJSON),
           "next_action": \(nextActionJSON),
@@ -12827,6 +12876,8 @@ private func configuredFinalDemoLaunchCommands() -> [String] {
 
 private func finalDemoLaunchReport(
     mode: String = "local",
+    includeStatus: Bool = true,
+    status: String? = nil,
     overallStatus: String = "partial",
     firstBlockerJSON: String = "null",
     nextActionJSON: String = "null",
@@ -12918,6 +12969,8 @@ private func finalDemoLaunchReport(
         FinalDemoLaunchReport.self,
         from: finalDemoLaunchPayload(
             mode: mode,
+            includeStatus: includeStatus,
+            status: status,
             overallStatus: overallStatus,
             firstBlockerJSON: firstBlockerJSON,
             nextActionJSON: nextActionJSON,
