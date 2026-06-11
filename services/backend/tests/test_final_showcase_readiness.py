@@ -422,6 +422,10 @@ def test_final_showcase_readiness_next_action_uses_preflight_child_action(
     assert action["detail"] == blocker["detail"]
     assert "Missing DEVELOPMENT_TEAM" in action["detail"]
     assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in action["detail"]
+    assert result.report["operator_actions"][0] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
 
 
 def test_final_showcase_readiness_maps_missing_mobile_xcode_build_evidence(
@@ -725,7 +729,8 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     actions = result.report["operator_actions"]
 
     assert result.exit_code == 2
-    assert actions[0] == "final_rehearsal_local: final_acceptance_local: action 1"
+    assert actions[0] == "make ios-device-launch-rehearsal"
+    assert "final_rehearsal_local: final_acceptance_local: action 1" in actions
     assert "final_handoff_index: run make final-configured-preflight" in actions
     assert "final_handoff_index: run make final-demo-launch-configured" in actions
     assert not any("final-demo-launch --mode configured" in action for action in actions)
