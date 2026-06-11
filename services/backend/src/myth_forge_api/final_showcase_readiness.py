@@ -1016,9 +1016,21 @@ def _next_action(
     if blocker is None:
         return None
     command = str(blocker.get("command", ""))
+    validation_command = ""
     if blocker.get("id") == "ios_deployable":
-        command = _preferred_device_action_command(device_action_bundle) or command
-    return {
+        device_action_source = _preferred_device_action_hint_source(
+            device_action_bundle or {},
+        )
+        child_next_action = _device_action_child_next_action(device_action_source)
+        command = (
+            str(child_next_action.get("command", "")).strip()
+            or _preferred_device_action_command(device_action_bundle)
+            or command
+        )
+        validation_command = str(
+            child_next_action.get("validation_command", ""),
+        ).strip()
+    action = {
         "id": str(blocker.get("id", "")),
         "label": str(blocker.get("label", "")),
         "status": str(blocker.get("status", "")),
@@ -1027,6 +1039,9 @@ def _next_action(
         "detail": str(blocker.get("detail", "")),
         "source": "first_blocker",
     }
+    if validation_command:
+        action["validation_command"] = validation_command
+    return action
 
 
 def _capability_with_device_action_detail(
@@ -1082,6 +1097,15 @@ def _preferred_device_action_command(
     return command
 
 
+def _device_action_child_next_action(
+    device_action_source: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(device_action_source, dict):
+        return {}
+    next_action = device_action_source.get("next_action")
+    return next_action if isinstance(next_action, dict) else {}
+
+
 def _first_device_action_hint(
     device_action_bundle: dict[str, Any] | None,
 ) -> str:
@@ -1126,6 +1150,9 @@ def _device_action_bundle(
         "evidence_detail": preflight_detail,
         "validation_command": MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_COMMAND,
     }
+    child_next_action = mobile_deploy_preflight_evidence.get("next_action")
+    if isinstance(child_next_action, dict):
+        preflight_metadata["next_action"] = child_next_action
     xcode_status = _normalized_report_status(mobile_xcode_build_evidence)
     xcode_raw_status = str(mobile_xcode_build_evidence.get("status", "missing"))
     xcode_metadata = {

@@ -164,6 +164,7 @@ Bridge deliverable:
 - P0.251 final demo launch reports expose top-level status
 - P0.252 iPhone final launch model decodes top-level status
 - P0.253 mobile deploy preflight evidence exposes top-level next action
+- P0.254 final showcase next action uses concrete mobile preflight action
 
 ## P1: Mobile Vertical Slice
 
