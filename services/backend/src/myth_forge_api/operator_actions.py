@@ -27,6 +27,7 @@ FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
 MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
     "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
     "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
+    "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig",
     "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
     "set PMF_FINAL_LAUNCH_MODE to local or configured",
 )
