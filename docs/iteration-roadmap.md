@@ -194,6 +194,7 @@ Bridge deliverable:
 - P0.280 resource handoff provider selection actions use final resource apply handoff
 - P0.281 final local report refresh normalizes stale provider selection actions
 - P0.282 final apply operator actions normalize to explicit resource handoff
+- P0.283 final-local refresh promotes child next_commands to executable operator actions
 
 ## P1: Mobile Vertical Slice
 

@@ -386,8 +386,11 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             _write_json(repo_root=repo_root, relative_path=step.output_path, report=report)
         raw_status = _raw_status(report)
         status = _normalized_status(raw_status)
+        next_command = _next_command(report)
         blocker_hint = _blocker_hint(report)
         blocker_fields = _promoted_blocker_fields(blocker_hint)
+        if next_command and not blocker_fields["command"]:
+            blocker_fields["command"] = next_command
         return {
             "id": step.id,
             "label": step.label,
@@ -396,6 +399,7 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             "exit_code": _step_exit_code(status),
             "kind": report.get("kind", "unknown"),
             "summary": report.get("summary", {}),
+            "next_command": next_command,
             "blocker_hint": blocker_hint,
             **blocker_fields,
             "output": step.output_path.as_posix() if step.output_path else None,
@@ -786,6 +790,19 @@ def _action_command(action: dict[str, Any] | None) -> str:
     return command
 
 
+def _next_command(report: dict[str, Any]) -> str:
+    commands = report.get("next_commands")
+    if not isinstance(commands, list):
+        return ""
+    for command in commands:
+        if not isinstance(command, str):
+            continue
+        normalized = normalize_operator_action(command)
+        if normalized:
+            return normalized
+    return ""
+
+
 def _dedupe(values: list[str]) -> list[str]:
     seen: set[str] = set()
     deduped: list[str] = []
@@ -902,6 +919,9 @@ def _blocker_command(step: dict[str, Any], hint: dict[str, Any]) -> str:
     hinted = str(hint.get("command", "")).strip()
     if hinted:
         return hinted
+    next_command = str(step.get("next_command") or "").strip()
+    if next_command:
+        return next_command
     step_id = str(step.get("id", "step"))
     if step.get("status") == "failed":
         return f"fix final-local-report-refresh step {step_id}"
