@@ -792,6 +792,22 @@ def _blocker_detail(step: dict[str, Any], hint: dict[str, Any]) -> str:
     return f"Review refreshed {step.get('id', 'step')} report."
 
 
+def _blocked_check_detail_summary(checks: list[Any]) -> str:
+    details: list[str] = []
+    seen: set[str] = set()
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        if str(check.get("status", "")).lower() in {"passed", "ready"}:
+            continue
+        detail = str(check.get("detail") or check.get("classification") or "").strip()
+        if not detail or detail in seen:
+            continue
+        seen.add(detail)
+        details.append(detail)
+    return "; ".join(details)
+
+
 def _blocker_hint(report: dict[str, Any]) -> dict[str, str]:
     next_action = report.get("next_action")
     if isinstance(next_action, dict):
@@ -833,6 +849,9 @@ def _blocker_hint(report: dict[str, Any]) -> dict[str, str]:
             if str(check.get("status", "")).lower() in {"passed", "ready"}:
                 continue
             hint = _hint_from_mapping(check)
+            detail = _blocked_check_detail_summary(checks)
+            if detail:
+                hint["detail"] = detail
             hint["command"] = _first_operator_action(report) or hint.get("command", "")
             return hint
 

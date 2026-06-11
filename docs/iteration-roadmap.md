@@ -158,6 +158,7 @@ Bridge deliverable:
 - P0.245 final showcase readiness iOS blocker prefers complete mobile preflight detail
 - P0.246 final showcase readiness next action command uses the preferred concrete device step
 - P0.247 final local report refresh step hints prefer child next actions
+- P0.248 final local report refresh check hints summarize every blocked check detail
 
 ## P1: Mobile Vertical Slice
 

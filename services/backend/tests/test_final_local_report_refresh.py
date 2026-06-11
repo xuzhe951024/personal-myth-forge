@@ -60,7 +60,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "start backend-device-demo and rerun mobile deploy preflight"
     )
     assert steps["final_acceptance_local"]["detail"] == (
-        "blocked_by_local_ios_backend_health"
+        "blocked_by_local_ios_backend_health; blocked_by_apple_sdk_license"
     )
     assert steps["final_acceptance_local"]["accepted_blocked"] is True
     assert steps["final_resource_fill_guide"]["status"] == "blocked"
@@ -77,7 +77,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
     )
     assert steps["mobile_deploy_preflight_evidence"]["detail"] == (
-        "Missing DEVELOPMENT_TEAM"
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     assert steps["mobile_deploy_preflight_evidence"]["accepted_blocked"] is True
     assert steps["mobile_xcode_build_evidence"]["status"] == "blocked"
@@ -363,6 +363,51 @@ def test_final_local_report_refresh_step_hint_prefers_child_next_action(
     )
     assert step["blocker_hint"]["command"] == "make mobile-deploy-preflight"
     assert "make ios-device-launch-rehearsal" not in step["detail"]
+
+
+def test_final_local_report_refresh_step_hint_summarizes_all_blocked_check_details(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    def child_report(_repo_root: Path) -> dict[str, object]:
+        return {
+            "kind": "child_report",
+            "status": "blocked",
+            "checks": [
+                {
+                    "id": "development_team",
+                    "label": "Apple Team ID",
+                    "status": "blocked",
+                    "detail": "Missing DEVELOPMENT_TEAM",
+                },
+                {
+                    "id": "backend_base_url",
+                    "label": "Backend base URL",
+                    "status": "blocked",
+                    "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                },
+            ],
+            "operator_actions": [
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+            ],
+        }
+
+    result = run_final_local_report_refresh(
+        repo_root=repo_root,
+        extra_steps={"child_checks": child_report},
+    )
+
+    step = result.report["steps_by_id"]["child_checks"]
+
+    assert result.exit_code == 2
+    assert step["status"] == "blocked"
+    assert step["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    assert step["detail"] == (
+        "Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
 
 
 def test_final_local_report_refresh_has_no_first_blocker_when_all_steps_ready() -> None:
