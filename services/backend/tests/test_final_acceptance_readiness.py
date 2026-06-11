@@ -236,7 +236,8 @@ def test_final_acceptance_readiness_blocks_from_saved_report_without_unsafe_text
         },
     ]
     assert result.report["operator_actions"] == [
-        "provide iOS deploy config and rerun mobile deploy preflight",
+        "provide iOS deploy config in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight",
         "resolve Xcode build gate outside the app",
     ]
     assert str(tmp_path) not in report_text

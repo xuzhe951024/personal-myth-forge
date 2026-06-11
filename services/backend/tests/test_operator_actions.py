@@ -64,6 +64,34 @@ def test_normalizes_backend_device_demo_action_to_validated_make_target() -> Non
     )
 
 
+def test_normalizes_prefixed_backend_device_demo_action() -> None:
+    assert normalize_operator_action(
+        "ios_device_launch_certificate: start backend-device-demo"
+    ) == (
+        "ios_device_launch_certificate: start backend-device-demo before device "
+        "checks: make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+
+
+def test_normalizes_prefixed_ios_deploy_config_action() -> None:
+    expected = (
+        "ios_device_launch_certificate: provide iOS deploy config in "
+        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+    )
+
+    assert (
+        normalize_operator_action("ios_device_launch_certificate: provide iOS deploy config")
+        == expected
+    )
+    assert (
+        normalize_operator_action(
+            "ios_device_launch_certificate: provide iOS deploy config and rerun "
+            "mobile deploy preflight"
+        )
+        == expected
+    )
+
+
 def test_normalizes_provider_handoff_cli_action_to_make_target() -> None:
     action = (
         "rerun provider handoff readiness: "
