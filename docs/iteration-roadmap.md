@@ -153,6 +153,7 @@ Bridge deliverable:
 - P0.240 final showcase readiness next action surfaces saved first device action detail
 - P0.241 iOS device evidence bundle slots prefer saved mobile preflight evidence detail
 - P0.242 iOS device launch rehearsal first blocker uses saved mobile preflight check details
+- P0.243 iOS device evidence bundle operator actions include saved slot blocker details
 
 ## P1: Mobile Vertical Slice
 

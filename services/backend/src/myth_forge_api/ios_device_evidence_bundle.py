@@ -527,14 +527,38 @@ def _operator_actions(status: str, slots: list[dict[str, Any]]) -> list[str]:
         if slot["status"] == "ready":
             continue
         if slot["id"] == "backend_device_server":
-            actions.append("start backend-device-demo before device checks: make backend-device-demo")
+            actions.append(
+                _action_with_detail(
+                    "start backend-device-demo before device checks: make backend-device-demo",
+                    slot,
+                )
+            )
         elif slot["id"] == "mobile_deploy_preflight":
-            actions.append("run make mobile-deploy-preflight after backend is running")
+            actions.append(
+                _action_with_detail(
+                    "run make mobile-deploy-preflight after backend is running",
+                    slot,
+                )
+            )
         elif slot["id"] == "xcode_build_gate":
-            actions.append("run Xcode build gate manually on the Mac: make mobile-xcode-build")
+            actions.append(
+                _action_with_detail(
+                    "run Xcode build gate manually on the Mac: make mobile-xcode-build",
+                    slot,
+                )
+            )
         elif slot["id"] == "ios_device_launch_rehearsal":
-            actions.append("run make ios-device-launch-rehearsal")
+            actions.append(
+                _action_with_detail("run make ios-device-launch-rehearsal", slot)
+            )
     return _dedupe(actions)
+
+
+def _action_with_detail(action: str, slot: dict[str, Any]) -> str:
+    detail = str(slot.get("detail", "")).strip()
+    if not detail:
+        return action
+    return f"{action} | {detail}"
 
 
 def _summary(slots: list[dict[str, Any]]) -> dict[str, int]:
