@@ -271,6 +271,37 @@ def test_final_local_report_refresh_operator_actions_normalize_detail_backend_de
     ]
 
 
+def test_final_local_report_refresh_operator_actions_drop_vague_unblock_actions() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_resource_requirements",
+                "status": "blocked",
+                "command": "provide MESHY_API_KEY in final-resources.env",
+                "validation_command": "make final-resources-preflight",
+            },
+            {
+                "id": "final_resource_fill_guide",
+                "status": "blocked",
+                "command": "unblock final_resource_fill_guide after MESHY_API_KEY",
+            },
+            {
+                "id": "provider_handoff",
+                "status": "blocked",
+                "command": "unblock provider_handoff before configured evidence bundle",
+            },
+        ],
+    )
+
+    assert actions == [
+        (
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        "make provider-handoff",
+    ]
+
+
 def test_final_local_report_refresh_operator_actions_normalize_provider_selectors() -> None:
     actions = final_local_report_refresh._operator_actions(
         [

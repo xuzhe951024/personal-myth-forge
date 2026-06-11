@@ -119,6 +119,19 @@ def test_normalizes_provider_handoff_cli_action_to_make_target() -> None:
     )
 
 
+def test_normalizes_vague_unblock_actions_to_concrete_commands() -> None:
+    assert normalize_operator_action(
+        "unblock final_resource_fill_guide after MESHY_API_KEY"
+    ) == (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    assert normalize_operator_action(
+        "final_showcase_readiness: unblock provider_handoff before configured "
+        "evidence bundle"
+    ) == "final_showcase_readiness: make provider-handoff"
+
+
 def test_normalizes_provider_selection_actions_to_final_apply() -> None:
     assert normalize_operator_action("set THREE_D_PROVIDER=meshy") == (
         "run make final-apply-resources to apply the filled resource bundle"

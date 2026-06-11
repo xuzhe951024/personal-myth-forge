@@ -36,6 +36,15 @@ FINAL_RESOURCE_VALIDATION_ACTION_ROOTS = (
 )
 FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
 MOBILE_DEPLOY_PREFLIGHT_COMMAND = "make mobile-deploy-preflight"
+UNBLOCK_ACTION_REPLACEMENTS = {
+    "unblock final_resource_fill_guide after MESHY_API_KEY": (
+        "provide MESHY_API_KEY in final-resources.env; "
+        f"rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}"
+    ),
+    "unblock provider_handoff before configured evidence bundle": (
+        "make provider-handoff"
+    ),
+}
 BACKEND_DEVICE_DEMO_ACTION = (
     "start backend-device-demo before device checks: make backend-device-demo"
 )
@@ -72,6 +81,9 @@ def normalize_operator_action(action: str) -> str:
     legacy_action = _normalize_legacy_action(command_part)
     if legacy_action is not None:
         return f"{legacy_action}{detail_suffix}"
+    unblock_action = _normalize_unblock_action(command_part)
+    if unblock_action is not None:
+        return f"{unblock_action}{detail_suffix}"
     mobile_validated_action = _add_mobile_deploy_validation_to_command(command_part)
     if mobile_validated_action != command_part:
         return f"{mobile_validated_action}{detail_suffix}"
@@ -88,6 +100,17 @@ def normalize_operator_action(action: str) -> str:
     if command is not None:
         return f"{_replace_action_command(command_part, command)}{detail_suffix}"
     return f"{command_part}{detail_suffix}"
+
+
+def _normalize_unblock_action(action: str) -> str | None:
+    if action in UNBLOCK_ACTION_REPLACEMENTS:
+        return UNBLOCK_ACTION_REPLACEMENTS[action]
+    for vague, replacement in UNBLOCK_ACTION_REPLACEMENTS.items():
+        suffix = f": {vague}"
+        if action.endswith(suffix):
+            prefix = action[: -len(suffix)]
+            return f"{prefix}: {replacement}"
+    return None
 
 
 def _normalize_legacy_action(action: str) -> str | None:
