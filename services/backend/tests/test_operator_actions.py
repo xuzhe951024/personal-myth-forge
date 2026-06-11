@@ -114,9 +114,21 @@ def test_normalizes_provider_handoff_cli_action_to_make_target() -> None:
         "provider-handoff --require-core-real --output .local/provider-handoff.json"
     )
 
-    assert normalize_operator_action(action) == (
+    assert normalize_operator_action(action) == "make provider-handoff"
+
+
+def test_normalizes_verbose_provider_evidence_actions_to_make_targets() -> None:
+    assert normalize_operator_action(
         "rerun provider handoff readiness: make provider-handoff"
-    )
+    ) == "make provider-handoff"
+    assert normalize_operator_action(
+        "run make live-provider-evidence after configured provider evidence files "
+        "are refreshed"
+    ) == "make live-provider-evidence"
+    assert normalize_operator_action(
+        "run make live-provider-evidence to refresh live provider evidence after "
+        "cost consent | configured evidence stale"
+    ) == "make live-provider-evidence | configured evidence stale"
 
 
 def test_normalizes_vague_unblock_actions_to_concrete_commands() -> None:

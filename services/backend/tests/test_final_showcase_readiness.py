@@ -736,9 +736,10 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert "final_handoff_index: run make final-demo-launch-configured" in actions
     assert not any("final-demo-launch --mode configured" in action for action in actions)
     assert "ios_device_launch_certificate: run make final-handoff-index" in actions
+    assert "make live-provider-evidence" in actions
     assert (
         "run make live-provider-evidence after configured provider evidence files are refreshed"
-        in actions
+        not in actions
     )
     assert "make print-fulfillment-readiness" in actions
     assert "run make final-resource-init" in actions
@@ -751,6 +752,7 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert "make final-showcase-readiness" in actions
     assert len(actions) <= 32
     assert actions.count("make print-fulfillment-readiness") == 1
+    assert actions.count("make live-provider-evidence") == 1
 
 
 def test_final_showcase_readiness_normalizes_resource_apply_unblock_actions() -> None:
@@ -770,6 +772,22 @@ def test_final_showcase_readiness_normalizes_resource_apply_unblock_actions() ->
         "make final-resource-apply-preview",
         "run make final-apply-resources to apply the filled resource bundle",
     ]
+
+
+def test_final_showcase_readiness_normalizes_provider_evidence_actions() -> None:
+    actions = final_showcase_readiness._report_operator_actions(
+        {
+            "operator_actions": [
+                "rerun provider handoff readiness: make provider-handoff",
+                (
+                    "run make live-provider-evidence after configured provider "
+                    "evidence files are refreshed"
+                ),
+            ]
+        }
+    )
+
+    assert actions == ["make provider-handoff", "make live-provider-evidence"]
 
 
 def test_final_showcase_readiness_normalizes_prefixed_ios_device_actions(
