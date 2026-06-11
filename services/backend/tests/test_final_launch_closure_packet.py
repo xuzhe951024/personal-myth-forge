@@ -89,6 +89,34 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert report["safety"]["describes_global_actions"] is True
 
 
+def test_final_launch_closure_packet_exposes_next_action_from_first_blocker(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    blocker = result.report["first_blocker"]
+    action = result.report["next_action"]
+
+    assert blocker["id"] == "resource_inputs"
+    assert action == {
+        "id": "resource_inputs",
+        "label": "Resource inputs",
+        "status": "blocked",
+        "classification": "missing_required_value",
+        "command": "make final-resources-preflight",
+        "detail": "Backend-only secret for live Meshy 3D generation.",
+        "source": "first_blocker",
+        "section_id": "resource_inputs",
+        "action_id": "provide_MESHY_API_KEY",
+    }
+    assert "meshy-secret" not in json.dumps(action)
+
+
 def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     tmp_path: Path,
 ) -> None:

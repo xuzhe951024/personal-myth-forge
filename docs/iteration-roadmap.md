@@ -159,6 +159,7 @@ Bridge deliverable:
 - P0.246 final showcase readiness next action command uses the preferred concrete device step
 - P0.247 final local report refresh step hints prefer child next actions
 - P0.248 final local report refresh check hints summarize every blocked check detail
+- P0.249 final launch closure packet exposes a top-level next action
 
 ## P1: Mobile Vertical Slice
 
