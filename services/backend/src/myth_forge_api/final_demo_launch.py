@@ -208,6 +208,7 @@ def build_final_demo_launch_report(
         mode=mode,
         resource_report=resource_report,
         final_resources_preflight=final_resources_preflight,
+        final_resource_requirements=final_resource_requirements,
         live_provider_evidence=live_provider_evidence,
         phases=phases,
     )
@@ -440,11 +441,13 @@ def _operator_checklist(
     mode: LaunchMode,
     resource_report: dict[str, Any],
     final_resources_preflight: dict[str, Any],
+    final_resource_requirements: dict[str, Any],
     live_provider_evidence: dict[str, Any],
     phases: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
     actions.extend(final_resources_preflight.get("operator_actions", []))
+    actions.extend(final_resource_requirements.get("operator_actions", []))
     if mode == "configured":
         actions.extend(resource_report["operator_actions"])
     else:
@@ -462,7 +465,7 @@ def _operator_checklist(
         actions.append(
             "run make live-provider-evidence after configured provider evidence files are refreshed"
         )
-    return _dedupe(actions)
+    return _dedupe_operator_actions(actions)
 
 
 def _operator_actions(
@@ -475,7 +478,7 @@ def _operator_actions(
     if concrete:
         actions.append(concrete)
     actions.extend(operator_checklist)
-    return _dedupe(actions)[:8]
+    return _dedupe_operator_actions(actions)[:8]
 
 
 def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:
@@ -813,6 +816,16 @@ def _dedupe(values: list[str]) -> list[str]:
         seen.add(value)
         result.append(value)
     return result
+
+
+def _dedupe_operator_actions(values: list[str]) -> list[str]:
+    deduped = _dedupe(values)
+    validation_aware_roots = {
+        value.split("; rerun ", 1)[0].strip()
+        for value in deduped
+        if "; rerun " in value
+    }
+    return [value for value in deduped if value not in validation_aware_roots]
 
 
 def _default_repo_root() -> Path:
