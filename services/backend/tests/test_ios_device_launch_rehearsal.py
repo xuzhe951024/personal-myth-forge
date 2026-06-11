@@ -239,8 +239,8 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
         ),
         "ios_deploy_runbook_local: resolve Xcode build gate outside the app",
         (
-            "mobile_deploy_preflight_evidence: start backend-device-demo and "
-            "rerun mobile deploy preflight"
+            "mobile_deploy_preflight_evidence: start backend-device-demo before "
+            "device checks: make backend-device-demo; rerun make mobile-deploy-preflight"
         ),
     ]
     assert result.report["operator_actions"][0] == (

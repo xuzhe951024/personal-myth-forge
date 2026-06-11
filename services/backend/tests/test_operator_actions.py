@@ -44,6 +44,26 @@ def test_mobile_deploy_validation_preserves_existing_rerun_command() -> None:
     assert operator_actions.add_mobile_deploy_validation_command(action) == action
 
 
+def test_normalizes_backend_device_demo_action_to_validated_make_target() -> None:
+    expected = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    assert (
+        normalize_operator_action(
+            "start backend-device-demo and rerun mobile deploy preflight"
+        )
+        == expected
+    )
+    assert (
+        operator_actions.add_mobile_deploy_validation_command(
+            "start backend-device-demo before device checks: make backend-device-demo"
+        )
+        == expected
+    )
+
+
 def test_normalizes_provider_handoff_cli_action_to_make_target() -> None:
     action = (
         "rerun provider handoff readiness: "

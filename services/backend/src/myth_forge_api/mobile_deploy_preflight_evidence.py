@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from myth_forge_api.operator_actions import add_mobile_deploy_validation_command
+from myth_forge_api.operator_actions import (
+    add_mobile_deploy_validation_command,
+    normalize_operator_action,
+)
 
 SCRIPT_PATH = Path("apps/mobile/ios/scripts/deploy_preflight.sh")
 COMMAND = "make mobile-deploy-preflight"
@@ -62,7 +65,7 @@ def build_mobile_deploy_preflight_evidence_report(
     status = "ready" if returncode == 0 else "blocked"
     checks = _checks(stdout=stdout, stderr=stderr, status=status)
     raw_actions = [] if status == "ready" else _operator_actions(checks)
-    actions = [add_mobile_deploy_validation_command(action) for action in raw_actions]
+    actions = [_validation_aware_action(action) for action in raw_actions]
     first_blocker = _first_blocker(checks)
     next_action = _next_action(first_blocker, raw_actions, checks)
     report = {
@@ -221,7 +224,7 @@ def _next_action(
 ) -> dict[str, str] | None:
     if first_blocker is None:
         return None
-    command = actions[0] if actions else first_blocker["detail"]
+    command = _action_command(actions[0]) if actions else first_blocker["detail"]
     detail = _blocked_check_detail_summary(checks) or first_blocker["detail"]
     return {
         "id": first_blocker["id"],
@@ -267,6 +270,14 @@ def _operator_actions(checks: list[dict[str, str]]) -> list[str]:
         else:
             actions.append("review make mobile-deploy-preflight output")
     return _dedupe(actions)
+
+
+def _validation_aware_action(action: str) -> str:
+    return add_mobile_deploy_validation_command(normalize_operator_action(action))
+
+
+def _action_command(action: str) -> str:
+    return normalize_operator_action(action).split("; rerun ", 1)[0].strip()
 
 
 def _safe_lines(text: str, *, repo_root: Path) -> list[str]:
