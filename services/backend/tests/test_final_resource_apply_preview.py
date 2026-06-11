@@ -258,6 +258,45 @@ def test_apply_preview_requires_treatstock_key_when_provider_selected(
     assert "TREATSTOCK_API_KEY" in backend["blocked_by"]
 
 
+def test_apply_preview_resource_actions_include_validation_commands(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        "PRINT_PROVIDER=local\nPMF_FINAL_LAUNCH_MODE=configured\n",
+    )
+
+    result = build_final_resource_apply_preview_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide DEVELOPMENT_TEAM in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert not _known_bare_resource_actions(actions)
+    assert not _resource_actions_with_wrong_rerun(actions)
+
+
 def test_apply_preview_is_ready_for_valid_local_resources_without_secret_leak(
     tmp_path: Path,
 ) -> None:
@@ -352,3 +391,25 @@ def backend_env_path(root: Path) -> Path:
 
 def ios_local_config_path(root: Path) -> Path:
     return root / "apps/mobile/ios/Config/Deployment.local.xcconfig"
+
+
+def _known_bare_resource_actions(actions: list[str]) -> list[str]:
+    roots = (
+        "provide MESHY_API_KEY in final-resources.env",
+        "provide OPENAI_API_KEY in final-resources.env",
+        "provide TREATSTOCK_API_KEY in final-resources.env",
+        "provide SCULPTEO_API_KEY in final-resources.env",
+        "provide DEVELOPMENT_TEAM in final-resources.env",
+        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env",
+        "provide PMF_BACKEND_BASE_URL in final-resources.env",
+    )
+    return [action for action in actions if action.endswith(roots)]
+
+
+def _resource_actions_with_wrong_rerun(actions: list[str]) -> list[str]:
+    return [
+        action
+        for action in actions
+        if " in final-resources.env; rerun " in action
+        and not action.endswith("; rerun make final-resources-preflight")
+    ]

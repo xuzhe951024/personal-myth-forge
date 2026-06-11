@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.operator_actions import add_final_resource_validation_command
+
 DEFAULT_RESOURCES_PATH = Path("services/backend/.local/final-resources.env")
 
 ACCEPTED_KEYS = [
@@ -330,7 +332,7 @@ def _operator_actions(
             actions.append("set PMF_FINAL_LAUNCH_MODE to local or configured")
     if treatstock_required:
         actions.append("provide TREATSTOCK_API_KEY or set PRINT_PROVIDER=local")
-    return _dedupe(actions)
+    return _dedupe([add_final_resource_validation_command(action) for action in actions])
 
 
 def _is_loopback_url(value: str) -> bool:

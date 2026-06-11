@@ -158,6 +158,45 @@ def test_requirements_report_is_ready_for_valid_local_resources(tmp_path: Path) 
     assert str(tmp_path) not in report_text
 
 
+def test_requirements_report_operator_actions_include_resource_validation_commands(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        "PRINT_PROVIDER=local\nPMF_FINAL_LAUNCH_MODE=configured\n",
+    )
+
+    result = build_final_resource_requirements_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide DEVELOPMENT_TEAM in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert not _known_bare_resource_actions(actions)
+    assert not _resource_actions_with_wrong_rerun(actions)
+
+
 def test_requirements_report_marks_auto_backend_url_as_apply_time_resolution(
     tmp_path: Path,
 ) -> None:
@@ -213,9 +252,10 @@ def test_requirements_report_requires_treatstock_key_when_provider_selected(
     assert result.report["first_blocker"]["command"] == (
         "provide TREATSTOCK_API_KEY in final-resources.env"
     )
-    assert "provide TREATSTOCK_API_KEY in final-resources.env" in result.report[
-        "operator_actions"
-    ]
+    assert (
+        "provide TREATSTOCK_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in result.report["operator_actions"]
 
 
 def test_requirements_report_marks_loopback_backend_url_blocked(
@@ -250,3 +290,25 @@ def write_resources(root: Path, text: str) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return path
+
+
+def _known_bare_resource_actions(actions: list[str]) -> list[str]:
+    roots = (
+        "provide MESHY_API_KEY in final-resources.env",
+        "provide OPENAI_API_KEY in final-resources.env",
+        "provide TREATSTOCK_API_KEY in final-resources.env",
+        "provide SCULPTEO_API_KEY in final-resources.env",
+        "provide DEVELOPMENT_TEAM in final-resources.env",
+        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env",
+        "provide PMF_BACKEND_BASE_URL in final-resources.env",
+    )
+    return [action for action in actions if action.endswith(roots)]
+
+
+def _resource_actions_with_wrong_rerun(actions: list[str]) -> list[str]:
+    return [
+        action
+        for action in actions
+        if " in final-resources.env; rerun " in action
+        and not action.endswith("; rerun make final-resources-preflight")
+    ]
