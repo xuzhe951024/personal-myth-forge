@@ -54,6 +54,40 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert str(tmp_path) not in report_text
 
 
+def test_ios_deploy_runbook_resource_actions_include_validation_commands(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+
+    report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
+    actions = report["operator_actions"]
+
+    assert (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide DEVELOPMENT_TEAM in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL" in actions
+    assert not any(
+        action.endswith("provide MESHY_API_KEY in final-resources.env")
+        or action.endswith("provide OPENAI_API_KEY in final-resources.env")
+        or action.endswith("provide DEVELOPMENT_TEAM in final-resources.env")
+        or action.endswith("provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env")
+        for action in actions
+    )
+
+
 def test_ios_deploy_runbook_ready_local_inputs_preserve_command_order(
     tmp_path: Path,
 ) -> None:

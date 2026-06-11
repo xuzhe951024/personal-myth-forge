@@ -26,7 +26,10 @@ from myth_forge_api.local_showcase_smoke import build_local_showcase_smoke_repor
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
-from myth_forge_api.operator_actions import normalize_operator_action
+from myth_forge_api.operator_actions import (
+    add_final_resource_validation_command,
+    normalize_operator_action,
+)
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
 )
@@ -65,12 +68,6 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES = (
     "final_handoff_index:",
     "ios_device_launch_certificate:",
 )
-FINAL_RESOURCE_VALIDATION_ACTION_ROOTS = (
-    "provide MESHY_API_KEY in final-resources.env",
-    "provide OPENAI_API_KEY in final-resources.env",
-    "provide PMF_BACKEND_BASE_URL in final-resources.env",
-)
-FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
 )
@@ -1427,7 +1424,10 @@ def _operator_actions(
         actions.append(
             "run make live-provider-evidence to refresh live provider evidence after cost consent"
         )
-    return _dedupe(actions)[:FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT]
+    return [
+        add_final_resource_validation_command(action)
+        for action in _dedupe(actions)[:FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT]
+    ]
 
 
 def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:
@@ -1458,11 +1458,7 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
 
 
 def _validation_aware_operator_action(action: str) -> str:
-    if "; rerun " in action:
-        return action
-    if action.endswith(FINAL_RESOURCE_VALIDATION_ACTION_ROOTS):
-        return f"{action}; rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}"
-    return action
+    return add_final_resource_validation_command(action)
 
 
 def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
