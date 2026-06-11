@@ -1427,7 +1427,9 @@ def _operator_actions(
         )
     return [
         add_final_resource_validation_command(action)
-        for action in _dedupe(actions)[:FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT]
+        for action in _dedupe_operator_actions(actions)[
+            :FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT
+        ]
     ]
 
 
@@ -1544,6 +1546,62 @@ def _dedupe(items: list[str]) -> list[str]:
         seen.add(item)
         deduped.append(item)
     return deduped
+
+
+def _dedupe_operator_actions(items: list[str]) -> list[str]:
+    seen_exact: set[str] = set()
+    normalized_items = [item.strip() for item in items if item.strip()]
+    bare_roots = {
+        _operator_action_bare_root(item)
+        for item in normalized_items
+        if not _is_source_prefixed_action(item)
+    }
+    deduped: list[str] = []
+    for normalized in normalized_items:
+        if normalized in seen_exact:
+            continue
+        bare_root = _operator_action_bare_root(normalized)
+        if _is_drop_candidate_source_prefix(normalized) and bare_root in bare_roots:
+            continue
+        seen_exact.add(normalized)
+        deduped.append(normalized)
+    return deduped
+
+
+def _operator_action_bare_root(action: str) -> str:
+    command = action.split(" | ", 1)[0].strip()
+    parts = command.split(": ")
+    for index in range(len(parts) - 1, 0, -1):
+        suffix = ": ".join(parts[index:]).strip()
+        if not _looks_like_operator_command(suffix):
+            continue
+        return suffix
+    return command
+
+
+def _is_source_prefixed_action(action: str) -> bool:
+    return _operator_action_bare_root(action) != action.split(" | ", 1)[0].strip()
+
+
+def _is_drop_candidate_source_prefix(action: str) -> bool:
+    return action.startswith(
+        "final_rehearsal_local: mobile_deploy_preflight_evidence: "
+    )
+
+
+def _looks_like_operator_command(value: str) -> bool:
+    return value.startswith(
+        (
+            "provide ",
+            "set ",
+            "make ",
+            "run ",
+            "start ",
+            "accept ",
+            "after explicit ",
+            "fill ",
+        )
+    )
 
 
 def _sanitize_report(report: dict[str, Any], repo_root: Path) -> dict[str, Any]:

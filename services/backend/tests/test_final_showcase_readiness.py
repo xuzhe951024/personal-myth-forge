@@ -764,6 +764,49 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert actions.count("make live-provider-evidence") == 1
 
 
+def test_final_showcase_readiness_dedupes_prefixed_duplicate_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression_blocked(repo_root)
+    _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_ios_device_launch_rehearsal_with_actions(
+        repo_root,
+        extra_actions=[
+            (
+                "final_rehearsal_local: mobile_deploy_preflight_evidence: "
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+                "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            )
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    bare_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    assert result.exit_code == 2
+    assert bare_action in actions
+    assert not any(
+        action.startswith(
+            "final_rehearsal_local: mobile_deploy_preflight_evidence: "
+            "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+        )
+        for action in actions
+    )
+
+
 def test_final_showcase_readiness_normalizes_resource_apply_unblock_actions() -> None:
     actions = final_showcase_readiness._report_operator_actions(
         {
