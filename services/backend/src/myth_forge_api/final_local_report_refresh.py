@@ -110,16 +110,22 @@ def run_final_local_report_refresh(
     summary = _summary(step_results)
     status = _overall_status(summary)
     first_blocker = _first_blocker(step_results)
+    next_action = _next_action(first_blocker)
+    showcase_next_action = _showcase_next_action(step_results)
     report = {
         "kind": "final_local_report_refresh_report",
         "status": status,
         "first_blocker": first_blocker,
-        "next_action": _next_action(first_blocker),
-        "showcase_next_action": _showcase_next_action(step_results),
+        "next_action": next_action,
+        "showcase_next_action": showcase_next_action,
         "summary": summary,
         "steps": step_results,
         "steps_by_id": {step["id"]: step for step in step_results},
-        "operator_actions": _operator_actions(step_results),
+        "operator_actions": _operator_actions(
+            step_results,
+            next_action=next_action,
+            showcase_next_action=showcase_next_action,
+        ),
         "safety": _safety(),
     }
     sanitized = _sanitize_report(report, selected_repo_root)
@@ -742,14 +748,45 @@ def _exit_code_for_status(status: str) -> int:
     return 1
 
 
-def _operator_actions(steps: list[dict[str, Any]]) -> list[str]:
+def _operator_actions(
+    steps: list[dict[str, Any]],
+    *,
+    next_action: dict[str, Any] | None = None,
+    showcase_next_action: dict[str, Any] | None = None,
+) -> list[str]:
     actions: list[str] = []
+    for action in (next_action, showcase_next_action):
+        command = _action_command(action)
+        if command:
+            actions.append(command)
     for step in steps:
         if step["status"] == "failed":
             actions.append(f"fix final-local-report-refresh step {step['id']}")
         elif step["status"] == "blocked":
-            actions.append(f"review refreshed {step['id']} report")
-    return actions[:12]
+            command = str(step.get("command") or "").strip()
+            if command:
+                actions.append(command)
+            else:
+                actions.append(f"review refreshed {step['id']} report")
+    return _dedupe(actions)[:12]
+
+
+def _action_command(action: dict[str, Any] | None) -> str:
+    if not isinstance(action, dict):
+        return ""
+    return str(action.get("command") or "").strip()
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for value in values:
+        normalized = value.strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(normalized)
+    return deduped
 
 
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:

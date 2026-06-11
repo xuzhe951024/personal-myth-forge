@@ -198,6 +198,23 @@ def test_final_local_report_refresh_exposes_showcase_next_action(
     }
 
 
+def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+
+    assert result.exit_code == 2
+    assert result.report["operator_actions"][:2] == [
+        "provide MESHY_API_KEY in final-resources.env",
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+    ]
+    assert "review refreshed final_resource_requirements report" not in (
+        result.report["operator_actions"][:2]
+    )
+
+
 def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
     tmp_path: Path,
 ) -> None:
