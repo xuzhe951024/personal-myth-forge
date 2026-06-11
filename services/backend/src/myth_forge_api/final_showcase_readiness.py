@@ -668,7 +668,7 @@ def _simple_report_capability(
             classification = str(blocker.get("classification", classification))
             detail = (
                 f"{blocked_detail} {blocker.get('id', 'unknown_blocker')}: "
-                f"{blocker.get('detail', blocker.get('status', 'blocked'))}"
+                f"{_report_blocker_detail(blocker)}"
             )
     return _capability(
         capability_id=capability_id,
@@ -689,6 +689,25 @@ def _first_report_blocker(report: dict[str, Any]) -> dict[str, Any] | None:
         if isinstance(blocker, dict):
             return blocker
     return None
+
+
+def _report_blocker_detail(blocker: dict[str, Any]) -> str:
+    next_action = blocker.get("next_action")
+    if isinstance(next_action, dict):
+        command = str(next_action.get("command", "")).strip()
+        validation_command = str(next_action.get("validation_command", "")).strip()
+        detail = str(next_action.get("detail", "")).strip()
+        parts = []
+        if command:
+            parts.append(f"Next action: {command}")
+        if validation_command:
+            parts.append(f"rerun {validation_command}")
+        if detail:
+            parts.append(detail)
+        formatted = " | ".join(parts)
+        if formatted:
+            return formatted
+    return str(blocker.get("detail", blocker.get("status", "blocked")))
 
 
 def _privacy_safety_capability(**reports: dict[str, Any]) -> dict[str, Any]:

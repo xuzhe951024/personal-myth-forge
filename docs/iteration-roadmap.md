@@ -168,6 +168,7 @@ Bridge deliverable:
 - P0.255 final demo launch next action uses concrete mobile preflight action
 - P0.256 final showcase blocker detail uses concrete mobile preflight action
 - P0.257 final acceptance readiness uses concrete mobile preflight action
+- P0.258 final showcase functional regression uses concrete final acceptance action
 
 ## P1: Mobile Vertical Slice
 

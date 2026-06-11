@@ -2746,6 +2746,10 @@ FEATURES = (
                 "local_showcase_smoke",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_showcase_readiness.py",
+                "_report_blocker_detail",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_showcase_readiness",
             ),
@@ -2790,6 +2794,10 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/tests/test_final_showcase_readiness.py",
                 "test_final_showcase_readiness_blocks_failed_local_showcase_smoke",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_showcase_readiness.py",
+                "test_final_showcase_readiness_functional_regression_uses_concrete_preflight_action",
             ),
         ),
     ),

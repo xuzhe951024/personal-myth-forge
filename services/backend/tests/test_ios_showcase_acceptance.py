@@ -1440,6 +1440,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "mobile_deploy_preflight_evidence validation_command "
             "mobile_xcode_build_evidence make mobile-xcode-build-evidence "
             "CAPABILITY_ORDER print_fulfillment make final-showcase-readiness "
+            "_report_blocker_detail "
             "make backend-device-demo "
             "build_final_resource_apply_preview_report final_resource_apply_preview "
             "build_local_showcase_smoke_report local_showcase_smoke"
@@ -1470,7 +1471,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "test_final_showcase_readiness_marks_preflight_actions_ready_with_evidence "
             "test_final_showcase_readiness_maps_blocked_mobile_xcode_build_evidence "
             "test_final_showcase_readiness_marks_xcode_action_ready_with_evidence "
-            "test_final_showcase_readiness_next_action_uses_preflight_child_action"
+            "test_final_showcase_readiness_next_action_uses_preflight_child_action "
+            "test_final_showcase_readiness_functional_regression_uses_concrete_preflight_action"
         ),
         "services/backend/src/myth_forge_api/ios_deploy_runbook.py": (
             "build_ios_deploy_runbook_report build_three_d_evaluation_readiness_report "

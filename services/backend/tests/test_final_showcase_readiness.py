@@ -743,6 +743,58 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert actions.count("make print-fulfillment-readiness") == 1
 
 
+def test_final_showcase_readiness_functional_regression_uses_concrete_preflight_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action={
+            "id": "development_team",
+            "label": "Apple Team ID",
+            "status": "blocked",
+            "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+            "detail": (
+                "Missing DEVELOPMENT_TEAM; "
+                "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            ),
+            "validation_command": "make mobile-deploy-preflight",
+            "source": "first_blocker",
+        },
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    row = result.report["capabilities_by_id"]["functional_regression"]
+
+    assert row["status"] == "blocked"
+    assert "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig" in row["detail"]
+    assert "rerun make mobile-deploy-preflight" in row["detail"]
+    assert (
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        in row["detail"]
+    )
+    assert "make[1]" not in row["detail"]
+
+
 def test_final_showcase_readiness_surfaces_final_resource_repair_action(
     tmp_path: Path,
 ) -> None:
