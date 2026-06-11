@@ -1197,6 +1197,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testNPCAgentTickSummaryShowsLatestTickResolution "
             "testNPCAgentActionGateEnablesLocalDemoActions "
             "testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance "
+            "test_final_acceptance_readiness_enriches_mobile_preflight_blocker_with_saved_next_action "
             "testFinalLaunchMobileSummaryShowsHandoffNextActions "
             "testFinalLaunchMobileSummaryShowsMissingResourceChecklist "
             "testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt "
@@ -1372,6 +1373,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/final_acceptance_readiness.py": (
             "build_final_acceptance_readiness_report _freshness_report final_acceptance_freshness "
+            "MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH _enrich_mobile_preflight_blocker "
             'LOCAL_FINAL_ACCEPTANCE_COMMAND = "make final-acceptance-local"'
         ),
         "services/backend/src/myth_forge_api/npc_agent_evaluation_readiness.py": (
@@ -1597,6 +1599,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "test_final_demo_launch_embeds_final_launch_closure_packet "
             "test_final_demo_launch_embeds_local_showcase_smoke "
             "test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidence_detail"
+        ),
+        "services/backend/tests/test_final_acceptance_readiness.py": (
+            "test_final_acceptance_readiness_enriches_mobile_preflight_blocker_with_saved_next_action"
         ),
         "services/backend/tests/test_ios_device_evidence_bundle.py": (
             "test_ios_device_evidence_bundle_blocks_missing_local_device_evidence "

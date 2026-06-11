@@ -1192,6 +1192,14 @@ FEATURES = (
                 "final_acceptance_freshness",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_acceptance_readiness.py",
+                "MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH",
+            ),
+            SourceRequirement(
+                "services/backend/src/myth_forge_api/final_acceptance_readiness.py",
+                "_enrich_mobile_preflight_blocker",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_acceptance_readiness",
             ),
@@ -1248,6 +1256,10 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance",
+            ),
+            SourceRequirement(
+                "services/backend/tests/test_final_acceptance_readiness.py",
+                "test_final_acceptance_readiness_enriches_mobile_preflight_blocker_with_saved_next_action",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",

@@ -12,6 +12,9 @@ from myth_forge_api.source_freshness import (
 )
 
 DEFAULT_ACCEPTANCE_PATH = Path("services/backend/.local/final-acceptance-local.json")
+MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH = Path(
+    "services/backend/.local/mobile-deploy-preflight-evidence.json"
+)
 LOCAL_FINAL_ACCEPTANCE_COMMAND = "make final-acceptance-local"
 
 
@@ -85,6 +88,14 @@ def build_final_acceptance_readiness_report(
         _blocker(check)
         for check in checks
         if isinstance(check, dict) and check.get("status") in {"blocked", "failed"}
+    ]
+    mobile_preflight_next_action = _mobile_preflight_next_action(selected_repo_root)
+    blockers = [
+        _enrich_mobile_preflight_blocker(
+            blocker,
+            next_action=mobile_preflight_next_action,
+        )
+        for blocker in blockers
     ]
     if freshness["status"] == "stale":
         blockers.insert(0, _freshness_blocker(freshness))
@@ -215,6 +226,42 @@ def _detail(check: dict[str, Any]) -> str:
     return "Final acceptance check needs attention."
 
 
+def _mobile_preflight_next_action(repo_root: Path) -> dict[str, Any]:
+    evidence_path = repo_root / MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH
+    if not evidence_path.exists():
+        return {}
+    try:
+        payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    if payload.get("kind") != "mobile_deploy_preflight_evidence_report":
+        return {}
+    next_action = payload.get("next_action")
+    return next_action if isinstance(next_action, dict) else {}
+
+
+def _enrich_mobile_preflight_blocker(
+    blocker: dict[str, Any],
+    *,
+    next_action: dict[str, Any],
+) -> dict[str, Any]:
+    if blocker.get("id") != "mobile_deploy_preflight" or not next_action:
+        return blocker
+    result = dict(blocker)
+    result["next_action"] = {
+        "id": str(next_action.get("id", "")),
+        "label": str(next_action.get("label", "")),
+        "status": str(next_action.get("status", "")),
+        "command": str(next_action.get("command", "")),
+        "detail": str(next_action.get("detail", "")),
+        "validation_command": str(next_action.get("validation_command", "")),
+        "source": str(next_action.get("source", "")),
+    }
+    return result
+
+
 def _freshness_report(
     *,
     repo_root: Path,
@@ -299,7 +346,11 @@ def _operator_actions(*, status: str, blockers: list[dict[str, Any]]) -> list[st
                 "services/backend/.local/final-acceptance-local.json for the current product sources"
             )
         elif blocker_id == "mobile_deploy_preflight":
-            actions.append("provide iOS deploy config and rerun mobile deploy preflight")
+            concrete_action = _mobile_preflight_operator_action(blocker)
+            actions.append(
+                concrete_action
+                or "provide iOS deploy config and rerun mobile deploy preflight"
+            )
         elif blocker_id == "mobile_xcode_build":
             actions.append("resolve Xcode build gate outside the app")
         elif blocker["status"] == "failed":
@@ -309,6 +360,19 @@ def _operator_actions(*, status: str, blockers: list[dict[str, Any]]) -> list[st
         else:
             actions.append(f"unblock {blocker_id}: {blocker['label']}")
     return _dedupe(actions)
+
+
+def _mobile_preflight_operator_action(blocker: dict[str, Any]) -> str:
+    next_action = blocker.get("next_action")
+    if not isinstance(next_action, dict):
+        return ""
+    command = str(next_action.get("command", "")).strip()
+    validation_command = str(next_action.get("validation_command", "")).strip()
+    if not command:
+        return ""
+    if validation_command:
+        return f"{command}; rerun {validation_command}"
+    return command
 
 
 def _sanitize_report(report: dict[str, Any], repo_root: Path) -> dict[str, Any]:
