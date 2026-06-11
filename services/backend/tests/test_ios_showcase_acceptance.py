@@ -256,6 +256,14 @@ def test_mobile_final_demo_launch_first_blocker_source_gates() -> None:
         "nextAction: FinalDemoLaunchNextAction?",
     ) in requirements
     assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
+        "status: String?",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
+        "launchStatus(_ report: FinalDemoLaunchReport)",
+    ) in requirements
+    assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift",
         "report.firstBlocker",
     ) in requirements
@@ -266,6 +274,10 @@ def test_mobile_final_demo_launch_first_blocker_source_gates() -> None:
     assert (
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
         "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
+        "testFinalLaunchMobileSummaryPrefersTopLevelStatus",
     ) in requirements
 
 
@@ -1131,6 +1143,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "testFinalLaunchMobileSummaryShowsMissingResourceChecklist "
             "testFinalLaunchMobileSummaryShowsAcceptanceBlockerReceipt "
             "testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction "
+            "testFinalLaunchMobileSummaryPrefersTopLevelStatus "
             "testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt "
             "testDecodesFinalAcceptanceFreshnessFromFinalLaunchPayload "
             "testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness "
@@ -1242,6 +1255,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "FinalAcceptanceReadinessReport FinalOperatorHandoffReport finalOperatorHandoff "
             "FinalDemoLaunchFirstBlocker firstBlocker: FinalDemoLaunchFirstBlocker? "
             "FinalDemoLaunchNextAction nextAction: FinalDemoLaunchNextAction? "
+            "status: String? "
             "FinalLaunchMode displayLabel FinalResourcesPreflightItem FinalAcceptanceFreshness "
             "resolutionMode: String? applyNote: String? "
             "ThreeDEvaluationReadinessReport threeDEvaluationReadiness "
@@ -1274,6 +1288,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift": (
             "acceptanceRows handoffRows modePolicyRows liveCallPolicy resourceChecklistRows "
             "launchReceiptRows Next action: firstBlockerReceiptRow report.firstBlocker freshness.status == \"stale\" "
+            "launchStatus(_ report: FinalDemoLaunchReport) "
             "threeDEvaluationRows threeDEvaluationRows(from: "
             "visualRegressionRows visualRegressionRows(from: "
             "localShowcaseSmokeRows provider_calls= "

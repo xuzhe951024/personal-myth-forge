@@ -171,10 +171,11 @@ public enum FinalLaunchMobileSummaryBuilder {
                 detail: phaseDetail(phase)
             )
         }
+        let reportStatus = launchStatus(report)
 
         return FinalLaunchMobileSummary(
-            overallStatus: status(from: report.overallStatus),
-            title: "Final launch \(sanitize(report.overallStatus))",
+            overallStatus: status(from: reportStatus),
+            title: "Final launch \(sanitize(reportStatus))",
             subtitle: summaryText(report.summary, mode: report.mode),
             phaseRows: Array(phaseRows.prefix(4)),
             launchReceiptRows: launchReceiptRows(from: report),
@@ -282,6 +283,14 @@ public enum FinalLaunchMobileSummaryBuilder {
         value ? "true" : "false"
     }
 
+    private static func launchStatus(_ report: FinalDemoLaunchReport) -> String {
+        if let status = report.status?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !status.isEmpty {
+            return status
+        }
+        return report.overallStatus
+    }
+
     private static func status(from raw: String) -> FinalLaunchMobileStatus {
         switch raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
         case "ready", "passed":
@@ -321,7 +330,7 @@ public enum FinalLaunchMobileSummaryBuilder {
     }
 
     private static func receiptStatusRow(_ report: FinalDemoLaunchReport) -> String {
-        "Receipt: \(displayMode(report.mode).lowercased()) launch \(report.overallStatus)."
+        "Receipt: \(displayMode(report.mode).lowercased()) launch \(launchStatus(report))."
     }
 
     private static func acceptanceReceiptRow(_ readiness: FinalAcceptanceReadinessReport?) -> String {

@@ -4257,6 +4257,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
     public var overallStatus: String
+    public var status: String?
     public var firstBlocker: FinalDemoLaunchFirstBlocker?
     public var nextAction: FinalDemoLaunchNextAction?
     public var summary: FinalDemoLaunchSummary
@@ -4293,6 +4294,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         kind: String,
         mode: String,
         overallStatus: String,
+        status: String? = nil,
         firstBlocker: FinalDemoLaunchFirstBlocker? = nil,
         nextAction: FinalDemoLaunchNextAction? = nil,
         summary: FinalDemoLaunchSummary,
@@ -4328,6 +4330,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.kind = kind
         self.mode = mode
         self.overallStatus = overallStatus
+        self.status = status
         self.firstBlocker = firstBlocker
         self.nextAction = nextAction
         self.summary = summary
