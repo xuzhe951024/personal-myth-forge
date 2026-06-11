@@ -155,6 +155,7 @@ Bridge deliverable:
 - P0.242 iOS device launch rehearsal first blocker uses saved mobile preflight check details
 - P0.243 iOS device evidence bundle operator actions include saved slot blocker details
 - P0.244 final handoff index local rehearsal lane surfaces saved blocker detail
+- P0.245 final showcase readiness iOS blocker prefers complete mobile preflight detail
 
 ## P1: Mobile Vertical Slice
 
