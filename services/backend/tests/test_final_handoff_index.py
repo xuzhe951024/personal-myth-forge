@@ -125,6 +125,65 @@ def test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready(
     assert str(tmp_path) not in report_text
 
 
+def test_final_handoff_index_local_lane_uses_saved_blocker_detail(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_json(
+        repo_root / "services/backend/.local/final-acceptance-local.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+        },
+    )
+    _write_ios_deploy_runbook(repo_root)
+    _write_final_demo_launch(
+        repo_root,
+        overall_status="partial",
+        first_blocker={
+            "id": "mobile_deploy_preflight",
+            "label": "Run iOS deploy preflight",
+            "status": "blocked",
+            "classification": "final_demo_launch_phase",
+            "command": "make mobile-deploy-preflight",
+            "detail": (
+                "physical iPhone backend health gate | Checks local config and "
+                "backend /health; does not build or sign. | Missing DEVELOPMENT_TEAM; "
+                "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            ),
+        },
+        operator_actions=[
+            (
+                "mobile_deploy_preflight: Missing DEVELOPMENT_TEAM; "
+                "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            )
+        ],
+    )
+
+    result = build_final_handoff_index_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    lanes = result.report["lanes_by_id"]
+    report_text = json.dumps(result.report)
+    expected_detail = (
+        "final_demo_launch_local: physical iPhone backend health gate | "
+        "Checks local config and backend /health; does not build or sign. | "
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+
+    assert result.exit_code == 2
+    assert lanes["local_rehearsal"]["status"] == "blocked"
+    assert lanes["local_rehearsal"]["detail"] == expected_detail
+    assert result.report["first_blocker"]["detail"] == expected_detail
+    assert result.report["operator_actions"][0] == expected_detail
+    assert "MESHY_API_KEY" not in report_text
+
+
 def test_final_handoff_index_reports_missing_source_freshness(
     tmp_path: Path,
 ) -> None:
@@ -326,13 +385,23 @@ def _write_final_acceptance(repo_root: Path) -> None:
     _write_json(repo_root / "services/backend/.local/final-acceptance-local.json", report)
 
 
-def _write_final_demo_launch(repo_root: Path) -> None:
-    report = {
+def _write_final_demo_launch(
+    repo_root: Path,
+    *,
+    overall_status: str = "partial",
+    first_blocker: dict[str, object] | None = None,
+    operator_actions: list[str] | None = None,
+) -> None:
+    report: dict[str, object] = {
         "kind": "final_demo_launch_report",
         "mode": "local",
-        "overall_status": "partial",
+        "overall_status": overall_status,
         "summary": {"ready": 8, "missing": 0, "blocked": 0, "manual": 1, "optional": 1},
     }
+    if first_blocker is not None:
+        report["first_blocker"] = first_blocker
+    if operator_actions is not None:
+        report["operator_actions"] = operator_actions
     _write_json(repo_root / "services/backend/.local/final-demo-launch-local.json", report)
 
 

@@ -155,12 +155,19 @@ def _source_report(*, source: dict[str, str], repo_root: Path) -> dict[str, Any]
     if freshness["status"] == "stale":
         status = "blocked"
         classification = "stale_report"
-    return {
+    report = {
         **base,
         "status": status,
         "kind": payload.get("kind"),
         "classification": classification,
     }
+    detail = _saved_report_detail(payload)
+    operator_actions = _bounded_operator_actions(payload.get("operator_actions"))
+    if detail:
+        report["detail"] = detail
+    if operator_actions:
+        report["operator_actions"] = operator_actions
+    return report
 
 
 def _configured_preflight_source(
@@ -205,12 +212,43 @@ def _saved_report_status(payload: dict[str, Any]) -> str:
     return _normalized_status(str(payload.get("status", "ready")))
 
 
+def _saved_report_detail(payload: dict[str, Any]) -> str:
+    first_blocker = payload.get("first_blocker")
+    if isinstance(first_blocker, dict):
+        detail = str(first_blocker.get("detail", "")).strip()
+        if detail:
+            return detail[:240]
+    return _first_operator_action(payload)
+
+
+def _bounded_operator_actions(raw_actions: Any) -> list[str]:
+    if not isinstance(raw_actions, list):
+        return []
+    actions: list[str] = []
+    for action in raw_actions:
+        if isinstance(action, str) and action.strip():
+            actions.append(action.strip()[:240])
+        if len(actions) == 4:
+            break
+    return actions
+
+
+def _first_operator_action(report: dict[str, Any]) -> str:
+    actions = report.get("operator_actions")
+    if isinstance(actions, list) and actions:
+        action = actions[0]
+        if isinstance(action, str):
+            return action.strip()[:240]
+    return ""
+
+
 def _lanes(
     *,
     local_sources: list[dict[str, Any]],
     configured_preflight: dict[str, Any],
 ) -> list[dict[str, Any]]:
     local_status = _combined_lane_status([str(source["status"]) for source in local_sources])
+    local_detail = _local_lane_detail(local_sources)
     configured_status = str(configured_preflight.get("status", "blocked"))
     configured_launch_status = str(
         configured_preflight.get("configured_final_launch", {}).get(
@@ -232,6 +270,7 @@ def _lanes(
             command="make final-rehearsal-local",
             required=True,
             notes=["Writes local/no-key saved reports for final launch review."],
+            detail=local_detail,
         ),
         _lane(
             lane_id="configured_preflight",
@@ -278,8 +317,9 @@ def _lane(
     required: bool,
     notes: list[str],
     requires_consent: bool = False,
+    detail: str = "",
 ) -> dict[str, Any]:
-    return {
+    lane = {
         "id": lane_id,
         "label": label,
         "status": _normalized_status(status),
@@ -288,6 +328,40 @@ def _lane(
         "requires_consent": requires_consent,
         "notes": notes,
     }
+    if detail:
+        lane["detail"] = detail
+    return lane
+
+
+def _local_lane_detail(local_sources: list[dict[str, Any]]) -> str:
+    preferred = _source_detail_by_id(local_sources, "final_demo_launch_local")
+    if preferred:
+        return preferred
+    for source in local_sources:
+        if source.get("status") not in {"blocked", "missing"}:
+            continue
+        detail = _source_detail(source)
+        if detail:
+            return detail
+    return ""
+
+
+def _source_detail_by_id(local_sources: list[dict[str, Any]], source_id: str) -> str:
+    for source in local_sources:
+        if source.get("id") != source_id:
+            continue
+        return _source_detail(source)
+    return ""
+
+
+def _source_detail(source: dict[str, Any]) -> str:
+    detail = str(source.get("detail", "")).strip()
+    if detail:
+        return f"{source['id']}: {detail}"
+    actions = source.get("operator_actions")
+    if isinstance(actions, list) and actions:
+        return f"{source['id']}: {actions[0]}"
+    return ""
 
 
 def _operator_sequence(lanes: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -399,7 +473,7 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
         lane_id = str(lane.get("id", "lane"))
         command = str(lane.get("command", ""))
         if lane_id == "local_rehearsal":
-            actions.append("run make final-rehearsal-local")
+            actions.append(_lane_detail_or_default(lane, "run make final-rehearsal-local"))
         elif lane_id == "configured_preflight":
             actions.append("run make final-configured-preflight")
         elif lane_id == "device_deploy":
@@ -435,12 +509,17 @@ def _lane_blocker_detail(lane: dict[str, Any]) -> str:
     lane_id = str(lane.get("id", "lane"))
     command = str(lane.get("command", ""))
     if lane_id == "local_rehearsal":
-        return "run make final-rehearsal-local"
+        return _lane_detail_or_default(lane, "run make final-rehearsal-local")
     if lane_id == "configured_preflight":
         return "run make final-configured-preflight"
     if lane_id == "device_deploy":
         return "run make mobile-deploy-preflight after backend is running"
     return f"run {command}" if command else f"unblock {lane_id}"
+
+
+def _lane_detail_or_default(lane: dict[str, Any], default: str) -> str:
+    detail = str(lane.get("detail", "")).strip()
+    return detail or default
 
 
 def _dedupe(values: list[str]) -> list[str]:
