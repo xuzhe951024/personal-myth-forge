@@ -177,6 +177,7 @@ Bridge deliverable:
 - P0.264 final local report refresh operator actions retain validation commands
 - P0.265 final external action ledger resource actions include destination and validation command
 - P0.266 final resource requirement actions retain validation command
+- P0.267 final demo launch resource actions prefer validation-aware handoff
 
 ## P1: Mobile Vertical Slice
 

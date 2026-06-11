@@ -219,7 +219,7 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
         result.report["operator_actions"][:2]
     )
     assert "provide MESHY_API_KEY in final-resources.env" not in (
-        result.report["operator_actions"][:5]
+        result.report["operator_actions"][:8]
     )
 
 

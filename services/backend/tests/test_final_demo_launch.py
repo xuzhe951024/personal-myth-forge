@@ -450,6 +450,13 @@ def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidenc
         "rerun make mobile-deploy-preflight"
     )
     assert "MESHY_API_KEY" not in result.report["operator_actions"][0]
+    assert (
+        "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight"
+        in result.report["operator_actions"]
+    )
+    assert "provide MESHY_API_KEY in final-resources.env" not in result.report[
+        "operator_actions"
+    ][:8]
 
 
 def test_local_final_demo_launch_marks_unified_apply_missing_with_ios_only(
