@@ -56,6 +56,15 @@ def test_normalizes_provider_handoff_cli_action_to_make_target() -> None:
     )
 
 
+def test_normalizes_provider_selection_actions_to_final_apply() -> None:
+    assert normalize_operator_action("set THREE_D_PROVIDER=meshy") == (
+        "run make final-apply-resources to apply the filled resource bundle"
+    )
+    assert normalize_operator_action("set NPC_PROVIDER=openai") == (
+        "run make final-apply-resources to apply the filled resource bundle"
+    )
+
+
 def test_normalizes_configured_final_demo_launch_cli_action_to_make_target() -> None:
     action = (
         "final_handoff_index: run cd services/backend && uv run python -m "

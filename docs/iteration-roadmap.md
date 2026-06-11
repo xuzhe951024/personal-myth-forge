@@ -191,6 +191,7 @@ Bridge deliverable:
 - P0.277 final external action ledger iOS deploy config actions use mobile preflight validation
 - P0.278 iOS device launch rehearsal and readiness retain iOS validation commands
 - P0.279 resource handoff backend secret actions retain final resource validation
+- P0.280 resource handoff provider selection actions use final resource apply handoff
 
 ## P1: Mobile Vertical Slice
 
