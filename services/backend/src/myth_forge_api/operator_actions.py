@@ -17,6 +17,11 @@ PROVIDER_SELECTION_ACTION_ROOTS = (
     "set NPC_PROVIDER=openai",
 )
 MOBILE_DEPLOY_PREFLIGHT_COMMAND = "make mobile-deploy-preflight"
+DEPLOYMENT_TEAM_ACTION = "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+PRODUCT_BUNDLE_IDENTIFIER_ACTION = (
+    "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig"
+)
+BACKEND_BASE_URL_ACTION = "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
 BACKEND_DEVICE_DEMO_ACTION = (
     "start backend-device-demo before device checks: make backend-device-demo"
 )
@@ -102,10 +107,10 @@ LEGACY_IOS_DEPLOY_CONFIG_ACTIONS = (
 MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
     BACKEND_DEVICE_DEMO_ACTION,
     IOS_DEPLOY_CONFIG_ACTION,
-    "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
-    "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
+    DEPLOYMENT_TEAM_ACTION,
+    PRODUCT_BUNDLE_IDENTIFIER_ACTION,
     "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig",
-    "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+    BACKEND_BASE_URL_ACTION,
     "set PMF_FINAL_LAUNCH_MODE to local or configured",
 )
 
@@ -113,6 +118,11 @@ MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
 def normalize_operator_action(action: str) -> str:
     normalized = action.strip()
     command_part, detail_suffix = _split_detail_suffix(normalized)
+    mobile_preflight_detail_action = _normalize_mobile_preflight_detail_action(
+        command_part
+    )
+    if mobile_preflight_detail_action is not None:
+        return f"{mobile_preflight_detail_action}{detail_suffix}"
     legacy_action = _normalize_legacy_action(command_part)
     if legacy_action is not None:
         return f"{legacy_action}{detail_suffix}"
@@ -156,6 +166,32 @@ def _normalize_make_target_action(action: str) -> str | None:
             prefix = action[: -len(suffix)]
             return f"{prefix}: {replacement}"
     return None
+
+
+def _normalize_mobile_preflight_detail_action(action: str) -> str | None:
+    marker = "mobile_deploy_preflight_evidence: "
+    if marker not in action:
+        return None
+    prefix, _separator, detail = action.partition(marker)
+    stripped_detail = detail.strip()
+    if not stripped_detail:
+        return None
+    if f"rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}" in stripped_detail:
+        return None
+    root: str | None = None
+    if "DEVELOPMENT_TEAM" in stripped_detail:
+        root = DEPLOYMENT_TEAM_ACTION
+    elif "PRODUCT_BUNDLE_IDENTIFIER" in stripped_detail:
+        root = PRODUCT_BUNDLE_IDENTIFIER_ACTION
+    elif (
+        "PMF_BACKEND_BASE_URL" in stripped_detail
+        or "iPhone-reachable" in stripped_detail
+    ):
+        root = BACKEND_BASE_URL_ACTION
+    if root is None:
+        return None
+    command = _add_mobile_deploy_validation_to_command(root)
+    return f"{prefix}{marker}{command} | {stripped_detail}"
 
 
 def _normalize_unblock_action(action: str) -> str | None:

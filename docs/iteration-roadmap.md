@@ -205,6 +205,7 @@ Bridge deliverable:
 - P0.291 final resource requirements action normalizes to make target
 - P0.292 final handoff make wrappers normalize to canonical targets
 - P0.293 mobile deploy preflight handoff action normalizes to concrete device command
+- P0.294 mobile preflight evidence details normalize to concrete deploy actions
 
 ## P1: Mobile Vertical Slice
 
