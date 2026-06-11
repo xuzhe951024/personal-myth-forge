@@ -321,6 +321,50 @@ def test_final_local_report_refresh_reports_unexpected_step_failure(
     assert result.report["safety"]["xcode_or_signing"] is False
 
 
+def test_final_local_report_refresh_step_hint_prefers_child_next_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    def child_report(_repo_root: Path) -> dict[str, object]:
+        return {
+            "kind": "child_report",
+            "status": "blocked",
+            "first_blocker": {
+                "id": "ios_deployable",
+                "classification": "ios_deploy_evidence",
+                "command": "make ios-device-launch-rehearsal",
+                "detail": "High-level rehearsal gate.",
+            },
+            "next_action": {
+                "id": "ios_deployable",
+                "classification": "ios_deploy_evidence",
+                "command": "make mobile-deploy-preflight",
+                "detail": (
+                    "Next device action: make mobile-deploy-preflight | "
+                    "Missing DEVELOPMENT_TEAM"
+                ),
+            },
+        }
+
+    result = run_final_local_report_refresh(
+        repo_root=repo_root,
+        extra_steps={"child_next_action": child_report},
+    )
+
+    step = result.report["steps_by_id"]["child_next_action"]
+
+    assert result.exit_code == 2
+    assert step["status"] == "blocked"
+    assert step["classification"] == "ios_deploy_evidence"
+    assert step["command"] == "make mobile-deploy-preflight"
+    assert step["detail"] == (
+        "Next device action: make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM"
+    )
+    assert step["blocker_hint"]["command"] == "make mobile-deploy-preflight"
+    assert "make ios-device-launch-rehearsal" not in step["detail"]
+
+
 def test_final_local_report_refresh_has_no_first_blocker_when_all_steps_ready() -> None:
     assert final_local_report_refresh._first_blocker(
         [
