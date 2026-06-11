@@ -197,6 +197,7 @@ Bridge deliverable:
 - P0.283 final-local refresh promotes child next_commands to executable operator actions
 - P0.284 backend-device-demo operator actions use make target plus mobile preflight validation
 - P0.285 prefixed iOS device actions normalize to concrete handoff commands
+- P0.286 detail-suffixed backend-device-demo actions retain mobile preflight validation
 
 ## P1: Mobile Vertical Slice
 

@@ -247,6 +247,30 @@ def test_final_local_report_refresh_operator_actions_drop_bare_action_roots() ->
     ]
 
 
+def test_final_local_report_refresh_operator_actions_normalize_detail_backend_demo() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "ios_device_evidence",
+                "status": "blocked",
+                "command": (
+                    "start backend-device-demo before device checks: "
+                    "make backend-device-demo | PMF_BACKEND_BASE_URL must be "
+                    "iPhone-reachable"
+                ),
+            }
+        ],
+    )
+
+    assert actions == [
+        (
+            "start backend-device-demo before device checks: make backend-device-demo; "
+            "rerun make mobile-deploy-preflight | PMF_BACKEND_BASE_URL must be "
+            "iPhone-reachable"
+        )
+    ]
+
+
 def test_final_local_report_refresh_operator_actions_normalize_provider_selectors() -> None:
     actions = final_local_report_refresh._operator_actions(
         [
