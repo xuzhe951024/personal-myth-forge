@@ -271,6 +271,38 @@ def test_final_local_report_refresh_operator_actions_normalize_detail_backend_de
     ]
 
 
+def test_final_local_report_refresh_operator_actions_drop_detail_duplicate_roots() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_acceptance_local",
+                "status": "blocked",
+                "command": (
+                    "start backend-device-demo before device checks: "
+                    "make backend-device-demo"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+            },
+            {
+                "id": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "command": (
+                    "start backend-device-demo before device checks: "
+                    "make backend-device-demo | PMF_BACKEND_BASE_URL must be "
+                    "iPhone-reachable"
+                ),
+            },
+        ],
+    )
+
+    assert actions == [
+        (
+            "start backend-device-demo before device checks: make backend-device-demo; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
 def test_final_local_report_refresh_operator_actions_drop_vague_unblock_actions() -> None:
     actions = final_local_report_refresh._operator_actions(
         [

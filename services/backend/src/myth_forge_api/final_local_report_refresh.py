@@ -822,7 +822,34 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
         for value in deduped
         if "; rerun " in value
     }
-    return [value for value in deduped if value not in validation_aware_roots]
+    validation_deduped = [
+        value for value in deduped if value not in validation_aware_roots
+    ]
+    return _dedupe_operator_action_roots(validation_deduped)
+
+
+def _dedupe_operator_action_roots(actions: list[str]) -> list[str]:
+    normalized = [action.strip() for action in actions if action.strip()]
+    bare_roots = {
+        _operator_action_root(action)
+        for action in normalized
+        if _operator_action_root(action) == action
+    }
+    deduped: list[str] = []
+    seen_exact: set[str] = set()
+    for action in normalized:
+        if action in seen_exact:
+            continue
+        root = _operator_action_root(action)
+        if root in bare_roots and action != root:
+            continue
+        seen_exact.add(action)
+        deduped.append(action)
+    return deduped
+
+
+def _operator_action_root(action: str) -> str:
+    return action.split(" | ", 1)[0].strip()
 
 
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
