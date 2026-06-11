@@ -177,6 +177,31 @@ def test_ios_device_handoff_source_gates_require_first_blocker() -> None:
     ) in rehearsal_requirements
 
 
+def test_mobile_preflight_evidence_source_gates_require_top_level_action() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["mobile_final_showcase_device_action_bundle"].requirements
+    }
+
+    assert (
+        "services/backend/src/myth_forge_api/mobile_deploy_preflight_evidence.py",
+        "first_blocker",
+    ) in requirements
+    assert (
+        "services/backend/src/myth_forge_api/mobile_deploy_preflight_evidence.py",
+        "next_action",
+    ) in requirements
+    assert (
+        "services/backend/src/myth_forge_api/mobile_deploy_preflight_evidence.py",
+        "validation_command",
+    ) in requirements
+    assert (
+        "services/backend/tests/test_mobile_deploy_preflight_evidence.py",
+        "test_preflight_evidence_blocks_missing_config_with_actions",
+    ) in requirements
+
+
 def test_final_launch_closure_packet_source_gate_requires_first_blocker() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1382,6 +1407,13 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "make backend-device-demo "
             "build_final_resource_apply_preview_report final_resource_apply_preview "
             "build_local_showcase_smoke_report local_showcase_smoke"
+        ),
+        "services/backend/src/myth_forge_api/mobile_deploy_preflight_evidence.py": (
+            "mobile_deploy_preflight_evidence_report first_blocker next_action "
+            "validation_command"
+        ),
+        "services/backend/tests/test_mobile_deploy_preflight_evidence.py": (
+            "test_preflight_evidence_blocks_missing_config_with_actions"
         ),
         "services/backend/src/myth_forge_api/final_external_action_ledger.py": (
             "build_final_external_action_ledger_report final_external_action_ledger_report "
