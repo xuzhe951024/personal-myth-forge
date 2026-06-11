@@ -172,6 +172,7 @@ Bridge deliverable:
 - P0.259 final local report refresh exposes final showcase next action separately from resource blockers
 - P0.260 final local report refresh operator actions use concrete resource and showcase commands
 - P0.261 final handoff index operator actions use concrete final demo launch next action
+- P0.262 final demo launch reports expose concrete top-level operator actions
 
 ## P1: Mobile Vertical Slice
 

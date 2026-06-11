@@ -445,6 +445,11 @@ def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidenc
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
     )
     assert next_action["validation_command"] == "make mobile-deploy-preflight"
+    assert result.report["operator_actions"][0] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert "MESHY_API_KEY" not in result.report["operator_actions"][0]
 
 
 def test_local_final_demo_launch_marks_unified_apply_missing_with_ios_only(
