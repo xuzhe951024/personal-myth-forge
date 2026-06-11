@@ -208,6 +208,7 @@ Bridge deliverable:
 - P0.294 mobile preflight evidence details normalize to concrete deploy actions
 - P0.295 final showcase drops source-prefixed duplicate operator actions
 - P0.296 final showcase drops duplicate source-prefixed device actions
+- P0.297 final local report refresh drops detail-suffixed duplicate action roots
 
 ## P1: Mobile Vertical Slice
 
