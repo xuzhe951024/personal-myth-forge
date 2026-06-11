@@ -163,23 +163,26 @@ def build_final_showcase_readiness_report(
         mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
         mobile_xcode_build_evidence=mobile_xcode_build_evidence,
     )
+    first_blocker = _first_blocker(
+        capabilities,
+        device_action_bundle=device_action_bundle,
+    )
+    next_action = _next_action(
+        capabilities,
+        device_action_bundle=device_action_bundle,
+    )
     report = {
         "kind": "final_showcase_readiness_report",
         "status": status,
         "summary": summary,
         "capabilities": capabilities,
         "capabilities_by_id": {row["id"]: row for row in capabilities},
-        "first_blocker": _first_blocker(
-            capabilities,
-            device_action_bundle=device_action_bundle,
-        ),
-        "next_action": _next_action(
-            capabilities,
-            device_action_bundle=device_action_bundle,
-        ),
+        "first_blocker": first_blocker,
+        "next_action": next_action,
         "device_action_bundle": device_action_bundle,
         "operator_actions": _operator_actions(
             capabilities,
+            next_action=next_action,
             action_reports=[
                 ios_device_launch_rehearsal,
                 mobile_deploy_preflight_evidence,
@@ -1397,9 +1400,13 @@ def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None
 def _operator_actions(
     capabilities: list[dict[str, Any]],
     *,
+    next_action: dict[str, Any] | None,
     action_reports: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
+    concrete = _next_action_operator_action(next_action)
+    if concrete:
+        actions.append(concrete)
     for report in action_reports:
         if _normalized_report_status(report) == "ready":
             continue
@@ -1415,6 +1422,16 @@ def _operator_actions(
             "run make live-provider-evidence to refresh live provider evidence after cost consent"
         )
     return _dedupe(actions)[:FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT]
+
+
+def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:
+    if not isinstance(next_action, dict):
+        return ""
+    command = str(next_action.get("command", "")).strip()
+    validation_command = str(next_action.get("validation_command", "")).strip()
+    if command and validation_command:
+        return f"{command}; rerun {validation_command}"
+    return command
 
 
 def _normalized_report_status(report: dict[str, Any]) -> str:
