@@ -24,6 +24,19 @@ LaunchMode = Literal["local", "configured"]
 
 IOS_BASE_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.xcconfig")
 IOS_DEPLOY_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.local.xcconfig")
+CERTIFICATE_PROVIDER_ACTION_MARKERS = (
+    "make provider-handoff",
+    "live-provider-evidence",
+    "provider-handoff",
+)
+CERTIFICATE_PRINT_ACTION_MARKERS = (
+    "treatstock",
+    "print-quote-configured",
+    "print quote",
+    "print-quote",
+    "print_quote",
+    "/v1/print-quotes",
+)
 
 
 @dataclass(frozen=True)
@@ -177,6 +190,7 @@ def _device_gates(
             "make final-handoff-index",
             required=True,
             notes=["Refreshes the unified local/configured handoff index."],
+            operator_actions=_final_handoff_priority_actions(final_handoff_index),
         ),
         _gate(
             "ios_deploy_config",
@@ -247,8 +261,9 @@ def _gate(
     required: bool,
     notes: list[str],
     requires_consent: bool = False,
+    operator_actions: list[str] | None = None,
 ) -> dict[str, Any]:
-    return {
+    gate = {
         "id": gate_id,
         "label": label,
         "status": _normalized_gate_status(status),
@@ -257,6 +272,33 @@ def _gate(
         "requires_consent": requires_consent,
         "notes": notes,
     }
+    if operator_actions:
+        gate["operator_actions"] = operator_actions
+    return gate
+
+
+def _final_handoff_priority_actions(report: dict[str, Any]) -> list[str]:
+    actions = report.get("operator_actions")
+    if not isinstance(actions, list):
+        return []
+    selected: list[str] = []
+    for action in actions:
+        if not isinstance(action, str):
+            continue
+        stripped = action.strip()
+        if _is_provider_handoff_action(stripped) or _is_print_handoff_action(stripped):
+            selected.append(stripped)
+    return selected
+
+
+def _is_provider_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(marker in lowered for marker in CERTIFICATE_PROVIDER_ACTION_MARKERS)
+
+
+def _is_print_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(marker in lowered for marker in CERTIFICATE_PRINT_ACTION_MARKERS)
 
 
 def _final_handoff_index_summary(report: dict[str, Any]) -> dict[str, Any]:
@@ -440,7 +482,24 @@ def _operator_actions(device_gates: list[dict[str, Any]]) -> list[str]:
         if status not in {"missing", "blocked", "manual", "live"}:
             continue
         actions.append(_operator_action_for_gate(gate))
-    return _dedupe(actions)[:6]
+        nested_actions = gate.get("operator_actions")
+        if isinstance(nested_actions, list):
+            actions.extend(str(action) for action in nested_actions)
+    return _prioritize_certificate_operator_actions(_dedupe(actions))[:6]
+
+
+def _prioritize_certificate_operator_actions(actions: list[str]) -> list[str]:
+    if not actions:
+        return []
+    first_actions = actions[:1]
+    rest = actions[1:]
+    provider_actions = [
+        action for action in rest if _is_provider_handoff_action(action)
+    ]
+    print_actions = [action for action in rest if _is_print_handoff_action(action)]
+    priority_actions = set(provider_actions + print_actions)
+    remaining = [action for action in rest if action not in priority_actions]
+    return first_actions + provider_actions + print_actions + remaining
 
 
 def _first_blocker(device_gates: list[dict[str, Any]]) -> dict[str, Any] | None:
