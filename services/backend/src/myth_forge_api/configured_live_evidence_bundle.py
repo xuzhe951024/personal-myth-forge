@@ -45,6 +45,7 @@ def build_configured_live_evidence_bundle_report(
         live_evidence=live_evidence,
         command_sequence=command_sequence,
     )
+    first_blocker = current_blocker
     report = {
         "kind": "configured_live_evidence_bundle_report",
         "status": status,
@@ -55,6 +56,8 @@ def build_configured_live_evidence_bundle_report(
             evidence_files=evidence_files,
         ),
         "current_blocker": current_blocker,
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "evidence_files": evidence_files,
         "evidence_files_by_id": {row["id"]: row for row in evidence_files},
         "command_sequence": command_sequence,
@@ -197,6 +200,12 @@ def _live_blocker(first_blocker: dict[str, Any]) -> dict[str, Any]:
         "command": str(first_blocker.get("command", "")),
         "detail": str(first_blocker.get("detail", "")),
     }
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
 
 
 def _step_detail(row: dict[str, Any], configured_plan: dict[str, Any]) -> str:

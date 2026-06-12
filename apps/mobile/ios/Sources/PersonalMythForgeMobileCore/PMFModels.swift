@@ -3845,6 +3845,17 @@ public struct ConfiguredLiveEvidenceBundleBlocker: Codable, Equatable, Sendable 
     public var blockedBy: [String]?
 }
 
+public struct ConfiguredLiveEvidenceBundleNextAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String?
+    public var blockedBy: [String]?
+    public var source: String?
+}
+
 public struct ConfiguredLiveEvidenceBundleEvidenceFile: Codable, Equatable, Sendable {
     public var id: String
     public var label: String
@@ -3900,6 +3911,8 @@ public struct ConfiguredLiveEvidenceBundleReport: Codable, Equatable, Sendable {
     public var status: String
     public var summary: ConfiguredLiveEvidenceBundleSummary
     public var currentBlocker: ConfiguredLiveEvidenceBundleBlocker?
+    public var firstBlocker: ConfiguredLiveEvidenceBundleBlocker?
+    public var nextAction: ConfiguredLiveEvidenceBundleNextAction?
     public var evidenceFiles: [ConfiguredLiveEvidenceBundleEvidenceFile]
     public var commandSequence: [ConfiguredLiveEvidenceBundleCommand]
     public var operatorActions: [String]
