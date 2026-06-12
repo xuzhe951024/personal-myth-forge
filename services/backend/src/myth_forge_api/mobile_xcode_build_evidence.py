@@ -63,6 +63,11 @@ def build_mobile_xcode_build_evidence_report(
     status = "ready" if classification == "ready" else "blocked"
     checks = [_check_for_classification(classification)]
     actions = [] if status == "ready" else [_operator_action(classification)]
+    first_blocker = _first_blocker(
+        status=status,
+        classification=classification,
+        checks=checks,
+    )
     report = {
         "kind": "mobile_xcode_build_evidence_report",
         "status": status,
@@ -74,6 +79,8 @@ def build_mobile_xcode_build_evidence_report(
         "stdout_lines": _safe_lines(stdout, repo_root=selected_repo_root),
         "stderr_lines": _safe_lines(stderr, repo_root=selected_repo_root),
         "operator_actions": actions,
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "safety": {
             "commands_run": True,
             "provider_calls": False,
@@ -164,6 +171,37 @@ def _check_for_classification(classification: str) -> dict[str, str]:
 
 def _check(check_id: str, label: str, status: str, detail: str) -> dict[str, str]:
     return {"id": check_id, "label": label, "status": status, "detail": detail}
+
+
+def _first_blocker(
+    *,
+    status: str,
+    classification: str,
+    checks: list[dict[str, str]],
+) -> dict[str, str] | None:
+    if status == "ready":
+        return None
+    check = checks[0] if checks else _check(
+        "xcode_build_gate",
+        "Xcode build gate",
+        "blocked",
+        "Review make mobile-xcode-build output.",
+    )
+    return {
+        "id": check["id"],
+        "label": check["label"],
+        "status": check["status"],
+        "classification": classification,
+        "command": _operator_action(classification),
+        "detail": check["detail"],
+        "validation_command": EVIDENCE_COMMAND,
+    }
+
+
+def _next_action(first_blocker: dict[str, str] | None) -> dict[str, str] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
 
 
 def _operator_action(classification: str) -> str:

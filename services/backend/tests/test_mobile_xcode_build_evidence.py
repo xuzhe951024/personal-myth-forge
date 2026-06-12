@@ -26,6 +26,8 @@ def test_xcode_build_evidence_ready_from_success_output(tmp_path: Path) -> None:
     assert result.report["classification"] == "ready"
     assert result.report["command"] == "make mobile-xcode-build"
     assert checks["xcode_build_gate"]["status"] == "ready"
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert result.report["operator_actions"] == []
     assert result.report["safety"]["commands_run"] is True
     assert result.report["safety"]["xcode_or_signing"] is True
@@ -57,6 +59,22 @@ def test_xcode_build_evidence_blocks_unaccepted_license_without_leaks(
     assert result.report["operator_actions"] == [
         "accept the Xcode license outside Codex, then rerun make mobile-xcode-build-evidence"
     ]
+    assert result.report["first_blocker"] == {
+        "id": "xcode_license",
+        "label": "Xcode license",
+        "status": "blocked",
+        "classification": "blocked_by_apple_sdk_license",
+        "command": (
+            "accept the Xcode license outside Codex, then rerun "
+            "make mobile-xcode-build-evidence"
+        ),
+        "detail": "Apple SDK license agreement is not accepted.",
+        "validation_command": "make mobile-xcode-build-evidence",
+    }
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert "sk-test" not in report_text
     assert "/Users/" not in report_text
     assert "file://" not in report_text
