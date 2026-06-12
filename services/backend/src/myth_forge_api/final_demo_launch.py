@@ -708,6 +708,10 @@ def _local_phase_blocker_with_device_evidence(
     result["detail"] = " | ".join(
         part for part in [detail, evidence_detail] if part
     )
+    _apply_concrete_mobile_preflight_next_action(
+        result,
+        final_showcase_readiness=final_showcase_readiness,
+    )
     return result
 
 
