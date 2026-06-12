@@ -271,6 +271,7 @@ Bridge deliverable:
 - P0.357 final showcase simple report capabilities promote concrete child actions
 - P0.358 final showcase print fulfillment exposes configured quote handoff and cost consent
 - P0.359 final showcase live provider capability rows expose provider handoff next action
+- P0.360 final showcase live provider operator actions use validation-aware handoff
 
 ## P1: Mobile Vertical Slice
 

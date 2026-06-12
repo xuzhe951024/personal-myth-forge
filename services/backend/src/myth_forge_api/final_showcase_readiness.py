@@ -1593,9 +1593,11 @@ def _operator_actions(
         actions.extend(_selected_report_operator_actions(report))
     actions.extend(["make final-rehearsal-local", "make final-showcase-readiness"])
     actions.extend(
-        row["command"]
+        action
         for row in capabilities
         if row.get("required", True) and row.get("status") != "ready"
+        for action in (_capability_operator_action(row),)
+        if action
     )
     if any("live_provider" in row.get("classification", "") for row in capabilities):
         actions.append(
@@ -1614,6 +1616,14 @@ def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:
         return ""
     command = str(next_action.get("command", "")).strip()
     validation_command = str(next_action.get("validation_command", "")).strip()
+    if command and validation_command:
+        return f"{command}; rerun {validation_command}"
+    return command
+
+
+def _capability_operator_action(row: dict[str, Any]) -> str:
+    command = str(row.get("command", "")).strip()
+    validation_command = str(row.get("validation_command", "")).strip()
     if command and validation_command:
         return f"{command}; rerun {validation_command}"
     return command
@@ -1762,11 +1772,46 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
             continue
         seen_exact.add(normalized)
         deduped.append(normalized)
+    deduped = _prefer_validation_aware_operator_actions(deduped)
     return _prefer_apply_preview_before_apply(
         prefer_project_local_ios_deploy_handoff_actions(
             _prefer_bare_ios_deploy_writer_action(deduped)
         )
     )
+
+
+def _prefer_validation_aware_operator_actions(actions: list[str]) -> list[str]:
+    validation_aware_roots: set[str] = set()
+    for action in actions:
+        roots = _validation_aware_action_roots(action)
+        if roots is None:
+            continue
+        command_root, validation_root = roots
+        validation_aware_roots.add(command_root)
+        validation_aware_roots.add(validation_root)
+    if not validation_aware_roots:
+        return actions
+    preferred: list[str] = []
+    for action in actions:
+        if _validation_aware_action_roots(action) is not None:
+            preferred.append(action)
+            continue
+        if _operator_action_bare_root(action) in validation_aware_roots:
+            continue
+        preferred.append(action)
+    return preferred
+
+
+def _validation_aware_action_roots(action: str) -> tuple[str, str] | None:
+    command_part, _detail_suffix = _split_detail_suffix(action)
+    command, separator, validation = command_part.partition("; rerun ")
+    if not separator:
+        return None
+    command_root = _operator_action_bare_root(command.strip())
+    validation_root = _operator_action_bare_root(validation.strip())
+    if not command_root or not validation_root:
+        return None
+    return command_root, validation_root
 
 
 def _prefer_bare_ios_deploy_writer_action(actions: list[str]) -> list[str]:
