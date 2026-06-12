@@ -5600,6 +5600,15 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
     try expectEqual(readiness.firstBlocker?.id, "ios_deployable")
     try expectEqual(readiness.nextAction?.id, "ios_deployable")
     try expectEqual(readiness.nextAction?.source, "first_blocker")
+    let iosDeployCapability = try require(
+        readiness.capabilities.first { $0.id == "ios_deployable" },
+        "missing iOS deploy final showcase capability"
+    )
+    try expectEqual(iosDeployCapability.nextAction?.source, "capability")
+    try expectEqual(
+        iosDeployCapability.nextAction?.validationCommand,
+        "make mobile-deploy-preflight"
+    )
     let bundle = try require(
         readiness.deviceActionBundle,
         "missing final showcase device action bundle"
@@ -5701,6 +5710,8 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness() throws {
     try expectContains(text, "Showcase readiness partial: ready 5, partial 3, blocked 0.")
     try expectContains(text, "ios_deployable: partial")
     try expectContains(text, "make ios-device-launch-rehearsal")
+    try expectContains(text, "next make ios-device-launch-rehearsal")
+    try expectContains(text, "validate make mobile-deploy-preflight")
 }
 
 private func testFinalLaunchMobileSummaryShowsFinalShowcaseCompletionProviderConsent() throws {
@@ -7766,6 +7777,24 @@ private func finalDemoLaunchPayload(
     let finalShowcaseCompletionConsentJSON = finalShowcaseReadinessUsesCompletionConsentBlocker
         ? #","completion_requires_live_provider_consent": true"#
         : ""
+    let finalShowcaseCapabilityValidationCommand = finalShowcaseReadinessUsesCompletionConsentBlocker
+        ? "make live-provider-evidence"
+        : "make mobile-deploy-preflight"
+    let finalShowcaseCapabilityNextActionJSON = finalShowcaseReadinessStatus == "ready"
+        ? ""
+        : """
+                ,"next_action": {
+                  "id": "\(finalShowcaseCapabilityID)",
+                  "label": "\(finalShowcaseCapabilityLabel)",
+                  "status": "\(finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
+                  "classification": "\(finalShowcaseCapabilityClassification)",
+                  "command": "\(finalShowcaseReadinessAction)",
+                  "detail": "\(finalShowcaseReadinessFirstBlockerDetail)",
+                  "source": "capability",
+                  "validation_command": "\(finalShowcaseCapabilityValidationCommand)"
+                  \(finalShowcaseCompletionConsentJSON)
+                }
+        """
     let localSmokeSucceeded = localShowcaseSmokeStatus == "succeeded"
     let localSmokeSummaryJSON = localSmokeSucceeded
         ? #"{"passed": 10, "failed": 0, "http_steps": 6, "npc_ticks": 2, "downloads": 3}"#
@@ -9589,6 +9618,7 @@ private func finalDemoLaunchPayload(
                 "command": "\(finalShowcaseReadinessAction)",
                 "detail": "\(finalShowcaseReadinessFirstBlockerDetail)"
                 \(finalShowcaseCompletionConsentJSON)
+                \(finalShowcaseCapabilityNextActionJSON)
               },
               {
                 "id": "capture_scanning",
@@ -9612,6 +9642,7 @@ private func finalDemoLaunchPayload(
               "command": "\(finalShowcaseReadinessAction)",
               "detail": "\(finalShowcaseReadinessFirstBlockerDetail)"
               \(finalShowcaseCompletionConsentJSON)
+              \(finalShowcaseCapabilityNextActionJSON)
             }
             """),
             "next_action": \(finalShowcaseReadinessStatus == "ready" ? "null" : """

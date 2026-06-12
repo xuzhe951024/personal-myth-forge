@@ -1137,6 +1137,31 @@ def _capability(
         row["completion_requires_live_provider_consent"] = (
             completion_requires_live_provider_consent
         )
+    return _capability_with_next_action(row)
+
+
+def _capability_with_next_action(row: dict[str, Any]) -> dict[str, Any]:
+    if row["status"] == "ready":
+        row.pop("next_action", None)
+        return row
+    next_action = {
+        "id": row["id"],
+        "label": row["label"],
+        "status": row["status"],
+        "classification": row["classification"],
+        "command": row["command"],
+        "detail": row["detail"],
+        "source": "capability",
+    }
+    for key in (
+        "validation_command",
+        "requires_cost_consent",
+        "requires_live_provider_consent",
+        "completion_requires_live_provider_consent",
+    ):
+        if key in row:
+            next_action[key] = row[key]
+    row["next_action"] = next_action
     return row
 
 
@@ -1231,7 +1256,7 @@ def _capability_with_device_action_detail(
         result["command"] = command
     if validation_command:
         result["validation_command"] = validation_command
-    return result
+    return _capability_with_next_action(result)
 
 
 def _capabilities_with_device_action_commands(
@@ -1264,7 +1289,7 @@ def _capability_with_device_action_command(
     result["command"] = command
     if validation_command:
         result["validation_command"] = validation_command
-    return result
+    return _capability_with_next_action(result)
 
 
 def _preferred_device_action_hint_source(
