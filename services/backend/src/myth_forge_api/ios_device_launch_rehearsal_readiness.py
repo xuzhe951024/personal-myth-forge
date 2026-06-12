@@ -10,6 +10,7 @@ from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
+    prefer_project_local_ios_deploy_handoff_actions,
 )
 from myth_forge_api.source_freshness import (
     freshness_payload,
@@ -257,9 +258,10 @@ def _operator_actions(
             if isinstance(raw_actions, list)
             else []
         )
-        return _dedupe(
-            [IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION, *existing_actions]
-        )[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
+        actions = _dedupe([IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION, *existing_actions])
+        return prefer_project_local_ios_deploy_handoff_actions(actions)[
+            :IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT
+        ]
     if not isinstance(raw_actions, list):
         return [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
     actions = [
@@ -267,8 +269,9 @@ def _operator_actions(
         for action in raw_actions
         if isinstance(action, str) and action
     ]
+    deduped = prefer_project_local_ios_deploy_handoff_actions(_dedupe(actions))
     return (
-        _dedupe(actions)[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
+        deduped[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
         or [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
     )
 

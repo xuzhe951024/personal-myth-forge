@@ -248,6 +248,7 @@ Bridge deliverable:
 - P0.334 iOS deploy writer reuses base bundle id
 - P0.335 iOS deploy preflight promotes writer command
 - P0.336 iOS deploy detail actions normalize to writer command
+- P0.337 final demo and iOS rehearsal action lists prefer deploy writer
 
 ## P1: Mobile Vertical Slice
 

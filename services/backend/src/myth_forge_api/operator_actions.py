@@ -23,6 +23,13 @@ BACKEND_BASE_URL_ACTION = "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN U
 MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION = (
     "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
 )
+MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION = (
+    f"{MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION}; rerun "
+    f"{MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+)
+DEPLOYMENT_TEAM_VALIDATED_ACTION = (
+    f"{DEPLOYMENT_TEAM_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+)
 BACKEND_DEVICE_DEMO_ACTION = (
     "start backend-device-demo before device checks: make backend-device-demo"
 )
@@ -196,6 +203,22 @@ def normalize_operator_action(action: str) -> str:
             return f"{make_target_action}{detail_suffix}"
         return f"{replaced}{detail_suffix}"
     return f"{command_part}{detail_suffix}"
+
+
+def prefer_project_local_ios_deploy_handoff_actions(actions: list[str]) -> list[str]:
+    action_roots = {_action_command_root(action) for action in actions}
+    if MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION not in action_roots:
+        return actions
+    return [
+        action
+        for action in actions
+        if _action_command_root(action) != DEPLOYMENT_TEAM_VALIDATED_ACTION
+    ]
+
+
+def _action_command_root(action: str) -> str:
+    command, _separator, _detail = action.partition(" | ")
+    return command.strip()
 
 
 def _normalize_make_target_action(action: str) -> str | None:

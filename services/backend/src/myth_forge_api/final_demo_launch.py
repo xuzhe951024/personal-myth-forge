@@ -53,7 +53,10 @@ from myth_forge_api.local_showcase_smoke import build_local_showcase_smoke_repor
 from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
-from myth_forge_api.operator_actions import add_final_resource_validation_command
+from myth_forge_api.operator_actions import (
+    add_final_resource_validation_command,
+    prefer_project_local_ios_deploy_handoff_actions,
+)
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
 )
@@ -826,7 +829,9 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
         for value in deduped
         if "; rerun " in value
     }
-    return [value for value in deduped if value not in validation_aware_roots]
+    return prefer_project_local_ios_deploy_handoff_actions(
+        [value for value in deduped if value not in validation_aware_roots]
+    )
 
 
 def _default_repo_root() -> Path:
