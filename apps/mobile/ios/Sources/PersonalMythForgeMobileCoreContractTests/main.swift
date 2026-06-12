@@ -5873,6 +5873,10 @@ private func testDecodesIOSDeviceEvidenceBundleFromFinalLaunchPayload() throws {
     try expectEqual(bundle.evidenceSlots[1].command, "make mobile-deploy-preflight")
     try expectEqual(bundle.evidenceSlots[2].globalAction, true)
     try expectEqual(bundle.evidenceSlots[2].xcodeOrSigning, true)
+    try expectEqual(bundle.firstBlocker?.id, "backend_device_server")
+    try expectEqual(bundle.firstBlocker?.command, "make backend-device-demo")
+    try expectEqual(bundle.nextAction?.id, "backend_device_server")
+    try expectEqual(bundle.nextAction?.source, "first_blocker")
     try expectFalse(bundle.safety.commandsRun)
     try expectFalse(bundle.safety.xcodeOrSigning)
     try expectTrue(bundle.safety.describesGlobalActions)
@@ -5892,6 +5896,8 @@ private func testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle() throws {
     try expectContains(text, "iOS device evidence blocked")
     try expectContains(text, "mobile_deploy_preflight")
     try expectContains(text, "make mobile-deploy-preflight")
+    try expectContains(text, "First blocker: backend_device_server")
+    try expectContains(text, "Next action: make backend-device-demo")
     try expectContains(text, "commands_run=false xcode=false global=false")
 }
 
@@ -9601,6 +9607,35 @@ private func finalDemoLaunchPayload(
               }
             ],
             "operator_actions": ["\(iosDeviceEvidenceAction)"],
+            "first_blocker": \(iosDeviceEvidenceReady ? "null" : """
+            {
+              "id": "backend_device_server",
+              "label": "Backend device server",
+              "status": "\(iosDeviceEvidenceSlotStatus)",
+              "command": "make backend-device-demo",
+              "detail": "\(iosDeviceEvidenceDetail)",
+              "classification": "backend_health_not_proven",
+              "evidence_source": "services/backend/.local/final-acceptance-local.json",
+              "required": true,
+              "global_action": false,
+              "xcode_or_signing": false
+            }
+            """),
+            "next_action": \(iosDeviceEvidenceReady ? "null" : """
+            {
+              "id": "backend_device_server",
+              "label": "Backend device server",
+              "status": "\(iosDeviceEvidenceSlotStatus)",
+              "command": "make backend-device-demo",
+              "detail": "\(iosDeviceEvidenceDetail)",
+              "classification": "backend_health_not_proven",
+              "evidence_source": "services/backend/.local/final-acceptance-local.json",
+              "required": true,
+              "global_action": false,
+              "xcode_or_signing": false,
+              "source": "first_blocker"
+            }
+            """),
             "commands": [
               "make backend-device-demo",
               "make mobile-deploy-preflight",

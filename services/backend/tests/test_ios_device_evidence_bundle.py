@@ -22,6 +22,8 @@ def test_ios_device_evidence_bundle_blocks_missing_local_device_evidence(
     assert result.report["summary"]["required"] == 4
     assert result.report["summary"]["global_actions"] == 1
     slots = {slot["id"]: slot for slot in result.report["evidence_slots"]}
+    first_blocker = result.report["first_blocker"]
+    next_action = result.report["next_action"]
     assert list(slots) == [
         "backend_device_server",
         "mobile_deploy_preflight",
@@ -37,6 +39,9 @@ def test_ios_device_evidence_bundle_blocks_missing_local_device_evidence(
         slots["ios_device_launch_rehearsal"]["command"]
         == "make ios-device-launch-rehearsal"
     )
+    assert first_blocker["id"] == "backend_device_server"
+    assert first_blocker["command"] == "make backend-device-demo"
+    assert next_action == {**first_blocker, "source": "first_blocker"}
     actions = " ".join(result.report["operator_actions"])
     assert "make backend-device-demo" in actions
     assert "make mobile-deploy-preflight" in actions
@@ -160,6 +165,8 @@ def test_ios_device_evidence_bundle_marks_ready_saved_device_evidence(
     assert result.report["status"] == "ready"
     assert result.report["summary"]["ready"] == 4
     assert result.report["summary"]["blocked"] == 0
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert result.report["operator_actions"] == ["iOS device evidence is ready"]
     assert all(slot["status"] == "ready" for slot in result.report["evidence_slots"])
 
