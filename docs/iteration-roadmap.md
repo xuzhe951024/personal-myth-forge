@@ -217,6 +217,7 @@ Bridge deliverable:
 - P0.303 final handoff index top-level actions normalize to bare handoff commands
 - P0.304 iOS device launch rehearsal top-level actions normalize to bare handoff commands
 - P0.305 iOS device evidence bundle top-level actions normalize to bare handoff details
+- P0.306 configured evidence top-level actions normalize to concrete handoff commands
 
 ## P1: Mobile Vertical Slice
 

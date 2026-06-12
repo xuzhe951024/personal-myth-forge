@@ -82,6 +82,10 @@ UNBLOCK_ACTION_REPLACEMENTS = {
         "provide MESHY_API_KEY in final-resources.env; "
         f"rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}"
     ),
+    "unblock final_resource_fill_guide before configured evidence bundle": (
+        "provide MESHY_API_KEY in final-resources.env; "
+        f"rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}"
+    ),
     "unblock provider_handoff before configured evidence bundle": (
         "make provider-handoff"
     ),
@@ -90,6 +94,27 @@ UNBLOCK_ACTION_REPLACEMENTS = {
     ),
     "unblock final_apply_resources after final_resource_apply_preview": (
         FINAL_RESOURCE_APPLY_ACTION
+    ),
+    "unblock final_configured_preflight after final_apply_resources": (
+        "make final-configured-preflight"
+    ),
+    "unblock provider_handoff after final_configured_preflight": (
+        "make provider-handoff"
+    ),
+    "unblock three_d_evaluation_configured after final_configured_preflight": (
+        "make backend-evaluate-3d-configured"
+    ),
+    "unblock npc_evaluation_configured after final_configured_preflight": (
+        "make backend-evaluate-npc-configured"
+    ),
+    "unblock final_acceptance_configured after final_configured_preflight": (
+        "make final-acceptance-configured"
+    ),
+    "unblock final_demo_launch_configured after final_configured_preflight": (
+        "make final-demo-launch-configured"
+    ),
+    "unblock live_provider_evidence after final_configured_preflight": (
+        "make live-provider-evidence"
     ),
 }
 IOS_DEPLOY_CONFIG_ACTION = "provide iOS deploy config in Deployment.local.xcconfig"
