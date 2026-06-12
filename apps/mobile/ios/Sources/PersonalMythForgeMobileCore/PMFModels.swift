@@ -4334,6 +4334,7 @@ public struct FinalShowcaseReadinessCapability: Codable, Equatable, Sendable {
     public var evidence: [String]
     public var command: String
     public var detail: String
+    public var nextAction: FinalShowcaseReadinessNextAction?
     public var completionRequiresLiveProviderConsent: Bool?
 
     public init(
@@ -4345,6 +4346,7 @@ public struct FinalShowcaseReadinessCapability: Codable, Equatable, Sendable {
         evidence: [String],
         command: String,
         detail: String,
+        nextAction: FinalShowcaseReadinessNextAction? = nil,
         completionRequiresLiveProviderConsent: Bool? = nil
     ) {
         self.id = id
@@ -4355,6 +4357,7 @@ public struct FinalShowcaseReadinessCapability: Codable, Equatable, Sendable {
         self.evidence = evidence
         self.command = command
         self.detail = detail
+        self.nextAction = nextAction
         self.completionRequiresLiveProviderConsent = (
             completionRequiresLiveProviderConsent
         )
@@ -4369,6 +4372,10 @@ public struct FinalShowcaseReadinessNextAction: Codable, Equatable, Sendable {
     public var command: String
     public var detail: String
     public var source: String
+    public var validationCommand: String?
+    public var requiresCostConsent: Bool?
+    public var requiresLiveProviderConsent: Bool?
+    public var completionRequiresLiveProviderConsent: Bool?
 
     public init(
         id: String,
@@ -4377,7 +4384,11 @@ public struct FinalShowcaseReadinessNextAction: Codable, Equatable, Sendable {
         classification: String? = nil,
         command: String,
         detail: String,
-        source: String
+        source: String,
+        validationCommand: String? = nil,
+        requiresCostConsent: Bool? = nil,
+        requiresLiveProviderConsent: Bool? = nil,
+        completionRequiresLiveProviderConsent: Bool? = nil
     ) {
         self.id = id
         self.label = label
@@ -4386,6 +4397,12 @@ public struct FinalShowcaseReadinessNextAction: Codable, Equatable, Sendable {
         self.command = command
         self.detail = detail
         self.source = source
+        self.validationCommand = validationCommand
+        self.requiresCostConsent = requiresCostConsent
+        self.requiresLiveProviderConsent = requiresLiveProviderConsent
+        self.completionRequiresLiveProviderConsent = (
+            completionRequiresLiveProviderConsent
+        )
     }
 }
 

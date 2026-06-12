@@ -431,6 +431,16 @@ def test_final_showcase_readiness_next_action_uses_preflight_child_action(
 
     assert row["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
     assert row["validation_command"] == "make mobile-deploy-preflight"
+    assert row["next_action"] == {
+        "id": "ios_deployable",
+        "label": "iOS deployable",
+        "status": "blocked",
+        "classification": "ios_rehearsal_missing",
+        "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+        "detail": row["detail"],
+        "source": "capability",
+        "validation_command": "make mobile-deploy-preflight",
+    }
     assert blocker["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
     assert blocker["validation_command"] == "make mobile-deploy-preflight"
     assert (
@@ -721,6 +731,18 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
         assert row["validation_command"] == "make live-provider-evidence"
         assert row["requires_live_provider_consent"] is False
         assert row["completion_requires_live_provider_consent"] is True
+        assert row["next_action"] == {
+            "id": row_id,
+            "label": row["label"],
+            "status": "partial",
+            "classification": row["classification"],
+            "command": "make provider-handoff",
+            "detail": row["detail"],
+            "source": "capability",
+            "validation_command": "make live-provider-evidence",
+            "requires_live_provider_consent": False,
+            "completion_requires_live_provider_consent": True,
+        }
     actions = result.report["operator_actions"]
     combined_action = "make provider-handoff; rerun make live-provider-evidence"
     assert combined_action in actions
@@ -822,6 +844,7 @@ def test_final_showcase_readiness_marks_provider_handoff_ready_with_configured_b
 
     assert provider_handoff["status"] == "ready"
     assert provider_handoff["classification"] == "provider_handoff_ready"
+    assert "next_action" not in provider_handoff
     assert "configured_live_evidence_bundle:ready" in provider_handoff["evidence"]
     assert result.report["evidence"]["configured_live_evidence_bundle"]["status"] == "ready"
     assert "make configured-live-evidence-bundle" in result.report["commands"]

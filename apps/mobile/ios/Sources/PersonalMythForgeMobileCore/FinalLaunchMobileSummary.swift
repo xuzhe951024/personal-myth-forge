@@ -1568,6 +1568,12 @@ public enum FinalLaunchMobileSummaryBuilder {
         if capability.completionRequiresLiveProviderConsent == true {
             parts.append("| completion live provider consent required")
         }
+        if let action = capability.nextAction, !action.command.isEmpty {
+            parts.append("| next \(action.command)")
+            if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
+                parts.append("| validate \(validationCommand)")
+            }
+        }
         if !capability.detail.isEmpty {
             parts.append("| \(capability.detail)")
         }
