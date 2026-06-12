@@ -539,12 +539,22 @@ def _generated_3d_capability(
         )
     live_status = _normalized_status(str(live_provider_evidence.get("status", "missing")))
     status = "ready" if live_status == "ready" else "partial"
+    command = "make live-provider-evidence"
+    validation_command = None
+    requires_live_provider_consent = None
+    if status == "partial":
+        child_command, child_validation_command, child_requires_consent = (
+            _report_next_action_metadata(live_provider_evidence)
+        )
+        command = child_command or command
+        validation_command = child_validation_command or None
+        requires_live_provider_consent = child_requires_consent
     return _capability(
         capability_id="game_asset_3d_generation",
         label="Game asset 3D generation",
         status=status,
         classification="live_3d_provider_unproven" if status == "partial" else "ready",
-        command="make live-provider-evidence",
+        command=command,
         detail=(
             "Local 3D proof is ready; live Meshy evidence still needs consent."
             if status == "partial"
@@ -554,6 +564,8 @@ def _generated_3d_capability(
             f"three_d_evaluation:{three_d_evaluation.get('status', 'unknown')}",
             f"live_provider_evidence:{live_provider_evidence.get('status', 'unknown')}",
         ],
+        validation_command=validation_command,
+        requires_live_provider_consent=requires_live_provider_consent,
     )
 
 
@@ -575,12 +587,22 @@ def _ai_agent_npc_capability(
         )
     live_status = _normalized_status(str(live_provider_evidence.get("status", "missing")))
     status = "ready" if live_status == "ready" else "partial"
+    command = "make live-provider-evidence"
+    validation_command = None
+    requires_live_provider_consent = None
+    if status == "partial":
+        child_command, child_validation_command, child_requires_consent = (
+            _report_next_action_metadata(live_provider_evidence)
+        )
+        command = child_command or command
+        validation_command = child_validation_command or None
+        requires_live_provider_consent = child_requires_consent
     return _capability(
         capability_id="ai_agent_npc",
         label="AI Agent NPC",
         status=status,
         classification="live_openai_provider_unproven" if status == "partial" else "ready",
-        command="make live-provider-evidence",
+        command=command,
         detail=(
             "Local NPC Agent proof is ready; live OpenAI evidence still needs consent."
             if status == "partial"
@@ -590,6 +612,8 @@ def _ai_agent_npc_capability(
             f"npc_agent_evaluation:{npc_evaluation.get('status', 'unknown')}",
             f"live_provider_evidence:{live_provider_evidence.get('status', 'unknown')}",
         ],
+        validation_command=validation_command,
+        requires_live_provider_consent=requires_live_provider_consent,
     )
 
 
@@ -707,12 +731,21 @@ def _provider_key_handoff_capability(
     )
 
 
-def _report_next_action_command(report: dict[str, Any]) -> tuple[str, str]:
+def _report_next_action_metadata(
+    report: dict[str, Any]
+) -> tuple[str, str, bool | None]:
     next_action = report.get("next_action")
     if not isinstance(next_action, dict):
-        return "", ""
+        return "", "", None
     command = str(next_action.get("command", "")).strip()
     validation_command = str(next_action.get("validation_command", "")).strip()
+    consent = next_action.get("requires_live_provider_consent")
+    requires_live_provider_consent = consent if isinstance(consent, bool) else None
+    return command, validation_command, requires_live_provider_consent
+
+
+def _report_next_action_command(report: dict[str, Any]) -> tuple[str, str]:
+    command, validation_command, _ = _report_next_action_metadata(report)
     return command, validation_command
 
 
@@ -1062,6 +1095,7 @@ def _capability(
     required: bool = True,
     validation_command: str | None = None,
     requires_cost_consent: bool | None = None,
+    requires_live_provider_consent: bool | None = None,
 ) -> dict[str, Any]:
     row = {
         "id": capability_id,
@@ -1077,6 +1111,8 @@ def _capability(
         row["validation_command"] = validation_command
     if requires_cost_consent is not None:
         row["requires_cost_consent"] = requires_cost_consent
+    if requires_live_provider_consent is not None:
+        row["requires_live_provider_consent"] = requires_live_provider_consent
     return row
 
 
