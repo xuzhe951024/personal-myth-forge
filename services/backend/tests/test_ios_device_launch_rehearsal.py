@@ -842,6 +842,8 @@ def test_ios_device_launch_rehearsal_readiness_marks_saved_report_fresh_against_
     assert result.report["freshness"]["status"] == "fresh"
     assert result.report["freshness"]["classification"] == "fresh_report"
     assert result.report["freshness"]["current_revision"]
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
 
 
 def test_ios_device_launch_rehearsal_readiness_resolves_relative_repo_root_from_backend_cwd(
@@ -956,6 +958,44 @@ def test_ios_device_launch_rehearsal_readiness_preserves_sequence_detail(
     assert result.report["sequence"][0]["detail"] == (
         "Final handoff index is stale; rerun safe refresh."
     )
+
+
+def test_ios_device_launch_rehearsal_readiness_exposes_first_blocker_and_next_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"][0]["status"] = "blocked"
+    payload["sequence"][0]["detail"] = (
+        "final_handoff_index: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto"
+    )
+    payload["operator_actions"] = [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+        )
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+
+    assert result.exit_code == 2
+    blocker = result.report["first_blocker"]
+    assert blocker["id"] == "final_handoff_index"
+    assert blocker["status"] == "blocked"
+    assert blocker["source"] == "sequence"
+    assert blocker["command"] == "make final-handoff-index"
+    assert "DEVELOPMENT_TEAM=YOUR_TEAM_ID" in blocker["detail"]
+    assert result.report["next_action"] == {
+        **blocker,
+        "source": "first_blocker",
+        "command": (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+        ),
+    }
 
 
 def test_ios_device_launch_rehearsal_readiness_sanitizes_sequence_detail(

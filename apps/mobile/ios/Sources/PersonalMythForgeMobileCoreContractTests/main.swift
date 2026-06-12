@@ -6112,7 +6112,13 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle() 
 private func testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
-        from: finalDemoLaunchPayload(iosDeviceLaunchRehearsalStatus: "blocked")
+        from: finalDemoLaunchPayload(
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchRehearsalAction: (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                + "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+            )
+        )
     )
 
     let readiness = try require(
@@ -6128,6 +6134,13 @@ private func testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload(
     try expectEqual(
         readiness.sequence.first?.detail,
         "Final handoff index is stale; rerun safe refresh."
+    )
+    try expectEqual(readiness.firstBlocker?.id, "final_handoff_index")
+    try expectEqual(readiness.firstBlocker?.source, "sequence")
+    try expectEqual(readiness.nextAction?.source, "first_blocker")
+    try expectContains(
+        try require(readiness.nextAction?.command, "missing rehearsal next action command"),
+        "rerun make mobile-deploy-preflight"
     )
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.providerCalls)
@@ -6201,13 +6214,17 @@ private func testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal() 
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
             iosDeviceLaunchRehearsalStatus: "blocked",
-            iosDeviceLaunchRehearsalAction: "refresh final handoff index"
+            iosDeviceLaunchRehearsalAction: (
+                "refresh final handoff index; rerun make mobile-deploy-preflight"
+            )
         ),
         error: nil
     )
     let text = summary.launchRehearsalRows.joined(separator: " ")
 
     try expectEqual(summary.launchRehearsalRows.first, "iOS launch rehearsal blocked: ready 3, blocked 1, partial 0.")
+    try expectContains(text, "Next action: final_handoff_index blocked")
+    try expectContains(text, "rerun make mobile-deploy-preflight")
     try expectContains(text, "final_handoff_index: blocked")
     try expectContains(text, "make final-handoff-index")
     try expectContains(text, "Final handoff index is stale; rerun safe refresh.")
@@ -10100,6 +10117,28 @@ private func finalDemoLaunchPayload(
                 "freshness_summary": \(iosDeviceLaunchSourceFreshnessSummaryJSON)
               }
             ]
+            """),
+            "first_blocker": \(iosDeviceLaunchRehearsalStatus == "ready" || iosDeviceLaunchRehearsalStatus == "missing" ? "null" : """
+            {
+              "id": "final_handoff_index",
+              "label": "Final handoff index",
+              "status": "blocked",
+              "classification": "saved_report",
+              "command": "\(iosDeviceLaunchRehearsalCommand)",
+              "detail": "\(iosDeviceLaunchRehearsalDetail)",
+              "source": "sequence"
+            }
+            """),
+            "next_action": \(iosDeviceLaunchRehearsalStatus == "ready" || iosDeviceLaunchRehearsalStatus == "missing" ? "null" : """
+            {
+              "id": "final_handoff_index",
+              "label": "Final handoff index",
+              "status": "blocked",
+              "classification": "saved_report",
+              "command": "\(iosDeviceLaunchRehearsalAction)",
+              "detail": "\(iosDeviceLaunchRehearsalDetail)",
+              "source": "first_blocker"
+            }
             """),
             "blockers": [],
             "operator_actions": \(iosDeviceLaunchActionsJSON),

@@ -173,6 +173,11 @@ def _base_report(
     blockers: list[dict[str, Any]],
     saved_safety: Any,
 ) -> dict[str, Any]:
+    first_blocker = _first_blocker(blockers=blockers, sequence=sequence)
+    next_action = _next_action(
+        first_blocker=first_blocker,
+        operator_actions=operator_actions,
+    )
     report = {
         "kind": "ios_device_launch_rehearsal_readiness_report",
         "status": status,
@@ -181,11 +186,50 @@ def _base_report(
         "summary": summary,
         "sequence": sequence,
         "blockers": blockers,
+        "first_blocker": first_blocker,
+        "next_action": next_action,
         "operator_actions": operator_actions,
         "commands": commands,
         "safety": _safety(saved_safety),
     }
     return _sanitize_report(report, repo_root)
+
+
+def _first_blocker(
+    *,
+    blockers: list[dict[str, Any]],
+    sequence: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if blockers:
+        blocker = dict(blockers[0])
+        blocker["source"] = "blockers"
+        return blocker
+    for row in sequence:
+        if str(row.get("status", "")).strip().lower() == "ready":
+            continue
+        return {
+            "id": str(row.get("id", "unknown")),
+            "label": str(row.get("label", row.get("id", "Unknown"))),
+            "status": str(row.get("status", "blocked")),
+            "classification": str(row.get("classification", "saved_report")),
+            "command": str(row.get("command", IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND)),
+            "detail": str(row.get("detail", "")),
+            "source": "sequence",
+        }
+    return None
+
+
+def _next_action(
+    *,
+    first_blocker: dict[str, Any] | None,
+    operator_actions: list[str],
+) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    next_action = {**first_blocker, "source": "first_blocker"}
+    if operator_actions:
+        next_action["command"] = operator_actions[0]
+    return next_action
 
 
 def _summary(raw_summary: Any) -> dict[str, int]:
