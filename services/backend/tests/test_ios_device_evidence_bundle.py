@@ -41,6 +41,12 @@ def test_ios_device_evidence_bundle_blocks_missing_local_device_evidence(
     assert "make backend-device-demo" in actions
     assert "make mobile-deploy-preflight" in actions
     assert "make ios-device-launch-rehearsal" in actions
+    assert (
+        "make ios-device-launch-rehearsal | "
+        "Run iOS device launch rehearsal to refresh final device evidence."
+        in result.report["operator_actions"]
+    )
+    assert "run make ios-device-launch-rehearsal" not in actions
     assert result.report["safety"]["commands_run"] is False
     assert result.report["safety"]["xcode_or_signing"] is False
     assert result.report["safety"]["describes_global_actions"] is True
@@ -416,10 +422,14 @@ def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
         "Apple SDK license agreement is not accepted."
     )
     assert actions[3] == (
-        "run make ios-device-launch-rehearsal | "
+        "make ios-device-launch-rehearsal | "
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
         "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    assert not any(
+        action.startswith("run make ios-device-launch-rehearsal")
+        for action in actions
     )
     assert slots["ios_device_launch_rehearsal"]["detail"].startswith(
         "final_rehearsal_local: mobile_deploy_preflight_evidence:"

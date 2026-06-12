@@ -49,6 +49,7 @@ MAKE_TARGET_ACTION_REPLACEMENTS = {
     "run make final-demo-launch-local": "make final-demo-launch-local",
     "run make final-handoff-index": "make final-handoff-index",
     "run make ios-deploy-runbook-local": "make ios-deploy-runbook-local",
+    "run make ios-device-launch-rehearsal": "make ios-device-launch-rehearsal",
     "run make mobile-deploy-preflight after backend is running": (
         BACKEND_DEVICE_DEMO_VALIDATED_ACTION
     ),

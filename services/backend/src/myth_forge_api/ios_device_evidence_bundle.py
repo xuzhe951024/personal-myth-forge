@@ -500,7 +500,10 @@ def _launch_rehearsal_detail(report: dict[str, Any]) -> str:
         return "Saved iOS device launch rehearsal evidence is ready."
     actions = report.get("operator_actions")
     if isinstance(actions, list) and actions:
-        return str(actions[0])
+        normalized_action = normalize_operator_action(str(actions[0]))
+        if normalized_action == "make ios-device-launch-rehearsal":
+            return "Run iOS device launch rehearsal to refresh final device evidence."
+        return normalized_action
     return "Run iOS device launch rehearsal to refresh final device evidence."
 
 
