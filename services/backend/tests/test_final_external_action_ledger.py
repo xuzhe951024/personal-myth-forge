@@ -94,10 +94,17 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert report["source_reports"]["final_resource_apply_preview"]["status"] == "missing"
     assert report["source_reports"]["final_resource_repair"]["status"] == "missing"
     assert report["source_reports"]["live_provider_evidence"]["status"] == "missing"
+    operator_actions = report["operator_actions"]
     assert report["operator_actions"][:2] == [
         "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
         "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight",
     ]
+    assert (
+        "run make final-apply-resources to apply the filled resource bundle"
+        in operator_actions
+    )
+    assert "make mobile-deploy-preflight" in operator_actions
+    assert not any(action.startswith("unblock ") for action in operator_actions)
     assert report["safety"] == {
         "commands_run": False,
         "writes_backend_env": False,
@@ -250,7 +257,8 @@ def test_external_action_ledger_routes_repairable_final_resources_before_apply(
         "make final-resource-repair",
         "make final-resource-apply-preview",
     ]
-    assert "unblock repair_final_resources: make final-resource-repair" in report[
+    assert "make final-resource-repair" in report["operator_actions"]
+    assert "unblock repair_final_resources: make final-resource-repair" not in report[
         "operator_actions"
     ]
     assert "meshy-secret-test" not in report_text
