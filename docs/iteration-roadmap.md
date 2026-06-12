@@ -252,6 +252,7 @@ Bridge deliverable:
 - P0.338 iOS deploy action lists prefer specific writer handoff
 - P0.339 iOS deploy action root dedupe for detail-bearing writer handoff
 - P0.340 iOS launch sequence actions prefer deploy writer handoff
+- P0.341 final local refresh prefers apply preview before apply writer
 
 ## P1: Mobile Vertical Slice
 

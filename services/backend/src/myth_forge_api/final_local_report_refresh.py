@@ -78,6 +78,10 @@ from myth_forge_api.resource_handoff import build_resource_handoff_report
 from myth_forge_api.visual_regression import check_visual_artifacts
 
 LOCAL_REPORT_DIR = Path("services/backend/.local")
+FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
+FINAL_RESOURCE_APPLY_PREVIEW_BEFORE_APPLY_ACTION = (
+    "rerun make final-resource-apply-preview before applying resources"
+)
 LOCAL_SETTINGS = Settings(
     three_d_provider="local",
     npc_provider="local",
@@ -411,6 +415,9 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
         next_command = _next_command(report)
         blocker_hint = _blocker_hint(report)
         blocker_fields = _promoted_blocker_fields(blocker_hint)
+        if step.id == "final_resource_apply_preview" and status == "blocked":
+            blocker_fields["command"] = FINAL_RESOURCE_APPLY_PREVIEW_BEFORE_APPLY_ACTION
+            blocker_fields.pop("validation_command", None)
         if next_command and not blocker_fields["command"]:
             blocker_fields["command"] = next_command
         return {
@@ -923,7 +930,20 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
             continue
         emitted_roots.add(root)
         validation_deduped.append(replacement)
-    return _dedupe_operator_action_roots(validation_deduped)
+    return _prefer_apply_preview_before_apply(
+        _dedupe_operator_action_roots(validation_deduped)
+    )
+
+
+def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
+    action_roots = {_operator_action_root(action) for action in actions}
+    if FINAL_RESOURCE_APPLY_PREVIEW_BEFORE_APPLY_ACTION not in action_roots:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_root(action) != FINAL_RESOURCE_APPLY_ACTION
+    ]
 
 
 def _dedupe_operator_action_roots(actions: list[str]) -> list[str]:
