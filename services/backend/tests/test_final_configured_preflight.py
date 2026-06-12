@@ -43,6 +43,21 @@ def test_configured_preflight_blocks_missing_resources_without_leaks(
         "approve live provider cost review before make final-acceptance-configured; "
         "--allow-live-provider-calls consent required"
     ) in result.report["operator_actions"]
+    assert result.report["first_blocker"] == {
+        "id": "final_resources_preflight",
+        "label": "Final resources preflight",
+        "status": "missing",
+        "classification": "missing_file",
+        "command": "make final-resource-init",
+        "detail": "Create ignored final-resources.env before configured validation.",
+        "source_kind": "final_resources_preflight_report",
+        "source_id": "final_resources_file",
+        "validation_command": "make final-resources-preflight",
+    }
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert result.report["safety"]["provider_calls"] is False
     assert result.report["safety"]["writes_backend_env"] is False
     assert result.report["safety"]["writes_ios_deploy_config"] is False
@@ -209,6 +224,8 @@ def test_configured_preflight_is_ready_with_configured_handoff_inputs(
     assert result.report["configured_final_launch"]["overall_status"] == "partial"
     assert result.report["configured_ios_deploy_runbook"]["mode"] == "configured"
     assert result.report["configured_ios_deploy_runbook"]["status"] == "partial"
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert "make final-configured-preflight" in result.report["commands"]
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
