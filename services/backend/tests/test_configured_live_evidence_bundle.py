@@ -20,6 +20,11 @@ def test_configured_live_evidence_bundle_blocks_missing_resources_without_runnin
     assert report["summary"]["evidence_files"] == 5
     assert report["summary"]["evidence_missing"] == 5
     assert report["current_blocker"]["id"] == "final_resource_fill_guide"
+    assert report["first_blocker"] == report["current_blocker"]
+    assert report["next_action"] == {
+        **report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert report["source_reports"]["final_configured_evidence_plan"]["status"] == (
         "blocked"
     )
@@ -63,6 +68,12 @@ def test_configured_live_evidence_bundle_requires_consent_with_ready_resources(
     assert report["summary"]["blocked_steps"] == 0
     assert report["summary"]["consent_required_steps"] >= 3
     assert report["current_blocker"]["id"] == "three_d_evaluation_configured"
+    assert report["first_blocker"]["id"] == "three_d_evaluation_configured"
+    assert report["first_blocker"]["status"] == "consent_required"
+    assert report["next_action"] == {
+        **report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert command_sequence["three_d_evaluation_configured"]["status"] == (
         "consent_required"
     )
@@ -90,6 +101,8 @@ def test_configured_live_evidence_bundle_is_ready_to_run_with_consent(
     assert result.exit_code == 2
     assert report["status"] == "ready_to_run"
     assert report["current_blocker"] is None
+    assert report["first_blocker"] is None
+    assert report["next_action"] is None
     assert command_sequence["three_d_evaluation_configured"]["status"] == (
         "ready_to_run"
     )
@@ -114,6 +127,8 @@ def test_configured_live_evidence_bundle_is_ready_with_saved_evidence(
     assert result.exit_code == 0
     assert report["status"] == "ready"
     assert report["current_blocker"] is None
+    assert report["first_blocker"] is None
+    assert report["next_action"] is None
     assert report["summary"]["evidence_ready"] == 5
     assert report["summary"]["evidence_missing"] == 0
     assert report["summary"]["commands_ready"] == report["summary"]["commands"]
@@ -154,6 +169,11 @@ def test_configured_live_evidence_bundle_redacts_unsafe_saved_report_text(
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["current_blocker"]["id"] == "three_d_evaluation_configured"
+    assert result.report["first_blocker"]["id"] == "three_d_evaluation_configured"
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert "secret-token" not in report_text
     assert "sk-live-secret" not in report_text
     assert "file://" not in report_text

@@ -5379,6 +5379,10 @@ private func testDecodesConfiguredEvidenceBundleFromFinalLaunchPayload() throws 
     try expectEqual(bundle.summary.evidenceFiles, 5)
     try expectEqual(bundle.summary.commands, 6)
     try expectEqual(bundle.currentBlocker?.id, "final_resource_fill_guide")
+    try expectEqual(bundle.firstBlocker?.id, "final_resource_fill_guide")
+    try expectEqual(bundle.nextAction?.id, "final_resource_fill_guide")
+    try expectEqual(bundle.nextAction?.source, "first_blocker")
+    try expectEqual(bundle.nextAction?.command, "make final-resource-fill-guide")
     try expectEqual(bundle.evidenceFiles.first?.id, "provider_handoff")
     try expectEqual(bundle.commandSequence.first?.id, "final_resource_fill_guide")
     try expectFalse(bundle.liveCallPolicy.liveCallsByDefault)
@@ -5397,6 +5401,7 @@ private func testFinalLaunchMobileSummaryShowsConfiguredEvidenceBundle() throws 
     try expectContains(text, "evidence ready 0, missing 5")
     try expectContains(text, "commands ready 3, blocked 2, consent 1")
     try expectContains(text, "final_resource_fill_guide: blocked")
+    try expectContains(text, "Next action: make final-resource-fill-guide")
     try expectContains(text, "make configured-live-evidence-bundle")
     try expectContains(text, "live calls by default no")
     try expectContains(text, "commands_run=false live_calls=false")
@@ -7595,6 +7600,17 @@ private func finalDemoLaunchPayload(
       "blocked_by": ["MESHY_API_KEY"]
     }
     """
+    let configuredEvidenceBundleNextActionJSON = configuredEvidenceBundleReady ? "null" : """
+    {
+      "id": "final_resource_fill_guide",
+      "label": "Final resource fill guide",
+      "status": "blocked",
+      "command": "make final-resource-fill-guide",
+      "detail": "\(configuredEvidenceBundleBlockerDetail)",
+      "blocked_by": ["MESHY_API_KEY"],
+      "source": "first_blocker"
+    }
+    """
     let configuredEvidenceBundleSummaryJSON = configuredEvidenceBundleReady
         ? #"{"evidence_files": 5, "evidence_ready": 5, "evidence_missing": 0, "evidence_blocked": 0, "evidence_partial": 0, "commands": 6, "commands_ready": 6, "commands_ready_to_run": 0, "blocked_steps": 0, "consent_required_steps": 0, "live_provider_steps": 3, "cost_steps": 3, "repo_local_write_steps": 1, "commands_run": 0}"#
         : #"{"evidence_files": 5, "evidence_ready": 0, "evidence_missing": 5, "evidence_blocked": 0, "evidence_partial": 0, "commands": 6, "commands_ready": 3, "commands_ready_to_run": 0, "blocked_steps": 2, "consent_required_steps": 1, "live_provider_steps": 3, "cost_steps": 3, "repo_local_write_steps": 1, "commands_run": 0}"#
@@ -9130,6 +9146,8 @@ private func finalDemoLaunchPayload(
             "status": "\(configuredEvidenceBundleStatus)",
             "summary": \(configuredEvidenceBundleSummaryJSON),
             "current_blocker": \(configuredEvidenceBundleBlockerJSON),
+            "first_blocker": \(configuredEvidenceBundleBlockerJSON),
+            "next_action": \(configuredEvidenceBundleNextActionJSON),
             "evidence_files": [
               {
                 "id": "provider_handoff",

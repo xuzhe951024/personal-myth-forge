@@ -1138,6 +1138,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             } else if let evidence = bundle.evidenceFiles.first(where: { status(from: $0.status) != .ready }) {
                 rows.append(configuredEvidenceBundleEvidenceRow(evidence))
             }
+            if let action = bundle.nextAction {
+                rows.append(configuredEvidenceBundleNextActionRow(action))
+            }
             rows.append(contentsOf: bundle.operatorActions.prefix(2).map(sanitize))
         }
         rows.append(
@@ -1160,6 +1163,23 @@ public enum FinalLaunchMobileSummaryBuilder {
             parts.append("| blocked by \(blockedBy.joined(separator: ", "))")
         }
         if let detail = blocker.detail, !detail.isEmpty {
+            parts.append("| \(detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func configuredEvidenceBundleNextActionRow(
+        _ action: ConfiguredLiveEvidenceBundleNextAction
+    ) -> String {
+        var parts = ["Next action: \(action.command)"]
+        parts.append("| \(action.id): \(action.status)")
+        if let classification = action.classification, !classification.isEmpty {
+            parts.append("| \(classification)")
+        }
+        if let blockedBy = action.blockedBy, !blockedBy.isEmpty {
+            parts.append("| blocked by \(blockedBy.joined(separator: ", "))")
+        }
+        if let detail = action.detail, !detail.isEmpty {
             parts.append("| \(detail)")
         }
         return sanitize(parts.joined(separator: " "))
