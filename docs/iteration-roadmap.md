@@ -284,6 +284,7 @@ Bridge deliverable:
 - P0.370 final handoff index prioritizes provider and print handoff actions from final demo launch
 - P0.371 iOS device launch certificate carries provider and print handoff actions from final handoff index
 - P0.372 final external action ledger uses concrete provider and print handoff actions
+- P0.373 final demo launch local operator actions prefer apply preview before apply writer
 
 ## P1: Mobile Vertical Slice
 
