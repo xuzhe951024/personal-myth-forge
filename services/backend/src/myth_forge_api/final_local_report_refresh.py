@@ -106,7 +106,10 @@ def run_final_local_report_refresh(
     extra_steps: dict[str, ReportStep] | None = None,
 ) -> FinalLocalReportRefreshResult:
     selected_repo_root = Path(repo_root) if repo_root is not None else _default_repo_root()
-    steps = [*_default_steps(), *_extra_step_definitions(extra_steps or {})]
+    steps = _merge_step_definitions(
+        defaults=_default_steps(),
+        extras=_extra_step_definitions(extra_steps or {}),
+    )
     step_results = [_run_step(step, selected_repo_root) for step in steps]
     summary = _summary(step_results)
     status = _overall_status(summary)
@@ -376,6 +379,25 @@ def _extra_step_definitions(
         )
         for step_id, runner in extra_steps.items()
     ]
+
+
+def _merge_step_definitions(
+    *,
+    defaults: list[RefreshStepDefinition],
+    extras: list[RefreshStepDefinition],
+) -> list[RefreshStepDefinition]:
+    extras_by_id = {step.id: step for step in extras}
+    used_extra_ids: set[str] = set()
+    merged: list[RefreshStepDefinition] = []
+    for step in defaults:
+        replacement = extras_by_id.get(step.id)
+        if replacement is None:
+            merged.append(step)
+            continue
+        merged.append(replacement)
+        used_extra_ids.add(replacement.id)
+    merged.extend(step for step in extras if step.id not in used_extra_ids)
+    return merged
 
 
 def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:

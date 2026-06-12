@@ -58,6 +58,13 @@ def build_final_configured_preflight_report(
         mode="configured",
         repo_root=selected_repo_root,
     )
+    components = _components(
+        final_resources_preflight=final_resources_preflight,
+        provider_handoff=provider_handoff,
+        resource_handoff=resource_handoff,
+        configured_final_launch=configured_final_launch,
+        configured_ios_deploy_runbook=configured_ios_deploy_runbook,
+    )
     status = _overall_status(
         final_resources_preflight=final_resources_preflight,
         provider_handoff=provider_handoff,
@@ -65,6 +72,7 @@ def build_final_configured_preflight_report(
         configured_final_launch=configured_final_launch,
         configured_ios_deploy_runbook=configured_ios_deploy_runbook,
     )
+    first_blocker = _first_blocker(components)
     report = {
         "kind": "final_configured_preflight_report",
         "status": status,
@@ -80,6 +88,8 @@ def build_final_configured_preflight_report(
         "resource_handoff": resource_handoff,
         "configured_final_launch": configured_final_launch,
         "configured_ios_deploy_runbook": configured_ios_deploy_runbook,
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "operator_actions": _operator_actions(
             final_resources_preflight=final_resources_preflight,
             provider_handoff=provider_handoff,
@@ -95,6 +105,156 @@ def build_final_configured_preflight_report(
         exit_code=0 if sanitized["status"] == "ready" else 2,
         report=sanitized,
     )
+
+
+def _components(
+    *,
+    final_resources_preflight: dict[str, Any],
+    provider_handoff: dict[str, Any],
+    resource_handoff: dict[str, Any],
+    configured_final_launch: dict[str, Any],
+    configured_ios_deploy_runbook: dict[str, Any],
+) -> list[dict[str, Any]]:
+    return [
+        _component(
+            component_id="final_resources_preflight",
+            label="Final resources preflight",
+            report=final_resources_preflight,
+            status=str(final_resources_preflight.get("status", "blocked")),
+            command="make final-resources-preflight",
+        ),
+        _component(
+            component_id="provider_handoff",
+            label="Provider handoff",
+            report=provider_handoff,
+            status="ready" if provider_handoff.get("core_real_ready", False) else "blocked",
+            command="make provider-handoff",
+        ),
+        _component(
+            component_id="resource_handoff",
+            label="Resource handoff",
+            report=resource_handoff,
+            status=str(resource_handoff.get("overall_status", "blocked")),
+            command="make resource-handoff",
+        ),
+        _component(
+            component_id="configured_final_launch",
+            label="Configured final launch",
+            report=configured_final_launch,
+            status=str(configured_final_launch.get("overall_status", "blocked")),
+            command="make final-demo-launch-configured",
+        ),
+        _component(
+            component_id="configured_ios_deploy_runbook",
+            label="Configured iOS deploy runbook",
+            report=configured_ios_deploy_runbook,
+            status=str(configured_ios_deploy_runbook.get("status", "blocked")),
+            command="make ios-deploy-runbook-configured",
+        ),
+    ]
+
+
+def _component(
+    *,
+    component_id: str,
+    label: str,
+    report: dict[str, Any],
+    status: str,
+    command: str,
+) -> dict[str, Any]:
+    return {
+        "id": component_id,
+        "label": label,
+        "report": report,
+        "status": status,
+        "command": command,
+    }
+
+
+def _first_blocker(components: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for component in components:
+        status = str(component["status"])
+        if status not in {"blocked", "missing"}:
+            continue
+        child_action = _child_action(component["report"])
+        return {
+            "id": component["id"],
+            "label": component["label"],
+            "status": status,
+            "classification": _classification(component, child_action),
+            "command": _command(component, child_action),
+            "detail": _detail(component, child_action),
+            "source_kind": str(component["report"].get("kind", "")),
+            "source_id": _source_id(component, child_action),
+            "validation_command": _validation_command(component, child_action),
+        }
+    return None
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
+
+
+def _child_action(report: dict[str, Any]) -> dict[str, Any] | None:
+    for key in ("next_action", "first_blocker"):
+        value = report.get(key)
+        if isinstance(value, dict):
+            return value
+    return None
+
+
+def _classification(
+    component: dict[str, Any],
+    child_action: dict[str, Any] | None,
+) -> str:
+    if child_action is not None and child_action.get("classification"):
+        return str(child_action["classification"])
+    report = component["report"]
+    if report.get("classification"):
+        return str(report["classification"])
+    return f"{component['id']}_{component['status']}"
+
+
+def _command(
+    component: dict[str, Any],
+    child_action: dict[str, Any] | None,
+) -> str:
+    if child_action is not None and child_action.get("command"):
+        return str(child_action["command"])
+    actions = _string_list(component["report"].get("operator_actions"))
+    if actions:
+        return actions[0]
+    return str(component["command"])
+
+
+def _detail(
+    component: dict[str, Any],
+    child_action: dict[str, Any] | None,
+) -> str:
+    if child_action is not None and child_action.get("detail"):
+        return str(child_action["detail"])
+    return f"{component['label']} is {component['status']}."
+
+
+def _source_id(
+    component: dict[str, Any],
+    child_action: dict[str, Any] | None,
+) -> str:
+    if child_action is not None and child_action.get("id"):
+        return str(child_action["id"])
+    return str(component["id"])
+
+
+def _validation_command(
+    component: dict[str, Any],
+    child_action: dict[str, Any] | None,
+) -> str:
+    if child_action is not None and child_action.get("validation_command"):
+        return str(child_action["validation_command"])
+    return str(component["command"])
+
 
 def _overall_status(
     *,
