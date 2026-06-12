@@ -4300,6 +4300,7 @@ public struct FinalShowcaseReadinessCapability: Codable, Equatable, Sendable {
     public var evidence: [String]
     public var command: String
     public var detail: String
+    public var completionRequiresLiveProviderConsent: Bool?
 
     public init(
         id: String,
@@ -4309,7 +4310,8 @@ public struct FinalShowcaseReadinessCapability: Codable, Equatable, Sendable {
         required: Bool,
         evidence: [String],
         command: String,
-        detail: String
+        detail: String,
+        completionRequiresLiveProviderConsent: Bool? = nil
     ) {
         self.id = id
         self.label = label
@@ -4319,6 +4321,9 @@ public struct FinalShowcaseReadinessCapability: Codable, Equatable, Sendable {
         self.evidence = evidence
         self.command = command
         self.detail = detail
+        self.completionRequiresLiveProviderConsent = (
+            completionRequiresLiveProviderConsent
+        )
     }
 }
 

@@ -216,7 +216,9 @@ do {
     try testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness()
     try testFinalLaunchMobileSummaryRedactsUnsafePrintFulfillmentReadiness()
     try testDecodesFinalShowcaseReadinessFromFinalLaunchPayload()
+    try testDecodesFinalShowcaseCompletionProviderConsent()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness()
+    try testFinalLaunchMobileSummaryShowsFinalShowcaseCompletionProviderConsent()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction()
     try testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle()
@@ -5645,6 +5647,37 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
     try expectFalse(readiness.safety.liveProviderCalls)
 }
 
+private func testDecodesFinalShowcaseCompletionProviderConsent() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            finalShowcaseReadinessStatus: "partial",
+            finalShowcaseReadinessFirstBlockerDetail: (
+                "Local 3D proof is ready; live Meshy evidence still needs consent."
+            ),
+            finalShowcaseReadinessAction: "make provider-handoff",
+            finalShowcaseReadinessUsesCompletionConsentBlocker: true
+        )
+    )
+
+    let readiness = try require(
+        report.finalShowcaseReadiness,
+        "missing final showcase readiness"
+    )
+    let capability = try require(
+        readiness.capabilities.first { $0.id == "game_asset_3d_generation" },
+        "missing 3D final showcase capability"
+    )
+
+    try expectEqual(capability.status, "partial")
+    try expectEqual(capability.command, "make provider-handoff")
+    try expectEqual(capability.completionRequiresLiveProviderConsent, true)
+    try expectEqual(
+        readiness.firstBlocker?.completionRequiresLiveProviderConsent,
+        true
+    )
+}
+
 private func testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(finalShowcaseReadinessStatus: "partial"),
@@ -5655,6 +5688,25 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness() throws {
     try expectContains(text, "Showcase readiness partial: ready 5, partial 3, blocked 0.")
     try expectContains(text, "ios_deployable: partial")
     try expectContains(text, "make ios-device-launch-rehearsal")
+}
+
+private func testFinalLaunchMobileSummaryShowsFinalShowcaseCompletionProviderConsent() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            finalShowcaseReadinessStatus: "partial",
+            finalShowcaseReadinessFirstBlockerDetail: (
+                "Local 3D proof is ready; live Meshy evidence still needs consent."
+            ),
+            finalShowcaseReadinessAction: "make provider-handoff",
+            finalShowcaseReadinessUsesCompletionConsentBlocker: true
+        ),
+        error: nil
+    )
+    let text = summary.showcaseReadinessRows.joined(separator: " ")
+
+    try expectContains(text, "game_asset_3d_generation: partial")
+    try expectContains(text, "make provider-handoff")
+    try expectContains(text, "completion live provider consent required")
 }
 
 private func testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction() throws {
@@ -7582,6 +7634,7 @@ private func finalDemoLaunchPayload(
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
     finalShowcaseReadinessActions: [String]? = nil,
+    finalShowcaseReadinessUsesCompletionConsentBlocker: Bool = false,
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -7662,6 +7715,21 @@ private func finalDemoLaunchPayload(
         decoding: try! PMFJSON.encoder.encode(finalShowcaseActions),
         as: UTF8.self
     )
+    let finalShowcaseCapabilityID = finalShowcaseReadinessUsesCompletionConsentBlocker
+        ? "game_asset_3d_generation"
+        : "ios_deployable"
+    let finalShowcaseCapabilityLabel = finalShowcaseReadinessUsesCompletionConsentBlocker
+        ? "Game asset 3D generation"
+        : "iOS deployable"
+    let finalShowcaseCapabilityClassification = finalShowcaseReadinessUsesCompletionConsentBlocker
+        ? "live_3d_provider_unproven"
+        : "ios_deploy_evidence"
+    let finalShowcaseCapabilityEvidence = finalShowcaseReadinessUsesCompletionConsentBlocker
+        ? #"["three_d_evaluation:ready", "live_provider_evidence:blocked"]"#
+        : #"["ios_deploy_runbook:partial", "ios_device_launch_rehearsal_readiness:missing"]"#
+    let finalShowcaseCompletionConsentJSON = finalShowcaseReadinessUsesCompletionConsentBlocker
+        ? #","completion_requires_live_provider_consent": true"#
+        : ""
     let localSmokeSucceeded = localShowcaseSmokeStatus == "succeeded"
     let localSmokeSummaryJSON = localSmokeSucceeded
         ? #"{"passed": 10, "failed": 0, "http_steps": 6, "npc_ticks": 2, "downloads": 3}"#
@@ -9476,14 +9544,15 @@ private func finalDemoLaunchPayload(
             },
             "capabilities": [
               {
-                "id": "ios_deployable",
-                "label": "iOS deployable",
+                "id": "\(finalShowcaseCapabilityID)",
+                "label": "\(finalShowcaseCapabilityLabel)",
                 "status": "\(finalShowcaseReadinessStatus == "ready" ? "ready" : finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
-                "classification": "ios_deploy_evidence",
+                "classification": "\(finalShowcaseCapabilityClassification)",
                 "required": true,
-                "evidence": ["ios_deploy_runbook:partial", "ios_device_launch_rehearsal_readiness:missing"],
-                "command": "make ios-device-launch-rehearsal",
+                "evidence": \(finalShowcaseCapabilityEvidence),
+                "command": "\(finalShowcaseReadinessAction)",
                 "detail": "\(finalShowcaseReadinessFirstBlockerDetail)"
+                \(finalShowcaseCompletionConsentJSON)
               },
               {
                 "id": "capture_scanning",
@@ -9498,23 +9567,24 @@ private func finalDemoLaunchPayload(
             ],
             "first_blocker": \(finalShowcaseReadinessStatus == "ready" ? "null" : """
             {
-              "id": "ios_deployable",
-              "label": "iOS deployable",
+              "id": "\(finalShowcaseCapabilityID)",
+              "label": "\(finalShowcaseCapabilityLabel)",
               "status": "\(finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
-              "classification": "ios_deploy_evidence",
+              "classification": "\(finalShowcaseCapabilityClassification)",
               "required": true,
-              "evidence": ["ios_deploy_runbook:partial"],
-              "command": "make ios-device-launch-rehearsal",
+              "evidence": \(finalShowcaseCapabilityEvidence),
+              "command": "\(finalShowcaseReadinessAction)",
               "detail": "\(finalShowcaseReadinessFirstBlockerDetail)"
+              \(finalShowcaseCompletionConsentJSON)
             }
             """),
             "next_action": \(finalShowcaseReadinessStatus == "ready" ? "null" : """
             {
-              "id": "ios_deployable",
-              "label": "iOS deployable",
+              "id": "\(finalShowcaseCapabilityID)",
+              "label": "\(finalShowcaseCapabilityLabel)",
               "status": "\(finalShowcaseReadinessStatus == "blocked" ? "blocked" : "partial")",
-              "classification": "ios_deploy_evidence",
-              "command": "make ios-device-launch-rehearsal",
+              "classification": "\(finalShowcaseCapabilityClassification)",
+              "command": "\(finalShowcaseReadinessAction)",
               "detail": "\(finalShowcaseReadinessFirstBlockerDetail)",
               "source": "first_blocker"
             }
@@ -13258,6 +13328,7 @@ private func finalDemoLaunchReport(
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
     finalShowcaseReadinessActions: [String]? = nil,
+    finalShowcaseReadinessUsesCompletionConsentBlocker: Bool = false,
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
     npcEvaluationBlockerDetail: String = "NPC Agent evaluation report contains failed cases.",
@@ -13353,6 +13424,7 @@ private func finalDemoLaunchReport(
             finalShowcaseReadinessFirstBlockerDetail: finalShowcaseReadinessFirstBlockerDetail,
             finalShowcaseReadinessAction: finalShowcaseReadinessAction,
             finalShowcaseReadinessActions: finalShowcaseReadinessActions,
+            finalShowcaseReadinessUsesCompletionConsentBlocker: finalShowcaseReadinessUsesCompletionConsentBlocker,
             npcEvaluationStatus: npcEvaluationStatus,
             npcEvaluationBlockerClassification: npcEvaluationBlockerClassification,
             npcEvaluationBlockerDetail: npcEvaluationBlockerDetail,
