@@ -5,9 +5,7 @@ LEGACY_FINAL_RESOURCE_COPY_MARKERS = (
     "services/backend/.local/final-resources.env",
 )
 NORMALIZED_FINAL_RESOURCE_INIT_ACTION = "run make final-resource-init"
-FINAL_RESOURCE_APPLY_ACTION = (
-    "run make final-apply-resources to apply the filled resource bundle"
-)
+FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 FINAL_RESOURCE_APPLY_ACTION_ROOTS = (
     "make final-apply-resources",
     "run make final-apply-resources",

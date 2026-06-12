@@ -115,6 +115,24 @@ def test_configured_preflight_operator_actions_use_make_target_for_provider_hand
     assert not any("--output .local/provider-handoff.json" in action for action in actions)
 
 
+def test_configured_preflight_operator_actions_use_make_target_for_final_apply(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_final_resources(repo_root)
+
+    result = build_final_configured_preflight_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert "make final-apply-resources" in actions
+    assert not any(
+        action.startswith("run make final-apply-resources") for action in actions
+    )
+
+
 def test_configured_preflight_ios_deploy_actions_include_validation_commands(
     tmp_path: Path,
 ) -> None:

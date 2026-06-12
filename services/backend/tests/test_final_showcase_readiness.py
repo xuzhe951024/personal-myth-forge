@@ -994,7 +994,7 @@ def test_final_showcase_readiness_normalizes_resource_apply_unblock_actions() ->
 
     assert actions == [
         "make final-resource-apply-preview",
-        "run make final-apply-resources to apply the filled resource bundle",
+        "make final-apply-resources",
     ]
 
 
