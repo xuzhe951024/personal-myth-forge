@@ -720,6 +720,11 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
         assert row["command"] == "make provider-handoff"
         assert row["validation_command"] == "make live-provider-evidence"
         assert row["requires_live_provider_consent"] is False
+    actions = result.report["operator_actions"]
+    combined_action = "make provider-handoff; rerun make live-provider-evidence"
+    assert combined_action in actions
+    assert "make provider-handoff" not in actions
+    assert "make live-provider-evidence" not in actions
 
 
 def test_final_showcase_readiness_provider_handoff_uses_final_resource_next_action(
@@ -866,12 +871,14 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
         )
         for action in actions
     )
-    assert "make live-provider-evidence" in actions
+    assert "make provider-handoff; rerun make live-provider-evidence" in actions
+    assert "make live-provider-evidence" not in actions
+    assert "make provider-handoff" not in actions
     assert (
         "run make live-provider-evidence after configured provider evidence files are refreshed"
         not in actions
     )
-    assert "make print-fulfillment-readiness" in actions
+    assert "make visual-regression-local; rerun make print-fulfillment-readiness" in actions
     assert "run make final-resource-init" in actions
     assert (
         "provide iOS deploy config in Deployment.local.xcconfig; "
@@ -885,8 +892,11 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert "rerun make visual-regression-local and review failed artifacts" in actions
     assert "make final-showcase-readiness" in actions
     assert len(actions) <= 32
-    assert actions.count("make print-fulfillment-readiness") == 1
-    assert actions.count("make live-provider-evidence") == 1
+    assert actions.count("make provider-handoff; rerun make live-provider-evidence") == 1
+    assert (
+        actions.count("make visual-regression-local; rerun make print-fulfillment-readiness")
+        == 1
+    )
 
 
 def test_final_showcase_readiness_dedupes_prefixed_duplicate_actions(
