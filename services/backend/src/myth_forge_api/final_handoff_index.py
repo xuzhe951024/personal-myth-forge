@@ -20,7 +20,10 @@ from myth_forge_api.final_handoff_commands import (
     FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
     FINAL_DEMO_LAUNCH_LOCAL_COMMAND,
 )
-from myth_forge_api.operator_actions import BACKEND_DEVICE_DEMO_VALIDATED_ACTION
+from myth_forge_api.operator_actions import (
+    BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+    normalize_operator_action,
+)
 
 LOCAL_REPORT_SOURCES = [
     {
@@ -59,6 +62,9 @@ CONFIGURED_PREFLIGHT_SOURCE = {
     "path": "services/backend/.local/final-configured-preflight.json",
     "command": "make final-configured-preflight",
 }
+FINAL_HANDOFF_SOURCE_ACTION_PREFIXES = tuple(
+    f"{source['id']}: " for source in LOCAL_REPORT_SOURCES
+) + (f"{CONFIGURED_PREFLIGHT_SOURCE['id']}: ",)
 
 
 @dataclass(frozen=True)
@@ -547,7 +553,39 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
             actions.append(f"run {command}")
         else:
             actions.append(f"unblock {lane_id}")
-    return _dedupe(actions)[:6]
+    return _dedupe(_final_handoff_operator_action(action) for action in actions)[:6]
+
+
+def _final_handoff_operator_action(action: str) -> str:
+    normalized = normalize_operator_action(action)
+    if normalized == CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION:
+        return normalized
+    command_part, detail_suffix = _split_detail_suffix(normalized)
+    bare_root = _strip_final_handoff_source_prefixes(command_part)
+    if bare_root.startswith("run make "):
+        return f"{bare_root.removeprefix('run ')}{detail_suffix}"
+    if bare_root != command_part:
+        return f"{bare_root}{detail_suffix}"
+    return f"{command_part}{detail_suffix}"
+
+
+def _split_detail_suffix(action: str) -> tuple[str, str]:
+    command, separator, detail = action.partition(" | ")
+    if not separator:
+        return action.strip(), ""
+    return command.strip(), f"{separator}{detail}"
+
+
+def _strip_final_handoff_source_prefixes(command: str) -> str:
+    stripped = command.strip()
+    changed = True
+    while changed:
+        changed = False
+        for prefix in FINAL_HANDOFF_SOURCE_ACTION_PREFIXES:
+            if stripped.startswith(prefix):
+                stripped = stripped.removeprefix(prefix).strip()
+                changed = True
+    return stripped
 
 
 def _first_blocker(lanes: list[dict[str, Any]]) -> dict[str, Any] | None:
