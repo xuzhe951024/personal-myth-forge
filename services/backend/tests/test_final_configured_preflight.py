@@ -130,7 +130,7 @@ def test_configured_preflight_operator_actions_use_make_target_for_provider_hand
     assert not any("--output .local/provider-handoff.json" in action for action in actions)
 
 
-def test_configured_preflight_operator_actions_use_make_target_for_final_apply(
+def test_configured_preflight_operator_actions_gate_apply_behind_preview(
     tmp_path: Path,
 ) -> None:
     repo_root = _write_deploy_config(tmp_path)
@@ -142,7 +142,9 @@ def test_configured_preflight_operator_actions_use_make_target_for_final_apply(
     )
     actions = result.report["operator_actions"]
 
-    assert "make final-apply-resources" in actions
+    assert "make final-resource-apply-preview" in actions
+    assert "make final-apply-resources" not in actions
+    assert "make final-apply-resources" in result.report["commands"]
     assert not any(
         action.startswith("run make final-apply-resources") for action in actions
     )
