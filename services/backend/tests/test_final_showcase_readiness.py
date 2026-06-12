@@ -425,7 +425,10 @@ def test_final_showcase_readiness_next_action_uses_preflight_child_action(
 
     action = result.report["next_action"]
     blocker = result.report["first_blocker"]
+    row = result.report["capabilities_by_id"]["ios_deployable"]
 
+    assert row["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    assert row["validation_command"] == "make mobile-deploy-preflight"
     assert blocker["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
     assert blocker["validation_command"] == "make mobile-deploy-preflight"
     assert (
