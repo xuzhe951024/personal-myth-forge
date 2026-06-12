@@ -4399,11 +4399,33 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
     public var evidenceDetail: String?
     public var validationCommand: String?
     public var nextAction: FinalShowcaseReadinessNextAction?
+    public var operatorActions: [String]
     public var blocks: [String]
     public var manual: Bool
     public var globalAction: Bool
     public var providerCalls: Bool
     public var xcodeOrSigning: Bool
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case label
+        case status
+        case classification
+        case command
+        case detail
+        case source
+        case evidenceStatus
+        case evidenceSource
+        case evidenceDetail
+        case validationCommand
+        case nextAction
+        case operatorActions
+        case blocks
+        case manual
+        case globalAction
+        case providerCalls
+        case xcodeOrSigning
+    }
 
     public init(
         id: String,
@@ -4418,6 +4440,7 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
         evidenceDetail: String? = nil,
         validationCommand: String? = nil,
         nextAction: FinalShowcaseReadinessNextAction? = nil,
+        operatorActions: [String] = [],
         blocks: [String],
         manual: Bool,
         globalAction: Bool,
@@ -4436,11 +4459,40 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
         self.evidenceDetail = evidenceDetail
         self.validationCommand = validationCommand
         self.nextAction = nextAction
+        self.operatorActions = operatorActions
         self.blocks = blocks
         self.manual = manual
         self.globalAction = globalAction
         self.providerCalls = providerCalls
         self.xcodeOrSigning = xcodeOrSigning
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.label = try container.decode(String.self, forKey: .label)
+        self.status = try container.decode(String.self, forKey: .status)
+        self.classification = try container.decodeIfPresent(String.self, forKey: .classification)
+        self.command = try container.decode(String.self, forKey: .command)
+        self.detail = try container.decode(String.self, forKey: .detail)
+        self.source = try container.decode(String.self, forKey: .source)
+        self.evidenceStatus = try container.decodeIfPresent(String.self, forKey: .evidenceStatus)
+        self.evidenceSource = try container.decodeIfPresent(String.self, forKey: .evidenceSource)
+        self.evidenceDetail = try container.decodeIfPresent(String.self, forKey: .evidenceDetail)
+        self.validationCommand = try container.decodeIfPresent(String.self, forKey: .validationCommand)
+        self.nextAction = try container.decodeIfPresent(
+            FinalShowcaseReadinessNextAction.self,
+            forKey: .nextAction
+        )
+        self.operatorActions = try container.decodeIfPresent(
+            [String].self,
+            forKey: .operatorActions
+        ) ?? []
+        self.blocks = try container.decode([String].self, forKey: .blocks)
+        self.manual = try container.decode(Bool.self, forKey: .manual)
+        self.globalAction = try container.decode(Bool.self, forKey: .globalAction)
+        self.providerCalls = try container.decode(Bool.self, forKey: .providerCalls)
+        self.xcodeOrSigning = try container.decode(Bool.self, forKey: .xcodeOrSigning)
     }
 }
 

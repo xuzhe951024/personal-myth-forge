@@ -1500,6 +1500,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             }
             parts.append("| \(next)")
         }
+        for operatorAction in action.operatorActions.prefix(2) where !operatorAction.isEmpty {
+            parts.append("| action \(operatorAction)")
+        }
         if !action.detail.isEmpty {
             parts.append("| \(action.detail)")
         }
