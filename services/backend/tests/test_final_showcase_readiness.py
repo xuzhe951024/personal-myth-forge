@@ -6,6 +6,7 @@ from myth_forge_api.config import Settings
 from myth_forge_api.final_showcase_readiness import (
     build_final_showcase_readiness_report,
 )
+from myth_forge_api.live_provider_evidence import LiveProviderEvidenceResult
 from myth_forge_api.local_showcase_smoke import LocalShowcaseSmokeResult
 
 
@@ -649,6 +650,76 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
         "live provider evidence" in action
         for action in result.report["operator_actions"]
     )
+
+
+def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+        ),
+    )
+    _write_capture_source_acceptance(repo_root)
+    _write_final_resources(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance_ready(repo_root)
+
+    def fake_live_provider_evidence_report(
+        *, repo_root: Path | str | None = None
+    ) -> LiveProviderEvidenceResult:
+        return LiveProviderEvidenceResult(
+            exit_code=2,
+            report={
+                "kind": "live_provider_evidence_report",
+                "status": "blocked",
+                "next_action": {
+                    "id": "provider_handoff",
+                    "label": "Provider handoff",
+                    "status": "blocked",
+                    "classification": "report_not_ready",
+                    "command": "make provider-handoff",
+                    "detail": "Core real providers are not ready for live evidence.",
+                    "requires_live_provider_consent": False,
+                    "validation_command": "make live-provider-evidence",
+                    "source": "first_blocker",
+                },
+                "evidence": [],
+                "operator_actions": ["make provider-handoff"],
+                "commands": ["make live-provider-evidence", "make provider-handoff"],
+                "safety": {"live_provider_calls": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        final_showcase_readiness,
+        "build_live_provider_evidence_report",
+        fake_live_provider_evidence_report,
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+        ),
+        repo_root=repo_root,
+    )
+    rows = result.report["capabilities_by_id"]
+
+    for row_id in ("game_asset_3d_generation", "ai_agent_npc"):
+        row = rows[row_id]
+        assert row["status"] == "partial"
+        assert row["command"] == "make provider-handoff"
+        assert row["validation_command"] == "make live-provider-evidence"
+        assert row["requires_live_provider_consent"] is False
 
 
 def test_final_showcase_readiness_provider_handoff_uses_final_resource_next_action(
