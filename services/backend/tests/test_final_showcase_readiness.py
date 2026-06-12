@@ -732,17 +732,19 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert result.exit_code == 2
     assert actions[0] == "make ios-device-launch-rehearsal"
     assert "final_rehearsal_local: final_acceptance_local: action 1" in actions
-    assert "final_handoff_index: make final-configured-preflight" in actions
-    assert "final_handoff_index: make final-demo-launch-configured" in actions
+    assert "make final-configured-preflight" in actions
+    assert "make final-demo-launch-configured" in actions
     assert not any("final-demo-launch --mode configured" in action for action in actions)
-    assert "ios_device_launch_certificate: make final-handoff-index" in actions
+    assert "make final-handoff-index" in actions
     assert not any(
-        action
-        in {
-            "final_handoff_index: run make final-configured-preflight",
-            "final_handoff_index: run make final-demo-launch-configured",
-            "ios_device_launch_certificate: run make final-handoff-index",
-        }
+        action.startswith(
+            (
+                "final_handoff_index: make ",
+                "final_handoff_index: run make ",
+                "ios_device_launch_certificate: make final-handoff-index",
+                "ios_device_launch_certificate: run make final-handoff-index",
+            )
+        )
         for action in actions
     )
     assert "make live-provider-evidence" in actions
@@ -1004,6 +1006,26 @@ def test_final_showcase_readiness_normalizes_provider_evidence_actions() -> None
     assert actions == ["make provider-handoff", "make live-provider-evidence"]
 
 
+def test_final_showcase_readiness_normalizes_prefixed_make_target_actions() -> None:
+    actions = final_showcase_readiness._report_operator_actions(
+        {
+            "operator_actions": [
+                "final_handoff_index: run make final-configured-preflight",
+                "final_handoff_index: make final-demo-launch-configured",
+                "ios_device_launch_certificate: run make final-handoff-index",
+                "ios_device_launch_certificate: make ios-deploy-runbook-local",
+            ]
+        }
+    )
+
+    assert actions == [
+        "make final-configured-preflight",
+        "make final-demo-launch-configured",
+        "make final-handoff-index",
+        "make ios-deploy-runbook-local",
+    ]
+
+
 def test_final_showcase_readiness_normalizes_xcode_gate_actions() -> None:
     actions = final_showcase_readiness._report_operator_actions(
         {
@@ -1222,8 +1244,8 @@ def test_final_showcase_readiness_normalizes_legacy_final_resource_copy_action(
     assert result.exit_code == 2
     assert "run make final-resource-init" in actions
     assert "services/backend/final-resources.env.example" not in report_text
-    assert "final_handoff_index: make final-configured-preflight" in actions
-    assert "ios_device_launch_certificate: make final-handoff-index" in actions
+    assert "make final-configured-preflight" in actions
+    assert "make final-handoff-index" in actions
 
 
 def test_final_showcase_readiness_adds_validation_to_nested_resource_actions(

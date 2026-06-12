@@ -70,6 +70,13 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES = (
     "final_handoff_index:",
     "ios_device_launch_certificate:",
 )
+FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_MAKE_TARGETS = (
+    "make final-rehearsal-local",
+    "make final-configured-preflight",
+    "make final-demo-launch-configured",
+    "make final-handoff-index",
+    "make ios-deploy-runbook-local",
+)
 FINAL_SHOWCASE_SOURCE_ACTION_PREFIXES = (
     "final_rehearsal_local:",
     "mobile_deploy_preflight_evidence:",
@@ -1478,7 +1485,9 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
     if not isinstance(raw_actions, list):
         return []
     return [
-        _validation_aware_operator_action(normalize_operator_action(str(action)))
+        _final_showcase_operator_action(
+            _validation_aware_operator_action(normalize_operator_action(str(action)))
+        )
         for action in raw_actions
         if isinstance(action, str) and action
     ]
@@ -1490,6 +1499,18 @@ def _validation_aware_operator_action(action: str) -> str:
     )
 
 
+def _final_showcase_operator_action(action: str) -> str:
+    command_part, detail_suffix = _split_detail_suffix(action)
+    bare_root = _strip_final_showcase_source_prefixes(command_part)
+    if bare_root == command_part:
+        return action
+    if bare_root.startswith("make "):
+        return f"{bare_root}{detail_suffix}"
+    if bare_root.startswith("run make "):
+        return f"{bare_root.removeprefix('run ')}{detail_suffix}"
+    return action
+
+
 def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
     actions = _report_operator_actions(report)
     if report.get("kind") != "ios_device_launch_rehearsal_readiness_report":
@@ -1499,6 +1520,7 @@ def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
         action
         for action in actions
         if action.startswith(FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES)
+        or action in FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_MAKE_TARGETS
     )
     return _dedupe(selected)[:FINAL_SHOWCASE_IOS_REHEARSAL_ACTION_LIMIT]
 
@@ -1596,7 +1618,7 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
 
 
 def _operator_action_bare_root(action: str) -> str:
-    command = action.split(" | ", 1)[0].strip()
+    command, _detail_suffix = _split_detail_suffix(action)
     command = _strip_final_showcase_source_prefixes(command)
     if _looks_like_operator_command(command):
         return command
@@ -1607,6 +1629,13 @@ def _operator_action_bare_root(action: str) -> str:
             continue
         return suffix
     return command
+
+
+def _split_detail_suffix(action: str) -> tuple[str, str]:
+    command, separator, detail = action.partition(" | ")
+    if not separator:
+        return action.strip(), ""
+    return command.strip(), f"{separator}{detail}"
 
 
 def _strip_final_showcase_source_prefixes(command: str) -> str:
