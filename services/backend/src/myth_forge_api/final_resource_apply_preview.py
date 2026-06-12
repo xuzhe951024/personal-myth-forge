@@ -137,6 +137,7 @@ def build_final_resource_apply_preview_report(
         "write_targets": targets,
         "write_targets_by_id": {target["id"]: target for target in targets},
         "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "operator_actions": _operator_actions(
             status=status,
             preflight_report=preflight_report,
@@ -278,6 +279,12 @@ def _first_blocker(targets: list[dict[str, Any]]) -> dict[str, Any] | None:
             "validation_command": "make final-resources-preflight",
         }
     return None
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
 
 
 def _target_classification(target: dict[str, Any], blocked_by: list[str]) -> str:

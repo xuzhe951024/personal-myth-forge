@@ -51,6 +51,10 @@ def test_apply_preview_reports_missing_resources_without_writing_outputs(
         "blocked_by": ["MESHY_API_KEY", "OPENAI_API_KEY"],
         "validation_command": "make final-resources-preflight",
     }
+    assert result.report["next_action"] == {
+        **first_blocker,
+        "source": "first_blocker",
+    }
     assert result.report["summary"]["missing"] >= 5
     assert result.report["summary"]["write_targets"] == 2
     assert targets["backend_env"]["status"] == "missing"
@@ -344,6 +348,7 @@ def test_apply_preview_is_ready_for_valid_local_resources_without_secret_leak(
     assert result.exit_code == 0
     assert report["status"] == "ready"
     assert report["first_blocker"] is None
+    assert report["next_action"] is None
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["missing"] == 0
     assert report["summary"]["ready"] >= 9
