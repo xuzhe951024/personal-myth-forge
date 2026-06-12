@@ -4595,6 +4595,7 @@ public struct FinalDemoLaunchFirstBlocker: Codable, Equatable, Sendable {
     public var detail: String
     public var source: String
     public var sourceId: String
+    public var validationCommand: String?
 
     public init(
         id: String,
@@ -4604,7 +4605,8 @@ public struct FinalDemoLaunchFirstBlocker: Codable, Equatable, Sendable {
         command: String,
         detail: String,
         source: String,
-        sourceId: String
+        sourceId: String,
+        validationCommand: String? = nil
     ) {
         self.id = id
         self.label = label
@@ -4614,6 +4616,7 @@ public struct FinalDemoLaunchFirstBlocker: Codable, Equatable, Sendable {
         self.detail = detail
         self.source = source
         self.sourceId = sourceId
+        self.validationCommand = validationCommand
     }
 }
 

@@ -290,6 +290,7 @@ Bridge deliverable:
 - P0.376 final showcase partial 3D/NPC rows expose completion-level live provider consent
 - P0.377 iOS final launch summary decodes and displays completion-level live provider consent
 - P0.378 iOS final launch device rows show backend child next actions
+- P0.379 iOS final launch first blocker receipt shows validation command
 
 ## P1: Mobile Vertical Slice
 

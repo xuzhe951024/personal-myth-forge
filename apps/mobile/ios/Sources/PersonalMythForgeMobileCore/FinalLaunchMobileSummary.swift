@@ -404,6 +404,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         if !blocker.detail.isEmpty {
             parts.append(blocker.detail)
         }
+        if let validationCommand = blocker.validationCommand, !validationCommand.isEmpty {
+            parts.append(validationCommand)
+        }
         return parts.joined(separator: " | ")
     }
 

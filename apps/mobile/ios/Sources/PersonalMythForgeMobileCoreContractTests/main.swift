@@ -3828,6 +3828,7 @@ private func testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt() throw
     try expectEqual(blocker.command, "make final-apply-resources")
     try expectEqual(blocker.source, "final_demo_launch_phase")
     try expectEqual(blocker.sourceId, "apply_final_resources")
+    try expectEqual(blocker.validationCommand, "make final-demo-launch-local")
 
     let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
 
@@ -3837,6 +3838,7 @@ private func testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt() throw
     )
     try expectContains(summary.launchReceiptRows[2], "make final-apply-resources")
     try expectContains(summary.launchReceiptRows[2], "one-file backend and iOS final demo handoff")
+    try expectContains(summary.launchReceiptRows[2], "make final-demo-launch-local")
 }
 
 private func testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction() throws {
@@ -7545,7 +7547,8 @@ private func finalDemoLaunchTopLevelFirstBlockerJSON() -> String {
       "command": "make final-apply-resources",
       "detail": "one-file backend and iOS final demo handoff | Reads only ignored services/backend/.local/final-resources.env.",
       "source": "final_demo_launch_phase",
-      "source_id": "apply_final_resources"
+      "source_id": "apply_final_resources",
+      "validation_command": "make final-demo-launch-local"
     }
     """
 }
