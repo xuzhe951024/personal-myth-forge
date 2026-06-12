@@ -347,6 +347,14 @@ def test_normalizes_ios_device_launch_rehearsal_run_make_action_to_make_target()
     )
 
 
+def test_normalizes_ios_device_launch_rehearsal_rerun_action_to_make_target() -> None:
+    assert normalize_operator_action(
+        "rerun make ios-device-launch-rehearsal to regenerate "
+        "services/backend/.local/ios-device-launch-rehearsal.json for the current "
+        "product sources"
+    ) == "make ios-device-launch-rehearsal"
+
+
 def test_normalizes_configured_final_demo_launch_cli_action_to_make_target() -> None:
     action = (
         "final_handoff_index: run cd services/backend && uv run python -m "
