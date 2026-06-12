@@ -934,6 +934,39 @@ def test_final_local_report_refresh_step_next_action_omits_ready_step() -> None:
     assert "next_action" not in step
 
 
+def test_final_local_report_refresh_step_next_action_strips_detail_suffix() -> None:
+    step = {
+        "id": "ios_device_launch_rehearsal",
+        "label": "iOS Device Launch Rehearsal",
+        "status": "blocked",
+        "classification": "step_blocked",
+        "command": (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        ),
+        "detail": (
+            "final_rehearsal_local: mobile_deploy_preflight_evidence: "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        ),
+        "output": "services/backend/.local/ios-device-launch-rehearsal.json",
+        "validation_command": "make ios-device-launch-rehearsal",
+    }
+
+    result = final_local_report_refresh._step_with_next_action(step)
+
+    assert result["next_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert result["next_action"]["detail"] == step["detail"]
+    assert result["next_action"]["validation_command"] == (
+        "make ios-device-launch-rehearsal"
+    )
+
+
 def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
     tmp_path: Path,
 ) -> None:

@@ -487,7 +487,7 @@ def _step_with_next_action(step: dict[str, Any]) -> dict[str, Any]:
     if step.get("status") == "ready":
         step.pop("next_action", None)
         return step
-    command = str(step.get("command") or "").strip()
+    command = _structured_next_action_command(step.get("command"))
     detail = str(step.get("detail") or "").strip()
     if not command and not detail:
         step.pop("next_action", None)
@@ -508,6 +508,11 @@ def _step_with_next_action(step: dict[str, Any]) -> dict[str, Any]:
         action["validation_command"] = validation_command
     step["next_action"] = action
     return step
+
+
+def _structured_next_action_command(value: Any) -> str:
+    command, _separator, _detail = str(value or "").partition(" | ")
+    return command.strip()
 
 
 def _three_d_evaluation_report(repo_root: Path) -> dict[str, Any]:
