@@ -47,6 +47,8 @@ def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_
     assert result.report["next_action"] == {
         **result.report["first_blocker"],
         "source": "first_blocker",
+        "validation_command": "make print-fulfillment-readiness",
+        "requires_cost_consent": True,
     }
     assert "print-fulfillment-readiness" in " ".join(result.report["commands"])
 
@@ -114,6 +116,8 @@ def test_print_fulfillment_readiness_blocks_unsafe_or_unapproved_treatstock_quot
     assert result.report["next_action"] == {
         **result.report["first_blocker"],
         "source": "first_blocker",
+        "validation_command": "make print-fulfillment-readiness",
+        "requires_cost_consent": False,
     }
     assert "secret-token" not in report_text
     assert "checkout.example" not in report_text

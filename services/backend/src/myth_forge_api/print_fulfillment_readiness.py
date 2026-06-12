@@ -474,7 +474,16 @@ def _first_blocker(checks: list[dict[str, Any]]) -> dict[str, Any] | None:
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     if first_blocker is None:
         return None
-    return {**first_blocker, "source": "first_blocker"}
+    return {
+        **first_blocker,
+        "source": "first_blocker",
+        "validation_command": "make print-fulfillment-readiness",
+        "requires_cost_consent": (
+            first_blocker.get("id") == "configured_treatstock_quote"
+            and first_blocker.get("classification")
+            == "missing_configured_treatstock_quote"
+        ),
+    }
 
 
 def _operator_actions(checks: list[dict[str, Any]]) -> list[str]:

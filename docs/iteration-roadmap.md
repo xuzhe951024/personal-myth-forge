@@ -244,6 +244,7 @@ Bridge deliverable:
 - P0.330 mobile Xcode build evidence exposes next action
 - P0.331 existing Xcode evidence normalizes next action
 - P0.332 iOS launch reports expose next action
+- P0.333 print fulfillment next action validates cost consent
 
 ## P1: Mobile Vertical Slice
 
