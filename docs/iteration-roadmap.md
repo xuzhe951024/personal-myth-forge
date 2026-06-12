@@ -229,6 +229,7 @@ Bridge deliverable:
 - P0.315 iOS deploy runbook exposes first blocker and next action
 - P0.316 print fulfillment readiness exposes next action
 - P0.317 configured evidence bundle exposes next action
+- P0.318 provider handoff exposes next action
 
 ## P1: Mobile Vertical Slice
 

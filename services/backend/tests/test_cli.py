@@ -391,6 +391,9 @@ def test_cli_provider_handoff_writes_local_report(tmp_path, monkeypatch) -> None
     assert "make final-apply-resources" in report["next_commands"]
     assert any("provider-readiness" in command for command in report["next_commands"])
     assert all("/tmp/" not in command for command in report["next_commands"])
+    assert report["first_blocker"]["id"] == "three_d_provider"
+    assert report["next_action"]["source"] == "first_blocker"
+    assert report["safety"]["provider_calls"] is False
 
 
 def test_cli_provider_handoff_require_core_real_returns_two_when_keys_missing(
