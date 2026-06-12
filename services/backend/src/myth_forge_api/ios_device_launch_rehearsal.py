@@ -596,7 +596,7 @@ def _next_action(
             continue
         return {
             **first_blocker,
-            "command": action,
+            "command": _structured_next_action_command(action),
             "source": "operator_actions",
             "validation_command": "make ios-device-launch-rehearsal",
         }
@@ -605,6 +605,11 @@ def _next_action(
         "source": "first_blocker",
         "validation_command": "make ios-device-launch-rehearsal",
     }
+
+
+def _structured_next_action_command(action: str) -> str:
+    command, _detail_suffix = _split_detail_suffix(action)
+    return command
 
 
 def _step_blocker_detail(step: dict[str, Any]) -> str:
