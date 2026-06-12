@@ -225,6 +225,7 @@ Bridge deliverable:
 - P0.311 final launch closure packet make actions normalize to canonical targets
 - P0.312 configured final acceptance handoff uses consent-first live action
 - P0.313 iOS device evidence bundle rehearsal action normalizes to canonical make target
+- P0.314 iOS device evidence bundle exposes first blocker and next action
 
 ## P1: Mobile Vertical Slice
 

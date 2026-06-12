@@ -1471,6 +1471,12 @@ public enum FinalLaunchMobileSummaryBuilder {
             ? Array(bundle.evidenceSlots.prefix(3))
             : Array(attention.prefix(3))
         rows.append(contentsOf: slots.map(deviceEvidenceSlotRow))
+        if let firstBlocker = bundle.firstBlocker {
+            rows.append(deviceEvidenceFirstBlockerRow(firstBlocker))
+        }
+        if let nextAction = bundle.nextAction {
+            rows.append(deviceEvidenceNextActionRow(nextAction))
+        }
         if let action = bundle.operatorActions.first, !action.isEmpty {
             rows.append(sanitize(action))
         }
@@ -1485,6 +1491,29 @@ public enum FinalLaunchMobileSummaryBuilder {
         }
         if !slot.detail.isEmpty {
             parts.append(slot.detail)
+        }
+        return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func deviceEvidenceFirstBlockerRow(
+        _ blocker: IOSDeviceEvidenceBundleFirstBlocker
+    ) -> String {
+        var parts = ["First blocker: \(blocker.id)", blocker.status, blocker.command]
+        if let classification = blocker.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        if !blocker.detail.isEmpty {
+            parts.append(blocker.detail)
+        }
+        return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func deviceEvidenceNextActionRow(
+        _ action: IOSDeviceEvidenceBundleNextAction
+    ) -> String {
+        var parts = ["Next action: \(action.command)", action.id, action.source]
+        if !action.detail.isEmpty {
+            parts.append(action.detail)
         }
         return sanitize(parts.joined(separator: " | "))
     }

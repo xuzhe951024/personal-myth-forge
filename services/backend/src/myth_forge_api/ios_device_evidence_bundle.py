@@ -71,6 +71,7 @@ def build_ios_device_evidence_bundle_report(
         xcode_build_evidence=xcode_build_evidence,
     )
     status = _overall_status(evidence_slots)
+    first_blocker = _first_blocker(evidence_slots)
     source_reports = {
         "final_acceptance_readiness": _source_summary(final_acceptance),
         "ios_deploy_runbook": _source_summary(ios_deploy_runbook),
@@ -91,6 +92,8 @@ def build_ios_device_evidence_bundle_report(
         "status": status,
         "summary": _summary(evidence_slots),
         "evidence_slots": evidence_slots,
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "source_reports": source_reports,
         "operator_actions": _operator_actions(status, evidence_slots),
         "commands": [
@@ -588,6 +591,19 @@ def _summary(slots: list[dict[str, Any]]) -> dict[str, int]:
 
 def _overall_status(slots: list[dict[str, Any]]) -> str:
     return "ready" if all(slot["status"] == "ready" for slot in slots) else "blocked"
+
+
+def _first_blocker(slots: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for slot in slots:
+        if slot["required"] and slot["status"] != "ready":
+            return dict(slot)
+    return None
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
