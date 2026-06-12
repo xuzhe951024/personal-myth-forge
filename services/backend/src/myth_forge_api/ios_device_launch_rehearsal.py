@@ -15,6 +15,7 @@ from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
+    prefer_project_local_ios_deploy_handoff_actions,
 )
 
 LOCAL_REPORT_SOURCES = [
@@ -380,12 +381,16 @@ def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
         else:
             actions.append(f"review {step['id']}: {step['command']}")
     if actions:
-        return _dedupe(_top_level_operator_action(action) for action in actions)
+        return prefer_project_local_ios_deploy_handoff_actions(
+            _dedupe(_top_level_operator_action(action) for action in actions)
+        )
 
     if all(step["status"] not in {"missing", "blocked"} for step in sequence):
         actions.append("continue with make backend-device-demo")
         actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
-    return _dedupe(_top_level_operator_action(action) for action in actions)
+    return prefer_project_local_ios_deploy_handoff_actions(
+        _dedupe(_top_level_operator_action(action) for action in actions)
+    )
 
 
 def _top_level_operator_action(action: str) -> str:

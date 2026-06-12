@@ -4,6 +4,7 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
+import myth_forge_api.ios_device_launch_rehearsal as ios_device_launch_rehearsal
 from myth_forge_api.ios_device_launch_rehearsal import (
     build_ios_device_launch_rehearsal_report,
 )
@@ -1158,6 +1159,69 @@ def test_ios_device_launch_rehearsal_prefers_writer_over_old_team_action(
 
     result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
     actions = result.report["operator_actions"]
+
+    assert actions == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
+def test_ios_device_launch_rehearsal_prefers_writer_over_generic_ios_config_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["operator_actions"] = [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        (
+            "provide iOS deploy config in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        ),
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    actions = result.report["operator_actions"]
+
+    assert actions == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
+def test_ios_device_launch_rehearsal_full_actions_prefer_writer_over_generic_ios_config() -> None:
+    actions = ios_device_launch_rehearsal._operator_actions(
+        [
+            {
+                "id": "final_rehearsal_local",
+                "label": "Local final rehearsal",
+                "status": "blocked",
+                "command": "make final-rehearsal-local",
+                "operator_actions": [
+                    (
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "make mobile-write-deploy-config-auto; "
+                        "rerun make mobile-deploy-preflight"
+                    ),
+                    (
+                        "provide iOS deploy config in Deployment.local.xcconfig; "
+                        "rerun make mobile-deploy-preflight"
+                    ),
+                ],
+            }
+        ]
+    )
 
     assert actions == [
         (
