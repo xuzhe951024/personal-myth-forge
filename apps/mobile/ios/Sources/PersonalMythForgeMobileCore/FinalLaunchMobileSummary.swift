@@ -1151,6 +1151,14 @@ public enum FinalLaunchMobileSummaryBuilder {
             "Live steps \(plan.summary.liveProviderSteps), cost steps \(plan.summary.costSteps), repo writes \(plan.summary.repoLocalWriteSteps).",
         ]
         if plan.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" {
+            if let nextAction = plan.nextAction {
+                rows.append(
+                    configuredEvidencePlanActionRow(
+                        prefix: "Next action: \(nextAction.id)",
+                        step: nextAction
+                    )
+                )
+            }
             if let step = plan.steps.first(where: { status(from: $0.status) != .ready }) {
                 rows.append(configuredEvidencePlanStepRow(step))
             }
@@ -1168,12 +1176,31 @@ public enum FinalLaunchMobileSummaryBuilder {
     private static func configuredEvidencePlanStepRow(
         _ step: FinalConfiguredEvidencePlanStep
     ) -> String {
-        var parts = ["\(step.id): \(step.status)", "| \(step.command)"]
+        configuredEvidencePlanActionRow(prefix: "\(step.id):", step: step)
+    }
+
+    private static func configuredEvidencePlanActionRow(
+        prefix: String,
+        step: FinalConfiguredEvidencePlanStep
+    ) -> String {
+        var parts = [prefix, step.status]
+        if let classification = step.classification,
+           !classification.isEmpty,
+           classification != step.status {
+            parts.append(classification)
+        }
+        if let source = step.source, !source.isEmpty {
+            parts.append("| source \(source)")
+        }
+        parts.append("| \(step.command)")
         if !step.blockedBy.isEmpty {
             parts.append("| blocked by \(step.blockedBy.joined(separator: ", "))")
         }
         if let detail = step.evidenceDetail, !detail.isEmpty {
             parts.append("| \(detail)")
+        }
+        if let validationCommand = step.validationCommand, !validationCommand.isEmpty {
+            parts.append("| \(validationCommand)")
         }
         return sanitize(parts.joined(separator: " "))
     }

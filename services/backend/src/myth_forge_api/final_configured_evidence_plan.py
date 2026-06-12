@@ -155,9 +155,12 @@ def build_final_configured_evidence_plan_report(
         for definition in STEPS
     ]
     status = _overall_status(steps)
+    first_blocker = _first_blocker(steps)
     report = {
         "kind": "final_configured_evidence_plan_report",
         "status": status,
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "summary": _summary(steps),
         "steps": steps,
         "steps_by_id": {step["id"]: step for step in steps},
@@ -323,6 +326,47 @@ def _overall_status(steps: list[dict[str, Any]]) -> str:
     if "ready_to_run" in statuses:
         return "ready_to_run"
     return "ready"
+
+
+def _first_blocker(steps: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for status in ("blocked", "consent_required", "ready_to_run"):
+        for step in steps:
+            if str(step["status"]) == status:
+                return _action_from_step(step)
+    return None
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
+
+
+def _action_from_step(step: dict[str, Any]) -> dict[str, Any]:
+    detail = str(step.get("evidence_detail") or "")
+    blocked_by = [str(item) for item in step.get("blocked_by", [])]
+    if not detail and blocked_by:
+        detail = "blocked by " + ", ".join(blocked_by)
+    action = {
+        "id": step["id"],
+        "label": step["label"],
+        "status": step["status"],
+        "classification": step["status"],
+        "command": step["command"],
+        "detail": detail,
+        "blocked_by": blocked_by,
+        "requires_live_provider_consent": step["requires_live_provider_consent"],
+        "may_call_live_provider": step["may_call_live_provider"],
+        "cost_risk": step["cost_risk"],
+        "repo_local_write": step["repo_local_write"],
+        "would_write_backend_env": step["would_write_backend_env"],
+        "would_write_ios_deploy_config": step["would_write_ios_deploy_config"],
+        "validation_command": "make final-configured-evidence-plan",
+    }
+    for key in ("evidence_status", "evidence_path"):
+        if step.get(key) is not None:
+            action[key] = step[key]
+    return action
 
 
 def _summary(steps: list[dict[str, Any]]) -> dict[str, int]:

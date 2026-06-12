@@ -26,6 +26,18 @@ def test_configured_evidence_plan_blocks_missing_resources_without_running_comma
     assert report["steps_by_id"]["three_d_evaluation_configured"][
         "requires_live_provider_consent"
     ] is True
+    assert report["first_blocker"]["id"] == "final_resource_fill_guide"
+    assert report["first_blocker"]["status"] == "blocked"
+    assert report["first_blocker"]["command"] == "make final-resource-fill-guide"
+    assert report["first_blocker"]["would_write_backend_env"] is False
+    assert report["first_blocker"]["would_write_ios_deploy_config"] is False
+    assert report["first_blocker"]["validation_command"] == (
+        "make final-configured-evidence-plan"
+    )
+    assert report["next_action"] == {
+        **report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert report["summary"]["commands_run"] == 0
     assert report["summary"]["consent_required"] == 0
     assert report["summary"]["planned_consent_steps"] == 3
@@ -92,6 +104,17 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
         "make final-demo-launch-configured"
     )
     assert steps["live_provider_evidence"]["status"] == "ready_to_run"
+    assert report["first_blocker"]["id"] == "three_d_evaluation_configured"
+    assert report["first_blocker"]["status"] == "consent_required"
+    assert report["first_blocker"]["requires_live_provider_consent"] is True
+    assert report["first_blocker"]["cost_risk"] is True
+    assert report["first_blocker"]["would_write_backend_env"] is False
+    assert report["first_blocker"]["would_write_ios_deploy_config"] is False
+    assert report["first_blocker"]["validation_command"] == (
+        "make final-configured-evidence-plan"
+    )
+    assert report["next_action"]["id"] == "three_d_evaluation_configured"
+    assert report["next_action"]["source"] == "first_blocker"
     assert "make provider-handoff" in report["commands"]
     assert "make final-demo-launch-configured" in report["commands"]
     assert not any(
@@ -162,6 +185,8 @@ def test_configured_evidence_plan_is_ready_with_configured_evidence(
     assert steps["final_acceptance_configured"]["status"] == "ready"
     assert steps["final_demo_launch_configured"]["status"] == "ready"
     assert steps["live_provider_evidence"]["status"] == "ready"
+    assert report["first_blocker"] is None
+    assert report["next_action"] is None
 
 
 def _configured_settings() -> Settings:

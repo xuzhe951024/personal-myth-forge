@@ -3704,6 +3704,7 @@ public struct FinalConfiguredEvidencePlanStep: Codable, Equatable, Sendable {
     public var id: String
     public var label: String
     public var status: String
+    public var classification: String?
     public var command: String
     public var requiresLiveProviderConsent: Bool
     public var mayCallLiveProvider: Bool
@@ -3715,11 +3716,14 @@ public struct FinalConfiguredEvidencePlanStep: Codable, Equatable, Sendable {
     public var evidenceStatus: String?
     public var evidencePath: String?
     public var evidenceDetail: String?
+    public var validationCommand: String?
+    public var source: String?
 
     public init(
         id: String,
         label: String,
         status: String,
+        classification: String? = nil,
         command: String,
         requiresLiveProviderConsent: Bool,
         mayCallLiveProvider: Bool,
@@ -3730,11 +3734,14 @@ public struct FinalConfiguredEvidencePlanStep: Codable, Equatable, Sendable {
         blockedBy: [String],
         evidenceStatus: String? = nil,
         evidencePath: String? = nil,
-        evidenceDetail: String? = nil
+        evidenceDetail: String? = nil,
+        validationCommand: String? = nil,
+        source: String? = nil
     ) {
         self.id = id
         self.label = label
         self.status = status
+        self.classification = classification
         self.command = command
         self.requiresLiveProviderConsent = requiresLiveProviderConsent
         self.mayCallLiveProvider = mayCallLiveProvider
@@ -3746,6 +3753,8 @@ public struct FinalConfiguredEvidencePlanStep: Codable, Equatable, Sendable {
         self.evidenceStatus = evidenceStatus
         self.evidencePath = evidencePath
         self.evidenceDetail = evidenceDetail
+        self.validationCommand = validationCommand
+        self.source = source
     }
 }
 
@@ -3818,6 +3827,8 @@ public struct FinalConfiguredEvidencePlanReport: Codable, Equatable, Sendable {
     public var kind: String
     public var status: String
     public var summary: FinalConfiguredEvidencePlanSummary
+    public var firstBlocker: FinalConfiguredEvidencePlanStep?
+    public var nextAction: FinalConfiguredEvidencePlanStep?
     public var steps: [FinalConfiguredEvidencePlanStep]
     public var stepsById: [String: FinalConfiguredEvidencePlanStep]
     public var operatorActions: [String]
@@ -3829,6 +3840,8 @@ public struct FinalConfiguredEvidencePlanReport: Codable, Equatable, Sendable {
         kind: String,
         status: String,
         summary: FinalConfiguredEvidencePlanSummary,
+        firstBlocker: FinalConfiguredEvidencePlanStep? = nil,
+        nextAction: FinalConfiguredEvidencePlanStep? = nil,
         steps: [FinalConfiguredEvidencePlanStep],
         stepsById: [String: FinalConfiguredEvidencePlanStep],
         operatorActions: [String],
@@ -3839,6 +3852,8 @@ public struct FinalConfiguredEvidencePlanReport: Codable, Equatable, Sendable {
         self.kind = kind
         self.status = status
         self.summary = summary
+        self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.steps = steps
         self.stepsById = stepsById
         self.operatorActions = operatorActions

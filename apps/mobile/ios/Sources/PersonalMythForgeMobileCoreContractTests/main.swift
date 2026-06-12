@@ -5366,6 +5366,13 @@ private func testDecodesConfiguredEvidencePlanFromFinalLaunchPayload() throws {
         plan.stepsById["three_d_evaluation_configured"]?.requiresLiveProviderConsent,
         true
     )
+    let nextAction = try require(
+        plan.nextAction,
+        "missing configured evidence plan next action"
+    )
+    try expectEqual(nextAction.id, "three_d_evaluation_configured")
+    try expectEqual(nextAction.source, "first_blocker")
+    try expectEqual(nextAction.validationCommand, "make final-configured-evidence-plan")
     try expectFalse(plan.liveCallPolicy.liveCallsByDefault)
     try expectFalse(plan.safety.commandsRun)
     try expectFalse(plan.safety.liveProviderCalls)
@@ -5382,6 +5389,8 @@ private func testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan() throws {
         text,
         "Configured evidence blocked: steps 6, ready 3, blocked 2, consent now 2, planned 3."
     )
+    try expectContains(text, "Next action: three_d_evaluation_configured blocked")
+    try expectContains(text, "make final-configured-evidence-plan")
     try expectContains(text, "three_d_evaluation_configured: blocked")
     try expectContains(text, "requires MESHY_API_KEY")
     try expectContains(text, "Consent flag: PMF_ALLOW_LIVE_PROVIDER_CALLS")
@@ -7643,6 +7652,27 @@ private func finalDemoLaunchPayload(
     let configuredEvidencePlanSummaryJSON = configuredEvidencePlanReady
         ? #"{"steps": 6, "ready": 6, "ready_to_run": 0, "blocked": 0, "consent_required": 2, "planned_consent_steps": 3, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
         : #"{"steps": 6, "ready": 3, "ready_to_run": 1, "blocked": 2, "consent_required": 2, "planned_consent_steps": 3, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
+    let configuredEvidencePlanNextActionJSON = configuredEvidencePlanReady ? "null" : """
+    {
+      "id": "three_d_evaluation_configured",
+      "label": "Configured 3D evaluation",
+      "status": "\(configuredEvidencePlanStepStatus)",
+      "classification": "\(configuredEvidencePlanStepStatus)",
+      "command": "make backend-evaluate-3d-configured",
+      "detail": "\(configuredEvidencePlanBlockerDetail)",
+      "blocked_by": \(configuredEvidencePlanReady ? "[]" : #"["MESHY_API_KEY", "PMF_ALLOW_LIVE_PROVIDER_CALLS"]"#),
+      "requires_live_provider_consent": true,
+      "may_call_live_provider": true,
+      "cost_risk": true,
+      "repo_local_write": false,
+      "would_write_backend_env": false,
+      "would_write_ios_deploy_config": false,
+      "evidence_status": "\(configuredEvidencePlanStepStatus)",
+      "evidence_path": "services/backend/.local/3d-evaluation-configured.json",
+      "validation_command": "make final-configured-evidence-plan",
+      "source": "first_blocker"
+    }
+    """
     let configuredEvidencePlanOperatorActionsJSON = configuredEvidencePlanReady
         ? #"[]"#
         : #"["provide MESHY_API_KEY in services/backend/.env", "rerun configured 3D evidence after consent"]"#
@@ -9162,6 +9192,8 @@ private func finalDemoLaunchPayload(
             "kind": "final_configured_evidence_plan_report",
             "status": "\(configuredEvidencePlanStatus)",
             "summary": \(configuredEvidencePlanSummaryJSON),
+            "first_blocker": \(configuredEvidencePlanNextActionJSON),
+            "next_action": \(configuredEvidencePlanNextActionJSON),
             "steps": [
               {
                 "id": "three_d_evaluation_configured",
