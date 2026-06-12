@@ -79,6 +79,16 @@ FINAL_DEMO_MANUAL_TEAM_ACTION = (
 )
 FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
+FINAL_DEMO_OPERATOR_ACTION_LIMIT = 12
+FINAL_SHOWCASE_HANDOFF_ACTION_LIMIT = 4
+FINAL_SHOWCASE_HANDOFF_ACTION_MARKERS = (
+    "provider-handoff",
+    "live-provider",
+    "live_provider",
+    "treatstock",
+    "print-fulfillment",
+    "print_fulfillment",
+)
 
 
 @dataclass(frozen=True)
@@ -236,6 +246,7 @@ def build_final_demo_launch_report(
         "operator_actions": _operator_actions(
             next_action=next_action,
             operator_checklist=operator_checklist,
+            final_showcase_readiness=final_showcase_readiness,
         ),
         "summary": resource_summary,
         "phase_summary": phase_summary,
@@ -500,17 +511,34 @@ def _operator_actions(
     *,
     next_action: dict[str, Any] | None,
     operator_checklist: list[str],
+    final_showcase_readiness: dict[str, Any] | None = None,
 ) -> list[str]:
     actions: list[str] = []
     concrete = _next_action_operator_action(next_action)
     if concrete:
         actions.append(concrete)
+    if isinstance(final_showcase_readiness, dict):
+        actions.extend(_final_showcase_handoff_actions(final_showcase_readiness))
     actions.extend(operator_checklist)
     deduped = _dedupe_operator_actions(actions)
     return _drop_superseded_manual_team_action(
         deduped,
         protected_action=concrete,
-    )[:8]
+    )[:FINAL_DEMO_OPERATOR_ACTION_LIMIT]
+
+
+def _final_showcase_handoff_actions(report: dict[str, Any]) -> list[str]:
+    raw_actions = report.get("operator_actions", [])
+    if not isinstance(raw_actions, list):
+        return []
+    selected: list[str] = []
+    for raw_action in raw_actions:
+        if not isinstance(raw_action, str):
+            continue
+        lowered = raw_action.lower()
+        if any(marker in lowered for marker in FINAL_SHOWCASE_HANDOFF_ACTION_MARKERS):
+            selected.append(raw_action)
+    return selected[:FINAL_SHOWCASE_HANDOFF_ACTION_LIMIT]
 
 
 def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:

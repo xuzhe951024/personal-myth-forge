@@ -273,6 +273,7 @@ Bridge deliverable:
 - P0.359 final showcase live provider capability rows expose provider handoff next action
 - P0.360 final showcase live provider operator actions use validation-aware handoff
 - P0.361 iPhone Final Launch summary prioritizes final showcase print handoff action
+- P0.362 final demo launch top-level actions promote final showcase live provider and print handoff
 
 ## P1: Mobile Vertical Slice
 
