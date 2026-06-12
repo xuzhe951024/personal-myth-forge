@@ -110,7 +110,10 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
         "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
         "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight",
     ]
-    assert "make final-apply-resources" in operator_actions
+    assert "make final-resource-apply-preview" in operator_actions
+    assert "make final-apply-resources" not in operator_actions
+    assert actions["apply_final_resources"]["command"] == "make final-apply-resources"
+    assert "make final-apply-resources" in report["operator_sequence"]
     assert "make mobile-deploy-preflight" in operator_actions
     assert not any(action.startswith("unblock ") for action in operator_actions)
     assert report["safety"] == {

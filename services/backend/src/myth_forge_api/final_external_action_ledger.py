@@ -35,6 +35,8 @@ OPERATOR_SEQUENCE = [
     "make print-fulfillment-readiness",
     "make final-showcase-readiness",
 ]
+FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
+FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
 IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
 
@@ -629,13 +631,37 @@ def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
         for action in group["actions"]:
             if action["status"] == "missing" and action["requires_user_input"]:
                 actions.append(_missing_user_input_action_text(action))
+            elif _is_blocked_apply_preview_action(action):
+                actions.append(normalize_operator_action(str(action["command"])))
             elif action["status"] == "blocked":
                 actions.append(normalize_operator_action(str(action["command"])))
             elif action["requires_cost_consent"] and action["status"] == "live":
                 actions.append(f"approve live provider cost before {action['command']}")
             elif action["requires_user_confirmation"] and action["status"] == "manual":
                 actions.append(f"confirm global/manual action before {action['command']}")
-    return _dedupe(actions)
+    return _prefer_apply_preview_before_apply(_dedupe(actions))
+
+
+def _is_blocked_apply_preview_action(action: dict[str, Any]) -> bool:
+    return (
+        action.get("id") == "preview_final_resource_apply"
+        and action.get("status") in {"missing", "blocked"}
+    )
+
+
+def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
+    action_roots = {_operator_action_root(action) for action in actions}
+    if FINAL_RESOURCE_APPLY_PREVIEW_ACTION not in action_roots:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_root(action) != FINAL_RESOURCE_APPLY_ACTION
+    ]
+
+
+def _operator_action_root(action: str) -> str:
+    return action.split(" | ", 1)[0].strip()
 
 
 def _missing_user_input_action_text(action: dict[str, Any]) -> str:
