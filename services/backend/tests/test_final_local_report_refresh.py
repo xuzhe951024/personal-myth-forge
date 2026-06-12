@@ -224,6 +224,20 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     )
 
 
+def test_final_local_report_refresh_operator_actions_gate_apply_behind_preview(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+
+    assert (
+        "rerun make final-resource-apply-preview before applying resources"
+        in result.report["operator_actions"]
+    )
+    assert "make final-apply-resources" not in result.report["operator_actions"]
+
+
 def test_final_local_report_refresh_operator_actions_drop_bare_action_roots() -> None:
     actions = final_local_report_refresh._operator_actions(
         [
@@ -400,6 +414,32 @@ def test_final_local_report_refresh_operator_actions_normalize_final_apply() -> 
     )
 
     assert actions == ["make final-apply-resources"]
+
+
+def test_final_local_report_refresh_operator_actions_hide_apply_when_preview_is_blocked() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_resource_apply_preview",
+                "status": "blocked",
+                "command": "rerun make final-resource-apply-preview before applying resources",
+            },
+            {
+                "id": "resource_handoff",
+                "status": "blocked",
+                "command": "set THREE_D_PROVIDER=meshy",
+            },
+            {
+                "id": "provider_handoff",
+                "status": "blocked",
+                "command": "set NPC_PROVIDER=openai",
+            },
+        ],
+    )
+
+    assert actions == [
+        "rerun make final-resource-apply-preview before applying resources"
+    ]
 
 
 def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
