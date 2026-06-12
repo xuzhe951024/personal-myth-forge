@@ -215,6 +215,7 @@ Bridge deliverable:
 - P0.301 final showcase source-prefixed make targets normalize to bare commands
 - P0.302 final showcase iOS deploy config action normalizes to bare handoff
 - P0.303 final handoff index top-level actions normalize to bare handoff commands
+- P0.304 iOS device launch rehearsal top-level actions normalize to bare handoff commands
 
 ## P1: Mobile Vertical Slice
 

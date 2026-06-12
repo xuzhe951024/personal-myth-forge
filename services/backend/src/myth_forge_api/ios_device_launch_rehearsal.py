@@ -6,8 +6,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.configured_acceptance_command import (
+    CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION,
+)
 from myth_forge_api.operator_actions import (
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+    FINAL_RESOURCE_APPLY_ACTION,
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
@@ -68,6 +72,11 @@ REHEARSAL_REPORT_SOURCES = [
         "command": "make ios-device-launch-certificate",
     },
 ]
+IOS_REHEARSAL_SOURCE_ACTION_PREFIXES = (
+    "final_rehearsal_local: ",
+    *(f"{source['id']}: " for source in LOCAL_REPORT_SOURCES),
+    *(f"{source['id']}: " for source in REHEARSAL_REPORT_SOURCES),
+)
 
 
 @dataclass(frozen=True)
@@ -365,12 +374,46 @@ def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
         else:
             actions.append(f"review {step['id']}: {step['command']}")
     if actions:
-        return _dedupe(actions)
+        return _dedupe(_top_level_operator_action(action) for action in actions)
 
     if all(step["status"] not in {"missing", "blocked"} for step in sequence):
         actions.append("continue with make backend-device-demo")
         actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
-    return _dedupe(actions)
+    return _dedupe(_top_level_operator_action(action) for action in actions)
+
+
+def _top_level_operator_action(action: str) -> str:
+    normalized = _validation_aware_operator_action(action)
+    command_part, detail_suffix = _split_detail_suffix(normalized)
+    bare_root = _strip_rehearsal_source_prefixes(command_part)
+    if bare_root == CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION:
+        return f"{bare_root}{detail_suffix}"
+    if bare_root == FINAL_RESOURCE_APPLY_ACTION:
+        return f"make final-apply-resources{detail_suffix}"
+    if bare_root.startswith("run make "):
+        return f"{bare_root.removeprefix('run ')}{detail_suffix}"
+    if bare_root != command_part:
+        return f"{bare_root}{detail_suffix}"
+    return f"{command_part}{detail_suffix}"
+
+
+def _split_detail_suffix(action: str) -> tuple[str, str]:
+    command, separator, detail = action.partition(" | ")
+    if not separator:
+        return action.strip(), ""
+    return command.strip(), f"{separator}{detail}"
+
+
+def _strip_rehearsal_source_prefixes(command: str) -> str:
+    stripped = command.strip()
+    changed = True
+    while changed:
+        changed = False
+        for prefix in IOS_REHEARSAL_SOURCE_ACTION_PREFIXES:
+            if stripped.startswith(prefix):
+                stripped = stripped.removeprefix(prefix).strip()
+                changed = True
+    return stripped
 
 
 def _first_blocker(sequence: list[dict[str, Any]]) -> dict[str, Any] | None:
