@@ -461,8 +461,8 @@ def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
     )
     assert actions[3] == (
         "make ios-device-launch-rehearsal | "
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
-        "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     assert not any(

@@ -338,19 +338,19 @@ def test_ios_device_launch_rehearsal_uses_mobile_preflight_check_details(
 
     expected_detail = (
         "final_rehearsal_local: mobile_deploy_preflight_evidence: "
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
-        "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     expected_source_action = (
-        "mobile_deploy_preflight_evidence: provide DEVELOPMENT_TEAM in "
-        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight | "
+        "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight | "
         "Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     expected_top_level_action = (
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
-        "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
 
