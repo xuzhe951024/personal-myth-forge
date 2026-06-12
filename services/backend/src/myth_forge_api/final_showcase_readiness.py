@@ -579,6 +579,9 @@ def _generated_3d_capability(
         ],
         validation_command=validation_command,
         requires_live_provider_consent=requires_live_provider_consent,
+        completion_requires_live_provider_consent=(
+            True if status == "partial" else None
+        ),
     )
 
 
@@ -627,6 +630,9 @@ def _ai_agent_npc_capability(
         ],
         validation_command=validation_command,
         requires_live_provider_consent=requires_live_provider_consent,
+        completion_requires_live_provider_consent=(
+            True if status == "partial" else None
+        ),
     )
 
 
@@ -1109,6 +1115,7 @@ def _capability(
     validation_command: str | None = None,
     requires_cost_consent: bool | None = None,
     requires_live_provider_consent: bool | None = None,
+    completion_requires_live_provider_consent: bool | None = None,
 ) -> dict[str, Any]:
     row = {
         "id": capability_id,
@@ -1126,6 +1133,10 @@ def _capability(
         row["requires_cost_consent"] = requires_cost_consent
     if requires_live_provider_consent is not None:
         row["requires_live_provider_consent"] = requires_live_provider_consent
+    if completion_requires_live_provider_consent is not None:
+        row["completion_requires_live_provider_consent"] = (
+            completion_requires_live_provider_consent
+        )
     return row
 
 
