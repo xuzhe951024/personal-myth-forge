@@ -230,6 +230,7 @@ Bridge deliverable:
 - P0.316 print fulfillment readiness exposes next action
 - P0.317 configured evidence bundle exposes next action
 - P0.318 provider handoff exposes next action
+- P0.319 final acceptance exposes next action
 
 ## P1: Mobile Vertical Slice
 

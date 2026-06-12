@@ -195,6 +195,7 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
     assert result.report["profile"] == "quick"
     assert result.report["allow_live_provider_calls"] is False
     assert result.report["overall_status"] == "blocked"
+    assert result.report["status"] == "blocked"
     assert result.report["summary"] == {
         "passed": 12,
         "blocked": 2,
@@ -209,6 +210,20 @@ def test_final_acceptance_quick_profile_classifies_known_local_blockers(tmp_path
             "make mobile-xcode-build-evidence"
         ),
     ]
+    assert result.report["first_blocker"]["id"] == "mobile_deploy_preflight"
+    assert result.report["first_blocker"]["classification"] == (
+        "blocked_by_local_ios_deploy_config"
+    )
+    assert result.report["first_blocker"]["command"] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    )
+    assert result.report["first_blocker"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "source": "first_blocker",
+    }
     checks = {check["id"]: check for check in result.report["checks"]}
     assert list(checks) == [
         "provider_handoff",
@@ -379,6 +394,15 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
             report={
                 "kind": "provider_handoff_report",
                 "missing_env": ["MESHY_API_KEY", "OPENAI_API_KEY"],
+                "first_blocker": {
+                    "id": "MESHY_API_KEY",
+                    "label": "MESHY_API_KEY",
+                    "status": "blocked",
+                    "classification": "missing_required_env",
+                    "command": "provide MESHY_API_KEY in final-resources.env",
+                    "detail": "Backend-only provider value is missing.",
+                    "validation_command": "make final-resources-preflight",
+                },
                 "error": "api_key=sk-meshy-secret raw=private",
             },
         ),
@@ -448,6 +472,14 @@ def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) ->
 
     assert result.exit_code == 2
     assert result.report["overall_status"] == "blocked"
+    assert result.report["first_blocker"]["id"] == "MESHY_API_KEY"
+    assert result.report["first_blocker"]["command"] == (
+        "provide MESHY_API_KEY in final-resources.env"
+    )
+    assert result.report["first_blocker"]["validation_command"] == (
+        "make final-resources-preflight"
+    )
+    assert result.report["next_action"]["source"] == "first_blocker"
     assert checks["provider_handoff"]["status"] == "blocked"
     assert checks["provider_handoff"]["classification"] == (
         "blocked_by_provider_configuration"
@@ -650,6 +682,9 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
 
     assert result.exit_code == 0
     assert result.report["overall_status"] == "passed"
+    assert result.report["status"] == "passed"
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert result.report["summary"] == {
         "passed": 19,
         "blocked": 0,

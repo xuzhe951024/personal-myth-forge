@@ -50,22 +50,13 @@ from myth_forge_api.print_acceptance import (
     PrintQuoteAcceptanceResult,
     run_print_quote_acceptance,
 )
-from myth_forge_api.providers.readiness import build_provider_readiness
+from myth_forge_api.provider_handoff import build_provider_handoff_report
 from myth_forge_api.resource_template_acceptance import (
     ResourceTemplateAcceptanceResult,
     run_resource_template_acceptance,
 )
 
 Profile = Literal["quick", "full"]
-
-CORE_PROVIDER_KINDS = ["three_d", "npc", "capture_storage"]
-BACKEND_ONLY_ENV = [
-    "MESHY_API_KEY",
-    "OPENAI_API_KEY",
-    "TREATSTOCK_API_KEY",
-    "SCULPTEO_API_KEY",
-]
-
 
 @dataclass(frozen=True)
 class CommandExecutionResult:
@@ -383,14 +374,18 @@ def run_final_acceptance(
     summary = _summary(checks)
     overall_status = _overall_status(summary)
     exit_code = _exit_code_for_status(overall_status)
+    first_blocker = _first_blocker(checks)
     report = {
         "kind": "final_acceptance_report",
         "profile": profile,
         "provider_mode": provider_mode,
         "require_real_core": require_real_core,
         "allow_live_provider_calls": allow_live_provider_calls,
+        "status": overall_status,
         "overall_status": overall_status,
         "summary": summary,
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "operator_actions": _operator_actions(checks),
         "checks": checks,
         "timings": {"total_elapsed_seconds": round(time.perf_counter() - started_at, 4)},
@@ -569,37 +564,8 @@ def _classify_command_result(
 
 
 def _run_provider_handoff(require_core_real: bool) -> InlineCheckResult:
-    readiness = build_provider_readiness(load_settings())
-    provider_items = [item.model_dump(mode="json") for item in readiness.providers]
-    provider_by_kind = {item["kind"]: item for item in provider_items}
-    core_items = [
-        provider_by_kind[kind]
-        for kind in CORE_PROVIDER_KINDS
-        if kind in provider_by_kind
-    ]
-    missing_env = sorted(
-        {
-            env_name
-            for provider in provider_items
-            for env_name in provider.get("missing_env", [])
-        }
-    )
-    core_real_ready = all(provider["is_real_provider_ready"] for provider in core_items)
-    report = {
-        "kind": "provider_handoff_report",
-        "mode": "configuration",
-        "overall_demo_ready": readiness.overall_demo_ready,
-        "overall_real_ready": readiness.overall_real_ready,
-        "core_real_ready": core_real_ready,
-        "core_provider_kinds": CORE_PROVIDER_KINDS,
-        "missing_env": missing_env,
-        "backend_only_env": BACKEND_ONLY_ENV,
-        "mobile_secret_policy": (
-            "Provider secrets stay on the backend; mobile clients only see readiness metadata."
-        ),
-        "providers": provider_items,
-    }
-    if require_core_real and not core_real_ready:
+    report = build_provider_handoff_report(load_settings())
+    if require_core_real and not report["core_real_ready"]:
         return InlineCheckResult(exit_code=2, report=report)
     return InlineCheckResult(exit_code=0, report=report)
 
@@ -646,6 +612,103 @@ def _operator_actions(checks: list[dict[str, Any]]) -> list[str]:
             else:
                 actions.append(f"unblock {check_id}: {label}")
     return _dedupe([_validation_aware_action(action) for action in actions])[:6]
+
+
+def _first_blocker(checks: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for check in checks:
+        if str(check.get("status", "")) in {"blocked", "failed"}:
+            return _check_blocker(check)
+    return None
+
+
+def _check_blocker(check: dict[str, Any]) -> dict[str, Any]:
+    child_blocker = _child_blocker(check)
+    if child_blocker is not None:
+        return child_blocker
+    check_id = str(check.get("id", "check"))
+    classification = str(check.get("classification", ""))
+    return {
+        "id": check_id,
+        "label": str(check.get("label", check_id)),
+        "status": str(check.get("status", "blocked")),
+        "classification": classification,
+        "command": _blocker_command(check_id, classification, check),
+        "detail": _blocker_detail(check),
+        "validation_command": _validation_command(check_id, check),
+    }
+
+
+def _child_blocker(check: dict[str, Any]) -> dict[str, Any] | None:
+    report = check.get("report")
+    if not isinstance(report, dict):
+        return None
+    child = report.get("next_action") or report.get("first_blocker")
+    if not isinstance(child, dict):
+        return None
+    child_blocker = dict(child)
+    child_blocker.pop("source", None)
+    child_blocker.setdefault("status", str(check.get("status", "blocked")))
+    child_blocker.setdefault(
+        "classification",
+        str(check.get("classification", "blocked")),
+    )
+    child_blocker.setdefault(
+        "validation_command",
+        _validation_command(str(check.get("id")), check),
+    )
+    return child_blocker
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
+
+
+def _blocker_command(
+    check_id: str,
+    classification: str,
+    check: dict[str, Any],
+) -> str:
+    if check_id == "mobile_deploy_preflight":
+        if classification == "blocked_by_local_ios_backend_health":
+            return (
+                "start backend-device-demo before device checks: make backend-device-demo; "
+                "rerun make mobile-deploy-preflight"
+            )
+        return "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    if check_id == "mobile_xcode_build":
+        return (
+            "accept the Xcode license outside Codex, then rerun "
+            "make mobile-xcode-build-evidence"
+        )
+    if classification == "blocked_by_provider_configuration":
+        return "make provider-handoff"
+    command = check.get("command")
+    if isinstance(command, list) and command:
+        return " ".join(str(part) for part in command)
+    return f"inspect {check_id}"
+
+
+def _validation_command(check_id: str, check: dict[str, Any]) -> str:
+    if check_id == "mobile_deploy_preflight":
+        return "make mobile-deploy-preflight"
+    if check_id == "mobile_xcode_build":
+        return "make mobile-xcode-build-evidence"
+    if check_id in {"provider_handoff", "demo_acceptance"}:
+        return "make final-acceptance-local"
+    command = check.get("command")
+    if isinstance(command, list) and command:
+        return " ".join(str(part) for part in command)
+    return "make final-acceptance-local"
+
+
+def _blocker_detail(check: dict[str, Any]) -> str:
+    for field in ("stderr_tail", "stdout_tail", "error"):
+        value = check.get(field)
+        if isinstance(value, str) and value:
+            return value
+    return str(check.get("label", check.get("id", "Final acceptance check blocked.")))
 
 
 def _validation_aware_action(action: str) -> str:

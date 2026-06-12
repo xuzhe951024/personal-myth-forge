@@ -786,6 +786,8 @@ def _action_command(action: dict[str, Any] | None) -> str:
     command = str(action.get("command") or "").strip()
     validation_command = str(action.get("validation_command") or "").strip()
     if command and validation_command:
+        if f"rerun {validation_command}" in command:
+            return command
         return f"{command}; rerun {validation_command}"
     return command
 
@@ -983,11 +985,11 @@ def _blocked_check_detail_summary(checks: list[Any]) -> str:
 def _blocker_hint(report: dict[str, Any]) -> dict[str, str]:
     next_action = report.get("next_action")
     if isinstance(next_action, dict):
-        return _hint_from_mapping(next_action)
+        return _hint_from_report_action(report, next_action)
 
     first_blocker = report.get("first_blocker")
     if isinstance(first_blocker, dict):
-        return _hint_from_mapping(first_blocker)
+        return _hint_from_report_action(report, first_blocker)
 
     requirements = report.get("requirements")
     if isinstance(requirements, list):
@@ -1029,6 +1031,20 @@ def _blocker_hint(report: dict[str, Any]) -> dict[str, str]:
 
     action = _first_operator_action(report)
     return {"command": action} if action else {}
+
+
+def _hint_from_report_action(
+    report: dict[str, Any],
+    action: dict[str, Any],
+) -> dict[str, str]:
+    hint = _hint_from_mapping(action)
+    if report.get("kind") == "final_acceptance_report":
+        checks = report.get("checks")
+        if isinstance(checks, list):
+            detail = _blocked_check_detail_summary(checks)
+            if detail:
+                hint["detail"] = detail
+    return hint
 
 
 def _hint_from_mapping(source: dict[str, Any]) -> dict[str, str]:
