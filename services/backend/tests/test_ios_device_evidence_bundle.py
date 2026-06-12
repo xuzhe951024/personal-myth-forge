@@ -52,6 +52,37 @@ def test_ios_device_evidence_bundle_blocks_missing_local_device_evidence(
     assert result.report["safety"]["describes_global_actions"] is True
 
 
+def test_ios_device_evidence_bundle_normalizes_stale_launch_rehearsal_detail(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_ios_device_launch_rehearsal(
+        repo_root,
+        {
+            "kind": "ios_device_launch_rehearsal_report",
+            "status": "blocked",
+            "operator_actions": [
+                (
+                    "rerun make ios-device-launch-rehearsal to regenerate "
+                    "services/backend/.local/ios-device-launch-rehearsal.json "
+                    "for the current product sources"
+                )
+            ],
+        },
+    )
+
+    result = build_ios_device_evidence_bundle_report(repo_root=repo_root)
+    actions = " ".join(result.report["operator_actions"])
+
+    assert (
+        "make ios-device-launch-rehearsal | "
+        "Run iOS device launch rehearsal to refresh final device evidence."
+        in result.report["operator_actions"]
+    )
+    assert "run make ios-device-launch-rehearsal" not in actions
+    assert "rerun make ios-device-launch-rehearsal" not in actions
+
+
 def test_ios_device_evidence_bundle_marks_ready_saved_device_evidence(
     tmp_path: Path,
 ) -> None:
