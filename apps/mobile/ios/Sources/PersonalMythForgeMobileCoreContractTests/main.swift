@@ -5440,6 +5440,9 @@ private func testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload() throws
     try expectEqual(readiness.summary.partial, 1)
     try expectEqual(readiness.checks.first?.id, "print_quote_acceptance")
     try expectEqual(readiness.firstBlocker?.id, "configured_treatstock_quote")
+    try expectEqual(readiness.nextAction?.id, "configured_treatstock_quote")
+    try expectEqual(readiness.nextAction?.source, "first_blocker")
+    try expectEqual(readiness.nextAction?.command, "make print-fulfillment-readiness")
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.liveProviderCalls)
     try expectFalse(readiness.safety.paymentLinksInReport)
@@ -5454,6 +5457,7 @@ private func testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness() throws
 
     try expectContains(text, "Print fulfillment partial: ready 4, partial 1, blocked 0.")
     try expectContains(text, "configured_treatstock_quote: partial")
+    try expectContains(text, "Next action: make print-fulfillment-readiness")
     try expectContains(text, "make print-fulfillment-readiness")
 }
 
@@ -7611,6 +7615,17 @@ private func finalDemoLaunchPayload(
       "detail": "\(printFulfillmentReadinessBlockerDetail)"
     }
     """
+    let printReadinessNextActionJSON = printReadinessReady ? "null" : """
+    {
+      "id": "configured_treatstock_quote",
+      "label": "Configured Treatstock quote",
+      "status": "\(printReadinessFirstStatus)",
+      "classification": "\(printReadinessFirstClassification)",
+      "command": "\(printFulfillmentReadinessAction)",
+      "detail": "\(printFulfillmentReadinessBlockerDetail)",
+      "source": "first_blocker"
+    }
+    """
     let printReadinessSummaryJSON = printReadinessReady
         ? #"{"ready": 5, "partial": 0, "blocked": 0}"#
         : printReadinessBlocked
@@ -9193,6 +9208,7 @@ private func finalDemoLaunchPayload(
               }
             ],
             "first_blocker": \(printReadinessFirstBlockerJSON),
+            "next_action": \(printReadinessNextActionJSON),
             "operator_actions": \(printReadinessReady ? #"[]"# : "[\"\(printFulfillmentReadinessAction)\"]"),
             "commands": ["make print-fulfillment-readiness"],
             "safety": {

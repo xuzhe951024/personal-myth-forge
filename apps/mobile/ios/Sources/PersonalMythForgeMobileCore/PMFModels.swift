@@ -3969,6 +3969,55 @@ public struct PrintFulfillmentReadinessCheck: Codable, Equatable, Sendable {
     }
 }
 
+public struct PrintFulfillmentReadinessNextAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var source: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case label
+        case status
+        case classification
+        case command
+        case detail
+        case source
+    }
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        source: String? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.source = source
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.label = try container.decode(String.self, forKey: .label)
+        self.status = try container.decode(String.self, forKey: .status)
+        self.classification = try container.decodeIfPresent(String.self, forKey: .classification)
+        self.command = try container.decode(String.self, forKey: .command)
+        self.detail = try container.decodeIfPresent(String.self, forKey: .detail) ?? ""
+        self.source = try container.decodeIfPresent(String.self, forKey: .source)
+    }
+}
+
 public struct PrintFulfillmentReadinessSafety: Codable, Equatable, Sendable {
     public var commandsRun: Bool
     public var providerCalls: Bool
@@ -4021,6 +4070,7 @@ public struct PrintFulfillmentReadinessReport: Codable, Equatable, Sendable {
     public var summary: PrintFulfillmentReadinessSummary
     public var checks: [PrintFulfillmentReadinessCheck]
     public var firstBlocker: PrintFulfillmentReadinessCheck?
+    public var nextAction: PrintFulfillmentReadinessNextAction?
     public var operatorActions: [String]
     public var commands: [String]
     public var safety: PrintFulfillmentReadinessSafety
@@ -4031,6 +4081,7 @@ public struct PrintFulfillmentReadinessReport: Codable, Equatable, Sendable {
         summary: PrintFulfillmentReadinessSummary,
         checks: [PrintFulfillmentReadinessCheck],
         firstBlocker: PrintFulfillmentReadinessCheck? = nil,
+        nextAction: PrintFulfillmentReadinessNextAction? = nil,
         operatorActions: [String],
         commands: [String],
         safety: PrintFulfillmentReadinessSafety
@@ -4040,6 +4091,7 @@ public struct PrintFulfillmentReadinessReport: Codable, Equatable, Sendable {
         self.summary = summary
         self.checks = checks
         self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.operatorActions = operatorActions
         self.commands = commands
         self.safety = safety

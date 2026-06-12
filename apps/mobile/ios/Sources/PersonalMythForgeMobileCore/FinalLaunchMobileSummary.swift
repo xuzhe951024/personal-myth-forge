@@ -1203,6 +1203,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             } else if let check = readiness.checks.first(where: { status(from: $0.status) != .ready }) {
                 rows.append(printFulfillmentReadinessCheckRow(check))
             }
+            if let action = readiness.nextAction {
+                rows.append(printFulfillmentReadinessNextActionRow(action))
+            }
             rows.append(contentsOf: readiness.operatorActions.prefix(2).map(sanitize))
         }
         return rows.map(sanitize)
@@ -1218,6 +1221,20 @@ public enum FinalLaunchMobileSummaryBuilder {
         parts.append("| \(check.command)")
         if !check.detail.isEmpty {
             parts.append("| \(check.detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func printFulfillmentReadinessNextActionRow(
+        _ action: PrintFulfillmentReadinessNextAction
+    ) -> String {
+        var parts = ["Next action: \(action.command)"]
+        parts.append("| \(action.id): \(action.status)")
+        if let classification = action.classification, !classification.isEmpty {
+            parts.append("| \(classification)")
+        }
+        if !action.detail.isEmpty {
+            parts.append("| \(action.detail)")
         }
         return sanitize(parts.joined(separator: " "))
     }
