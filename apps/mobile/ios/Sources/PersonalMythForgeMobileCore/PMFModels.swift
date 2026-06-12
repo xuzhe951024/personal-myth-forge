@@ -1260,6 +1260,7 @@ public struct FinalResourceApplyPreviewFirstBlocker: Codable, Equatable, Sendabl
     public var writer: String
     public var blockedBy: [String]
     public var validationCommand: String
+    public var source: String?
 
     public init(
         id: String,
@@ -1271,7 +1272,8 @@ public struct FinalResourceApplyPreviewFirstBlocker: Codable, Equatable, Sendabl
         destination: String,
         writer: String,
         blockedBy: [String] = [],
-        validationCommand: String
+        validationCommand: String,
+        source: String? = nil
     ) {
         self.id = id
         self.label = label
@@ -1283,6 +1285,7 @@ public struct FinalResourceApplyPreviewFirstBlocker: Codable, Equatable, Sendabl
         self.writer = writer
         self.blockedBy = blockedBy
         self.validationCommand = validationCommand
+        self.source = source
     }
 }
 
@@ -1325,6 +1328,7 @@ public struct FinalResourceApplyPreviewReport: Codable, Equatable, Sendable {
     public var writeTargets: [FinalResourceApplyPreviewTarget]
     public var writeTargetsById: [String: FinalResourceApplyPreviewTarget]
     public var firstBlocker: FinalResourceApplyPreviewFirstBlocker?
+    public var nextAction: FinalResourceApplyPreviewFirstBlocker?
     public var operatorActions: [String]
     public var commands: [String]
     public var safety: FinalResourceApplyPreviewSafety
@@ -1337,6 +1341,7 @@ public struct FinalResourceApplyPreviewReport: Codable, Equatable, Sendable {
         writeTargets: [FinalResourceApplyPreviewTarget],
         writeTargetsById: [String: FinalResourceApplyPreviewTarget],
         firstBlocker: FinalResourceApplyPreviewFirstBlocker? = nil,
+        nextAction: FinalResourceApplyPreviewFirstBlocker? = nil,
         operatorActions: [String] = [],
         commands: [String] = [],
         safety: FinalResourceApplyPreviewSafety
@@ -1348,6 +1353,7 @@ public struct FinalResourceApplyPreviewReport: Codable, Equatable, Sendable {
         self.writeTargets = writeTargets
         self.writeTargetsById = writeTargetsById
         self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.operatorActions = operatorActions
         self.commands = commands
         self.safety = safety

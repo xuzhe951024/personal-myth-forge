@@ -641,6 +641,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         var rows = [
             "Apply preview \(sanitize(report.status)): targets \(report.summary.writeTargets), missing \(report.summary.missing), blocked \(report.summary.blocked), secret \(report.summary.secret)."
         ]
+        if let nextAction = report.nextAction {
+            rows.append(applyPreviewActionRow(prefix: "Next action:", action: nextAction))
+        }
         if let blocker = report.firstBlocker {
             rows.append(applyPreviewFirstBlockerRow(blocker))
         }
@@ -658,18 +661,28 @@ public enum FinalLaunchMobileSummaryBuilder {
     private static func applyPreviewFirstBlockerRow(
         _ blocker: FinalResourceApplyPreviewFirstBlocker
     ) -> String {
-        var parts = ["First blocker:", blocker.id, blocker.status]
-        if let classification = blocker.classification, !classification.isEmpty {
+        applyPreviewActionRow(prefix: "First blocker:", action: blocker)
+    }
+
+    private static func applyPreviewActionRow(
+        prefix: String,
+        action: FinalResourceApplyPreviewFirstBlocker
+    ) -> String {
+        var parts = [prefix, action.id, action.status]
+        if let classification = action.classification, !classification.isEmpty {
             parts.append(classification)
         }
-        if !blocker.command.isEmpty {
-            parts.append("| \(blocker.command)")
+        if let source = action.source, !source.isEmpty {
+            parts.append("| source \(source)")
         }
-        if !blocker.detail.isEmpty {
-            parts.append("| \(blocker.detail)")
+        if !action.command.isEmpty {
+            parts.append("| \(action.command)")
         }
-        if !blocker.validationCommand.isEmpty {
-            parts.append("| \(blocker.validationCommand)")
+        if !action.detail.isEmpty {
+            parts.append("| \(action.detail)")
+        }
+        if !action.validationCommand.isEmpty {
+            parts.append("| \(action.validationCommand)")
         }
         return sanitize(parts.joined(separator: " "))
     }

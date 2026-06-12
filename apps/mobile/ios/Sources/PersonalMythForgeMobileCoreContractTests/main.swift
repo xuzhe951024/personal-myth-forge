@@ -4666,6 +4666,13 @@ private func testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload() throws
     try expectEqual(firstBlocker.command, "make final-apply-resources")
     try expectEqual(firstBlocker.blockedBy, ["MESHY_API_KEY"])
     try expectEqual(firstBlocker.validationCommand, "make final-resources-preflight")
+    let nextAction = try require(
+        preview.nextAction,
+        "missing final resource apply preview next action"
+    )
+    try expectEqual(nextAction.id, "backend_env")
+    try expectEqual(nextAction.source, "first_blocker")
+    try expectEqual(nextAction.validationCommand, "make final-resources-preflight")
     try expectEqual(preview.commands.first, "make final-resource-apply-preview")
     try expectFalse(preview.safety.writesBackendEnv)
     try expectFalse(preview.safety.writesIosDeployConfig)
@@ -4683,6 +4690,7 @@ private func testFinalLaunchMobileSummaryShowsResourceApplyPreview() throws {
     try expectContains(text, "targets 2")
     try expectContains(text, "backend_env")
     try expectContains(text, "services/backend/.env")
+    try expectContains(text, "Next action: backend_env missing")
     try expectContains(text, "First blocker: backend_env missing")
     try expectContains(text, "blocked by MESHY_API_KEY")
     try expectContains(text, "ios_deploy_config")
@@ -8037,6 +8045,19 @@ private func finalDemoLaunchPayload(
               "writer": "services/backend/scripts/write_backend_env.sh",
               "blocked_by": ["MESHY_API_KEY"],
               "validation_command": "make final-resources-preflight"
+            },
+            "next_action": {
+              "id": "backend_env",
+              "label": "Backend env",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "make final-apply-resources",
+              "detail": "blocked by MESHY_API_KEY",
+              "destination": "services/backend/.env",
+              "writer": "services/backend/scripts/write_backend_env.sh",
+              "blocked_by": ["MESHY_API_KEY"],
+              "validation_command": "make final-resources-preflight",
+              "source": "first_blocker"
             },
             "write_targets": [
               {

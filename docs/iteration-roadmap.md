@@ -234,6 +234,7 @@ Bridge deliverable:
 - P0.320 final resources preflight exposes next action
 - P0.321 final resources preflight item actions
 - P0.322 final resource fill guide exposes next action
+- P0.323 final resource apply preview exposes next action
 
 ## P1: Mobile Vertical Slice
 
