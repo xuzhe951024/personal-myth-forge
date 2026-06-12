@@ -541,7 +541,7 @@ def _mobile_deploy_preflight_evidence_snapshot(repo_root: Path) -> dict[str, Any
 def _mobile_xcode_build_evidence_snapshot(repo_root: Path) -> dict[str, Any]:
     existing = _load_local_report(repo_root, "mobile-xcode-build-evidence.json")
     if isinstance(existing, dict):
-        return existing
+        return _normalize_existing_mobile_xcode_build_evidence(existing)
 
     first_blocker = {
         "id": "xcode_build_gate",
@@ -596,6 +596,48 @@ def _mobile_xcode_build_evidence_snapshot(repo_root: Path) -> dict[str, Any]:
             "local_paths_in_report": False,
             "writes_derived_data": False,
         },
+    }
+
+
+def _normalize_existing_mobile_xcode_build_evidence(
+    report: dict[str, Any],
+) -> dict[str, Any]:
+    normalized = dict(report)
+    if normalized.get("status") == "ready":
+        normalized["first_blocker"] = None
+        normalized["next_action"] = None
+        return normalized
+
+    first_blocker = normalized.get("first_blocker")
+    if not isinstance(first_blocker, dict):
+        first_blocker = _existing_mobile_xcode_first_blocker(normalized)
+        normalized["first_blocker"] = first_blocker
+    if not isinstance(normalized.get("next_action"), dict):
+        normalized["next_action"] = {**first_blocker, "source": "first_blocker"}
+    return normalized
+
+
+def _existing_mobile_xcode_first_blocker(report: dict[str, Any]) -> dict[str, Any]:
+    checks = report.get("checks")
+    check = checks[0] if isinstance(checks, list) and checks else {}
+    if not isinstance(check, dict):
+        check = {}
+    operator_actions = report.get("operator_actions")
+    command = (
+        operator_actions[0]
+        if isinstance(operator_actions, list)
+        and operator_actions
+        and isinstance(operator_actions[0], str)
+        else "review make mobile-xcode-build output, then rerun make mobile-xcode-build-evidence"
+    )
+    return {
+        "id": check.get("id", "xcode_build_gate"),
+        "label": check.get("label", "Xcode build gate"),
+        "status": check.get("status", "blocked"),
+        "classification": report.get("classification", "xcode_build_gate_failed"),
+        "command": command,
+        "detail": check.get("detail", "Review make mobile-xcode-build output."),
+        "validation_command": "make mobile-xcode-build-evidence",
     }
 
 

@@ -517,6 +517,22 @@ def test_final_local_report_refresh_preserves_existing_xcode_evidence(
     assert result.exit_code == 2
     assert preserved["classification"] == "blocked_by_apple_sdk_license"
     assert preserved["checks"][0]["id"] == "xcode_license"
+    assert preserved["first_blocker"] == {
+        "id": "xcode_license",
+        "label": "Xcode license",
+        "status": "blocked",
+        "classification": "blocked_by_apple_sdk_license",
+        "command": (
+            "accept the Xcode license outside Codex, "
+            "then rerun make mobile-xcode-build-evidence"
+        ),
+        "detail": "Apple SDK license agreement is not accepted.",
+        "validation_command": "make mobile-xcode-build-evidence",
+    }
+    assert preserved["next_action"] == {
+        **preserved["first_blocker"],
+        "source": "first_blocker",
+    }
     assert preserved["safety"]["commands_run"] is True
 
 
@@ -536,12 +552,17 @@ def test_final_local_report_refresh_reuses_ready_device_gate_evidence_for_final_
     )
 
     result = run_final_local_report_refresh(repo_root=repo_root)
+    preserved_xcode = json.loads(
+        (local_dir / "mobile-xcode-build-evidence.json").read_text(encoding="utf-8")
+    )
     final_acceptance = json.loads(
         (local_dir / "final-acceptance-local.json").read_text(encoding="utf-8")
     )
     checks = {check["id"]: check for check in final_acceptance["checks"]}
 
     assert result.exit_code == 2
+    assert preserved_xcode["first_blocker"] is None
+    assert preserved_xcode["next_action"] is None
     assert checks["mobile_deploy_preflight"]["status"] == "passed"
     assert checks["mobile_deploy_preflight"]["classification"] == "command_succeeded"
     assert checks["mobile_deploy_preflight"]["exit_code"] == 0
