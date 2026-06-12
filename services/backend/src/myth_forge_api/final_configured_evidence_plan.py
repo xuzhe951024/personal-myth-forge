@@ -25,6 +25,10 @@ from myth_forge_api.live_provider_evidence import build_live_provider_evidence_r
 from myth_forge_api.operator_actions import normalize_operator_action
 
 
+FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
+FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
+
+
 @dataclass(frozen=True)
 class FinalConfiguredEvidencePlanResult:
     exit_code: int
@@ -411,7 +415,7 @@ def _operator_actions(steps: list[dict[str, Any]]) -> list[str]:
             )
     if not actions:
         actions.append("run configured evidence commands in order")
-    return _dedupe(actions)[:12]
+    return _prefer_apply_preview_before_apply(_dedupe(actions))[:12]
 
 
 def _safety() -> dict[str, bool]:
@@ -442,6 +446,21 @@ def _dedupe(values: list[str]) -> list[str]:
         seen.add(normalized)
         result.append(normalized)
     return result
+
+
+def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
+    action_roots = {_operator_action_root(action) for action in actions}
+    if FINAL_RESOURCE_APPLY_PREVIEW_ACTION not in action_roots:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_root(action) != FINAL_RESOURCE_APPLY_ACTION
+    ]
+
+
+def _operator_action_root(action: str) -> str:
+    return action.split(" | ", 1)[0].strip()
 
 
 def _sanitize_report(report: dict[str, Any], repo_root: Path) -> dict[str, Any]:

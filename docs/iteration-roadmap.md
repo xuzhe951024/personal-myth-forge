@@ -258,6 +258,7 @@ Bridge deliverable:
 - P0.344 resource handoff prefers apply preview before apply writer
 - P0.345 final configured preflight prefers apply preview before apply writer
 - P0.346 final demo launch configured prefers apply preview before apply writer
+- P0.347 final configured evidence plan prefers apply preview before apply writer
 
 ## P1: Mobile Vertical Slice
 
