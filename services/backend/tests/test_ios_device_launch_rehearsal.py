@@ -354,13 +354,17 @@ def test_ios_device_launch_rehearsal_uses_mobile_preflight_check_details(
         "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
+    expected_next_action_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
 
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["first_blocker"]["detail"] == expected_detail
     assert result.report["next_action"] == {
         **result.report["first_blocker"],
-        "command": expected_top_level_action,
+        "command": expected_next_action_command,
         "source": "operator_actions",
         "validation_command": "make ios-device-launch-rehearsal",
     }
