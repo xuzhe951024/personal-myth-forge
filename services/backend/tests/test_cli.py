@@ -580,6 +580,8 @@ def test_cli_final_resources_preflight_writes_ready_report(tmp_path) -> None:
     assert exit_code == 0
     assert report["kind"] == "final_resources_preflight_report"
     assert report["status"] == "ready"
+    assert report["first_blocker"] is None
+    assert report["next_action"] is None
     assert report["resources_file"]["path"] == "services/backend/.local/final-resources.env"
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
@@ -681,6 +683,8 @@ def test_cli_final_resources_preflight_returns_two_when_missing(
     assert exit_code == 2
     assert payload["kind"] == "final_resources_preflight_report"
     assert payload["status"] == "missing"
+    assert payload["first_blocker"]["id"] == "final_resources_file"
+    assert payload["next_action"]["source"] == "first_blocker"
     assert str(tmp_path) not in json.dumps(payload)
 
 

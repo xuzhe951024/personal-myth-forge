@@ -70,6 +70,7 @@ def build_final_resources_preflight_report(
     )
 
     if not selected_resources_file.exists():
+        first_blocker = _missing_file_blocker()
         report = {
             "kind": "final_resources_preflight_report",
             "status": "missing",
@@ -84,6 +85,8 @@ def build_final_resources_preflight_report(
             "unknown_keys": [],
             "malformed_lines": [],
             "operator_actions": ["run make final-resource-init"],
+            "first_blocker": first_blocker,
+            "next_action": _next_action(first_blocker),
             "safety": _safety(),
         }
         return FinalResourcesPreflightResult(exit_code=2, report=report)
@@ -108,6 +111,12 @@ def build_final_resources_preflight_report(
     status = "ready"
     if blocked_count or missing_count:
         status = "blocked"
+    first_blocker = _first_blocker(
+        status=status,
+        items=items,
+        unknown_keys=unknown_keys,
+        malformed_lines=malformed_lines,
+    )
 
     report = {
         "kind": "final_resources_preflight_report",
@@ -128,6 +137,8 @@ def build_final_resources_preflight_report(
             malformed_lines=malformed_lines,
             treatstock_required=treatstock_required,
         ),
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "safety": _safety(),
     }
     return FinalResourcesPreflightResult(
@@ -333,6 +344,106 @@ def _operator_actions(
     if treatstock_required:
         actions.append("provide TREATSTOCK_API_KEY or set PRINT_PROVIDER=local")
     return _dedupe([add_final_resource_validation_command(action) for action in actions])
+
+
+def _missing_file_blocker() -> dict[str, Any]:
+    return {
+        "id": "final_resources_file",
+        "label": "Final resources file",
+        "status": "missing",
+        "classification": "missing_file",
+        "command": "make final-resource-init",
+        "detail": "Create ignored final-resources.env before configured validation.",
+        "validation_command": "make final-resources-preflight",
+    }
+
+
+def _first_blocker(
+    *,
+    status: str,
+    items: list[dict[str, Any]],
+    unknown_keys: list[str],
+    malformed_lines: list[dict[str, int]],
+) -> dict[str, Any] | None:
+    if status == "ready":
+        return None
+    if unknown_keys:
+        key = unknown_keys[0]
+        return {
+            "id": "unknown_keys",
+            "label": "Unknown final resource key",
+            "status": "blocked",
+            "classification": "unknown_key",
+            "command": "remove unknown keys from final-resources.env",
+            "detail": f"Unknown final resource key: {key}",
+            "validation_command": "make final-resources-preflight",
+        }
+    if malformed_lines:
+        line_number = malformed_lines[0]["line_number"]
+        return {
+            "id": "malformed_lines",
+            "label": "Malformed final resource line",
+            "status": "blocked",
+            "classification": "malformed_line",
+            "command": "fix malformed final resource lines",
+            "detail": f"Malformed final resource line: {line_number}",
+            "validation_command": "make final-resources-preflight",
+        }
+    for item in items:
+        if item["status"] == "missing" and item["required"]:
+            return _item_blocker(item)
+    for item in items:
+        if item["status"] == "blocked":
+            return _item_blocker(item)
+    return None
+
+
+def _item_blocker(item: dict[str, Any]) -> dict[str, Any]:
+    item_id = str(item["id"])
+    return {
+        "id": item_id,
+        "label": item_id,
+        "status": str(item["status"]),
+        "classification": str(item.get("classification", item["status"])),
+        "command": _item_blocker_command(item),
+        "detail": _item_blocker_detail(item),
+        "validation_command": "make final-resources-preflight",
+    }
+
+
+def _item_blocker_command(item: dict[str, Any]) -> str:
+    item_id = str(item["id"])
+    if item["status"] == "missing":
+        return f"provide {item_id} in final-resources.env"
+    if item_id == "PMF_BACKEND_BASE_URL":
+        return "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    if item_id == "PRODUCT_BUNDLE_IDENTIFIER":
+        return "set PRODUCT_BUNDLE_IDENTIFIER to a unique app bundle id"
+    if item_id == "PRINT_PROVIDER":
+        return "set PRINT_PROVIDER to local or treatstock"
+    if item_id == "PMF_FINAL_LAUNCH_MODE":
+        return "set PMF_FINAL_LAUNCH_MODE to local or configured"
+    return f"fix {item_id} in final-resources.env"
+
+
+def _item_blocker_detail(item: dict[str, Any]) -> str:
+    item_id = str(item["id"])
+    classification = str(item.get("classification", ""))
+    if item["status"] == "missing":
+        return f"Required final resource value is missing: {item_id}."
+    if item_id == "PMF_BACKEND_BASE_URL" and classification == "loopback_url":
+        return "PMF_BACKEND_BASE_URL must be reachable from iPhone, not loopback."
+    if classification == "placeholder_value":
+        return f"Replace placeholder value for {item_id}."
+    if classification == "unsupported_value":
+        return f"Unsupported value for {item_id}."
+    return f"Blocked final resource value: {item_id}."
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
 
 
 def _is_loopback_url(value: str) -> bool:
