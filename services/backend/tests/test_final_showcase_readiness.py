@@ -1154,7 +1154,7 @@ def test_final_showcase_readiness_dedupes_duplicate_deploy_writer_roots() -> Non
         [bare_writer, detailed_writer]
     )
 
-    assert actions == [detailed_writer]
+    assert actions == [bare_writer]
 
 
 def test_final_showcase_readiness_normalizes_xcode_gate_actions() -> None:

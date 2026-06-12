@@ -266,6 +266,7 @@ Bridge deliverable:
 - P0.352 final showcase iOS blocker uses concrete deploy handoff command
 - P0.353 final demo launch iOS blocker uses concrete deploy handoff command
 - P0.354 final showcase iOS capability row uses concrete deploy handoff command
+- P0.355 final showcase iOS deploy writer operator action stays copy-pasteable
 
 ## P1: Mobile Vertical Slice
 

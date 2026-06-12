@@ -1685,8 +1685,32 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
         seen_exact.add(normalized)
         deduped.append(normalized)
     return _prefer_apply_preview_before_apply(
-        prefer_project_local_ios_deploy_handoff_actions(deduped)
+        prefer_project_local_ios_deploy_handoff_actions(
+            _prefer_bare_ios_deploy_writer_action(deduped)
+        )
     )
+
+
+def _prefer_bare_ios_deploy_writer_action(actions: list[str]) -> list[str]:
+    bare_writer_by_root = {
+        _operator_action_bare_root(action): action
+        for action in actions
+        if _is_mobile_deploy_writer_action_root(_operator_action_bare_root(action))
+        and not _split_detail_suffix(action)[1]
+    }
+    if not bare_writer_by_root:
+        return actions
+
+    preferred: list[str] = []
+    seen: set[str] = set()
+    for action in actions:
+        root = _operator_action_bare_root(action)
+        selected = bare_writer_by_root.get(root, action)
+        if selected in seen:
+            continue
+        seen.add(selected)
+        preferred.append(selected)
+    return preferred
 
 
 def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
@@ -1755,6 +1779,12 @@ def _is_final_resource_action_root(action_root: str) -> bool:
 
 def _is_ios_deploy_config_action_root(action_root: str) -> bool:
     return action_root.startswith(IOS_DEPLOY_CONFIG_ACTION)
+
+
+def _is_mobile_deploy_writer_action_root(action_root: str) -> bool:
+    return action_root.startswith(
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
 
 
 def _looks_like_operator_command(value: str) -> bool:
