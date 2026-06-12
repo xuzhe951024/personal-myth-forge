@@ -16,6 +16,7 @@ from myth_forge_api.final_resource_requirements import (
 )
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
+from myth_forge_api.operator_actions import normalize_operator_action
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
 )
@@ -564,7 +565,7 @@ def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
             if action["status"] == "missing" and action["requires_user_input"]:
                 actions.append(_missing_user_input_action_text(action))
             elif action["status"] == "blocked":
-                actions.append(f"unblock {action['id']}: {action['command']}")
+                actions.append(normalize_operator_action(str(action["command"])))
             elif action["requires_cost_consent"] and action["status"] == "live":
                 actions.append(f"approve live provider cost before {action['command']}")
             elif action["requires_user_confirmation"] and action["status"] == "manual":
