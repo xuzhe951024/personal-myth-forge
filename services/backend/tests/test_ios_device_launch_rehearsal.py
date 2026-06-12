@@ -108,12 +108,10 @@ def test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_m
     assert result.report["summary"]["partial"] >= 1
     assert result.report["summary"]["missing"] == 0
     assert result.report["summary"]["blocked"] == 0
-    assert result.report["operator_actions"][0] == "continue with make backend-device-demo"
-    assert (
-        result.report["operator_actions"][1]
-        == "start backend-device-demo before device checks: make backend-device-demo; "
+    assert result.report["operator_actions"] == [
+        "start backend-device-demo before device checks: make backend-device-demo; "
         "rerun make mobile-deploy-preflight"
-    )
+    ]
     assert "run make ios-device-launch-rehearsal" not in result.report["operator_actions"]
     assert "configured" in report_text
     assert str(tmp_path) not in report_text
@@ -161,11 +159,11 @@ def test_ios_device_launch_rehearsal_routes_blocked_saved_report_actions(
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["operator_actions"][0] == (
-        "final_configured_preflight: fill services/backend/.local/final-resources.env"
+        "fill services/backend/.local/final-resources.env"
     )
     assert "run make ios-device-launch-rehearsal" not in result.report["operator_actions"]
     assert (
-        "final_configured_preflight: run make final-resource-apply-preview"
+        "make final-resource-apply-preview"
         in result.report["operator_actions"]
     )
 
@@ -247,8 +245,12 @@ def test_ios_device_launch_rehearsal_routes_local_rehearsal_source_actions(
             "device checks: make backend-device-demo; rerun make mobile-deploy-preflight"
         ),
     ]
-    assert result.report["operator_actions"][0] == (
-        f"final_rehearsal_local: {expected_runbook_action}"
+    assert result.report["operator_actions"][0] == expected_runbook_action.removeprefix(
+        "ios_deploy_runbook_local: "
+    )
+    assert not any(
+        action.startswith("final_rehearsal_local:")
+        for action in result.report["operator_actions"]
     )
     assert (
         "review final_rehearsal_local: make final-rehearsal-local"
@@ -339,6 +341,11 @@ def test_ios_device_launch_rehearsal_uses_mobile_preflight_check_details(
         "Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
+    expected_top_level_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
+        "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
 
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
@@ -351,7 +358,11 @@ def test_ios_device_launch_rehearsal_uses_mobile_preflight_check_details(
         "final_acceptance_local: accept the Xcode license outside Codex, then "
         "rerun make mobile-xcode-build-evidence"
     )
-    assert result.report["operator_actions"][0] == expected_detail
+    assert result.report["operator_actions"][0] == expected_top_level_action
+    assert not any(
+        action.startswith("final_rehearsal_local:")
+        for action in result.report["operator_actions"]
+    )
     assert "start backend-device-demo and rerun mobile deploy preflight" not in (
         result.report["operator_actions"][0]
     )
@@ -418,17 +429,13 @@ def test_ios_device_launch_rehearsal_normalizes_legacy_final_resource_copy_actio
 
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
-    assert "run make final-resource-init" in result.report["operator_actions"]
+    assert "make final-resource-init" in result.report["operator_actions"]
     assert "services/backend/final-resources.env.example" not in report_text
     assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: provide iOS deploy "
-        "config in Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+        "provide iOS deploy config in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
     ) in result.report["operator_actions"]
-    assert (
-        "final_configured_preflight: run make final-apply-resources "
-        "to apply the filled resource bundle"
-        in result.report["operator_actions"]
-    )
+    assert "make final-apply-resources" in result.report["operator_actions"]
 
 
 def test_ios_device_launch_rehearsal_adds_validation_to_resource_actions(
@@ -486,22 +493,18 @@ def test_ios_device_launch_rehearsal_adds_validation_to_resource_actions(
     actions = result.report["operator_actions"]
 
     assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
         "provide MESHY_API_KEY in final-resources.env; "
         "rerun make final-resources-preflight"
     ) in actions
     assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
         "provide OPENAI_API_KEY in final-resources.env; "
         "rerun make final-resources-preflight"
     ) in actions
     assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
         "provide DEVELOPMENT_TEAM in final-resources.env; "
         "rerun make final-resources-preflight"
     ) in actions
     assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
         "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
         "rerun make final-resources-preflight"
     ) in actions
@@ -566,17 +569,14 @@ def test_ios_device_launch_rehearsal_adds_mobile_validation_to_ios_config_action
     actions = result.report["operator_actions"]
 
     assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
     ) in actions
     assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
         "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
         "rerun make mobile-deploy-preflight"
     ) in actions
     assert (
-        "final_configured_preflight: "
         "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
     ) in actions
@@ -647,8 +647,12 @@ def test_ios_device_launch_rehearsal_routes_final_acceptance_source_actions(
             "then rerun make mobile-xcode-build-evidence"
         ),
     ]
-    assert result.report["operator_actions"][0] == (
-        f"final_rehearsal_local: {expected_acceptance_action}"
+    assert result.report["operator_actions"][0] == expected_acceptance_action.removeprefix(
+        "final_acceptance_local: "
+    )
+    assert not any(
+        action.startswith("final_rehearsal_local:")
+        for action in result.report["operator_actions"]
     )
     assert (
         "final_rehearsal_local: review final_acceptance_local: make final-acceptance-local"
@@ -743,13 +747,12 @@ def test_ios_device_launch_rehearsal_routes_handoff_and_certificate_actions(
     assert sequence["final_handoff_index"]["detail"] == (
         "final_handoff_index: make final-configured-preflight"
     )
-    assert (
-        "final_handoff_index: make final-configured-preflight"
-        in result.report["operator_actions"]
-    )
-    assert (
-        "ios_device_launch_certificate: make final-handoff-index"
-        in result.report["operator_actions"]
+    assert "make final-configured-preflight" in result.report["operator_actions"]
+    assert "make final-handoff-index" in result.report["operator_actions"]
+    assert not any(
+        action.startswith("final_handoff_index:")
+        or action.startswith("ios_device_launch_certificate:")
+        for action in result.report["operator_actions"]
     )
     assert "review final_handoff_index: make final-handoff-index" not in result.report[
         "operator_actions"
