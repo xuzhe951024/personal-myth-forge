@@ -288,6 +288,7 @@ Bridge deliverable:
 - P0.374 final local report refresh drops self-rerun operator action suffixes
 - P0.375 final external action ledger uses concrete global Xcode handoff actions
 - P0.376 final showcase partial 3D/NPC rows expose completion-level live provider consent
+- P0.377 iOS final launch summary decodes and displays completion-level live provider consent
 
 ## P1: Mobile Vertical Slice
 

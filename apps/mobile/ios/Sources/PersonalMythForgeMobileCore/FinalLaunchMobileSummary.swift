@@ -1552,6 +1552,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             parts.append(classification)
         }
         parts.append("| \(capability.command)")
+        if capability.completionRequiresLiveProviderConsent == true {
+            parts.append("| completion live provider consent required")
+        }
         if !capability.detail.isEmpty {
             parts.append("| \(capability.detail)")
         }
