@@ -256,6 +256,7 @@ Bridge deliverable:
 - P0.342 final showcase readiness prefers apply preview before apply writer
 - P0.343 final external action ledger prefers apply preview before apply writer
 - P0.344 resource handoff prefers apply preview before apply writer
+- P0.345 final configured preflight prefers apply preview before apply writer
 
 ## P1: Mobile Vertical Slice
 

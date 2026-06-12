@@ -26,6 +26,9 @@ from myth_forge_api.provider_handoff import build_provider_handoff_report
 from myth_forge_api.resource_handoff import build_resource_handoff_report
 
 
+FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
+
+
 @dataclass(frozen=True)
 class FinalConfiguredPreflightResult:
     exit_code: int
@@ -319,15 +322,19 @@ def _operator_actions(
         final_resources_preflight.get("status") == "ready"
         and not provider_handoff.get("core_real_ready", False)
     ):
-        actions.append(FINAL_RESOURCE_APPLY_ACTION)
+        actions.append(FINAL_RESOURCE_APPLY_PREVIEW_ACTION)
     actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
-    return _dedupe(
-        [
-            add_final_resource_validation_command(
-                add_mobile_deploy_validation_command(normalize_operator_action(action))
-            )
-            for action in actions
-        ]
+    return _prefer_apply_preview_before_apply(
+        _dedupe(
+            [
+                add_final_resource_validation_command(
+                    add_mobile_deploy_validation_command(
+                        normalize_operator_action(action)
+                    )
+                )
+                for action in actions
+            ]
+        )
     )
 
 
@@ -391,6 +398,21 @@ def _dedupe(values: list[str]) -> list[str]:
         seen.add(value)
         result.append(value)
     return result
+
+
+def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
+    action_roots = {_operator_action_root(action) for action in actions}
+    if FINAL_RESOURCE_APPLY_PREVIEW_ACTION not in action_roots:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_root(action) != FINAL_RESOURCE_APPLY_ACTION
+    ]
+
+
+def _operator_action_root(action: str) -> str:
+    return action.split(" | ", 1)[0].strip()
 
 
 def _default_repo_root() -> Path:
