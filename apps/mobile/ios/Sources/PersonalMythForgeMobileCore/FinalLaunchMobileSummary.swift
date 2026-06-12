@@ -756,6 +756,12 @@ public enum FinalLaunchMobileSummaryBuilder {
         var rows = [
             "External actions \(sanitize(report.status)): groups \(report.summary.groups), blocked \(report.summary.blocked), missing \(report.summary.missing), live \(report.summary.live), manual \(report.summary.manual)."
         ]
+        if let nextAction = report.nextAction {
+            rows.append(externalActionLedgerNextActionRow(nextAction))
+        }
+        if let firstBlocker = report.firstBlocker {
+            rows.append(externalActionLedgerFirstBlockerRow(firstBlocker))
+        }
         let attention = report.actionGroups.filter { group in
             status(from: group.status) != .ready
         }
@@ -776,6 +782,34 @@ public enum FinalLaunchMobileSummaryBuilder {
             rows.append(sanitize(action))
         }
         return rows.map(sanitize)
+    }
+
+    private static func externalActionLedgerNextActionRow(
+        _ action: FinalExternalActionLedgerBlocker
+    ) -> String {
+        var parts = [
+            "Next action: \(action.id) \(action.status)",
+            action.command,
+            action.detail,
+        ]
+        if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
+            parts.append("validate \(validationCommand)")
+        }
+        return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func externalActionLedgerFirstBlockerRow(
+        _ blocker: FinalExternalActionLedgerBlocker
+    ) -> String {
+        var parts = [
+            "First blocker: \(blocker.id) \(blocker.status)",
+            blocker.groupId,
+            blocker.command,
+        ]
+        if let classification = blocker.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        return sanitize(parts.joined(separator: " | "))
     }
 
     private static func externalActionGroupRow(

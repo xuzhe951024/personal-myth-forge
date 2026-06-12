@@ -1581,10 +1581,52 @@ public struct FinalExternalActionLedgerSafety: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalExternalActionLedgerBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var groupId: String
+    public var groupLabel: String
+    public var destination: String?
+    public var validationCommand: String?
+    public var source: String?
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        groupId: String,
+        groupLabel: String,
+        destination: String? = nil,
+        validationCommand: String? = nil,
+        source: String? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.groupId = groupId
+        self.groupLabel = groupLabel
+        self.destination = destination
+        self.validationCommand = validationCommand
+        self.source = source
+    }
+}
+
 public struct FinalExternalActionLedgerReport: Codable, Equatable, Sendable {
     public var kind: String
     public var status: String
     public var summary: FinalExternalActionLedgerSummary
+    public var firstBlocker: FinalExternalActionLedgerBlocker?
+    public var nextAction: FinalExternalActionLedgerBlocker?
     public var actionGroups: [FinalExternalActionLedgerActionGroup]
     public var actionsById: [String: FinalExternalActionLedgerAction]
     public var operatorSequence: [String]
@@ -1595,6 +1637,8 @@ public struct FinalExternalActionLedgerReport: Codable, Equatable, Sendable {
         kind: String,
         status: String,
         summary: FinalExternalActionLedgerSummary,
+        firstBlocker: FinalExternalActionLedgerBlocker? = nil,
+        nextAction: FinalExternalActionLedgerBlocker? = nil,
         actionGroups: [FinalExternalActionLedgerActionGroup],
         actionsById: [String: FinalExternalActionLedgerAction],
         operatorSequence: [String],
@@ -1604,6 +1648,8 @@ public struct FinalExternalActionLedgerReport: Codable, Equatable, Sendable {
         self.kind = kind
         self.status = status
         self.summary = summary
+        self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.actionGroups = actionGroups
         self.actionsById = actionsById
         self.operatorSequence = operatorSequence

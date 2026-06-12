@@ -4718,6 +4718,21 @@ private func testDecodesFinalExternalActionLedgerFromFinalLaunchPayload() throws
     try expectEqual(ledger.actionGroups.first?.summary.missing, 5)
     try expectEqual(ledger.actionsById["provide_MESHY_API_KEY"]?.secret, true)
     try expectEqual(ledger.actionsById["run_xcode_build_gate"]?.global, true)
+    let firstBlocker = try require(
+        ledger.firstBlocker,
+        "missing final external action ledger first blocker"
+    )
+    try expectEqual(firstBlocker.id, "provide_MESHY_API_KEY")
+    try expectEqual(firstBlocker.groupId, "resource_inputs")
+    try expectEqual(firstBlocker.groupLabel, "Resource inputs")
+    try expectEqual(firstBlocker.validationCommand, "make final-resources-preflight")
+    let nextAction = try require(
+        ledger.nextAction,
+        "missing final external action ledger next action"
+    )
+    try expectEqual(nextAction.id, "provide_MESHY_API_KEY")
+    try expectEqual(nextAction.source, "first_blocker")
+    try expectEqual(nextAction.validationCommand, "make final-resources-preflight")
     try expectEqual(ledger.operatorSequence.first, "make final-resource-requirements")
     try expectFalse(ledger.safety.commandsRun)
     try expectFalse(ledger.safety.globalMutation)
@@ -4733,6 +4748,8 @@ private func testFinalLaunchMobileSummaryShowsExternalActionLedger() throws {
 
     try expectContains(text, "External actions blocked")
     try expectContains(text, "groups 5")
+    try expectContains(text, "Next action: provide_MESHY_API_KEY missing")
+    try expectContains(text, "First blocker: provide_MESHY_API_KEY missing")
     try expectContains(text, "resource_inputs: blocked")
     try expectContains(text, "global_machine_actions: manual")
     try expectContains(text, "live cost consent true")
@@ -8263,6 +8280,29 @@ private func finalDemoLaunchPayload(
               "global": 3,
               "safe_local_write": 2,
               "live_provider_call": 5
+            },
+            "first_blocker": {
+              "id": "provide_MESHY_API_KEY",
+              "label": "Meshy API key",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "make final-resources-preflight",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "group_id": "resource_inputs",
+              "group_label": "Resource inputs",
+              "validation_command": "make final-resources-preflight"
+            },
+            "next_action": {
+              "id": "provide_MESHY_API_KEY",
+              "label": "Meshy API key",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "make final-resources-preflight",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "group_id": "resource_inputs",
+              "group_label": "Resource inputs",
+              "validation_command": "make final-resources-preflight",
+              "source": "first_blocker"
             },
             "action_groups": [
               {
