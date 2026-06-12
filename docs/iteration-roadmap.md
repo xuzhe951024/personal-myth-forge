@@ -289,6 +289,7 @@ Bridge deliverable:
 - P0.375 final external action ledger uses concrete global Xcode handoff actions
 - P0.376 final showcase partial 3D/NPC rows expose completion-level live provider consent
 - P0.377 iOS final launch summary decodes and displays completion-level live provider consent
+- P0.378 iOS final launch device rows show backend child next actions
 
 ## P1: Mobile Vertical Slice
 

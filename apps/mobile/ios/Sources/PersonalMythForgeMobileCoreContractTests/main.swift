@@ -5612,6 +5612,13 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
         try require(bundle.firstAction.evidenceDetail, "missing first action evidence detail"),
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
+    try expectEqual(
+        try require(
+            bundle.actions[0].nextAction,
+            "missing first device child next action"
+        ).command,
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
     try expectEqual(bundle.actions[1].command, "make mobile-deploy-preflight")
     try expectEqual(try require(bundle.actions[1].evidenceStatus, "missing evidence status"), "blocked")
     try expectEqual(
@@ -5788,6 +5795,10 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle() 
     try expectContains(text, "PMF_BACKEND_BASE_URL must be iPhone-reachable")
     try expectContains(text, "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable")
     try expectContains(text, "make mobile-deploy-preflight-evidence")
+    try expectContains(
+        text,
+        "next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
     try expectContains(text, "evidence blocked")
     try expectContains(text, "make mobile-xcode-build-evidence")
     try expectContains(text, "commands_run=false")
@@ -9615,6 +9626,14 @@ private func finalDemoLaunchPayload(
                 "evidence_source": "services/backend/.local/mobile-deploy-preflight-evidence.json",
                 "evidence_detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
                 "validation_command": "make mobile-deploy-preflight-evidence",
+                "next_action": {
+                  "id": "development_team",
+                  "label": "Apple Team ID",
+                  "status": "blocked",
+                  "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                  "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                  "source": "first_blocker"
+                },
                 "blocks": ["ios_deployable", "functional_regression"],
                 "manual": true,
                 "global_action": false,
@@ -9634,6 +9653,14 @@ private func finalDemoLaunchPayload(
                   "evidence_source": "services/backend/.local/mobile-deploy-preflight-evidence.json",
                   "evidence_detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
                   "validation_command": "make mobile-deploy-preflight-evidence",
+                  "next_action": {
+                    "id": "development_team",
+                    "label": "Apple Team ID",
+                    "status": "blocked",
+                    "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                    "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                    "source": "first_blocker"
+                  },
                   "blocks": ["ios_deployable", "functional_regression"],
                   "manual": true,
                   "global_action": false,
@@ -9652,6 +9679,14 @@ private func finalDemoLaunchPayload(
                   "evidence_source": "services/backend/.local/mobile-deploy-preflight-evidence.json",
                   "evidence_detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
                   "validation_command": "make mobile-deploy-preflight-evidence",
+                  "next_action": {
+                    "id": "development_team",
+                    "label": "Apple Team ID",
+                    "status": "blocked",
+                    "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                    "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                    "source": "first_blocker"
+                  },
                   "blocks": ["ios_deployable", "functional_regression"],
                   "manual": true,
                   "global_action": false,

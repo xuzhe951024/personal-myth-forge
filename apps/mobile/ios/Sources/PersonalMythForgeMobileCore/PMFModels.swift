@@ -4398,6 +4398,7 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
     public var evidenceSource: String?
     public var evidenceDetail: String?
     public var validationCommand: String?
+    public var nextAction: FinalShowcaseReadinessNextAction?
     public var blocks: [String]
     public var manual: Bool
     public var globalAction: Bool
@@ -4416,6 +4417,7 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
         evidenceSource: String? = nil,
         evidenceDetail: String? = nil,
         validationCommand: String? = nil,
+        nextAction: FinalShowcaseReadinessNextAction? = nil,
         blocks: [String],
         manual: Bool,
         globalAction: Bool,
@@ -4433,6 +4435,7 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
         self.evidenceSource = evidenceSource
         self.evidenceDetail = evidenceDetail
         self.validationCommand = validationCommand
+        self.nextAction = nextAction
         self.blocks = blocks
         self.manual = manual
         self.globalAction = globalAction

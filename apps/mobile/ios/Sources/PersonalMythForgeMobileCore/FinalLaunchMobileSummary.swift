@@ -1490,6 +1490,13 @@ public enum FinalLaunchMobileSummaryBuilder {
         if let evidenceDetail = action.evidenceDetail, !evidenceDetail.isEmpty {
             parts.append("| \(evidenceDetail)")
         }
+        if let nextAction = action.nextAction, !nextAction.command.isEmpty {
+            var next = "next \(nextAction.command)"
+            if !nextAction.detail.isEmpty {
+                next += " | \(nextAction.detail)"
+            }
+            parts.append("| \(next)")
+        }
         if !action.detail.isEmpty {
             parts.append("| \(action.detail)")
         }
