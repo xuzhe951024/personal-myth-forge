@@ -1232,6 +1232,75 @@ def test_ios_device_launch_rehearsal_full_actions_prefer_writer_over_generic_ios
     ]
 
 
+def test_ios_device_launch_rehearsal_full_actions_prioritize_provider_and_print_handoff() -> None:
+    actions = ios_device_launch_rehearsal._operator_actions(
+        [
+            {
+                "id": "final_rehearsal_local",
+                "label": "Local final rehearsal",
+                "status": "blocked",
+                "command": "make final-rehearsal-local",
+                "operator_actions": [
+                    (
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "make mobile-write-deploy-config-auto; "
+                        "rerun make mobile-deploy-preflight"
+                    ),
+                    (
+                        "accept the Xcode license outside Codex, then rerun "
+                        "make mobile-xcode-build-evidence"
+                    ),
+                    (
+                        "provide MESHY_API_KEY in final-resources.env; "
+                        "rerun make final-resources-preflight"
+                    ),
+                    (
+                        "provide OPENAI_API_KEY in final-resources.env; "
+                        "rerun make final-resources-preflight"
+                    ),
+                ],
+            },
+            {
+                "id": "final_handoff_index",
+                "label": "Final handoff index",
+                "status": "blocked",
+                "command": "make final-handoff-index",
+                "operator_actions": [
+                    "make final-configured-preflight",
+                    "make final-demo-launch-configured",
+                    "make provider-handoff; rerun make live-provider-evidence",
+                    (
+                        "after explicit Treatstock cost consent, save a sanitized "
+                        "services/backend/.local/print-quote-configured.json from "
+                        "POST /v1/print-quotes; rerun "
+                        "make print-fulfillment-readiness"
+                    ),
+                ],
+            },
+        ],
+    )
+
+    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    print_action = (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+    )
+
+    assert actions[0] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert provider_action in actions
+    assert print_action in actions
+    assert actions.index(provider_action) < actions.index(print_action)
+    assert actions.index(print_action) < actions.index(
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+
+
 def test_ios_device_launch_rehearsal_dedupes_duplicate_deploy_writer_roots(
     tmp_path: Path,
 ) -> None:
