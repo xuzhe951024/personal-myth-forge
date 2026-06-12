@@ -65,6 +65,19 @@ CONFIGURED_PREFLIGHT_SOURCE = {
 FINAL_HANDOFF_SOURCE_ACTION_PREFIXES = tuple(
     f"{source['id']}: " for source in LOCAL_REPORT_SOURCES
 ) + (f"{CONFIGURED_PREFLIGHT_SOURCE['id']}: ",)
+FINAL_HANDOFF_PROVIDER_ACTION_MARKERS = (
+    "make provider-handoff",
+    "live-provider-evidence",
+    "provider-handoff",
+)
+FINAL_HANDOFF_PRINT_ACTION_MARKERS = (
+    "treatstock",
+    "print-quote-configured",
+    "print quote",
+    "print-quote",
+    "print_quote",
+    "/v1/print-quotes",
+)
 
 
 @dataclass(frozen=True)
@@ -300,6 +313,7 @@ def _lanes(
             notes=["Writes local/no-key saved reports for final launch review."],
             detail=local_detail,
             operator_action=_local_lane_operator_action(local_sources),
+            operator_actions=_local_lane_handoff_actions(local_sources),
         ),
         _lane(
             lane_id="configured_preflight",
@@ -348,6 +362,7 @@ def _lane(
     requires_consent: bool = False,
     detail: str = "",
     operator_action: str = "",
+    operator_actions: list[str] | None = None,
 ) -> dict[str, Any]:
     lane = {
         "id": lane_id,
@@ -362,6 +377,8 @@ def _lane(
         lane["detail"] = detail
     if operator_action:
         lane["operator_action"] = operator_action
+    if operator_actions:
+        lane["operator_actions"] = operator_actions
     return lane
 
 
@@ -403,11 +420,49 @@ def _source_operator_action_by_id(
     local_sources: list[dict[str, Any]],
     source_id: str,
 ) -> str:
-    for source in local_sources:
-        if source.get("id") != source_id:
+    source = _source_by_id(local_sources, source_id)
+    return _source_operator_action(source) if source is not None else ""
+
+
+def _local_lane_handoff_actions(local_sources: list[dict[str, Any]]) -> list[str]:
+    source = _source_by_id(local_sources, "final_demo_launch_local")
+    if source is None:
+        return []
+    actions = source.get("operator_actions")
+    if not isinstance(actions, list):
+        return []
+    selected: list[str] = []
+    for action in actions:
+        if not isinstance(action, str):
             continue
-        return _source_operator_action(source)
-    return ""
+        stripped = action.strip()
+        if not (
+            _is_provider_handoff_action(stripped)
+            or _is_print_handoff_action(stripped)
+        ):
+            continue
+        selected.append(f"final_demo_launch_local: {stripped}")
+    return selected
+
+
+def _source_by_id(
+    local_sources: list[dict[str, Any]],
+    source_id: str,
+) -> dict[str, Any] | None:
+    for source in local_sources:
+        if source.get("id") == source_id:
+            return source
+    return None
+
+
+def _is_provider_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(marker in lowered for marker in FINAL_HANDOFF_PROVIDER_ACTION_MARKERS)
+
+
+def _is_print_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(marker in lowered for marker in FINAL_HANDOFF_PRINT_ACTION_MARKERS)
 
 
 def _source_detail(source: dict[str, Any]) -> str:
@@ -545,6 +600,9 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
                     _lane_detail_or_default(lane, "run make final-rehearsal-local"),
                 )
             )
+            nested_actions = lane.get("operator_actions")
+            if isinstance(nested_actions, list):
+                actions.extend(str(action) for action in nested_actions)
         elif lane_id == "configured_preflight":
             actions.append("run make final-configured-preflight")
         elif lane_id == "device_deploy":
@@ -555,7 +613,23 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
             actions.append(f"run {command}")
         else:
             actions.append(f"unblock {lane_id}")
-    return _dedupe(_final_handoff_operator_action(action) for action in actions)[:6]
+    return _prioritize_final_handoff_operator_actions(
+        _dedupe(_final_handoff_operator_action(action) for action in actions)
+    )[:6]
+
+
+def _prioritize_final_handoff_operator_actions(actions: list[str]) -> list[str]:
+    if not actions:
+        return []
+    first_actions = actions[:1]
+    rest = actions[1:]
+    provider_actions = [
+        action for action in rest if _is_provider_handoff_action(action)
+    ]
+    print_actions = [action for action in rest if _is_print_handoff_action(action)]
+    priority_actions = set(provider_actions + print_actions)
+    remaining = [action for action in rest if action not in priority_actions]
+    return first_actions + provider_actions + print_actions + remaining
 
 
 def _final_handoff_operator_action(action: str) -> str:
