@@ -1137,6 +1137,37 @@ def test_ios_device_launch_rehearsal_readiness_adds_mobile_validation_to_saved_i
     )
 
 
+def test_ios_device_launch_rehearsal_prefers_writer_over_old_team_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["operator_actions"] = [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        (
+            "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        ),
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    actions = result.report["operator_actions"]
+
+    assert actions == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
 def _write_local_rehearsal_reports(local_dir: Path) -> None:
     _write_json(
         local_dir / "3d-evaluation-local.json",

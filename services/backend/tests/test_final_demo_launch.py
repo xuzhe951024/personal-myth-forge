@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import myth_forge_api.final_demo_launch as final_demo_launch
 from myth_forge_api.config import Settings
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
 
@@ -459,6 +460,58 @@ def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidenc
     ][:8]
 
 
+def test_local_final_demo_launch_prefers_writer_over_old_team_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action={
+            "id": "development_team",
+            "label": "Apple Team ID",
+            "status": "blocked",
+            "classification": "ios_deploy_config",
+            "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+            "detail": (
+                "Missing DEVELOPMENT_TEAM; "
+                "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            ),
+            "source": "first_blocker",
+            "validation_command": "make mobile-deploy-preflight",
+        },
+    )
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    actions = result.report["operator_actions"]
+
+    assert actions[0] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) not in actions
+
+
 def test_local_final_demo_launch_resource_actions_use_final_resources_preflight(
     tmp_path: Path,
 ) -> None:
@@ -484,6 +537,52 @@ def test_local_final_demo_launch_resource_actions_use_final_resources_preflight(
         and not action.endswith("; rerun make final-resources-preflight")
         for action in actions
     )
+
+
+def test_configured_final_demo_launch_drops_superseded_resource_team_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="configured",
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "provide DEVELOPMENT_TEAM in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) not in actions
+
+
+def test_final_demo_launch_dedupe_prefers_writer_over_old_team_action() -> None:
+    actions = final_demo_launch._dedupe_operator_actions(
+        [
+            (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+        ]
+    )
+
+    assert actions == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
 
 
 def test_local_final_demo_launch_normalizes_final_resource_requirement_action(

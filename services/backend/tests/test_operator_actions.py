@@ -44,6 +44,72 @@ def test_adds_mobile_deploy_validation_to_writer_command() -> None:
     )
 
 
+def test_prefers_project_local_ios_deploy_handoff_over_manual_team_action() -> None:
+    actions = operator_actions.prefer_project_local_ios_deploy_handoff_actions(
+        [
+            (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "provide DEVELOPMENT_TEAM in final-resources.env; "
+                "rerun make final-resources-preflight"
+            ),
+        ]
+    )
+
+    assert actions == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        (
+            "provide DEVELOPMENT_TEAM in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+    ]
+
+
+def test_preserves_manual_team_action_without_deploy_writer() -> None:
+    actions = operator_actions.prefer_project_local_ios_deploy_handoff_actions(
+        [
+            (
+                "provide DEVELOPMENT_TEAM in final-resources.env; "
+                "rerun make final-resources-preflight"
+            ),
+            (
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+                "rerun make mobile-deploy-preflight"
+            ),
+        ]
+    )
+
+    assert actions == [
+        (
+            "provide DEVELOPMENT_TEAM in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        (
+            "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        (
+            "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+            "rerun make mobile-deploy-preflight"
+        ),
+    ]
+
+
 def test_mobile_deploy_validation_preserves_existing_rerun_command() -> None:
     action = (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
