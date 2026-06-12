@@ -4,6 +4,7 @@ set -eu
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 IOS_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 CONFIG_DIR="$IOS_ROOT/Config"
+BASE_CONFIG="$CONFIG_DIR/Deployment.xcconfig"
 LOCAL_CONFIG="$CONFIG_DIR/Deployment.local.xcconfig"
 
 usage() {
@@ -68,8 +69,32 @@ sys.exit(1)
 PY
 }
 
+get_config_value() {
+  key="$1"
+  file="$2"
+  if [ ! -f "$file" ]; then
+    printf ''
+    return 0
+  fi
+  awk -F '=' -v key="$key" '
+    $0 !~ /^[[:space:]]*(\/\/|#)/ {
+      lhs=$1
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", lhs)
+      if (lhs == key) {
+        rhs=$2
+        sub(/^[[:space:]]+/, "", rhs)
+        sub(/[[:space:]]+$/, "", rhs)
+        print rhs
+      }
+    }
+  ' "$file" | tail -n 1
+}
+
 team="${DEVELOPMENT_TEAM:-}"
 bundle_id="${PRODUCT_BUNDLE_IDENTIFIER:-}"
+if [ -z "$bundle_id" ]; then
+  bundle_id=$(get_config_value PRODUCT_BUNDLE_IDENTIFIER "$BASE_CONFIG")
+fi
 backend_url="${PMF_BACKEND_BASE_URL:-}"
 final_launch_mode="${PMF_FINAL_LAUNCH_MODE:-local}"
 
