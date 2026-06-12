@@ -221,6 +221,7 @@ Bridge deliverable:
 - P0.307 final external action ledger top-level actions normalize to concrete commands
 - P0.308 final launch closure packet resource actions retain validation handoff
 - P0.309 live provider evidence top-level actions normalize to canonical make targets
+- P0.310 final apply operator actions normalize to canonical make target
 
 ## P1: Mobile Vertical Slice
 

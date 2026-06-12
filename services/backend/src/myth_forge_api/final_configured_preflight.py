@@ -16,6 +16,7 @@ from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
 from myth_forge_api.operator_actions import (
+    FINAL_RESOURCE_APPLY_ACTION,
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
@@ -158,7 +159,7 @@ def _operator_actions(
         final_resources_preflight.get("status") == "ready"
         and not provider_handoff.get("core_real_ready", False)
     ):
-        actions.append("run make final-apply-resources to apply the filled resource bundle")
+        actions.append(FINAL_RESOURCE_APPLY_ACTION)
     actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
     return _dedupe(
         [

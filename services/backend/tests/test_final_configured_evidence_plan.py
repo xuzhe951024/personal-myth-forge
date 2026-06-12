@@ -41,7 +41,7 @@ def test_configured_evidence_plan_blocks_missing_resources_without_running_comma
             "make final-resources-preflight"
         ),
         "make final-resource-apply-preview",
-        "run make final-apply-resources to apply the filled resource bundle",
+        "make final-apply-resources",
         "make final-configured-preflight",
         "make provider-handoff",
         "make backend-evaluate-3d-configured",

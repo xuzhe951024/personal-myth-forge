@@ -268,10 +268,7 @@ def test_normalizes_resource_apply_unblock_actions_to_concrete_commands() -> Non
     assert normalize_operator_action(
         "final_showcase_readiness: unblock final_apply_resources after "
         "final_resource_apply_preview"
-    ) == (
-        "final_showcase_readiness: run make final-apply-resources to apply the "
-        "filled resource bundle"
-    )
+    ) == "final_showcase_readiness: make final-apply-resources"
 
 
 def test_normalizes_configured_evidence_unblock_actions_to_make_targets() -> None:
@@ -306,15 +303,15 @@ def test_normalizes_configured_evidence_unblock_actions_to_make_targets() -> Non
 
 def test_normalizes_provider_selection_actions_to_final_apply() -> None:
     assert normalize_operator_action("set THREE_D_PROVIDER=meshy") == (
-        "run make final-apply-resources to apply the filled resource bundle"
+        "make final-apply-resources"
     )
     assert normalize_operator_action("set NPC_PROVIDER=openai") == (
-        "run make final-apply-resources to apply the filled resource bundle"
+        "make final-apply-resources"
     )
 
 
 def test_normalizes_final_apply_actions_to_explicit_handoff() -> None:
-    expected = "run make final-apply-resources to apply the filled resource bundle"
+    expected = "make final-apply-resources"
 
     assert normalize_operator_action("make final-apply-resources") == expected
     assert (

@@ -379,9 +379,7 @@ def test_final_local_report_refresh_operator_actions_normalize_provider_selector
         ]
     )
 
-    assert actions == [
-        "run make final-apply-resources to apply the filled resource bundle"
-    ]
+    assert actions == ["make final-apply-resources"]
 
 
 def test_final_local_report_refresh_operator_actions_normalize_final_apply() -> None:
@@ -401,9 +399,7 @@ def test_final_local_report_refresh_operator_actions_normalize_final_apply() -> 
         ]
     )
 
-    assert actions == [
-        "run make final-apply-resources to apply the filled resource bundle"
-    ]
+    assert actions == ["make final-apply-resources"]
 
 
 def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
