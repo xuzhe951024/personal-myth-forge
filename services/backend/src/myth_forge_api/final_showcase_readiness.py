@@ -645,10 +645,17 @@ def _provider_key_handoff_capability(
         apply_preview_status,
         resource_handoff_status,
     }
+    validation_command = ""
     if "blocked" in local_resource_statuses:
         status = "blocked"
         classification = "provider_handoff_incomplete"
         command = "make final-resource-apply-preview"
+        if final_resource_status != "ready":
+            child_command, child_validation_command = _report_next_action_command(
+                final_resources,
+            )
+            command = child_command or command
+            validation_command = child_validation_command
     elif live_status != "ready":
         status = "partial"
         classification = "live_provider_evidence_unproven"
@@ -672,6 +679,7 @@ def _provider_key_handoff_capability(
             if status != "ready"
             else "Final resources, apply preview, resource handoff, live provider evidence, and configured evidence bundle are ready."
         ),
+        validation_command=validation_command or None,
         evidence=[
             f"final_resources:{final_resources.get('status', 'unknown')}",
             (
@@ -686,6 +694,15 @@ def _provider_key_handoff_capability(
             ),
         ],
     )
+
+
+def _report_next_action_command(report: dict[str, Any]) -> tuple[str, str]:
+    next_action = report.get("next_action")
+    if not isinstance(next_action, dict):
+        return "", ""
+    command = str(next_action.get("command", "")).strip()
+    validation_command = str(next_action.get("validation_command", "")).strip()
+    return command, validation_command
 
 
 def _simple_report_capability(
@@ -1025,8 +1042,9 @@ def _capability(
     detail: str,
     evidence: list[str],
     required: bool = True,
+    validation_command: str | None = None,
 ) -> dict[str, Any]:
-    return {
+    row = {
         "id": capability_id,
         "label": label,
         "status": _normalized_status(status),
@@ -1036,6 +1054,9 @@ def _capability(
         "command": command,
         "detail": detail,
     }
+    if validation_command:
+        row["validation_command"] = validation_command
+    return row
 
 
 def _summary(capabilities: list[dict[str, Any]]) -> dict[str, int]:
