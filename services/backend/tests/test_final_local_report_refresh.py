@@ -238,6 +238,73 @@ def test_final_local_report_refresh_operator_actions_gate_apply_behind_preview(
     assert "make final-apply-resources" not in result.report["operator_actions"]
 
 
+def test_final_local_report_refresh_operator_actions_prioritize_provider_and_print_handoff() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_resource_requirements",
+                "status": "blocked",
+                "command": "provide MESHY_API_KEY in final-resources.env",
+                "validation_command": "make final-resources-preflight",
+            },
+            {
+                "id": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "command": (
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "make mobile-write-deploy-config-auto"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+            },
+            {
+                "id": "provider_handoff",
+                "status": "blocked",
+                "command": "make provider-handoff",
+                "validation_command": "make live-provider-evidence",
+            },
+            {
+                "id": "final_resource_apply_preview",
+                "status": "blocked",
+                "command": (
+                    "rerun make final-resource-apply-preview before applying "
+                    "resources"
+                ),
+            },
+            *[
+                {
+                    "id": f"blocked_step_{index}",
+                    "status": "blocked",
+                    "command": f"make blocked-step-{index}",
+                }
+                for index in range(10)
+            ],
+            {
+                "id": "print_fulfillment_readiness",
+                "status": "blocked",
+                "command": (
+                    "after explicit Treatstock cost consent, save a sanitized "
+                    "services/backend/.local/print-quote-configured.json from POST "
+                    "/v1/print-quotes"
+                ),
+                "validation_command": "make print-fulfillment-readiness",
+            },
+        ],
+    )
+
+    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    print_action = (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+    )
+
+    assert provider_action in actions
+    assert print_action in actions
+    assert actions.index(provider_action) < actions.index(print_action)
+    assert actions.index(print_action) < actions.index("make blocked-step-0")
+    assert len(actions) == 12
+
+
 def test_final_local_report_refresh_operator_actions_drop_bare_action_roots() -> None:
     actions = final_local_report_refresh._operator_actions(
         [
