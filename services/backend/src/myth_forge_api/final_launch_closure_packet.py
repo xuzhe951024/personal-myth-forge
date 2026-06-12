@@ -34,6 +34,8 @@ COMMANDS = [
     "make final-showcase-readiness",
     "make final-acceptance-local",
 ]
+FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
+FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
 )
@@ -569,7 +571,7 @@ def _operator_actions(sections: list[dict[str, Any]]) -> list[str]:
                 actions.append(_run_action_text(str(action["command"])))
     if not actions:
         return ["Final launch closure packet is ready"]
-    return _dedupe(actions)
+    return _prefer_apply_preview_before_apply(_dedupe(actions))
 
 
 def _run_action_text(command: str) -> str:
@@ -822,6 +824,21 @@ def _dedupe(values: list[str]) -> list[str]:
         seen.add(normalized)
         result.append(normalized)
     return result
+
+
+def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
+    action_roots = {_operator_action_root(action) for action in actions}
+    if FINAL_RESOURCE_APPLY_PREVIEW_ACTION not in action_roots:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_root(action) != FINAL_RESOURCE_APPLY_ACTION
+    ]
+
+
+def _operator_action_root(action: str) -> str:
+    return action.split(" | ", 1)[0].strip()
 
 
 def _sanitize_report(report: dict[str, Any], repo_root: Path) -> dict[str, Any]:
