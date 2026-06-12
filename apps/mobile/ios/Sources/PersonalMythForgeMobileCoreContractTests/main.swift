@@ -4600,6 +4600,13 @@ private func testDecodesFinalResourceFillGuideFromFinalLaunchPayload() throws {
     try expectEqual(firstBlocker.command, "fill MESHY_API_KEY in services/backend/.local/final-resources.env")
     try expectEqual(firstBlocker.inputSource, "services/backend/.local/final-resources.env")
     try expectEqual(firstBlocker.validationCommand, "make final-resources-preflight")
+    let nextAction = try require(
+        guide.nextAction,
+        "missing final resource fill guide next action"
+    )
+    try expectEqual(nextAction.id, "MESHY_API_KEY")
+    try expectEqual(nextAction.source, "first_blocker")
+    try expectEqual(nextAction.validationCommand, "make final-resources-preflight")
     try expectFalse(guide.safety.writesBackendEnv)
     try expectFalse(guide.safety.liveProviderCalls)
 }
@@ -4619,6 +4626,7 @@ private func testFinalLaunchMobileSummaryShowsResourceFillGuide() throws {
         text,
         "MESHY_API_KEY: missing | services/backend/.local/final-resources.env | make final-resources-preflight"
     )
+    try expectContains(text, "Next action: MESHY_API_KEY missing")
     try expectContains(text, "First blocker: MESHY_API_KEY missing")
     try expectContains(text, "fill MESHY_API_KEY in services/backend/.local/final-resources.env")
     try expectContains(text, "Command: make final-resource-requirements")
@@ -7884,6 +7892,19 @@ private func finalDemoLaunchPayload(
               "input_source": "services/backend/.local/final-resources.env",
               "write_destination": "services/backend/.env",
               "validation_command": "make final-resources-preflight"
+            },
+            "next_action": {
+              "id": "MESHY_API_KEY",
+              "label": "Meshy API key",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "fill MESHY_API_KEY in services/backend/.local/final-resources.env",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "domain": "backend_provider",
+              "input_source": "services/backend/.local/final-resources.env",
+              "write_destination": "services/backend/.env",
+              "validation_command": "make final-resources-preflight",
+              "source": "first_blocker"
             },
             "required_inputs": [
               {

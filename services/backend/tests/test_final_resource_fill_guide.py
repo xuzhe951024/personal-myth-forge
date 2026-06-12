@@ -53,6 +53,10 @@ def test_fill_guide_lists_required_inputs_without_secret_or_path_leak(
         "write_destination": "services/backend/.env",
         "validation_command": "make final-resources-preflight",
     }
+    assert report["next_action"] == {
+        **first_blocker,
+        "source": "first_blocker",
+    }
     assert required_ids == [
         "MESHY_API_KEY",
         "OPENAI_API_KEY",
@@ -100,6 +104,7 @@ def test_fill_guide_ready_resources_do_not_leak_secret_or_backend_url(
     assert result.exit_code == 0
     assert report["status"] == "ready"
     assert report["first_blocker"] is None
+    assert report["next_action"] is None
     assert report["required_inputs"] == []
     assert "MESHY_API_KEY" in configured_ids
     assert "MESHY_API_KEY" in markdown
