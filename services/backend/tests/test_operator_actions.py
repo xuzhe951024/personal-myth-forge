@@ -221,8 +221,8 @@ def test_normalizes_mobile_deploy_after_backend_action_to_device_handoff() -> No
 
 
 def test_normalizes_mobile_preflight_evidence_details_to_deploy_handoff() -> None:
-    development_team_action = (
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+    writer_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     backend_url_action = (
@@ -235,7 +235,7 @@ def test_normalizes_mobile_preflight_evidence_details_to_deploy_handoff() -> Non
         "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
     ) == (
         "final_rehearsal_local: mobile_deploy_preflight_evidence: "
-        f"{development_team_action} | Missing DEVELOPMENT_TEAM; "
+        f"{writer_action} | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     assert normalize_operator_action(
@@ -255,7 +255,12 @@ def test_mobile_preflight_evidence_detail_normalization_is_idempotent() -> None:
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
 
-    assert normalize_operator_action(action) == action
+    assert normalize_operator_action(action) == (
+        "final_rehearsal_local: mobile_deploy_preflight_evidence: "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
 
 
 def test_normalizes_vague_unblock_actions_to_concrete_commands() -> None:

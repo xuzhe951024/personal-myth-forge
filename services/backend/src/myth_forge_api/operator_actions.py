@@ -156,7 +156,8 @@ def normalize_operator_action(action: str) -> str:
     normalized = action.strip()
     command_part, detail_suffix = _split_detail_suffix(normalized)
     mobile_preflight_detail_action = _normalize_mobile_preflight_detail_action(
-        command_part
+        command_part,
+        detail_suffix=detail_suffix,
     )
     if mobile_preflight_detail_action is not None:
         return f"{mobile_preflight_detail_action}{detail_suffix}"
@@ -208,7 +209,11 @@ def _normalize_make_target_action(action: str) -> str | None:
     return None
 
 
-def _normalize_mobile_preflight_detail_action(action: str) -> str | None:
+def _normalize_mobile_preflight_detail_action(
+    action: str,
+    *,
+    detail_suffix: str = "",
+) -> str | None:
     marker = "mobile_deploy_preflight_evidence: "
     if marker not in action:
         return None
@@ -216,10 +221,33 @@ def _normalize_mobile_preflight_detail_action(action: str) -> str | None:
     stripped_detail = detail.strip()
     if not stripped_detail:
         return None
-    if f"rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}" in stripped_detail:
+    command_detail, inner_detail_suffix = _split_detail_suffix(stripped_detail)
+    combined_detail_suffix = f"{inner_detail_suffix}{detail_suffix}"
+    if f"rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}" in command_detail:
+        if (
+            command_detail
+            == _add_mobile_deploy_validation_to_command(DEPLOYMENT_TEAM_ACTION)
+            and (
+                "PMF_BACKEND_BASE_URL" in combined_detail_suffix
+                or "iPhone-reachable" in combined_detail_suffix
+            )
+        ):
+            command = _add_mobile_deploy_validation_to_command(
+                MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION
+            )
+            return f"{prefix}{marker}{command}"
         return None
     root: str | None = None
-    if "DEVELOPMENT_TEAM" in stripped_detail:
+    if (
+        "DEVELOPMENT_TEAM" in stripped_detail
+        and "PRODUCT_BUNDLE_IDENTIFIER" not in stripped_detail
+        and (
+            "PMF_BACKEND_BASE_URL" in stripped_detail
+            or "iPhone-reachable" in stripped_detail
+        )
+    ):
+        root = MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION
+    elif "DEVELOPMENT_TEAM" in stripped_detail:
         root = DEPLOYMENT_TEAM_ACTION
     elif "PRODUCT_BUNDLE_IDENTIFIER" in stripped_detail:
         root = PRODUCT_BUNDLE_IDENTIFIER_ACTION
