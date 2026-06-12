@@ -47,18 +47,19 @@ def test_configured_evidence_plan_blocks_missing_resources_without_running_comma
     assert report["safety"]["writes_backend_env"] is False
     assert report["safety"]["writes_ios_deploy_config"] is False
     actions = report["operator_actions"]
-    assert actions[:7] == [
+    assert actions[:6] == [
         (
             "provide MESHY_API_KEY in final-resources.env; rerun "
             "make final-resources-preflight"
         ),
         "make final-resource-apply-preview",
-        "make final-apply-resources",
         "make final-configured-preflight",
         "make provider-handoff",
         "make backend-evaluate-3d-configured",
         "make backend-evaluate-npc-configured",
     ]
+    assert "make final-apply-resources" not in actions
+    assert "make final-apply-resources" in report["commands"]
     assert "make live-provider-evidence" in actions
     assert not any(action.startswith("unblock ") for action in actions)
     assert "sk-" not in report_text
