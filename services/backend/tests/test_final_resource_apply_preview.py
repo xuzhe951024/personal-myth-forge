@@ -44,7 +44,7 @@ def test_apply_preview_reports_missing_resources_without_writing_outputs(
         "label": "Backend env",
         "status": "missing",
         "classification": "missing_required_value",
-        "command": "make final-apply-resources",
+        "command": "make final-resource-init",
         "detail": "blocked by MESHY_API_KEY, OPENAI_API_KEY",
         "destination": "services/backend/.env",
         "writer": "services/backend/scripts/write_backend_env.sh",
@@ -106,6 +106,50 @@ def test_apply_preview_blocks_loopback_backend_url_without_writes(
     assert "PMF_BACKEND_BASE_URL" in result.report["write_targets_by_id"][
         "ios_deploy_config"
     ]["blocked_by"]
+    assert result.report["first_blocker"]["command"] == (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    )
+    assert result.report["next_action"]["command"] == (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    )
+    assert result.report["first_blocker"]["command"] != "make final-apply-resources"
+    assert not backend_env_path(repo_root).exists()
+    assert not ios_local_config_path(repo_root).exists()
+
+
+def test_apply_preview_blocker_command_uses_value_fill_before_writer(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "MESHY_API_KEY=meshy-secret-test",
+            "MESHY_API_KEY=",
+        ),
+    )
+
+    result = build_final_resource_apply_preview_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert result.report["first_blocker"]["command"] == (
+        "provide MESHY_API_KEY in final-resources.env"
+    )
+    assert result.report["next_action"]["command"] == (
+        "provide MESHY_API_KEY in final-resources.env"
+    )
+    assert result.report["first_blocker"]["validation_command"] == (
+        "make final-resources-preflight"
+    )
+    assert result.report["first_blocker"]["writer"] == (
+        "services/backend/scripts/write_backend_env.sh"
+    )
+    assert result.report["first_blocker"]["blocked_by"] == ["MESHY_API_KEY"]
+    assert result.report["first_blocker"]["command"] != "make final-apply-resources"
     assert not backend_env_path(repo_root).exists()
     assert not ios_local_config_path(repo_root).exists()
 

@@ -260,6 +260,7 @@ Bridge deliverable:
 - P0.346 final demo launch configured prefers apply preview before apply writer
 - P0.347 final configured evidence plan prefers apply preview before apply writer
 - P0.348 final launch closure packet prefers apply preview before apply writer
+- P0.349 final resource apply preview blockers avoid direct apply writer
 
 ## P1: Mobile Vertical Slice
 
