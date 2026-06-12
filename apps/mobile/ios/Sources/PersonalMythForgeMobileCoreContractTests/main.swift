@@ -5651,6 +5651,10 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
         try require(bundle.actions[2].evidenceDetail, "missing xcode evidence detail"),
         "Apple SDK license agreement is not accepted."
     )
+    try expectEqual(
+        bundle.actions[2].operatorActions.first,
+        "accept the Xcode license outside Codex, then rerun make mobile-xcode-build-evidence"
+    )
     try expectFalse(bundle.safety.commandsRun)
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.liveProviderCalls)
@@ -5803,6 +5807,7 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle() 
     )
     try expectContains(text, "evidence blocked")
     try expectContains(text, "make mobile-xcode-build-evidence")
+    try expectContains(text, "accept the Xcode license outside Codex")
     try expectContains(text, "commands_run=false")
 }
 
@@ -9708,6 +9713,9 @@ private func finalDemoLaunchPayload(
                   "evidence_source": "services/backend/.local/mobile-xcode-build-evidence.json",
                   "evidence_detail": "Apple SDK license agreement is not accepted.",
                   "validation_command": "make mobile-xcode-build-evidence",
+                  "operator_actions": [
+                    "accept the Xcode license outside Codex, then rerun make mobile-xcode-build-evidence"
+                  ],
                   "blocks": ["ios_deployable"],
                   "manual": true,
                   "global_action": false,
