@@ -483,6 +483,27 @@ def test_final_local_report_refresh_operator_actions_normalize_final_apply() -> 
     assert actions == ["make final-apply-resources"]
 
 
+def test_final_local_report_refresh_operator_actions_drop_self_rerun_suffix() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_rehearsal_local",
+                "status": "blocked",
+                "command": "make final-rehearsal-local",
+                "validation_command": "make final-rehearsal-local",
+            },
+            {
+                "id": "final_handoff_index",
+                "status": "blocked",
+                "command": "run make final-handoff-index",
+                "validation_command": "make final-handoff-index",
+            },
+        ],
+    )
+
+    assert actions == ["make final-rehearsal-local", "make final-handoff-index"]
+
+
 def test_final_local_report_refresh_operator_actions_hide_apply_when_preview_is_blocked() -> None:
     actions = final_local_report_refresh._operator_actions(
         [

@@ -893,8 +893,17 @@ def _action_command(action: dict[str, Any] | None) -> str:
     if command and validation_command:
         if f"rerun {validation_command}" in command:
             return command
+        command_root = _action_command_root(command)
+        validation_root = _action_command_root(validation_command)
+        if command_root == validation_root:
+            return command_root
         return f"{command}; rerun {validation_command}"
     return command
+
+
+def _action_command_root(value: str) -> str:
+    normalized = normalize_operator_action(value)
+    return normalized.split("; rerun ", 1)[0].strip()
 
 
 def _next_command(report: dict[str, Any]) -> str:
