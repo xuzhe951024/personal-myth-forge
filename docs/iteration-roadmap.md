@@ -280,6 +280,7 @@ Bridge deliverable:
 - P0.366 final showcase readiness prioritizes provider and print handoff actions near the top of operator actions
 - P0.367 final local report refresh prioritizes provider and print handoff actions near the top of operator actions
 - P0.368 iOS device launch rehearsal prioritizes provider and print handoff actions near the top of operator actions
+- P0.369 iOS local rehearsal includes provider and print handoff actions from partial final demo launch reports
 
 ## P1: Mobile Vertical Slice
 

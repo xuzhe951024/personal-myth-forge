@@ -188,6 +188,11 @@ def _local_rehearsal_operator_actions(
         if status == "missing":
             actions.append(f"refresh {source['id']}: {source['command']}")
             continue
+        if status == "partial":
+            actions.extend(_partial_source_handoff_actions(source))
+            if len(actions) >= 6:
+                break
+            continue
         if status != "blocked":
             continue
         detail = source.get("detail")
@@ -213,6 +218,25 @@ def _local_rehearsal_operator_actions(
         if len(actions) >= 6:
             break
     return _dedupe(actions)[:6]
+
+
+def _partial_source_handoff_actions(source: dict[str, Any]) -> list[str]:
+    nested_actions = source.get("operator_actions")
+    if not isinstance(nested_actions, list):
+        return []
+    source_id = str(source.get("id", "source"))
+    actions: list[str] = []
+    for action in nested_actions:
+        if not isinstance(action, str):
+            continue
+        normalized = _validation_aware_operator_action(action)
+        if not (
+            _is_provider_handoff_action(normalized)
+            or _is_print_handoff_action(normalized)
+        ):
+            continue
+        actions.append(f"{source_id}: {normalized}")
+    return actions
 
 
 def _blocked_mobile_preflight_detail(local_sources: list[dict[str, Any]]) -> str:
