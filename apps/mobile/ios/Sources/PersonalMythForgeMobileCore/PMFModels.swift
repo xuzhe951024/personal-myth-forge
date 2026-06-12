@@ -2785,12 +2785,79 @@ public struct IOSDeployRunbookSafety: Codable, Equatable, Sendable {
     }
 }
 
+public struct IOSDeployRunbookFirstBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var inputSource: String?
+    public var required: Bool?
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        inputSource: String? = nil,
+        required: Bool? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.inputSource = inputSource
+        self.required = required
+    }
+}
+
+public struct IOSDeployRunbookNextAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var inputSource: String?
+    public var required: Bool?
+    public var source: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        inputSource: String? = nil,
+        required: Bool? = nil,
+        source: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.inputSource = inputSource
+        self.required = required
+        self.source = source
+    }
+}
+
 public struct IOSDeployRunbookReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
     public var status: String
     public var inputSlots: [IOSDeployRunbookInputSlot]
     public var commandSequence: [IOSDeployRunbookCommandStep]
+    public var firstBlocker: IOSDeployRunbookFirstBlocker?
+    public var nextAction: IOSDeployRunbookNextAction?
     public var operatorActions: [String]
     public var safety: IOSDeployRunbookSafety
 
@@ -2800,6 +2867,8 @@ public struct IOSDeployRunbookReport: Codable, Equatable, Sendable {
         status: String,
         inputSlots: [IOSDeployRunbookInputSlot],
         commandSequence: [IOSDeployRunbookCommandStep],
+        firstBlocker: IOSDeployRunbookFirstBlocker? = nil,
+        nextAction: IOSDeployRunbookNextAction? = nil,
         operatorActions: [String],
         safety: IOSDeployRunbookSafety
     ) {
@@ -2808,6 +2877,8 @@ public struct IOSDeployRunbookReport: Codable, Equatable, Sendable {
         self.status = status
         self.inputSlots = inputSlots
         self.commandSequence = commandSequence
+        self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.operatorActions = operatorActions
         self.safety = safety
     }

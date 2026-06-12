@@ -73,12 +73,18 @@ def build_ios_deploy_runbook_report(
         npc_evaluation=npc_evaluation,
     )
     command_sequence = _command_sequence(mode=mode, input_slots=input_slots)
+    first_blocker = _first_blocker(
+        input_slots=input_slots,
+        command_sequence=command_sequence,
+    )
     report = {
         "kind": "ios_deploy_runbook_report",
         "mode": mode,
         "status": _overall_status(input_slots=input_slots, command_sequence=command_sequence),
         "input_slots": input_slots,
         "command_sequence": command_sequence,
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "operator_actions": _operator_actions(
             mode=mode,
             input_slots=input_slots,
@@ -467,6 +473,55 @@ def _overall_status(
     if any(status in {"manual", "partial", "live"} for status in statuses):
         return "partial"
     return "ready"
+
+
+def _first_blocker(
+    *,
+    input_slots: list[dict[str, Any]],
+    command_sequence: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    for slot in input_slots:
+        if slot["required"] and slot["status"] != "ready":
+            return _slot_blocker(slot)
+    for step in command_sequence:
+        if step["status"] != "ready":
+            return _command_step_blocker(step)
+    return None
+
+
+def _slot_blocker(slot: dict[str, Any]) -> dict[str, Any]:
+    command = add_final_resource_validation_command(
+        add_mobile_deploy_validation_command(str(slot["operator_action"]))
+    )
+    blocker = {
+        "id": str(slot["id"]),
+        "label": str(slot["label"]),
+        "status": str(slot["status"]),
+        "classification": str(slot.get("classification", "")),
+        "command": command,
+        "detail": f"{slot['label']} is {slot['status']}.",
+        "input_source": str(slot["source"]),
+        "required": bool(slot["required"]),
+    }
+    return blocker
+
+
+def _command_step_blocker(step: dict[str, Any]) -> dict[str, Any]:
+    notes = "; ".join(str(note) for note in step.get("notes", []) if str(note))
+    return {
+        "id": str(step["id"]),
+        "label": str(step["label"]),
+        "status": str(step["status"]),
+        "classification": "command_step_not_ready",
+        "command": str(step["command"]),
+        "detail": notes,
+    }
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
 
 
 def _deploy_config_values(repo_root: Path) -> dict[str, str]:
