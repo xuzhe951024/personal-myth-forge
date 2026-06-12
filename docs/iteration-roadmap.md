@@ -220,6 +220,7 @@ Bridge deliverable:
 - P0.306 configured evidence top-level actions normalize to concrete handoff commands
 - P0.307 final external action ledger top-level actions normalize to concrete commands
 - P0.308 final launch closure packet resource actions retain validation handoff
+- P0.309 live provider evidence top-level actions normalize to canonical make targets
 
 ## P1: Mobile Vertical Slice
 

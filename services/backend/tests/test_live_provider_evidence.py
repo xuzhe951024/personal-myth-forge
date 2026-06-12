@@ -44,7 +44,15 @@ def test_live_provider_evidence_missing_reports_without_running_commands(
         or "final-demo-launch --mode configured" in command
         for command in result.report["commands"]
     )
-    assert "make live-provider-evidence" in result.report["operator_actions"][0]
+    assert result.report["operator_actions"] == [
+        "make live-provider-evidence",
+        "make provider-handoff",
+    ]
+    assert not any(
+        action.startswith("run make ")
+        or action.startswith("rerun provider handoff readiness")
+        for action in result.report["operator_actions"]
+    )
     assert result.report["safety"]["commands_run"] is False
     assert result.report["safety"]["provider_calls"] is False
     assert result.report["safety"]["provider_secrets_in_report"] is False
