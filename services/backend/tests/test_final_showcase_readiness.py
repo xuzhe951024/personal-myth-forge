@@ -720,6 +720,7 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
         assert row["command"] == "make provider-handoff"
         assert row["validation_command"] == "make live-provider-evidence"
         assert row["requires_live_provider_consent"] is False
+        assert row["completion_requires_live_provider_consent"] is True
     actions = result.report["operator_actions"]
     combined_action = "make provider-handoff; rerun make live-provider-evidence"
     assert combined_action in actions
