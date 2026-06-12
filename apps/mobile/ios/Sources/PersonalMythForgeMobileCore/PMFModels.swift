@@ -3566,12 +3566,85 @@ public struct ResourceHandoffSafety: Codable, Equatable, Sendable {
     }
 }
 
+public struct ResourceHandoffFirstBlocker: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var destination: String
+    public var requiredFor: String
+    public var validationCommand: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        destination: String,
+        requiredFor: String,
+        validationCommand: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.destination = destination
+        self.requiredFor = requiredFor
+        self.validationCommand = validationCommand
+    }
+}
+
+public struct ResourceHandoffNextAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var destination: String
+    public var requiredFor: String
+    public var validationCommand: String
+    public var source: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        destination: String,
+        requiredFor: String,
+        validationCommand: String,
+        source: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.destination = destination
+        self.requiredFor = requiredFor
+        self.validationCommand = validationCommand
+        self.source = source
+    }
+}
+
 public struct ResourceHandoffReport: Codable, Equatable, Sendable {
     public var kind: String
     public var overallStatus: String
     public var summary: ResourceHandoffSummary
     public var backend: ResourceHandoffSection
     public var ios: ResourceHandoffSection
+    public var firstBlocker: ResourceHandoffFirstBlocker?
+    public var nextAction: ResourceHandoffNextAction?
     public var operatorActions: [String]
     public var commands: [String]
     public var safety: ResourceHandoffSafety
@@ -3582,6 +3655,8 @@ public struct ResourceHandoffReport: Codable, Equatable, Sendable {
         summary: ResourceHandoffSummary,
         backend: ResourceHandoffSection,
         ios: ResourceHandoffSection,
+        firstBlocker: ResourceHandoffFirstBlocker? = nil,
+        nextAction: ResourceHandoffNextAction? = nil,
         operatorActions: [String],
         commands: [String],
         safety: ResourceHandoffSafety
@@ -3591,6 +3666,8 @@ public struct ResourceHandoffReport: Codable, Equatable, Sendable {
         self.summary = summary
         self.backend = backend
         self.ios = ios
+        self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.operatorActions = operatorActions
         self.commands = commands
         self.safety = safety

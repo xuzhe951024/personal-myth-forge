@@ -42,6 +42,8 @@ def build_resource_handoff_report(
             "destination": IOS_DEPLOY_DESTINATION,
             "items": ios_items,
         },
+        "first_blocker": _first_blocker(all_items),
+        "next_action": _next_action(all_items),
         "operator_actions": _operator_actions(backend_items, ios_items),
         "commands": _commands(),
         "safety": {
@@ -284,6 +286,66 @@ def _overall_status(summary: dict[str, int]) -> str:
     if summary["manual"] or summary["optional"]:
         return "partial"
     return "ready"
+
+
+def _first_blocker(items: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for item in items:
+        if item["status"] not in {"missing", "blocked"}:
+            continue
+        return {
+            "id": item["id"],
+            "label": item["label"],
+            "status": item["status"],
+            "classification": _blocker_classification(item),
+            "command": _blocker_command(item),
+            "detail": _blocker_detail(item),
+            "destination": item["destination"],
+            "required_for": item["required_for"],
+            "validation_command": _validation_command(item),
+        }
+    return None
+
+
+def _next_action(items: list[dict[str, Any]]) -> dict[str, Any] | None:
+    blocker = _first_blocker(items)
+    if blocker is None:
+        return None
+    return {
+        **blocker,
+        "source": "first_blocker",
+    }
+
+
+def _blocker_classification(item: dict[str, Any]) -> str:
+    if item["status"] == "blocked":
+        return "blocked_required_value"
+    return "missing_required_value"
+
+
+def _blocker_command(item: dict[str, Any]) -> str:
+    item_id = str(item["id"])
+    if item_id == "PRINT_PROVIDER":
+        return "provide TREATSTOCK_API_KEY or set PRINT_PROVIDER=local"
+    if item_id == "DEVELOPMENT_TEAM":
+        return "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    if item_id == "PMF_BACKEND_BASE_URL":
+        return "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    if item["destination"] == BACKEND_ENV_DESTINATION:
+        return f"provide {item_id} in final-resources.env"
+    return f"provide {item_id}"
+
+
+def _blocker_detail(item: dict[str, Any]) -> str:
+    notes = item.get("notes", [])
+    if notes:
+        return str(notes[0])
+    return str(item["required_for"])
+
+
+def _validation_command(item: dict[str, Any]) -> str:
+    if item["destination"] == IOS_DEPLOY_DESTINATION:
+        return "make mobile-deploy-preflight"
+    return "make final-resources-preflight"
 
 
 def _operator_actions(

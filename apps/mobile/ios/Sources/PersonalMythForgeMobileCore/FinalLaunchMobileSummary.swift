@@ -923,10 +923,44 @@ public enum FinalLaunchMobileSummaryBuilder {
             "Backend: \(report.backend.destination)",
             "iOS: \(report.ios.destination)",
         ]
-        if let action = report.operatorActions.first, !action.isEmpty {
+        if let action = report.nextAction {
+            rows.append(resourceHandoffNextActionRow(action))
+        } else if let blocker = report.firstBlocker {
+            rows.append(resourceHandoffFirstBlockerRow(blocker))
+        } else if let action = report.operatorActions.first, !action.isEmpty {
             rows.append(action)
         }
         return rows.map(sanitize)
+    }
+
+    private static func resourceHandoffNextActionRow(_ action: ResourceHandoffNextAction) -> String {
+        var first = "Next action: \(action.id) \(action.status)"
+        if let classification = action.classification, !classification.isEmpty {
+            first += " \(classification)"
+        }
+        return sanitize(
+            [
+                first,
+                action.command,
+                action.detail,
+                action.validationCommand,
+            ].joined(separator: " | ")
+        )
+    }
+
+    private static func resourceHandoffFirstBlockerRow(_ blocker: ResourceHandoffFirstBlocker) -> String {
+        var first = "First blocker: \(blocker.id) \(blocker.status)"
+        if let classification = blocker.classification, !classification.isEmpty {
+            first += " \(classification)"
+        }
+        return sanitize(
+            [
+                first,
+                blocker.command,
+                blocker.detail,
+                blocker.validationCommand,
+            ].joined(separator: " | ")
+        )
     }
 
     private static func resourceHandoffBackendRows(from report: ResourceHandoffReport?) -> [String] {
