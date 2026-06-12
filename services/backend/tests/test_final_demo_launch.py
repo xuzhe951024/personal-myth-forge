@@ -585,6 +585,40 @@ def test_final_demo_launch_dedupe_prefers_writer_over_old_team_action() -> None:
     ]
 
 
+def test_final_demo_launch_actions_drop_old_team_when_resource_team_handoff_exists() -> None:
+    actions = final_demo_launch._operator_actions(
+        next_action={
+            "command": "make final-apply-resources",
+        },
+        operator_checklist=[
+            (
+                "provide MESHY_API_KEY in final-resources.env; "
+                "rerun make final-resources-preflight"
+            ),
+            (
+                "provide DEVELOPMENT_TEAM in final-resources.env; "
+                "rerun make final-resources-preflight"
+            ),
+            (
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+        ],
+    )
+
+    assert actions == [
+        "make final-apply-resources",
+        (
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        (
+            "provide DEVELOPMENT_TEAM in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+    ]
+
+
 def test_local_final_demo_launch_normalizes_final_resource_requirement_action(
     tmp_path: Path,
 ) -> None:

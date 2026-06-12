@@ -69,6 +69,14 @@ from myth_forge_api.visual_regression_readiness import (
 )
 
 LaunchMode = Literal["local", "configured"]
+FINAL_DEMO_RESOURCE_TEAM_ACTION = (
+    "provide DEVELOPMENT_TEAM in final-resources.env; "
+    "rerun make final-resources-preflight"
+)
+FINAL_DEMO_MANUAL_TEAM_ACTION = (
+    "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+    "rerun make mobile-deploy-preflight"
+)
 
 
 @dataclass(frozen=True)
@@ -482,7 +490,11 @@ def _operator_actions(
     if concrete:
         actions.append(concrete)
     actions.extend(operator_checklist)
-    return _dedupe_operator_actions(actions)[:8]
+    deduped = _dedupe_operator_actions(actions)
+    return _drop_superseded_manual_team_action(
+        deduped,
+        protected_action=concrete,
+    )[:8]
 
 
 def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:
@@ -832,6 +844,28 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     return prefer_project_local_ios_deploy_handoff_actions(
         [value for value in deduped if value not in validation_aware_roots]
     )
+
+
+def _drop_superseded_manual_team_action(
+    actions: list[str],
+    *,
+    protected_action: str,
+) -> list[str]:
+    action_roots = {_command_root(action) for action in actions}
+    if FINAL_DEMO_RESOURCE_TEAM_ACTION not in action_roots:
+        return actions
+    protected_root = _command_root(protected_action)
+    return [
+        action
+        for action in actions
+        if _command_root(action) != FINAL_DEMO_MANUAL_TEAM_ACTION
+        or protected_root == FINAL_DEMO_MANUAL_TEAM_ACTION
+    ]
+
+
+def _command_root(action: str) -> str:
+    command, _separator, _detail = action.partition(" | ")
+    return command.strip()
 
 
 def _default_repo_root() -> Path:
