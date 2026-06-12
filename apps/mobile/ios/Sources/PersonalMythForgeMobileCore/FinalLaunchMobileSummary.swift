@@ -1793,6 +1793,11 @@ public enum FinalLaunchMobileSummaryBuilder {
                 status(from: row.status) != .ready
             }
             let attentionRows = attention.prefix(3).map(launchRehearsalSequenceRow)
+            if let action = readiness.nextAction {
+                rows.append(launchRehearsalActionRow(prefix: "Next action:", action))
+            } else if let blocker = readiness.firstBlocker {
+                rows.append(launchRehearsalActionRow(prefix: "First blocker:", blocker))
+            }
             if attentionRows.isEmpty {
                 rows.append(contentsOf: readiness.operatorActions.prefix(3).map(sanitize))
             } else {
@@ -1805,6 +1810,21 @@ public enum FinalLaunchMobileSummaryBuilder {
             }
         }
         return rows.map(sanitize)
+    }
+
+    private static func launchRehearsalActionRow(
+        prefix: String,
+        _ action: IOSDeviceLaunchRehearsalAction
+    ) -> String {
+        var parts = [prefix, action.id, action.status]
+        if let classification = action.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        parts.append("| \(action.command)")
+        if !action.detail.isEmpty {
+            parts.append("| \(action.detail)")
+        }
+        return sanitize(parts.joined(separator: " "))
     }
 
     private static func rehearsalFreshnessRow(

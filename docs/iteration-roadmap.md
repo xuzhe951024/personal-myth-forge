@@ -292,6 +292,7 @@ Bridge deliverable:
 - P0.378 iOS final launch device rows show backend child next actions
 - P0.379 iOS final launch first blocker receipt shows validation command
 - P0.380 iOS final launch device rows show child operator actions
+- P0.381 iOS device launch rehearsal readiness exposes first blocker and next action
 
 ## P1: Mobile Vertical Slice
 

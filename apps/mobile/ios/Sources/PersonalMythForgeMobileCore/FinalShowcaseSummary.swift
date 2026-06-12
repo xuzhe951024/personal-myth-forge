@@ -318,9 +318,29 @@ public enum FinalShowcaseSummaryBuilder {
             return sanitize(first)
         }
         if let actionable = rows.dropFirst().first(where: iosDeployActionableRow) {
-            return sanitize([first, actionable].joined(separator: " "))
+            var selected = [first, actionable]
+            if iosDeployNextActionRow(actionable),
+               let evidence = rows.dropFirst().first(where: iosDeployEvidenceRow)
+            {
+                selected.append(evidence)
+            }
+            return sanitize(selected.joined(separator: " "))
         }
         return sanitize(rows.prefix(2).joined(separator: " "))
+    }
+
+    private static func iosDeployNextActionRow(_ row: String) -> Bool {
+        row.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .hasPrefix("next action:")
+    }
+
+    private static func iosDeployEvidenceRow(_ row: String) -> Bool {
+        let text = row.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if text.hasPrefix("next action:") || text.hasPrefix("freshness:") || text.hasPrefix("source freshness:") {
+            return false
+        }
+        return iosDeployActionableRow(row)
     }
 
     private static func iosDeployActionableRow(_ row: String) -> Bool {

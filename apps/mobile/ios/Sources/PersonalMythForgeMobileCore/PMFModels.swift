@@ -3229,6 +3229,34 @@ public struct IOSDeviceLaunchRehearsalSequenceRow: Codable, Equatable, Sendable 
     }
 }
 
+public struct IOSDeviceLaunchRehearsalAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var source: String
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        source: String
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.source = source
+    }
+}
+
 public struct IOSDeviceLaunchRehearsalSafety: Codable, Equatable, Sendable {
     public var commandsRun: Bool
     public var providerCalls: Bool
@@ -3280,6 +3308,8 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
     public var summary: IOSDeviceLaunchRehearsalReadinessSummary
     public var sequence: [IOSDeviceLaunchRehearsalSequenceRow]
     public var blockers: [ThreeDEvaluationReadinessBlocker]
+    public var firstBlocker: IOSDeviceLaunchRehearsalAction?
+    public var nextAction: IOSDeviceLaunchRehearsalAction?
     public var operatorActions: [String]
     public var commands: [String]
     public var safety: IOSDeviceLaunchRehearsalSafety
@@ -3292,6 +3322,8 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
         summary: IOSDeviceLaunchRehearsalReadinessSummary,
         sequence: [IOSDeviceLaunchRehearsalSequenceRow],
         blockers: [ThreeDEvaluationReadinessBlocker] = [],
+        firstBlocker: IOSDeviceLaunchRehearsalAction? = nil,
+        nextAction: IOSDeviceLaunchRehearsalAction? = nil,
         operatorActions: [String],
         commands: [String],
         safety: IOSDeviceLaunchRehearsalSafety
@@ -3303,6 +3335,8 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
         self.summary = summary
         self.sequence = sequence
         self.blockers = blockers
+        self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.operatorActions = operatorActions
         self.commands = commands
         self.safety = safety
