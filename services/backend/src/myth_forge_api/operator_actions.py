@@ -209,12 +209,26 @@ def prefer_project_local_ios_deploy_handoff_actions(actions: list[str]) -> list[
     action_roots = {_action_command_root(action) for action in actions}
     if MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION not in action_roots:
         return actions
-    return [
-        action
-        for action in actions
-        if _action_command_root(action)
-        not in {DEPLOYMENT_TEAM_VALIDATED_ACTION, IOS_DEPLOY_CONFIG_VALIDATED_ACTION}
-    ]
+    filtered: list[str] = []
+    writer_index: int | None = None
+    old_deploy_action_roots = {
+        DEPLOYMENT_TEAM_VALIDATED_ACTION,
+        IOS_DEPLOY_CONFIG_VALIDATED_ACTION,
+    }
+    for action in actions:
+        root = _action_command_root(action)
+        if root in old_deploy_action_roots:
+            continue
+        if root != MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION:
+            filtered.append(action)
+            continue
+        if writer_index is None:
+            writer_index = len(filtered)
+            filtered.append(action)
+            continue
+        if " | " in action and " | " not in filtered[writer_index]:
+            filtered[writer_index] = action
+    return filtered
 
 
 def _action_command_root(action: str) -> str:

@@ -1232,6 +1232,55 @@ def test_ios_device_launch_rehearsal_full_actions_prefer_writer_over_generic_ios
     ]
 
 
+def test_ios_device_launch_rehearsal_dedupes_duplicate_deploy_writer_roots(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    bare_writer = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    detailed_writer = (
+        f"{bare_writer} | Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["operator_actions"] = [bare_writer, detailed_writer]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+
+    assert result.report["operator_actions"] == [detailed_writer]
+
+
+def test_ios_device_launch_rehearsal_full_actions_dedupes_deploy_writer_roots() -> None:
+    bare_writer = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    detailed_writer = (
+        f"{bare_writer} | Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+
+    actions = ios_device_launch_rehearsal._operator_actions(
+        [
+            {
+                "id": "final_rehearsal_local",
+                "label": "Local final rehearsal",
+                "status": "blocked",
+                "command": "make final-rehearsal-local",
+                "operator_actions": [bare_writer, detailed_writer],
+            }
+        ]
+    )
+
+    assert actions == [detailed_writer]
+
+
 def _write_local_rehearsal_reports(local_dir: Path) -> None:
     _write_json(
         local_dir / "3d-evaluation-local.json",

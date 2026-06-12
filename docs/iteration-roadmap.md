@@ -250,6 +250,7 @@ Bridge deliverable:
 - P0.336 iOS deploy detail actions normalize to writer command
 - P0.337 final demo and iOS rehearsal action lists prefer deploy writer
 - P0.338 iOS deploy action lists prefer specific writer handoff
+- P0.339 iOS deploy action root dedupe for detail-bearing writer handoff
 
 ## P1: Mobile Vertical Slice
 
