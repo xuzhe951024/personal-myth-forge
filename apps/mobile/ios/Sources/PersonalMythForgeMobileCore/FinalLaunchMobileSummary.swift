@@ -1097,6 +1097,14 @@ public enum FinalLaunchMobileSummaryBuilder {
             "Live provider consent commands: \(evidence.summary.requiresLiveProviderConsent).",
         ]
         if evidence.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" {
+            if let nextAction = evidence.nextAction {
+                rows.append(
+                    liveProviderEvidenceActionRow(
+                        prefix: "Next action: \(nextAction.id)",
+                        slot: nextAction
+                    )
+                )
+            }
             if let blocker = evidence.firstBlocker {
                 rows.append(liveProviderEvidenceSlotRow(blocker))
             } else if let slot = evidence.evidence.first(where: { status(from: $0.status) != .ready }) {
@@ -1108,13 +1116,26 @@ public enum FinalLaunchMobileSummaryBuilder {
     }
 
     private static func liveProviderEvidenceSlotRow(_ slot: LiveProviderEvidenceSlot) -> String {
-        var parts = ["\(slot.id): \(slot.status)"]
+        liveProviderEvidenceActionRow(prefix: "\(slot.id):", slot: slot)
+    }
+
+    private static func liveProviderEvidenceActionRow(
+        prefix: String,
+        slot: LiveProviderEvidenceSlot
+    ) -> String {
+        var parts = [prefix, slot.status]
         if let classification = slot.classification, !classification.isEmpty {
             parts.append(classification)
+        }
+        if let source = slot.source, !source.isEmpty {
+            parts.append("| source \(source)")
         }
         parts.append("| \(slot.command)")
         if let detail = slot.detail, !detail.isEmpty {
             parts.append("| \(detail)")
+        }
+        if let validationCommand = slot.validationCommand, !validationCommand.isEmpty {
+            parts.append("| \(validationCommand)")
         }
         return sanitize(parts.joined(separator: " "))
     }

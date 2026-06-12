@@ -23,6 +23,12 @@ def test_live_provider_evidence_missing_reports_without_running_commands(
     }
     assert result.report["first_blocker"]["id"] == "provider_handoff"
     assert result.report["first_blocker"]["status"] == "missing"
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "requires_live_provider_consent": False,
+        "validation_command": "make live-provider-evidence",
+        "source": "first_blocker",
+    }
     evidence = {slot["id"]: slot for slot in result.report["evidence"]}
     assert evidence["provider_handoff"]["status"] == "missing"
     assert evidence["provider_handoff"]["command"] == "make provider-handoff"
@@ -76,6 +82,7 @@ def test_live_provider_evidence_ready_from_configured_fixtures(
         "requires_live_provider_consent": 3,
     }
     assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert result.report["operator_actions"] == []
     evidence = {slot["id"]: slot for slot in result.report["evidence"]}
     assert evidence["provider_handoff"]["status"] == "ready"
@@ -140,6 +147,11 @@ def test_live_provider_evidence_blocks_failed_report_and_redacts(
     assert result.report["summary"]["blocked"] == 1
     assert result.report["first_blocker"]["id"] == "three_d_evaluation_configured"
     assert result.report["first_blocker"]["classification"] == "report_not_ready"
+    assert result.report["next_action"]["id"] == "three_d_evaluation_configured"
+    assert result.report["next_action"]["requires_live_provider_consent"] is True
+    assert result.report["next_action"]["validation_command"] == (
+        "make live-provider-evidence"
+    )
     assert "rerun configured 3D evaluation" in " ".join(result.report["operator_actions"])
     assert "secret-token" not in report_text
     assert "sk-live-secret" not in report_text

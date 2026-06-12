@@ -655,7 +655,10 @@ def test_final_local_report_refresh_step_hint_uses_child_next_commands(
     assert step["status"] == "blocked"
     assert step["next_command"] == "make provider-handoff"
     assert step["command"] == "make provider-handoff"
-    assert "make provider-handoff" in result.report["operator_actions"]
+    assert (
+        "make provider-handoff; rerun make live-provider-evidence"
+        in result.report["operator_actions"]
+    )
     assert "review refreshed provider_handoff report" not in (
         result.report["operator_actions"]
     )
