@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from myth_forge_api.operator_actions import (
+    MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
 )
@@ -253,8 +254,21 @@ def _blocked_check_detail_summary(checks: list[dict[str, str]]) -> str:
 
 def _operator_actions(checks: list[dict[str, str]]) -> list[str]:
     actions: list[str] = []
+    blocked_ids = {
+        check["id"] for check in checks if check.get("status") != "ready"
+    }
+    if (
+        "development_team" in blocked_ids
+        and "backend_base_url" in blocked_ids
+        and "bundle_identifier" not in blocked_ids
+    ):
+        actions.append(MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION)
     for check in checks:
         check_id = check["id"]
+        if check_id in {"development_team", "backend_base_url"} and (
+            MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION in actions
+        ):
+            continue
         if check_id == "development_team":
             actions.append("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
         elif check_id == "bundle_identifier":

@@ -93,6 +93,36 @@ def test_preflight_evidence_blocks_missing_config_with_actions(tmp_path: Path) -
     ]
 
 
+def test_preflight_evidence_suggests_auto_writer_for_team_and_backend_url(
+    tmp_path: Path,
+) -> None:
+    result = build_mobile_deploy_preflight_evidence_report(
+        repo_root=tmp_path,
+        returncode=2,
+        stdout="",
+        stderr=(
+            "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.\n"
+            "PMF_BACKEND_BASE_URL must be reachable from iPhone, not loopback.\n"
+        ),
+    )
+
+    assert result.report["next_action"] == {
+        "id": "development_team",
+        "label": "Apple Team ID",
+        "status": "blocked",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+        "validation_command": "make mobile-deploy-preflight",
+        "source": "first_blocker",
+    }
+    assert result.report["operator_actions"] == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
 def test_preflight_evidence_blocks_backend_health_without_leaks(tmp_path: Path) -> None:
     expected_command = (
         "start backend-device-demo before device checks: make backend-device-demo"

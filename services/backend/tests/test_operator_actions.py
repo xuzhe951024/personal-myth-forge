@@ -35,6 +35,15 @@ def test_adds_mobile_deploy_validation_to_known_ios_config_actions() -> None:
     )
 
 
+def test_adds_mobile_deploy_validation_to_writer_command() -> None:
+    assert operator_actions.add_mobile_deploy_validation_command(
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    ) == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+
 def test_mobile_deploy_validation_preserves_existing_rerun_command() -> None:
     action = (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
