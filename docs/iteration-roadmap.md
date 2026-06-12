@@ -214,6 +214,7 @@ Bridge deliverable:
 - P0.300 final showcase drops duplicate source-prefixed resource actions
 - P0.301 final showcase source-prefixed make targets normalize to bare commands
 - P0.302 final showcase iOS deploy config action normalizes to bare handoff
+- P0.303 final handoff index top-level actions normalize to bare handoff commands
 
 ## P1: Mobile Vertical Slice
 

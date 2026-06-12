@@ -45,8 +45,8 @@ def test_final_handoff_index_blocks_missing_reports_without_leaks(
         "and --allow-live-provider-calls consent"
     ) in result.report["operator_actions"]
     assert result.report["operator_actions"][:2] == [
-        "run make final-rehearsal-local",
-        "run make final-configured-preflight",
+        "make final-rehearsal-local",
+        "make final-configured-preflight",
     ]
     assert result.report["safety"]["provider_calls"] is False
     assert result.report["safety"]["commands_run"] is False
@@ -194,8 +194,12 @@ def test_final_handoff_index_local_lane_uses_saved_blocker_detail(
     assert lanes["local_rehearsal"]["detail"] == expected_detail
     assert result.report["first_blocker"]["detail"] == expected_detail
     assert result.report["operator_actions"][0] == (
-        "final_demo_launch_local: provide DEVELOPMENT_TEAM in "
-        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert not any(
+        action.startswith("final_demo_launch_local:")
+        for action in result.report["operator_actions"]
     )
     assert "MESHY_API_KEY" not in report_text
 
