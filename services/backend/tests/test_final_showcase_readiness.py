@@ -1336,6 +1336,8 @@ def test_final_showcase_readiness_functional_regression_uses_concrete_preflight_
     row = result.report["capabilities_by_id"]["functional_regression"]
 
     assert row["status"] == "blocked"
+    assert row["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    assert row["validation_command"] == "make mobile-deploy-preflight"
     assert "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig" in row["detail"]
     assert "rerun make mobile-deploy-preflight" in row["detail"]
     assert (

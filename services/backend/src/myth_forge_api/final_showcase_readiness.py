@@ -717,6 +717,7 @@ def _simple_report_capability(
 ) -> dict[str, Any]:
     raw_status = str(report.get("status", report.get("overall_status", "missing")))
     status = _normalized_status(raw_status)
+    validation_command = ""
     if status == "ready":
         detail = ready_detail
         classification = "report_ready"
@@ -729,6 +730,11 @@ def _simple_report_capability(
         blocker = _first_report_blocker(report)
         if blocker is not None:
             classification = str(blocker.get("classification", classification))
+            child_command, child_validation_command = _report_next_action_command(
+                blocker,
+            )
+            command = child_command or command
+            validation_command = child_validation_command
             detail = (
                 f"{blocked_detail} {blocker.get('id', 'unknown_blocker')}: "
                 f"{_report_blocker_detail(blocker)}"
@@ -741,6 +747,7 @@ def _simple_report_capability(
         command=command,
         detail=detail,
         evidence=[f"{report.get('kind', capability_id)}:{raw_status}"],
+        validation_command=validation_command or None,
     )
 
 
