@@ -1281,6 +1281,59 @@ def test_ios_device_launch_rehearsal_full_actions_dedupes_deploy_writer_roots() 
     assert actions == [detailed_writer]
 
 
+def test_ios_device_launch_rehearsal_sequence_prefers_writer_over_generic_deploy_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True)
+    _write_local_rehearsal_reports(local_dir)
+    _write_json(
+        local_dir / "final-configured-preflight.json",
+        {"kind": "final_configured_preflight_report", "status": "ready"},
+    )
+    writer = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    _write_json(
+        local_dir / "final-handoff-index.json",
+        {
+            "kind": "final_handoff_index_report",
+            "status": "blocked",
+            "operator_actions": [writer],
+        },
+    )
+    _write_json(
+        local_dir / "ios-device-launch-certificate.json",
+        {
+            "kind": "ios_device_launch_certificate_report",
+            "status": "blocked",
+            "mode": "local",
+            "operator_actions": [
+                "run make final-handoff-index",
+                "provide iOS deploy config and rerun mobile deploy preflight",
+                "run make ios-deploy-runbook-local",
+            ],
+        },
+    )
+
+    result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
+    sequence = {step["id"]: step for step in result.report["sequence"]}
+
+    assert sequence["final_handoff_index"]["operator_actions"] == [writer]
+    assert sequence["ios_device_launch_certificate"]["operator_actions"] == [
+        "make final-handoff-index",
+        "make ios-deploy-runbook-local",
+    ]
+    assert not any(
+        "provide iOS deploy config" in action
+        for step in result.report["sequence"]
+        for action in step.get("operator_actions", [])
+    )
+
+
 def _write_local_rehearsal_reports(local_dir: Path) -> None:
     _write_json(
         local_dir / "3d-evaluation-local.json",

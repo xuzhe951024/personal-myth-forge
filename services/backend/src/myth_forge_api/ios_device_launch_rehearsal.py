@@ -11,7 +11,10 @@ from myth_forge_api.configured_acceptance_command import (
 )
 from myth_forge_api.operator_actions import (
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+    DEPLOYMENT_TEAM_VALIDATED_ACTION,
     FINAL_RESOURCE_APPLY_ACTION,
+    IOS_DEPLOY_CONFIG_VALIDATED_ACTION,
+    MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION,
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
@@ -325,13 +328,76 @@ def _saved_report_status(payload: dict[str, Any]) -> str:
 
 
 def _sequence_with_details(sequence: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    preferred_sequence = _prefer_sequence_ios_deploy_handoff_actions(sequence)
     rows: list[dict[str, Any]] = []
-    for step in sequence:
+    for step in preferred_sequence:
         row = dict(step)
         if row.get("status") in {"missing", "blocked"}:
             row["detail"] = _step_blocker_detail(row)
         rows.append(row)
     return rows
+
+
+def _prefer_sequence_ios_deploy_handoff_actions(
+    sequence: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not _sequence_has_ios_deploy_writer(sequence):
+        return sequence
+    rows: list[dict[str, Any]] = []
+    for step in sequence:
+        nested_actions = step.get("operator_actions")
+        if not isinstance(nested_actions, list):
+            rows.append(step)
+            continue
+        preferred_actions = _prefer_nested_ios_deploy_handoff_actions(nested_actions)
+        row = dict(step)
+        if preferred_actions:
+            row["operator_actions"] = preferred_actions
+        else:
+            row.pop("operator_actions", None)
+        rows.append(row)
+    return rows
+
+
+def _sequence_has_ios_deploy_writer(sequence: list[dict[str, Any]]) -> bool:
+    return any(
+        _top_level_action_root(str(action))
+        == MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION
+        for step in sequence
+        for action in step.get("operator_actions", [])
+        if isinstance(action, str)
+    )
+
+
+def _prefer_nested_ios_deploy_handoff_actions(actions: list[Any]) -> list[str]:
+    preferred: list[str] = []
+    writer_index: int | None = None
+    old_roots = {
+        DEPLOYMENT_TEAM_VALIDATED_ACTION,
+        IOS_DEPLOY_CONFIG_VALIDATED_ACTION,
+    }
+    for action in actions:
+        if not isinstance(action, str) or not action.strip():
+            continue
+        root = _top_level_action_root(action)
+        if root in old_roots:
+            continue
+        if root != MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION:
+            if action not in preferred:
+                preferred.append(action)
+            continue
+        if writer_index is None:
+            writer_index = len(preferred)
+            preferred.append(action)
+            continue
+        if " | " in action and " | " not in preferred[writer_index]:
+            preferred[writer_index] = action
+    return preferred
+
+
+def _top_level_action_root(action: str) -> str:
+    command, _detail_suffix = _split_detail_suffix(_top_level_operator_action(action))
+    return command
 
 
 def _overall_status(sequence: list[dict[str, Any]]) -> str:
