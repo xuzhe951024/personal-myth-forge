@@ -36,6 +36,16 @@ def test_final_handoff_index_blocks_missing_reports_without_leaks(
         "command": "make final-rehearsal-local",
         "detail": "run make final-rehearsal-local",
     }
+    assert result.report["next_action"] == {
+        "id": "local_rehearsal",
+        "label": "Local rehearsal",
+        "status": "missing",
+        "classification": "lane_missing",
+        "command": "make final-rehearsal-local",
+        "detail": "run make final-rehearsal-local",
+        "source": "first_blocker",
+        "validation_command": "make final-rehearsal-local",
+    }
     assert "make final-rehearsal-local" in result.report["commands"]
     assert "make final-configured-preflight" in result.report["commands"]
     assert "make final-handoff-index" in result.report["commands"]
@@ -93,6 +103,7 @@ def test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready(
     assert result.exit_code == 0
     assert result.report["status"] == "ready"
     assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert result.report["summary"]["missing"] == 0
     assert result.report["summary"]["blocked"] == 0
     assert lanes["local_rehearsal"]["status"] == "ready"
@@ -193,6 +204,11 @@ def test_final_handoff_index_local_lane_uses_saved_blocker_detail(
     assert lanes["local_rehearsal"]["status"] == "blocked"
     assert lanes["local_rehearsal"]["detail"] == expected_detail
     assert result.report["first_blocker"]["detail"] == expected_detail
+    next_action = result.report["next_action"]
+    assert next_action["id"] == "local_rehearsal"
+    assert next_action["source"] == "first_blocker"
+    assert next_action["validation_command"] == "make final-rehearsal-local"
+    assert next_action["detail"] == expected_detail
     assert result.report["operator_actions"][0] == (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"

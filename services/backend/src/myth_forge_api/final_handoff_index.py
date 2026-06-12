@@ -98,11 +98,13 @@ def build_final_handoff_index_report(
         configured_preflight=configured_preflight,
     )
     status = _overall_status(lanes)
+    first_blocker = _first_blocker(lanes)
     report = {
         "kind": "final_handoff_index_report",
         "status": status,
         "summary": _summary(lanes),
-        "first_blocker": _first_blocker(lanes),
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "lanes": lanes,
         "lanes_by_id": {lane["id"]: lane for lane in lanes},
         "source_reports": source_reports,
@@ -603,6 +605,23 @@ def _first_blocker(lanes: list[dict[str, Any]]) -> dict[str, Any] | None:
             "command": command,
             "detail": _lane_blocker_detail(lane),
         }
+    return None
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    next_action = {**first_blocker, "source": "first_blocker"}
+    validation_command = _validation_command_for_blocker(first_blocker)
+    if validation_command:
+        next_action["validation_command"] = validation_command
+    return next_action
+
+
+def _validation_command_for_blocker(blocker: dict[str, Any]) -> str | None:
+    command = str(blocker.get("command", "")).strip()
+    if command.startswith("make "):
+        return command
     return None
 
 
