@@ -593,10 +593,34 @@ def _provide_action_text(action: dict[str, Any]) -> str:
     return "; ".join(parts)
 
 
+def _blocker_command_for_action(
+    action: dict[str, Any],
+    section: dict[str, Any],
+) -> str:
+    if _is_resource_user_input_action(action):
+        return _provide_action_text(action).split(";", 1)[0].strip()
+    return str(action.get("command", section.get("command", "")))
+
+
+def _validation_command_for_action(action: dict[str, Any]) -> str | None:
+    command = str(action.get("command", "")).strip()
+    if command.startswith("make "):
+        return command
+    return None
+
+
+def _is_resource_user_input_action(action: dict[str, Any]) -> bool:
+    return (
+        str(action.get("id", "")).startswith("provide_")
+        and action.get("status") in {"missing", "blocked"}
+        and bool(action.get("requires_user_input"))
+    )
+
+
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     if not isinstance(first_blocker, dict):
         return None
-    return {
+    next_action = {
         "id": str(first_blocker.get("id", "")),
         "label": str(first_blocker.get("label", "")),
         "status": str(first_blocker.get("status", "")),
@@ -607,6 +631,10 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
         "section_id": str(first_blocker.get("section_id", "")),
         "action_id": str(first_blocker.get("action_id", "")),
     }
+    validation_command = first_blocker.get("validation_command")
+    if validation_command:
+        next_action["validation_command"] = str(validation_command)
+    return next_action
 
 
 def _first_blocker(sections: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -623,11 +651,14 @@ def _first_blocker(sections: list[dict[str, Any]]) -> dict[str, Any] | None:
             "label": str(section.get("label", section.get("id", "section"))),
             "status": str(section.get("status", "blocked")),
             "classification": _optional_string(action.get("classification")),
-            "command": str(action.get("command", section.get("command", ""))),
+            "command": _blocker_command_for_action(action, section),
             "detail": str(action.get("detail", section.get("detail", ""))),
             "section_id": str(section.get("id", "section")),
             "action_id": str(action.get("id", "action")),
         }
+        validation_command = _validation_command_for_action(action)
+        if validation_command:
+            blocker["validation_command"] = validation_command
         if blocker["classification"] is None:
             blocker.pop("classification")
         return blocker
