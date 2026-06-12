@@ -1099,6 +1099,24 @@ def test_final_showcase_readiness_prefers_writer_over_generic_ios_config_action(
     ]
 
 
+def test_final_showcase_readiness_dedupes_duplicate_deploy_writer_roots() -> None:
+    bare_writer = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    detailed_writer = (
+        f"{bare_writer} | Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+
+    actions = final_showcase_readiness._dedupe_operator_actions(
+        [bare_writer, detailed_writer]
+    )
+
+    assert actions == [detailed_writer]
+
+
 def test_final_showcase_readiness_normalizes_xcode_gate_actions() -> None:
     actions = final_showcase_readiness._report_operator_actions(
         {
