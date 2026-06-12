@@ -34,6 +34,12 @@ def test_ios_device_launch_rehearsal_blocks_missing_reports_without_leaks(
         "command": "make final-rehearsal-local",
         "detail": "run make ios-device-launch-rehearsal",
     }
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "command": "make final-rehearsal-local",
+        "source": "first_blocker",
+        "validation_command": "make ios-device-launch-rehearsal",
+    }
     assert result.report["sequence"][0]["id"] == "final_rehearsal_local"
     assert sequence["final_rehearsal_local"]["detail"] == (
         "run make ios-device-launch-rehearsal"
@@ -92,6 +98,7 @@ def test_ios_device_launch_rehearsal_partial_when_saved_reports_are_ready_with_m
     assert result.exit_code == 0
     assert result.report["status"] == "partial"
     assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert result.report["mode"] == "configured"
     assert result.report["configured_preflight"]["status"] == "ready"
     assert result.report["final_handoff_index"]["status"] == "ready"
@@ -350,6 +357,12 @@ def test_ios_device_launch_rehearsal_uses_mobile_preflight_check_details(
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["first_blocker"]["detail"] == expected_detail
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "command": expected_top_level_action,
+        "source": "operator_actions",
+        "validation_command": "make ios-device-launch-rehearsal",
+    }
     assert sequence["final_rehearsal_local"]["detail"] == expected_detail
     assert sequence["final_rehearsal_local"]["operator_actions"][0] == (
         expected_source_action
