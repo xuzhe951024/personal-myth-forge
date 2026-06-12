@@ -1045,6 +1045,9 @@ def test_final_demo_launch_promotes_final_showcase_handoff_actions(
         "services/backend/.local/print-quote-configured.json from POST "
         "/v1/print-quotes; rerun make print-fulfillment-readiness"
     )
+    print_validation_only_action = (
+        "make visual-regression-local; rerun make print-fulfillment-readiness"
+    )
 
     def build_showcase_readiness(**_: object) -> final_demo_launch.FinalDemoLaunchResult:
         return final_demo_launch.FinalDemoLaunchResult(
@@ -1055,6 +1058,7 @@ def test_final_demo_launch_promotes_final_showcase_handoff_actions(
                 "operator_actions": [
                     provider_handoff_action,
                     print_handoff_action,
+                    print_validation_only_action,
                     "refresh unrelated visual proof",
                 ],
                 "capabilities_by_id": {
@@ -1080,6 +1084,7 @@ def test_final_demo_launch_promotes_final_showcase_handoff_actions(
 
     assert provider_handoff_action in actions
     assert print_handoff_action in actions
+    assert print_validation_only_action not in actions
     assert "refresh unrelated visual proof" not in actions
 
 
