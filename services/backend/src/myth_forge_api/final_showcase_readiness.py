@@ -79,6 +79,8 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_MAKE_TARGETS = (
     "make final-handoff-index",
     "make ios-deploy-runbook-local",
 )
+FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
+FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 FINAL_SHOWCASE_SOURCE_ACTION_PREFIXES = (
     "final_rehearsal_local:",
     "mobile_deploy_preflight_evidence:",
@@ -1619,7 +1621,20 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
             continue
         seen_exact.add(normalized)
         deduped.append(normalized)
-    return prefer_project_local_ios_deploy_handoff_actions(deduped)
+    return _prefer_apply_preview_before_apply(
+        prefer_project_local_ios_deploy_handoff_actions(deduped)
+    )
+
+
+def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
+    action_roots = {_operator_action_bare_root(action) for action in actions}
+    if FINAL_RESOURCE_APPLY_PREVIEW_ACTION not in action_roots:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_bare_root(action) != FINAL_RESOURCE_APPLY_ACTION
+    ]
 
 
 def _operator_action_bare_root(action: str) -> str:

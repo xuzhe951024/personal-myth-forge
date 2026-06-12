@@ -82,6 +82,21 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
     assert result.report["safety"]["live_provider_calls"] is False
 
 
+def test_final_showcase_readiness_operator_actions_gate_apply_behind_preview(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert "make final-resource-apply-preview" in actions
+    assert "make final-apply-resources" not in actions
+
+
 def test_final_showcase_readiness_includes_ios_device_action_bundle(
     tmp_path: Path,
 ) -> None:
@@ -1096,6 +1111,27 @@ def test_final_showcase_readiness_prefers_writer_over_generic_ios_config_action(
             "make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         )
+    ]
+
+
+def test_final_showcase_readiness_hides_apply_when_preview_gate_is_present() -> None:
+    actions = final_showcase_readiness._dedupe_operator_actions(
+        [
+            "make final-resource-apply-preview",
+            "make final-apply-resources",
+            (
+                "provide MESHY_API_KEY in final-resources.env; "
+                "rerun make final-resources-preflight"
+            ),
+        ]
+    )
+
+    assert actions == [
+        "make final-resource-apply-preview",
+        (
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
     ]
 
 
