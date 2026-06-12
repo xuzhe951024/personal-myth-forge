@@ -38,6 +38,11 @@ OPERATOR_SEQUENCE = [
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 PROVIDER_HANDOFF_OPERATOR_ACTION = "make provider-handoff; rerun make live-provider-evidence"
+MOBILE_XCODE_BUILD_EVIDENCE_ACTION = "make mobile-xcode-build-evidence"
+XCODE_LICENSE_OPERATOR_ACTION = (
+    "accept the Xcode license outside Codex, then rerun "
+    f"{MOBILE_XCODE_BUILD_EVIDENCE_ACTION}"
+)
 IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
 IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
 
@@ -381,18 +386,27 @@ def _global_machine_actions() -> list[dict[str, Any]]:
             label="Accept Apple SDK license",
             command="accept Apple SDK license manually on this Mac",
             detail="Requires explicit user confirmation because it changes machine state.",
+            operator_action=XCODE_LICENSE_OPERATOR_ACTION,
         ),
         _global_action(
             action_id="configure_apple_signing",
             label="Configure Apple signing",
             command="configure Apple Team ID, bundle id, certificates, and device trust manually",
             detail="Signing, certificates, device trust, and keychain state are outside repo control.",
+            operator_action=(
+                "configure Apple Team ID, bundle id, certificates, and device trust "
+                f"manually; rerun {MOBILE_XCODE_BUILD_EVIDENCE_ACTION}"
+            ),
         ),
         _global_action(
             action_id="run_xcode_build_gate",
             label="Run Xcode build gate",
             command="make mobile-xcode-build",
             detail="May invoke Xcode signing and Apple SDK global state.",
+            operator_action=(
+                "run Xcode build gate manually on the Mac: make mobile-xcode-build; "
+                f"rerun {MOBILE_XCODE_BUILD_EVIDENCE_ACTION}"
+            ),
         ),
     ]
 
@@ -403,6 +417,7 @@ def _global_action(
     label: str,
     command: str,
     detail: str,
+    operator_action: str = "",
 ) -> dict[str, Any]:
     return _action(
         action_id=action_id,
@@ -414,6 +429,7 @@ def _global_action(
         requires_user_confirmation=True,
         global_action=True,
         xcode_or_signing=True,
+        operator_action=operator_action,
     )
 
 
@@ -685,7 +701,13 @@ def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
                         f"approve live provider cost before {action['command']}"
                     )
             elif action["requires_user_confirmation"] and action["status"] == "manual":
-                actions.append(f"confirm global/manual action before {action['command']}")
+                concrete_action = str(action.get("operator_action", "")).strip()
+                if concrete_action:
+                    actions.append(normalize_operator_action(concrete_action))
+                else:
+                    actions.append(
+                        f"confirm global/manual action before {action['command']}"
+                    )
     return _prefer_apply_preview_before_apply(_dedupe(actions))
 
 

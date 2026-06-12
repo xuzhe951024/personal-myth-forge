@@ -218,6 +218,46 @@ def test_external_action_ledger_uses_concrete_provider_and_print_handoff_actions
     )
 
 
+def test_external_action_ledger_uses_concrete_global_xcode_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["actions_by_id"]
+    operator_actions = result.report["operator_actions"]
+
+    expected_actions = [
+        (
+            "accept the Xcode license outside Codex, then rerun "
+            "make mobile-xcode-build-evidence"
+        ),
+        (
+            "configure Apple Team ID, bundle id, certificates, and device trust "
+            "manually; rerun make mobile-xcode-build-evidence"
+        ),
+        (
+            "run Xcode build gate manually on the Mac: make mobile-xcode-build; "
+            "rerun make mobile-xcode-build-evidence"
+        ),
+    ]
+
+    for expected in expected_actions:
+        assert expected in operator_actions
+
+    assert not any(
+        action.startswith("confirm global/manual action before")
+        for action in operator_actions
+    )
+    assert actions["accept_apple_sdk_license"]["requires_user_confirmation"] is True
+    assert actions["configure_apple_signing"]["global"] is True
+    assert actions["run_xcode_build_gate"]["xcode_or_signing"] is True
+
+
 def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks(
     tmp_path: Path,
 ) -> None:

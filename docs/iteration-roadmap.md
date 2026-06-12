@@ -286,6 +286,7 @@ Bridge deliverable:
 - P0.372 final external action ledger uses concrete provider and print handoff actions
 - P0.373 final demo launch local operator actions prefer apply preview before apply writer
 - P0.374 final local report refresh drops self-rerun operator action suffixes
+- P0.375 final external action ledger uses concrete global Xcode handoff actions
 
 ## P1: Mobile Vertical Slice
 
