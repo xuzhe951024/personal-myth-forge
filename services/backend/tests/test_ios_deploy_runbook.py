@@ -19,6 +19,15 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert report["kind"] == "ios_deploy_runbook_report"
     assert report["mode"] == "local"
     assert report["status"] == "blocked"
+    assert report["first_blocker"]["id"] == "final_resources_env"
+    assert report["first_blocker"]["command"] == "run make final-resource-init"
+    assert report["first_blocker"]["input_source"] == (
+        "services/backend/.local/final-resources.env"
+    )
+    assert report["next_action"] == {
+        **report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert slots["final_resources_env"]["status"] == "missing"
     assert slots["final_resource_apply_preview"]["status"] == "missing"
     assert slots["development_team"]["status"] == "missing"
@@ -127,6 +136,13 @@ def test_ios_deploy_runbook_ready_local_inputs_preserve_command_order(
     assert commands[-1] == "make mobile-xcode-build"
     assert report["command_sequence"][-1]["id"] == "xcode_build_gate"
     assert report["command_sequence"][-1]["status"] == "manual"
+    assert report["first_blocker"]["id"] == "xcode_build_gate"
+    assert report["first_blocker"]["status"] == "manual"
+    assert report["first_blocker"]["command"] == "make mobile-xcode-build"
+    assert report["next_action"] == {
+        **report["first_blocker"],
+        "source": "first_blocker",
+    }
 
 
 def test_ios_deploy_runbook_configured_mode_includes_live_acceptance_consent(

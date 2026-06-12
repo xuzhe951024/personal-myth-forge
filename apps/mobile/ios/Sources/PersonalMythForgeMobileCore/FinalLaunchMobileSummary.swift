@@ -1411,6 +1411,12 @@ public enum FinalLaunchMobileSummaryBuilder {
             ? runbook.inputSlots.filter(\.required).prefix(3)
             : attention.prefix(3)
         rows.append(contentsOf: slots.map(deployRunbookSlotRow))
+        if let firstBlocker = runbook.firstBlocker {
+            rows.append(deployRunbookFirstBlockerRow(firstBlocker))
+        }
+        if let nextAction = runbook.nextAction {
+            rows.append(deployRunbookNextActionRow(nextAction))
+        }
         if let action = runbook.operatorActions.first, !action.isEmpty {
             rows.append(sanitize(action))
         }
@@ -1429,6 +1435,29 @@ public enum FinalLaunchMobileSummaryBuilder {
             parts.append("| \(slot.operatorAction)")
         }
         return sanitize(parts.joined(separator: " "))
+    }
+
+    private static func deployRunbookFirstBlockerRow(
+        _ blocker: IOSDeployRunbookFirstBlocker
+    ) -> String {
+        var parts = ["First blocker: \(blocker.id)", blocker.status, blocker.command]
+        if let classification = blocker.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        if !blocker.detail.isEmpty {
+            parts.append(blocker.detail)
+        }
+        return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func deployRunbookNextActionRow(
+        _ action: IOSDeployRunbookNextAction
+    ) -> String {
+        var parts = ["Next action: \(action.command)", action.id, action.source]
+        if !action.detail.isEmpty {
+            parts.append(action.detail)
+        }
+        return sanitize(parts.joined(separator: " | "))
     }
 
     private static func deployRunbookCommandRows(from runbook: IOSDeployRunbookReport?) -> [String] {

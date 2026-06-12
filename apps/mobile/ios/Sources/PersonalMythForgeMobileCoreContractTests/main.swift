@@ -5773,6 +5773,13 @@ private func testDecodesIOSDeployRunbookFromFinalLaunchPayload() throws {
     try expectEqual(runbook.inputSlots.first?.configured, false)
     try expectEqual(runbook.commandSequence.first?.id, "mobile_deploy_preflight")
     try expectEqual(runbook.commandSequence.first?.requiresConsent, false)
+    try expectEqual(runbook.firstBlocker?.id, "backend_base_url")
+    try expectEqual(
+        runbook.firstBlocker?.command,
+        "set PMF_BACKEND_BASE_URL to the Mac LAN URL"
+    )
+    try expectEqual(runbook.nextAction?.id, "backend_base_url")
+    try expectEqual(runbook.nextAction?.source, "first_blocker")
     try expectFalse(runbook.safety.commandsRun)
     try expectFalse(runbook.safety.providerCalls)
     try expectFalse(runbook.safety.globalMutation)
@@ -5794,6 +5801,8 @@ private func testFinalLaunchMobileSummaryShowsPartialIOSDeployRunbook() throws {
     try expectEqual(summary.deployRunbookRows.first, "iOS deploy runbook partial.")
     try expectContains(runbookText, "backend_base_url: missing required")
     try expectContains(runbookText, "set PMF_BACKEND_BASE_URL")
+    try expectContains(runbookText, "First blocker: backend_base_url")
+    try expectContains(runbookText, "Next action: set PMF_BACKEND_BASE_URL")
     try expectContains(commandText, "mobile_deploy_preflight: ready | make mobile-deploy-preflight")
     try expectContains(commandText, "mobile_xcode_build: blocked | make mobile-xcode-build")
     try expectContains(safetyText, "commands_run=false")
@@ -9541,6 +9550,31 @@ private func finalDemoLaunchPayload(
                 "requires_consent": false
               }
             ],
+            "first_blocker": \(iosDeployRunbookStatus == "ready" ? "null" : """
+            {
+              "id": "backend_base_url",
+              "label": "Backend base URL",
+              "status": "\(iosDeployRunbookSlotStatus)",
+              "classification": "\(iosDeployRunbookSlotStatus == "ready" ? "ready" : "blocked_by_ios_deploy_config")",
+              "command": "\(iosDeployRunbookAction)",
+              "detail": "Backend base URL is \(iosDeployRunbookSlotStatus).",
+              "input_source": "Deployment.local.xcconfig",
+              "required": true
+            }
+            """),
+            "next_action": \(iosDeployRunbookStatus == "ready" ? "null" : """
+            {
+              "id": "backend_base_url",
+              "label": "Backend base URL",
+              "status": "\(iosDeployRunbookSlotStatus)",
+              "classification": "\(iosDeployRunbookSlotStatus == "ready" ? "ready" : "blocked_by_ios_deploy_config")",
+              "command": "\(iosDeployRunbookAction)",
+              "detail": "Backend base URL is \(iosDeployRunbookSlotStatus).",
+              "input_source": "Deployment.local.xcconfig",
+              "required": true,
+              "source": "first_blocker"
+            }
+            """),
             "operator_actions": ["\(iosDeployRunbookAction)"],
             "safety": {
               "commands_run": false,
