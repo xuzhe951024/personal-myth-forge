@@ -188,6 +188,36 @@ def test_external_action_ledger_ios_deploy_actions_use_mobile_preflight(
     )
 
 
+def test_external_action_ledger_uses_concrete_provider_and_print_handoff_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    operator_actions = result.report["operator_actions"]
+    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    print_action = (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+    )
+
+    assert provider_action in operator_actions
+    assert print_action in operator_actions
+    assert (
+        "approve live provider cost before make live-provider-evidence"
+        not in operator_actions
+    )
+    assert (
+        "approve live provider cost before make print-fulfillment-readiness"
+        not in operator_actions
+    )
+
+
 def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks(
     tmp_path: Path,
 ) -> None:
