@@ -3581,6 +3581,8 @@ public struct LiveProviderEvidenceSlot: Codable, Equatable, Sendable {
     public var command: String
     public var detail: String?
     public var requiresLiveProviderConsent: Bool
+    public var validationCommand: String?
+    public var source: String?
 
     public init(
         id: String,
@@ -3589,7 +3591,9 @@ public struct LiveProviderEvidenceSlot: Codable, Equatable, Sendable {
         classification: String? = nil,
         command: String,
         detail: String? = nil,
-        requiresLiveProviderConsent: Bool
+        requiresLiveProviderConsent: Bool,
+        validationCommand: String? = nil,
+        source: String? = nil
     ) {
         self.id = id
         self.label = label
@@ -3598,6 +3602,8 @@ public struct LiveProviderEvidenceSlot: Codable, Equatable, Sendable {
         self.command = command
         self.detail = detail
         self.requiresLiveProviderConsent = requiresLiveProviderConsent
+        self.validationCommand = validationCommand
+        self.source = source
     }
 }
 
@@ -3631,6 +3637,7 @@ public struct LiveProviderEvidenceReport: Codable, Equatable, Sendable {
     public var status: String
     public var summary: LiveProviderEvidenceSummary
     public var firstBlocker: LiveProviderEvidenceSlot?
+    public var nextAction: LiveProviderEvidenceSlot?
     public var evidence: [LiveProviderEvidenceSlot]
     public var operatorActions: [String]
     public var safety: LiveProviderEvidenceSafety
@@ -3640,6 +3647,7 @@ public struct LiveProviderEvidenceReport: Codable, Equatable, Sendable {
         status: String,
         summary: LiveProviderEvidenceSummary,
         firstBlocker: LiveProviderEvidenceSlot? = nil,
+        nextAction: LiveProviderEvidenceSlot? = nil,
         evidence: [LiveProviderEvidenceSlot],
         operatorActions: [String],
         safety: LiveProviderEvidenceSafety
@@ -3648,6 +3656,7 @@ public struct LiveProviderEvidenceReport: Codable, Equatable, Sendable {
         self.status = status
         self.summary = summary
         self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.evidence = evidence
         self.operatorActions = operatorActions
         self.safety = safety

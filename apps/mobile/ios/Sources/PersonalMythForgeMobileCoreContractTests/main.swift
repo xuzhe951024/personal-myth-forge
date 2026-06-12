@@ -5275,6 +5275,15 @@ private func testDecodesLiveProviderEvidenceFromFinalLaunchPayload() throws {
     try expectEqual(evidence.summary.missing, 5)
     try expectEqual(evidence.summary.requiresLiveProviderConsent, 3)
     try expectEqual(evidence.evidence.first?.id, "provider_handoff")
+    let nextAction = try require(
+        evidence.nextAction,
+        "missing live provider evidence next action"
+    )
+    try expectEqual(nextAction.id, "provider_handoff")
+    try expectEqual(nextAction.command, "make provider-handoff")
+    try expectEqual(nextAction.requiresLiveProviderConsent, false)
+    try expectEqual(nextAction.validationCommand, "make live-provider-evidence")
+    try expectEqual(nextAction.source, "first_blocker")
     try expectFalse(evidence.safety.commandsRun)
 }
 
@@ -5297,6 +5306,7 @@ private func testFinalLaunchMobileSummaryShowsMissingLiveProviderEvidence() thro
     let text = summary.liveProviderEvidenceRows.joined(separator: " ")
 
     try expectContains(text, "Live evidence missing: ready 0, missing 5, blocked 0, partial 0.")
+    try expectContains(text, "Next action: provider_handoff missing")
     try expectContains(text, "provider_handoff: missing")
     try expectContains(text, "make live-provider-evidence")
 }
@@ -7593,7 +7603,7 @@ private func finalDemoLaunchPayload(
     let defaultLiveEvidenceFirstClassification = liveEvidenceReady ? "ready" : liveEvidenceBlocked ? "report_not_ready" : "missing_report"
     let defaultLiveEvidenceCommand = liveEvidenceBlocked
         ? "make backend-evaluate-3d-configured"
-        : "make live-provider-evidence"
+        : "make provider-handoff"
     let liveEvidenceFirstID = liveProviderEvidenceFirstID ?? defaultLiveEvidenceFirstID
     let liveEvidenceFirstLabel = liveProviderEvidenceFirstLabel ?? defaultLiveEvidenceFirstLabel
     let liveEvidenceFirstStatus = liveProviderEvidenceFirstStatus ?? defaultLiveEvidenceFirstStatus
@@ -7608,6 +7618,19 @@ private func finalDemoLaunchPayload(
       "command": "\(liveEvidenceCommand)",
       "detail": "\(liveProviderEvidenceBlockerDetail)",
       "requires_live_provider_consent": \(liveEvidenceBlocked ? "true" : "false")
+    }
+    """
+    let liveEvidenceNextActionJSON = liveEvidenceReady ? "null" : """
+    {
+      "id": "\(liveEvidenceFirstID)",
+      "label": "\(liveEvidenceFirstLabel)",
+      "status": "\(liveEvidenceFirstStatus)",
+      "classification": "\(liveEvidenceFirstClassification)",
+      "command": "\(liveEvidenceCommand)",
+      "detail": "\(liveProviderEvidenceBlockerDetail)",
+      "requires_live_provider_consent": \(liveEvidenceBlocked ? "true" : "false"),
+      "validation_command": "make live-provider-evidence",
+      "source": "first_blocker"
     }
     """
     let liveEvidenceSummaryJSON = liveEvidenceReady
@@ -9113,6 +9136,7 @@ private func finalDemoLaunchPayload(
             "status": "\(liveProviderEvidenceStatus)",
             "summary": \(liveEvidenceSummaryJSON),
             "first_blocker": \(liveEvidenceFirstBlockerJSON),
+            "next_action": \(liveEvidenceNextActionJSON),
             "evidence": [
               {
                 "id": "\(liveEvidenceFirstID)",

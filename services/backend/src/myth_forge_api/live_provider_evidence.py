@@ -104,6 +104,7 @@ def build_live_provider_evidence_report(
         "status": status,
         "summary": summary,
         "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "evidence": evidence,
         "operator_actions": operator_actions,
         "commands": ["make live-provider-evidence", *[slot.command for slot in EVIDENCE_SLOTS]],
@@ -265,6 +266,18 @@ def _first_blocker(evidence: list[dict[str, Any]]) -> dict[str, Any] | None:
                     "detail": row["detail"],
                 }
     return None
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    slot = _slot_by_id(str(first_blocker["id"]))
+    return {
+        **first_blocker,
+        "requires_live_provider_consent": slot.requires_live_provider_consent,
+        "validation_command": "make live-provider-evidence",
+        "source": "first_blocker",
+    }
 
 
 def _operator_actions(
