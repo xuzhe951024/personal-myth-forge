@@ -433,7 +433,7 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             blocker_fields.pop("validation_command", None)
         if next_command and not blocker_fields["command"]:
             blocker_fields["command"] = next_command
-        return {
+        step_result = {
             "id": step.id,
             "label": step.label,
             "status": status,
@@ -449,6 +449,7 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             "writes_repo_local_report": step.output_path is not None,
             "elapsed_seconds": round(time.perf_counter() - started_at, 4),
         }
+        return _step_with_next_action(step_result)
     except Exception as exc:
         return {
             "id": step.id,
@@ -480,6 +481,33 @@ def _promoted_blocker_fields(hint: dict[str, Any]) -> dict[str, str]:
     if validation_command:
         fields["validation_command"] = validation_command
     return fields
+
+
+def _step_with_next_action(step: dict[str, Any]) -> dict[str, Any]:
+    if step.get("status") == "ready":
+        step.pop("next_action", None)
+        return step
+    command = str(step.get("command") or "").strip()
+    detail = str(step.get("detail") or "").strip()
+    if not command and not detail:
+        step.pop("next_action", None)
+        return step
+    action = {
+        "id": str(step.get("id", "")),
+        "label": str(step.get("label", "")),
+        "status": str(step.get("status", "")),
+        "classification": str(step.get("classification", "")),
+        "command": command,
+        "detail": detail,
+        "source": "step",
+        "output": step.get("output"),
+        "step_id": str(step.get("id", "")),
+    }
+    validation_command = str(step.get("validation_command") or "").strip()
+    if validation_command:
+        action["validation_command"] = validation_command
+    step["next_action"] = action
+    return step
 
 
 def _three_d_evaluation_report(repo_root: Path) -> dict[str, Any]:
