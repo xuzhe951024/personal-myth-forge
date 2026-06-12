@@ -598,7 +598,7 @@ def _blocker_from_action(
         "label": action["label"],
         "status": action["status"],
         "classification": action.get("classification") or action["status"],
-        "command": action["command"],
+        "command": _blocker_command_for_action(action),
         "detail": action["detail"],
         "group_id": action["group_id"],
         "group_label": group.get("label") or action["group_id"],
@@ -610,6 +610,20 @@ def _blocker_from_action(
     if validation_command:
         blocker["validation_command"] = validation_command
     return blocker
+
+
+def _blocker_command_for_action(action: dict[str, Any]) -> str:
+    if _is_resource_user_input_action(action):
+        return _missing_user_input_action_text(action).split(";", 1)[0].strip()
+    return str(action["command"])
+
+
+def _is_resource_user_input_action(action: dict[str, Any]) -> bool:
+    return (
+        action.get("group_id") == "resource_inputs"
+        and action.get("status") in {"missing", "blocked"}
+        and bool(action.get("requires_user_input"))
+    )
 
 
 def _validation_command_for_action(action: dict[str, Any]) -> str | None:

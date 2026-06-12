@@ -100,10 +100,11 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert first_blocker["group_id"] == "resource_inputs"
     assert first_blocker["group_label"] == "Resource inputs"
     assert first_blocker["classification"] == "missing_required_value"
-    assert first_blocker["command"] == "make final-resources-preflight"
+    assert first_blocker["command"] == "provide MESHY_API_KEY in final-resources.env"
     assert first_blocker["validation_command"] == "make final-resources-preflight"
     assert next_action["id"] == "provide_MESHY_API_KEY"
     assert next_action["source"] == "first_blocker"
+    assert next_action["command"] == "provide MESHY_API_KEY in final-resources.env"
     assert next_action["validation_command"] == "make final-resources-preflight"
     operator_actions = report["operator_actions"]
     assert report["operator_actions"][:2] == [
