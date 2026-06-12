@@ -597,6 +597,9 @@ def _print_fulfillment_capability(report: dict[str, Any]) -> dict[str, Any]:
     raw_status = str(report.get("status", "missing"))
     status = _normalized_status(raw_status)
     first_blocker = report.get("first_blocker")
+    command = "make print-fulfillment-readiness"
+    validation_command = ""
+    requires_cost_consent = False
     if status == "ready":
         classification = "print_fulfillment_ready"
         detail = "Local and configured print fulfillment quote handoff evidence are ready."
@@ -607,6 +610,12 @@ def _print_fulfillment_capability(report: dict[str, Any]) -> dict[str, Any]:
         detail = str(
             first_blocker.get("detail", "Print fulfillment readiness is not ready.")
         )
+        child_command, child_validation_command = _report_next_action_command(report)
+        command = child_command or command
+        validation_command = child_validation_command
+        next_action = report.get("next_action")
+        if isinstance(next_action, dict):
+            requires_cost_consent = bool(next_action.get("requires_cost_consent"))
     else:
         classification = "missing_print_fulfillment_readiness"
         detail = "Print fulfillment readiness report is missing or incomplete."
@@ -615,9 +624,11 @@ def _print_fulfillment_capability(report: dict[str, Any]) -> dict[str, Any]:
         label="Print fulfillment",
         status=status,
         classification=classification,
-        command="make print-fulfillment-readiness",
+        command=command,
         detail=detail,
         evidence=[f"{report.get('kind', 'print_fulfillment_readiness')}:{raw_status}"],
+        validation_command=validation_command or None,
+        requires_cost_consent=requires_cost_consent or None,
     )
 
 
@@ -1050,6 +1061,7 @@ def _capability(
     evidence: list[str],
     required: bool = True,
     validation_command: str | None = None,
+    requires_cost_consent: bool | None = None,
 ) -> dict[str, Any]:
     row = {
         "id": capability_id,
@@ -1063,6 +1075,8 @@ def _capability(
     }
     if validation_command:
         row["validation_command"] = validation_command
+    if requires_cost_consent is not None:
+        row["requires_cost_consent"] = requires_cost_consent
     return row
 
 
