@@ -81,6 +81,19 @@ IOS_REHEARSAL_SOURCE_ACTION_PREFIXES = (
     *(f"{source['id']}: " for source in LOCAL_REPORT_SOURCES),
     *(f"{source['id']}: " for source in REHEARSAL_REPORT_SOURCES),
 )
+IOS_REHEARSAL_PROVIDER_HANDOFF_ACTION_MARKERS = (
+    "make provider-handoff",
+    "live-provider-evidence",
+    "provider-handoff",
+)
+IOS_REHEARSAL_PRINT_HANDOFF_ACTION_MARKERS = (
+    "treatstock",
+    "print-quote-configured",
+    "print quote",
+    "print-quote",
+    "print_quote",
+    "/v1/print-quotes",
+)
 
 
 @dataclass(frozen=True)
@@ -447,15 +460,49 @@ def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
         else:
             actions.append(f"review {step['id']}: {step['command']}")
     if actions:
-        return prefer_project_local_ios_deploy_handoff_actions(
-            _dedupe(_top_level_operator_action(action) for action in actions)
+        return _prioritize_rehearsal_handoff_actions(
+            prefer_project_local_ios_deploy_handoff_actions(
+                _dedupe(_top_level_operator_action(action) for action in actions)
+            )
         )
 
     if all(step["status"] not in {"missing", "blocked"} for step in sequence):
         actions.append("continue with make backend-device-demo")
         actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
-    return prefer_project_local_ios_deploy_handoff_actions(
-        _dedupe(_top_level_operator_action(action) for action in actions)
+    return _prioritize_rehearsal_handoff_actions(
+        prefer_project_local_ios_deploy_handoff_actions(
+            _dedupe(_top_level_operator_action(action) for action in actions)
+        )
+    )
+
+
+def _prioritize_rehearsal_handoff_actions(actions: list[str]) -> list[str]:
+    if not actions:
+        return []
+    first_actions = actions[:1]
+    rest = actions[1:]
+    provider_actions = [
+        action for action in rest if _is_provider_handoff_action(action)
+    ]
+    print_actions = [action for action in rest if _is_print_handoff_action(action)]
+    priority_actions = set(provider_actions + print_actions)
+    remaining = [action for action in rest if action not in priority_actions]
+    return first_actions + provider_actions + print_actions + remaining
+
+
+def _is_provider_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(
+        marker in lowered
+        for marker in IOS_REHEARSAL_PROVIDER_HANDOFF_ACTION_MARKERS
+    )
+
+
+def _is_print_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(
+        marker in lowered
+        for marker in IOS_REHEARSAL_PRINT_HANDOFF_ACTION_MARKERS
     )
 
 
