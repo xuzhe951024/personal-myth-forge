@@ -42,6 +42,15 @@ def test_preflight_reports_missing_default_file_without_local_path_leak(
     }
     assert result.report["summary"]["missing"] >= 1
     assert result.report["operator_actions"] == ["run make final-resource-init"]
+    assert result.report["first_blocker"]["id"] == "final_resources_file"
+    assert result.report["first_blocker"]["command"] == "make final-resource-init"
+    assert result.report["first_blocker"]["validation_command"] == (
+        "make final-resources-preflight"
+    )
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert str(tmp_path) not in report_text
     assert result.report["safety"] == {
         "provider_secrets_in_report": False,
@@ -113,6 +122,15 @@ def test_preflight_resource_actions_include_validation_commands(
         "provide PMF_BACKEND_BASE_URL in final-resources.env; "
         "rerun make final-resources-preflight"
     ) in actions
+    assert result.report["first_blocker"]["id"] == "MESHY_API_KEY"
+    assert result.report["first_blocker"]["classification"] == "missing_required_value"
+    assert result.report["first_blocker"]["command"] == (
+        "provide MESHY_API_KEY in final-resources.env"
+    )
+    assert result.report["first_blocker"]["validation_command"] == (
+        "make final-resources-preflight"
+    )
+    assert result.report["next_action"]["source"] == "first_blocker"
     assert not _known_bare_resource_actions(actions)
     assert not _resource_actions_with_wrong_rerun(actions)
 
@@ -137,6 +155,11 @@ def test_preflight_blocks_loopback_backend_url(tmp_path: Path) -> None:
     assert result.report["status"] == "blocked"
     assert items["PMF_BACKEND_BASE_URL"]["status"] == "blocked"
     assert items["PMF_BACKEND_BASE_URL"]["classification"] == "loopback_url"
+    assert result.report["first_blocker"]["id"] == "PMF_BACKEND_BASE_URL"
+    assert result.report["first_blocker"]["classification"] == "loopback_url"
+    assert result.report["first_blocker"]["command"] == (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    )
 
 
 def test_preflight_blocks_example_backend_url_placeholder(tmp_path: Path) -> None:
@@ -316,6 +339,8 @@ def test_preflight_marks_valid_local_print_resources_ready_and_redacted(
     assert items["DEVELOPMENT_TEAM"]["status"] == "ready"
     assert items["PRODUCT_BUNDLE_IDENTIFIER"]["status"] == "ready"
     assert items["PMF_BACKEND_BASE_URL"]["status"] == "ready"
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
     assert "10.0.0.24" not in report_text
