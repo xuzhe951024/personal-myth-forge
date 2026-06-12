@@ -230,7 +230,19 @@ def test_final_local_report_refresh_operator_actions_gate_apply_behind_preview(
     repo_root = _repo_fixture(tmp_path)
 
     result = run_final_local_report_refresh(repo_root=repo_root)
+    preview = result.report["steps_by_id"]["final_resource_apply_preview"]
 
+    assert preview["next_action"] == {
+        "id": "final_resource_apply_preview",
+        "label": "Final resource apply preview",
+        "status": "blocked",
+        "classification": "missing_required_value",
+        "command": "rerun make final-resource-apply-preview before applying resources",
+        "detail": preview["detail"],
+        "source": "step",
+        "output": "services/backend/.local/final-resource-apply-preview.json",
+        "step_id": "final_resource_apply_preview",
+    }
     assert (
         "rerun make final-resource-apply-preview before applying resources"
         in result.report["operator_actions"]
@@ -787,6 +799,20 @@ def test_final_local_report_refresh_step_hint_prefers_child_next_action(
         "Next device action: make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM"
     )
     assert step["blocker_hint"]["command"] == "make mobile-deploy-preflight"
+    assert step["next_action"] == {
+        "id": "child_next_action",
+        "label": "Child Next Action",
+        "status": "blocked",
+        "classification": "ios_deploy_evidence",
+        "command": "make mobile-deploy-preflight",
+        "detail": (
+            "Next device action: make mobile-deploy-preflight | "
+            "Missing DEVELOPMENT_TEAM"
+        ),
+        "source": "step",
+        "output": None,
+        "step_id": "child_next_action",
+    }
     assert "make ios-device-launch-rehearsal" not in step["detail"]
 
 
@@ -891,6 +917,21 @@ def test_final_local_report_refresh_has_no_first_blocker_when_all_steps_ready() 
             }
         ]
     ) is None
+
+
+def test_final_local_report_refresh_step_next_action_omits_ready_step() -> None:
+    step = {
+        "id": "ready_step",
+        "label": "Ready Step",
+        "status": "ready",
+        "classification": "ready",
+        "command": "make ready-step",
+        "detail": "Ready.",
+        "output": None,
+    }
+
+    assert final_local_report_refresh._step_with_next_action(step) == step
+    assert "next_action" not in step
 
 
 def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
