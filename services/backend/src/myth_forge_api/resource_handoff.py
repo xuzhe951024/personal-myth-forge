@@ -8,7 +8,6 @@ from typing import Any
 from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.config import Settings, load_settings
 from myth_forge_api.operator_actions import (
-    FINAL_RESOURCE_APPLY_ACTION,
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
 )
@@ -17,6 +16,7 @@ Status = str
 
 BACKEND_ENV_DESTINATION = "services/backend/.env"
 IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
+FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 
 
 def build_resource_handoff_report(
@@ -360,7 +360,7 @@ def _operator_actions(
         or backend_by_id["NPC_PROVIDER"]["status"] != "ready"
     )
     if provider_selection_missing:
-        actions.append(FINAL_RESOURCE_APPLY_ACTION)
+        actions.append(FINAL_RESOURCE_APPLY_PREVIEW_ACTION)
     if backend_by_id["MESHY_API_KEY"]["status"] != "ready":
         actions.append("provide MESHY_API_KEY in final-resources.env")
     if backend_by_id["OPENAI_API_KEY"]["status"] != "ready":
