@@ -300,8 +300,8 @@ def test_configured_final_demo_launch_marks_ready_resources_without_secret_leak(
     assert handoff_steps["configured_final_acceptance"]["requires_consent"] is True
     assert handoff["next_actions"] == [
         (
-            "run make final-acceptance-configured only after live provider cost review "
-            "and --allow-live-provider-calls consent"
+            "approve live provider cost review before make final-acceptance-configured; "
+            "--allow-live-provider-calls consent required"
         ),
         "run Xcode build gate manually on the Mac: make mobile-xcode-build",
     ]

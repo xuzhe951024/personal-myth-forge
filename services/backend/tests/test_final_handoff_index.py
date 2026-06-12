@@ -41,8 +41,8 @@ def test_final_handoff_index_blocks_missing_reports_without_leaks(
     assert "make final-handoff-index" in result.report["commands"]
     assert "make final-acceptance-configured" in result.report["commands"]
     assert (
-        "run make final-acceptance-configured only after live provider cost review "
-        "and --allow-live-provider-calls consent"
+        "approve live provider cost review before make final-acceptance-configured; "
+        "--allow-live-provider-calls consent required"
     ) in result.report["operator_actions"]
     assert result.report["operator_actions"][:2] == [
         "make final-rehearsal-local",

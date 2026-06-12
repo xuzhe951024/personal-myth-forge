@@ -40,8 +40,8 @@ def test_configured_preflight_blocks_missing_resources_without_leaks(
     assert "make final-configured-preflight" in result.report["commands"]
     assert "make final-acceptance-configured" in result.report["commands"]
     assert (
-        "run make final-acceptance-configured only after live provider cost review "
-        "and --allow-live-provider-calls consent"
+        "approve live provider cost review before make final-acceptance-configured; "
+        "--allow-live-provider-calls consent required"
     ) in result.report["operator_actions"]
     assert result.report["safety"]["provider_calls"] is False
     assert result.report["safety"]["writes_backend_env"] is False

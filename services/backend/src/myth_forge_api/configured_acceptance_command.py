@@ -5,6 +5,6 @@ CONFIGURED_FINAL_ACCEPTANCE_OUTPUT = (
     "services/backend/.local/final-acceptance-configured.json"
 )
 CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION = (
-    "run make final-acceptance-configured only after live provider cost review "
-    "and --allow-live-provider-calls consent"
+    "approve live provider cost review before make final-acceptance-configured; "
+    "--allow-live-provider-calls consent required"
 )

@@ -121,8 +121,8 @@ def test_operator_handoff_marks_configured_acceptance_as_live_consent_gate(
     )
     assert report["next_actions"] == [
         (
-            "run make final-acceptance-configured only after live provider cost review "
-            "and --allow-live-provider-calls consent"
+            "approve live provider cost review before make final-acceptance-configured; "
+            "--allow-live-provider-calls consent required"
         ),
         "run Xcode build gate manually on the Mac: make mobile-xcode-build",
     ]
