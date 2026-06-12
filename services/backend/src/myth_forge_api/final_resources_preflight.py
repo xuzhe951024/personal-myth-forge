@@ -153,7 +153,7 @@ def _items(
     print_provider: str,
     final_launch_mode: str,
 ) -> list[dict[str, Any]]:
-    return [
+    items = [
         _key_item("MESHY_API_KEY", values, required=True),
         _key_item("OPENAI_API_KEY", values, required=True),
         _key_item("OPENAI_API_BASE_URL", values, required=False),
@@ -172,6 +172,21 @@ def _items(
         _key_item("CAPTURE_STORAGE_DIR", values, required=False),
         _key_item("MYTH_SESSION_STORAGE_DIR", values, required=False),
     ]
+    return [_with_item_action(item) for item in items]
+
+
+def _with_item_action(item: dict[str, Any]) -> dict[str, Any]:
+    actionable = (item["status"] == "missing" and item["required"]) or (
+        item["status"] == "blocked"
+    )
+    if not actionable:
+        return item
+    blocker = _item_blocker(item)
+    enriched = dict(item)
+    enriched["command"] = blocker["command"]
+    enriched["detail"] = blocker["detail"]
+    enriched["validation_command"] = blocker["validation_command"]
+    return enriched
 
 
 def _key_item(

@@ -232,6 +232,7 @@ Bridge deliverable:
 - P0.318 provider handoff exposes next action
 - P0.319 final acceptance exposes next action
 - P0.320 final resources preflight exposes next action
+- P0.321 final resources preflight item actions
 
 ## P1: Mobile Vertical Slice
 
