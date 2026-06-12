@@ -807,6 +807,65 @@ def test_final_showcase_readiness_dedupes_prefixed_duplicate_actions(
     )
 
 
+def test_final_showcase_readiness_dedupes_prefixed_resource_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression_blocked(repo_root)
+    _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_ios_device_launch_rehearsal_with_actions(
+        repo_root,
+        extra_actions=[
+            (
+                "final_rehearsal_local: ios_deploy_runbook_local: "
+                "provide MESHY_API_KEY in final-resources.env; "
+                "rerun make final-resources-preflight"
+            ),
+            (
+                "final_rehearsal_local: ios_deploy_runbook_local: "
+                "provide OPENAI_API_KEY in final-resources.env; "
+                "rerun make final-resources-preflight"
+            ),
+        ],
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    meshy_action = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    openai_action = (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+
+    assert result.exit_code == 2
+    assert actions.count(meshy_action) == 1
+    assert actions.count(openai_action) == 1
+    assert not any(
+        action.startswith(
+            "final_rehearsal_local: ios_deploy_runbook_local: "
+            "provide MESHY_API_KEY"
+        )
+        for action in actions
+    )
+    assert not any(
+        action.startswith(
+            "final_rehearsal_local: ios_deploy_runbook_local: "
+            "provide OPENAI_API_KEY"
+        )
+        for action in actions
+    )
+
+
 def test_final_showcase_readiness_dedupes_prefixed_device_actions(
     tmp_path: Path,
 ) -> None:
@@ -1196,16 +1255,31 @@ def test_final_showcase_readiness_adds_validation_to_nested_resource_actions(
     )
     actions = result.report["operator_actions"]
 
-    assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
+    meshy_action = (
         "provide MESHY_API_KEY in final-resources.env; "
         "rerun make final-resources-preflight"
-    ) in actions
-    assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
+    )
+    openai_action = (
         "provide OPENAI_API_KEY in final-resources.env; "
         "rerun make final-resources-preflight"
-    ) in actions
+    )
+
+    assert actions.count(meshy_action) == 1
+    assert actions.count(openai_action) == 1
+    assert not any(
+        action.startswith(
+            "final_rehearsal_local: ios_deploy_runbook_local: "
+            "provide MESHY_API_KEY"
+        )
+        for action in actions
+    )
+    assert not any(
+        action.startswith(
+            "final_rehearsal_local: ios_deploy_runbook_local: "
+            "provide OPENAI_API_KEY"
+        )
+        for action in actions
+    )
     assert (
         "final_rehearsal_local: ios_deploy_runbook_local: "
         "provide MESHY_API_KEY in final-resources.env"
@@ -1245,11 +1319,19 @@ def test_final_showcase_readiness_adds_validation_to_ios_resource_actions(
     )
     actions = result.report["operator_actions"]
 
-    assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
+    development_team_action = (
         "provide DEVELOPMENT_TEAM in final-resources.env; "
         "rerun make final-resources-preflight"
-    ) in actions
+    )
+
+    assert actions.count(development_team_action) == 1
+    assert not any(
+        action.startswith(
+            "final_rehearsal_local: ios_deploy_runbook_local: "
+            "provide DEVELOPMENT_TEAM"
+        )
+        for action in actions
+    )
     assert (
         "final_rehearsal_local: ios_deploy_runbook_local: "
         "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "

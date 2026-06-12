@@ -27,6 +27,7 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
 from myth_forge_api.operator_actions import (
+    FINAL_RESOURCE_VALIDATION_ACTION_ROOTS,
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
@@ -1631,7 +1632,13 @@ def _is_drop_candidate_source_prefix(action: str, bare_root: str) -> bool:
         "final_rehearsal_local: mobile_deploy_preflight_evidence: "
     ):
         return True
+    if _is_final_resource_action_root(bare_root):
+        return True
     return bare_root in FINAL_SHOWCASE_DUPLICATE_DEVICE_ROOTS
+
+
+def _is_final_resource_action_root(action_root: str) -> bool:
+    return action_root.startswith(FINAL_RESOURCE_VALIDATION_ACTION_ROOTS)
 
 
 def _looks_like_operator_command(value: str) -> bool:

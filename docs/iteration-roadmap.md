@@ -211,6 +211,7 @@ Bridge deliverable:
 - P0.297 final local report refresh drops detail-suffixed duplicate action roots
 - P0.298 final showcase drops duplicate source-prefixed Xcode action
 - P0.299 final resource fill-guide actions normalize to validation-aware handoff
+- P0.300 final showcase drops duplicate source-prefixed resource actions
 
 ## P1: Mobile Vertical Slice
 
