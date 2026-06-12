@@ -131,6 +131,16 @@ def test_normalizes_verbose_provider_evidence_actions_to_make_targets() -> None:
     ) == "make live-provider-evidence | configured evidence stale"
 
 
+def test_normalizes_configured_acceptance_cost_review_action() -> None:
+    assert normalize_operator_action(
+        "run make final-acceptance-configured only after live provider cost review "
+        "and --allow-live-provider-calls consent"
+    ) == (
+        "approve live provider cost review before make final-acceptance-configured; "
+        "--allow-live-provider-calls consent required"
+    )
+
+
 def test_normalizes_xcode_gate_actions_to_evidence_command() -> None:
     expected = (
         "accept the Xcode license outside Codex, then rerun "

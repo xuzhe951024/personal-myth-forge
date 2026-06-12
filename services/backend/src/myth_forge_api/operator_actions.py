@@ -36,6 +36,11 @@ MAKE_TARGET_ACTION_REPLACEMENTS = {
     "run make live-provider-evidence to refresh live provider evidence after cost consent": (
         "make live-provider-evidence"
     ),
+    "run make final-acceptance-configured only after live provider cost review "
+    "and --allow-live-provider-calls consent": (
+        "approve live provider cost review before make final-acceptance-configured; "
+        "--allow-live-provider-calls consent required"
+    ),
     "run make final-resource-requirements after filling resources": (
         "make final-resource-requirements"
     ),

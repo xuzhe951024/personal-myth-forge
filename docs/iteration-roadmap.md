@@ -223,6 +223,7 @@ Bridge deliverable:
 - P0.309 live provider evidence top-level actions normalize to canonical make targets
 - P0.310 final apply operator actions normalize to canonical make target
 - P0.311 final launch closure packet make actions normalize to canonical targets
+- P0.312 configured final acceptance handoff uses consent-first live action
 
 ## P1: Mobile Vertical Slice
 
