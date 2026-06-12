@@ -79,10 +79,13 @@ def build_final_external_action_ledger_report(
     actions = [action for group in action_groups for action in group["actions"]]
     summary = _summary(action_groups=action_groups, actions=actions)
     status = _overall_status(action_groups)
+    first_blocker = _first_blocker(action_groups)
     report = {
         "kind": "final_external_action_ledger_report",
         "status": status,
         "summary": summary,
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "action_groups": action_groups,
         "actions_by_id": {action["id"]: action for action in actions},
         "operator_sequence": OPERATOR_SEQUENCE,
@@ -556,6 +559,68 @@ def _overall_status(action_groups: list[dict[str, Any]]) -> str:
     if any(group["status"] in {"manual", "live", "partial"} for group in action_groups):
         return "partial"
     return "ready"
+
+
+def _first_blocker(action_groups: list[dict[str, Any]]) -> dict[str, Any] | None:
+    actions = [action for group in action_groups for action in group["actions"]]
+    for predicate in (
+        lambda action: action["status"] in {"missing", "blocked"}
+        and action["requires_user_input"],
+        lambda action: action["status"] in {"missing", "blocked"},
+        lambda action: action["status"] == "manual"
+        and action["requires_user_confirmation"],
+        lambda action: action["status"] == "live" and action["requires_cost_consent"],
+        lambda action: action["status"] == "manual",
+        lambda action: action["status"] == "live",
+    ):
+        match = next((action for action in actions if predicate(action)), None)
+        if match:
+            return _blocker_from_action(match, action_groups)
+    return None
+
+
+def _blocker_from_action(
+    action: dict[str, Any],
+    action_groups: list[dict[str, Any]],
+) -> dict[str, Any]:
+    group = next(
+        (
+            group
+            for group in action_groups
+            if str(group.get("id", "")) == str(action.get("group_id", ""))
+        ),
+        {},
+    )
+    blocker = {
+        "id": action["id"],
+        "label": action["label"],
+        "status": action["status"],
+        "classification": action.get("classification") or action["status"],
+        "command": action["command"],
+        "detail": action["detail"],
+        "group_id": action["group_id"],
+        "group_label": group.get("label") or action["group_id"],
+    }
+    destination = action.get("destination")
+    if destination:
+        blocker["destination"] = destination
+    validation_command = _validation_command_for_action(action)
+    if validation_command:
+        blocker["validation_command"] = validation_command
+    return blocker
+
+
+def _validation_command_for_action(action: dict[str, Any]) -> str | None:
+    command = str(action.get("command", "")).strip()
+    if command.startswith("make "):
+        return command
+    return None
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
 
 
 def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
