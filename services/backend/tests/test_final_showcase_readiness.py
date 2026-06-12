@@ -60,10 +60,11 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
         "final_resource_apply_preview_report"
     )
     assert result.report["evidence"]["final_resource_apply_preview"]["status"] == "missing"
-    assert provider_handoff["command"] == "make final-resource-apply-preview"
+    assert provider_handoff["command"] == "make final-resource-init"
+    assert provider_handoff["validation_command"] == "make final-resources-preflight"
     assert "final_resource_apply_preview:missing" in provider_handoff["evidence"]
     assert any(
-        action == "make final-resource-apply-preview"
+        action == "run make final-resource-init"
         for action in result.report["operator_actions"]
     )
     assert result.report["first_blocker"]["id"] == "ios_deployable"
@@ -639,6 +640,25 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
         "live provider evidence" in action
         for action in result.report["operator_actions"]
     )
+
+
+def test_final_showcase_readiness_provider_handoff_uses_final_resource_next_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_incomplete_final_resources(repo_root)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    provider_handoff = result.report["capabilities_by_id"]["provider_key_handoff"]
+
+    assert provider_handoff["status"] == "blocked"
+    assert provider_handoff["classification"] == "provider_handoff_incomplete"
+    assert provider_handoff["command"] == "provide MESHY_API_KEY in final-resources.env"
+    assert provider_handoff["validation_command"] == "make final-resources-preflight"
+    assert "final_resources:blocked" in provider_handoff["evidence"]
 
 
 def test_final_showcase_readiness_gates_provider_handoff_on_configured_bundle(
@@ -1730,6 +1750,19 @@ def _write_final_resources(
                 "DEVELOPMENT_TEAM=TEAM12345",
                 f"PRODUCT_BUNDLE_IDENTIFIER={bundle_identifier}",
                 f"PMF_BACKEND_BASE_URL={backend_base_url}",
+                "PMF_FINAL_LAUNCH_MODE=local",
+            ]
+        ),
+    )
+
+
+def _write_incomplete_final_resources(repo_root: Path) -> None:
+    _write_text(
+        repo_root / "services/backend/.local/final-resources.env",
+        "\n".join(
+            [
+                "PRINT_PROVIDER=local",
+                "TREATSTOCK_API_BASE_URL=https://api.treatstock.test",
                 "PMF_FINAL_LAUNCH_MODE=local",
             ]
         ),
