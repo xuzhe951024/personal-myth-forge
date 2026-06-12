@@ -274,6 +274,36 @@ def test_normalizes_resource_apply_unblock_actions_to_concrete_commands() -> Non
     )
 
 
+def test_normalizes_configured_evidence_unblock_actions_to_make_targets() -> None:
+    assert normalize_operator_action(
+        "unblock final_resource_fill_guide before configured evidence bundle"
+    ) == (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    assert normalize_operator_action(
+        "unblock final_configured_preflight after final_apply_resources"
+    ) == "make final-configured-preflight"
+    assert normalize_operator_action(
+        "unblock provider_handoff after final_configured_preflight"
+    ) == "make provider-handoff"
+    assert normalize_operator_action(
+        "unblock three_d_evaluation_configured after final_configured_preflight"
+    ) == "make backend-evaluate-3d-configured"
+    assert normalize_operator_action(
+        "unblock npc_evaluation_configured after final_configured_preflight"
+    ) == "make backend-evaluate-npc-configured"
+    assert normalize_operator_action(
+        "unblock final_acceptance_configured after final_configured_preflight"
+    ) == "make final-acceptance-configured"
+    assert normalize_operator_action(
+        "unblock final_demo_launch_configured after final_configured_preflight"
+    ) == "make final-demo-launch-configured"
+    assert normalize_operator_action(
+        "unblock live_provider_evidence after final_configured_preflight"
+    ) == "make live-provider-evidence"
+
+
 def test_normalizes_provider_selection_actions_to_final_apply() -> None:
     assert normalize_operator_action("set THREE_D_PROVIDER=meshy") == (
         "run make final-apply-resources to apply the filled resource bundle"

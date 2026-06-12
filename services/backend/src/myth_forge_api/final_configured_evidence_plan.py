@@ -22,6 +22,7 @@ from myth_forge_api.final_resource_fill_guide import (
     build_final_resource_fill_guide_report,
 )
 from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
+from myth_forge_api.operator_actions import normalize_operator_action
 
 
 @dataclass(frozen=True)
@@ -391,10 +392,11 @@ def _dedupe(values: list[str]) -> list[str]:
     seen: set[str] = set()
     result: list[str] = []
     for value in values:
-        if value in seen:
+        normalized = normalize_operator_action(value)
+        if normalized in seen:
             continue
-        seen.add(value)
-        result.append(value)
+        seen.add(normalized)
+        result.append(normalized)
     return result
 
 

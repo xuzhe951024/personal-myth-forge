@@ -11,6 +11,7 @@ from myth_forge_api.final_configured_evidence_plan import (
     build_final_configured_evidence_plan_report,
 )
 from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
+from myth_forge_api.operator_actions import normalize_operator_action
 
 
 @dataclass(frozen=True)
@@ -272,7 +273,7 @@ def _operator_actions(
         actions.append("run configured evidence commands in order")
     actions.extend(_string_list(configured_plan.get("operator_actions")))
     actions.extend(_string_list(live_evidence.get("operator_actions")))
-    return _dedupe(actions)[:12]
+    return _dedupe_operator_actions(actions)[:12]
 
 
 def _commands(
@@ -327,6 +328,18 @@ def _dedupe(values: list[str]) -> list[str]:
             continue
         seen.add(value)
         result.append(value)
+    return result
+
+
+def _dedupe_operator_actions(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        normalized = normalize_operator_action(value)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        result.append(normalized)
     return result
 
 
