@@ -59,6 +59,7 @@ def build_final_resource_fill_guide_report(
         "optional_inputs": optional_inputs,
         "configured_inputs": configured_inputs,
         "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "commands": COMMANDS,
         "markdown": _markdown(
             status=status,
@@ -193,6 +194,12 @@ def _first_blocker(required_inputs: list[dict[str, Any]]) -> dict[str, Any] | No
         "write_destination": item["write_destination"],
         "validation_command": item["validation_command"],
     }
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
 
 
 def _safety() -> dict[str, bool]:

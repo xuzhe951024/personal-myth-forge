@@ -1050,6 +1050,7 @@ public struct FinalResourceFillGuideFirstBlocker: Codable, Equatable, Sendable {
     public var inputSource: String
     public var writeDestination: String
     public var validationCommand: String
+    public var source: String?
 
     public init(
         id: String,
@@ -1061,7 +1062,8 @@ public struct FinalResourceFillGuideFirstBlocker: Codable, Equatable, Sendable {
         domain: String,
         inputSource: String,
         writeDestination: String,
-        validationCommand: String
+        validationCommand: String,
+        source: String? = nil
     ) {
         self.id = id
         self.label = label
@@ -1073,6 +1075,7 @@ public struct FinalResourceFillGuideFirstBlocker: Codable, Equatable, Sendable {
         self.inputSource = inputSource
         self.writeDestination = writeDestination
         self.validationCommand = validationCommand
+        self.source = source
     }
 }
 
@@ -1112,6 +1115,7 @@ public struct FinalResourceFillGuideReport: Codable, Equatable, Sendable {
     public var optionalInputs: [FinalResourceFillGuideItem]
     public var configuredInputs: [FinalResourceFillGuideItem]
     public var firstBlocker: FinalResourceFillGuideFirstBlocker?
+    public var nextAction: FinalResourceFillGuideFirstBlocker?
     public var commands: [String]
     public var safety: FinalResourceFillGuideSafety
 
@@ -1123,6 +1127,7 @@ public struct FinalResourceFillGuideReport: Codable, Equatable, Sendable {
         optionalInputs: [FinalResourceFillGuideItem] = [],
         configuredInputs: [FinalResourceFillGuideItem] = [],
         firstBlocker: FinalResourceFillGuideFirstBlocker? = nil,
+        nextAction: FinalResourceFillGuideFirstBlocker? = nil,
         commands: [String] = [],
         safety: FinalResourceFillGuideSafety
     ) {
@@ -1133,6 +1138,7 @@ public struct FinalResourceFillGuideReport: Codable, Equatable, Sendable {
         self.optionalInputs = optionalInputs
         self.configuredInputs = configuredInputs
         self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
         self.commands = commands
         self.safety = safety
     }

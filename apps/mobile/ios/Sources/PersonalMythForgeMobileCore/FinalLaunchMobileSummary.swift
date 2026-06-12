@@ -569,6 +569,11 @@ public enum FinalLaunchMobileSummaryBuilder {
         var rows = [
             "Fill guide \(sanitize(report.status)): required \(report.summary.requiredInputs), optional \(report.summary.optionalInputs), configured \(report.summary.configuredInputs), secret \(report.summary.secretInputs)."
         ]
+        if let nextAction = report.nextAction {
+            rows.append(
+                resourceFillGuideActionRow(prefix: "Next action:", action: nextAction)
+            )
+        }
         if let blocker = report.firstBlocker {
             rows.append(resourceFillGuideFirstBlockerRow(blocker))
         }
@@ -593,18 +598,28 @@ public enum FinalLaunchMobileSummaryBuilder {
     private static func resourceFillGuideFirstBlockerRow(
         _ blocker: FinalResourceFillGuideFirstBlocker
     ) -> String {
-        var parts = ["First blocker:", blocker.id, blocker.status]
-        if let classification = blocker.classification, !classification.isEmpty {
+        resourceFillGuideActionRow(prefix: "First blocker:", action: blocker)
+    }
+
+    private static func resourceFillGuideActionRow(
+        prefix: String,
+        action: FinalResourceFillGuideFirstBlocker
+    ) -> String {
+        var parts = [prefix, action.id, action.status]
+        if let classification = action.classification, !classification.isEmpty {
             parts.append(classification)
         }
-        if !blocker.command.isEmpty {
-            parts.append("| \(blocker.command)")
+        if let source = action.source, !source.isEmpty {
+            parts.append("source=\(source)")
         }
-        if !blocker.detail.isEmpty {
-            parts.append("| \(blocker.detail)")
+        if !action.command.isEmpty {
+            parts.append("| \(action.command)")
         }
-        if !blocker.validationCommand.isEmpty {
-            parts.append("| \(blocker.validationCommand)")
+        if !action.detail.isEmpty {
+            parts.append("| \(action.detail)")
+        }
+        if !action.validationCommand.isEmpty {
+            parts.append("| \(action.validationCommand)")
         }
         return sanitize(parts.joined(separator: " "))
     }
