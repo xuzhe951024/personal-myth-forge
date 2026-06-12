@@ -39,7 +39,10 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
     assert "make final-acceptance-configured" in result.report["commands"]
     phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
     assert phases["apply_final_resources"]["status"] == "missing"
-    assert phases["apply_final_resources"]["command"] == "make final-apply-resources"
+    assert (
+        phases["apply_final_resources"]["command"]
+        == "make final-resource-apply-preview"
+    )
     assert phases["provider_readiness"]["command"] == "make provider-handoff"
     assert "write_backend_env" not in phases
     assert "write_ios_deploy_config" not in phases
@@ -97,7 +100,7 @@ def test_final_demo_launch_exposes_top_level_phase_first_blocker(
     assert blocker["label"] == "Apply final resources"
     assert blocker["status"] == "missing"
     assert blocker["classification"] == "final_demo_launch_phase"
-    assert blocker["command"] == "make final-apply-resources"
+    assert blocker["command"] == "make final-resource-apply-preview"
     assert blocker["source"] == "final_demo_launch_phase"
     assert blocker["source_id"] == "apply_final_resources"
     assert "one-file backend and iOS final demo handoff" in blocker["detail"]
@@ -108,11 +111,14 @@ def test_final_demo_launch_exposes_top_level_phase_first_blocker(
     assert action["label"] == "Apply final resources"
     assert action["status"] == "missing"
     assert action["classification"] == "final_demo_launch_phase"
-    assert action["command"] == "make final-apply-resources"
+    assert action["command"] == "make final-resource-apply-preview"
     assert action["source"] == "first_blocker"
     assert action["source_id"] == "apply_final_resources"
     assert "one-file backend and iOS final demo handoff" in action["detail"]
     assert "provide MESHY_API_KEY in final-resources.env" in action["detail"]
+    assert "make final-resource-apply-preview" in result.report["operator_actions"]
+    assert "make final-apply-resources" not in result.report["operator_actions"]
+    assert "make final-apply-resources" in result.report["commands"]
     report_text = json.dumps(result.report)
     assert "sk-" not in report_text
     assert str(tmp_path) not in report_text
