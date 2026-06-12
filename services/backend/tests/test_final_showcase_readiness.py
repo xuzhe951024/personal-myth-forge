@@ -375,7 +375,7 @@ def test_final_showcase_readiness_next_action_command_uses_preferred_device_acti
     action = result.report["next_action"]
 
     assert blocker["id"] == "ios_deployable"
-    assert blocker["command"] == "make ios-device-launch-rehearsal"
+    assert blocker["command"] == "make mobile-deploy-preflight"
     assert action["id"] == "ios_deployable"
     assert action["command"] == "make mobile-deploy-preflight"
     assert "Next device action: make mobile-deploy-preflight" in action["detail"]
@@ -426,7 +426,8 @@ def test_final_showcase_readiness_next_action_uses_preflight_child_action(
     action = result.report["next_action"]
     blocker = result.report["first_blocker"]
 
-    assert blocker["command"] == "make ios-device-launch-rehearsal"
+    assert blocker["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    assert blocker["validation_command"] == "make mobile-deploy-preflight"
     assert (
         "Next device action: provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
         in blocker["detail"]

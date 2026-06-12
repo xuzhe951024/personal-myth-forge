@@ -1077,7 +1077,7 @@ def _next_action(
     if blocker is None:
         return None
     command = str(blocker.get("command", ""))
-    validation_command = ""
+    validation_command = str(blocker.get("validation_command", "")).strip()
     if blocker.get("id") == "ios_deployable":
         device_action_source = _preferred_device_action_hint_source(
             device_action_bundle or {},
@@ -1118,6 +1118,13 @@ def _capability_with_device_action_detail(
     result = dict(capability)
     detail = str(result.get("detail", ""))
     result["detail"] = " | ".join(part for part in [detail, hint] if part)
+    command, validation_command = _preferred_device_action_blocker_command(
+        device_action_bundle,
+    )
+    if command:
+        result["command"] = command
+    if validation_command:
+        result["validation_command"] = validation_command
     return result
 
 
@@ -1156,6 +1163,25 @@ def _preferred_device_action_command(
     if str(action.get("evidence_status", "")) == "missing":
         return ""
     return command
+
+
+def _preferred_device_action_blocker_command(
+    device_action_bundle: dict[str, Any] | None,
+) -> tuple[str, str]:
+    if not isinstance(device_action_bundle, dict):
+        return "", ""
+    action = _preferred_device_action_hint_source(device_action_bundle)
+    if not isinstance(action, dict):
+        return "", ""
+    child_next_action = _device_action_child_next_action(action)
+    command = (
+        str(child_next_action.get("command", "")).strip()
+        or _preferred_device_action_command(device_action_bundle)
+    )
+    validation_command = str(
+        child_next_action.get("validation_command", ""),
+    ).strip()
+    return command, validation_command
 
 
 def _device_action_child_next_action(

@@ -263,6 +263,7 @@ Bridge deliverable:
 - P0.349 final resource apply preview blockers avoid direct apply writer
 - P0.350 final external action ledger resource blockers use concrete input commands
 - P0.351 final launch closure packet resource blockers use concrete input commands
+- P0.352 final showcase iOS blocker uses concrete deploy handoff command
 
 ## P1: Mobile Vertical Slice
 
