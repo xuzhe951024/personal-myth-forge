@@ -212,6 +212,7 @@ Bridge deliverable:
 - P0.298 final showcase drops duplicate source-prefixed Xcode action
 - P0.299 final resource fill-guide actions normalize to validation-aware handoff
 - P0.300 final showcase drops duplicate source-prefixed resource actions
+- P0.301 final showcase source-prefixed make targets normalize to bare commands
 
 ## P1: Mobile Vertical Slice
 
