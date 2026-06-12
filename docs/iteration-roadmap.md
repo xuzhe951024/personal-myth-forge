@@ -241,6 +241,7 @@ Bridge deliverable:
 - P0.327 final handoff index exposes next action
 - P0.328 resource handoff exposes next action
 - P0.329 final configured preflight exposes next action
+- P0.330 mobile Xcode build evidence exposes next action
 
 ## P1: Mobile Vertical Slice
 

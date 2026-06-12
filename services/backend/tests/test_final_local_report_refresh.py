@@ -428,6 +428,22 @@ def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
     assert xcode_report["operator_actions"] == [
         "run make mobile-xcode-build-evidence outside final-local-report-refresh"
     ]
+    assert xcode_report["first_blocker"] == {
+        "id": "xcode_build_gate",
+        "label": "Xcode build gate",
+        "status": "blocked",
+        "classification": "xcode_build_gate_not_run_by_final_local_report_refresh",
+        "command": "run make mobile-xcode-build-evidence outside final-local-report-refresh",
+        "detail": (
+            "Xcode build gate was not run by final-local-report-refresh "
+            "to avoid global Apple SDK/signing state."
+        ),
+        "validation_command": "make mobile-xcode-build-evidence",
+    }
+    assert xcode_report["next_action"] == {
+        **xcode_report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert xcode_report["safety"]["commands_run"] is False
     assert xcode_report["safety"]["xcode_or_signing"] is False
     assert xcode_report["safety"]["global_mutation"] is False

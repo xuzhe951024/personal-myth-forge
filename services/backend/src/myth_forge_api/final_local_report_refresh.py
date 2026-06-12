@@ -543,6 +543,18 @@ def _mobile_xcode_build_evidence_snapshot(repo_root: Path) -> dict[str, Any]:
     if isinstance(existing, dict):
         return existing
 
+    first_blocker = {
+        "id": "xcode_build_gate",
+        "label": "Xcode build gate",
+        "status": "blocked",
+        "classification": "xcode_build_gate_not_run_by_final_local_report_refresh",
+        "command": "run make mobile-xcode-build-evidence outside final-local-report-refresh",
+        "detail": (
+            "Xcode build gate was not run by final-local-report-refresh "
+            "to avoid global Apple SDK/signing state."
+        ),
+        "validation_command": "make mobile-xcode-build-evidence",
+    }
     return {
         "kind": "mobile_xcode_build_evidence_report",
         "status": "blocked",
@@ -568,6 +580,8 @@ def _mobile_xcode_build_evidence_snapshot(repo_root: Path) -> dict[str, Any]:
         "operator_actions": [
             "run make mobile-xcode-build-evidence outside final-local-report-refresh"
         ],
+        "first_blocker": first_blocker,
+        "next_action": {**first_blocker, "source": "first_blocker"},
         "safety": {
             "commands_run": False,
             "provider_calls": False,
