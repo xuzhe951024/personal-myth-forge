@@ -679,6 +679,9 @@ public struct FinalResourcesPreflightItem: Codable, Equatable, Sendable {
     public var normalizedValue: String?
     public var resolutionMode: String?
     public var applyNote: String?
+    public var command: String?
+    public var detail: String?
+    public var validationCommand: String?
 
     public init(
         id: String,
@@ -689,7 +692,10 @@ public struct FinalResourcesPreflightItem: Codable, Equatable, Sendable {
         classification: String? = nil,
         normalizedValue: String? = nil,
         resolutionMode: String? = nil,
-        applyNote: String? = nil
+        applyNote: String? = nil,
+        command: String? = nil,
+        detail: String? = nil,
+        validationCommand: String? = nil
     ) {
         self.id = id
         self.status = status
@@ -700,6 +706,9 @@ public struct FinalResourcesPreflightItem: Codable, Equatable, Sendable {
         self.normalizedValue = normalizedValue
         self.resolutionMode = resolutionMode
         self.applyNote = applyNote
+        self.command = command
+        self.detail = detail
+        self.validationCommand = validationCommand
     }
 }
 

@@ -453,6 +453,15 @@ public enum FinalLaunchMobileSummaryBuilder {
             applyNote: item.applyNote,
             to: &parts
         )
+        if let command = item.command, !command.isEmpty {
+            parts.append(command)
+        }
+        if let detail = item.detail, !detail.isEmpty {
+            parts.append(detail)
+        }
+        if let validationCommand = item.validationCommand, !validationCommand.isEmpty {
+            parts.append(validationCommand)
+        }
         return sanitize(parts.joined(separator: " "))
     }
 

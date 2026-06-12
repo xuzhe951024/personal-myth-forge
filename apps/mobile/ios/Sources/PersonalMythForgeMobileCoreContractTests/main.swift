@@ -4316,7 +4316,16 @@ private func testDecodesFinalResourcesPreflightItemsFromFinalLaunchPayload() thr
     try expectEqual(preflight.items[0].id, "MESHY_API_KEY")
     try expectEqual(preflight.items[0].status, "missing")
     try expectTrue(preflight.items[0].required)
+    try expectEqual(
+        preflight.items[0].command,
+        "provide MESHY_API_KEY in final-resources.env"
+    )
+    try expectEqual(preflight.items[0].validationCommand, "make final-resources-preflight")
     try expectEqual(preflight.items[2].classification, "loopback_url")
+    try expectEqual(
+        preflight.items[2].command,
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    )
 }
 
 private func testDecodesFinalResourceAutoBackendURLHandoffFields() throws {
@@ -4396,9 +4405,18 @@ private func testFinalLaunchMobileSummaryShowsMissingResourceChecklist() throws 
     try expectEqual(summary.resourceChecklistRows.count, 3)
     try expectContains(summary.resourceChecklistRows[0], "MESHY_API_KEY")
     try expectContains(summary.resourceChecklistRows[0], "missing required")
+    try expectContains(
+        summary.resourceChecklistRows[0],
+        "provide MESHY_API_KEY in final-resources.env"
+    )
+    try expectContains(summary.resourceChecklistRows[0], "make final-resources-preflight")
     try expectContains(summary.resourceChecklistRows[1], "OPENAI_API_KEY")
     try expectContains(summary.resourceChecklistRows[2], "PMF_BACKEND_BASE_URL")
     try expectContains(summary.resourceChecklistRows[2], "loopback_url")
+    try expectContains(
+        summary.resourceChecklistRows[2],
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    )
 }
 
 private func testFinalLaunchMobileSummaryShowsReadyResourceChecklist() throws {
@@ -12418,7 +12436,10 @@ private func blockedFinalResourceItemsJSON() -> String {
         "required": true,
         "configured": false,
         "redacted": false,
-        "classification": "missing_required_value"
+        "classification": "missing_required_value",
+        "command": "provide MESHY_API_KEY in final-resources.env",
+        "detail": "Required final resource value is missing: MESHY_API_KEY.",
+        "validation_command": "make final-resources-preflight"
       },
       {
         "id": "OPENAI_API_KEY",
@@ -12426,7 +12447,10 @@ private func blockedFinalResourceItemsJSON() -> String {
         "required": true,
         "configured": false,
         "redacted": false,
-        "classification": "missing_required_value"
+        "classification": "missing_required_value",
+        "command": "provide OPENAI_API_KEY in final-resources.env",
+        "detail": "Required final resource value is missing: OPENAI_API_KEY.",
+        "validation_command": "make final-resources-preflight"
       },
       {
         "id": "PMF_BACKEND_BASE_URL",
@@ -12434,7 +12458,10 @@ private func blockedFinalResourceItemsJSON() -> String {
         "required": true,
         "configured": false,
         "redacted": true,
-        "classification": "loopback_url"
+        "classification": "loopback_url",
+        "command": "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+        "detail": "PMF_BACKEND_BASE_URL must be reachable from iPhone, not loopback.",
+        "validation_command": "make final-resources-preflight"
       }
     ]
     """

@@ -100,8 +100,21 @@ def test_preflight_resource_actions_include_validation_commands(
         repo_root=repo_root,
         resources_file=resources,
     )
+    items = {item["id"]: item for item in result.report["items"]}
     actions = result.report["operator_actions"]
 
+    assert items["MESHY_API_KEY"]["command"] == (
+        "provide MESHY_API_KEY in final-resources.env"
+    )
+    assert items["MESHY_API_KEY"]["detail"] == (
+        "Required final resource value is missing: MESHY_API_KEY."
+    )
+    assert items["MESHY_API_KEY"]["validation_command"] == (
+        "make final-resources-preflight"
+    )
+    assert items["OPENAI_API_KEY"]["command"] == (
+        "provide OPENAI_API_KEY in final-resources.env"
+    )
     assert (
         "provide MESHY_API_KEY in final-resources.env; "
         "rerun make final-resources-preflight"
@@ -155,6 +168,15 @@ def test_preflight_blocks_loopback_backend_url(tmp_path: Path) -> None:
     assert result.report["status"] == "blocked"
     assert items["PMF_BACKEND_BASE_URL"]["status"] == "blocked"
     assert items["PMF_BACKEND_BASE_URL"]["classification"] == "loopback_url"
+    assert items["PMF_BACKEND_BASE_URL"]["command"] == (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    )
+    assert items["PMF_BACKEND_BASE_URL"]["detail"] == (
+        "PMF_BACKEND_BASE_URL must be reachable from iPhone, not loopback."
+    )
+    assert items["PMF_BACKEND_BASE_URL"]["validation_command"] == (
+        "make final-resources-preflight"
+    )
     assert result.report["first_blocker"]["id"] == "PMF_BACKEND_BASE_URL"
     assert result.report["first_blocker"]["classification"] == "loopback_url"
     assert result.report["first_blocker"]["command"] == (
@@ -339,6 +361,9 @@ def test_preflight_marks_valid_local_print_resources_ready_and_redacted(
     assert items["DEVELOPMENT_TEAM"]["status"] == "ready"
     assert items["PRODUCT_BUNDLE_IDENTIFIER"]["status"] == "ready"
     assert items["PMF_BACKEND_BASE_URL"]["status"] == "ready"
+    assert "command" not in items["MESHY_API_KEY"]
+    assert "validation_command" not in items["MESHY_API_KEY"]
+    assert "command" not in items["TREATSTOCK_API_KEY"]
     assert result.report["first_blocker"] is None
     assert result.report["next_action"] is None
     assert "meshy-secret-test" not in report_text
