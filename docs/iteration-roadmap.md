@@ -268,6 +268,7 @@ Bridge deliverable:
 - P0.354 final showcase iOS capability row uses concrete deploy handoff command
 - P0.355 final showcase iOS deploy writer operator action stays copy-pasteable
 - P0.356 final showcase provider key handoff uses concrete resource preflight action
+- P0.357 final showcase simple report capabilities promote concrete child actions
 
 ## P1: Mobile Vertical Slice
 
