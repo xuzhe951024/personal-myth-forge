@@ -24,6 +24,16 @@ MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH = Path(
 MOBILE_XCODE_BUILD_EVIDENCE_PATH = Path(
     "services/backend/.local/mobile-xcode-build-evidence.json"
 )
+IOS_DEVICE_EVIDENCE_SOURCE_ACTION_PREFIXES = (
+    "final_rehearsal_local: ",
+    "final_acceptance_local: ",
+    "final_configured_preflight: ",
+    "final_handoff_index: ",
+    "ios_device_launch_certificate: ",
+    "ios_deploy_runbook_local: ",
+    "mobile_deploy_preflight_evidence: ",
+    "mobile_xcode_build_evidence: ",
+)
 
 
 @dataclass(frozen=True)
@@ -665,12 +675,49 @@ def _dedupe(values: list[str]) -> list[str]:
     seen: set[str] = set()
     result: list[str] = []
     for value in values:
-        normalized = normalize_operator_action(value)
+        normalized = _top_level_operator_action(value)
         if normalized in seen:
             continue
         seen.add(normalized)
         result.append(normalized)
     return result
+
+
+def _top_level_operator_action(action: str) -> str:
+    normalized = normalize_operator_action(action)
+    command_part, detail_suffix = _split_detail_suffix(normalized)
+    return f"{command_part}{_strip_source_prefixes_from_detail(detail_suffix)}"
+
+
+def _split_detail_suffix(action: str) -> tuple[str, str]:
+    command, separator, detail = action.partition(" | ")
+    if not separator:
+        return action.strip(), ""
+    return command.strip(), f"{separator}{detail}"
+
+
+def _strip_source_prefixes_from_detail(detail_suffix: str) -> str:
+    if not detail_suffix:
+        return ""
+    separator = " | "
+    detail = detail_suffix.removeprefix(separator).strip()
+    detail_root, nested_separator, nested_detail = detail.partition(separator)
+    stripped_root = _strip_evidence_source_prefixes(detail_root)
+    if nested_separator:
+        return f"{separator}{stripped_root}{nested_separator}{nested_detail}"
+    return f"{separator}{stripped_root}"
+
+
+def _strip_evidence_source_prefixes(value: str) -> str:
+    stripped = value.strip()
+    changed = True
+    while changed:
+        changed = False
+        for prefix in IOS_DEVICE_EVIDENCE_SOURCE_ACTION_PREFIXES:
+            if stripped.startswith(prefix):
+                stripped = stripped.removeprefix(prefix).strip()
+                changed = True
+    return stripped
 
 
 def _default_repo_root() -> Path:

@@ -397,6 +397,7 @@ def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
 
     result = build_ios_device_evidence_bundle_report(repo_root=repo_root)
     actions = result.report["operator_actions"]
+    slots = {slot["id"]: slot for slot in result.report["evidence_slots"]}
     text = json.dumps(result.report)
 
     assert result.exit_code == 2
@@ -416,10 +417,17 @@ def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
     )
     assert actions[3] == (
         "run make ios-device-launch-rehearsal | "
-        "final_rehearsal_local: mobile_deploy_preflight_evidence: "
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
         "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    assert slots["ios_device_launch_rehearsal"]["detail"].startswith(
+        "final_rehearsal_local: mobile_deploy_preflight_evidence:"
+    )
+    assert not any(
+        " | final_rehearsal_local:" in action
+        or " | mobile_deploy_preflight_evidence:" in action
+        for action in actions
     )
     assert "MESHY_API_KEY" not in text
 
