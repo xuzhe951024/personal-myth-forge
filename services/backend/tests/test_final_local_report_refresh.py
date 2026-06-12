@@ -76,7 +76,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert steps["mobile_deploy_preflight_evidence"]["status"] == "blocked"
     assert steps["mobile_deploy_preflight_evidence"]["classification"] == ""
     assert steps["mobile_deploy_preflight_evidence"]["command"] == (
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
     )
     assert steps["mobile_deploy_preflight_evidence"]["detail"] == (
         "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
@@ -187,11 +187,11 @@ def test_final_local_report_refresh_exposes_showcase_next_action(
         "label": "Final showcase readiness",
         "status": "blocked",
         "classification": "ios_deploy_evidence",
-        "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
         "detail": (
             "iOS deploy runbook and device launch rehearsal must both be ready. | "
-            "Next device action: provide DEVELOPMENT_TEAM in "
-            "Deployment.local.xcconfig | Missing DEVELOPMENT_TEAM; "
+            "Next device action: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto | Missing DEVELOPMENT_TEAM; "
             "PMF_BACKEND_BASE_URL must be iPhone-reachable"
         ),
         "source": "final_showcase_readiness",
@@ -212,7 +212,7 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     assert result.report["operator_actions"][:2] == [
         "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
         (
-            "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         ),
     ]

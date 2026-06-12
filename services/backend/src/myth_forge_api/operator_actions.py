@@ -20,6 +20,9 @@ PRODUCT_BUNDLE_IDENTIFIER_ACTION = (
     "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig"
 )
 BACKEND_BASE_URL_ACTION = "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION = (
+    "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+)
 BACKEND_DEVICE_DEMO_ACTION = (
     "start backend-device-demo before device checks: make backend-device-demo"
 )
@@ -144,6 +147,7 @@ MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
     PRODUCT_BUNDLE_IDENTIFIER_ACTION,
     "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig",
     BACKEND_BASE_URL_ACTION,
+    MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION,
     "set PMF_FINAL_LAUNCH_MODE to local or configured",
 )
 
