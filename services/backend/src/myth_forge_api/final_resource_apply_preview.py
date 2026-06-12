@@ -20,13 +20,16 @@ from myth_forge_api.operator_actions import (
 
 BACKEND_ENV_DESTINATION = "services/backend/.env"
 IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
+FINAL_RESOURCE_INIT_COMMAND = "make final-resource-init"
+FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
+FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 BACKEND_WRITER = "services/backend/scripts/write_backend_env.sh"
 IOS_WRITER = "apps/mobile/ios/scripts/write_deploy_local_config.sh"
 
 BASE_COMMANDS = [
-    "make final-resource-apply-preview",
+    FINAL_RESOURCE_APPLY_PREVIEW_COMMAND,
     "make final-resources-preflight",
-    "make final-apply-resources",
+    FINAL_RESOURCE_APPLY_COMMAND,
 ]
 REPAIR_COMMANDS = [
     "make final-resource-repair-preview",
@@ -271,7 +274,7 @@ def _first_blocker(targets: list[dict[str, Any]]) -> dict[str, Any] | None:
             "label": target["label"],
             "status": target["status"],
             "classification": _target_classification(target, blocked_by),
-            "command": target["command"],
+            "command": _target_blocker_command(target, blocked_by),
             "detail": detail,
             "destination": target["destination"],
             "writer": target["writer"],
@@ -293,6 +296,27 @@ def _target_classification(target: dict[str, Any], blocked_by: list[str]) -> str
         if slot["id"] == first_blocked_id:
             return str(slot["classification"])
     return str(target["status"])
+
+
+def _target_blocker_command(target: dict[str, Any], blocked_by: list[str]) -> str:
+    if target["status"] == "missing":
+        return FINAL_RESOURCE_INIT_COMMAND
+    first_blocked_id = blocked_by[0] if blocked_by else ""
+    for slot in target["slots"]:
+        if slot["id"] == first_blocked_id:
+            return _slot_blocker_command(slot)
+    return FINAL_RESOURCE_APPLY_PREVIEW_COMMAND
+
+
+def _slot_blocker_command(slot: dict[str, Any]) -> str:
+    slot_id = str(slot["id"])
+    if slot_id == "PMF_BACKEND_BASE_URL":
+        return "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    if slot_id == "PRODUCT_BUNDLE_IDENTIFIER":
+        return "set PRODUCT_BUNDLE_IDENTIFIER to a unique app bundle id"
+    if slot["status"] == "missing":
+        return f"provide {slot_id} in final-resources.env"
+    return FINAL_RESOURCE_APPLY_PREVIEW_COMMAND
 
 
 def _summary(

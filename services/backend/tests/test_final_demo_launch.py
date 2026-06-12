@@ -899,7 +899,9 @@ def test_final_demo_launch_embeds_final_resource_apply_preview(
     assert preview["kind"] == "final_resource_apply_preview_report"
     assert preview["status"] == "missing"
     assert preview["first_blocker"]["id"] == "backend_env"
-    assert preview["first_blocker"]["command"] == "make final-apply-resources"
+    assert preview["first_blocker"]["command"] == "make final-resource-init"
+    assert preview["next_action"]["command"] == "make final-resource-init"
+    assert preview["first_blocker"]["command"] != "make final-apply-resources"
     assert preview["first_blocker"]["blocked_by"] == [
         "MESHY_API_KEY",
         "OPENAI_API_KEY",
