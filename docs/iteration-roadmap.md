@@ -245,6 +245,7 @@ Bridge deliverable:
 - P0.331 existing Xcode evidence normalizes next action
 - P0.332 iOS launch reports expose next action
 - P0.333 print fulfillment next action validates cost consent
+- P0.334 iOS deploy writer reuses base bundle id
 
 ## P1: Mobile Vertical Slice
 
