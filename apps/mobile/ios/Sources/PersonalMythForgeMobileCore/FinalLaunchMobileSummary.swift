@@ -1510,6 +1510,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             "ios_device_launch_certificate:",
             "live-provider",
             "live_provider",
+            "treatstock",
+            "print-fulfillment",
+            "print_fulfillment",
             "final-resource",
             "final_resource",
             "final-showcase",
@@ -1520,7 +1523,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             let lowered = action.lowercased()
             return priorityFragments.contains { lowered.contains($0) }
         })
-        return deduped(selected).prefix(6).map(sanitize)
+        return deduped(selected).prefix(7).map(sanitize)
     }
 
     private static func showcaseReadinessNextActionRow(
