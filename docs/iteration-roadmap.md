@@ -269,6 +269,7 @@ Bridge deliverable:
 - P0.355 final showcase iOS deploy writer operator action stays copy-pasteable
 - P0.356 final showcase provider key handoff uses concrete resource preflight action
 - P0.357 final showcase simple report capabilities promote concrete child actions
+- P0.358 final showcase print fulfillment exposes configured quote handoff and cost consent
 
 ## P1: Mobile Vertical Slice
 

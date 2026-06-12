@@ -629,6 +629,15 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     assert rows["ai_agent_npc"]["status"] == "partial"
     assert rows["print_fulfillment"]["status"] == "partial"
     assert rows["print_fulfillment"]["classification"] == "missing_configured_treatstock_quote"
+    assert rows["print_fulfillment"]["command"] == (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes"
+    )
+    assert rows["print_fulfillment"]["validation_command"] == (
+        "make print-fulfillment-readiness"
+    )
+    assert rows["print_fulfillment"]["requires_cost_consent"] is True
     assert rows["provider_key_handoff"]["status"] == "partial"
     assert result.report["evidence"]["final_resource_apply_preview"]["status"] == "ready"
     assert "final_resource_apply_preview:ready" in rows["provider_key_handoff"]["evidence"]
