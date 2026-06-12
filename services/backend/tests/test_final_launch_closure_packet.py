@@ -69,8 +69,27 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
         "configured_live_evidence_bundle"
     )
     assert sections["final_acceptance"]["required"] is True
-    actions = " ".join(report["operator_actions"])
-    assert "provide MESHY_API_KEY" in actions
+    assert sections["resource_inputs"]["first_action"]["destination"] == (
+        "services/backend/.local/final-resources.env"
+    )
+    resource_actions = {
+        action["id"]: action for action in sections["resource_inputs"]["actions"]
+    }
+    assert resource_actions["provide_DEVELOPMENT_TEAM"]["destination"] == (
+        "apps/mobile/ios/Config/Deployment.local.xcconfig"
+    )
+    operator_actions = report["operator_actions"]
+    actions = " ".join(operator_actions)
+    assert (
+        "provide MESHY_API_KEY in final-resources.env; rerun "
+        "make final-resources-preflight"
+    ) in operator_actions
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
+        "make mobile-deploy-preflight"
+    ) in operator_actions
+    assert "provide MESHY_API_KEY" not in operator_actions
+    assert "provide DEVELOPMENT_TEAM" not in operator_actions
     assert "make ios-device-launch-rehearsal" in actions
     assert "make configured-live-evidence-bundle" in actions
     assert report["commands"][:5] == [

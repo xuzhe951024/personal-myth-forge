@@ -219,6 +219,7 @@ Bridge deliverable:
 - P0.305 iOS device evidence bundle top-level actions normalize to bare handoff details
 - P0.306 configured evidence top-level actions normalize to concrete handoff commands
 - P0.307 final external action ledger top-level actions normalize to concrete commands
+- P0.308 final launch closure packet resource actions retain validation handoff
 
 ## P1: Mobile Vertical Slice
 
