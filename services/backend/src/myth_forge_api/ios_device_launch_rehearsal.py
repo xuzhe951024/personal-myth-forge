@@ -109,12 +109,18 @@ def build_ios_device_launch_rehearsal_report(
     )
     status = _overall_status(sequence)
     mode = _mode_from_certificate(report_sources["ios_device_launch_certificate"])
+    first_blocker = _first_blocker(sequence)
+    operator_actions = _operator_actions(sequence)
     report = {
         "kind": "ios_device_launch_rehearsal_report",
         "status": status,
         "mode": mode,
         "summary": _summary(sequence),
-        "first_blocker": _first_blocker(sequence),
+        "first_blocker": first_blocker,
+        "next_action": _next_action(
+            first_blocker=first_blocker,
+            operator_actions=operator_actions,
+        ),
         "sequence": sequence,
         "local_rehearsal_reports": local_sources,
         "configured_preflight": report_sources["final_configured_preflight"],
@@ -122,7 +128,7 @@ def build_ios_device_launch_rehearsal_report(
         "ios_device_launch_certificate": report_sources[
             "ios_device_launch_certificate"
         ],
-        "operator_actions": _operator_actions(sequence),
+        "operator_actions": operator_actions,
         "commands": _commands(),
         "safety": _safety(),
     }
@@ -432,6 +438,31 @@ def _first_blocker(sequence: list[dict[str, Any]]) -> dict[str, Any] | None:
             "detail": _step_blocker_detail(step),
         }
     return None
+
+
+def _next_action(
+    *,
+    first_blocker: dict[str, Any] | None,
+    operator_actions: list[str],
+) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    for action in operator_actions:
+        if action == "run make ios-device-launch-rehearsal":
+            continue
+        if action.startswith("refresh "):
+            continue
+        return {
+            **first_blocker,
+            "command": action,
+            "source": "operator_actions",
+            "validation_command": "make ios-device-launch-rehearsal",
+        }
+    return {
+        **first_blocker,
+        "source": "first_blocker",
+        "validation_command": "make ios-device-launch-rehearsal",
+    }
 
 
 def _step_blocker_detail(step: dict[str, Any]) -> str:

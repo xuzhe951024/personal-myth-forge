@@ -64,11 +64,14 @@ def build_ios_device_launch_certificate_report(
         final_demo_launch=final_demo_launch,
     )
     status = _overall_status(device_gates)
+    first_blocker = _first_blocker(device_gates)
     report = {
         "kind": "ios_device_launch_certificate_report",
         "status": status,
         "mode": mode,
         "summary": _summary(device_gates),
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "certificate": certificate,
         "device_gates": device_gates,
         "operator_actions": _operator_actions(device_gates),
@@ -436,29 +439,66 @@ def _operator_actions(device_gates: list[dict[str, Any]]) -> list[str]:
         status = str(gate.get("status", ""))
         if status not in {"missing", "blocked", "manual", "live"}:
             continue
-        gate_id = str(gate.get("id", "gate"))
-        command = str(gate.get("command", ""))
-        if gate_id == "final_handoff_index":
-            actions.append("run make final-handoff-index")
-        elif gate_id == "ios_deploy_config":
-            actions.append("provide iOS deploy config and rerun mobile deploy preflight")
-        elif gate_id == "ios_deploy_runbook":
-            actions.append("run make ios-deploy-runbook-local")
-        elif gate_id == "final_demo_launch":
-            actions.append("run make final-demo-launch")
-        elif gate_id == "backend_device_server":
-            actions.append("start backend-device-demo")
-        elif gate_id == "mobile_deploy_preflight":
-            actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
-        elif gate_id == "xcode_build_gate":
-            actions.append("resolve Xcode build gate outside the app")
-        elif gate_id == "configured_final_acceptance":
-            actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
-        elif command:
-            actions.append(f"run {command}")
-        else:
-            actions.append(f"unblock {gate_id}")
+        actions.append(_operator_action_for_gate(gate))
     return _dedupe(actions)[:6]
+
+
+def _first_blocker(device_gates: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for gate in device_gates:
+        if not gate.get("required"):
+            continue
+        status = str(gate.get("status", ""))
+        if status not in {"missing", "blocked"}:
+            continue
+        return {
+            "id": str(gate.get("id", "device_gate")),
+            "label": str(gate.get("label", "Device gate")),
+            "status": status,
+            "classification": f"device_gate_{status}",
+            "command": _operator_action_for_gate(gate),
+            "detail": _gate_detail(gate),
+            "validation_command": str(
+                gate.get("command", "make ios-device-launch-certificate")
+            ),
+        }
+    return None
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
+
+
+def _operator_action_for_gate(gate: dict[str, Any]) -> str:
+    gate_id = str(gate.get("id", "gate"))
+    command = str(gate.get("command", ""))
+    if gate_id == "final_handoff_index":
+        return "run make final-handoff-index"
+    if gate_id == "ios_deploy_config":
+        return "provide iOS deploy config and rerun mobile deploy preflight"
+    if gate_id == "ios_deploy_runbook":
+        return "run make ios-deploy-runbook-local"
+    if gate_id == "final_demo_launch":
+        return "run make final-demo-launch"
+    if gate_id == "backend_device_server":
+        return "start backend-device-demo"
+    if gate_id == "mobile_deploy_preflight":
+        return BACKEND_DEVICE_DEMO_VALIDATED_ACTION
+    if gate_id == "xcode_build_gate":
+        return "resolve Xcode build gate outside the app"
+    if gate_id == "configured_final_acceptance":
+        return CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION
+    if command:
+        return f"run {command}"
+    return f"unblock {gate_id}"
+
+
+def _gate_detail(gate: dict[str, Any]) -> str:
+    notes = gate.get("notes")
+    if isinstance(notes, list) and notes:
+        return str(notes[0])
+    return str(gate.get("label", gate.get("id", "Device gate")))
 
 
 def _dedupe(values: list[str]) -> list[str]:

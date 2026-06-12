@@ -846,15 +846,20 @@ def _operator_actions(
         command = _action_command(action)
         if command:
             actions.append(command)
+    priority_step_actions: list[str] = []
+    fallback_step_actions: list[str] = []
     for step in steps:
+        step_actions = priority_step_actions if step.get("next_command") else fallback_step_actions
         if step["status"] == "failed":
-            actions.append(f"fix final-local-report-refresh step {step['id']}")
+            step_actions.append(f"fix final-local-report-refresh step {step['id']}")
         elif step["status"] == "blocked":
             command = _action_command(step)
             if command:
-                actions.append(command)
+                step_actions.append(command)
             else:
-                actions.append(f"review refreshed {step['id']} report")
+                step_actions.append(f"review refreshed {step['id']} report")
+    actions.extend(priority_step_actions)
+    actions.extend(fallback_step_actions)
     return _dedupe_operator_actions(actions)[:12]
 
 
@@ -897,14 +902,27 @@ def _dedupe(values: list[str]) -> list[str]:
 
 def _dedupe_operator_actions(values: list[str]) -> list[str]:
     deduped = _dedupe([normalize_operator_action(value) for value in values])
-    validation_aware_roots = {
-        value.split("; rerun ", 1)[0].strip()
+    validation_by_root = {
+        value.split("; rerun ", 1)[0].strip(): value
         for value in deduped
         if "; rerun " in value
     }
-    validation_deduped = [
-        value for value in deduped if value not in validation_aware_roots
-    ]
+    validation_deduped: list[str] = []
+    emitted_roots: set[str] = set()
+    for value in deduped:
+        if value in validation_by_root:
+            root = value
+            replacement = validation_by_root[root]
+        elif "; rerun " in value:
+            root = value.split("; rerun ", 1)[0].strip()
+            replacement = value
+        else:
+            root = value
+            replacement = value
+        if root in emitted_roots:
+            continue
+        emitted_roots.add(root)
+        validation_deduped.append(replacement)
     return _dedupe_operator_action_roots(validation_deduped)
 
 

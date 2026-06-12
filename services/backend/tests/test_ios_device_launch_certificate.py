@@ -40,6 +40,19 @@ def test_ios_device_launch_certificate_blocks_missing_inputs_without_leaks(
         "provide iOS deploy config and rerun mobile deploy preflight",
         "run make ios-deploy-runbook-local",
     ]
+    assert result.report["first_blocker"] == {
+        "id": "final_handoff_index",
+        "label": "Final handoff index",
+        "status": "blocked",
+        "classification": "device_gate_blocked",
+        "command": "run make final-handoff-index",
+        "detail": "Refreshes the unified local/configured handoff index.",
+        "validation_command": "make final-handoff-index",
+    }
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert result.report["safety"]["provider_calls"] is False
     assert result.report["safety"]["commands_run"] is False
     assert result.report["safety"]["xcode_or_signing"] is False
@@ -81,6 +94,8 @@ def test_ios_device_launch_certificate_ready_with_configured_inputs(
     assert result.exit_code == 0
     assert result.report["status"] == "ready"
     assert result.report["mode"] == "configured"
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert result.report["certificate"]["development_team"]["configured"] is True
     assert result.report["certificate"]["product_bundle_identifier"]["configured"] is True
     assert result.report["certificate"]["backend_base_url"]["configured"] is True
