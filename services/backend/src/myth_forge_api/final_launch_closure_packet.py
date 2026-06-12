@@ -566,10 +566,17 @@ def _operator_actions(sections: list[dict[str, Any]]) -> list[str]:
             elif action["requires_user_confirmation"]:
                 actions.append(f"confirm global/manual action before {action['command']}")
             else:
-                actions.append(f"run {action['command']}")
+                actions.append(_run_action_text(str(action["command"])))
     if not actions:
         return ["Final launch closure packet is ready"]
     return _dedupe(actions)
+
+
+def _run_action_text(command: str) -> str:
+    normalized = command.strip()
+    if normalized.startswith("make "):
+        return normalized
+    return f"run {normalized}"
 
 
 def _provide_action_text(action: dict[str, Any]) -> str:
