@@ -61,13 +61,15 @@ def build_print_fulfillment_readiness_report(
     ]
     summary = _summary(checks)
     status = _overall_status(checks)
+    first_blocker = _first_blocker(checks)
     report = {
         "kind": "print_fulfillment_readiness_report",
         "status": status,
         "summary": summary,
         "checks": checks,
         "checks_by_id": {check["id"]: check for check in checks},
-        "first_blocker": _first_blocker(checks),
+        "first_blocker": first_blocker,
+        "next_action": _next_action(first_blocker),
         "operator_actions": _operator_actions(checks),
         "commands": _commands(),
         "evidence": {
@@ -467,6 +469,12 @@ def _first_blocker(checks: list[dict[str, Any]]) -> dict[str, Any] | None:
                     "detail": check["detail"],
                 }
     return None
+
+
+def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
+    if first_blocker is None:
+        return None
+    return {**first_blocker, "source": "first_blocker"}
 
 
 def _operator_actions(checks: list[dict[str, Any]]) -> list[str]:

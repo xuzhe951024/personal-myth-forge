@@ -44,6 +44,10 @@ def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_
     assert rows["print_resource_handoff"]["status"] == "ready"
     assert rows["configured_treatstock_quote"]["status"] == "partial"
     assert result.report["first_blocker"]["id"] == "configured_treatstock_quote"
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert "print-fulfillment-readiness" in " ".join(result.report["commands"])
 
 
@@ -65,6 +69,7 @@ def test_print_fulfillment_readiness_ready_with_configured_treatstock_quote(
     assert result.exit_code == 0
     assert result.report["status"] == "ready"
     assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
     assert result.report["checks_by_id"]["configured_treatstock_quote"]["status"] == "ready"
     assert result.report["checks_by_id"]["configured_treatstock_quote"]["classification"] == (
         "draft_quote_requires_user_approval"
@@ -106,6 +111,10 @@ def test_print_fulfillment_readiness_blocks_unsafe_or_unapproved_treatstock_quot
     assert result.report["status"] == "blocked"
     assert result.report["first_blocker"]["id"] == "configured_treatstock_quote"
     assert result.report["first_blocker"]["classification"] == "missing_user_approval_gate"
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "source": "first_blocker",
+    }
     assert "secret-token" not in report_text
     assert "checkout.example" not in report_text
     assert "file://" not in report_text
