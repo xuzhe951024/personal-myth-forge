@@ -77,6 +77,8 @@ FINAL_DEMO_MANUAL_TEAM_ACTION = (
     "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
     "rerun make mobile-deploy-preflight"
 )
+FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
+FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 
 
 @dataclass(frozen=True)
@@ -328,6 +330,10 @@ def _launch_phases(
         ios_status=ios_status,
         final_resources_preflight_status=final_resources_preflight["status"],
     )
+    final_resource_apply_command = _final_resource_apply_command(
+        mode=mode,
+        final_resource_apply_status=final_resource_apply_status,
+    )
     configured_acceptance_status = _combined_status([core_backend_status, ios_status])
     if mode == "local":
         configured_acceptance_status = "optional"
@@ -337,7 +343,7 @@ def _launch_phases(
             "Apply final resources",
             final_resource_apply_status,
             "one-file backend and iOS final demo handoff",
-            "make final-apply-resources",
+            final_resource_apply_command,
             [
                 "Reads only ignored services/backend/.local/final-resources.env.",
                 "Writes only ignored services/backend/.env and Deployment.local.xcconfig.",
@@ -430,6 +436,16 @@ def _final_resource_apply_status(
     return "ready"
 
 
+def _final_resource_apply_command(
+    *,
+    mode: LaunchMode,
+    final_resource_apply_status: str,
+) -> str:
+    if mode == "configured" and final_resource_apply_status != "ready":
+        return FINAL_RESOURCE_APPLY_PREVIEW_COMMAND
+    return FINAL_RESOURCE_APPLY_COMMAND
+
+
 def _phase(
     phase_id: str,
     label: str,
@@ -512,8 +528,8 @@ def _commands(mode: LaunchMode) -> list[str]:
         return [
             "make final-resource-requirements",
             "make final-resources-preflight",
-            "make final-resource-apply-preview",
-            "make final-apply-resources",
+            FINAL_RESOURCE_APPLY_PREVIEW_COMMAND,
+            FINAL_RESOURCE_APPLY_COMMAND,
             "make visual-regression-local",
             "make live-provider-evidence",
             "make ios-deploy-runbook",
@@ -526,8 +542,8 @@ def _commands(mode: LaunchMode) -> list[str]:
     return [
         "make final-resource-requirements",
         "make final-resources-preflight",
-        "make final-resource-apply-preview",
-        "make final-apply-resources",
+        FINAL_RESOURCE_APPLY_PREVIEW_COMMAND,
+        FINAL_RESOURCE_APPLY_COMMAND,
         "make visual-regression-local",
         "make live-provider-evidence",
         "make ios-deploy-runbook",
