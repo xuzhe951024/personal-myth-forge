@@ -28,6 +28,7 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
 )
 from myth_forge_api.operator_actions import (
     FINAL_RESOURCE_VALIDATION_ACTION_ROOTS,
+    IOS_DEPLOY_CONFIG_ACTION,
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
@@ -1508,6 +1509,8 @@ def _final_showcase_operator_action(action: str) -> str:
         return f"{bare_root}{detail_suffix}"
     if bare_root.startswith("run make "):
         return f"{bare_root.removeprefix('run ')}{detail_suffix}"
+    if _is_ios_deploy_config_action_root(bare_root):
+        return f"{bare_root}{detail_suffix}"
     return action
 
 
@@ -1521,6 +1524,7 @@ def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
         for action in actions
         if action.startswith(FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES)
         or action in FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_MAKE_TARGETS
+        or _is_ios_deploy_config_action_root(action)
     )
     return _dedupe(selected)[:FINAL_SHOWCASE_IOS_REHEARSAL_ACTION_LIMIT]
 
@@ -1668,6 +1672,10 @@ def _is_drop_candidate_source_prefix(action: str, bare_root: str) -> bool:
 
 def _is_final_resource_action_root(action_root: str) -> bool:
     return action_root.startswith(FINAL_RESOURCE_VALIDATION_ACTION_ROOTS)
+
+
+def _is_ios_deploy_config_action_root(action_root: str) -> bool:
+    return action_root.startswith(IOS_DEPLOY_CONFIG_ACTION)
 
 
 def _looks_like_operator_command(value: str) -> bool:

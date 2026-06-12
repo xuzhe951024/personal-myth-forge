@@ -755,9 +755,13 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert "make print-fulfillment-readiness" in actions
     assert "run make final-resource-init" in actions
     assert (
-        "ios_device_launch_certificate: provide iOS deploy config in "
-        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+        "provide iOS deploy config in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
         in actions
+    )
+    assert not any(
+        action.startswith("ios_device_launch_certificate: provide iOS deploy config")
+        for action in actions
     )
     assert "rerun make visual-regression-local and review failed artifacts" in actions
     assert "make final-showcase-readiness" in actions
@@ -915,8 +919,8 @@ def test_final_showcase_readiness_dedupes_prefixed_device_actions(
         "rerun make mobile-deploy-preflight"
     )
     deploy_config_action = (
-        "ios_device_launch_certificate: provide iOS deploy config in "
-        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+        "provide iOS deploy config in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
     )
 
     assert result.exit_code == 2
@@ -930,6 +934,10 @@ def test_final_showcase_readiness_dedupes_prefixed_device_actions(
         for action in actions
     )
     assert deploy_config_action in actions
+    assert not any(
+        action.startswith("ios_device_launch_certificate: provide iOS deploy config")
+        for action in actions
+    )
 
 
 def test_final_showcase_readiness_dedupes_prefixed_xcode_actions(
@@ -1026,6 +1034,23 @@ def test_final_showcase_readiness_normalizes_prefixed_make_target_actions() -> N
     ]
 
 
+def test_final_showcase_readiness_normalizes_prefixed_ios_config_action() -> None:
+    actions = final_showcase_readiness._report_operator_actions(
+        {
+            "operator_actions": [
+                "ios_device_launch_certificate: provide iOS deploy config",
+            ]
+        }
+    )
+
+    assert actions == [
+        (
+            "provide iOS deploy config in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
 def test_final_showcase_readiness_normalizes_xcode_gate_actions() -> None:
     actions = final_showcase_readiness._report_operator_actions(
         {
@@ -1075,8 +1100,8 @@ def test_final_showcase_readiness_normalizes_prefixed_ios_device_actions(
     actions = result.report["operator_actions"]
 
     deploy_config_action = (
-        "ios_device_launch_certificate: provide iOS deploy config in "
-        "Deployment.local.xcconfig; rerun make mobile-deploy-preflight"
+        "provide iOS deploy config in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
     )
     backend_action = (
         "ios_device_launch_certificate: start backend-device-demo before device "
@@ -1085,11 +1110,11 @@ def test_final_showcase_readiness_normalizes_prefixed_ios_device_actions(
 
     assert result.exit_code == 2
     assert deploy_config_action in actions
-    assert backend_action in actions
-    assert (
-        "ios_device_launch_certificate: provide iOS deploy config"
-        not in actions
+    assert not any(
+        action.startswith("ios_device_launch_certificate: provide iOS deploy config")
+        for action in actions
     )
+    assert backend_action in actions
     assert "ios_device_launch_certificate: start backend-device-demo" not in actions
 
 
