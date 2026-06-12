@@ -37,6 +37,7 @@ OPERATOR_SEQUENCE = [
 ]
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
+PROVIDER_HANDOFF_OPERATOR_ACTION = "make provider-handoff; rerun make live-provider-evidence"
 IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
 IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
 
@@ -298,6 +299,7 @@ def _live_provider_cost_actions(
             status=live_status,
             command="make live-provider-evidence",
             detail="Refresh configured Meshy/OpenAI evidence after cost consent.",
+            operator_action=PROVIDER_HANDOFF_OPERATOR_ACTION,
         ),
         _live_action(
             action_id="run_configured_3d_evaluation",
@@ -326,8 +328,28 @@ def _live_provider_cost_actions(
             status=print_status,
             command="make print-fulfillment-readiness",
             detail="Configured print quote evidence may call a print provider.",
+            operator_action=_report_next_action_operator_action(print_fulfillment),
         ),
     ]
+
+
+def _report_next_action_operator_action(report: dict[str, Any]) -> str:
+    checks_by_id = report.get("checks_by_id")
+    if isinstance(checks_by_id, dict):
+        configured_quote = checks_by_id.get("configured_treatstock_quote")
+        if isinstance(configured_quote, dict):
+            command = str(configured_quote.get("command", "")).strip()
+            if command:
+                return f"{command}; rerun make print-fulfillment-readiness"
+    next_action = report.get("next_action")
+    if isinstance(next_action, dict):
+        command = str(next_action.get("command", "")).strip()
+        validation_command = str(next_action.get("validation_command", "")).strip()
+        if command and validation_command:
+            return f"{command}; rerun {validation_command}"
+        if command:
+            return command
+    return ""
 
 
 def _live_action(
@@ -337,6 +359,7 @@ def _live_action(
     status: str,
     command: str,
     detail: str,
+    operator_action: str = "",
 ) -> dict[str, Any]:
     return _action(
         action_id=action_id,
@@ -347,6 +370,7 @@ def _live_action(
         detail=detail,
         live_provider_call=True,
         requires_cost_consent=True,
+        operator_action=operator_action,
     )
 
 
@@ -452,6 +476,7 @@ def _action(
     writes_repo_local_files: bool = False,
     destination: str | None = None,
     classification: str | None = None,
+    operator_action: str = "",
 ) -> dict[str, Any]:
     action = {
         "id": action_id,
@@ -475,6 +500,8 @@ def _action(
         action["destination"] = destination
     if classification:
         action["classification"] = classification
+    if operator_action:
+        action["operator_action"] = operator_action
     return action
 
 
@@ -650,7 +677,13 @@ def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
             elif action["status"] == "blocked":
                 actions.append(normalize_operator_action(str(action["command"])))
             elif action["requires_cost_consent"] and action["status"] == "live":
-                actions.append(f"approve live provider cost before {action['command']}")
+                concrete_action = str(action.get("operator_action", "")).strip()
+                if concrete_action:
+                    actions.append(normalize_operator_action(concrete_action))
+                else:
+                    actions.append(
+                        f"approve live provider cost before {action['command']}"
+                    )
             elif action["requires_user_confirmation"] and action["status"] == "manual":
                 actions.append(f"confirm global/manual action before {action['command']}")
     return _prefer_apply_preview_before_apply(_dedupe(actions))
