@@ -880,6 +880,16 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     )
     assert "make visual-regression-local; rerun make print-fulfillment-readiness" not in actions
     assert any("Treatstock" in action for action in actions)
+    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    print_action = next(
+        action for action in actions if "Treatstock" in action
+    )
+    assert actions.index(provider_action) < actions.index(
+        "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight"
+    )
+    assert actions.index(print_action) < actions.index(
+        "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight"
+    )
     assert "run make final-resource-init" in actions
     assert (
         "provide iOS deploy config in Deployment.local.xcconfig; "

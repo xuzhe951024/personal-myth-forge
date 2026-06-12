@@ -81,6 +81,12 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_MAKE_TARGETS = (
 )
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
+FINAL_SHOWCASE_PROVIDER_HANDOFF_ACTION_MARKERS = (
+    "provider-handoff",
+    "live-provider",
+    "live_provider",
+    "live-provider-evidence",
+)
 FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "treatstock",
     "print-quote",
@@ -1610,8 +1616,8 @@ def _operator_actions(
         actions.append(
             "run make live-provider-evidence to refresh live provider evidence after cost consent"
         )
-    deduped_actions = _filter_showcase_operator_actions(
-        _dedupe_operator_actions(actions),
+    deduped_actions = _prioritize_showcase_operator_actions(
+        _filter_showcase_operator_actions(_dedupe_operator_actions(actions)),
     )
     return [
         add_final_resource_validation_command(action)
@@ -1662,6 +1668,40 @@ def _filter_showcase_operator_actions(actions: list[str]) -> list[str]:
         for action in actions
         if not _is_validation_only_print_action(action)
     ]
+
+
+def _prioritize_showcase_operator_actions(actions: list[str]) -> list[str]:
+    if not actions:
+        return []
+    first = actions[:1]
+    rest = actions[1:]
+    provider_actions = [
+        action for action in rest if _is_provider_handoff_action(action)
+    ]
+    print_actions = [
+        action for action in rest if _is_print_handoff_action(action)
+    ]
+    priority_actions = set(provider_actions + print_actions)
+    remaining = [
+        action for action in rest if action not in priority_actions
+    ]
+    return first + provider_actions + print_actions + remaining
+
+
+def _is_provider_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(
+        marker in lowered
+        for marker in FINAL_SHOWCASE_PROVIDER_HANDOFF_ACTION_MARKERS
+    )
+
+
+def _is_print_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(
+        marker in lowered
+        for marker in FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS
+    )
 
 
 def _is_validation_only_print_action(action: str) -> bool:
