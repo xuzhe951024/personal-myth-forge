@@ -455,7 +455,7 @@ def _final_resource_apply_command(
     mode: LaunchMode,
     final_resource_apply_status: str,
 ) -> str:
-    if mode == "configured" and final_resource_apply_status != "ready":
+    if final_resource_apply_status != "ready":
         return FINAL_RESOURCE_APPLY_PREVIEW_COMMAND
     return FINAL_RESOURCE_APPLY_COMMAND
 
@@ -522,6 +522,8 @@ def _operator_actions(
         actions.append(concrete)
     if isinstance(final_showcase_readiness, dict):
         actions.extend(_final_showcase_handoff_actions(final_showcase_readiness))
+    if _operator_checklist_needs_apply_preview(operator_checklist):
+        actions.append(FINAL_RESOURCE_APPLY_PREVIEW_COMMAND)
     actions.extend(operator_checklist)
     deduped = _dedupe_operator_actions(actions)
     return _drop_superseded_manual_team_action(
@@ -901,9 +903,37 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
         for value in deduped
         if "; rerun " in value
     }
-    return prefer_project_local_ios_deploy_handoff_actions(
+    deduped = _prefer_apply_preview_before_apply(
         [value for value in deduped if value not in validation_aware_roots]
     )
+    return prefer_project_local_ios_deploy_handoff_actions(
+        deduped
+    )
+
+
+def _operator_checklist_needs_apply_preview(actions: list[str]) -> bool:
+    commands = {_operator_action_command(action) for action in actions}
+    return bool(
+        {FINAL_RESOURCE_APPLY_PREVIEW_COMMAND, FINAL_RESOURCE_APPLY_COMMAND}
+        & commands
+    )
+
+
+def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
+    commands = {_operator_action_command(action) for action in actions}
+    if FINAL_RESOURCE_APPLY_PREVIEW_COMMAND not in commands:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_command(action) != FINAL_RESOURCE_APPLY_COMMAND
+    ]
+
+
+def _operator_action_command(action: str) -> str:
+    _prefix, _separator, command = action.partition(":")
+    candidate = command.strip() if command else action.strip()
+    return candidate.split("; rerun ", 1)[0].strip()
 
 
 def _drop_superseded_manual_team_action(

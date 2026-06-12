@@ -335,7 +335,10 @@ def test_local_final_demo_launch_is_no_key_ready_but_surfaces_ios_actions(
     assert result.report["final_resources_preflight"]["status"] == "missing"
     phases = {phase["id"]: phase for phase in result.report["launch_phases"]}
     assert phases["apply_final_resources"]["status"] == "missing"
-    assert phases["apply_final_resources"]["command"] == "make final-apply-resources"
+    assert (
+        phases["apply_final_resources"]["command"]
+        == "make final-resource-apply-preview"
+    )
     assert phases["local_final_acceptance"]["command"] == "make final-acceptance-local"
     assert "write_backend_env" not in phases
     assert "write_ios_deploy_config" not in phases
@@ -546,6 +549,26 @@ def test_local_final_demo_launch_resource_actions_use_final_resources_preflight(
         " in final-resources.env; rerun " in action
         and not action.endswith("; rerun make final-resources-preflight")
         for action in actions
+    )
+
+
+def test_local_final_demo_launch_operator_actions_do_not_skip_apply_preview(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    operator_actions = result.report["operator_actions"]
+
+    assert "make final-resource-apply-preview" in operator_actions
+    assert "make final-apply-resources" in result.report["commands"]
+    assert not any(
+        _operator_action_command_root(action) == "make final-apply-resources"
+        for action in operator_actions
     )
 
 
@@ -1485,6 +1508,12 @@ def _write_ios_device_launch_rehearsal(repo_root: Path) -> None:
     rehearsal = repo_root / "services/backend/.local/ios-device-launch-rehearsal.json"
     rehearsal.parent.mkdir(parents=True, exist_ok=True)
     rehearsal.write_text(json.dumps(report), encoding="utf-8")
+
+
+def _operator_action_command_root(action: str) -> str:
+    _prefix, _separator, command = action.partition(":")
+    candidate = command.strip() if command else action.strip()
+    return candidate.split("; rerun ", 1)[0].strip()
 
 
 def _write_json(path: Path, report: dict[str, object]) -> None:
