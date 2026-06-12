@@ -195,13 +195,17 @@ def build_final_showcase_readiness_report(
         final_resource_apply_preview=final_resource_apply_preview,
         resource_handoff=resource_handoff,
     )
-    summary = _summary(capabilities)
-    status = _overall_status(capabilities)
     device_action_bundle = _device_action_bundle(
         capabilities,
         mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
         mobile_xcode_build_evidence=mobile_xcode_build_evidence,
     )
+    capabilities = _capabilities_with_device_action_commands(
+        capabilities,
+        device_action_bundle=device_action_bundle,
+    )
+    summary = _summary(capabilities)
+    status = _overall_status(capabilities)
     first_blocker = _first_blocker(
         capabilities,
         device_action_bundle=device_action_bundle,
@@ -1123,6 +1127,39 @@ def _capability_with_device_action_detail(
     )
     if command:
         result["command"] = command
+    if validation_command:
+        result["validation_command"] = validation_command
+    return result
+
+
+def _capabilities_with_device_action_commands(
+    capabilities: list[dict[str, Any]],
+    *,
+    device_action_bundle: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    return [
+        _capability_with_device_action_command(
+            capability,
+            device_action_bundle=device_action_bundle,
+        )
+        for capability in capabilities
+    ]
+
+
+def _capability_with_device_action_command(
+    capability: dict[str, Any],
+    *,
+    device_action_bundle: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if capability.get("id") != "ios_deployable":
+        return capability
+    command, validation_command = _preferred_device_action_blocker_command(
+        device_action_bundle,
+    )
+    if not command:
+        return capability
+    result = dict(capability)
+    result["command"] = command
     if validation_command:
         result["validation_command"] = validation_command
     return result
