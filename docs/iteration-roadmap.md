@@ -255,6 +255,7 @@ Bridge deliverable:
 - P0.341 final local refresh prefers apply preview before apply writer
 - P0.342 final showcase readiness prefers apply preview before apply writer
 - P0.343 final external action ledger prefers apply preview before apply writer
+- P0.344 resource handoff prefers apply preview before apply writer
 
 ## P1: Mobile Vertical Slice
 
