@@ -5693,6 +5693,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
                 "run make live-provider-evidence after configured provider evidence files are refreshed",
                 "run make final-resource-init",
                 "make final-showcase-readiness",
+                "make visual-regression-local; rerun make print-fulfillment-readiness",
                 (
                     "after explicit Treatstock cost consent, save a sanitized "
                     + "services/backend/.local/print-quote-configured.json from POST "
@@ -5713,6 +5714,10 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
     try expectContains(text, "make final-showcase-readiness")
     try expectContains(text, "after explicit Treatstock cost consent")
     try expectContains(text, "make print-fulfillment-readiness")
+    try expectNotContains(
+        text,
+        "make visual-regression-local; rerun make print-fulfillment-readiness"
+    )
     try expectNotContains(text, "extra action that should stay hidden")
     try expectEqual(summary.showcaseReadinessRows.count, 15)
 }

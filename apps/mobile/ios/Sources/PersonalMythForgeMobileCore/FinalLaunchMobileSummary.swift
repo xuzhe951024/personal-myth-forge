@@ -1510,18 +1510,22 @@ public enum FinalLaunchMobileSummaryBuilder {
             "ios_device_launch_certificate:",
             "live-provider",
             "live_provider",
-            "treatstock",
-            "print-fulfillment",
-            "print_fulfillment",
             "final-resource",
             "final_resource",
             "final-showcase",
             "final_showcase",
         ]
+        let printHandoffFragments = [
+            "treatstock",
+            "print-quote",
+            "print_quote",
+            "/v1/print-quotes",
+        ]
         var selected = Array(actions.prefix(1))
         selected.append(contentsOf: actions.filter { action in
             let lowered = action.lowercased()
             return priorityFragments.contains { lowered.contains($0) }
+                || printHandoffFragments.contains { lowered.contains($0) }
         })
         return deduped(selected).prefix(7).map(sanitize)
     }
