@@ -295,6 +295,7 @@ Bridge deliverable:
 - P0.381 iOS device launch rehearsal readiness exposes first blocker and next action
 - P0.382 final showcase capability rows expose next actions
 - P0.383 final local refresh step rows expose next actions
+- P0.384 final local refresh step next action commands stay copy-pasteable
 
 ## P1: Mobile Vertical Slice
 
