@@ -278,6 +278,7 @@ Bridge deliverable:
 - P0.364 final showcase readiness filters validation-only print readiness actions from top-level handoff
 - P0.365 iPhone Final Launch summary filters validation-only print readiness actions from showcase handoff rows
 - P0.366 final showcase readiness prioritizes provider and print handoff actions near the top of operator actions
+- P0.367 final local report refresh prioritizes provider and print handoff actions near the top of operator actions
 
 ## P1: Mobile Vertical Slice
 

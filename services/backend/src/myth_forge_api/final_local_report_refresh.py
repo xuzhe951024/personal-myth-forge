@@ -82,6 +82,19 @@ FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 FINAL_RESOURCE_APPLY_PREVIEW_BEFORE_APPLY_ACTION = (
     "rerun make final-resource-apply-preview before applying resources"
 )
+FINAL_LOCAL_REPORT_PROVIDER_HANDOFF_ACTION_MARKERS = (
+    "make provider-handoff",
+    "live-provider-evidence",
+    "provider-handoff",
+)
+FINAL_LOCAL_REPORT_PRINT_HANDOFF_ACTION_MARKERS = (
+    "treatstock",
+    "print-quote-configured",
+    "print quote",
+    "print-quote",
+    "print_quote",
+    "/v1/print-quotes",
+)
 LOCAL_SETTINGS = Settings(
     three_d_provider="local",
     npc_provider="local",
@@ -867,7 +880,9 @@ def _operator_actions(
                 step_actions.append(f"review refreshed {step['id']} report")
     actions.extend(priority_step_actions)
     actions.extend(fallback_step_actions)
-    return _dedupe_operator_actions(actions)[:12]
+    return _prioritize_final_local_report_operator_actions(
+        _dedupe_operator_actions(actions)
+    )[:12]
 
 
 def _action_command(action: dict[str, Any] | None) -> str:
@@ -932,6 +947,36 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
         validation_deduped.append(replacement)
     return _prefer_apply_preview_before_apply(
         _dedupe_operator_action_roots(validation_deduped)
+    )
+
+
+def _prioritize_final_local_report_operator_actions(actions: list[str]) -> list[str]:
+    if not actions:
+        return []
+    first_actions = actions[:2]
+    rest = actions[2:]
+    provider_actions = [
+        action for action in rest if _is_provider_handoff_action(action)
+    ]
+    print_actions = [action for action in rest if _is_print_handoff_action(action)]
+    priority_actions = set(provider_actions + print_actions)
+    remaining = [action for action in rest if action not in priority_actions]
+    return first_actions + provider_actions + print_actions + remaining
+
+
+def _is_provider_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(
+        marker in lowered
+        for marker in FINAL_LOCAL_REPORT_PROVIDER_HANDOFF_ACTION_MARKERS
+    )
+
+
+def _is_print_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(
+        marker in lowered
+        for marker in FINAL_LOCAL_REPORT_PRINT_HANDOFF_ACTION_MARKERS
     )
 
 
