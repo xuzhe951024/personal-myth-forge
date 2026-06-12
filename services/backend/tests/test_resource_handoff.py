@@ -49,6 +49,29 @@ def test_resource_handoff_reports_missing_final_core_resources(tmp_path: Path) -
         "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
         "rerun make mobile-deploy-preflight"
     ) in report["operator_actions"]
+    assert report["first_blocker"] == {
+        "id": "MESHY_API_KEY",
+        "label": "Meshy API key",
+        "status": "missing",
+        "classification": "missing_required_value",
+        "command": "provide MESHY_API_KEY in final-resources.env",
+        "detail": "Backend-only key; never put it in the iOS app.",
+        "destination": "services/backend/.env",
+        "required_for": "real text/image/multi-image 3D generation",
+        "validation_command": "make final-resources-preflight",
+    }
+    assert report["next_action"] == {
+        "id": "MESHY_API_KEY",
+        "label": "Meshy API key",
+        "status": "missing",
+        "classification": "missing_required_value",
+        "command": "provide MESHY_API_KEY in final-resources.env",
+        "detail": "Backend-only key; never put it in the iOS app.",
+        "destination": "services/backend/.env",
+        "required_for": "real text/image/multi-image 3D generation",
+        "validation_command": "make final-resources-preflight",
+        "source": "first_blocker",
+    }
     assert not any(
         action.endswith("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
         or action.endswith("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
@@ -98,6 +121,8 @@ def test_resource_handoff_marks_core_resources_ready_without_secret_leak(
     )
     assert ios["DEVELOPMENT_TEAM"]["status"] == "ready"
     assert ios["PMF_BACKEND_BASE_URL"]["status"] == "ready"
+    assert report["first_blocker"] is None
+    assert report["next_action"] is None
     assert report["safety"]["provider_secrets_in_report"] is False
     assert "sk-meshy-secret" not in report_text
     assert "sk-openai-secret" not in report_text

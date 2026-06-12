@@ -4900,7 +4900,9 @@ private func testDecodesResourceHandoffFromFinalLaunchPayload() throws {
         from: finalDemoLaunchPayload(
             resourceHandoffStatus: "blocked",
             resourceHandoffBackendStatus: "missing",
-            resourceHandoffIOSStatus: "blocked"
+            resourceHandoffIOSStatus: "blocked",
+            resourceHandoffFirstBlockerJSON: resourceHandoffFirstBlockerJSON(),
+            resourceHandoffNextActionJSON: resourceHandoffNextActionJSON()
         )
     )
 
@@ -4915,6 +4917,18 @@ private func testDecodesResourceHandoffFromFinalLaunchPayload() throws {
     try expectEqual(handoff.ios.items.first?.id, "PMF_BACKEND_BASE_URL")
     try expectFalse(handoff.safety.providerSecretsInReport)
     try expectFalse(handoff.safety.localPathsInReport)
+    let blocker = try require(handoff.firstBlocker, "missing resource handoff first blocker")
+    try expectEqual(blocker.id, "MESHY_API_KEY")
+    try expectEqual(blocker.status, "missing")
+    try expectEqual(blocker.classification, "missing_required_value")
+    try expectEqual(blocker.command, "provide MESHY_API_KEY in final-resources.env")
+    try expectEqual(blocker.destination, "services/backend/.env")
+    try expectEqual(blocker.requiredFor, "real text/image/multi-image 3D generation")
+    try expectEqual(blocker.validationCommand, "make final-resources-preflight")
+    let action = try require(handoff.nextAction, "missing resource handoff next action")
+    try expectEqual(action.id, "MESHY_API_KEY")
+    try expectEqual(action.source, "first_blocker")
+    try expectEqual(action.validationCommand, "make final-resources-preflight")
 }
 
 private func testFinalLaunchMobileSummaryShowsMissingResourceHandoff() throws {
@@ -4923,7 +4937,8 @@ private func testFinalLaunchMobileSummaryShowsMissingResourceHandoff() throws {
             resourceHandoffStatus: "blocked",
             resourceHandoffBackendStatus: "missing",
             resourceHandoffIOSStatus: "blocked",
-            resourceHandoffAction: "provide MESHY_API_KEY"
+            resourceHandoffAction: "legacy resource handoff fallback",
+            resourceHandoffNextActionJSON: resourceHandoffNextActionJSON()
         ),
         error: nil
     )
@@ -4937,7 +4952,10 @@ private func testFinalLaunchMobileSummaryShowsMissingResourceHandoff() throws {
     )
     try expectContains(overviewText, "Backend: services/backend/.env")
     try expectContains(overviewText, "iOS: apps/mobile/ios/Config/Deployment.local.xcconfig")
-    try expectContains(overviewText, "provide MESHY_API_KEY")
+    try expectContains(overviewText, "Next action: MESHY_API_KEY missing missing_required_value")
+    try expectContains(overviewText, "provide MESHY_API_KEY in final-resources.env")
+    try expectContains(overviewText, "make final-resources-preflight")
+    try expectNotContains(overviewText, "legacy resource handoff fallback")
     try expectContains(backendText, "MESHY_API_KEY: missing")
     try expectContains(backendText, "real text/image/multi-image 3D generation")
     try expectContains(iosText, "PMF_BACKEND_BASE_URL: blocked")
@@ -7473,6 +7491,39 @@ private func finalDemoLaunchTopLevelNextActionJSON() -> String {
     """
 }
 
+private func resourceHandoffFirstBlockerJSON() -> String {
+    """
+    {
+      "id": "MESHY_API_KEY",
+      "label": "Meshy API key",
+      "status": "missing",
+      "classification": "missing_required_value",
+      "command": "provide MESHY_API_KEY in final-resources.env",
+      "detail": "Backend-only key; never put it in the iOS app.",
+      "destination": "services/backend/.env",
+      "required_for": "real text/image/multi-image 3D generation",
+      "validation_command": "make final-resources-preflight"
+    }
+    """
+}
+
+private func resourceHandoffNextActionJSON() -> String {
+    """
+    {
+      "id": "MESHY_API_KEY",
+      "label": "Meshy API key",
+      "status": "missing",
+      "classification": "missing_required_value",
+      "command": "provide MESHY_API_KEY in final-resources.env",
+      "detail": "Backend-only key; never put it in the iOS app.",
+      "destination": "services/backend/.env",
+      "required_for": "real text/image/multi-image 3D generation",
+      "validation_command": "make final-resources-preflight",
+      "source": "first_blocker"
+    }
+    """
+}
+
 private func finalDemoLaunchPayload(
     mode: String = "local",
     includeStatus: Bool = true,
@@ -7553,6 +7604,8 @@ private func finalDemoLaunchPayload(
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
     resourceHandoffAction: String = "provide MESHY_API_KEY",
+    resourceHandoffFirstBlockerJSON: String = "null",
+    resourceHandoffNextActionJSON: String = "null",
     resourceHandoffDestination: String = "services/backend/.env",
     externalActionLedgerCommand: String = "make final-external-action-ledger",
     externalActionLedgerDetail: String = "Inspect external action blockers.",
@@ -10102,6 +10155,8 @@ private func finalDemoLaunchPayload(
                 }
               ]
             },
+            "first_blocker": \(resourceHandoffFirstBlockerJSON),
+            "next_action": \(resourceHandoffNextActionJSON),
             "operator_actions": ["\(resourceHandoffAction)"],
             "commands": ["make final-apply-resources"],
             "safety": {
@@ -13225,6 +13280,8 @@ private func finalDemoLaunchReport(
     resourceHandoffBackendStatus: String = "missing",
     resourceHandoffIOSStatus: String = "blocked",
     resourceHandoffAction: String = "provide MESHY_API_KEY",
+    resourceHandoffFirstBlockerJSON: String = "null",
+    resourceHandoffNextActionJSON: String = "null",
     resourceHandoffDestination: String = "services/backend/.env",
     externalActionLedgerCommand: String = "make final-external-action-ledger",
     externalActionLedgerDetail: String = "Inspect external action blockers.",
@@ -13318,6 +13375,8 @@ private func finalDemoLaunchReport(
             resourceHandoffBackendStatus: resourceHandoffBackendStatus,
             resourceHandoffIOSStatus: resourceHandoffIOSStatus,
             resourceHandoffAction: resourceHandoffAction,
+            resourceHandoffFirstBlockerJSON: resourceHandoffFirstBlockerJSON,
+            resourceHandoffNextActionJSON: resourceHandoffNextActionJSON,
             resourceHandoffDestination: resourceHandoffDestination,
             externalActionLedgerCommand: externalActionLedgerCommand,
             externalActionLedgerDetail: externalActionLedgerDetail,

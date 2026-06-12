@@ -239,6 +239,7 @@ Bridge deliverable:
 - P0.325 final configured evidence plan exposes next action
 - P0.326 final external action ledger exposes next action
 - P0.327 final handoff index exposes next action
+- P0.328 resource handoff exposes next action
 
 ## P1: Mobile Vertical Slice
 
