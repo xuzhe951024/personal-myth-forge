@@ -81,13 +81,16 @@ FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 FINAL_DEMO_OPERATOR_ACTION_LIMIT = 12
 FINAL_SHOWCASE_HANDOFF_ACTION_LIMIT = 4
-FINAL_SHOWCASE_HANDOFF_ACTION_MARKERS = (
+FINAL_SHOWCASE_LIVE_HANDOFF_ACTION_MARKERS = (
     "provider-handoff",
     "live-provider",
     "live_provider",
+)
+FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "treatstock",
-    "print-fulfillment",
-    "print_fulfillment",
+    "print-quote",
+    "print_quote",
+    "/v1/print-quotes",
 )
 
 
@@ -536,7 +539,16 @@ def _final_showcase_handoff_actions(report: dict[str, Any]) -> list[str]:
         if not isinstance(raw_action, str):
             continue
         lowered = raw_action.lower()
-        if any(marker in lowered for marker in FINAL_SHOWCASE_HANDOFF_ACTION_MARKERS):
+        if any(
+            marker in lowered
+            for marker in FINAL_SHOWCASE_LIVE_HANDOFF_ACTION_MARKERS
+        ):
+            selected.append(raw_action)
+            continue
+        if any(
+            marker in lowered
+            for marker in FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS
+        ):
             selected.append(raw_action)
     return selected[:FINAL_SHOWCASE_HANDOFF_ACTION_LIMIT]
 
