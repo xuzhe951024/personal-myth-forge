@@ -83,6 +83,8 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert "make final-resources-preflight" in operator_actions
     assert "make print-fulfillment-readiness" in operator_actions
     assert "make ios-device-launch-rehearsal" in operator_actions
+    assert "make final-resource-apply-preview" in operator_actions
+    assert "make final-apply-resources" not in operator_actions
     assert not any(action.startswith("run make ") for action in operator_actions)
     assert (
         "provide MESHY_API_KEY in final-resources.env; rerun "
