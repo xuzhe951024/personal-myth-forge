@@ -333,6 +333,20 @@ def test_normalizes_final_apply_actions_to_explicit_handoff() -> None:
     assert normalize_operator_action("run make final-apply-resources") == expected
 
 
+def test_normalizes_ios_device_launch_rehearsal_run_make_action_to_make_target() -> None:
+    action = (
+        "run make ios-device-launch-rehearsal | "
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
+        "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM"
+    )
+
+    assert normalize_operator_action(action) == (
+        "make ios-device-launch-rehearsal | "
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
+        "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM"
+    )
+
+
 def test_normalizes_configured_final_demo_launch_cli_action_to_make_target() -> None:
     action = (
         "final_handoff_index: run cd services/backend && uv run python -m "
