@@ -1301,6 +1301,69 @@ def test_ios_device_launch_rehearsal_full_actions_prioritize_provider_and_print_
     )
 
 
+def test_ios_device_launch_rehearsal_local_actions_include_partial_final_demo_handoff() -> None:
+    actions = ios_device_launch_rehearsal._local_rehearsal_operator_actions(
+        [
+            {
+                "id": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "detail": (
+                    "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be "
+                    "iPhone-reachable"
+                ),
+                "operator_actions": [
+                    (
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "make mobile-write-deploy-config-auto; "
+                        "rerun make mobile-deploy-preflight"
+                    )
+                ],
+            },
+            {
+                "id": "final_demo_launch_local",
+                "status": "partial",
+                "operator_actions": [
+                    (
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "make mobile-write-deploy-config-auto; "
+                        "rerun make mobile-deploy-preflight"
+                    ),
+                    "make provider-handoff; rerun make live-provider-evidence",
+                    (
+                        "after explicit Treatstock cost consent, save a sanitized "
+                        "services/backend/.local/print-quote-configured.json from "
+                        "POST /v1/print-quotes; rerun "
+                        "make print-fulfillment-readiness"
+                    ),
+                    (
+                        "provide MESHY_API_KEY in final-resources.env; "
+                        "rerun make final-resources-preflight"
+                    ),
+                ],
+            },
+        ],
+    )
+
+    assert actions == [
+        (
+            "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; rerun "
+            "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        ),
+        (
+            "final_demo_launch_local: make provider-handoff; "
+            "rerun make live-provider-evidence"
+        ),
+        (
+            "final_demo_launch_local: after explicit Treatstock cost consent, "
+            "save a sanitized "
+            "services/backend/.local/print-quote-configured.json from POST "
+            "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        ),
+    ]
+
+
 def test_ios_device_launch_rehearsal_dedupes_duplicate_deploy_writer_roots(
     tmp_path: Path,
 ) -> None:
