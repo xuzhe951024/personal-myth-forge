@@ -878,7 +878,8 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
         "run make live-provider-evidence after configured provider evidence files are refreshed"
         not in actions
     )
-    assert "make visual-regression-local; rerun make print-fulfillment-readiness" in actions
+    assert "make visual-regression-local; rerun make print-fulfillment-readiness" not in actions
+    assert any("Treatstock" in action for action in actions)
     assert "run make final-resource-init" in actions
     assert (
         "provide iOS deploy config in Deployment.local.xcconfig; "
@@ -895,7 +896,7 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert actions.count("make provider-handoff; rerun make live-provider-evidence") == 1
     assert (
         actions.count("make visual-regression-local; rerun make print-fulfillment-readiness")
-        == 1
+        == 0
     )
 
 

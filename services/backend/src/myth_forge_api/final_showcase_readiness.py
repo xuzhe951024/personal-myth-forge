@@ -81,6 +81,13 @@ FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_MAKE_TARGETS = (
 )
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
+FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
+    "treatstock",
+    "print-quote",
+    "print_quote",
+    "/v1/print-quotes",
+)
+FINAL_SHOWCASE_PRINT_READINESS_VALIDATION = "make print-fulfillment-readiness"
 FINAL_SHOWCASE_SOURCE_ACTION_PREFIXES = (
     "final_rehearsal_local:",
     "mobile_deploy_preflight_evidence:",
@@ -1603,11 +1610,12 @@ def _operator_actions(
         actions.append(
             "run make live-provider-evidence to refresh live provider evidence after cost consent"
         )
+    deduped_actions = _filter_showcase_operator_actions(
+        _dedupe_operator_actions(actions),
+    )
     return [
         add_final_resource_validation_command(action)
-        for action in _dedupe_operator_actions(actions)[
-            :FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT
-        ]
+        for action in deduped_actions[:FINAL_SHOWCASE_OPERATOR_ACTION_LIMIT]
     ]
 
 
@@ -1646,6 +1654,25 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
         for action in raw_actions
         if isinstance(action, str) and action
     ]
+
+
+def _filter_showcase_operator_actions(actions: list[str]) -> list[str]:
+    return [
+        action
+        for action in actions
+        if not _is_validation_only_print_action(action)
+    ]
+
+
+def _is_validation_only_print_action(action: str) -> bool:
+    lowered = action.lower()
+    if any(
+        marker in lowered
+        for marker in FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS
+    ):
+        return False
+    _command, separator, validation = action.partition("; rerun ")
+    return bool(separator) and validation.strip() == FINAL_SHOWCASE_PRINT_READINESS_VALIDATION
 
 
 def _validation_aware_operator_action(action: str) -> str:

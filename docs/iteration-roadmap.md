@@ -275,6 +275,7 @@ Bridge deliverable:
 - P0.361 iPhone Final Launch summary prioritizes final showcase print handoff action
 - P0.362 final demo launch top-level actions promote final showcase live provider and print handoff
 - P0.363 final demo launch print handoff filtering excludes validation-only print readiness actions
+- P0.364 final showcase readiness filters validation-only print readiness actions from top-level handoff
 
 ## P1: Mobile Vertical Slice
 
