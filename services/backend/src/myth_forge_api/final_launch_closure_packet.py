@@ -215,6 +215,7 @@ def _compact_ledger_action(action: dict[str, Any]) -> dict[str, Any]:
         safe_local_write=bool(action.get("safe_local_write")),
         writes_repo_local_files=bool(action.get("writes_repo_local_files")),
         classification=_optional_string(action.get("classification")),
+        destination=_optional_string(action.get("destination")),
     )
 
 
@@ -495,6 +496,7 @@ def _closure_action(
     safe_local_write: bool = False,
     writes_repo_local_files: bool = False,
     classification: str | None = None,
+    destination: str | None = None,
 ) -> dict[str, Any]:
     row = {
         "id": action_id,
@@ -515,6 +517,8 @@ def _closure_action(
     }
     if classification:
         row["classification"] = classification
+    if destination:
+        row["destination"] = destination
     return row
 
 
@@ -556,7 +560,7 @@ def _operator_actions(sections: list[dict[str, Any]]) -> list[str]:
             if action["status"] == "ready":
                 continue
             if action["requires_user_input"] and action["id"].startswith("provide_"):
-                actions.append(f"provide {action['id'].removeprefix('provide_')}")
+                actions.append(_provide_action_text(action))
             elif action["requires_cost_consent"]:
                 actions.append(f"approve live provider cost before {action['command']}")
             elif action["requires_user_confirmation"]:
@@ -566,6 +570,18 @@ def _operator_actions(sections: list[dict[str, Any]]) -> list[str]:
     if not actions:
         return ["Final launch closure packet is ready"]
     return _dedupe(actions)
+
+
+def _provide_action_text(action: dict[str, Any]) -> str:
+    slot = str(action["id"]).removeprefix("provide_")
+    destination = Path(str(action.get("destination", ""))).name
+    command = str(action.get("command", "")).strip()
+    parts = [f"provide {slot}"]
+    if destination:
+        parts[0] = f"{parts[0]} in {destination}"
+    if command:
+        parts.append(f"rerun {command}")
+    return "; ".join(parts)
 
 
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
