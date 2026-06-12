@@ -11,6 +11,7 @@ from myth_forge_api.final_handoff_commands import (
     FINAL_DEMO_LAUNCH_CONFIGURED_COMMAND,
     PROVIDER_HANDOFF_COMMAND,
 )
+from myth_forge_api.operator_actions import normalize_operator_action
 
 
 @dataclass(frozen=True)
@@ -277,7 +278,7 @@ def _operator_actions(
     if first_blocker is not None:
         slot = _slot_by_id(str(first_blocker["id"]))
         actions.append(f"{slot.rerun_action}: {slot.command}")
-    return _dedupe(actions)
+    return _dedupe([normalize_operator_action(action) for action in actions])
 
 
 def _slot_by_id(slot_id: str) -> EvidenceSlot:
