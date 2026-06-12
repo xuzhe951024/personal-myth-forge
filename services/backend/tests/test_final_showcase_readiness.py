@@ -1051,6 +1051,30 @@ def test_final_showcase_readiness_normalizes_prefixed_ios_config_action() -> Non
     ]
 
 
+def test_final_showcase_readiness_prefers_deploy_writer_over_old_team_action() -> None:
+    actions = final_showcase_readiness._dedupe_operator_actions(
+        [
+            (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+        ]
+    )
+
+    assert actions == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
 def test_final_showcase_readiness_normalizes_xcode_gate_actions() -> None:
     actions = final_showcase_readiness._report_operator_actions(
         {

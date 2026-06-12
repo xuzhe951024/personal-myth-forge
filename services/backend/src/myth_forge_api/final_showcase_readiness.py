@@ -27,8 +27,11 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
 from myth_forge_api.operator_actions import (
+    DEPLOYMENT_TEAM_ACTION,
     FINAL_RESOURCE_VALIDATION_ACTION_ROOTS,
     IOS_DEPLOY_CONFIG_ACTION,
+    MOBILE_DEPLOY_PREFLIGHT_COMMAND,
+    MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION,
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
@@ -101,6 +104,12 @@ FINAL_SHOWCASE_DUPLICATE_DEVICE_ROOTS = {
         "make mobile-xcode-build-evidence"
     ),
 }
+FINAL_SHOWCASE_DEPLOY_WRITER_ROOT = (
+    f"{MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+)
+FINAL_SHOWCASE_OLD_TEAM_ACTION_ROOT = (
+    f"{DEPLOYMENT_TEAM_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+)
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
 )
@@ -1606,11 +1615,17 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
         for item in normalized_items
         if not _is_source_prefixed_action(item)
     }
+    has_deploy_writer_root = FINAL_SHOWCASE_DEPLOY_WRITER_ROOT in bare_roots
     deduped: list[str] = []
     for normalized in normalized_items:
         if normalized in seen_exact:
             continue
         bare_root = _operator_action_bare_root(normalized)
+        if (
+            has_deploy_writer_root
+            and bare_root == FINAL_SHOWCASE_OLD_TEAM_ACTION_ROOT
+        ):
+            continue
         if (
             _is_drop_candidate_source_prefix(normalized, bare_root)
             and bare_root in bare_roots
