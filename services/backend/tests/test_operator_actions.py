@@ -110,6 +110,64 @@ def test_preserves_manual_team_action_without_deploy_writer() -> None:
     ]
 
 
+def test_prefers_writer_over_generic_ios_deploy_config_action() -> None:
+    actions = operator_actions.prefer_project_local_ios_deploy_handoff_actions(
+        [
+            (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "provide iOS deploy config in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+                "rerun make mobile-deploy-preflight"
+            ),
+        ]
+    )
+
+    assert actions == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        (
+            "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+            "rerun make mobile-deploy-preflight"
+        ),
+    ]
+
+
+def test_preserves_generic_ios_deploy_config_action_without_writer() -> None:
+    actions = operator_actions.prefer_project_local_ios_deploy_handoff_actions(
+        [
+            (
+                "provide iOS deploy config in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+                "rerun make mobile-deploy-preflight"
+            ),
+        ]
+    )
+
+    assert actions == [
+        (
+            "provide iOS deploy config in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        (
+            "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+            "rerun make mobile-deploy-preflight"
+        ),
+    ]
+
+
 def test_mobile_deploy_validation_preserves_existing_rerun_command() -> None:
     action = (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "

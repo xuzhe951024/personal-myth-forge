@@ -212,7 +212,8 @@ def prefer_project_local_ios_deploy_handoff_actions(actions: list[str]) -> list[
     return [
         action
         for action in actions
-        if _action_command_root(action) != DEPLOYMENT_TEAM_VALIDATED_ACTION
+        if _action_command_root(action)
+        not in {DEPLOYMENT_TEAM_VALIDATED_ACTION, IOS_DEPLOY_CONFIG_VALIDATED_ACTION}
     ]
 
 
