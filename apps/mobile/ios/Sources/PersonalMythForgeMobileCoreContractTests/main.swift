@@ -9749,7 +9749,7 @@ private func finalDemoLaunchPayload(
                   "label": "Apple Team ID",
                   "status": "blocked",
                   "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
-                  "detail": "Missing DEVELOPMENT_TEAM; rerun make mobile-deploy-preflight",
+                  "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
                   "source": "first_blocker",
                   "validation_command": "make mobile-deploy-preflight"
                 }

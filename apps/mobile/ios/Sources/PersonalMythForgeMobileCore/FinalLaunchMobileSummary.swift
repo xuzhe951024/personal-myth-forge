@@ -1116,6 +1116,14 @@ public enum FinalLaunchMobileSummaryBuilder {
             if !action.detail.isEmpty {
                 next += " | \(action.detail)"
             }
+            if let validationCommand = action.validationCommand,
+               !validationCommand.isEmpty {
+                if validationCommand.hasPrefix("rerun ") {
+                    next += " | \(validationCommand)"
+                } else {
+                    next += " | rerun \(validationCommand)"
+                }
+            }
             parts.append(next)
         }
         return sanitize(parts.joined(separator: " | "))
