@@ -324,16 +324,18 @@ def _operator_actions(
     ):
         actions.append(FINAL_RESOURCE_APPLY_PREVIEW_ACTION)
     actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
-    return _prefer_apply_preview_before_apply(
-        _dedupe(
-            [
-                add_final_resource_validation_command(
-                    add_mobile_deploy_validation_command(
-                        normalize_operator_action(action)
+    return _drop_unblock_fallback_actions(
+        _prefer_apply_preview_before_apply(
+            _dedupe(
+                [
+                    add_final_resource_validation_command(
+                        add_mobile_deploy_validation_command(
+                            normalize_operator_action(action)
+                        )
                     )
-                )
-                for action in actions
-            ]
+                    for action in actions
+                ]
+            )
         )
     )
 
@@ -408,6 +410,14 @@ def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
         action
         for action in actions
         if _operator_action_root(action) != FINAL_RESOURCE_APPLY_ACTION
+    ]
+
+
+def _drop_unblock_fallback_actions(actions: list[str]) -> list[str]:
+    return [
+        action
+        for action in actions
+        if not _operator_action_root(action).startswith("unblock ")
     ]
 
 

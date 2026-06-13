@@ -315,6 +315,7 @@ Bridge deliverable:
 - P0.401 final demo launch drops targeted unblock fallback actions
 - P0.402 final local refresh step apply preview action normalizes to make target
 - P0.403 iOS deploy runbook operator actions drop stale unblock fallbacks
+- P0.404 final configured preflight actions drop stale unblock fallbacks
 
 ## P1: Mobile Vertical Slice
 

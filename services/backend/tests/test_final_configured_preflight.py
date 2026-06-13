@@ -130,6 +130,29 @@ def test_configured_preflight_operator_actions_use_make_target_for_provider_hand
     assert not any("--output .local/provider-handoff.json" in action for action in actions)
 
 
+def test_configured_preflight_operator_actions_drop_stale_unblock_fallbacks(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_configured_preflight_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+    action_text = " ".join(actions)
+
+    assert not any(action.startswith("unblock ") for action in actions)
+    assert "unblock provider_readiness: make provider-handoff" not in actions
+    assert (
+        "unblock configured_final_acceptance: make final-acceptance-configured"
+        not in actions
+    )
+    assert "make provider-handoff" in actions
+    assert "make live-provider-evidence" in actions
+    assert "live provider cost review" in action_text
+
+
 def test_configured_preflight_operator_actions_gate_apply_behind_preview(
     tmp_path: Path,
 ) -> None:
