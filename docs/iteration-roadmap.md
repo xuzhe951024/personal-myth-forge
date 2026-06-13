@@ -301,6 +301,7 @@ Bridge deliverable:
 - P0.387 resource handoff exposes top-level status
 - P0.388 evaluation reports expose top-level status
 - P0.389 iOS rehearsal readiness writes a first-class local report
+- P0.390 provider handoff actions align with ignored final resources
 
 ## P1: Mobile Vertical Slice
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from myth_forge_api.config import Settings
+from myth_forge_api.operator_actions import add_final_resource_validation_command
 from myth_forge_api.providers.readiness import build_provider_readiness
 
 CORE_PROVIDER_KINDS = ["three_d", "npc", "capture_storage"]
@@ -12,8 +13,13 @@ BACKEND_ONLY_ENV = [
     "TREATSTOCK_API_KEY",
     "SCULPTEO_API_KEY",
 ]
+FINAL_RESOURCES_FILE = "services/backend/.local/final-resources.env"
+FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
+FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
+PROVIDER_HANDOFF_COMMAND = "make provider-handoff"
 NEXT_HANDOFF_COMMANDS = [
-    "make final-apply-resources",
+    FINAL_RESOURCE_APPLY_PREVIEW_COMMAND,
+    FINAL_RESOURCE_APPLY_COMMAND,
     "make backend-dev",
     "curl http://127.0.0.1:8080/v1/provider-readiness",
     (
@@ -77,7 +83,11 @@ def build_provider_handoff_report(settings: Settings) -> dict[str, Any]:
         "next_commands": NEXT_HANDOFF_COMMANDS,
         "first_blocker": first_blocker,
         "next_action": _next_action(first_blocker),
-        "operator_actions": _operator_actions(first_blocker),
+        "operator_actions": _operator_actions(
+            core_items=core_items,
+            missing_env=missing_env,
+            first_blocker=first_blocker,
+        ),
         "safety": _safety(),
     }
 
@@ -97,8 +107,15 @@ def _first_blocker(
             "label": env_name,
             "status": "blocked",
             "classification": "missing_required_env",
-            "command": f"provide {env_name} in final-resources.env",
-            "detail": "Backend-only provider value is missing from ignored final resources.",
+            "command": _resource_env_command(env_name),
+            "detail": (
+                "Backend-only provider value is missing from ignored final resources."
+            ),
+            "resources_file": FINAL_RESOURCES_FILE,
+            "apply_preview_command": FINAL_RESOURCE_APPLY_PREVIEW_COMMAND,
+            "apply_command": FINAL_RESOURCE_APPLY_COMMAND,
+            "handoff_command": PROVIDER_HANDOFF_COMMAND,
+            "blocked_by": [env_name],
             "validation_command": "make final-resources-preflight",
         }
     for provider in core_items:
@@ -116,21 +133,32 @@ def _provider_blocker(provider: dict[str, Any]) -> dict[str, Any]:
         "status": "blocked",
         "classification": status,
         "command": _provider_command(kind),
-        "detail": "Core provider is demo-ready but not configured as a real provider.",
-        "validation_command": "make provider-handoff",
+        "detail": (
+            "Core provider is demo-ready but not configured as a real provider. "
+            "Fill ignored final resources, preview the apply step, then apply "
+            "resources to write backend-only provider settings."
+        ),
+        "resources_file": FINAL_RESOURCES_FILE,
+        "apply_preview_command": FINAL_RESOURCE_APPLY_PREVIEW_COMMAND,
+        "apply_command": FINAL_RESOURCE_APPLY_COMMAND,
+        "handoff_command": PROVIDER_HANDOFF_COMMAND,
+        "blocked_by": _provider_required_env(kind),
+        "validation_command": PROVIDER_HANDOFF_COMMAND,
     }
 
 
 def _provider_command(kind: str) -> str:
+    if kind in {"three_d", "npc"}:
+        return FINAL_RESOURCE_APPLY_PREVIEW_COMMAND
+    return PROVIDER_HANDOFF_COMMAND
+
+
+def _provider_required_env(kind: str) -> list[str]:
     if kind == "three_d":
-        return (
-            "set THREE_D_PROVIDER=meshy and provide MESHY_API_KEY in final-resources.env"
-        )
+        return ["MESHY_API_KEY"]
     if kind == "npc":
-        return (
-            "set NPC_PROVIDER=openai and provide OPENAI_API_KEY in final-resources.env"
-        )
-    return f"configure real provider for {kind} in final-resources.env"
+        return ["OPENAI_API_KEY"]
+    return []
 
 
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -139,10 +167,55 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     return {**first_blocker, "source": "first_blocker"}
 
 
-def _operator_actions(first_blocker: dict[str, Any] | None) -> list[str]:
+def _operator_actions(
+    *,
+    core_items: list[dict[str, Any]],
+    missing_env: list[str],
+    first_blocker: dict[str, Any] | None,
+) -> list[str]:
     if first_blocker is None:
         return []
-    return [str(first_blocker["command"]), "make provider-handoff"]
+    actions = [FINAL_RESOURCE_APPLY_PREVIEW_COMMAND]
+    resource_env = _resource_env_actions(
+        core_items=core_items,
+        missing_env=missing_env,
+    )
+    actions.extend(
+        add_final_resource_validation_command(_resource_env_command(env_name))
+        for env_name in resource_env
+    )
+    actions.append(PROVIDER_HANDOFF_COMMAND)
+    return _dedupe(actions)
+
+
+def _resource_env_actions(
+    *,
+    core_items: list[dict[str, Any]],
+    missing_env: list[str],
+) -> list[str]:
+    env_names: list[str] = list(missing_env)
+    for provider in core_items:
+        if provider.get("is_real_provider_ready") is not False:
+            continue
+        for env_name in _provider_required_env(str(provider.get("kind", ""))):
+            env_names.append(env_name)
+    order = {name: index for index, name in enumerate(BACKEND_ONLY_ENV)}
+    return sorted(set(env_names), key=lambda name: order.get(name, len(order)))
+
+
+def _resource_env_command(env_name: str) -> str:
+    return f"provide {env_name} in final-resources.env"
+
+
+def _dedupe(actions: list[str]) -> list[str]:
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for action in actions:
+        if action in seen:
+            continue
+        deduped.append(action)
+        seen.add(action)
+    return deduped
 
 
 def _safety() -> dict[str, bool]:

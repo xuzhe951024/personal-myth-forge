@@ -391,11 +391,33 @@ def test_cli_provider_handoff_writes_local_report(tmp_path, monkeypatch) -> None
     assert "MESHY_API_KEY" in report["backend_only_env"]
     assert "OPENAI_API_KEY" in report["backend_only_env"]
     assert "Provider secrets stay on the backend" in report["mobile_secret_policy"]
+    assert report["next_commands"][0] == "make final-resource-apply-preview"
+    assert report["next_commands"].index("make final-resource-apply-preview") < (
+        report["next_commands"].index("make final-apply-resources")
+    )
     assert "make final-apply-resources" in report["next_commands"]
     assert any("provider-readiness" in command for command in report["next_commands"])
     assert all("/tmp/" not in command for command in report["next_commands"])
     assert report["first_blocker"]["id"] == "three_d_provider"
+    assert report["first_blocker"]["command"] == "make final-resource-apply-preview"
+    assert report["first_blocker"]["resources_file"] == (
+        "services/backend/.local/final-resources.env"
+    )
+    assert report["first_blocker"]["apply_command"] == "make final-apply-resources"
+    assert report["first_blocker"]["handoff_command"] == "make provider-handoff"
     assert report["next_action"]["source"] == "first_blocker"
+    assert report["operator_actions"] == [
+        "make final-resource-apply-preview",
+        (
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        (
+            "provide OPENAI_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        "make provider-handoff",
+    ]
     assert report["safety"]["provider_calls"] is False
 
 
@@ -416,6 +438,27 @@ def test_cli_provider_handoff_require_core_real_returns_two_when_keys_missing(
     assert exit_code == 2
     assert report["core_real_ready"] is False
     assert report["missing_env"] == ["MESHY_API_KEY", "OPENAI_API_KEY"]
+    assert report["first_blocker"]["resources_file"] == (
+        "services/backend/.local/final-resources.env"
+    )
+    assert report["operator_actions"] == [
+        "make final-resource-apply-preview",
+        (
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        (
+            "provide OPENAI_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        "make provider-handoff",
+    ]
+    assert "provide MESHY_API_KEY in final-resources.env" not in report[
+        "operator_actions"
+    ]
+    assert "provide OPENAI_API_KEY in final-resources.env" not in report[
+        "operator_actions"
+    ]
     assert "sk-" not in report_text
 
 
