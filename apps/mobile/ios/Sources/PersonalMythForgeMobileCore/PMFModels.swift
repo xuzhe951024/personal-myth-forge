@@ -1918,6 +1918,281 @@ public struct FinalLaunchClosurePacketBlocker: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalLaunchClosurePacketSourceSummary: Codable, Equatable, Sendable {
+    public var required: Int?
+    public var missing: Int?
+    public var blocked: Int?
+    public var secret: Int?
+
+    public init(
+        required: Int? = nil,
+        missing: Int? = nil,
+        blocked: Int? = nil,
+        secret: Int? = nil
+    ) {
+        self.required = required
+        self.missing = missing
+        self.blocked = blocked
+        self.secret = secret
+    }
+}
+
+public struct FinalLaunchClosurePacketSourceActionBundleSummary: Codable, Equatable, Sendable {
+    public var actions: Int
+    public var ready: Int
+    public var missing: Int
+    public var blocked: Int
+    public var manual: Int
+    public var secret: Int?
+    public var providerCalls: Int
+    public var globalActions: Int
+    public var xcodeOrSigning: Int
+
+    public init(
+        actions: Int = 0,
+        ready: Int = 0,
+        missing: Int = 0,
+        blocked: Int = 0,
+        manual: Int = 0,
+        secret: Int? = nil,
+        providerCalls: Int = 0,
+        globalActions: Int = 0,
+        xcodeOrSigning: Int = 0
+    ) {
+        self.actions = actions
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.manual = manual
+        self.secret = secret
+        self.providerCalls = providerCalls
+        self.globalActions = globalActions
+        self.xcodeOrSigning = xcodeOrSigning
+    }
+
+    private enum CodingKeys: CodingKey {
+        case actions
+        case ready
+        case missing
+        case blocked
+        case manual
+        case secret
+        case providerCalls
+        case globalActions
+        case xcodeOrSigning
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            actions: try container.decodeIfPresent(Int.self, forKey: .actions) ?? 0,
+            ready: try container.decodeIfPresent(Int.self, forKey: .ready) ?? 0,
+            missing: try container.decodeIfPresent(Int.self, forKey: .missing) ?? 0,
+            blocked: try container.decodeIfPresent(Int.self, forKey: .blocked) ?? 0,
+            manual: try container.decodeIfPresent(Int.self, forKey: .manual) ?? 0,
+            secret: try container.decodeIfPresent(Int.self, forKey: .secret),
+            providerCalls: try container.decodeIfPresent(Int.self, forKey: .providerCalls) ?? 0,
+            globalActions: try container.decodeIfPresent(Int.self, forKey: .globalActions) ?? 0,
+            xcodeOrSigning: try container.decodeIfPresent(Int.self, forKey: .xcodeOrSigning) ?? 0
+        )
+    }
+}
+
+public struct FinalLaunchClosurePacketSourceAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var source: String?
+    public var validationCommand: String?
+    public var blocks: [String]
+    public var manual: Bool
+    public var providerCalls: Bool
+    public var globalAction: Bool
+    public var xcodeOrSigning: Bool
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        source: String? = nil,
+        validationCommand: String? = nil,
+        blocks: [String] = [],
+        manual: Bool = false,
+        providerCalls: Bool = false,
+        globalAction: Bool = false,
+        xcodeOrSigning: Bool = false
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.source = source
+        self.validationCommand = validationCommand
+        self.blocks = blocks
+        self.manual = manual
+        self.providerCalls = providerCalls
+        self.globalAction = globalAction
+        self.xcodeOrSigning = xcodeOrSigning
+    }
+
+    private enum CodingKeys: CodingKey {
+        case id
+        case label
+        case status
+        case classification
+        case command
+        case detail
+        case source
+        case validationCommand
+        case blocks
+        case manual
+        case providerCalls
+        case globalAction
+        case xcodeOrSigning
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decode(String.self, forKey: .id),
+            label: try container.decode(String.self, forKey: .label),
+            status: try container.decode(String.self, forKey: .status),
+            classification: try container.decodeIfPresent(String.self, forKey: .classification),
+            command: try container.decodeIfPresent(String.self, forKey: .command) ?? "",
+            detail: try container.decodeIfPresent(String.self, forKey: .detail) ?? "",
+            source: try container.decodeIfPresent(String.self, forKey: .source),
+            validationCommand: try container.decodeIfPresent(String.self, forKey: .validationCommand),
+            blocks: try container.decodeIfPresent([String].self, forKey: .blocks) ?? [],
+            manual: try container.decodeIfPresent(Bool.self, forKey: .manual) ?? false,
+            providerCalls: try container.decodeIfPresent(Bool.self, forKey: .providerCalls) ?? false,
+            globalAction: try container.decodeIfPresent(Bool.self, forKey: .globalAction) ?? false,
+            xcodeOrSigning: try container.decodeIfPresent(Bool.self, forKey: .xcodeOrSigning) ?? false
+        )
+    }
+}
+
+public struct FinalLaunchClosurePacketSourceActionBundleSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var globalMutation: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+
+    public init(
+        commandsRun: Bool = false,
+        globalMutation: Bool = false,
+        providerCalls: Bool = false,
+        liveProviderCalls: Bool = false,
+        writesBackendEnv: Bool = false,
+        writesIosDeployConfig: Bool = false,
+        xcodeOrSigning: Bool = false,
+        keychainWrites: Bool = false
+    ) {
+        self.commandsRun = commandsRun
+        self.globalMutation = globalMutation
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+    }
+
+    private enum CodingKeys: CodingKey {
+        case commandsRun
+        case globalMutation
+        case providerCalls
+        case liveProviderCalls
+        case writesBackendEnv
+        case writesIosDeployConfig
+        case xcodeOrSigning
+        case keychainWrites
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            commandsRun: try container.decodeIfPresent(Bool.self, forKey: .commandsRun) ?? false,
+            globalMutation: try container.decodeIfPresent(Bool.self, forKey: .globalMutation) ?? false,
+            providerCalls: try container.decodeIfPresent(Bool.self, forKey: .providerCalls) ?? false,
+            liveProviderCalls: try container.decodeIfPresent(Bool.self, forKey: .liveProviderCalls) ?? false,
+            writesBackendEnv: try container.decodeIfPresent(Bool.self, forKey: .writesBackendEnv) ?? false,
+            writesIosDeployConfig: try container.decodeIfPresent(Bool.self, forKey: .writesIosDeployConfig) ?? false,
+            xcodeOrSigning: try container.decodeIfPresent(Bool.self, forKey: .xcodeOrSigning) ?? false,
+            keychainWrites: try container.decodeIfPresent(Bool.self, forKey: .keychainWrites) ?? false
+        )
+    }
+}
+
+public struct FinalLaunchClosurePacketSourceActionBundle: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var sourceReport: String?
+    public var status: String
+    public var summary: FinalLaunchClosurePacketSourceActionBundleSummary
+    public var firstAction: FinalLaunchClosurePacketSourceAction
+    public var actions: [FinalLaunchClosurePacketSourceAction]
+    public var safety: FinalLaunchClosurePacketSourceActionBundleSafety
+
+    public init(
+        id: String,
+        label: String,
+        sourceReport: String? = nil,
+        status: String,
+        summary: FinalLaunchClosurePacketSourceActionBundleSummary,
+        firstAction: FinalLaunchClosurePacketSourceAction,
+        actions: [FinalLaunchClosurePacketSourceAction] = [],
+        safety: FinalLaunchClosurePacketSourceActionBundleSafety = FinalLaunchClosurePacketSourceActionBundleSafety()
+    ) {
+        self.id = id
+        self.label = label
+        self.sourceReport = sourceReport
+        self.status = status
+        self.summary = summary
+        self.firstAction = firstAction
+        self.actions = actions
+        self.safety = safety
+    }
+}
+
+public struct FinalLaunchClosurePacketSourceReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var summary: FinalLaunchClosurePacketSourceSummary?
+    public var deviceActionBundle: FinalLaunchClosurePacketSourceActionBundle?
+
+    public init(
+        kind: String,
+        status: String,
+        summary: FinalLaunchClosurePacketSourceSummary? = nil,
+        deviceActionBundle: FinalLaunchClosurePacketSourceActionBundle? = nil
+    ) {
+        self.kind = kind
+        self.status = status
+        self.summary = summary
+        self.deviceActionBundle = deviceActionBundle
+    }
+}
+
+public struct FinalLaunchClosurePacketSourceReports: Codable, Equatable, Sendable {
+    public var finalResourceRequirements: FinalLaunchClosurePacketSourceReport?
+
+    public init(finalResourceRequirements: FinalLaunchClosurePacketSourceReport? = nil) {
+        self.finalResourceRequirements = finalResourceRequirements
+    }
+}
+
 public struct FinalLaunchClosurePacketReport: Codable, Equatable, Sendable {
     public var kind: String
     public var status: String
@@ -1928,6 +2203,7 @@ public struct FinalLaunchClosurePacketReport: Codable, Equatable, Sendable {
     public var operatorActions: [String]
     public var commands: [String]
     public var safety: FinalLaunchClosurePacketSafety
+    public var sourceReports: FinalLaunchClosurePacketSourceReports
 
     public init(
         kind: String,
@@ -1938,7 +2214,8 @@ public struct FinalLaunchClosurePacketReport: Codable, Equatable, Sendable {
         sectionsById: [String: FinalLaunchClosurePacketSection],
         operatorActions: [String],
         commands: [String],
-        safety: FinalLaunchClosurePacketSafety
+        safety: FinalLaunchClosurePacketSafety,
+        sourceReports: FinalLaunchClosurePacketSourceReports = FinalLaunchClosurePacketSourceReports()
     ) {
         self.kind = kind
         self.status = status
@@ -1949,6 +2226,45 @@ public struct FinalLaunchClosurePacketReport: Codable, Equatable, Sendable {
         self.operatorActions = operatorActions
         self.commands = commands
         self.safety = safety
+        self.sourceReports = sourceReports
+    }
+
+    private enum CodingKeys: CodingKey {
+        case kind
+        case status
+        case firstBlocker
+        case summary
+        case sections
+        case sectionsById
+        case operatorActions
+        case commands
+        case safety
+        case sourceReports
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            kind: try container.decode(String.self, forKey: .kind),
+            status: try container.decode(String.self, forKey: .status),
+            firstBlocker: try container.decodeIfPresent(
+                FinalLaunchClosurePacketBlocker.self,
+                forKey: .firstBlocker
+            ),
+            summary: try container.decode(FinalLaunchClosurePacketSummary.self, forKey: .summary),
+            sections: try container.decode([FinalLaunchClosurePacketSection].self, forKey: .sections),
+            sectionsById: try container.decode(
+                [String: FinalLaunchClosurePacketSection].self,
+                forKey: .sectionsById
+            ),
+            operatorActions: try container.decode([String].self, forKey: .operatorActions),
+            commands: try container.decode([String].self, forKey: .commands),
+            safety: try container.decode(FinalLaunchClosurePacketSafety.self, forKey: .safety),
+            sourceReports: try container.decodeIfPresent(
+                FinalLaunchClosurePacketSourceReports.self,
+                forKey: .sourceReports
+            ) ?? FinalLaunchClosurePacketSourceReports()
+        )
     }
 }
 

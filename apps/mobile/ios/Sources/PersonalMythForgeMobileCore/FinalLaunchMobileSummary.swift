@@ -841,6 +841,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         if let firstBlocker = packet.firstBlocker {
             rows.append(closurePacketFirstBlockerRow(firstBlocker))
         }
+        if let source = packet.sourceReports.finalResourceRequirements {
+            rows.append(closureResourceRequirementsSourceRow(source))
+        }
         let attention = packet.sections.filter { section in
             status(from: section.status) != .ready
         }
@@ -862,6 +865,26 @@ public enum FinalLaunchMobileSummaryBuilder {
             "Safety: commands_run=\(flag(packet.safety.commandsRun)) global=\(flag(packet.safety.globalMutation)) live_calls=\(flag(packet.safety.liveProviderCalls))"
         )
         return rows.map(sanitize)
+    }
+
+    private static func closureResourceRequirementsSourceRow(
+        _ source: FinalLaunchClosurePacketSourceReport
+    ) -> String {
+        guard let bundle = source.deviceActionBundle else {
+            return "Closure resource requirements: \(sanitize(source.status))"
+        }
+        let action = bundle.firstAction
+        var parts = [
+            "Closure resource requirements: \(source.status)",
+            "\(action.id): \(action.status)",
+        ]
+        if !action.command.isEmpty {
+            parts.append(action.command)
+        }
+        if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
+            parts.append(validationCommand)
+        }
+        return sanitize(parts.joined(separator: " | "))
     }
 
     private static func closurePacketFirstBlockerRow(

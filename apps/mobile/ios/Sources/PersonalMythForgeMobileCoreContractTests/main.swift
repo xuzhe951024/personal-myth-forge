@@ -177,7 +177,9 @@ do {
     try testFinalLaunchMobileSummaryShowsExternalActionLedger()
     try testFinalLaunchMobileSummaryRedactsUnsafeExternalActionLedger()
     try testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload()
+    try testDecodesFinalLaunchClosurePacketResourceRequirementsSource()
     try testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket()
+    try testFinalLaunchMobileSummaryShowsClosureResourceRequirementsSource()
     try testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket()
     try testDecodesResourceHandoffFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsMissingResourceHandoff()
@@ -4836,6 +4838,33 @@ private func testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload() throws 
     try expectTrue(packet.safety.describesGlobalActions)
 }
 
+private func testDecodesFinalLaunchClosurePacketResourceRequirementsSource() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload()
+    )
+    let packet = try require(
+        report.finalLaunchClosurePacket,
+        "missing final launch closure packet"
+    )
+    let source = try require(
+        packet.sourceReports.finalResourceRequirements,
+        "missing closure resource requirements source"
+    )
+    let bundle = try require(
+        source.deviceActionBundle,
+        "missing closure resource requirements action bundle"
+    )
+
+    try expectEqual(source.kind, "final_resource_requirements_report")
+    try expectEqual(source.status, "blocked")
+    try expectEqual(bundle.id, "final_resource_requirements_actions")
+    try expectEqual(bundle.firstAction.id, "MESHY_API_KEY")
+    try expectEqual(bundle.firstAction.command, "provide MESHY_API_KEY in final-resources.env")
+    try expectEqual(bundle.firstAction.validationCommand, "make final-resources-preflight")
+    try expectFalse(bundle.safety.liveProviderCalls)
+}
+
 private func testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(),
@@ -4854,6 +4883,27 @@ private func testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket() throws 
     try expectContains(text, "make configured-live-evidence-bundle")
     try expectContains(text, "cost consent")
     try expectContains(text, "commands_run=false global=false live_calls=false")
+}
+
+private func testFinalLaunchMobileSummaryShowsClosureResourceRequirementsSource() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            closurePacketSourceActionCommand: (
+                "provide MESHY_API_KEY in final-resources.env sk-openai-test "
+                    + "/Users/zhexu/private file:///tmp/private local-capture://cap"
+            )
+        ),
+        error: nil
+    )
+    let text = summary.closurePacketRows.joined(separator: " ")
+
+    try expectContains(text, "Closure resource requirements: blocked")
+    try expectContains(text, "MESHY_API_KEY")
+    try expectContains(text, "make final-resources-preflight")
+    try expectFalse(text.contains("sk-openai-test"))
+    try expectFalse(text.contains("/Users/"))
+    try expectFalse(text.contains("file:///"))
+    try expectFalse(text.contains("local-capture://"))
 }
 
 private func testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket() throws {
@@ -7727,7 +7777,8 @@ private func finalDemoLaunchPayload(
     closurePacketFirstBlockerDetail: String = "Backend-only secret for live Meshy 3D generation.",
     closurePacketConfiguredBundleStatus: String = "blocked",
     closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
-    closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready."
+    closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready.",
+    closurePacketSourceActionCommand: String = "provide MESHY_API_KEY in final-resources.env"
 ) -> Data {
     let liveEvidenceReady = liveProviderEvidenceStatus == "ready"
     let liveEvidenceBlocked = liveProviderEvidenceStatus == "blocked"
@@ -9195,6 +9246,59 @@ private func finalDemoLaunchPayload(
               "local_paths_in_report": false,
               "describes_global_actions": true,
               "requires_cost_consent_for_live_actions": true
+            },
+            "source_reports": {
+              "final_resource_requirements": {
+                "kind": "final_resource_requirements_report",
+                "status": "blocked",
+                "summary": {
+                  "required": 5,
+                  "missing": 5,
+                  "blocked": 0,
+                  "secret": 4
+                },
+                "device_action_bundle": {
+                  "id": "final_resource_requirements_actions",
+                  "label": "Final Resource Requirements Actions",
+                  "source_report": "final_resource_requirements",
+                  "status": "blocked",
+                  "summary": {
+                    "actions": 5,
+                    "ready": 0,
+                    "missing": 5,
+                    "blocked": 0,
+                    "manual": 5,
+                    "secret": 2,
+                    "provider_calls": 0,
+                    "global_actions": 0,
+                    "xcode_or_signing": 0
+                  },
+                  "first_action": {
+                    "id": "MESHY_API_KEY",
+                    "label": "Meshy API key",
+                    "status": "missing",
+                    "classification": "missing_required_value",
+                    "command": "\(closurePacketSourceActionCommand)",
+                    "detail": "Backend-only secret for live Meshy 3D generation.",
+                    "source": "final_resource_requirements",
+                    "validation_command": "make final-resources-preflight",
+                    "blocks": ["game_asset_3d_generation", "provider_key_handoff"],
+                    "manual": true,
+                    "provider_calls": false,
+                    "global_action": false,
+                    "xcode_or_signing": false
+                  },
+                  "actions": [],
+                  "safety": {
+                    "global_mutation": false,
+                    "provider_calls": false,
+                    "live_provider_calls": false,
+                    "writes_backend_env": false,
+                    "writes_ios_deploy_config": false,
+                    "xcode_or_signing": false
+                  }
+                }
+              }
             }
           },
           "final_acceptance_readiness": {
@@ -13490,7 +13594,8 @@ private func finalDemoLaunchReport(
     closurePacketFirstBlockerDetail: String = "Backend-only secret for live Meshy 3D generation.",
     closurePacketConfiguredBundleStatus: String = "blocked",
     closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
-    closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready."
+    closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready.",
+    closurePacketSourceActionCommand: String = "provide MESHY_API_KEY in final-resources.env"
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -13586,7 +13691,8 @@ private func finalDemoLaunchReport(
             closurePacketFirstBlockerDetail: closurePacketFirstBlockerDetail,
             closurePacketConfiguredBundleStatus: closurePacketConfiguredBundleStatus,
             closurePacketConfiguredBundleCommand: closurePacketConfiguredBundleCommand,
-            closurePacketConfiguredBundleDetail: closurePacketConfiguredBundleDetail
+            closurePacketConfiguredBundleDetail: closurePacketConfiguredBundleDetail,
+            closurePacketSourceActionCommand: closurePacketSourceActionCommand
         )
     )
 }
