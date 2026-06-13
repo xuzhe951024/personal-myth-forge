@@ -5922,6 +5922,7 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction() throws {
 
     try expectContains(text, "Next action: ios_deployable blocked")
     try expectContains(text, "make ios-device-launch-rehearsal")
+    try expectContains(text, "rerun make mobile-deploy-preflight")
     try expectContains(
         text,
         "iOS deploy runbook and device launch rehearsal must both be ready."
@@ -10191,7 +10192,8 @@ private func finalDemoLaunchPayload(
               "classification": "\(finalShowcaseCapabilityClassification)",
               "command": "\(finalShowcaseReadinessAction)",
               "detail": "\(finalShowcaseReadinessFirstBlockerDetail)",
-              "source": "first_blocker"
+              "source": "first_blocker",
+              "validation_command": "\(finalShowcaseCapabilityValidationCommand)"
             }
             """),
             "device_action_bundle": {

@@ -351,6 +351,7 @@ Bridge deliverable:
 - P0.437 iPhone Final Launch displays final acceptance blocker next action
 - P0.438 iPhone Final Launch shows final acceptance next validation command
 - P0.439 iPhone Final Launch shows print quote cost consent handoff
+- P0.440 iPhone Final Launch shows final showcase next validation command
 
 ## P1: Mobile Vertical Slice
 
