@@ -91,8 +91,11 @@ def build_final_external_action_ledger_report(
     actions = [action for group in action_groups for action in group["actions"]]
     summary = _summary(action_groups=action_groups, actions=actions)
     status = _overall_status(action_groups)
-    first_blocker = _first_blocker(action_groups)
     device_action_bundle = _device_action_bundle(ios_deploy_runbook)
+    first_blocker = _first_blocker(
+        action_groups,
+        device_action_bundle=device_action_bundle,
+    )
     report = {
         "kind": "final_external_action_ledger_report",
         "status": status,
@@ -111,7 +114,10 @@ def build_final_external_action_ledger_report(
             "print_fulfillment_readiness": _source_summary(print_fulfillment),
             "ios_deploy_runbook": _source_summary(ios_deploy_runbook),
         },
-        "operator_actions": _operator_actions(action_groups),
+        "operator_actions": _operator_actions(
+            action_groups,
+            first_blocker=first_blocker,
+        ),
         "safety": _safety(),
     }
     sanitized = _sanitize_report(report, selected_repo_root)
@@ -781,7 +787,14 @@ def _overall_status(action_groups: list[dict[str, Any]]) -> str:
     return "ready"
 
 
-def _first_blocker(action_groups: list[dict[str, Any]]) -> dict[str, Any] | None:
+def _first_blocker(
+    action_groups: list[dict[str, Any]],
+    *,
+    device_action_bundle: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    promoted = _promoted_device_blocker(device_action_bundle)
+    if promoted is not None:
+        return promoted
     actions = [action for group in action_groups for action in group["actions"]]
     for predicate in (
         lambda action: action["status"] in {"missing", "blocked"}
@@ -797,6 +810,37 @@ def _first_blocker(action_groups: list[dict[str, Any]]) -> dict[str, Any] | None
         if match:
             return _blocker_from_action(match, action_groups)
     return None
+
+
+def _promoted_device_blocker(
+    device_action_bundle: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if not isinstance(device_action_bundle, dict):
+        return None
+    first_action = device_action_bundle.get("first_action")
+    if not isinstance(first_action, dict):
+        return None
+    if str(first_action.get("status", "ready")) == "ready":
+        return None
+    command = str(first_action.get("command", "")).strip()
+    if not _is_device_handoff_command(command):
+        return None
+    blocker = {
+        "id": str(first_action.get("id", "device_action")),
+        "label": str(first_action.get("label", "Device action")),
+        "status": str(first_action.get("status", "blocked")),
+        "classification": str(
+            first_action.get("classification") or "device_runtime_blocked"
+        ),
+        "command": command,
+        "detail": str(first_action.get("detail", "")),
+        "group_id": "device_runtime_actions",
+        "group_label": "Device runtime actions",
+    }
+    validation_command = str(first_action.get("validation_command", "")).strip()
+    if validation_command:
+        blocker["validation_command"] = validation_command
+    return blocker
 
 
 def _blocker_from_action(
@@ -857,7 +901,11 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     return {**first_blocker, "source": "first_blocker"}
 
 
-def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
+def _operator_actions(
+    action_groups: list[dict[str, Any]],
+    *,
+    first_blocker: dict[str, Any] | None = None,
+) -> list[str]:
     actions: list[str] = []
     for group in action_groups:
         for action in group["actions"]:
@@ -883,7 +931,32 @@ def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
                     actions.append(
                         f"approve live provider cost before {action['command']}"
                     )
-    return _prefer_apply_preview_before_apply(_dedupe(actions))
+    normalized_actions = _prefer_apply_preview_before_apply(_dedupe(actions))
+    return _promote_first_blocker_device_action(
+        normalized_actions,
+        first_blocker=first_blocker,
+    )
+
+
+def _promote_first_blocker_device_action(
+    actions: list[str],
+    *,
+    first_blocker: dict[str, Any] | None,
+) -> list[str]:
+    command = str((first_blocker or {}).get("command", "")).strip()
+    if not _is_device_handoff_command(command):
+        return actions
+    return _dedupe([normalize_operator_action(command), *actions])
+
+
+def _is_device_handoff_command(command: str) -> bool:
+    return (
+        "mobile-write-deploy-config-auto" in command
+        or "mobile-deploy-preflight" in command
+        or "ios-device-launch-rehearsal" in command
+        or "backend-device-demo" in command
+        or "mobile-xcode-build" in command
+    )
 
 
 def _is_blocked_apply_preview_action(action: dict[str, Any]) -> bool:

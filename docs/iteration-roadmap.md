@@ -377,6 +377,7 @@ Bridge deliverable:
 - P0.463 Final launch closure packet prioritizes iPhone device blocker before provider keys
 - P0.464 iOS deploy runbook operator actions prioritize device blockers before provider keys
 - P0.465 Final launch closure packet operator actions prioritize device blockers before provider keys
+- P0.466 Final external action ledger prioritizes device blockers before provider keys
 
 ## P1: Mobile Vertical Slice
 
