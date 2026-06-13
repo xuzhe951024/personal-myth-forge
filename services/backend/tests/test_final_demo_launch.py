@@ -526,6 +526,67 @@ def test_final_demo_launch_device_bundle_first_action_uses_showcase_child_action
     assert result.report["next_action"]["command"] == child_action["command"]
 
 
+def test_final_demo_launch_device_bundle_preserves_showcase_saved_next_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    child_action = {
+        "id": "development_team",
+        "label": "Apple Team ID",
+        "status": "blocked",
+        "classification": "ios_deploy_config",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "detail": "Missing DEVELOPMENT_TEAM",
+        "source": "first_blocker",
+        "validation_command": "make mobile-deploy-preflight",
+    }
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action=child_action,
+    )
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    showcase_first_action = result.report["final_showcase_readiness"][
+        "device_action_bundle"
+    ]["first_action"]
+    assert showcase_first_action["saved_next_action"]["command"] == expected_command
+
+    bundle = result.report["device_action_bundle"]
+    first_action = bundle["first_action"]
+    actions = {action["id"]: action for action in bundle["actions"]}
+    preflight_row = actions["run_mobile_deploy_preflight"]
+    saved_next_action = first_action["saved_next_action"]
+
+    assert bundle["source_report"] == "final_showcase_readiness"
+    assert first_action["id"] == "run_mobile_deploy_preflight"
+    assert saved_next_action["command"] == expected_command
+    assert saved_next_action["validation_command"] == "make mobile-deploy-preflight"
+    assert preflight_row["saved_next_action"] == saved_next_action
+
+
 def test_local_final_demo_launch_prefers_writer_over_old_team_action(
     tmp_path: Path,
 ) -> None:

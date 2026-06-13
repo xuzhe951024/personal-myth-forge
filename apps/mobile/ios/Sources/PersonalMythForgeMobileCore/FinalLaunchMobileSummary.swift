@@ -332,6 +332,9 @@ public enum FinalLaunchMobileSummaryBuilder {
         }
         rows.append(firstBlockerReceiptRow(report))
         rows.append(liveProviderReceiptRow(report))
+        if let action = report.deviceActionBundle?.firstAction {
+            rows.append(finalDemoDeviceActionReceiptRow(action))
+        }
         return rows.map(sanitize)
     }
 
@@ -414,6 +417,12 @@ public enum FinalLaunchMobileSummaryBuilder {
             parts.append(validationCommand)
         }
         return parts.joined(separator: " | ")
+    }
+
+    private static func finalDemoDeviceActionReceiptRow(
+        _ action: FinalShowcaseDeviceAction
+    ) -> String {
+        "Final demo device action: \(showcaseDeviceActionRow(action))"
     }
 
     private static func liveProviderReceiptRow(_ report: FinalDemoLaunchReport) -> String {

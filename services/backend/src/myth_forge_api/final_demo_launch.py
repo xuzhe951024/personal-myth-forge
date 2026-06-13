@@ -898,6 +898,9 @@ def _device_action(action: dict[str, Any]) -> dict[str, Any]:
     next_action = action.get("next_action")
     if isinstance(next_action, dict):
         copied["next_action"] = _device_next_action(next_action)
+    saved_next_action = action.get("saved_next_action")
+    if isinstance(saved_next_action, dict):
+        copied["saved_next_action"] = _device_next_action(saved_next_action)
     return copied
 
 

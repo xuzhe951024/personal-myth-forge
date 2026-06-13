@@ -226,6 +226,7 @@ do {
     try testFinalLaunchMobileSummaryShowsFinalShowcaseCompletionProviderConsent()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceSavedNextAction()
+    try testFinalLaunchMobileSummaryShowsFinalDemoDeviceSavedNextAction()
     try testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle()
     try testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness()
@@ -5924,6 +5925,42 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceSavedNextAction
     )
 }
 
+private func testFinalLaunchMobileSummaryShowsFinalDemoDeviceSavedNextAction() throws {
+    let savedNextActionJSON = """
+    {
+      "id": "run_mobile_deploy_preflight",
+      "label": "Run mobile deploy preflight",
+      "status": "blocked",
+      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+      "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+      "source": "operator_actions",
+      "validation_command": "make mobile-deploy-preflight"
+    }
+    """
+    let report = finalDemoLaunchReport(
+        finalDemoDeviceSavedNextActionJSON: savedNextActionJSON
+    )
+    let action = try require(
+        report.deviceActionBundle?.firstAction,
+        "missing final demo device action bundle first action"
+    )
+    try expectEqual(
+        action.savedNextAction?.command,
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+    )
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = summary.launchReceiptRows.joined(separator: " ")
+
+    try expectContains(text, "Final demo device action:")
+    try expectContains(text, "saved next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto")
+    try expectContains(text, "rerun make mobile-deploy-preflight")
+    try expectContains(
+        text,
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+}
+
 private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -7919,6 +7956,7 @@ private func finalDemoLaunchPayload(
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
     finalShowcaseReadinessActions: [String]? = nil,
+    finalDemoDeviceSavedNextActionJSON: String = "null",
     finalShowcaseDeviceSavedNextActionJSON: String = "",
     finalShowcaseReadinessUsesCompletionConsentBlocker: Bool = false,
     npcEvaluationStatus: String = "missing",
@@ -8208,6 +8246,66 @@ private func finalDemoLaunchPayload(
           "overall_status": "\(overallStatus)",
           "first_blocker": \(firstBlockerJSON),
           "next_action": \(nextActionJSON),
+          "device_action_bundle": {
+            "id": "final_demo_launch_device_actions",
+            "label": "Final Demo Launch Device Actions",
+            "source_report": "final_showcase_readiness",
+            "status": "blocked",
+            "actions": [
+              {
+                "id": "run_mobile_deploy_preflight",
+                "label": "Run mobile deploy preflight",
+                "status": "blocked",
+                "classification": "manual_preflight_required",
+                "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                "detail": "Verify the iPhone can reach the backend.",
+                "source": "final_demo_launch",
+                "validation_command": "make mobile-deploy-preflight",
+                "saved_next_action": \(finalDemoDeviceSavedNextActionJSON),
+                "blocks": ["ios_deployable"],
+                "manual": true,
+                "provider_calls": false,
+                "global_action": false,
+                "xcode_or_signing": false
+              }
+            ],
+            "first_action": {
+              "id": "run_mobile_deploy_preflight",
+              "label": "Run mobile deploy preflight",
+              "status": "blocked",
+              "classification": "manual_preflight_required",
+              "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+              "detail": "Verify the iPhone can reach the backend.",
+              "source": "final_demo_launch",
+              "validation_command": "make mobile-deploy-preflight",
+              "saved_next_action": \(finalDemoDeviceSavedNextActionJSON),
+              "blocks": ["ios_deployable"],
+              "manual": true,
+              "provider_calls": false,
+              "global_action": false,
+              "xcode_or_signing": false
+            },
+            "summary": {
+              "actions": 1,
+              "ready": 0,
+              "manual": 1,
+              "blocked": 1,
+              "partial": 0,
+              "xcode_or_signing": 0,
+              "global_actions": 0,
+              "provider_calls": 0
+            },
+            "safety": {
+              "commands_run": false,
+              "global_mutation": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false
+            }
+          },
           "summary": {
             "ready": 4,
             "missing": 3,
@@ -13902,6 +14000,7 @@ private func finalDemoLaunchReport(
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
     finalShowcaseReadinessActions: [String]? = nil,
+    finalDemoDeviceSavedNextActionJSON: String = "null",
     finalShowcaseDeviceSavedNextActionJSON: String = "",
     finalShowcaseReadinessUsesCompletionConsentBlocker: Bool = false,
     npcEvaluationStatus: String = "missing",
@@ -14002,6 +14101,7 @@ private func finalDemoLaunchReport(
             finalShowcaseReadinessFirstBlockerDetail: finalShowcaseReadinessFirstBlockerDetail,
             finalShowcaseReadinessAction: finalShowcaseReadinessAction,
             finalShowcaseReadinessActions: finalShowcaseReadinessActions,
+            finalDemoDeviceSavedNextActionJSON: finalDemoDeviceSavedNextActionJSON,
             finalShowcaseDeviceSavedNextActionJSON: finalShowcaseDeviceSavedNextActionJSON,
             finalShowcaseReadinessUsesCompletionConsentBlocker: finalShowcaseReadinessUsesCompletionConsentBlocker,
             npcEvaluationStatus: npcEvaluationStatus,

@@ -347,6 +347,7 @@ Bridge deliverable:
 - P0.433 iPhone Final Launch displays rehearsal readiness saved next action
 - P0.434 iPhone Device Preflight displays rehearsal readiness saved next action
 - P0.435 final showcase device action bundle preserves saved next handoff
+- P0.436 final demo launch device action bundle preserves saved next handoff
 
 ## P1: Mobile Vertical Slice
 

@@ -5328,6 +5328,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var status: String?
     public var firstBlocker: FinalDemoLaunchFirstBlocker?
     public var nextAction: FinalDemoLaunchNextAction?
+    public var deviceActionBundle: FinalShowcaseDeviceActionBundle?
     public var summary: FinalDemoLaunchSummary
     public var phaseSummary: FinalDemoLaunchSummary?
     public var finalResourcesPreflight: FinalResourcesPreflightReport?
@@ -5366,6 +5367,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         status: String? = nil,
         firstBlocker: FinalDemoLaunchFirstBlocker? = nil,
         nextAction: FinalDemoLaunchNextAction? = nil,
+        deviceActionBundle: FinalShowcaseDeviceActionBundle? = nil,
         summary: FinalDemoLaunchSummary,
         phaseSummary: FinalDemoLaunchSummary? = nil,
         finalResourcesPreflight: FinalResourcesPreflightReport? = nil,
@@ -5403,6 +5405,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.status = status
         self.firstBlocker = firstBlocker
         self.nextAction = nextAction
+        self.deviceActionBundle = deviceActionBundle
         self.summary = summary
         self.phaseSummary = phaseSummary
         self.finalResourcesPreflight = finalResourcesPreflight
