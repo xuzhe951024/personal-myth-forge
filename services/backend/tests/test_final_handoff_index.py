@@ -295,6 +295,121 @@ def test_final_handoff_index_promotes_provider_and_print_handoff_from_final_demo
     assert actions.index(print_action) < actions.index("make final-configured-preflight")
 
 
+def test_final_handoff_index_exposes_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance(repo_root)
+    _write_ios_deploy_runbook(repo_root)
+    _write_final_demo_launch(
+        repo_root,
+        overall_status="partial",
+        next_action={
+            "id": "mobile_deploy_preflight",
+            "label": "Run iOS deploy preflight",
+            "status": "blocked",
+            "classification": "final_demo_launch_phase",
+            "command": (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto"
+            ),
+            "detail": "Missing DEVELOPMENT_TEAM.",
+            "validation_command": "make mobile-deploy-preflight",
+        },
+        device_action_bundle={
+            "id": "final_demo_launch_device_actions",
+            "status": "blocked",
+            "actions": [
+                {
+                    "id": "run_mobile_deploy_preflight",
+                    "label": "Run mobile deploy preflight",
+                    "status": "blocked",
+                    "classification": "manual_preflight_required",
+                    "command": "make mobile-deploy-preflight",
+                    "detail": "Verify iPhone backend access.",
+                    "manual": True,
+                    "provider_calls": False,
+                    "global_action": False,
+                    "xcode_or_signing": False,
+                    "validation_command": "make mobile-deploy-preflight",
+                    "next_action": {
+                        "id": "mobile_deploy_preflight",
+                        "label": "Mobile deploy preflight",
+                        "status": "blocked",
+                        "command": (
+                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                            "make mobile-write-deploy-config-auto"
+                        ),
+                        "detail": "Missing DEVELOPMENT_TEAM.",
+                        "source": "first_blocker",
+                        "validation_command": "make mobile-deploy-preflight",
+                    },
+                },
+                {
+                    "id": "resolve_xcode_build_gate",
+                    "label": "Resolve Xcode build gate",
+                    "status": "blocked",
+                    "classification": "manual_xcode_or_signing_required",
+                    "command": "open Xcode and resolve signing/build gate",
+                    "detail": "Resolve signing before launch proof.",
+                    "manual": True,
+                    "provider_calls": False,
+                    "global_action": False,
+                    "xcode_or_signing": True,
+                },
+            ],
+            "first_action": {
+                "id": "run_mobile_deploy_preflight",
+                "label": "Run mobile deploy preflight",
+                "status": "blocked",
+                "classification": "manual_preflight_required",
+                "command": (
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "make mobile-write-deploy-config-auto"
+                ),
+                "detail": "Verify iPhone backend access.",
+                "manual": True,
+                "provider_calls": False,
+                "global_action": False,
+                "xcode_or_signing": False,
+                "validation_command": "make mobile-deploy-preflight",
+            },
+        },
+    )
+
+    result = build_final_handoff_index_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    report_text = json.dumps(result.report)
+    bundle = result.report["device_action_bundle"]
+
+    assert bundle["id"] == "final_handoff_index_device_actions"
+    assert bundle["label"] == "Final Handoff Index Device Actions"
+    assert bundle["source_report"] == "final_demo_launch_local"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"]["actions"] == 2
+    assert bundle["summary"]["xcode_or_signing"] == 1
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["summary"]["global_actions"] == 0
+    assert bundle["first_action"]["id"] == "run_mobile_deploy_preflight"
+    assert bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert bundle["first_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert bundle["safety"]["commands_run"] is False
+    assert bundle["safety"]["provider_calls"] is False
+    assert bundle["safety"]["xcode_or_signing"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+    assert "meshy-secret" not in report_text
+
+
 def test_final_handoff_index_reports_missing_source_freshness(
     tmp_path: Path,
 ) -> None:
@@ -503,6 +618,7 @@ def _write_final_demo_launch(
     first_blocker: dict[str, object] | None = None,
     next_action: dict[str, object] | None = None,
     operator_actions: list[str] | None = None,
+    device_action_bundle: dict[str, object] | None = None,
 ) -> None:
     report: dict[str, object] = {
         "kind": "final_demo_launch_report",
@@ -516,6 +632,8 @@ def _write_final_demo_launch(
         report["next_action"] = next_action
     if operator_actions is not None:
         report["operator_actions"] = operator_actions
+    if device_action_bundle is not None:
+        report["device_action_bundle"] = device_action_bundle
     _write_json(repo_root / "services/backend/.local/final-demo-launch-local.json", report)
 
 
