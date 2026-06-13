@@ -14,6 +14,8 @@ def test_resource_handoff_reports_missing_final_core_resources(tmp_path: Path) -
     ios = {item["id"]: item for item in report["ios"]["items"]}
     assert report["kind"] == "resource_handoff_report"
     assert report["overall_status"] == "blocked"
+    assert report["status"] == "blocked"
+    assert report["status"] == report["overall_status"]
     assert "make final-apply-resources" in report["commands"]
     assert backend["THREE_D_PROVIDER"]["status"] == "manual"
     assert backend["MESHY_API_KEY"]["status"] == "missing"
@@ -107,6 +109,9 @@ def test_resource_handoff_marks_core_resources_ready_without_secret_leak(
     )
 
     report = build_resource_handoff_report(settings=settings, repo_root=repo_root)
+    assert report["overall_status"] == "partial"
+    assert report["status"] == "partial"
+    assert report["status"] == report["overall_status"]
     report_text = json.dumps(report)
     backend = {item["id"]: item for item in report["backend"]["items"]}
     ios = {item["id"]: item for item in report["ios"]["items"]}
