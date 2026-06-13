@@ -456,6 +456,9 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
         device_action_bundle = report.get("device_action_bundle")
         if isinstance(device_action_bundle, dict):
             step_result["device_action_bundle"] = device_action_bundle
+        source_reports = report.get("source_reports")
+        if isinstance(source_reports, dict):
+            step_result["source_reports"] = source_reports
         return _step_with_next_action(step_result)
     except Exception as exc:
         return {
@@ -642,6 +645,56 @@ def _mobile_xcode_build_evidence_snapshot(repo_root: Path) -> dict[str, Any]:
         ],
         "first_blocker": first_blocker,
         "next_action": {**first_blocker, "source": "first_blocker"},
+        "device_action_bundle": _safe_xcode_device_action_bundle(first_blocker),
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": False,
+            "code_signing_allowed": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "local_paths_in_report": False,
+            "writes_derived_data": False,
+        },
+    }
+
+
+def _safe_xcode_device_action_bundle(first_blocker: dict[str, Any]) -> dict[str, Any]:
+    action = {
+        "id": str(first_blocker["id"]),
+        "label": str(first_blocker["label"]),
+        "status": str(first_blocker["status"]),
+        "classification": str(first_blocker["classification"]),
+        "command": str(first_blocker["command"]),
+        "detail": str(first_blocker["detail"]),
+        "manual": True,
+        "provider_calls": False,
+        "global_action": False,
+        "xcode_or_signing": False,
+        "validation_command": "make mobile-xcode-build-evidence",
+        "next_action": {**first_blocker, "source": "device_action_bundle"},
+    }
+    return {
+        "id": "mobile_xcode_build_evidence_actions",
+        "label": "Mobile Xcode Build Evidence Actions",
+        "source_report": "mobile_xcode_build_evidence",
+        "status": "blocked",
+        "actions": [action],
+        "first_action": action,
+        "summary": {
+            "actions": 1,
+            "ready": 0,
+            "missing": 0,
+            "blocked": 1,
+            "manual": 1,
+            "provider_calls": 0,
+            "global_actions": 0,
+            "xcode_or_signing": 0,
+        },
         "safety": {
             "commands_run": False,
             "provider_calls": False,

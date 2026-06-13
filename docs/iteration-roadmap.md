@@ -335,6 +335,7 @@ Bridge deliverable:
 - P0.421 mobile evidence reports expose device action bundles
 - P0.422 iOS device evidence source reports expose mobile device action bundles
 - P0.423 final launch closure packet preserves nested iOS device source reports
+- P0.424 final local report refresh preserves step source reports
 
 ## P1: Mobile Vertical Slice
 

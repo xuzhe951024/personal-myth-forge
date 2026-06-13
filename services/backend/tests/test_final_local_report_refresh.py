@@ -234,6 +234,39 @@ def test_final_local_report_refresh_exposes_device_action_bundle(
     assert "meshy-secret" not in report_text
 
 
+def test_final_local_report_refresh_preserves_step_source_reports(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+    report_text = json.dumps(result.report)
+    closure_step = result.report["steps_by_id"]["final_launch_closure_packet"]
+    nested_sources = closure_step["source_reports"]["ios_device_evidence_bundle"][
+        "source_reports"
+    ]
+    deploy_bundle = nested_sources["mobile_deploy_preflight_evidence"][
+        "device_action_bundle"
+    ]
+    xcode_bundle = nested_sources["mobile_xcode_build_evidence"][
+        "device_action_bundle"
+    ]
+
+    assert deploy_bundle["id"] == "mobile_deploy_preflight_evidence_actions"
+    assert deploy_bundle["first_action"]["id"] == "development_team"
+    assert deploy_bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert xcode_bundle["id"] == "mobile_xcode_build_evidence_actions"
+    assert xcode_bundle["first_action"]["id"] == "xcode_build_gate"
+    assert xcode_bundle["first_action"]["command"] == (
+        "run make mobile-xcode-build-evidence outside final-local-report-refresh"
+    )
+    assert xcode_bundle["safety"]["xcode_or_signing"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+
+
 def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     tmp_path: Path,
 ) -> None:
@@ -698,6 +731,17 @@ def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(
     assert xcode_report["safety"]["xcode_or_signing"] is False
     assert xcode_report["safety"]["global_mutation"] is False
     assert xcode_report["safety"]["writes_derived_data"] is False
+    assert xcode_report["device_action_bundle"]["id"] == (
+        "mobile_xcode_build_evidence_actions"
+    )
+    assert xcode_report["device_action_bundle"]["first_action"]["id"] == (
+        "xcode_build_gate"
+    )
+    assert xcode_report["device_action_bundle"]["first_action"]["command"] == (
+        "run make mobile-xcode-build-evidence outside final-local-report-refresh"
+    )
+    assert xcode_report["device_action_bundle"]["safety"]["commands_run"] is False
+    assert xcode_report["device_action_bundle"]["safety"]["xcode_or_signing"] is False
 
 
 def test_final_local_report_refresh_preserves_existing_mobile_deploy_preflight_evidence(
