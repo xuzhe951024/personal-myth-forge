@@ -138,7 +138,7 @@ configured-live-evidence-bundle:
 .PHONY: final-handoff-index
 
 final-handoff-index:
-	cd services/backend && uv run python -m myth_forge_api.cli final-handoff-index --repo-root ../.. --output .local/final-handoff-index.json
+	@services/backend/scripts/write_final_handoff_index.sh
 
 .PHONY: final-showcase-readiness
 
@@ -158,7 +158,7 @@ live-provider-evidence:
 .PHONY: ios-device-launch-certificate
 
 ios-device-launch-certificate:
-	cd services/backend && uv run python -m myth_forge_api.cli ios-device-launch-certificate --repo-root ../.. --output .local/ios-device-launch-certificate.json
+	@services/backend/scripts/write_ios_device_launch_certificate.sh
 
 .PHONY: ios-device-launch-rehearsal
 
@@ -197,7 +197,7 @@ ios-deploy-runbook-local:
 .PHONY: ios-device-evidence-bundle
 
 ios-device-evidence-bundle:
-	cd services/backend && uv run python -m myth_forge_api.cli ios-device-evidence-bundle --repo-root ../.. --output .local/ios-device-evidence-bundle.json
+	@services/backend/scripts/write_ios_device_evidence_bundle.sh
 
 final-rehearsal-local: backend-evaluate-local visual-regression-local final-acceptance-local final-demo-launch-local ios-deploy-runbook-local final-local-report-refresh-local
 
@@ -209,7 +209,7 @@ mobile-xcode-build:
 .PHONY: mobile-xcode-build-evidence
 
 mobile-xcode-build-evidence:
-	cd services/backend && uv run python -m myth_forge_api.cli mobile-xcode-build-evidence --repo-root ../.. --output .local/mobile-xcode-build-evidence.json
+	@services/backend/scripts/write_mobile_xcode_build_evidence.sh
 
 .PHONY: mobile-deploy-preflight
 

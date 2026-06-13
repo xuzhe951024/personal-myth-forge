@@ -2177,9 +2177,14 @@ FEATURES = (
                 "final-handoff-index",
             ),
             SourceRequirement("Makefile", "final-handoff-index:"),
+            SourceRequirement("Makefile", "write_final_handoff_index.sh"),
             SourceRequirement(
-                "Makefile",
-                "--output .local/final-handoff-index.json",
+                "services/backend/scripts/write_final_handoff_index.sh",
+                ".local/final-handoff-index.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_handoff_index.sh",
+                "accepted final handoff index exit code",
             ),
             SourceRequirement(
                 "services/backend/tests/test_final_handoff_index.py",
@@ -2244,9 +2249,14 @@ FEATURES = (
                 "ios-device-launch-certificate",
             ),
             SourceRequirement("Makefile", "ios-device-launch-certificate:"),
+            SourceRequirement("Makefile", "write_ios_device_launch_certificate.sh"),
             SourceRequirement(
-                "Makefile",
-                "--output .local/ios-device-launch-certificate.json",
+                "services/backend/scripts/write_ios_device_launch_certificate.sh",
+                ".local/ios-device-launch-certificate.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_launch_certificate.sh",
+                "accepted iOS device launch certificate exit code",
             ),
             SourceRequirement(
                 "services/backend/tests/test_ios_device_launch_certificate.py",
@@ -2347,6 +2357,15 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
                 "final-configured-preflight",
+            ),
+            SourceRequirement("Makefile", "write_ios_device_evidence_bundle.sh"),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_evidence_bundle.sh",
+                ".local/ios-device-evidence-bundle.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_ios_device_evidence_bundle.sh",
+                "accepted iOS device evidence bundle exit code",
             ),
             SourceRequirement(
                 "services/backend/scripts/write_ios_device_launch_rehearsal.sh",
@@ -2941,6 +2960,18 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "make mobile-xcode-build-evidence",
+            ),
+            SourceRequirement(
+                "Makefile",
+                "write_mobile_xcode_build_evidence.sh",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_mobile_xcode_build_evidence.sh",
+                ".local/mobile-xcode-build-evidence.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_mobile_xcode_build_evidence.sh",
+                "accepted mobile Xcode build evidence exit code",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
