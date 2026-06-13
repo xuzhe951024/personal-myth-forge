@@ -1579,6 +1579,14 @@ public enum FinalLaunchMobileSummaryBuilder {
             }
             parts.append("| \(next)")
         }
+        if let savedNextAction = action.savedNextAction,
+           !savedNextAction.command.isEmpty {
+            var savedNext = "saved next \(savedNextAction.command)"
+            if !savedNextAction.detail.isEmpty {
+                savedNext += " | \(savedNextAction.detail)"
+            }
+            parts.append("| \(savedNext)")
+        }
         for operatorAction in action.operatorActions.prefix(2) where !operatorAction.isEmpty {
             parts.append("| action \(operatorAction)")
         }

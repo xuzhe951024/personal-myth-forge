@@ -344,6 +344,7 @@ Bridge deliverable:
 - P0.430 iOS device launch rehearsal readiness exposes device action bundle
 - P0.431 iOS rehearsal readiness syncs iPhone final demo launch source
 - P0.432 iOS rehearsal readiness preserves saved sequence operator actions
+- P0.433 iPhone Final Launch displays rehearsal readiness saved next action
 
 ## P1: Mobile Vertical Slice
 

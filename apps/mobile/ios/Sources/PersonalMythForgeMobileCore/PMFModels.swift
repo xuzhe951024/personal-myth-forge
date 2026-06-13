@@ -4769,6 +4769,7 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
     public var evidenceDetail: String?
     public var validationCommand: String?
     public var nextAction: FinalShowcaseReadinessNextAction?
+    public var savedNextAction: FinalShowcaseReadinessNextAction?
     public var operatorActions: [String]
     public var blocks: [String]
     public var manual: Bool
@@ -4789,6 +4790,7 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
         case evidenceDetail
         case validationCommand
         case nextAction
+        case savedNextAction
         case operatorActions
         case blocks
         case manual
@@ -4810,6 +4812,7 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
         evidenceDetail: String? = nil,
         validationCommand: String? = nil,
         nextAction: FinalShowcaseReadinessNextAction? = nil,
+        savedNextAction: FinalShowcaseReadinessNextAction? = nil,
         operatorActions: [String] = [],
         blocks: [String],
         manual: Bool,
@@ -4829,6 +4832,7 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
         self.evidenceDetail = evidenceDetail
         self.validationCommand = validationCommand
         self.nextAction = nextAction
+        self.savedNextAction = savedNextAction
         self.operatorActions = operatorActions
         self.blocks = blocks
         self.manual = manual
@@ -4853,6 +4857,10 @@ public struct FinalShowcaseDeviceAction: Codable, Equatable, Sendable {
         self.nextAction = try container.decodeIfPresent(
             FinalShowcaseReadinessNextAction.self,
             forKey: .nextAction
+        )
+        self.savedNextAction = try container.decodeIfPresent(
+            FinalShowcaseReadinessNextAction.self,
+            forKey: .savedNextAction
         )
         self.operatorActions = try container.decodeIfPresent(
             [String].self,

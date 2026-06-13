@@ -242,10 +242,12 @@ do {
     try testFinalLaunchMobileSummaryShowsIOSDeviceEvidenceBundle()
     try testFinalLaunchMobileSummaryRedactsUnsafeIOSDeviceEvidenceBundle()
     try testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload()
+    try testDecodesIOSDeviceLaunchRehearsalSavedNextAction()
     try testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload()
     try testDecodesIOSDeviceLaunchRehearsalSourceFreshnessFromFinalLaunchPayload()
     try testDecodesIOSDeviceLaunchCertificateFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal()
+    try testFinalLaunchMobileSummaryShowsIOSDeviceLaunchRehearsalSavedNextAction()
     try testFinalLaunchMobileSummaryShowsMultipleIOSDeviceLaunchRehearsalActions()
     try testFinalLaunchMobileSummaryShowsReadyIOSDeviceLaunchRehearsal()
     try testFinalLaunchMobileSummaryShowsStaleIOSDeviceLaunchRehearsalFreshness()
@@ -6266,6 +6268,41 @@ private func testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload(
     try expectFalse(readiness.safety.providerCalls)
 }
 
+private func testDecodesIOSDeviceLaunchRehearsalSavedNextAction() throws {
+    let savedNextActionJSON = """
+    {
+      "id": "final_rehearsal_local",
+      "label": "Local final rehearsal",
+      "status": "blocked",
+      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+      "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+      "source": "saved_sequence_operator_actions",
+      "validation_command": "make ios-device-launch-rehearsal"
+    }
+    """
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload(
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchSavedNextActionJSON: savedNextActionJSON
+        )
+    )
+    let action = try require(
+        report.iosDeviceLaunchRehearsalReadiness?.deviceActionBundle?.firstAction,
+        "missing rehearsal device action"
+    )
+
+    try expectEqual(
+        action.savedNextAction?.command,
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+    )
+    try expectEqual(
+        action.savedNextAction?.detail,
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    try expectEqual(action.savedNextAction?.source, "saved_sequence_operator_actions")
+}
+
 private func testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -6351,6 +6388,31 @@ private func testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal() 
     try expectContains(text, "refresh final handoff index")
     try expectContains(text, "Device actions blocked")
     try expectContains(text, "make ios-device-launch-rehearsal")
+}
+
+private func testFinalLaunchMobileSummaryShowsIOSDeviceLaunchRehearsalSavedNextAction() throws {
+    let savedNextActionJSON = """
+    {
+      "id": "final_rehearsal_local",
+      "label": "Local final rehearsal",
+      "status": "blocked",
+      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+      "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+      "source": "saved_sequence_operator_actions",
+      "validation_command": "make ios-device-launch-rehearsal"
+    }
+    """
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchSavedNextActionJSON: savedNextActionJSON
+        ),
+        error: nil
+    )
+    let text = summary.launchRehearsalRows.joined(separator: " ")
+
+    try expectContains(text, "saved next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto")
+    try expectContains(text, "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable")
 }
 
 private func testFinalLaunchMobileSummaryShowsMultipleIOSDeviceLaunchRehearsalActions() throws {
@@ -7820,6 +7882,7 @@ private func finalDemoLaunchPayload(
     iosDeviceLaunchSourceFreshnessStatus: String = "fresh",
     iosDeviceLaunchSourceFreshnessClassification: String = "fresh_report",
     iosDeviceLaunchSourceFreshnessSummaryJSON: String = #"{"fresh": 1, "stale": 0, "unknown": 0}"#,
+    iosDeviceLaunchSavedNextActionJSON: String = "null",
     iosDeviceLaunchCertificateStatus: String = "blocked",
     iosDeviceLaunchCertificateGateStatus: String = "blocked",
     iosDeviceLaunchCertificateAction: String = "run make final-handoff-index",
@@ -10441,6 +10504,7 @@ private func finalDemoLaunchPayload(
                 "detail": "\(iosDeviceLaunchRehearsalDetail)",
                 "source": "ios_device_launch_rehearsal_readiness",
                 "validation_command": "make ios-device-launch-rehearsal",
+                "saved_next_action": \(iosDeviceLaunchSavedNextActionJSON),
                 "blocks": ["ios_deployable"],
                 "manual": \(iosDeviceLaunchRehearsalStatus == "ready" ? "false" : "true"),
                 "provider_calls": false,
@@ -10457,6 +10521,7 @@ private func finalDemoLaunchPayload(
                   "detail": "\(iosDeviceLaunchRehearsalDetail)",
                   "source": "ios_device_launch_rehearsal_readiness",
                   "validation_command": "make ios-device-launch-rehearsal",
+                  "saved_next_action": \(iosDeviceLaunchSavedNextActionJSON),
                   "blocks": ["ios_deployable"],
                   "manual": \(iosDeviceLaunchRehearsalStatus == "ready" ? "false" : "true"),
                   "provider_calls": false,
@@ -13798,6 +13863,7 @@ private func finalDemoLaunchReport(
     iosDeviceLaunchSourceFreshnessStatus: String = "fresh",
     iosDeviceLaunchSourceFreshnessClassification: String = "fresh_report",
     iosDeviceLaunchSourceFreshnessSummaryJSON: String = #"{"fresh": 1, "stale": 0, "unknown": 0}"#,
+    iosDeviceLaunchSavedNextActionJSON: String = "null",
     iosDeviceLaunchCertificateStatus: String = "blocked",
     iosDeviceLaunchCertificateGateStatus: String = "blocked",
     iosDeviceLaunchCertificateAction: String = "run make final-handoff-index",
@@ -13896,6 +13962,7 @@ private func finalDemoLaunchReport(
             iosDeviceLaunchSourceFreshnessStatus: iosDeviceLaunchSourceFreshnessStatus,
             iosDeviceLaunchSourceFreshnessClassification: iosDeviceLaunchSourceFreshnessClassification,
             iosDeviceLaunchSourceFreshnessSummaryJSON: iosDeviceLaunchSourceFreshnessSummaryJSON,
+            iosDeviceLaunchSavedNextActionJSON: iosDeviceLaunchSavedNextActionJSON,
             iosDeviceLaunchCertificateStatus: iosDeviceLaunchCertificateStatus,
             iosDeviceLaunchCertificateGateStatus: iosDeviceLaunchCertificateGateStatus,
             iosDeviceLaunchCertificateAction: iosDeviceLaunchCertificateAction,
