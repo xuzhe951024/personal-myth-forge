@@ -74,6 +74,9 @@ public enum FinalShowcaseSummaryBuilder {
             stages.append(threeDEvaluationStage(finalLaunchSummary))
             stages.append(npcEvaluationStage(finalLaunchSummary))
             stages.append(operatorHandoffStage(finalLaunchSummary))
+            if let externalStage = externalActionStage(finalLaunchSummary) {
+                stages.append(externalStage)
+            }
             stages.append(finalLaunchStage(finalLaunchSummary))
         }
         return FinalShowcaseSummary(
@@ -394,6 +397,91 @@ public enum FinalShowcaseSummaryBuilder {
         )
     }
 
+    private static func externalActionStage(
+        _ summary: FinalLaunchMobileSummary
+    ) -> FinalShowcaseSummaryStage? {
+        let rows = summary.externalActionLedgerRows
+        guard !rows.isEmpty else {
+            return nil
+        }
+        return stage(
+            "external_actions",
+            "External Actions",
+            externalActionStatus(rows),
+            externalActionDetail(rows)
+        )
+    }
+
+    private static func externalActionStatus(_ rows: [String]) -> FinalShowcaseStageStatus {
+        guard let first = rows.first else {
+            return .waiting
+        }
+        if first.hasPrefix("External actions ready") {
+            return .ready
+        }
+        let text = rows.joined(separator: " ").lowercased()
+        if text.contains("has not loaded") || text.contains("waiting") {
+            return .waiting
+        }
+        if text.contains("blocked")
+            || text.contains("missing")
+            || text.contains("manual")
+            || text.contains("live")
+            || text.contains("cost consent")
+            || text.contains("global confirmation")
+            || text.contains("backend-device-demo")
+        {
+            return .needsAttention
+        }
+        return .needsAttention
+    }
+
+    private static func externalActionDetail(_ rows: [String]) -> String {
+        guard let first = rows.first else {
+            return "External action ledger has not loaded."
+        }
+        if rows.count == 1 || externalActionStatus(rows) == .ready {
+            return sanitize(first)
+        }
+
+        var selected = [first]
+        if let operatorAction = rows.dropFirst().first(where: externalActionOperatorRow) {
+            selected.append(operatorAction)
+        } else if let action = rows.dropFirst().first(where: externalActionActionableRow) {
+            selected.append(action)
+        }
+        if let backend = rows.dropFirst().first(where: externalActionBackendRow),
+           !selected.contains(backend) {
+            selected.append(backend)
+        }
+        return sanitize(selected.joined(separator: " "))
+    }
+
+    private static func externalActionOperatorRow(_ row: String) -> Bool {
+        let text = row.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return text.hasPrefix("make ")
+            || text.hasPrefix("start ")
+            || text.contains("; rerun make ")
+    }
+
+    private static func externalActionActionableRow(_ row: String) -> Bool {
+        let text = row.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if text.hasPrefix("next action:")
+            || text.contains("make ")
+            || text.contains("provide ")
+            || text.contains("cost consent")
+            || text.contains("global confirmation")
+            || text.contains("backend-device-demo")
+        {
+            return true
+        }
+        return false
+    }
+
+    private static func externalActionBackendRow(_ row: String) -> Bool {
+        row.localizedCaseInsensitiveContains("backend-device-demo")
+    }
+
     private static func finalLaunchStage(_ summary: FinalLaunchMobileSummary) -> FinalShowcaseSummaryStage {
         let status: FinalShowcaseStageStatus
         switch summary.overallStatus {
@@ -543,7 +631,7 @@ public enum FinalShowcaseSummaryBuilder {
         }
         let launchStageIDs = Set([
             "provider_handoff", "local_smoke", "ios_deploy", "three_d_evaluation",
-            "npc_evaluation", "operator_handoff", "final_launch",
+            "npc_evaluation", "operator_handoff", "external_actions", "final_launch",
         ])
         let launchStages = stages.filter { launchStageIDs.contains($0.id) }
         let launchReady = launchStages.allSatisfy { $0.status == .ready }

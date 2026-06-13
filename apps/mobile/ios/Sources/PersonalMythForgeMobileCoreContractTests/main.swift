@@ -53,6 +53,7 @@ do {
     try testFinalShowcaseFinalLaunchStageUsesReceiptFirstBlocker()
     try testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest()
     try testFinalShowcaseSummaryIncludesReadyProviderHandoffDigest()
+    try testFinalShowcaseSummaryShowsExternalActionsBackendHandoff()
     try testFinalShowcaseSummaryBlocksProviderHandoffDigest()
     try testFinalShowcaseSummaryBlocksProviderHandoffOnConfiguredEvidenceBundle()
     try testFinalShowcaseSummaryRedactsUnsafeConfiguredBundleProviderHandoff()
@@ -1746,6 +1747,9 @@ private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
         phaseRows: [],
         resourceFillGuideRows: ["Fill guide ready: required 2, optional 0, configured 2, secret 1."],
         applyPreviewRows: ["Apply preview ready: targets 2, missing 0, blocked 0, secret 4."],
+        externalActionLedgerRows: [
+            "External actions ready: groups 5, blocked 0, missing 0, live 0, manual 0."
+        ],
         resourceHandoffRows: ["Resource handoff ready: ready 6, missing 0, blocked 0, manual 0."],
         resourceActions: [],
         acceptanceRows: ["Final acceptance ready."],
@@ -1776,7 +1780,7 @@ private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
         [
             "capture", "three_d", "npc_agent", "print", "resources",
             "provider_handoff", "local_smoke", "ios_deploy", "three_d_evaluation",
-            "npc_evaluation", "operator_handoff", "final_launch",
+            "npc_evaluation", "operator_handoff", "external_actions", "final_launch",
         ]
     )
     try expectEqual(summary.stage(id: "provider_handoff")?.status, .ready)
@@ -1785,6 +1789,7 @@ private func testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest() throws {
     try expectEqual(summary.stage(id: "three_d_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "npc_evaluation")?.status, .ready)
     try expectEqual(summary.stage(id: "operator_handoff")?.status, .ready)
+    try expectEqual(summary.stage(id: "external_actions")?.status, .ready)
     try expectEqual(summary.stage(id: "final_launch")?.status, .ready)
 }
 
@@ -1831,6 +1836,62 @@ private func testFinalShowcaseSummaryIncludesReadyProviderHandoffDigest() throws
     try expectContains(stage.detail, "Live evidence ready")
     try expectTrue(resourcesIndex < providerIndex)
     try expectTrue(providerIndex < localSmokeIndex)
+}
+
+private func testFinalShowcaseSummaryShowsExternalActionsBackendHandoff() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let backendAction = (
+        "start backend-device-demo before device checks: "
+            + "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch blocked",
+        subtitle: "External actions blocked",
+        phaseRows: [],
+        resourceFillGuideRows: ["Fill guide ready: required 2, optional 0, configured 2, secret 1."],
+        applyPreviewRows: ["Apply preview ready: targets 2, missing 0, blocked 0, secret 4."],
+        externalActionLedgerRows: [
+            "External actions blocked: groups 5, blocked 4, missing 6, live 5, manual 5.",
+            "Next action: provide_MESHY_API_KEY missing make final-resources-preflight validate make final-resources-preflight",
+            "resource_inputs: blocked actions 13, missing 5, blocked 1, live 0, manual 0.",
+            "make final-resource-apply-preview",
+            backendAction,
+        ],
+        resourceHandoffRows: ["Resource handoff ready: ready 6, missing 0, blocked 0, manual 0."],
+        resourceActions: [],
+        acceptanceRows: ["Final acceptance ready."],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        localShowcaseSmokeRows: ["Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3."],
+        liveProviderEvidenceRows: ["Live evidence ready: ready 5, missing 0, blocked 0, partial 0."],
+        deployRunbookRows: ["iOS deploy runbook ready."],
+        launchRehearsalRows: ["iOS launch rehearsal ready: ready 4, blocked 0, partial 0."],
+        handoffRows: ["Final operator handoff ready."],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let stage = try require(
+        summary.stage(id: "external_actions"),
+        "missing external actions stage"
+    )
+
+    try expectEqual(summary.overallStatus, .needsAttention)
+    try expectEqual(stage.label, "External Actions")
+    try expectEqual(stage.status, .needsAttention)
+    try expectContains(stage.detail, "External actions blocked")
+    try expectContains(stage.detail, "make final-resource-apply-preview")
+    try expectContains(stage.detail, backendAction)
 }
 
 private func testFinalShowcaseSummaryBlocksProviderHandoffDigest() throws {
@@ -8138,13 +8199,52 @@ private func finalDemoLaunchPayload(
         decoding: try! PMFJSON.encoder.encode(finalShowcaseActions),
         as: UTF8.self
     )
-    let effectiveExternalActionLedgerActions = externalActionLedgerActions ?? [
-        externalActionLedgerDetail
-    ]
+    let externalActionLedgerReady = overallStatus == "ready"
+    let externalActionLedgerStatus = externalActionLedgerReady ? "ready" : "blocked"
+    let effectiveExternalActionLedgerActions = externalActionLedgerActions
+        ?? (externalActionLedgerReady ? [] : [externalActionLedgerDetail])
     let externalActionLedgerActionsJSON = String(
         decoding: try! PMFJSON.encoder.encode(effectiveExternalActionLedgerActions),
         as: UTF8.self
     )
+    let externalActionLedgerSummaryJSON = externalActionLedgerReady
+        ? #"{"groups": 5, "actions": 27, "ready": 27, "missing": 0, "blocked": 0, "manual": 0, "live": 0, "partial": 0, "optional": 8, "secret": 4, "requires_user_confirmation": 0, "requires_cost_consent": 0, "global": 0, "safe_local_write": 2, "live_provider_call": 0}"#
+        : #"{"groups": 5, "actions": 27, "ready": 0, "missing": 6, "blocked": 4, "manual": 5, "live": 5, "partial": 0, "optional": 8, "secret": 4, "requires_user_confirmation": 3, "requires_cost_consent": 5, "global": 3, "safe_local_write": 2, "live_provider_call": 5}"#
+    let externalActionLedgerFirstBlockerJSON = externalActionLedgerReady ? "null" : """
+            {
+              "id": "provide_MESHY_API_KEY",
+              "label": "Meshy API key",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "make final-resources-preflight",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "group_id": "resource_inputs",
+              "group_label": "Resource inputs",
+              "validation_command": "make final-resources-preflight"
+            }
+    """
+    let externalActionLedgerNextActionJSON = externalActionLedgerReady ? "null" : """
+            {
+              "id": "provide_MESHY_API_KEY",
+              "label": "Meshy API key",
+              "status": "missing",
+              "classification": "missing_required_value",
+              "command": "make final-resources-preflight",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "group_id": "resource_inputs",
+              "group_label": "Resource inputs",
+              "validation_command": "make final-resources-preflight",
+              "source": "first_blocker"
+            }
+    """
+    let externalActionLedgerResourceGroupStatus = externalActionLedgerReady ? "ready" : "blocked"
+    let externalActionLedgerResourceGroupSummaryJSON = externalActionLedgerReady
+        ? #"{"actions": 13, "ready": 13, "missing": 0, "blocked": 0, "manual": 0, "live": 0, "partial": 0, "optional": 7, "secret": 4, "requires_user_confirmation": 0, "requires_cost_consent": 0}"#
+        : #"{"actions": 13, "ready": 0, "missing": 5, "blocked": 1, "manual": 0, "live": 0, "partial": 0, "optional": 7, "secret": 4, "requires_user_confirmation": 0, "requires_cost_consent": 0}"#
+    let externalActionLedgerLiveGroupStatus = externalActionLedgerReady ? "ready" : "live"
+    let externalActionLedgerLiveGroupSummaryJSON = externalActionLedgerReady
+        ? #"{"actions": 5, "ready": 5, "missing": 0, "blocked": 0, "manual": 0, "live": 0, "partial": 0, "optional": 0, "secret": 0, "requires_user_confirmation": 0, "requires_cost_consent": 0}"#
+        : #"{"actions": 5, "ready": 0, "missing": 0, "blocked": 0, "manual": 0, "live": 5, "partial": 0, "optional": 0, "secret": 0, "requires_user_confirmation": 0, "requires_cost_consent": 5}"#
     let finalShowcaseCapabilityID = finalShowcaseReadinessUsesCompletionConsentBlocker
         ? "game_asset_3d_generation"
         : "ios_deployable"
@@ -8906,65 +9006,16 @@ private func finalDemoLaunchPayload(
           },
           "final_external_action_ledger": {
             "kind": "final_external_action_ledger_report",
-            "status": "blocked",
-            "summary": {
-              "groups": 5,
-              "actions": 27,
-              "ready": 0,
-              "missing": 6,
-              "blocked": 4,
-              "manual": 5,
-              "live": 5,
-              "partial": 0,
-              "optional": 8,
-              "secret": 4,
-              "requires_user_confirmation": 3,
-              "requires_cost_consent": 5,
-              "global": 3,
-              "safe_local_write": 2,
-              "live_provider_call": 5
-            },
-            "first_blocker": {
-              "id": "provide_MESHY_API_KEY",
-              "label": "Meshy API key",
-              "status": "missing",
-              "classification": "missing_required_value",
-              "command": "make final-resources-preflight",
-              "detail": "Backend-only secret for live Meshy 3D generation.",
-              "group_id": "resource_inputs",
-              "group_label": "Resource inputs",
-              "validation_command": "make final-resources-preflight"
-            },
-            "next_action": {
-              "id": "provide_MESHY_API_KEY",
-              "label": "Meshy API key",
-              "status": "missing",
-              "classification": "missing_required_value",
-              "command": "make final-resources-preflight",
-              "detail": "Backend-only secret for live Meshy 3D generation.",
-              "group_id": "resource_inputs",
-              "group_label": "Resource inputs",
-              "validation_command": "make final-resources-preflight",
-              "source": "first_blocker"
-            },
+            "status": "\(externalActionLedgerStatus)",
+            "summary": \(externalActionLedgerSummaryJSON),
+            "first_blocker": \(externalActionLedgerFirstBlockerJSON),
+            "next_action": \(externalActionLedgerNextActionJSON),
             "action_groups": [
               {
                 "id": "resource_inputs",
                 "label": "Resource inputs",
-                "status": "blocked",
-                "summary": {
-                  "actions": 13,
-                  "ready": 0,
-                  "missing": 5,
-                  "blocked": 1,
-                  "manual": 0,
-                  "live": 0,
-                  "partial": 0,
-                  "optional": 7,
-                  "secret": 4,
-                  "requires_user_confirmation": 0,
-                  "requires_cost_consent": 0
-                },
+                "status": "\(externalActionLedgerResourceGroupStatus)",
+                "summary": \(externalActionLedgerResourceGroupSummaryJSON),
                 "actions": [
                   {
                     "id": "provide_MESHY_API_KEY",
@@ -8989,20 +9040,8 @@ private func finalDemoLaunchPayload(
               {
                 "id": "live_provider_costs",
                 "label": "Live provider costs",
-                "status": "live",
-                "summary": {
-                  "actions": 5,
-                  "ready": 0,
-                  "missing": 0,
-                  "blocked": 0,
-                  "manual": 0,
-                  "live": 5,
-                  "partial": 0,
-                  "optional": 0,
-                  "secret": 0,
-                  "requires_user_confirmation": 0,
-                  "requires_cost_consent": 5
-                },
+                "status": "\(externalActionLedgerLiveGroupStatus)",
+                "summary": \(externalActionLedgerLiveGroupSummaryJSON),
                 "actions": [
                   {
                     "id": "run_live_provider_evidence",

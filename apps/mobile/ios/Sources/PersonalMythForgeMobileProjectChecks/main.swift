@@ -1398,6 +1398,7 @@ do {
     try requireContains(finalShowcaseSummary, "npcEvaluationStage", "final showcase npc evaluation digest")
     try requireContains(finalShowcaseSummary, "threeDEvaluationStage", "final showcase 3D evaluation digest")
     try requireContains(finalShowcaseSummary, "operatorHandoffStage", "final showcase operator handoff digest")
+    try requireContains(finalShowcaseSummary, "externalActionStage", "final showcase external action digest")
     try requireContains(finalShowcaseSummary, "finalLaunchStage", "final showcase final launch digest")
     try requireContains(
         finalShowcaseSummary,
@@ -1412,6 +1413,7 @@ do {
     try requireContains(finalShowcaseSummary, #""three_d_evaluation""#, "final showcase 3D evaluation stage id")
     try requireContains(finalShowcaseSummary, #""npc_evaluation""#, "final showcase npc evaluation stage id")
     try requireContains(finalShowcaseSummary, #""operator_handoff""#, "final showcase handoff stage id")
+    try requireContains(finalShowcaseSummary, #""external_actions""#, "final showcase external action stage id")
     try requireContains(finalShowcaseSummary, #""final_launch""#, "final showcase launch stage id")
     try requireContains(
         contractTests,
@@ -1427,6 +1429,11 @@ do {
         contractTests,
         "testFinalShowcaseSummaryIncludesReadyFinalLaunchDigest",
         "ready final showcase launch digest contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testFinalShowcaseSummaryShowsExternalActionsBackendHandoff",
+        "final showcase external action backend handoff contract test"
     )
     try requireContains(
         contractTests,
