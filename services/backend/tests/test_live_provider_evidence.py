@@ -51,8 +51,7 @@ def test_live_provider_evidence_missing_reports_without_running_commands(
         for command in result.report["commands"]
     )
     assert result.report["operator_actions"] == [
-        "make live-provider-evidence",
-        "make provider-handoff",
+        "make provider-handoff; rerun make live-provider-evidence",
     ]
     assert not any(
         action.startswith("run make ")
@@ -165,6 +164,14 @@ def test_live_provider_evidence_projects_provider_handoff_child_next_action(
     assert result.report["next_action"]["validation_command"] == (
         "make live-provider-evidence"
     )
+    assert result.report["operator_actions"][0] == (
+        "make final-resource-apply-preview; "
+        "rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    assert "rerun provider handoff readiness" not in " ".join(
+        result.report["operator_actions"]
+    )
     evidence = {slot["id"]: slot for slot in result.report["evidence"]}
     assert evidence["provider_handoff"]["source_blocker_id"] == "three_d_provider"
 
@@ -205,7 +212,10 @@ def test_live_provider_evidence_blocks_failed_report_and_redacts(
     assert result.report["next_action"]["validation_command"] == (
         "make live-provider-evidence"
     )
-    assert "rerun configured 3D evaluation" in " ".join(result.report["operator_actions"])
+    assert (
+        "make backend-evaluate-3d-configured; rerun make live-provider-evidence"
+        in " ".join(result.report["operator_actions"])
+    )
     assert "secret-token" not in report_text
     assert "sk-live-secret" not in report_text
     assert "data:image" not in report_text

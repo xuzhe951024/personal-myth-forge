@@ -330,12 +330,38 @@ def _operator_actions(
 ) -> list[str]:
     if status == "ready":
         return []
-    actions = ["run make live-provider-evidence after configured provider evidence files are refreshed"]
+    actions: list[str] = []
     if first_blocker is not None:
         slot = _slot_by_id(str(first_blocker["id"]))
-        command = str(first_blocker.get("command", slot.command)).strip()
-        actions.append(f"{slot.rerun_action}: {command or slot.command}")
+        actions.append(_operator_action_for_blocker(first_blocker, slot=slot))
+    else:
+        actions.append("make live-provider-evidence")
     return _dedupe([normalize_operator_action(action) for action in actions])
+
+
+def _operator_action_for_blocker(
+    first_blocker: dict[str, Any],
+    *,
+    slot: EvidenceSlot,
+) -> str:
+    command = str(first_blocker.get("command", slot.command)).strip() or slot.command
+    source_validation = str(
+        first_blocker.get("source_blocker_validation_command", "")
+    ).strip()
+    validations = _dedupe(
+        [
+            validation
+            for validation in (
+                source_validation,
+                "make live-provider-evidence",
+            )
+            if validation
+        ]
+    )
+    action = command
+    for validation in validations:
+        action += f"; rerun {validation}"
+    return action
 
 
 def _slot_by_id(slot_id: str) -> EvidenceSlot:
