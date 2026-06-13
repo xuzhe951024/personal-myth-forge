@@ -369,6 +369,7 @@ Bridge deliverable:
 - P0.455 iPhone Demo Script and autopilot show external action ledger backend-device-demo handoff
 - P0.456 Mobile final launch readiness acceptance verifies demo script external actions handoff
 - P0.457 Visual regression covers Demo Script external actions handoff
+- P0.458 Visual regression readiness blocks stale artifact inventory reports
 
 ## P1: Mobile Vertical Slice
 

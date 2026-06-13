@@ -10,6 +10,7 @@ from myth_forge_api.source_freshness import (
     freshness_payload,
     git_product_source_metadata,
 )
+from myth_forge_api.visual_regression import DEFAULT_VISUAL_ARTIFACTS
 
 DEFAULT_VISUAL_REGRESSION_REPORT_PATH = Path(
     "services/backend/.local/visual-regression-local.json"
@@ -256,6 +257,12 @@ def _readiness_blocker(
             classification="empty_pass_count",
             detail="Visual regression report has no passed artifacts.",
         )
+    inventory_blocker = _inventory_blocker(
+        summary=summary,
+        raw_artifacts=saved_report.get("artifacts"),
+    )
+    if inventory_blocker is not None:
+        return inventory_blocker
     failed_artifacts = [
         artifact for artifact in artifacts if artifact.get("status") != "passed"
     ]
@@ -265,6 +272,46 @@ def _readiness_blocker(
             detail=f"{failed_artifacts[0]['id']}: artifact status {failed_artifacts[0]['status']}",
         )
     return None
+
+
+def _inventory_blocker(
+    *,
+    summary: dict[str, int],
+    raw_artifacts: Any,
+) -> dict[str, Any] | None:
+    expected_ids = [artifact.id for artifact in DEFAULT_VISUAL_ARTIFACTS]
+    saved_passed_ids = _saved_passed_artifact_ids(raw_artifacts)
+    missing_ids = [
+        artifact_id for artifact_id in expected_ids if artifact_id not in saved_passed_ids
+    ]
+    if missing_ids:
+        return _blocker(
+            classification="visual_regression_inventory_stale",
+            detail=(
+                "Saved visual regression report is missing current visual artifact "
+                f"{missing_ids[0]}."
+            ),
+        )
+    if summary["passed"] < len(expected_ids):
+        return _blocker(
+            classification="visual_regression_inventory_stale",
+            detail=(
+                "Saved visual regression report passed "
+                f"{summary['passed']} artifacts but current inventory has "
+                f"{len(expected_ids)}."
+            ),
+        )
+    return None
+
+
+def _saved_passed_artifact_ids(raw_artifacts: Any) -> set[str]:
+    if not isinstance(raw_artifacts, list):
+        return set()
+    return {
+        str(artifact.get("id"))
+        for artifact in raw_artifacts
+        if isinstance(artifact, dict) and artifact.get("status") == "passed"
+    }
 
 
 def _blocker(*, classification: str, detail: str) -> dict[str, Any]:
