@@ -5702,7 +5702,15 @@ private func testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload() throws
     try expectEqual(readiness.firstBlocker?.id, "configured_treatstock_quote")
     try expectEqual(readiness.nextAction?.id, "configured_treatstock_quote")
     try expectEqual(readiness.nextAction?.source, "first_blocker")
-    try expectEqual(readiness.nextAction?.command, "make print-fulfillment-readiness")
+    try expectEqual(
+        readiness.nextAction?.command,
+        "after explicit Treatstock cost consent, save a sanitized services/backend/.local/print-quote-configured.json from POST /v1/print-quotes"
+    )
+    try expectEqual(readiness.nextAction?.requiresCostConsent, true)
+    try expectEqual(
+        readiness.nextAction?.validationCommand,
+        "make print-fulfillment-readiness"
+    )
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.liveProviderCalls)
     try expectFalse(readiness.safety.paymentLinksInReport)
@@ -5717,7 +5725,9 @@ private func testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness() throws
 
     try expectContains(text, "Print fulfillment partial: ready 4, partial 1, blocked 0.")
     try expectContains(text, "configured_treatstock_quote: partial")
-    try expectContains(text, "Next action: make print-fulfillment-readiness")
+    try expectContains(text, "Next action: after explicit Treatstock cost consent")
+    try expectContains(text, "cost consent required")
+    try expectContains(text, "rerun make print-fulfillment-readiness")
     try expectContains(text, "make print-fulfillment-readiness")
 }
 
@@ -7974,7 +7984,7 @@ private func finalDemoLaunchPayload(
     configuredEvidenceBundleBlockerDetail: String = "Final resource fill guide is blocked before configured evidence bundle.",
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
-    printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
+    printFulfillmentReadinessAction: String = "after explicit Treatstock cost consent, save a sanitized services/backend/.local/print-quote-configured.json from POST /v1/print-quotes",
     finalResourceApplyPreviewStatus: String = "missing",
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
@@ -8245,7 +8255,9 @@ private func finalDemoLaunchPayload(
       "classification": "\(printReadinessFirstClassification)",
       "command": "\(printFulfillmentReadinessAction)",
       "detail": "\(printFulfillmentReadinessBlockerDetail)",
-      "source": "first_blocker"
+      "source": "first_blocker",
+      "requires_cost_consent": true,
+      "validation_command": "make print-fulfillment-readiness"
     }
     """
     let printReadinessSummaryJSON = printReadinessReady
@@ -14027,7 +14039,7 @@ private func finalDemoLaunchReport(
     configuredEvidenceBundleBlockerDetail: String = "Final resource fill guide is blocked before configured evidence bundle.",
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
-    printFulfillmentReadinessAction: String = "make print-fulfillment-readiness",
+    printFulfillmentReadinessAction: String = "after explicit Treatstock cost consent, save a sanitized services/backend/.local/print-quote-configured.json from POST /v1/print-quotes",
     finalResourceApplyPreviewStatus: String = "missing",
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",

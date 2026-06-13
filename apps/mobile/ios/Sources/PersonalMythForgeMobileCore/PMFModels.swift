@@ -4514,6 +4514,8 @@ public struct PrintFulfillmentReadinessNextAction: Codable, Equatable, Sendable 
     public var command: String
     public var detail: String
     public var source: String?
+    public var requiresCostConsent: Bool?
+    public var validationCommand: String?
 
     private enum CodingKeys: String, CodingKey {
         case id
@@ -4523,6 +4525,8 @@ public struct PrintFulfillmentReadinessNextAction: Codable, Equatable, Sendable 
         case command
         case detail
         case source
+        case requiresCostConsent
+        case validationCommand
     }
 
     public init(
@@ -4532,7 +4536,9 @@ public struct PrintFulfillmentReadinessNextAction: Codable, Equatable, Sendable 
         classification: String? = nil,
         command: String,
         detail: String,
-        source: String? = nil
+        source: String? = nil,
+        requiresCostConsent: Bool? = nil,
+        validationCommand: String? = nil
     ) {
         self.id = id
         self.label = label
@@ -4541,6 +4547,8 @@ public struct PrintFulfillmentReadinessNextAction: Codable, Equatable, Sendable 
         self.command = command
         self.detail = detail
         self.source = source
+        self.requiresCostConsent = requiresCostConsent
+        self.validationCommand = validationCommand
     }
 
     public init(from decoder: Decoder) throws {
@@ -4552,6 +4560,8 @@ public struct PrintFulfillmentReadinessNextAction: Codable, Equatable, Sendable 
         self.command = try container.decode(String.self, forKey: .command)
         self.detail = try container.decodeIfPresent(String.self, forKey: .detail) ?? ""
         self.source = try container.decodeIfPresent(String.self, forKey: .source)
+        self.requiresCostConsent = try container.decodeIfPresent(Bool.self, forKey: .requiresCostConsent)
+        self.validationCommand = try container.decodeIfPresent(String.self, forKey: .validationCommand)
     }
 }
 

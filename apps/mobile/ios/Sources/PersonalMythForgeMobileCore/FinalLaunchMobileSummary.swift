@@ -1520,6 +1520,16 @@ public enum FinalLaunchMobileSummaryBuilder {
         if !action.detail.isEmpty {
             parts.append("| \(action.detail)")
         }
+        if action.requiresCostConsent == true {
+            parts.append("| cost consent required")
+        }
+        if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
+            if validationCommand.hasPrefix("rerun ") {
+                parts.append("| \(validationCommand)")
+            } else {
+                parts.append("| rerun \(validationCommand)")
+            }
+        }
         return sanitize(parts.joined(separator: " "))
     }
 
