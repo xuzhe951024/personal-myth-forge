@@ -296,6 +296,60 @@ def test_ios_device_launch_certificate_uses_final_demo_child_action_when_handoff
     assert result.report["operator_actions"][0] == deploy_action
 
 
+def test_ios_device_launch_certificate_preserves_backend_device_demo_handoff(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    deploy_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+
+    class StubFinalHandoffResult:
+        report = {
+            "kind": "final_handoff_index_report",
+            "status": "blocked",
+            "summary": {"blocked": 1},
+            "lanes_by_id": {},
+            "operator_actions": [
+                deploy_action,
+                (
+                    "make final-resource-apply-preview; rerun make provider-handoff; "
+                    "rerun make live-provider-evidence"
+                ),
+                (
+                    "after explicit Treatstock cost consent, save a sanitized "
+                    "services/backend/.local/print-quote-configured.json from POST "
+                    "/v1/print-quotes; rerun make print-fulfillment-readiness"
+                ),
+                "make final-configured-preflight; rerun make configured-live-evidence-bundle",
+                "make final-demo-launch-configured",
+                backend_action,
+            ],
+        }
+
+    monkeypatch.setattr(
+        "myth_forge_api.ios_device_launch_certificate.build_final_handoff_index_report",
+        lambda **kwargs: StubFinalHandoffResult(),
+    )
+
+    result = build_ios_device_launch_certificate_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    actions = result.report["operator_actions"]
+    assert actions[0] == deploy_action
+    assert backend_action in actions
+    assert "start backend-device-demo" not in actions
+
+
 def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print_actions(
     tmp_path: Path,
 ) -> None:

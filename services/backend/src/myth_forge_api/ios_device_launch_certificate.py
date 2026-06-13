@@ -304,6 +304,7 @@ def _final_handoff_priority_actions(*reports: dict[str, Any]) -> list[str]:
                 _is_ios_handoff_action(stripped)
                 or _is_provider_handoff_action(stripped)
                 or _is_print_handoff_action(stripped)
+                or _is_backend_device_demo_handoff_action(stripped)
             ):
                 selected.append(stripped)
     preferred = prefer_project_local_ios_deploy_handoff_actions(_dedupe(selected))
@@ -346,6 +347,20 @@ def _is_provider_handoff_action(action: str) -> bool:
 def _is_print_handoff_action(action: str) -> bool:
     lowered = action.lower()
     return any(marker in lowered for marker in CERTIFICATE_PRINT_ACTION_MARKERS)
+
+
+def _is_backend_device_demo_handoff_action(action: str) -> bool:
+    return "backend-device-demo" in action.lower()
+
+
+def _preferred_backend_device_demo_handoff_actions(actions: list[str]) -> list[str]:
+    backend_actions = [
+        action for action in actions if _is_backend_device_demo_handoff_action(action)
+    ]
+    validated_actions = [
+        action for action in backend_actions if "mobile-deploy-preflight" in action.lower()
+    ]
+    return validated_actions or backend_actions
 
 
 def _final_handoff_index_summary(report: dict[str, Any]) -> dict[str, Any]:
@@ -644,9 +659,13 @@ def _prioritize_certificate_operator_actions(actions: list[str]) -> list[str]:
         action for action in rest if _is_provider_handoff_action(action)
     ]
     print_actions = [action for action in rest if _is_print_handoff_action(action)]
-    priority_actions = set(provider_actions + print_actions)
+    raw_backend_actions = [
+        action for action in rest if _is_backend_device_demo_handoff_action(action)
+    ]
+    backend_actions = _preferred_backend_device_demo_handoff_actions(rest)
+    priority_actions = set(provider_actions + print_actions + raw_backend_actions)
     remaining = [action for action in rest if action not in priority_actions]
-    return first_actions + provider_actions + print_actions + remaining
+    return first_actions + provider_actions + print_actions + backend_actions + remaining
 
 
 def _first_blocker(device_gates: list[dict[str, Any]]) -> dict[str, Any] | None:
