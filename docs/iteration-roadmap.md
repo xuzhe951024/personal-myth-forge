@@ -319,6 +319,7 @@ Bridge deliverable:
 - P0.405 final demo launch configured drops stale provider and final-acceptance unblock fallbacks
 - P0.406 iOS deploy runbook exposes device action bundle for physical iPhone handoff
 - P0.407 iOS device evidence bundle exposes device action bundle for physical iPhone proof
+- P0.408 iOS device launch certificate exposes device action bundle for final iPhone operator sequence
 
 ## P1: Mobile Vertical Slice
 

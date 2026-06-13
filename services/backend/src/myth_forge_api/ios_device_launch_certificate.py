@@ -96,6 +96,7 @@ def build_ios_device_launch_certificate_report(
         "next_action": _next_action(first_blocker),
         "certificate": certificate,
         "device_gates": device_gates,
+        "device_action_bundle": _device_action_bundle(device_gates),
         "operator_actions": _operator_actions(device_gates),
         "final_handoff_index": _final_handoff_index_summary(final_handoff_index),
         "ios_deploy_runbook": _ios_deploy_runbook_summary(ios_deploy_runbook),
@@ -532,6 +533,106 @@ def _operator_actions(device_gates: list[dict[str, Any]]) -> list[str]:
         if isinstance(nested_actions, list):
             actions.extend(str(action) for action in nested_actions)
     return _prioritize_certificate_operator_actions(_dedupe(actions))[:6]
+
+
+def _device_action_bundle(device_gates: list[dict[str, Any]]) -> dict[str, Any]:
+    actions = [_device_action(gate) for gate in device_gates]
+    return {
+        "id": "ios_device_launch_certificate_actions",
+        "label": "iOS Device Launch Certificate Actions",
+        "status": _overall_status(device_gates),
+        "actions": actions,
+        "first_action": _first_device_action(actions),
+        "summary": _device_action_summary(actions),
+        "safety": {
+            "commands_run": False,
+            "global_mutation": False,
+            "keychain_writes": False,
+            "live_provider_calls": False,
+            "provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "xcode_or_signing": False,
+        },
+    }
+
+
+def _device_action(gate: dict[str, Any]) -> dict[str, Any]:
+    status = str(gate.get("status", "blocked"))
+    command = _operator_action_for_gate(gate)
+    validation_command = str(gate.get("command", "make ios-device-launch-certificate"))
+    action: dict[str, Any] = {
+        "id": str(gate.get("id", "device_gate")),
+        "label": str(gate.get("label", "Device gate")),
+        "status": status,
+        "classification": _device_action_classification(status, gate),
+        "command": command,
+        "detail": _gate_detail(gate),
+        "required": bool(gate.get("required")),
+        "requires_consent": bool(gate.get("requires_consent")),
+        "manual": status != "ready",
+        "provider_calls": False,
+        "global_action": False,
+        "xcode_or_signing": _is_xcode_or_signing_gate(gate),
+        "validation_command": validation_command,
+    }
+    if status in {"missing", "blocked", "manual", "live"}:
+        action["next_action"] = {
+            "id": action["id"],
+            "label": action["label"],
+            "status": action["status"],
+            "command": command,
+            "detail": action["detail"],
+            "source": "device_action_bundle",
+            "validation_command": validation_command,
+        }
+    return action
+
+
+def _device_action_classification(status: str, gate: dict[str, Any]) -> str:
+    if status == "ready":
+        return "ready"
+    if status in {"missing", "blocked"}:
+        return f"device_gate_{status}"
+    if _is_xcode_or_signing_gate(gate):
+        return "manual_xcode_or_signing_required"
+    if gate.get("requires_consent"):
+        return "live_provider_consent_required"
+    if status == "manual":
+        return "manual_device_step_required"
+    if status == "partial":
+        return "partial_device_gate"
+    return f"device_gate_{status}"
+
+
+def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for action in actions:
+        if not action.get("required"):
+            continue
+        if action.get("status") in {"missing", "blocked"}:
+            return action
+    return None
+
+
+def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action["status"] == "ready"),
+        "missing": sum(1 for action in actions if action["status"] == "missing"),
+        "blocked": sum(1 for action in actions if action["status"] == "blocked"),
+        "manual": sum(1 for action in actions if action.get("manual") is True),
+        "partial": sum(1 for action in actions if action["status"] == "partial"),
+        "live": sum(1 for action in actions if action["status"] == "live"),
+        "provider_calls": sum(1 for action in actions if action["provider_calls"] is True),
+        "global_actions": sum(1 for action in actions if action["global_action"] is True),
+        "xcode_or_signing": sum(
+            1 for action in actions if action["xcode_or_signing"] is True
+        ),
+    }
+
+
+def _is_xcode_or_signing_gate(gate: dict[str, Any]) -> bool:
+    return str(gate.get("id", "")) == "xcode_build_gate"
 
 
 def _prioritize_certificate_operator_actions(actions: list[str]) -> list[str]:

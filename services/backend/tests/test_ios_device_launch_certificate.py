@@ -73,6 +73,56 @@ def test_ios_device_launch_certificate_blocks_missing_inputs_without_leaks(
     assert "sk-" not in report_text
 
 
+def test_ios_device_launch_certificate_exposes_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_ios_device_launch_certificate_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    bundle = result.report["device_action_bundle"]
+    report_text = json.dumps(bundle)
+    deploy_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    assert bundle["id"] == "ios_device_launch_certificate_actions"
+    assert bundle["label"] == "iOS Device Launch Certificate Actions"
+    assert bundle["status"] == "blocked"
+    assert bundle["first_action"]["id"] == "final_handoff_index"
+    assert bundle["first_action"]["command"] == deploy_action
+    assert bundle["first_action"]["validation_command"] == "make final-handoff-index"
+    assert bundle["first_action"]["next_action"] == {
+        "id": "final_handoff_index",
+        "label": "Final handoff index",
+        "status": "blocked",
+        "command": deploy_action,
+        "detail": "Refreshes the unified local/configured handoff index.",
+        "source": "device_action_bundle",
+        "validation_command": "make final-handoff-index",
+    }
+    assert bundle["summary"]["actions"] == len(result.report["device_gates"])
+    assert bundle["summary"]["blocked"] >= 1
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["summary"]["global_actions"] == 0
+    assert bundle["summary"]["xcode_or_signing"] == 1
+    assert bundle["safety"] == {
+        "commands_run": False,
+        "global_mutation": False,
+        "keychain_writes": False,
+        "live_provider_calls": False,
+        "provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "xcode_or_signing": False,
+    }
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+
+
 def test_ios_device_launch_certificate_ready_with_configured_inputs(
     tmp_path: Path,
 ) -> None:
@@ -137,6 +187,13 @@ def test_ios_device_launch_certificate_ready_with_configured_inputs(
     assert gates["backend_device_server"]["status"] == "manual"
     assert gates["xcode_build_gate"]["status"] == "manual"
     assert gates["configured_final_acceptance"]["requires_consent"] is True
+    bundle = result.report["device_action_bundle"]
+    assert bundle["id"] == "ios_device_launch_certificate_actions"
+    assert bundle["status"] == "ready"
+    assert bundle["first_action"] is None
+    assert bundle["summary"]["actions"] == len(result.report["device_gates"])
+    assert bundle["summary"]["provider_calls"] == 0
+    assert all(action["provider_calls"] is False for action in bundle["actions"])
     assert result.report["operator_sequence"][0]["command"] == (
         "make ios-device-launch-certificate"
     )
