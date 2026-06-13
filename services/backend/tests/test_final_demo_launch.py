@@ -1111,6 +1111,52 @@ def test_final_demo_launch_promotes_final_showcase_handoff_actions(
     assert "refresh unrelated visual proof" not in actions
 
 
+def test_final_demo_launch_prefers_showcase_provider_child_action(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    provider_handoff_action = (
+        "make provider-handoff; rerun make live-provider-evidence"
+    )
+    provider_child_action = (
+        "make final-resource-apply-preview; rerun make live-provider-evidence"
+    )
+
+    def build_showcase_readiness(**_: object) -> final_demo_launch.FinalDemoLaunchResult:
+        return final_demo_launch.FinalDemoLaunchResult(
+            exit_code=2,
+            report={
+                "kind": "final_showcase_readiness_report",
+                "status": "blocked",
+                "operator_actions": [
+                    provider_handoff_action,
+                    provider_child_action,
+                ],
+                "capabilities_by_id": {
+                    "ios_deployable": {"status": "blocked"},
+                },
+                "safety": {"commands_run": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        final_demo_launch,
+        "build_final_showcase_readiness_report",
+        build_showcase_readiness,
+    )
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    actions = result.report["operator_actions"]
+    assert provider_child_action in actions
+    assert provider_handoff_action not in actions
+
+
 def test_final_demo_launch_operator_handoff_includes_three_d_evaluation_step(
     tmp_path: Path,
 ) -> None:

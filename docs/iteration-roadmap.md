@@ -304,6 +304,7 @@ Bridge deliverable:
 - P0.390 provider handoff actions align with ignored final resources
 - P0.391 iOS deploy runbook surfaces concrete final resource blockers
 - P0.392 final showcase live provider rows inherit provider handoff child actions
+- P0.393 final demo launch prefers provider handoff child actions
 
 ## P1: Mobile Vertical Slice
 

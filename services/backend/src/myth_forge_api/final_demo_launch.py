@@ -552,7 +552,24 @@ def _final_showcase_handoff_actions(report: dict[str, Any]) -> list[str]:
             for marker in FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS
         ):
             selected.append(raw_action)
-    return selected[:FINAL_SHOWCASE_HANDOFF_ACTION_LIMIT]
+    return _prefer_showcase_provider_child_actions(
+        selected,
+    )[:FINAL_SHOWCASE_HANDOFF_ACTION_LIMIT]
+
+
+def _prefer_showcase_provider_child_actions(actions: list[str]) -> list[str]:
+    has_provider_child_action = any(
+        _operator_action_command(action) != PROVIDER_HANDOFF_COMMAND
+        and "make live-provider-evidence" in action
+        for action in actions
+    )
+    if not has_provider_child_action:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_command(action) != PROVIDER_HANDOFF_COMMAND
+    ]
 
 
 def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:
