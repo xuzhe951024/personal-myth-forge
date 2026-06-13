@@ -317,6 +317,80 @@ def test_final_local_report_refresh_operator_actions_prioritize_provider_and_pri
     assert len(actions) == 12
 
 
+def test_final_local_report_refresh_operator_actions_promote_final_demo_handoff_actions() -> None:
+    live_child_action = (
+        "make final-resource-apply-preview; rerun make live-provider-evidence"
+    )
+    print_action = (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_resource_requirements",
+                "status": "blocked",
+                "command": "provide MESHY_API_KEY in final-resources.env",
+                "validation_command": "make final-resources-preflight",
+            },
+            {
+                "id": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "command": (
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "make mobile-write-deploy-config-auto"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+            },
+            {
+                "id": "provider_handoff",
+                "status": "blocked",
+                "command": "make final-resource-apply-preview",
+                "validation_command": "make provider-handoff",
+            },
+            {
+                "id": "final_demo_launch_local",
+                "status": "blocked",
+                "command": (
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "make mobile-write-deploy-config-auto"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+                "report_operator_actions": [
+                    live_child_action,
+                    print_action,
+                ],
+            },
+            *[
+                {
+                    "id": f"blocked_step_{index}",
+                    "status": "blocked",
+                    "command": f"make blocked-step-{index}",
+                }
+                for index in range(10)
+            ],
+        ],
+    )
+
+    assert actions[:2] == [
+        (
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
+    ]
+    assert live_child_action in actions
+    assert print_action in actions
+    assert actions.index(live_child_action) < actions.index("make blocked-step-0")
+    assert actions.index(print_action) < actions.index("make blocked-step-0")
+
+
 def test_final_local_report_refresh_operator_actions_drop_bare_action_roots() -> None:
     actions = final_local_report_refresh._operator_actions(
         [
