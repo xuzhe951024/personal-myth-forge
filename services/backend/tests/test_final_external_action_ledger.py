@@ -300,6 +300,42 @@ def test_external_action_ledger_uses_concrete_global_xcode_actions(
     assert actions["run_xcode_build_gate"]["xcode_or_signing"] is True
 
 
+def test_external_action_ledger_exposes_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    report_text = json.dumps(result.report)
+    bundle = result.report["device_action_bundle"]
+
+    assert bundle["id"] == "final_external_action_ledger_device_actions"
+    assert bundle["label"] == "Final External Action Ledger Device Actions"
+    assert bundle["source_report"] == "ios_deploy_runbook"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"]["actions"] >= 4
+    assert bundle["summary"]["xcode_or_signing"] == 1
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["summary"]["global_actions"] == 0
+    assert bundle["first_action"]["id"] == "write_development_team"
+    assert bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert bundle["first_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert bundle["safety"]["commands_run"] is False
+    assert bundle["safety"]["provider_calls"] is False
+    assert bundle["safety"]["xcode_or_signing"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+    assert "meshy-secret" not in report_text
+
+
 def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks(
     tmp_path: Path,
 ) -> None:

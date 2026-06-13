@@ -325,6 +325,7 @@ Bridge deliverable:
 - P0.411 final demo launch exposes device action bundle for iPhone status handoff
 - P0.412 final local report refresh exposes device action bundle
 - P0.413 final handoff index exposes device action bundle
+- P0.414 final external action ledger exposes device action bundle
 
 ## P1: Mobile Vertical Slice
 
