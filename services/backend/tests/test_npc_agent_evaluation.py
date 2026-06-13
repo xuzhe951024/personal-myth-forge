@@ -20,6 +20,7 @@ def test_npc_agent_evaluation_default_suite_builds_rich_safe_report() -> None:
     report_text = json.dumps(report)
 
     assert report["kind"] == "npc_agent_evaluation_report"
+    assert report["status"] == "succeeded"
     assert report["suite"] == "default-v0"
     assert report["provider"] == "local"
     assert report["tick_steps"] == 2
@@ -75,6 +76,7 @@ def test_npc_agent_evaluation_sanitizes_provider_errors() -> None:
     )
     report_text = json.dumps(report)
 
+    assert report["status"] == "failed"
     assert report["failed"] == 1
     assert report["cases"][0]["status"] == "failed"
     assert "[withheld]" in report["cases"][0]["error"]

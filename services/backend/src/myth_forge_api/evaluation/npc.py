@@ -182,15 +182,18 @@ def run_npc_agent_evaluation(
     cases: tuple[NPCAgentEvaluationCase, ...],
 ) -> dict[str, object]:
     case_reports = [_run_case(director, tick_runtime, case, tick_steps) for case in cases]
+    succeeded = sum(1 for case in case_reports if case["status"] == "succeeded")
+    failed = sum(1 for case in case_reports if case["status"] == "failed")
     return _sanitize_report(
         {
             "kind": "npc_agent_evaluation_report",
+            "status": "failed" if failed else "succeeded",
             "suite": suite_name,
             "provider": selected_provider,
             "tick_steps": tick_steps,
             "total_cases": len(cases),
-            "succeeded": sum(1 for case in case_reports if case["status"] == "succeeded"),
-            "failed": sum(1 for case in case_reports if case["status"] == "failed"),
+            "succeeded": succeeded,
+            "failed": failed,
             "coverage": _coverage(case_reports),
             "review_rubric": REVIEW_RUBRIC,
             "safety": {
