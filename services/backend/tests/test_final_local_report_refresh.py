@@ -201,6 +201,39 @@ def test_final_local_report_refresh_exposes_showcase_next_action(
     }
 
 
+def test_final_local_report_refresh_exposes_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = run_final_local_report_refresh(repo_root=repo_root)
+    report_text = json.dumps(result.report)
+
+    bundle = result.report["device_action_bundle"]
+
+    assert bundle["id"] == "final_local_report_refresh_device_actions"
+    assert bundle["label"] == "Final Local Report Refresh Device Actions"
+    assert bundle["source_report"] == "final_demo_launch_local"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"]["actions"] == 4
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["summary"]["global_actions"] == 0
+    assert bundle["summary"]["xcode_or_signing"] == 1
+    assert bundle["first_action"]["id"] == "run_mobile_deploy_preflight"
+    assert bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert bundle["first_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert bundle["safety"]["commands_run"] is False
+    assert bundle["safety"]["provider_calls"] is False
+    assert bundle["safety"]["xcode_or_signing"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+    assert "meshy-secret" not in report_text
+
+
 def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     tmp_path: Path,
 ) -> None:
