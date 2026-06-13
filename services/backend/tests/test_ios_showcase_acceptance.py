@@ -202,6 +202,43 @@ def test_mobile_preflight_evidence_source_gates_require_top_level_action() -> No
     ) in requirements
 
 
+def test_device_evidence_make_source_gates_require_safe_wrappers() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    device_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["mobile_final_showcase_device_action_bundle"].requirements
+    }
+    showcase_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_showcase_readiness_ledger"].requirements
+    }
+
+    assert (
+        "Makefile",
+        "write_mobile_deploy_preflight_evidence.sh",
+    ) in device_requirements
+    assert (
+        "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh",
+        ".local/mobile-deploy-preflight-evidence.json",
+    ) in device_requirements
+    assert (
+        "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh",
+        "accepted mobile deploy preflight evidence exit code",
+    ) in device_requirements
+    assert (
+        "Makefile",
+        "write_final_showcase_readiness.sh",
+    ) in showcase_requirements
+    assert (
+        "services/backend/scripts/write_final_showcase_readiness.sh",
+        ".local/final-showcase-readiness.json",
+    ) in showcase_requirements
+    assert (
+        "services/backend/scripts/write_final_showcase_readiness.sh",
+        "accepted final showcase readiness exit code",
+    ) in showcase_requirements
+
+
 def test_final_showcase_concrete_next_action_source_gate() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1503,6 +1540,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final-demo-launch-local: "
             "final-demo-launch: final-demo-launch-local "
             "services/backend/scripts/write_final_local_report_refresh.sh "
+            "services/backend/scripts/write_final_showcase_readiness.sh "
+            "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh "
             "final-rehearsal-local: backend-evaluate-local visual-regression-local "
             "final-acceptance-local final-demo-launch-local ios-deploy-runbook-local "
             "final-local-report-refresh-local "
@@ -1530,6 +1569,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/scripts/write_final_launch_closure_packet.sh": (
             "accepted final launch closure packet exit code $status "
             "services/backend/.local/final-launch-closure-packet.json"
+        ),
+        "services/backend/scripts/write_final_showcase_readiness.sh": (
+            "accepted final showcase readiness exit code $status "
+            "services/backend/.local/final-showcase-readiness.json"
+        ),
+        "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh": (
+            "accepted mobile deploy preflight evidence exit code $status "
+            "services/backend/.local/mobile-deploy-preflight-evidence.json"
         ),
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
             "three_d_evaluation LOCAL_THREE_D_EVALUATION_COMMAND "

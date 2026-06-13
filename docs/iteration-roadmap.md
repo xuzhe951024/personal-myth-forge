@@ -379,6 +379,7 @@ Bridge deliverable:
 - P0.465 Final launch closure packet operator actions prioritize device blockers before provider keys
 - P0.466 Final external action ledger prioritizes device blockers before provider keys
 - P0.467 Safe Make wrappers accept blocked final handoff reports while writing local evidence
+- P0.468 Safe Make wrappers accept blocked iPhone device evidence reports while writing local evidence
 
 ## P1: Mobile Vertical Slice
 

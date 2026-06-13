@@ -142,6 +142,61 @@ def test_write_final_local_report_refresh_fails_unusable_exit_code(
     )
 
 
+def test_write_mobile_deploy_preflight_evidence_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_mobile_deploy_preflight_evidence.sh")
+
+    assert result.returncode == 0
+    assert "accepted mobile deploy preflight evidence exit code 2" in result.stdout
+    assert (
+        "services/backend/.local/mobile-deploy-preflight-evidence.json"
+        in result.stdout
+    )
+
+
+def test_write_mobile_deploy_preflight_evidence_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_mobile_deploy_preflight_evidence.sh")
+
+    assert result.returncode == 1
+    assert (
+        "mobile deploy preflight evidence failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
+def test_write_final_showcase_readiness_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_final_showcase_readiness.sh")
+
+    assert result.returncode == 0
+    assert "accepted final showcase readiness exit code 2" in result.stdout
+    assert "services/backend/.local/final-showcase-readiness.json" in result.stdout
+
+
+def test_write_final_showcase_readiness_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_final_showcase_readiness.sh")
+
+    assert result.returncode == 1
+    assert (
+        "final showcase readiness failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
 def test_write_final_external_action_ledger_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:
@@ -507,6 +562,60 @@ def test_final_launch_closure_packet_wrapper_is_executable() -> None:
     repo_root = Path(__file__).resolve().parents[3]
 
     wrapper = repo_root / "services/backend/scripts/write_final_launch_closure_packet.sh"
+
+    assert os.access(wrapper, os.X_OK)
+
+
+def test_mobile_deploy_preflight_evidence_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "mobile-deploy-preflight-evidence"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    assert ".PHONY: mobile-deploy-preflight-evidence" in makefile
+    assert "mobile-deploy-preflight-evidence:" in makefile
+    assert "write_mobile_deploy_preflight_evidence.sh" in result.stdout
+
+
+def test_mobile_deploy_preflight_evidence_wrapper_is_executable() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    wrapper = (
+        repo_root / "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh"
+    )
+
+    assert os.access(wrapper, os.X_OK)
+
+
+def test_final_showcase_readiness_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "final-showcase-readiness"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    assert ".PHONY: final-showcase-readiness" in makefile
+    assert "final-showcase-readiness:" in makefile
+    assert "write_final_showcase_readiness.sh" in result.stdout
+
+
+def test_final_showcase_readiness_wrapper_is_executable() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    wrapper = repo_root / "services/backend/scripts/write_final_showcase_readiness.sh"
 
     assert os.access(wrapper, os.X_OK)
 
