@@ -1040,6 +1040,60 @@ def test_ios_device_launch_rehearsal_readiness_exposes_first_blocker_and_next_ac
     }
 
 
+def test_ios_device_launch_rehearsal_readiness_exposes_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["summary"] = {"ready": 1, "blocked": 1, "manual": 1}
+    payload["sequence"] = [
+        {
+            "id": "final_rehearsal_local",
+            "label": "Local final rehearsal",
+            "status": "blocked",
+            "classification": "saved_report_set",
+            "command": "make final-rehearsal-local",
+            "detail": "mobile deploy preflight still blocked",
+        },
+        {
+            "id": "ios_device_launch_certificate",
+            "label": "iOS device launch certificate",
+            "status": "ready",
+            "classification": "saved_report_ready",
+            "command": "make ios-device-launch-certificate",
+        },
+    ]
+    payload["operator_actions"] = [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+        )
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    bundle = result.report["device_action_bundle"]
+
+    assert bundle["id"] == "ios_device_launch_rehearsal_readiness_actions"
+    assert bundle["status"] == "blocked"
+    assert bundle["source_report"] == "ios_device_launch_rehearsal_readiness"
+    assert bundle["summary"]["actions"] == 2
+    assert bundle["summary"]["blocked"] == 1
+    assert bundle["first_action"]["id"] == "final_rehearsal_local"
+    assert bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+    )
+    assert bundle["first_action"]["validation_command"] == (
+        "make ios-device-launch-rehearsal"
+    )
+    assert bundle["first_action"]["next_action"]["source"] == "device_action_bundle"
+    assert bundle["safety"]["commands_run"] is False
+    assert bundle["safety"]["provider_calls"] is False
+    assert bundle["safety"]["xcode_or_signing"] is False
+
+
 def test_ios_device_launch_rehearsal_readiness_sanitizes_sequence_detail(
     tmp_path: Path,
 ) -> None:

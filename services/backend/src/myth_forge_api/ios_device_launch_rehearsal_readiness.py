@@ -178,6 +178,11 @@ def _base_report(
         first_blocker=first_blocker,
         operator_actions=operator_actions,
     )
+    device_action_bundle = _device_action_bundle(
+        status=status,
+        sequence=sequence,
+        operator_actions=operator_actions,
+    )
     report = {
         "kind": "ios_device_launch_rehearsal_readiness_report",
         "status": status,
@@ -188,6 +193,7 @@ def _base_report(
         "blockers": blockers,
         "first_blocker": first_blocker,
         "next_action": next_action,
+        "device_action_bundle": device_action_bundle,
         "operator_actions": operator_actions,
         "commands": commands,
         "safety": _safety(saved_safety),
@@ -235,6 +241,136 @@ def _next_action(
 def _structured_next_action_command(action: str) -> str:
     command, _separator, _detail = action.partition(" | ")
     return command.strip()
+
+
+def _device_action_bundle(
+    *,
+    status: str,
+    sequence: list[dict[str, Any]],
+    operator_actions: list[str],
+) -> dict[str, Any]:
+    first_operator_action = operator_actions[0] if operator_actions else None
+    actions = [
+        _device_action(
+            row,
+            command_override=first_operator_action if index == 0 else None,
+        )
+        for index, row in enumerate(sequence)
+    ]
+    if not actions:
+        actions = [
+            _device_action(
+                {
+                    "id": "run_ios_device_launch_rehearsal",
+                    "label": "Run iOS device launch rehearsal",
+                    "status": "missing",
+                    "classification": "missing_saved_report",
+                    "command": IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND,
+                    "detail": (
+                        "Regenerate the saved iOS device launch rehearsal report."
+                    ),
+                },
+                command_override=None,
+            )
+        ]
+    return {
+        "id": "ios_device_launch_rehearsal_readiness_actions",
+        "label": "iOS Device Launch Rehearsal Readiness Actions",
+        "source_report": "ios_device_launch_rehearsal_readiness",
+        "status": status,
+        "actions": actions,
+        "first_action": _first_device_action(actions),
+        "summary": _device_action_summary(actions),
+        "safety": {
+            "commands_run": False,
+            "global_mutation": False,
+            "keychain_writes": False,
+            "live_provider_calls": False,
+            "provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "xcode_or_signing": False,
+        },
+    }
+
+
+def _device_action(
+    row: dict[str, Any],
+    *,
+    command_override: str | None,
+) -> dict[str, Any]:
+    action_status = str(row.get("status", "blocked"))
+    command = (
+        _structured_next_action_command(command_override)
+        if command_override
+        else str(row.get("command", IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND))
+    )
+    action: dict[str, Any] = {
+        "id": str(row.get("id", "device_action")),
+        "label": str(row.get("label", row.get("id", "Device action"))),
+        "status": action_status,
+        "classification": str(row.get("classification", "saved_report")),
+        "command": command,
+        "detail": str(row.get("detail", "")),
+        "source": "ios_device_launch_rehearsal_readiness",
+        "blocks": ["ios_deployable", "functional_regression"],
+        "manual": action_status != "ready",
+        "provider_calls": False,
+        "global_action": False,
+        "xcode_or_signing": _is_xcode_or_signing_action(row),
+        "validation_command": IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND,
+    }
+    if action_status != "ready":
+        action["next_action"] = {
+            "id": action["id"],
+            "label": action["label"],
+            "status": action["status"],
+            "command": action["command"],
+            "detail": action["detail"],
+            "source": "device_action_bundle",
+            "validation_command": action["validation_command"],
+        }
+    return action
+
+
+def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
+    return next(
+        (action for action in actions if action["status"] != "ready"),
+        actions[0] if actions else None,
+    )
+
+
+def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action["status"] == "ready"),
+        "missing": sum(1 for action in actions if action["status"] == "missing"),
+        "blocked": sum(1 for action in actions if action["status"] == "blocked"),
+        "manual": sum(1 for action in actions if action.get("manual") is True),
+        "partial": sum(1 for action in actions if action["status"] == "partial"),
+        "live": sum(1 for action in actions if action["status"] == "live"),
+        "provider_calls": sum(
+            1 for action in actions if action["provider_calls"] is True
+        ),
+        "global_actions": sum(
+            1 for action in actions if action["global_action"] is True
+        ),
+        "xcode_or_signing": sum(
+            1 for action in actions if action["xcode_or_signing"] is True
+        ),
+    }
+
+
+def _is_xcode_or_signing_action(row: dict[str, Any]) -> bool:
+    text = " ".join(
+        [
+            str(row.get("id", "")),
+            str(row.get("classification", "")),
+            str(row.get("command", "")),
+            str(row.get("detail", "")),
+        ]
+    ).lower()
+    return "xcode" in text or "signing" in text
 
 
 def _summary(raw_summary: Any) -> dict[str, int]:

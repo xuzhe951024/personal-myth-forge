@@ -3626,6 +3626,7 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
     public var blockers: [ThreeDEvaluationReadinessBlocker]
     public var firstBlocker: IOSDeviceLaunchRehearsalAction?
     public var nextAction: IOSDeviceLaunchRehearsalAction?
+    public var deviceActionBundle: FinalShowcaseDeviceActionBundle?
     public var operatorActions: [String]
     public var commands: [String]
     public var safety: IOSDeviceLaunchRehearsalSafety
@@ -3640,6 +3641,7 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
         blockers: [ThreeDEvaluationReadinessBlocker] = [],
         firstBlocker: IOSDeviceLaunchRehearsalAction? = nil,
         nextAction: IOSDeviceLaunchRehearsalAction? = nil,
+        deviceActionBundle: FinalShowcaseDeviceActionBundle? = nil,
         operatorActions: [String],
         commands: [String],
         safety: IOSDeviceLaunchRehearsalSafety
@@ -3653,6 +3655,7 @@ public struct IOSDeviceLaunchRehearsalReadinessReport: Codable, Equatable, Senda
         self.blockers = blockers
         self.firstBlocker = firstBlocker
         self.nextAction = nextAction
+        self.deviceActionBundle = deviceActionBundle
         self.operatorActions = operatorActions
         self.commands = commands
         self.safety = safety

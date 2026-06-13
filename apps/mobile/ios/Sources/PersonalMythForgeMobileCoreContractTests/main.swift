@@ -6253,6 +6253,15 @@ private func testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload(
         try require(readiness.nextAction?.command, "missing rehearsal next action command"),
         "rerun make mobile-deploy-preflight"
     )
+    try expectEqual(
+        readiness.deviceActionBundle?.id,
+        "ios_device_launch_rehearsal_readiness_actions"
+    )
+    try expectEqual(readiness.deviceActionBundle?.firstAction.id, "final_handoff_index")
+    try expectEqual(
+        readiness.deviceActionBundle?.firstAction.validationCommand,
+        "make ios-device-launch-rehearsal"
+    )
     try expectFalse(readiness.safety.commandsRun)
     try expectFalse(readiness.safety.providerCalls)
 }
@@ -6340,6 +6349,8 @@ private func testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal() 
     try expectContains(text, "make final-handoff-index")
     try expectContains(text, "Final handoff index is stale; rerun safe refresh.")
     try expectContains(text, "refresh final handoff index")
+    try expectContains(text, "Device actions blocked")
+    try expectContains(text, "make ios-device-launch-rehearsal")
 }
 
 private func testFinalLaunchMobileSummaryShowsMultipleIOSDeviceLaunchRehearsalActions() throws {
@@ -10404,6 +10415,66 @@ private func finalDemoLaunchPayload(
               }
             ]
             """),
+            "device_action_bundle": {
+              "id": "ios_device_launch_rehearsal_readiness_actions",
+              "label": "iOS Device Launch Rehearsal Readiness Actions",
+              "source_report": "ios_device_launch_rehearsal_readiness",
+              "status": "\(iosDeviceLaunchRehearsalStatus)",
+              "summary": {
+                "actions": 1,
+                "ready": \(iosDeviceLaunchRehearsalStatus == "ready" ? "1" : "0"),
+                "missing": \(iosDeviceLaunchRehearsalStatus == "missing" ? "1" : "0"),
+                "blocked": \(iosDeviceLaunchRehearsalStatus == "blocked" ? "1" : "0"),
+                "manual": \(iosDeviceLaunchRehearsalStatus == "ready" ? "0" : "1"),
+                "partial": \(iosDeviceLaunchRehearsalStatus == "partial" ? "1" : "0"),
+                "live": 0,
+                "provider_calls": 0,
+                "global_actions": 0,
+                "xcode_or_signing": 0
+              },
+              "first_action": {
+                "id": "final_handoff_index",
+                "label": "Final handoff index",
+                "status": "\(iosDeviceLaunchRehearsalStatus == "ready" ? "ready" : "blocked")",
+                "classification": "saved_report",
+                "command": "\(iosDeviceLaunchRehearsalAction)",
+                "detail": "\(iosDeviceLaunchRehearsalDetail)",
+                "source": "ios_device_launch_rehearsal_readiness",
+                "validation_command": "make ios-device-launch-rehearsal",
+                "blocks": ["ios_deployable"],
+                "manual": \(iosDeviceLaunchRehearsalStatus == "ready" ? "false" : "true"),
+                "provider_calls": false,
+                "global_action": false,
+                "xcode_or_signing": false
+              },
+              "actions": [
+                {
+                  "id": "final_handoff_index",
+                  "label": "Final handoff index",
+                  "status": "\(iosDeviceLaunchRehearsalStatus == "ready" ? "ready" : "blocked")",
+                  "classification": "saved_report",
+                  "command": "\(iosDeviceLaunchRehearsalAction)",
+                  "detail": "\(iosDeviceLaunchRehearsalDetail)",
+                  "source": "ios_device_launch_rehearsal_readiness",
+                  "validation_command": "make ios-device-launch-rehearsal",
+                  "blocks": ["ios_deployable"],
+                  "manual": \(iosDeviceLaunchRehearsalStatus == "ready" ? "false" : "true"),
+                  "provider_calls": false,
+                  "global_action": false,
+                  "xcode_or_signing": false
+                }
+              ],
+              "safety": {
+                "commands_run": false,
+                "global_mutation": false,
+                "provider_calls": false,
+                "live_provider_calls": false,
+                "writes_backend_env": false,
+                "writes_ios_deploy_config": false,
+                "xcode_or_signing": false,
+                "keychain_writes": false
+              }
+            },
             "first_blocker": \(iosDeviceLaunchRehearsalStatus == "ready" || iosDeviceLaunchRehearsalStatus == "missing" ? "null" : """
             {
               "id": "final_handoff_index",

@@ -1566,6 +1566,8 @@ public enum FinalLaunchMobileSummaryBuilder {
                 evidence += " | \(validationCommand)"
             }
             parts.append("| \(evidence)")
+        } else if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
+            parts.append("| \(validationCommand)")
         }
         if let evidenceDetail = action.evidenceDetail, !evidenceDetail.isEmpty {
             parts.append("| \(evidenceDetail)")
@@ -1887,6 +1889,7 @@ public enum FinalLaunchMobileSummaryBuilder {
                 rows.append(contentsOf: attentionRows)
                 rows.append(contentsOf: readiness.operatorActions.prefix(3).map(sanitize))
             }
+            rows.append(contentsOf: showcaseDeviceActionBundleRows(readiness.deviceActionBundle))
         default:
             if let action = readiness.operatorActions.first {
                 rows.append(sanitize(action))
