@@ -342,6 +342,7 @@ Bridge deliverable:
 - P0.428 iPhone Final Launch shows final local refresh source
 - P0.429 final local refresh syncs iPhone final demo launch source
 - P0.430 iOS device launch rehearsal readiness exposes device action bundle
+- P0.431 iOS rehearsal readiness syncs iPhone final demo launch source
 
 ## P1: Mobile Vertical Slice
 

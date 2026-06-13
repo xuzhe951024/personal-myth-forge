@@ -221,6 +221,36 @@ def test_write_ios_device_launch_rehearsal_syncs_final_launch_after_rehearsal(
     assert "--output .local/final-demo-launch-local.json" in fake_uv_args
 
 
+def test_write_ios_device_launch_rehearsal_readiness_syncs_final_launch(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(
+        script_repo,
+        "write_ios_device_launch_rehearsal_readiness.sh",
+    )
+    fake_uv_args = (
+        script_repo / "services/backend/.local/fake-uv-args.txt"
+    ).read_text(encoding="utf-8")
+
+    assert result.returncode == 0
+    assert (
+        "accepted iOS device launch rehearsal readiness exit code 2"
+        in result.stdout
+    )
+    assert (
+        "wrote services/backend/.local/ios-device-launch-rehearsal-readiness.json"
+        in result.stdout
+    )
+    assert "wrote services/backend/.local/final-demo-launch-local.json" in result.stdout
+    readiness_index = fake_uv_args.index("ios-device-launch-rehearsal-readiness")
+    launch_index = fake_uv_args.index("final-demo-launch --mode local")
+    assert readiness_index < launch_index
+    assert "--output .local/ios-device-launch-rehearsal-readiness.json" in fake_uv_args
+    assert "--output .local/final-demo-launch-local.json" in fake_uv_args
+
+
 def test_write_ios_device_launch_rehearsal_fails_unusable_exit_code(
     script_repo: Path,
 ) -> None:

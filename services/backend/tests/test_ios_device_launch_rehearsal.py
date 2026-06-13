@@ -840,8 +840,10 @@ def test_ios_device_launch_rehearsal_readiness_cli_writes_report_and_makefile_ta
         encoding="utf-8"
     )
     assert "ios-device-launch-rehearsal-readiness:" in makefile
-    assert "ios-device-launch-rehearsal-readiness --repo-root ../.." in makefile
-    assert "--output .local/ios-device-launch-rehearsal-readiness.json" in makefile
+    assert (
+        "services/backend/scripts/write_ios_device_launch_rehearsal_readiness.sh"
+        in makefile
+    )
 
 
 def test_ios_device_launch_rehearsal_readiness_missing_file_has_unknown_freshness(
