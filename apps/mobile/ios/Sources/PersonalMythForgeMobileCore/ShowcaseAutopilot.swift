@@ -108,6 +108,18 @@ public enum ShowcaseAutopilotPlanner {
                 return waiting("Check NPC Eval", "Review NPC evaluation readiness: \(npcEvaluationStep.detail)")
             }
         }
+        if let externalActionsStep = script.step(id: "external_actions") {
+            switch externalActionsStep.status {
+            case .complete:
+                break
+            case .blocked:
+                return blocked("Check Actions", "Review external action blockers: \(externalActionsStep.detail)")
+            case .waiting:
+                return waiting("Check Actions", "Load external action readiness: \(externalActionsStep.detail)")
+            case .current, .optional:
+                return waiting("Check Actions", "Review external action readiness: \(externalActionsStep.detail)")
+            }
+        }
         if let launchStep = script.step(id: "final_launch") {
             switch launchStep.status {
             case .complete:

@@ -366,6 +366,7 @@ Bridge deliverable:
 - P0.452 iPhone Final Launch shows external ledger backend-device-demo handoff
 - P0.453 iPhone Device Preflight shows external action ledger backend-device-demo handoff
 - P0.454 iPhone Final Showcase summary shows external action ledger backend-device-demo handoff
+- P0.455 iPhone Demo Script and autopilot show external action ledger backend-device-demo handoff
 
 ## P1: Mobile Vertical Slice
 

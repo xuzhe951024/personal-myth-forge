@@ -284,6 +284,8 @@ do {
     try testDemoScriptShowsReadyNPCEvaluationBeforeFinalLaunch()
     try testDemoScriptWaitsForMissingNPCEvaluation()
     try testDemoScriptBlocksAndRedactsFailedNPCEvaluation()
+    try testDemoScriptShowsBlockedExternalActionsBeforeFinalLaunch()
+    try testDemoScriptCompletesReadyExternalActionsBeforeFinalLaunch()
     try testShowcaseAutopilotBlocksUntilCaptureReady()
     try testShowcaseAutopilotPlansForgeWhenCaptureReady()
     try testShowcaseAutopilotPlansBackendAutonomyForReadySession()
@@ -296,6 +298,7 @@ do {
     try testShowcaseAutopilotBlocksOnFailedThreeDEvaluation()
     try testShowcaseAutopilotWaitsForMissingNPCEvaluation()
     try testShowcaseAutopilotBlocksOnFailedNPCEvaluation()
+    try testShowcaseAutopilotBlocksOnExternalActions()
     try testShowcaseAutopilotDisablesWhileBusy()
     try testShowcaseAutopilotRedactsUnsafeText()
     try testEncodesPrintQuoteRequestAsSnakeCase()
@@ -1687,7 +1690,8 @@ private func testFinalShowcaseSummaryIncludesBlockedFinalLaunchDigest() throws {
             overallStatus: "blocked",
             finalAcceptanceStatus: "blocked",
             threeDEvaluationStatus: "ready",
-            npcEvaluationStatus: "ready"
+            npcEvaluationStatus: "ready",
+            externalActionLedgerStatus: "ready"
         ),
         error: nil
     )
@@ -6948,7 +6952,8 @@ private func testDemoScriptShowsBlockedFinalLaunch() throws {
             overallStatus: "blocked",
             finalAcceptanceStatus: "blocked",
             threeDEvaluationStatus: "ready",
-            npcEvaluationStatus: "ready"
+            npcEvaluationStatus: "ready",
+            externalActionLedgerStatus: "ready"
         ),
         error: nil
     )
@@ -7227,6 +7232,71 @@ private func testDemoScriptBlocksAndRedactsFailedNPCEvaluation() throws {
     try expectNotContains(detail, "private_message:")
 }
 
+private func testDemoScriptShowsBlockedExternalActionsBeforeFinalLaunch() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let backendAction = "backend-device-demo: manual | make backend-device-demo | verify iPhone reaches Mac backend"
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            externalActionLedgerActions: [
+                "provide_MESHY_API_KEY: missing | make final-resources-preflight",
+                backendAction,
+            ]
+        ),
+        error: nil
+    )
+
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        finalLaunchSummary: finalLaunch
+    )
+    let ids = script.steps.map(\.id)
+    let externalIndex = try require(ids.firstIndex(of: "external_actions"), "missing external actions step")
+    let launchIndex = try require(ids.firstIndex(of: "final_launch"), "missing final launch step")
+    let step = try require(script.step(id: "external_actions"), "missing external actions step")
+
+    try expectEqual(step.label, "External Actions")
+    try expectEqual(step.status, .blocked)
+    try expectContains(step.detail, "External actions blocked")
+    try expectContains(step.detail, backendAction)
+    try expectTrue(externalIndex < launchIndex)
+    try expectEqual(script.nextAction, "Review external action blockers.")
+}
+
+private func testDemoScriptCompletesReadyExternalActionsBeforeFinalLaunch() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let finalLaunch = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            overallStatus: "ready",
+            finalResourcesStatus: "ready",
+            finalAcceptanceStatus: "ready",
+            threeDEvaluationStatus: "ready",
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready"
+        ),
+        error: nil
+    )
+
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        finalLaunchSummary: finalLaunch
+    )
+
+    try expectEqual(script.step(id: "external_actions")?.status, .complete)
+    try expectContains(script.step(id: "external_actions")?.detail ?? "", "External actions ready")
+    try expectEqual(script.step(id: "final_launch")?.status, .complete)
+    try expectEqual(script.nextAction, "Final launch is ready.")
+}
+
 private func testShowcaseAutopilotBlocksUntilCaptureReady() throws {
     let script = demoScript(captureSelection: CaptureMediaSelection(mode: .singlePhoto))
 
@@ -7311,7 +7381,8 @@ private func testShowcaseAutopilotBlocksOnFinalLaunchBlocker() throws {
                 overallStatus: "blocked",
                 finalAcceptanceStatus: "blocked",
                 threeDEvaluationStatus: "ready",
-                npcEvaluationStatus: "ready"
+                npcEvaluationStatus: "ready",
+                externalActionLedgerStatus: "ready"
             ),
             error: nil
         )
@@ -7491,6 +7562,41 @@ private func testShowcaseAutopilotBlocksOnFailedNPCEvaluation() throws {
 
     try expectEqual(plan.action, .blocked)
     try expectEqual(plan.buttonTitle, "Check NPC Eval")
+}
+
+private func testShowcaseAutopilotBlocksOnExternalActions() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let quote = localPrintQuote()
+    let backendAction = "backend-device-demo: manual | make backend-device-demo | verify iPhone reaches Mac backend"
+    let script = demoScript(
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote,
+        finalLaunchSummary: FinalLaunchMobileSummaryBuilder.build(
+            report: finalDemoLaunchReport(
+                overallStatus: "blocked",
+                finalResourcesStatus: "ready",
+                finalAcceptanceStatus: "ready",
+                threeDEvaluationStatus: "ready",
+                npcEvaluationStatus: "ready",
+                finalOperatorHandoffStatus: "ready",
+                externalActionLedgerActions: [backendAction]
+            ),
+            error: nil
+        )
+    )
+
+    let plan = autopilotPlan(
+        script: script,
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: quote
+    )
+
+    try expectEqual(plan.action, .blocked)
+    try expectEqual(plan.buttonTitle, "Check Actions")
+    try expectContains(plan.detail, "backend-device-demo")
+    try expectContains(plan.detail, "External actions")
 }
 
 private func testShowcaseAutopilotDisablesWhileBusy() throws {
@@ -8153,6 +8259,7 @@ private func finalDemoLaunchPayload(
     resourceHandoffFirstBlockerJSON: String = "null",
     resourceHandoffNextActionJSON: String = "null",
     resourceHandoffDestination: String = "services/backend/.env",
+    externalActionLedgerStatus: String? = nil,
     externalActionLedgerCommand: String = "make final-external-action-ledger",
     externalActionLedgerDetail: String = "Inspect external action blockers.",
     externalActionLedgerActions: [String]? = nil,
@@ -8199,8 +8306,9 @@ private func finalDemoLaunchPayload(
         decoding: try! PMFJSON.encoder.encode(finalShowcaseActions),
         as: UTF8.self
     )
-    let externalActionLedgerReady = overallStatus == "ready"
-    let externalActionLedgerStatus = externalActionLedgerReady ? "ready" : "blocked"
+    let effectiveExternalActionLedgerStatus = externalActionLedgerStatus
+        ?? (overallStatus == "ready" ? "ready" : "blocked")
+    let externalActionLedgerReady = effectiveExternalActionLedgerStatus == "ready"
     let effectiveExternalActionLedgerActions = externalActionLedgerActions
         ?? (externalActionLedgerReady ? [] : [externalActionLedgerDetail])
     let externalActionLedgerActionsJSON = String(
@@ -9006,7 +9114,7 @@ private func finalDemoLaunchPayload(
           },
           "final_external_action_ledger": {
             "kind": "final_external_action_ledger_report",
-            "status": "\(externalActionLedgerStatus)",
+            "status": "\(effectiveExternalActionLedgerStatus)",
             "summary": \(externalActionLedgerSummaryJSON),
             "first_blocker": \(externalActionLedgerFirstBlockerJSON),
             "next_action": \(externalActionLedgerNextActionJSON),
@@ -14256,6 +14364,7 @@ private func finalDemoLaunchReport(
     resourceHandoffFirstBlockerJSON: String = "null",
     resourceHandoffNextActionJSON: String = "null",
     resourceHandoffDestination: String = "services/backend/.env",
+    externalActionLedgerStatus: String? = nil,
     externalActionLedgerCommand: String = "make final-external-action-ledger",
     externalActionLedgerDetail: String = "Inspect external action blockers.",
     externalActionLedgerActions: [String]? = nil,
@@ -14358,6 +14467,7 @@ private func finalDemoLaunchReport(
             resourceHandoffFirstBlockerJSON: resourceHandoffFirstBlockerJSON,
             resourceHandoffNextActionJSON: resourceHandoffNextActionJSON,
             resourceHandoffDestination: resourceHandoffDestination,
+            externalActionLedgerStatus: externalActionLedgerStatus,
             externalActionLedgerCommand: externalActionLedgerCommand,
             externalActionLedgerDetail: externalActionLedgerDetail,
             externalActionLedgerActions: externalActionLedgerActions,

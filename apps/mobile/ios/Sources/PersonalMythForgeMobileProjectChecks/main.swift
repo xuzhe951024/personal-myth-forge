@@ -3437,8 +3437,10 @@ do {
     try requireContains(demoScript, "final_launch", "demo script final launch step")
     try requireContains(demoScript, "three_d_evaluation", "demo script 3D evaluation step")
     try requireContains(demoScript, "npc_evaluation", "demo script NPC evaluation step")
+    try requireContains(demoScript, "external_actions", "demo script external actions step")
     try requireContains(demoScript, "threeDEvaluationStep", "demo script 3D evaluation builder")
     try requireContains(demoScript, "npcEvaluationStep", "demo script NPC evaluation builder")
+    try requireContains(demoScript, "externalActionsStep", "demo script external actions builder")
     try requireContains(demoScript, "FinalLaunchMobileSummary", "demo script final launch summary input")
     try requireContains(
         demoScript,
@@ -3461,6 +3463,11 @@ do {
         showcaseAutopilot,
         #"script.step(id: "npc_evaluation")"#,
         "autopilot NPC evaluation step handling"
+    )
+    try requireContains(
+        showcaseAutopilot,
+        #"script.step(id: "external_actions")"#,
+        "autopilot external actions step handling"
     )
     try requireContains(
         contractTests,
@@ -3499,6 +3506,16 @@ do {
     )
     try requireContains(
         contractTests,
+        "testDemoScriptShowsBlockedExternalActionsBeforeFinalLaunch",
+        "demo script external actions blocked contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDemoScriptCompletesReadyExternalActionsBeforeFinalLaunch",
+        "demo script external actions ready contract test"
+    )
+    try requireContains(
+        contractTests,
         "testShowcaseAutopilotBlocksOnFinalLaunchBlocker",
         "autopilot final launch contract test"
     )
@@ -3521,6 +3538,11 @@ do {
         contractTests,
         "testShowcaseAutopilotBlocksOnFailedNPCEvaluation",
         "autopilot blocked NPC evaluation contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testShowcaseAutopilotBlocksOnExternalActions",
+        "autopilot external actions contract test"
     )
     try requireContains(demoSnapshotStatusView, "Restored Demo Run", "demo snapshot restored label")
     try requireContains(demoSnapshotStatusView, "Clear", "demo snapshot clear action")
