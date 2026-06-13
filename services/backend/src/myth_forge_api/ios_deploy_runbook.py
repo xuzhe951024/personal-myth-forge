@@ -123,12 +123,12 @@ def _input_slots(
     npc_evaluation: dict[str, Any],
 ) -> list[dict[str, Any]]:
     return [
-        _final_resources_slot(final_resources),
+        _final_resources_slot(mode=mode, final_resources=final_resources),
         _slot(
             slot_id="final_resource_apply_preview",
             label="Final resource apply preview",
             status=str(final_resource_apply_preview.get("status", "missing")),
-            required=True,
+            required=mode == "configured",
             source="services/backend/.local/final-resource-apply-preview.json",
             action="make final-resource-apply-preview",
         ),
@@ -192,7 +192,11 @@ def _input_slots(
     ]
 
 
-def _final_resources_slot(final_resources: dict[str, Any]) -> dict[str, Any]:
+def _final_resources_slot(
+    *,
+    mode: LaunchMode,
+    final_resources: dict[str, Any],
+) -> dict[str, Any]:
     resources_file = final_resources.get("resources_file", {})
     resources_path = str(
         resources_file.get(
@@ -210,7 +214,7 @@ def _final_resources_slot(final_resources: dict[str, Any]) -> dict[str, Any]:
         slot_id="final_resources_env",
         label="Final resources env",
         status=str(final_resources.get("status", "missing")),
-        required=True,
+        required=mode == "configured",
         source=resources_path,
         action=action,
         classification=classification,
@@ -371,25 +375,34 @@ def _command_sequence(
         _command_step(
             "final_resources_preflight",
             "Check final resources",
-            str(slots["final_resources_env"]["status"]),
+            _resource_command_status(
+                mode=mode,
+                status=str(slots["final_resources_env"]["status"]),
+            ),
             "make final-resources-preflight",
             "Validate ignored final resources file without applying it.",
         ),
         _command_step(
             "preview_final_resource_apply",
             "Preview final resource apply",
-            str(slots["final_resource_apply_preview"]["status"]),
+            _resource_command_status(
+                mode=mode,
+                status=str(slots["final_resource_apply_preview"]["status"]),
+            ),
             "make final-resource-apply-preview",
             "Preview backend .env and iOS deploy config writes without running writer scripts.",
         ),
         _command_step(
             "apply_final_resources",
             "Apply final resources",
-            _combined_status(
-                [
-                    str(slots["final_resources_env"]["status"]),
-                    str(slots["final_resource_apply_preview"]["status"]),
-                ]
+            _resource_command_status(
+                mode=mode,
+                status=_combined_status(
+                    [
+                        str(slots["final_resources_env"]["status"]),
+                        str(slots["final_resource_apply_preview"]["status"]),
+                    ]
+                ),
             ),
             "make final-apply-resources",
             "Write only ignored backend and iOS local config files.",
@@ -430,6 +443,12 @@ def _command_sequence(
         )
     )
     return sequence
+
+
+def _resource_command_status(*, mode: LaunchMode, status: str) -> str:
+    if mode == "configured":
+        return status
+    return "ready" if status == "ready" else "partial"
 
 
 def _command_step(

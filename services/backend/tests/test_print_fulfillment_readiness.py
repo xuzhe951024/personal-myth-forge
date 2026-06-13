@@ -5,6 +5,7 @@ from myth_forge_api.config import Settings
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
 )
+from myth_forge_api.visual_regression import DEFAULT_VISUAL_ARTIFACTS
 
 
 def test_print_fulfillment_readiness_blocks_missing_local_evidence(tmp_path: Path) -> None:
@@ -185,14 +186,15 @@ def _write_visual_regression_fixture(repo_root: Path) -> None:
         {
             "kind": "visual_regression_report",
             "status": "passed",
-            "summary": {"passed": 1, "failed": 0},
+            "summary": {"passed": len(DEFAULT_VISUAL_ARTIFACTS), "failed": 0},
             "artifacts": [
                 {
-                    "id": "p0.101_print_fulfillment_receipt",
+                    "id": artifact.id,
                     "status": "passed",
-                    "html_path": "docs/superpowers/verification/p0.101-print-fulfillment-receipt.html",
-                    "png_path": "docs/superpowers/verification/assets/p0.101-print-fulfillment-receipt.png",
+                    "html_path": artifact.html_path,
+                    "png_path": artifact.png_path,
                 }
+                for artifact in DEFAULT_VISUAL_ARTIFACTS
             ],
         },
     )

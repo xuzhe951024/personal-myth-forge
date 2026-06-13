@@ -40,7 +40,7 @@ def test_configured_live_evidence_bundle_blocks_missing_resources_without_runnin
             "make final-resources-preflight"
         ),
         "make final-resource-apply-preview",
-        "make final-configured-preflight",
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle",
         "make provider-handoff",
         "make backend-evaluate-3d-configured",
         "make backend-evaluate-npc-configured",

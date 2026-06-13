@@ -335,7 +335,7 @@ def test_normalizes_final_resource_requirements_action_to_make_target() -> None:
 def test_normalizes_final_handoff_make_wrappers_to_make_targets() -> None:
     assert normalize_operator_action(
         "run make final-configured-preflight"
-    ) == "make final-configured-preflight"
+    ) == "make final-configured-preflight; rerun make configured-live-evidence-bundle"
     assert normalize_operator_action(
         "final_handoff_index: run make final-demo-launch-configured"
     ) == "final_handoff_index: make final-demo-launch-configured"

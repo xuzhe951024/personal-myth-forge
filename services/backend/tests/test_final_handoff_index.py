@@ -56,7 +56,7 @@ def test_final_handoff_index_blocks_missing_reports_without_leaks(
     ) in result.report["operator_actions"]
     assert result.report["operator_actions"][:2] == [
         "make final-rehearsal-local",
-        "make final-configured-preflight",
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle",
     ]
     assert result.report["safety"]["provider_calls"] is False
     assert result.report["safety"]["commands_run"] is False
@@ -292,7 +292,9 @@ def test_final_handoff_index_promotes_provider_and_print_handoff_from_final_demo
     assert provider_action in actions
     assert print_action in actions
     assert actions.index(provider_action) < actions.index(print_action)
-    assert actions.index(print_action) < actions.index("make final-configured-preflight")
+    assert actions.index(print_action) < actions.index(
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    )
 
 
 def test_final_handoff_index_exposes_device_action_bundle(
