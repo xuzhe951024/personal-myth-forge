@@ -359,6 +359,7 @@ Bridge deliverable:
 - P0.445 final local refresh prefers complete provider handoff chain
 - P0.446 configured preflight actions include evidence bundle validation
 - P0.447 final local refresh drops duplicate backend demo action
+- P0.448 local final demo launch shows backend-device-demo handoff
 
 ## P1: Mobile Vertical Slice
 

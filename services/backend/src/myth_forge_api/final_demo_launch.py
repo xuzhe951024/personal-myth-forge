@@ -54,6 +54,7 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
 from myth_forge_api.operator_actions import (
+    BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
     add_final_resource_validation_command,
     normalize_operator_action,
     prefer_project_local_ios_deploy_handoff_actions,
@@ -511,6 +512,7 @@ def _operator_checklist(
     phases: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
+    actions.extend(_local_backend_device_demo_actions(mode=mode, phases=phases))
     actions.extend(final_resources_preflight.get("operator_actions", []))
     actions.extend(final_resource_requirements.get("operator_actions", []))
     if mode == "configured":
@@ -536,6 +538,22 @@ def _operator_checklist(
             final_resource_requirements=final_resource_requirements,
         )
     )
+
+
+def _local_backend_device_demo_actions(
+    *,
+    mode: LaunchMode,
+    phases: list[dict[str, Any]],
+) -> list[str]:
+    if mode != "local":
+        return []
+    for phase in phases:
+        if (
+            phase.get("id") == "mobile_deploy_preflight"
+            and phase.get("status") in {"blocked", "missing"}
+        ):
+            return [BACKEND_DEVICE_DEMO_VALIDATED_ACTION]
+    return []
 
 
 def _operator_actions(

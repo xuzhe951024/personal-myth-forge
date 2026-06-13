@@ -364,6 +364,26 @@ def test_local_final_demo_launch_is_no_key_ready_but_surfaces_ios_actions(
     )
 
 
+def test_local_final_demo_launch_operator_actions_include_backend_device_demo_handoff(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    expected = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    assert expected in result.report["operator_actions"]
+    assert "make backend-device-demo" not in result.report["operator_actions"]
+
+
 def test_local_final_demo_launch_exposes_status_alias(
     tmp_path: Path,
 ) -> None:
