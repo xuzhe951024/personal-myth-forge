@@ -21,23 +21,34 @@ FINAL_RESOURCE_TEMPLATE_PATH = "services/backend/final-resources.env.example"
 FINAL_RESOURCE_APPLY_PATH = "services/backend/scripts/apply_final_resources.sh"
 FINAL_RESOURCE_APPLY_MAKE_TARGET = "final-apply-resources"
 RESOURCE_HANDOFF_PATH = "services/backend/src/myth_forge_api/resource_handoff.py"
+RESOURCE_HANDOFF_SCRIPT_PATH = "services/backend/scripts/write_resource_handoff.sh"
 RESOURCE_HANDOFF_MAKE_TARGET = "resource-handoff"
 RESOURCE_HANDOFF_OUTPUT = ".local/resource-handoff.json"
 FINAL_RESOURCES_PREFLIGHT_PATH = (
     "services/backend/src/myth_forge_api/final_resources_preflight.py"
+)
+FINAL_RESOURCES_PREFLIGHT_SCRIPT_PATH = (
+    "services/backend/scripts/write_final_resources_preflight.sh"
 )
 FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET = "final-resources-preflight"
 FINAL_RESOURCES_PREFLIGHT_OUTPUT = ".local/final-resources-preflight.json"
 FINAL_CONFIGURED_PREFLIGHT_PATH = (
     "services/backend/src/myth_forge_api/final_configured_preflight.py"
 )
+FINAL_CONFIGURED_PREFLIGHT_SCRIPT_PATH = (
+    "services/backend/scripts/write_final_configured_preflight.sh"
+)
 FINAL_CONFIGURED_PREFLIGHT_MAKE_TARGET = "final-configured-preflight"
 FINAL_CONFIGURED_PREFLIGHT_OUTPUT = ".local/final-configured-preflight.json"
 FINAL_HANDOFF_INDEX_PATH = "services/backend/src/myth_forge_api/final_handoff_index.py"
+FINAL_HANDOFF_INDEX_SCRIPT_PATH = "services/backend/scripts/write_final_handoff_index.sh"
 FINAL_HANDOFF_INDEX_MAKE_TARGET = "final-handoff-index"
 FINAL_HANDOFF_INDEX_OUTPUT = ".local/final-handoff-index.json"
 IOS_DEVICE_LAUNCH_CERTIFICATE_PATH = (
     "services/backend/src/myth_forge_api/ios_device_launch_certificate.py"
+)
+IOS_DEVICE_LAUNCH_CERTIFICATE_SCRIPT_PATH = (
+    "services/backend/scripts/write_ios_device_launch_certificate.sh"
 )
 IOS_DEVICE_LAUNCH_CERTIFICATE_MAKE_TARGET = "ios-device-launch-certificate"
 IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT = ".local/ios-device-launch-certificate.json"
@@ -165,19 +176,39 @@ def run_resource_template_acceptance(
     resource_handoff_text, resource_handoff_exists = _read_optional_text(
         selected_repo_root / RESOURCE_HANDOFF_PATH
     )
+    resource_handoff_script_text, resource_handoff_script_exists = _read_optional_text(
+        selected_repo_root / RESOURCE_HANDOFF_SCRIPT_PATH
+    )
     final_resources_preflight_text, final_resources_preflight_exists = (
         _read_optional_text(selected_repo_root / FINAL_RESOURCES_PREFLIGHT_PATH)
     )
+    (
+        final_resources_preflight_script_text,
+        final_resources_preflight_script_exists,
+    ) = _read_optional_text(selected_repo_root / FINAL_RESOURCES_PREFLIGHT_SCRIPT_PATH)
     final_configured_preflight_text, final_configured_preflight_exists = (
         _read_optional_text(selected_repo_root / FINAL_CONFIGURED_PREFLIGHT_PATH)
     )
+    (
+        final_configured_preflight_script_text,
+        final_configured_preflight_script_exists,
+    ) = _read_optional_text(selected_repo_root / FINAL_CONFIGURED_PREFLIGHT_SCRIPT_PATH)
     final_handoff_index_text, final_handoff_index_exists = _read_optional_text(
         selected_repo_root / FINAL_HANDOFF_INDEX_PATH
+    )
+    final_handoff_index_script_text, final_handoff_index_script_exists = (
+        _read_optional_text(selected_repo_root / FINAL_HANDOFF_INDEX_SCRIPT_PATH)
     )
     (
         ios_device_launch_certificate_text,
         ios_device_launch_certificate_exists,
     ) = _read_optional_text(selected_repo_root / IOS_DEVICE_LAUNCH_CERTIFICATE_PATH)
+    (
+        ios_device_launch_certificate_script_text,
+        ios_device_launch_certificate_script_exists,
+    ) = _read_optional_text(
+        selected_repo_root / IOS_DEVICE_LAUNCH_CERTIFICATE_SCRIPT_PATH
+    )
     (
         ios_device_launch_rehearsal_text,
         ios_device_launch_rehearsal_exists,
@@ -251,6 +282,8 @@ def run_resource_template_acceptance(
     resource_handoff_checks = _resource_handoff_checks(
         module_text=resource_handoff_text,
         module_exists=resource_handoff_exists,
+        script_text=resource_handoff_script_text,
+        script_exists=resource_handoff_script_exists,
         cli_text=cli_text,
         cli_exists=cli_exists,
         makefile_text=makefile_text,
@@ -259,6 +292,8 @@ def run_resource_template_acceptance(
     final_resources_preflight_checks = _final_resources_preflight_checks(
         module_text=final_resources_preflight_text,
         module_exists=final_resources_preflight_exists,
+        script_text=final_resources_preflight_script_text,
+        script_exists=final_resources_preflight_script_exists,
         cli_text=cli_text,
         cli_exists=cli_exists,
         final_demo_launch_text=final_demo_launch_text,
@@ -276,6 +311,8 @@ def run_resource_template_acceptance(
     final_configured_preflight_checks = _final_configured_preflight_checks(
         module_text=final_configured_preflight_text,
         module_exists=final_configured_preflight_exists,
+        script_text=final_configured_preflight_script_text,
+        script_exists=final_configured_preflight_script_exists,
         cli_text=cli_text,
         cli_exists=cli_exists,
         makefile_text=makefile_text,
@@ -284,6 +321,8 @@ def run_resource_template_acceptance(
     final_handoff_index_checks = _final_handoff_index_checks(
         module_text=final_handoff_index_text,
         module_exists=final_handoff_index_exists,
+        script_text=final_handoff_index_script_text,
+        script_exists=final_handoff_index_script_exists,
         cli_text=cli_text,
         cli_exists=cli_exists,
         makefile_text=makefile_text,
@@ -292,6 +331,8 @@ def run_resource_template_acceptance(
     ios_device_launch_certificate_checks = _ios_device_launch_certificate_checks(
         module_text=ios_device_launch_certificate_text,
         module_exists=ios_device_launch_certificate_exists,
+        script_text=ios_device_launch_certificate_script_text,
+        script_exists=ios_device_launch_certificate_script_exists,
         cli_text=cli_text,
         cli_exists=cli_exists,
         makefile_text=makefile_text,
@@ -404,16 +445,20 @@ def run_resource_template_acceptance(
         },
         "resource_handoff": {
             "path": RESOURCE_HANDOFF_PATH,
+            "script_path": RESOURCE_HANDOFF_SCRIPT_PATH,
             "make_target": RESOURCE_HANDOFF_MAKE_TARGET,
             "output_path": RESOURCE_HANDOFF_OUTPUT,
             "exists": resource_handoff_exists,
+            "script_exists": resource_handoff_script_exists,
             "checks": resource_handoff_checks,
         },
         "final_resources_preflight": {
             "path": FINAL_RESOURCES_PREFLIGHT_PATH,
+            "script_path": FINAL_RESOURCES_PREFLIGHT_SCRIPT_PATH,
             "make_target": FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET,
             "output_path": FINAL_RESOURCES_PREFLIGHT_OUTPUT,
             "exists": final_resources_preflight_exists,
+            "script_exists": final_resources_preflight_script_exists,
             "checks": final_resources_preflight_checks,
         },
         "final_demo_launch": {
@@ -424,23 +469,29 @@ def run_resource_template_acceptance(
         },
         "final_configured_preflight": {
             "path": FINAL_CONFIGURED_PREFLIGHT_PATH,
+            "script_path": FINAL_CONFIGURED_PREFLIGHT_SCRIPT_PATH,
             "make_target": FINAL_CONFIGURED_PREFLIGHT_MAKE_TARGET,
             "output_path": FINAL_CONFIGURED_PREFLIGHT_OUTPUT,
             "exists": final_configured_preflight_exists,
+            "script_exists": final_configured_preflight_script_exists,
             "checks": final_configured_preflight_checks,
         },
         "final_handoff_index": {
             "path": FINAL_HANDOFF_INDEX_PATH,
+            "script_path": FINAL_HANDOFF_INDEX_SCRIPT_PATH,
             "make_target": FINAL_HANDOFF_INDEX_MAKE_TARGET,
             "output_path": FINAL_HANDOFF_INDEX_OUTPUT,
             "exists": final_handoff_index_exists,
+            "script_exists": final_handoff_index_script_exists,
             "checks": final_handoff_index_checks,
         },
         "ios_device_launch_certificate": {
             "path": IOS_DEVICE_LAUNCH_CERTIFICATE_PATH,
+            "script_path": IOS_DEVICE_LAUNCH_CERTIFICATE_SCRIPT_PATH,
             "make_target": IOS_DEVICE_LAUNCH_CERTIFICATE_MAKE_TARGET,
             "output_path": IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT,
             "exists": ios_device_launch_certificate_exists,
+            "script_exists": ios_device_launch_certificate_script_exists,
             "checks": ios_device_launch_certificate_checks,
         },
         "ios_device_launch_rehearsal": {
@@ -578,6 +629,19 @@ def _backend_writer_checks(
     }
 
 
+def _script_accepts_blocked_report(
+    script_text: str,
+    *,
+    accepted_text: str,
+    output_text: str,
+) -> bool:
+    return (
+        '"$status" -eq 2' in script_text
+        and accepted_text in script_text
+        and output_text in script_text
+    )
+
+
 def _final_resource_apply_checks(
     *,
     template_text: str,
@@ -610,23 +674,33 @@ def _final_resources_preflight_checks(
     *,
     module_text: str,
     module_exists: bool,
+    script_text: str,
+    script_exists: bool,
     cli_text: str,
     cli_exists: bool,
     final_demo_launch_text: str,
     makefile_text: str,
     makefile_exists: bool,
 ) -> dict[str, bool]:
-    checked_text = "\n".join([module_text, final_demo_launch_text, makefile_text])
+    checked_text = "\n".join(
+        [module_text, final_demo_launch_text, script_text, makefile_text]
+    )
     return {
         "module_exists": module_exists,
+        "script_exists": script_exists,
         "cli_command": cli_exists
         and "final-resources-preflight" in cli_text
         and "build_final_resources_preflight_report" in cli_text,
         "make_target": makefile_exists
         and FINAL_RESOURCES_PREFLIGHT_MAKE_TARGET in makefile_text
-        and "myth_forge_api.cli final-resources-preflight" in makefile_text,
-        "output_path": makefile_exists
-        and FINAL_RESOURCES_PREFLIGHT_OUTPUT in makefile_text,
+        and FINAL_RESOURCES_PREFLIGHT_SCRIPT_PATH in makefile_text,
+        "output_path": script_exists
+        and FINAL_RESOURCES_PREFLIGHT_OUTPUT in script_text,
+        "script_accepts_blocked_report": _script_accepts_blocked_report(
+            script_text,
+            accepted_text="accepted final resources preflight exit code $status",
+            output_text="final-resources-preflight.json",
+        ),
         "launch_integration": "build_final_resources_preflight_report"
         in final_demo_launch_text
         and "final_resources_preflight" in final_demo_launch_text,
@@ -640,21 +714,29 @@ def _resource_handoff_checks(
     *,
     module_text: str,
     module_exists: bool,
+    script_text: str,
+    script_exists: bool,
     cli_text: str,
     cli_exists: bool,
     makefile_text: str,
     makefile_exists: bool,
 ) -> dict[str, bool]:
-    checked_text = makefile_text
+    checked_text = "\n".join([script_text, makefile_text])
     return {
         "module_exists": module_exists,
+        "script_exists": script_exists,
         "cli_command": cli_exists
         and "resource-handoff" in cli_text
         and "build_resource_handoff_report" in cli_text,
         "make_target": makefile_exists
         and RESOURCE_HANDOFF_MAKE_TARGET in makefile_text
-        and "myth_forge_api.cli resource-handoff" in makefile_text,
-        "output_path": makefile_exists and RESOURCE_HANDOFF_OUTPUT in makefile_text,
+        and RESOURCE_HANDOFF_SCRIPT_PATH in makefile_text,
+        "output_path": script_exists and RESOURCE_HANDOFF_OUTPUT in script_text,
+        "script_accepts_blocked_report": _script_accepts_blocked_report(
+            script_text,
+            accepted_text="accepted resource handoff exit code $status",
+            output_text="resource-handoff.json",
+        ),
         "no_banned_commands": not any(
             banned in checked_text for banned in BANNED_WRITER_TEXT
         ),
@@ -695,21 +777,29 @@ def _final_configured_preflight_checks(
     *,
     module_text: str,
     module_exists: bool,
+    script_text: str,
+    script_exists: bool,
     cli_text: str,
     cli_exists: bool,
     makefile_text: str,
     makefile_exists: bool,
 ) -> dict[str, bool]:
-    checked_text = "\n".join([module_text, makefile_text])
+    checked_text = "\n".join([module_text, script_text, makefile_text])
     return {
         "module_exists": module_exists,
+        "script_exists": script_exists,
         "cli_command": cli_exists
         and "final-configured-preflight" in cli_text
         and "build_final_configured_preflight_report" in cli_text,
         "make_target": makefile_exists
         and FINAL_CONFIGURED_PREFLIGHT_MAKE_TARGET in makefile_text
-        and "myth_forge_api.cli final-configured-preflight" in makefile_text,
-        "output_path": FINAL_CONFIGURED_PREFLIGHT_OUTPUT in makefile_text,
+        and FINAL_CONFIGURED_PREFLIGHT_SCRIPT_PATH in makefile_text,
+        "output_path": FINAL_CONFIGURED_PREFLIGHT_OUTPUT in script_text,
+        "script_accepts_blocked_report": _script_accepts_blocked_report(
+            script_text,
+            accepted_text="accepted final configured preflight exit code $status",
+            output_text="final-configured-preflight.json",
+        ),
         "composes_handoff_reports": all(
             text in module_text
             for text in [
@@ -740,21 +830,29 @@ def _final_handoff_index_checks(
     *,
     module_text: str,
     module_exists: bool,
+    script_text: str,
+    script_exists: bool,
     cli_text: str,
     cli_exists: bool,
     makefile_text: str,
     makefile_exists: bool,
 ) -> dict[str, bool]:
-    checked_text = "\n".join([module_text, makefile_text])
+    checked_text = "\n".join([module_text, script_text, makefile_text])
     return {
         "module_exists": module_exists,
+        "script_exists": script_exists,
         "cli_command": cli_exists
         and "final-handoff-index" in cli_text
         and "build_final_handoff_index_report" in cli_text,
         "make_target": makefile_exists
         and FINAL_HANDOFF_INDEX_MAKE_TARGET in makefile_text
-        and "myth_forge_api.cli final-handoff-index" in makefile_text,
-        "output_path": FINAL_HANDOFF_INDEX_OUTPUT in makefile_text,
+        and FINAL_HANDOFF_INDEX_SCRIPT_PATH in makefile_text,
+        "output_path": FINAL_HANDOFF_INDEX_OUTPUT in script_text,
+        "script_accepts_blocked_report": _script_accepts_blocked_report(
+            script_text,
+            accepted_text="accepted final handoff index exit code $status",
+            output_text="final-handoff-index.json",
+        ),
         "composes_handoff_reports": all(
             text in module_text
             for text in [
@@ -795,21 +893,29 @@ def _ios_device_launch_certificate_checks(
     *,
     module_text: str,
     module_exists: bool,
+    script_text: str,
+    script_exists: bool,
     cli_text: str,
     cli_exists: bool,
     makefile_text: str,
     makefile_exists: bool,
 ) -> dict[str, bool]:
-    checked_text = "\n".join([module_text, makefile_text])
+    checked_text = "\n".join([module_text, script_text, makefile_text])
     return {
         "module_exists": module_exists,
+        "script_exists": script_exists,
         "cli_command": cli_exists
         and "ios-device-launch-certificate" in cli_text
         and "build_ios_device_launch_certificate_report" in cli_text,
         "make_target": makefile_exists
         and IOS_DEVICE_LAUNCH_CERTIFICATE_MAKE_TARGET in makefile_text
-        and "myth_forge_api.cli ios-device-launch-certificate" in makefile_text,
-        "output_path": IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT in makefile_text,
+        and IOS_DEVICE_LAUNCH_CERTIFICATE_SCRIPT_PATH in makefile_text,
+        "output_path": IOS_DEVICE_LAUNCH_CERTIFICATE_OUTPUT in script_text,
+        "script_accepts_blocked_report": _script_accepts_blocked_report(
+            script_text,
+            accepted_text="accepted iOS device launch certificate exit code $status",
+            output_text="ios-device-launch-certificate.json",
+        ),
         "composes_device_reports": all(
             text in module_text
             for text in [

@@ -504,13 +504,17 @@ def test_cli_provider_handoff_prints_json_to_stdout(capsys, monkeypatch) -> None
 
 
 def test_makefile_exposes_provider_handoff_target() -> None:
-    makefile = Path(__file__).resolve().parents[3] / "Makefile"
-    text = makefile.read_text(encoding="utf-8")
+    repo_root = Path(__file__).resolve().parents[3]
+    text = (repo_root / "Makefile").read_text(encoding="utf-8")
+    wrapper = (
+        repo_root / "services/backend/scripts/write_provider_handoff.sh"
+    ).read_text(encoding="utf-8")
 
     assert "provider-handoff:" in text
-    assert "myth_forge_api.cli provider-handoff" in text
-    assert "--require-core-real" in text
-    assert ".local/provider-handoff.json" in text
+    assert "services/backend/scripts/write_provider_handoff.sh" in text
+    assert "myth_forge_api.cli provider-handoff" in wrapper
+    assert "--require-core-real" in wrapper
+    assert ".local/provider-handoff.json" in wrapper
 
 
 def test_cli_resource_handoff_writes_report(tmp_path, monkeypatch) -> None:

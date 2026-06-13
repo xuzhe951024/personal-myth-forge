@@ -8,6 +8,64 @@ from pathlib import Path
 import pytest
 
 
+PROVIDER_HANDOFF_SAFE_WRAPPERS = [
+    (
+        "provider-handoff",
+        "write_provider_handoff.sh",
+        "accepted provider handoff exit code 2",
+        "services/backend/.local/provider-handoff.json",
+    ),
+    (
+        "resource-handoff",
+        "write_resource_handoff.sh",
+        "accepted resource handoff exit code 2",
+        "services/backend/.local/resource-handoff.json",
+    ),
+    (
+        "final-resources-preflight",
+        "write_final_resources_preflight.sh",
+        "accepted final resources preflight exit code 2",
+        "services/backend/.local/final-resources-preflight.json",
+    ),
+    (
+        "final-resource-requirements",
+        "write_final_resource_requirements.sh",
+        "accepted final resource requirements exit code 2",
+        "services/backend/.local/final-resource-requirements.json",
+    ),
+    (
+        "final-resource-apply-preview",
+        "write_final_resource_apply_preview.sh",
+        "accepted final resource apply preview exit code 2",
+        "services/backend/.local/final-resource-apply-preview.json",
+    ),
+    (
+        "final-configured-preflight",
+        "write_final_configured_preflight.sh",
+        "accepted final configured preflight exit code 2",
+        "services/backend/.local/final-configured-preflight.json",
+    ),
+    (
+        "final-configured-evidence-plan",
+        "write_final_configured_evidence_plan.sh",
+        "accepted final configured evidence plan exit code 2",
+        "services/backend/.local/final-configured-evidence-plan.json",
+    ),
+    (
+        "configured-live-evidence-bundle",
+        "write_configured_live_evidence_bundle.sh",
+        "accepted configured live evidence bundle exit code 2",
+        "services/backend/.local/configured-live-evidence-bundle.json",
+    ),
+    (
+        "live-provider-evidence",
+        "write_live_provider_evidence.sh",
+        "accepted live provider evidence exit code 2",
+        "services/backend/.local/live-provider-evidence.json",
+    ),
+]
+
+
 def test_write_final_acceptance_local_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:
@@ -462,6 +520,47 @@ def test_write_ios_device_launch_rehearsal_readiness_syncs_final_launch(
     assert "--output .local/final-demo-launch-local.json" in fake_uv_args
 
 
+@pytest.mark.parametrize(
+    ("target", "script_name", "accepted_message", "output_path"),
+    PROVIDER_HANDOFF_SAFE_WRAPPERS,
+)
+def test_provider_handoff_safe_wrappers_accept_blocked_report_exit_code(
+    script_repo: Path,
+    target: str,
+    script_name: str,
+    accepted_message: str,
+    output_path: str,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, script_name)
+
+    assert result.returncode == 0, target
+    assert accepted_message in result.stdout
+    assert output_path in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("target", "script_name", "accepted_message", "output_path"),
+    PROVIDER_HANDOFF_SAFE_WRAPPERS,
+)
+def test_provider_handoff_safe_wrappers_fail_unusable_exit_code(
+    script_repo: Path,
+    target: str,
+    script_name: str,
+    accepted_message: str,
+    output_path: str,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, script_name)
+
+    assert result.returncode == 1, target
+    assert "failed before writing a usable report: exit 1" in result.stderr
+    assert accepted_message not in result.stdout
+    assert output_path not in result.stdout
+
+
 def test_write_ios_device_launch_rehearsal_fails_unusable_exit_code(
     script_repo: Path,
 ) -> None:
@@ -835,7 +934,7 @@ def test_local_showcase_smoke_make_target_dry_run_uses_cli() -> None:
     assert "--output .local/local-showcase-smoke.json" in result.stdout
 
 
-def test_final_configured_evidence_plan_make_target_dry_run_uses_cli() -> None:
+def test_final_configured_evidence_plan_make_target_dry_run_uses_wrapper() -> None:
     repo_root = Path(__file__).resolve().parents[3]
 
     result = subprocess.run(
@@ -847,15 +946,10 @@ def test_final_configured_evidence_plan_make_target_dry_run_uses_cli() -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
-    assert ".PHONY: final-configured-evidence-plan" in makefile
-    assert "final-configured-evidence-plan:" in makefile
-    assert "myth_forge_api.cli final-configured-evidence-plan" in result.stdout
-    assert "--repo-root ../.." in result.stdout
-    assert "--output .local/final-configured-evidence-plan.json" in result.stdout
+    assert "write_final_configured_evidence_plan.sh" in result.stdout
 
 
-def test_configured_live_evidence_bundle_make_target_dry_run_uses_cli() -> None:
+def test_configured_live_evidence_bundle_make_target_dry_run_uses_wrapper() -> None:
     repo_root = Path(__file__).resolve().parents[3]
 
     result = subprocess.run(
@@ -867,12 +961,36 @@ def test_configured_live_evidence_bundle_make_target_dry_run_uses_cli() -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
-    assert ".PHONY: configured-live-evidence-bundle" in makefile
-    assert "configured-live-evidence-bundle:" in makefile
-    assert "myth_forge_api.cli configured-live-evidence-bundle" in result.stdout
-    assert "--repo-root ../.." in result.stdout
-    assert "--output .local/configured-live-evidence-bundle.json" in result.stdout
+    assert "write_configured_live_evidence_bundle.sh" in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("target", "script_name", "accepted_message", "output_path"),
+    PROVIDER_HANDOFF_SAFE_WRAPPERS,
+)
+def test_provider_handoff_safe_wrapper_make_targets(
+    target: str,
+    script_name: str,
+    accepted_message: str,
+    output_path: str,
+) -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", target],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert script_name in result.stdout
+    wrapper = repo_root / "services/backend/scripts" / script_name
+    assert os.access(wrapper, os.X_OK)
+    wrapper_text = wrapper.read_text(encoding="utf-8")
+    assert accepted_message.removesuffix(" 2") in wrapper_text
+    assert output_path in wrapper_text
 
 
 def _run_script(root: Path, script_name: str) -> subprocess.CompletedProcess[str]:

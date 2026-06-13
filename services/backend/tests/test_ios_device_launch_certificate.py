@@ -445,12 +445,15 @@ def test_ios_device_launch_certificate_cli_writes_report_and_makefile_target(
     assert payload["kind"] == "ios_device_launch_certificate_report"
     assert payload["status"] == "blocked"
 
-    makefile = (Path(__file__).resolve().parents[3] / "Makefile").read_text(
-        encoding="utf-8"
-    )
+    repo_root = Path(__file__).resolve().parents[3]
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    wrapper = (
+        repo_root / "services/backend/scripts/write_ios_device_launch_certificate.sh"
+    ).read_text(encoding="utf-8")
     assert "ios-device-launch-certificate:" in makefile
-    assert "myth_forge_api.cli ios-device-launch-certificate" in makefile
-    assert ".local/ios-device-launch-certificate.json" in makefile
+    assert "services/backend/scripts/write_ios_device_launch_certificate.sh" in makefile
+    assert "myth_forge_api.cli ios-device-launch-certificate" in wrapper
+    assert ".local/ios-device-launch-certificate.json" in wrapper
 
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:

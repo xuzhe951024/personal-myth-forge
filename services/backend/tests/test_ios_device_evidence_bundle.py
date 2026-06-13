@@ -708,12 +708,16 @@ def test_cli_writes_ios_device_evidence_bundle_report(tmp_path: Path) -> None:
 
 
 def test_makefile_exposes_ios_device_evidence_bundle_target() -> None:
-    makefile = Path(__file__).resolve().parents[3] / "Makefile"
-    text = makefile.read_text(encoding="utf-8")
+    repo_root = Path(__file__).resolve().parents[3]
+    text = (repo_root / "Makefile").read_text(encoding="utf-8")
+    wrapper = (
+        repo_root / "services/backend/scripts/write_ios_device_evidence_bundle.sh"
+    ).read_text(encoding="utf-8")
 
     assert "ios-device-evidence-bundle" in text
-    assert "myth_forge_api.cli ios-device-evidence-bundle" in text
-    assert ".local/ios-device-evidence-bundle.json" in text
+    assert "services/backend/scripts/write_ios_device_evidence_bundle.sh" in text
+    assert "myth_forge_api.cli ios-device-evidence-bundle" in wrapper
+    assert ".local/ios-device-evidence-bundle.json" in wrapper
 
 
 def _repo_fixture(tmp_path: Path) -> Path:

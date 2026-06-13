@@ -108,6 +108,49 @@ fi
 exit "$status"
 """
 
+
+def _safe_report_wrapper(command: str, output: str, label: str) -> str:
+    return f"""#!/usr/bin/env sh
+set -eu
+set +e
+uv run python -m myth_forge_api.cli {command} --output .local/{output}
+status=$?
+set -e
+if [ "$status" -eq 0 ] || [ "$status" -eq 2 ]; then
+  printf '%s\\n' "accepted {label} exit code $status"
+  printf '%s\\n' "wrote services/backend/.local/{output}"
+  exit 0
+fi
+exit "$status"
+"""
+
+
+RESOURCE_HANDOFF_SCRIPT = _safe_report_wrapper(
+    "resource-handoff",
+    "resource-handoff.json",
+    "resource handoff",
+)
+FINAL_RESOURCES_PREFLIGHT_SCRIPT = _safe_report_wrapper(
+    "final-resources-preflight",
+    "final-resources-preflight.json",
+    "final resources preflight",
+)
+FINAL_CONFIGURED_PREFLIGHT_SCRIPT = _safe_report_wrapper(
+    "final-configured-preflight",
+    "final-configured-preflight.json",
+    "final configured preflight",
+)
+FINAL_HANDOFF_INDEX_SCRIPT = _safe_report_wrapper(
+    "final-handoff-index",
+    "final-handoff-index.json",
+    "final handoff index",
+)
+IOS_DEVICE_LAUNCH_CERTIFICATE_SCRIPT = _safe_report_wrapper(
+    "ios-device-launch-certificate",
+    "ios-device-launch-certificate.json",
+    "iOS device launch certificate",
+)
+
 IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT = """#!/usr/bin/env sh
 set -eu
 run_report_command() { :; }
@@ -139,22 +182,22 @@ final-demo-launch-configured:
 \tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../.. --output .local/final-demo-launch-configured.json
 .PHONY: resource-handoff
 resource-handoff:
-\tcd services/backend && uv run python -m myth_forge_api.cli resource-handoff --repo-root ../.. --output .local/resource-handoff.json
+\t@services/backend/scripts/write_resource_handoff.sh
 .PHONY: final-apply-resources
 final-apply-resources:
 \t@services/backend/scripts/apply_final_resources.sh
 .PHONY: final-resources-preflight
 final-resources-preflight:
-\tcd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../.. --output .local/final-resources-preflight.json
+\t@services/backend/scripts/write_final_resources_preflight.sh
 .PHONY: final-configured-preflight
 final-configured-preflight:
-\tcd services/backend && uv run python -m myth_forge_api.cli final-configured-preflight --repo-root ../.. --output .local/final-configured-preflight.json
+\t@services/backend/scripts/write_final_configured_preflight.sh
 .PHONY: final-handoff-index
 final-handoff-index:
-\tcd services/backend && uv run python -m myth_forge_api.cli final-handoff-index --repo-root ../.. --output .local/final-handoff-index.json
+\t@services/backend/scripts/write_final_handoff_index.sh
 .PHONY: ios-device-launch-certificate
 ios-device-launch-certificate:
-\tcd services/backend && uv run python -m myth_forge_api.cli ios-device-launch-certificate --repo-root ../.. --output .local/ios-device-launch-certificate.json
+\t@services/backend/scripts/write_ios_device_launch_certificate.sh
 .PHONY: ios-device-launch-rehearsal
 ios-device-launch-rehearsal:
 \t@services/backend/scripts/write_ios_device_launch_rehearsal.sh
@@ -414,9 +457,14 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         ".local/resource-handoff.json"
     )
     assert result.report["resource_handoff"]["checks"]["module_exists"] is True
+    assert result.report["resource_handoff"]["checks"]["script_exists"] is True
     assert result.report["resource_handoff"]["checks"]["cli_command"] is True
     assert result.report["resource_handoff"]["checks"]["make_target"] is True
     assert result.report["resource_handoff"]["checks"]["output_path"] is True
+    assert (
+        result.report["resource_handoff"]["checks"]["script_accepts_blocked_report"]
+        is True
+    )
     assert result.report["resource_handoff"]["checks"]["no_banned_commands"] is True
     assert result.report["final_resources_preflight"]["path"] == (
         "services/backend/src/myth_forge_api/final_resources_preflight.py"
@@ -428,9 +476,16 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
         ".local/final-resources-preflight.json"
     )
     assert result.report["final_resources_preflight"]["checks"]["module_exists"] is True
+    assert result.report["final_resources_preflight"]["checks"]["script_exists"] is True
     assert result.report["final_resources_preflight"]["checks"]["cli_command"] is True
     assert result.report["final_resources_preflight"]["checks"]["make_target"] is True
     assert result.report["final_resources_preflight"]["checks"]["output_path"] is True
+    assert (
+        result.report["final_resources_preflight"]["checks"][
+            "script_accepts_blocked_report"
+        ]
+        is True
+    )
     assert (
         result.report["final_resources_preflight"]["checks"]["launch_integration"] is True
     )
@@ -446,9 +501,11 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     )
     assert result.report["final_configured_preflight"]["checks"] == {
         "module_exists": True,
+        "script_exists": True,
         "cli_command": True,
         "make_target": True,
         "output_path": True,
+        "script_accepts_blocked_report": True,
         "composes_handoff_reports": True,
         "safety_contract": True,
         "no_banned_commands": True,
@@ -464,9 +521,11 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     )
     assert result.report["final_handoff_index"]["checks"] == {
         "module_exists": True,
+        "script_exists": True,
         "cli_command": True,
         "make_target": True,
         "output_path": True,
+        "script_accepts_blocked_report": True,
         "composes_handoff_reports": True,
         "source_freshness": True,
         "safety_contract": True,
@@ -483,9 +542,11 @@ def test_resource_template_acceptance_passes_complete_templates(tmp_path: Path) 
     )
     assert result.report["ios_device_launch_certificate"]["checks"] == {
         "module_exists": True,
+        "script_exists": True,
         "cli_command": True,
         "make_target": True,
         "output_path": True,
+        "script_accepts_blocked_report": True,
         "composes_device_reports": True,
         "safety_contract": True,
         "no_banned_commands": True,
@@ -605,6 +666,11 @@ def _write_repo(
     final_acceptance_local_script: str = FINAL_ACCEPTANCE_LOCAL_SCRIPT,
     ios_deploy_runbook_local_script: str = IOS_DEPLOY_RUNBOOK_LOCAL_SCRIPT,
     final_local_report_refresh_script: str = FINAL_LOCAL_REPORT_REFRESH_SCRIPT,
+    resource_handoff_script: str = RESOURCE_HANDOFF_SCRIPT,
+    final_resources_preflight_script: str = FINAL_RESOURCES_PREFLIGHT_SCRIPT,
+    final_configured_preflight_script: str = FINAL_CONFIGURED_PREFLIGHT_SCRIPT,
+    final_handoff_index_script: str = FINAL_HANDOFF_INDEX_SCRIPT,
+    ios_device_launch_certificate_script: str = IOS_DEVICE_LAUNCH_CERTIFICATE_SCRIPT,
     ios_device_launch_rehearsal_script: str = IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT,
     resource_handoff: str = RESOURCE_HANDOFF_TEMPLATE,
     final_resources_preflight: str = FINAL_RESOURCES_PREFLIGHT_TEMPLATE,
@@ -648,6 +714,34 @@ def _write_repo(
         repo_root / "services/backend/scripts/write_final_local_report_refresh.sh"
     ).write_text(
         final_local_report_refresh_script,
+        encoding="utf-8",
+    )
+    (repo_root / "services/backend/scripts/write_resource_handoff.sh").write_text(
+        resource_handoff_script,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/scripts/write_final_resources_preflight.sh"
+    ).write_text(
+        final_resources_preflight_script,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/scripts/write_final_configured_preflight.sh"
+    ).write_text(
+        final_configured_preflight_script,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/scripts/write_final_handoff_index.sh"
+    ).write_text(
+        final_handoff_index_script,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/scripts/write_ios_device_launch_certificate.sh"
+    ).write_text(
+        ios_device_launch_certificate_script,
         encoding="utf-8",
     )
     (

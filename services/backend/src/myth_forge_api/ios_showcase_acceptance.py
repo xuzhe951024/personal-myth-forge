@@ -818,6 +818,33 @@ FEATURES = (
                 "scripts/init_final_resources.sh",
             ),
             SourceRequirement("Makefile", "final-resource-requirements:"),
+            SourceRequirement("Makefile", "write_resource_handoff.sh"),
+            SourceRequirement("Makefile", "write_final_resources_preflight.sh"),
+            SourceRequirement("Makefile", "write_final_resource_requirements.sh"),
+            SourceRequirement(
+                "services/backend/scripts/write_resource_handoff.sh",
+                ".local/resource-handoff.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_resource_handoff.sh",
+                "accepted resource handoff exit code",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_resources_preflight.sh",
+                ".local/final-resources-preflight.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_resources_preflight.sh",
+                "accepted final resources preflight exit code",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_resource_requirements.sh",
+                ".local/final-resource-requirements.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_resource_requirements.sh",
+                "accepted final resource requirements exit code",
+            ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_resource_requirements",
@@ -961,6 +988,15 @@ FEATURES = (
                 "final-resource-apply-preview",
             ),
             SourceRequirement("Makefile", "final-resource-apply-preview:"),
+            SourceRequirement("Makefile", "write_final_resource_apply_preview.sh"),
+            SourceRequirement(
+                "services/backend/scripts/write_final_resource_apply_preview.sh",
+                ".local/final-resource-apply-preview.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_resource_apply_preview.sh",
+                "accepted final resource apply preview exit code",
+            ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_resource_apply_preview",
@@ -1017,6 +1053,15 @@ FEATURES = (
         requirements=(
             SourceRequirement("apps/mobile/ios/App/ProviderReadinessView.swift", "missingEnv"),
             SourceRequirement("apps/mobile/ios/App/ForgeRootView.swift", "getProviderReadiness"),
+            SourceRequirement("Makefile", "write_provider_handoff.sh"),
+            SourceRequirement(
+                "services/backend/scripts/write_provider_handoff.sh",
+                ".local/provider-handoff.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_provider_handoff.sh",
+                "accepted provider handoff exit code",
+            ),
         ),
     ),
     FeatureRequirement(
@@ -1639,9 +1684,14 @@ FEATURES = (
                 "live-provider-evidence",
             ),
             SourceRequirement("Makefile", "live-provider-evidence:"),
+            SourceRequirement("Makefile", "write_live_provider_evidence.sh"),
             SourceRequirement(
-                "Makefile",
+                "services/backend/scripts/write_live_provider_evidence.sh",
                 ".local/live-provider-evidence.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_live_provider_evidence.sh",
+                "accepted live provider evidence exit code",
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
@@ -2114,9 +2164,32 @@ FEATURES = (
                 "final-configured-preflight",
             ),
             SourceRequirement("Makefile", "final-configured-preflight:"),
+            SourceRequirement("Makefile", "write_final_configured_preflight.sh"),
+            SourceRequirement("Makefile", "write_final_configured_evidence_plan.sh"),
+            SourceRequirement("Makefile", "write_configured_live_evidence_bundle.sh"),
             SourceRequirement(
-                "Makefile",
-                "--output .local/final-configured-preflight.json",
+                "services/backend/scripts/write_final_configured_preflight.sh",
+                ".local/final-configured-preflight.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_configured_preflight.sh",
+                "accepted final configured preflight exit code",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_configured_evidence_plan.sh",
+                ".local/final-configured-evidence-plan.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_configured_evidence_plan.sh",
+                "accepted final configured evidence plan exit code",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_configured_live_evidence_bundle.sh",
+                ".local/configured-live-evidence-bundle.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_configured_live_evidence_bundle.sh",
+                "accepted configured live evidence bundle exit code",
             ),
             SourceRequirement(
                 "services/backend/tests/test_final_configured_preflight.py",

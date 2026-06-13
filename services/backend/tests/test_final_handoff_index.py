@@ -620,12 +620,15 @@ def test_final_handoff_index_cli_writes_report_and_makefile_exposes_target(
     assert payload["kind"] == "final_handoff_index_report"
     assert payload["status"] == "blocked"
 
-    makefile = (Path(__file__).resolve().parents[3] / "Makefile").read_text(
-        encoding="utf-8"
-    )
+    repo_root = Path(__file__).resolve().parents[3]
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    wrapper = (
+        repo_root / "services/backend/scripts/write_final_handoff_index.sh"
+    ).read_text(encoding="utf-8")
     assert "final-handoff-index:" in makefile
-    assert "myth_forge_api.cli final-handoff-index" in makefile
-    assert ".local/final-handoff-index.json" in makefile
+    assert "services/backend/scripts/write_final_handoff_index.sh" in makefile
+    assert "myth_forge_api.cli final-handoff-index" in wrapper
+    assert ".local/final-handoff-index.json" in wrapper
 
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:

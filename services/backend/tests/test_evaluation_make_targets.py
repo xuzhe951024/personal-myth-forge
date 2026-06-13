@@ -45,10 +45,16 @@ def test_evaluation_make_targets_dry_run_expected_local_commands() -> None:
     assert "--output .local/3d-evaluation-configured.json" in output
     assert "--provider openai" in output
     assert "--output .local/npc-evaluation-configured.json" in output
-    assert "final-resources-preflight" in output
-    assert "--output .local/final-resources-preflight.json" in output
-    assert "resource-handoff" in output
-    assert "--output .local/resource-handoff.json" in output
+    assert "services/backend/scripts/write_final_resources_preflight.sh" in output
+    final_resources_wrapper = (
+        repo_root / "services/backend/scripts/write_final_resources_preflight.sh"
+    ).read_text(encoding="utf-8")
+    assert "--output .local/final-resources-preflight.json" in final_resources_wrapper
+    assert "services/backend/scripts/write_resource_handoff.sh" in output
+    resource_wrapper = (
+        repo_root / "services/backend/scripts/write_resource_handoff.sh"
+    ).read_text(encoding="utf-8")
+    assert "--output .local/resource-handoff.json" in resource_wrapper
     assert "final-demo-launch --mode configured" in output
     assert "--output .local/final-demo-launch-configured.json" in output
     assert output.index("evaluate-3d") < output.rindex("evaluate-npc")

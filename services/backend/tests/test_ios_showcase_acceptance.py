@@ -305,6 +305,93 @@ def test_device_handoff_make_source_gates_require_safe_wrappers() -> None:
     ) in showcase_device_requirements
 
 
+def test_provider_handoff_make_source_gates_require_safe_wrappers() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    provider_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["provider_readiness"].requirements
+    }
+    resource_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_resource_requirements_manifest"].requirements
+    }
+    apply_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_resource_apply_preview"].requirements
+    }
+    configured_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["configured_handoff_preflight"].requirements
+    }
+    live_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["mobile_live_provider_evidence"].requirements
+    }
+
+    assert ("Makefile", "write_provider_handoff.sh") in provider_requirements
+    assert (
+        "services/backend/scripts/write_provider_handoff.sh",
+        ".local/provider-handoff.json",
+    ) in provider_requirements
+    assert (
+        "services/backend/scripts/write_provider_handoff.sh",
+        "accepted provider handoff exit code",
+    ) in provider_requirements
+    assert ("Makefile", "write_resource_handoff.sh") in resource_requirements
+    assert ("Makefile", "write_final_resources_preflight.sh") in resource_requirements
+    assert ("Makefile", "write_final_resource_requirements.sh") in resource_requirements
+    assert (
+        "services/backend/scripts/write_resource_handoff.sh",
+        ".local/resource-handoff.json",
+    ) in resource_requirements
+    assert (
+        "services/backend/scripts/write_final_resources_preflight.sh",
+        ".local/final-resources-preflight.json",
+    ) in resource_requirements
+    assert (
+        "services/backend/scripts/write_final_resource_requirements.sh",
+        ".local/final-resource-requirements.json",
+    ) in resource_requirements
+    assert ("Makefile", "write_final_resource_apply_preview.sh") in apply_requirements
+    assert (
+        "services/backend/scripts/write_final_resource_apply_preview.sh",
+        "accepted final resource apply preview exit code",
+    ) in apply_requirements
+    assert (
+        "Makefile",
+        "write_final_configured_preflight.sh",
+    ) in configured_requirements
+    assert (
+        "Makefile",
+        "write_final_configured_evidence_plan.sh",
+    ) in configured_requirements
+    assert (
+        "Makefile",
+        "write_configured_live_evidence_bundle.sh",
+    ) in configured_requirements
+    assert (
+        "services/backend/scripts/write_final_configured_preflight.sh",
+        ".local/final-configured-preflight.json",
+    ) in configured_requirements
+    assert (
+        "services/backend/scripts/write_final_configured_evidence_plan.sh",
+        ".local/final-configured-evidence-plan.json",
+    ) in configured_requirements
+    assert (
+        "services/backend/scripts/write_configured_live_evidence_bundle.sh",
+        ".local/configured-live-evidence-bundle.json",
+    ) in configured_requirements
+    assert ("Makefile", "write_live_provider_evidence.sh") in live_requirements
+    assert (
+        "services/backend/scripts/write_live_provider_evidence.sh",
+        ".local/live-provider-evidence.json",
+    ) in live_requirements
+    assert (
+        "services/backend/scripts/write_live_provider_evidence.sh",
+        "accepted live provider evidence exit code",
+    ) in live_requirements
+
+
 def test_final_showcase_concrete_next_action_source_gate() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1598,6 +1685,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "print-fulfillment-readiness: .local/print-fulfillment-readiness.json "
             "final-resource-requirements: .local/final-resource-requirements.json "
             "final-resource-apply-preview: .local/final-resource-apply-preview.json "
+            "write_provider_handoff.sh write_resource_handoff.sh "
+            "write_final_resources_preflight.sh "
+            "write_final_resource_requirements.sh "
+            "write_final_resource_apply_preview.sh "
+            "write_final_configured_preflight.sh "
+            "write_final_configured_evidence_plan.sh "
+            "write_configured_live_evidence_bundle.sh "
+            "write_live_provider_evidence.sh "
             "final-external-action-ledger: write_final_external_action_ledger.sh "
             "final-launch-closure-packet: write_final_launch_closure_packet.sh "
             "local-showcase-smoke: "
@@ -1663,6 +1758,42 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/scripts/write_final_handoff_index.sh": (
             "accepted final handoff index exit code $status "
             "services/backend/.local/final-handoff-index.json"
+        ),
+        "services/backend/scripts/write_provider_handoff.sh": (
+            "accepted provider handoff exit code $status "
+            "services/backend/.local/provider-handoff.json"
+        ),
+        "services/backend/scripts/write_resource_handoff.sh": (
+            "accepted resource handoff exit code $status "
+            "services/backend/.local/resource-handoff.json"
+        ),
+        "services/backend/scripts/write_final_resources_preflight.sh": (
+            "accepted final resources preflight exit code $status "
+            "services/backend/.local/final-resources-preflight.json"
+        ),
+        "services/backend/scripts/write_final_resource_requirements.sh": (
+            "accepted final resource requirements exit code $status "
+            "services/backend/.local/final-resource-requirements.json"
+        ),
+        "services/backend/scripts/write_final_resource_apply_preview.sh": (
+            "accepted final resource apply preview exit code $status "
+            "services/backend/.local/final-resource-apply-preview.json"
+        ),
+        "services/backend/scripts/write_final_configured_preflight.sh": (
+            "accepted final configured preflight exit code $status "
+            "services/backend/.local/final-configured-preflight.json"
+        ),
+        "services/backend/scripts/write_final_configured_evidence_plan.sh": (
+            "accepted final configured evidence plan exit code $status "
+            "services/backend/.local/final-configured-evidence-plan.json"
+        ),
+        "services/backend/scripts/write_configured_live_evidence_bundle.sh": (
+            "accepted configured live evidence bundle exit code $status "
+            "services/backend/.local/configured-live-evidence-bundle.json"
+        ),
+        "services/backend/scripts/write_live_provider_evidence.sh": (
+            "accepted live provider evidence exit code $status "
+            "services/backend/.local/live-provider-evidence.json"
         ),
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
             "three_d_evaluation LOCAL_THREE_D_EVALUATION_COMMAND "

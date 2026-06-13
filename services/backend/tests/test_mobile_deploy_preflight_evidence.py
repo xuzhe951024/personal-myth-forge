@@ -258,12 +258,16 @@ def test_cli_writes_mobile_deploy_preflight_evidence_blocked_report(
 
 
 def test_makefile_exposes_mobile_deploy_preflight_evidence_target() -> None:
-    makefile = Path(__file__).resolve().parents[3] / "Makefile"
-    text = makefile.read_text(encoding="utf-8")
+    repo_root = Path(__file__).resolve().parents[3]
+    text = (repo_root / "Makefile").read_text(encoding="utf-8")
+    wrapper = (
+        repo_root / "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh"
+    ).read_text(encoding="utf-8")
 
     assert "mobile-deploy-preflight-evidence" in text
-    assert "myth_forge_api.cli mobile-deploy-preflight-evidence" in text
-    assert ".local/mobile-deploy-preflight-evidence.json" in text
+    assert "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh" in text
+    assert "myth_forge_api.cli mobile-deploy-preflight-evidence" in wrapper
+    assert ".local/mobile-deploy-preflight-evidence.json" in wrapper
 
 
 def _minimal_preflight_repo(tmp_path: Path) -> Path:

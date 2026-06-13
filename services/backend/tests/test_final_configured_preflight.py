@@ -324,11 +324,15 @@ def test_configured_preflight_cli_writes_report_and_makefile_exposes_target(
     assert payload["kind"] == "final_configured_preflight_report"
     assert payload["status"] == "blocked"
 
-    makefile = (Path(__file__).resolve().parents[3] / "Makefile").read_text(
-        encoding="utf-8"
-    )
+    repo_root = Path(__file__).resolve().parents[3]
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    wrapper = (
+        repo_root / "services/backend/scripts/write_final_configured_preflight.sh"
+    ).read_text(encoding="utf-8")
     assert "final-configured-preflight:" in makefile
-    assert "myth_forge_api.cli final-configured-preflight" in makefile
+    assert "services/backend/scripts/write_final_configured_preflight.sh" in makefile
+    assert "myth_forge_api.cli final-configured-preflight" in wrapper
+    assert ".local/final-configured-preflight.json" in wrapper
 
 
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:

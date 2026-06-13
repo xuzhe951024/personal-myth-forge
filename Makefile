@@ -52,12 +52,12 @@ backend-write-provider-env:
 .PHONY: provider-handoff
 
 provider-handoff:
-	cd services/backend && uv run python -m myth_forge_api.cli provider-handoff --require-core-real --output .local/provider-handoff.json
+	@services/backend/scripts/write_provider_handoff.sh
 
 .PHONY: resource-handoff
 
 resource-handoff:
-	cd services/backend && uv run python -m myth_forge_api.cli resource-handoff --repo-root ../.. --output .local/resource-handoff.json
+	@services/backend/scripts/write_resource_handoff.sh
 
 .PHONY: final-apply-resources
 
@@ -72,17 +72,17 @@ final-resource-init:
 .PHONY: final-resources-preflight
 
 final-resources-preflight:
-	cd services/backend && uv run python -m myth_forge_api.cli final-resources-preflight --repo-root ../.. --output .local/final-resources-preflight.json
+	@services/backend/scripts/write_final_resources_preflight.sh
 
 .PHONY: final-resource-requirements
 
 final-resource-requirements:
-	cd services/backend && uv run python -m myth_forge_api.cli final-resource-requirements --repo-root ../.. --output .local/final-resource-requirements.json
+	@services/backend/scripts/write_final_resource_requirements.sh
 
 .PHONY: final-resource-apply-preview
 
 final-resource-apply-preview:
-	cd services/backend && uv run python -m myth_forge_api.cli final-resource-apply-preview --repo-root ../.. --output .local/final-resource-apply-preview.json
+	@services/backend/scripts/write_final_resource_apply_preview.sh
 
 .PHONY: final-resource-repair-preview final-resource-repair
 
@@ -123,17 +123,17 @@ final-local-report-refresh-local:
 .PHONY: final-configured-preflight
 
 final-configured-preflight:
-	cd services/backend && uv run python -m myth_forge_api.cli final-configured-preflight --repo-root ../.. --output .local/final-configured-preflight.json
+	@services/backend/scripts/write_final_configured_preflight.sh
 
 .PHONY: final-configured-evidence-plan
 
 final-configured-evidence-plan:
-	cd services/backend && uv run python -m myth_forge_api.cli final-configured-evidence-plan --repo-root ../.. --output .local/final-configured-evidence-plan.json
+	@services/backend/scripts/write_final_configured_evidence_plan.sh
 
 .PHONY: configured-live-evidence-bundle
 
 configured-live-evidence-bundle:
-	cd services/backend && uv run python -m myth_forge_api.cli configured-live-evidence-bundle --repo-root ../.. --output .local/configured-live-evidence-bundle.json
+	@services/backend/scripts/write_configured_live_evidence_bundle.sh
 
 .PHONY: final-handoff-index
 
@@ -153,7 +153,7 @@ print-fulfillment-readiness:
 .PHONY: live-provider-evidence
 
 live-provider-evidence:
-	cd services/backend && uv run python -m myth_forge_api.cli live-provider-evidence --repo-root ../.. --output .local/live-provider-evidence.json
+	@services/backend/scripts/write_live_provider_evidence.sh
 
 .PHONY: ios-device-launch-certificate
 

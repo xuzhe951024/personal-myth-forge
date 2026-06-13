@@ -283,13 +283,16 @@ def test_live_provider_evidence_cli_writes_report(tmp_path: Path) -> None:
 
 
 def test_live_provider_evidence_makefile_target() -> None:
-    makefile = (Path(__file__).resolve().parents[3] / "Makefile").read_text(
-        encoding="utf-8"
-    )
+    repo_root = Path(__file__).resolve().parents[3]
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    wrapper = (
+        repo_root / "services/backend/scripts/write_live_provider_evidence.sh"
+    ).read_text(encoding="utf-8")
 
     assert "live-provider-evidence:" in makefile
-    assert "myth_forge_api.cli live-provider-evidence" in makefile
-    assert ".local/live-provider-evidence.json" in makefile
+    assert "services/backend/scripts/write_live_provider_evidence.sh" in makefile
+    assert "myth_forge_api.cli live-provider-evidence" in wrapper
+    assert ".local/live-provider-evidence.json" in wrapper
 
 
 def _write_ready_evidence(repo_root: Path) -> None:
