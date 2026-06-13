@@ -333,14 +333,17 @@ def run_three_d_evaluation(
     cases: tuple[ThreeDEvaluationCase, ...],
 ) -> dict[str, object]:
     case_reports = [_run_case(provider, case) for case in cases]
+    succeeded = sum(1 for case in case_reports if case["status"] == "succeeded")
+    failed = sum(1 for case in case_reports if case["status"] == "failed")
     return _sanitize_report(
         {
             "kind": "three_d_evaluation_report",
+            "status": "failed" if failed else "succeeded",
             "suite": suite_name,
             "provider": selected_provider,
             "total_cases": len(cases),
-            "succeeded": sum(1 for case in case_reports if case["status"] == "succeeded"),
-            "failed": sum(1 for case in case_reports if case["status"] == "failed"),
+            "succeeded": succeeded,
+            "failed": failed,
             "coverage": _coverage(case_reports),
             "review_rubric": REVIEW_RUBRIC,
             "safety": {

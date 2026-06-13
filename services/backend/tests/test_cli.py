@@ -93,6 +93,7 @@ def test_cli_evaluate_3d_default_suite_writes_rich_report(tmp_path) -> None:
 
     assert exit_code == 0
     assert report["kind"] == "three_d_evaluation_report"
+    assert report["status"] == "succeeded"
     assert report["suite"] == "default-v0"
     assert report["provider"] == "local"
     assert report["total_cases"] == 20
@@ -274,6 +275,7 @@ def test_cli_evaluate_npc_default_suite_writes_report(tmp_path) -> None:
     report = json.loads(report_text)
     assert exit_code == 0
     assert report["kind"] == "npc_agent_evaluation_report"
+    assert report["status"] == "succeeded"
     assert report["suite"] == "default-v0"
     assert report["provider"] == "local"
     assert report["tick_steps"] == 2
@@ -356,6 +358,7 @@ def test_cli_evaluate_3d_sanitizes_per_prompt_errors(tmp_path, monkeypatch) -> N
     report = json.loads(report_text)
 
     assert exit_code == 0
+    assert report["status"] == "failed"
     assert report["cases"][0]["status"] == "failed"
     assert report["cases"][0]["error"] == "failed [redacted] [redacted]"
     assert "test-secret" not in report_text

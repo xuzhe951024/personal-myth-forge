@@ -845,7 +845,7 @@ def _raw_status(report: dict[str, Any]) -> str:
 
 
 def _normalized_status(status: str) -> str:
-    if status in {"passed", "ready", "repaired"}:
+    if status in {"passed", "ready", "repaired", "succeeded"}:
         return "ready"
     if status in {"failed", "error"}:
         return "failed"
