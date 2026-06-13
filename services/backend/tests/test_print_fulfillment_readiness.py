@@ -50,6 +50,12 @@ def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_
         "validation_command": "make print-fulfillment-readiness",
         "requires_cost_consent": True,
     }
+    assert result.report["operator_actions"][0] == (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+    )
+    assert "make print-fulfillment-readiness" not in result.report["operator_actions"]
     assert "print-fulfillment-readiness" in " ".join(result.report["commands"])
 
 

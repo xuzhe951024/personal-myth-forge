@@ -487,12 +487,14 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def _operator_actions(checks: list[dict[str, Any]]) -> list[str]:
+    validation_command = "make print-fulfillment-readiness"
     actions = [
-        check["command"]
+        f"{check['command']}; rerun {validation_command}"
         for check in checks
         if check.get("status") != "ready"
     ]
-    actions.append("make print-fulfillment-readiness")
+    if not actions:
+        actions.append(validation_command)
     return _dedupe(actions)[:8]
 
 
