@@ -1784,6 +1784,11 @@ do {
     )
     try requireContains(
         contractTests,
+        "testDevicePreflightShowsIOSLaunchRehearsalSavedNextAction",
+        "device preflight iOS launch rehearsal saved next action contract test"
+    )
+    try requireContains(
+        contractTests,
         "testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness",
         "device preflight iOS launch rehearsal readiness redaction contract test"
     )

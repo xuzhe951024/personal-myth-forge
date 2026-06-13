@@ -874,6 +874,9 @@ public enum DevicePreflightSummaryBuilder {
         } else if let action = readiness.operatorActions.first, !action.isEmpty {
             parts.append("Action: \(action)")
         }
+        if let savedNextAction = iosLaunchRehearsalSavedNextActionDetail(readiness) {
+            parts.append(savedNextAction)
+        }
         parts.append(iosLaunchRehearsalSafetyDetail(readiness.safety))
         return parts.joined(separator: " ")
     }
@@ -913,6 +916,22 @@ public enum DevicePreflightSummaryBuilder {
             "| \(blocker.command)",
             "| \(blocker.detail)",
         ].joined(separator: " ")
+    }
+
+    private static func iosLaunchRehearsalSavedNextActionDetail(
+        _ readiness: IOSDeviceLaunchRehearsalReadinessReport
+    ) -> String? {
+        guard let savedNextAction = readiness.deviceActionBundle?.firstAction.savedNextAction,
+              !savedNextAction.command.isEmpty
+        else {
+            return nil
+        }
+
+        var detail = "Saved next: \(savedNextAction.command)"
+        if !savedNextAction.detail.isEmpty {
+            detail += " | \(savedNextAction.detail)"
+        }
+        return detail
     }
 
     private static func iosLaunchRehearsalSummaryDetail(

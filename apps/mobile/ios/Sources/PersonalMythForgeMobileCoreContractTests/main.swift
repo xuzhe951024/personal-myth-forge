@@ -122,6 +122,7 @@ do {
     try testDevicePreflightBlocksOnIOSLaunchRehearsalReadiness()
     try testDevicePreflightMarksReadyIOSLaunchRehearsalReadiness()
     try testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness()
+    try testDevicePreflightShowsIOSLaunchRehearsalSavedNextAction()
     try testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness()
     try testDevicePreflightWaitsForMissingIOSDeviceLaunchCertificate()
     try testDevicePreflightBlocksOnIOSDeviceLaunchCertificateGate()
@@ -3432,6 +3433,40 @@ private func testDevicePreflightShowsStaleIOSLaunchRehearsalFreshness() throws {
     try expectContains(detail, "Freshness: stale_report")
     try expectContains(detail, "Source freshness: 3 fresh, 1 stale, 0 unknown")
     try expectContains(detail, "stale_source")
+}
+
+private func testDevicePreflightShowsIOSLaunchRehearsalSavedNextAction() throws {
+    let savedNextActionJSON = """
+    {
+      "id": "final_rehearsal_local",
+      "label": "Local final rehearsal",
+      "status": "blocked",
+      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+      "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+      "source": "saved_sequence_operator_actions",
+      "validation_command": "make ios-device-launch-rehearsal"
+    }
+    """
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        finalDemoLaunch: finalDemoLaunchReport(
+            overallStatus: "blocked",
+            iosDeviceLaunchRehearsalStatus: "blocked",
+            iosDeviceLaunchRehearsalAction: "rerun make ios-device-launch-rehearsal",
+            iosDeviceLaunchSavedNextActionJSON: savedNextActionJSON
+        )
+    )
+    let detail = summary.item(id: "ios_device_launch_rehearsal_readiness")?.detail ?? ""
+
+    try expectEqual(summary.item(id: "ios_device_launch_rehearsal_readiness")?.status, .blocked)
+    try expectContains(
+        detail,
+        "Saved next: DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+    )
+    try expectContains(
+        detail,
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
 }
 
 private func testDevicePreflightRedactsUnsafeIOSLaunchRehearsalReadiness() throws {
