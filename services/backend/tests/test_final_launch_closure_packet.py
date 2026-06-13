@@ -153,6 +153,50 @@ def test_final_launch_closure_packet_exposes_device_action_bundle(
     assert "sk-" not in report_text
 
 
+def test_final_launch_closure_packet_source_reports_expose_device_action_bundles(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_configured_live_evidence_bundle_blocked(
+        repo_root,
+        detail="configured live provider evidence missing",
+    )
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    sources = result.report["source_reports"]
+    report_text = json.dumps(result.report)
+
+    ios_bundle = sources["ios_device_evidence_bundle"]["device_action_bundle"]
+    configured_bundle = sources["configured_live_evidence_bundle"][
+        "device_action_bundle"
+    ]
+
+    assert ios_bundle["id"] == "ios_device_evidence_actions"
+    assert ios_bundle["status"] == "blocked"
+    assert ios_bundle["first_action"]["id"] == "backend_device_server"
+    assert ios_bundle["first_action"]["command"] == "make backend-device-demo"
+    assert configured_bundle["id"] == "configured_live_evidence_bundle_device_actions"
+    assert configured_bundle["source_report"] == "final_configured_evidence_plan"
+    assert configured_bundle["status"] == "blocked"
+    assert configured_bundle["first_action"]["id"] == "write_development_team"
+    assert configured_bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert configured_bundle["first_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert result.report["device_action_bundle"]["source_report"] == (
+        "ios_device_evidence_bundle"
+    )
+    assert ios_bundle["safety"]["commands_run"] is False
+    assert configured_bundle["safety"]["commands_run"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+
+
 def test_final_launch_closure_packet_exposes_next_action_from_first_blocker(
     tmp_path: Path,
 ) -> None:
@@ -612,6 +656,68 @@ def _write_configured_live_evidence_bundle_blocked(
                 "commands": 10,
                 "commands_ready": 9,
                 "commands_run": 0,
+            },
+            "device_action_bundle": {
+                "id": "configured_live_evidence_bundle_device_actions",
+                "label": "Configured Live Evidence Bundle Device Actions",
+                "source_report": "final_configured_evidence_plan",
+                "status": "blocked",
+                "actions": [
+                    {
+                        "id": "write_development_team",
+                        "label": "Write development team",
+                        "status": "blocked",
+                        "classification": "ios_deploy_config_missing",
+                        "command": (
+                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                            "make mobile-write-deploy-config-auto"
+                        ),
+                        "detail": "Missing DEVELOPMENT_TEAM.",
+                        "manual": True,
+                        "provider_calls": False,
+                        "global_action": False,
+                        "xcode_or_signing": False,
+                        "validation_command": "make mobile-deploy-preflight",
+                    }
+                ],
+                "first_action": {
+                    "id": "write_development_team",
+                    "label": "Write development team",
+                    "status": "blocked",
+                    "classification": "ios_deploy_config_missing",
+                    "command": (
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "make mobile-write-deploy-config-auto"
+                    ),
+                    "detail": "Missing DEVELOPMENT_TEAM.",
+                    "manual": True,
+                    "provider_calls": False,
+                    "global_action": False,
+                    "xcode_or_signing": False,
+                    "validation_command": "make mobile-deploy-preflight",
+                },
+                "summary": {
+                    "actions": 1,
+                    "ready": 0,
+                    "missing": 0,
+                    "blocked": 1,
+                    "manual": 1,
+                    "partial": 0,
+                    "live": 0,
+                    "provider_calls": 0,
+                    "global_actions": 0,
+                    "xcode_or_signing": 0,
+                },
+                "safety": {
+                    "commands_run": False,
+                    "provider_calls": False,
+                    "live_provider_calls": False,
+                    "global_mutation": False,
+                    "keychain_writes": False,
+                    "writes_backend_env": False,
+                    "writes_ios_deploy_config": False,
+                    "xcode_or_signing": False,
+                },
             },
             "current_blocker": {
                 "id": "final_resource_fill_guide",

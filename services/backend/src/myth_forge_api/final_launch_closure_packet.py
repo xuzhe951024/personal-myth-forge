@@ -872,11 +872,15 @@ def _overall_status(sections: list[dict[str, Any]]) -> str:
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
-    return {
+    summary = {
         "kind": report.get("kind", "unknown"),
         "status": report.get("status") or report.get("overall_status") or "unknown",
         "summary": report.get("summary", {}),
     }
+    device_action_bundle = report.get("device_action_bundle")
+    if isinstance(device_action_bundle, dict):
+        summary["device_action_bundle"] = device_action_bundle
+    return summary
 
 
 def _load_configured_live_evidence_bundle_report(repo_root: Path) -> dict[str, Any]:
