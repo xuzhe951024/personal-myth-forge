@@ -327,6 +327,7 @@ Bridge deliverable:
 - P0.413 final handoff index exposes device action bundle
 - P0.414 final external action ledger exposes device action bundle
 - P0.415 final configured preflight exposes device action bundle
+- P0.416 final configured evidence plan exposes device action bundle
 
 ## P1: Mobile Vertical Slice
 

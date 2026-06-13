@@ -67,6 +67,36 @@ def test_configured_evidence_plan_blocks_missing_resources_without_running_comma
     assert str(tmp_path) not in report_text
 
 
+def test_configured_evidence_plan_exposes_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    result = build_final_configured_evidence_plan_report(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+
+    bundle = result.report["device_action_bundle"]
+
+    assert bundle["id"] == "final_configured_evidence_plan_device_actions"
+    assert bundle["label"] == "Final Configured Evidence Plan Device Actions"
+    assert bundle["source_report"] == "final_configured_preflight"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"]["actions"] == 7
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["summary"]["global_actions"] == 0
+    assert bundle["summary"]["xcode_or_signing"] == 1
+    assert bundle["first_action"]["id"] == "write_development_team"
+    assert bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert bundle["first_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert bundle["safety"]["commands_run"] is False
+    assert bundle["safety"]["provider_calls"] is False
+    assert bundle["safety"]["xcode_or_signing"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+
+
 def test_configured_evidence_plan_requires_consent_with_ready_resources(
     tmp_path: Path,
 ) -> None:
