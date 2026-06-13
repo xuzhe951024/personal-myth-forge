@@ -85,6 +85,10 @@ def build_ios_deploy_runbook_report(
         "command_sequence": command_sequence,
         "first_blocker": first_blocker,
         "next_action": _next_action(first_blocker),
+        "device_action_bundle": _device_action_bundle(
+            input_slots=input_slots,
+            command_sequence=command_sequence,
+        ),
         "operator_actions": _operator_actions(
             mode=mode,
             input_slots=input_slots,
@@ -569,6 +573,177 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     if first_blocker is None:
         return None
     return {**first_blocker, "source": "first_blocker"}
+
+
+def _device_action_bundle(
+    *,
+    input_slots: list[dict[str, Any]],
+    command_sequence: list[dict[str, Any]],
+) -> dict[str, Any]:
+    slots = {slot["id"]: slot for slot in input_slots}
+    steps = {step["id"]: step for step in command_sequence}
+    actions = [
+        _device_slot_action(
+            "write_development_team",
+            "Write Apple Team ID",
+            slots["development_team"],
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+            "Provide the Apple Team ID in ignored Deployment.local.xcconfig.",
+        ),
+        _device_slot_action(
+            "write_product_bundle_identifier",
+            "Write bundle identifier",
+            slots["product_bundle_identifier"],
+            "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig",
+            "Provide the bundle identifier in ignored Deployment.local.xcconfig.",
+        ),
+        _device_slot_action(
+            "write_backend_base_url",
+            "Write iPhone backend URL",
+            slots["backend_base_url"],
+            "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL",
+            "Use a LAN URL the iPhone can reach; localhost is not valid.",
+        ),
+        _device_step_action(
+            "start_backend_device_demo",
+            "Start backend device demo",
+            "ready",
+            "make backend-device-demo",
+            "Start the LAN backend before running mobile preflight.",
+        ),
+        _device_step_action(
+            "run_mobile_deploy_preflight",
+            "Run mobile deploy preflight",
+            str(steps["mobile_deploy_preflight"]["status"]),
+            "make mobile-deploy-preflight",
+            "Verify device config and backend health before Xcode.",
+        ),
+        _device_step_action(
+            "resolve_xcode_build_gate",
+            "Resolve Xcode build gate",
+            str(steps["xcode_build_gate"]["status"]),
+            "make mobile-xcode-build",
+            "Run or resolve the Xcode build/signing gate on the Mac.",
+            xcode_or_signing=True,
+        ),
+        _device_step_action(
+            "run_ios_device_launch_rehearsal",
+            "Run iOS device launch rehearsal",
+            str(steps["xcode_build_gate"]["status"]),
+            "make ios-device-launch-rehearsal",
+            "Refresh final device launch rehearsal evidence after preflight and build gates.",
+        ),
+    ]
+    return {
+        "id": "ios_deploy_runbook_device_actions",
+        "label": "iOS Deploy Runbook Device Actions",
+        "status": _device_bundle_status(actions),
+        "actions": actions,
+        "first_action": _first_device_action(actions),
+        "summary": _device_action_summary(actions),
+        "safety": {
+            "commands_run": False,
+            "global_mutation": False,
+            "keychain_writes": False,
+            "live_provider_calls": False,
+            "provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "xcode_or_signing": False,
+        },
+    }
+
+
+def _device_slot_action(
+    action_id: str,
+    label: str,
+    slot: dict[str, Any],
+    command: str,
+    detail: str,
+) -> dict[str, Any]:
+    status = str(slot["status"])
+    action = _device_step_action(action_id, label, status, command, detail)
+    action["input_source"] = str(slot["source"])
+    action["next_action"] = {
+        "id": str(slot["id"]),
+        "label": str(slot["label"]),
+        "status": str(action["status"]),
+        "command": command,
+        "detail": str(slot.get("blocker_detail") or detail),
+        "source": "device_action_bundle",
+        "validation_command": "make mobile-deploy-preflight",
+    }
+    return action
+
+
+def _device_step_action(
+    action_id: str,
+    label: str,
+    status: str,
+    command: str,
+    detail: str,
+    *,
+    xcode_or_signing: bool = False,
+) -> dict[str, Any]:
+    normalized = _normalized_device_action_status(status)
+    return {
+        "id": action_id,
+        "label": label,
+        "status": normalized,
+        "classification": _device_action_classification(normalized, xcode_or_signing),
+        "command": command,
+        "detail": detail,
+        "manual": normalized != "ready",
+        "provider_calls": False,
+        "global_action": False,
+        "xcode_or_signing": xcode_or_signing,
+        "validation_command": "make mobile-deploy-preflight",
+    }
+
+
+def _normalized_device_action_status(status: str) -> str:
+    if status == "ready":
+        return "ready"
+    if status == "manual":
+        return "manual"
+    return "blocked"
+
+
+def _device_action_classification(status: str, xcode_or_signing: bool) -> str:
+    if status == "ready":
+        return "ready"
+    if xcode_or_signing:
+        return "manual_xcode_or_signing_required"
+    if status == "manual":
+        return "manual_device_step_required"
+    return "manual_device_config_required"
+
+
+def _device_bundle_status(actions: list[dict[str, Any]]) -> str:
+    statuses = [str(action["status"]) for action in actions]
+    if "blocked" in statuses:
+        return "blocked"
+    if "manual" in statuses:
+        return "partial"
+    return "ready"
+
+
+def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
+    return next((action for action in actions if action["status"] != "ready"), None)
+
+
+def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action["status"] == "ready"),
+        "blocked": sum(1 for action in actions if action["status"] == "blocked"),
+        "manual": sum(1 for action in actions if action.get("manual") is True),
+        "provider_calls": sum(1 for action in actions if action["provider_calls"] is True),
+        "global_actions": sum(1 for action in actions if action["global_action"] is True),
+        "xcode_or_signing": sum(
+            1 for action in actions if action["xcode_or_signing"] is True
+        ),
+    }
 
 
 def _deploy_config_values(repo_root: Path) -> dict[str, str]:

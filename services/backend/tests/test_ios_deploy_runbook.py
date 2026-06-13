@@ -65,6 +65,40 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert str(tmp_path) not in report_text
 
 
+def test_ios_deploy_runbook_includes_device_action_bundle_for_missing_config(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+
+    report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
+    bundle = report["device_action_bundle"]
+
+    assert bundle["id"] == "ios_deploy_runbook_device_actions"
+    assert bundle["status"] == "blocked"
+    assert bundle["first_action"]["id"] == "write_development_team"
+    assert bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert bundle["first_action"]["validation_command"] == "make mobile-deploy-preflight"
+    assert bundle["first_action"]["next_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert bundle["summary"]["actions"] >= 4
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["safety"] == {
+        "commands_run": False,
+        "global_mutation": False,
+        "keychain_writes": False,
+        "live_provider_calls": False,
+        "provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "xcode_or_signing": False,
+    }
+    assert "sk-" not in json.dumps(bundle)
+    assert str(tmp_path) not in json.dumps(bundle)
+
+
 def test_ios_deploy_runbook_resource_actions_include_validation_commands(
     tmp_path: Path,
 ) -> None:
@@ -195,6 +229,29 @@ def test_ios_deploy_runbook_ready_local_inputs_preserve_command_order(
         **report["first_blocker"],
         "source": "first_blocker",
     }
+
+
+def test_ios_deploy_runbook_device_bundle_advances_after_deploy_config_ready(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+    _write_deploy_config(repo_root)
+    _write_final_resources(repo_root)
+    _write_final_acceptance(repo_root, status="passed")
+    _write_three_d_evaluation(repo_root, status="passed")
+    _write_npc_evaluation(repo_root, status="passed")
+
+    report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
+    bundle = report["device_action_bundle"]
+    actions = {action["id"]: action for action in bundle["actions"]}
+
+    assert bundle["first_action"]["id"] == "resolve_xcode_build_gate"
+    assert bundle["first_action"]["command"] == "make mobile-xcode-build"
+    assert actions["run_mobile_deploy_preflight"]["status"] == "ready"
+    assert actions["resolve_xcode_build_gate"]["status"] == "manual"
+    assert actions["run_ios_device_launch_rehearsal"]["command"] == (
+        "make ios-device-launch-rehearsal"
+    )
 
 
 def test_ios_deploy_runbook_configured_mode_includes_live_acceptance_consent(

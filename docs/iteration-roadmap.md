@@ -317,6 +317,7 @@ Bridge deliverable:
 - P0.403 iOS deploy runbook operator actions drop stale unblock fallbacks
 - P0.404 final configured preflight actions drop stale unblock fallbacks
 - P0.405 final demo launch configured drops stale provider and final-acceptance unblock fallbacks
+- P0.406 iOS deploy runbook exposes device action bundle for physical iPhone handoff
 
 ## P1: Mobile Vertical Slice
 
