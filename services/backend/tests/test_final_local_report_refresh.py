@@ -243,9 +243,14 @@ def test_final_local_report_refresh_operator_actions_gate_apply_behind_preview(
         "output": "services/backend/.local/final-resource-apply-preview.json",
         "step_id": "final_resource_apply_preview",
     }
+    action_roots = {
+        final_local_report_refresh._action_command_root(action)
+        for action in result.report["operator_actions"]
+    }
+    assert "make final-resource-apply-preview" in action_roots
     assert (
         "rerun make final-resource-apply-preview before applying resources"
-        in result.report["operator_actions"]
+        not in result.report["operator_actions"]
     )
     assert "make final-apply-resources" not in result.report["operator_actions"]
 
@@ -611,9 +616,7 @@ def test_final_local_report_refresh_operator_actions_hide_apply_when_preview_is_
         ],
     )
 
-    assert actions == [
-        "rerun make final-resource-apply-preview before applying resources"
-    ]
+    assert actions == ["make final-resource-apply-preview"]
 
 
 def test_final_local_report_refresh_writes_safe_xcode_evidence_snapshot(

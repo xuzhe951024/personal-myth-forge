@@ -79,6 +79,7 @@ from myth_forge_api.visual_regression import check_visual_artifacts
 
 LOCAL_REPORT_DIR = Path("services/backend/.local")
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
+FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_PREVIEW_BEFORE_APPLY_ACTION = (
     "rerun make final-resource-apply-preview before applying resources"
 )
@@ -984,7 +985,12 @@ def _dedupe(values: list[str]) -> list[str]:
 
 
 def _dedupe_operator_actions(values: list[str]) -> list[str]:
-    deduped = _dedupe([normalize_operator_action(value) for value in values])
+    deduped = _dedupe(
+        [
+            _normalize_apply_preview_action(normalize_operator_action(value))
+            for value in values
+        ]
+    )
     validation_by_root: dict[str, str] = {}
     for value in deduped:
         if "; rerun " not in value:
@@ -1007,6 +1013,13 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     return _prefer_apply_preview_before_apply(
         _dedupe_operator_action_roots(validation_deduped)
     )
+
+
+def _normalize_apply_preview_action(action: str) -> str:
+    root = _operator_action_root(action)
+    if root == FINAL_RESOURCE_APPLY_PREVIEW_BEFORE_APPLY_ACTION:
+        return FINAL_RESOURCE_APPLY_PREVIEW_ACTION
+    return action
 
 
 def _preferred_validation_action(existing: str | None, candidate: str) -> str:
@@ -1052,7 +1065,7 @@ def _is_print_handoff_action(action: str) -> bool:
 
 def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
     action_roots = {_operator_action_root(action) for action in actions}
-    if FINAL_RESOURCE_APPLY_PREVIEW_BEFORE_APPLY_ACTION not in action_roots:
+    if FINAL_RESOURCE_APPLY_PREVIEW_ACTION not in action_roots:
         return actions
     return [
         action

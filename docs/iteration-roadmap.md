@@ -311,6 +311,7 @@ Bridge deliverable:
 - P0.397 final demo launch uses iOS destination-aware resource actions
 - P0.398 final showcase readiness uses iOS destination-aware resource actions
 - P0.399 iOS device launch certificate prefers final handoff child actions
+- P0.400 final local refresh normalizes apply preview action
 
 ## P1: Mobile Vertical Slice
 
