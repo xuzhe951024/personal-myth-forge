@@ -197,6 +197,110 @@ def test_write_final_showcase_readiness_fails_unusable_exit_code(
     )
 
 
+def test_write_mobile_xcode_build_evidence_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_mobile_xcode_build_evidence.sh")
+
+    assert result.returncode == 0
+    assert "accepted mobile Xcode build evidence exit code 2" in result.stdout
+    assert "services/backend/.local/mobile-xcode-build-evidence.json" in result.stdout
+
+
+def test_write_mobile_xcode_build_evidence_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_mobile_xcode_build_evidence.sh")
+
+    assert result.returncode == 1
+    assert (
+        "mobile Xcode build evidence failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
+def test_write_ios_device_evidence_bundle_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_ios_device_evidence_bundle.sh")
+
+    assert result.returncode == 0
+    assert "accepted iOS device evidence bundle exit code 2" in result.stdout
+    assert "services/backend/.local/ios-device-evidence-bundle.json" in result.stdout
+
+
+def test_write_ios_device_evidence_bundle_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_ios_device_evidence_bundle.sh")
+
+    assert result.returncode == 1
+    assert (
+        "iOS device evidence bundle failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
+def test_write_ios_device_launch_certificate_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_ios_device_launch_certificate.sh")
+
+    assert result.returncode == 0
+    assert "accepted iOS device launch certificate exit code 2" in result.stdout
+    assert "services/backend/.local/ios-device-launch-certificate.json" in result.stdout
+
+
+def test_write_ios_device_launch_certificate_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_ios_device_launch_certificate.sh")
+
+    assert result.returncode == 1
+    assert (
+        "iOS device launch certificate failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
+def test_write_final_handoff_index_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_final_handoff_index.sh")
+
+    assert result.returncode == 0
+    assert "accepted final handoff index exit code 2" in result.stdout
+    assert "services/backend/.local/final-handoff-index.json" in result.stdout
+
+
+def test_write_final_handoff_index_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_final_handoff_index.sh")
+
+    assert result.returncode == 1
+    assert (
+        "final handoff index failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
 def test_write_final_external_action_ledger_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:
@@ -616,6 +720,98 @@ def test_final_showcase_readiness_wrapper_is_executable() -> None:
     repo_root = Path(__file__).resolve().parents[3]
 
     wrapper = repo_root / "services/backend/scripts/write_final_showcase_readiness.sh"
+
+    assert os.access(wrapper, os.X_OK)
+
+
+def test_mobile_xcode_build_evidence_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "mobile-xcode-build-evidence"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "write_mobile_xcode_build_evidence.sh" in result.stdout
+
+
+def test_mobile_xcode_build_evidence_wrapper_is_executable() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    wrapper = repo_root / "services/backend/scripts/write_mobile_xcode_build_evidence.sh"
+
+    assert os.access(wrapper, os.X_OK)
+
+
+def test_ios_device_evidence_bundle_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "ios-device-evidence-bundle"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "write_ios_device_evidence_bundle.sh" in result.stdout
+
+
+def test_ios_device_evidence_bundle_wrapper_is_executable() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    wrapper = repo_root / "services/backend/scripts/write_ios_device_evidence_bundle.sh"
+
+    assert os.access(wrapper, os.X_OK)
+
+
+def test_ios_device_launch_certificate_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "ios-device-launch-certificate"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "write_ios_device_launch_certificate.sh" in result.stdout
+
+
+def test_ios_device_launch_certificate_wrapper_is_executable() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    wrapper = repo_root / "services/backend/scripts/write_ios_device_launch_certificate.sh"
+
+    assert os.access(wrapper, os.X_OK)
+
+
+def test_final_handoff_index_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "final-handoff-index"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "write_final_handoff_index.sh" in result.stdout
+
+
+def test_final_handoff_index_wrapper_is_executable() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    wrapper = repo_root / "services/backend/scripts/write_final_handoff_index.sh"
 
     assert os.access(wrapper, os.X_OK)
 

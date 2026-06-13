@@ -239,6 +239,72 @@ def test_device_evidence_make_source_gates_require_safe_wrappers() -> None:
     ) in showcase_requirements
 
 
+def test_device_handoff_make_source_gates_require_safe_wrappers() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    final_handoff_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_handoff_index"].requirements
+    }
+    certificate_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["ios_device_launch_certificate"].requirements
+    }
+    rehearsal_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["ios_device_launch_rehearsal"].requirements
+    }
+    showcase_device_requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["mobile_final_showcase_device_action_bundle"].requirements
+    }
+
+    assert ("Makefile", "write_final_handoff_index.sh") in final_handoff_requirements
+    assert (
+        "services/backend/scripts/write_final_handoff_index.sh",
+        ".local/final-handoff-index.json",
+    ) in final_handoff_requirements
+    assert (
+        "services/backend/scripts/write_final_handoff_index.sh",
+        "accepted final handoff index exit code",
+    ) in final_handoff_requirements
+    assert (
+        "Makefile",
+        "write_ios_device_launch_certificate.sh",
+    ) in certificate_requirements
+    assert (
+        "services/backend/scripts/write_ios_device_launch_certificate.sh",
+        ".local/ios-device-launch-certificate.json",
+    ) in certificate_requirements
+    assert (
+        "services/backend/scripts/write_ios_device_launch_certificate.sh",
+        "accepted iOS device launch certificate exit code",
+    ) in certificate_requirements
+    assert (
+        "Makefile",
+        "write_ios_device_evidence_bundle.sh",
+    ) in rehearsal_requirements
+    assert (
+        "services/backend/scripts/write_ios_device_evidence_bundle.sh",
+        ".local/ios-device-evidence-bundle.json",
+    ) in rehearsal_requirements
+    assert (
+        "services/backend/scripts/write_ios_device_evidence_bundle.sh",
+        "accepted iOS device evidence bundle exit code",
+    ) in rehearsal_requirements
+    assert (
+        "Makefile",
+        "write_mobile_xcode_build_evidence.sh",
+    ) in showcase_device_requirements
+    assert (
+        "services/backend/scripts/write_mobile_xcode_build_evidence.sh",
+        ".local/mobile-xcode-build-evidence.json",
+    ) in showcase_device_requirements
+    assert (
+        "services/backend/scripts/write_mobile_xcode_build_evidence.sh",
+        "accepted mobile Xcode build evidence exit code",
+    ) in showcase_device_requirements
+
+
 def test_final_showcase_concrete_next_action_source_gate() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1542,6 +1608,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "services/backend/scripts/write_final_local_report_refresh.sh "
             "services/backend/scripts/write_final_showcase_readiness.sh "
             "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh "
+            "services/backend/scripts/write_mobile_xcode_build_evidence.sh "
+            "services/backend/scripts/write_ios_device_evidence_bundle.sh "
+            "services/backend/scripts/write_ios_device_launch_certificate.sh "
+            "services/backend/scripts/write_final_handoff_index.sh "
             "final-rehearsal-local: backend-evaluate-local visual-regression-local "
             "final-acceptance-local final-demo-launch-local ios-deploy-runbook-local "
             "final-local-report-refresh-local "
@@ -1577,6 +1647,22 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh": (
             "accepted mobile deploy preflight evidence exit code $status "
             "services/backend/.local/mobile-deploy-preflight-evidence.json"
+        ),
+        "services/backend/scripts/write_mobile_xcode_build_evidence.sh": (
+            "accepted mobile Xcode build evidence exit code $status "
+            "services/backend/.local/mobile-xcode-build-evidence.json"
+        ),
+        "services/backend/scripts/write_ios_device_evidence_bundle.sh": (
+            "accepted iOS device evidence bundle exit code $status "
+            "services/backend/.local/ios-device-evidence-bundle.json"
+        ),
+        "services/backend/scripts/write_ios_device_launch_certificate.sh": (
+            "accepted iOS device launch certificate exit code $status "
+            "services/backend/.local/ios-device-launch-certificate.json"
+        ),
+        "services/backend/scripts/write_final_handoff_index.sh": (
+            "accepted final handoff index exit code $status "
+            "services/backend/.local/final-handoff-index.json"
         ),
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
             "three_d_evaluation LOCAL_THREE_D_EVALUATION_COMMAND "
