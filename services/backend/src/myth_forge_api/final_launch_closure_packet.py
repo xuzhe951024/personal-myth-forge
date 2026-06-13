@@ -218,6 +218,7 @@ def _compact_ledger_action(action: dict[str, Any]) -> dict[str, Any]:
         writes_repo_local_files=bool(action.get("writes_repo_local_files")),
         classification=_optional_string(action.get("classification")),
         destination=_optional_string(action.get("destination")),
+        operator_action=_optional_string(action.get("operator_action")),
     )
 
 
@@ -499,6 +500,7 @@ def _closure_action(
     writes_repo_local_files: bool = False,
     classification: str | None = None,
     destination: str | None = None,
+    operator_action: str | None = None,
 ) -> dict[str, Any]:
     row = {
         "id": action_id,
@@ -521,6 +523,8 @@ def _closure_action(
         row["classification"] = classification
     if destination:
         row["destination"] = destination
+    if operator_action:
+        row["operator_action"] = operator_action
     return row
 
 
@@ -564,9 +568,21 @@ def _operator_actions(sections: list[dict[str, Any]]) -> list[str]:
             if action["requires_user_input"] and action["id"].startswith("provide_"):
                 actions.append(_provide_action_text(action))
             elif action["requires_cost_consent"]:
-                actions.append(f"approve live provider cost before {action['command']}")
+                concrete_action = str(action.get("operator_action", "")).strip()
+                if concrete_action:
+                    actions.append(concrete_action)
+                else:
+                    actions.append(
+                        f"approve live provider cost before {action['command']}"
+                    )
             elif action["requires_user_confirmation"]:
-                actions.append(f"confirm global/manual action before {action['command']}")
+                concrete_action = str(action.get("operator_action", "")).strip()
+                if concrete_action:
+                    actions.append(concrete_action)
+                else:
+                    actions.append(
+                        f"confirm global/manual action before {action['command']}"
+                    )
             else:
                 actions.append(_run_action_text(str(action["command"])))
     if not actions:

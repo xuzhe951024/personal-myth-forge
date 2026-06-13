@@ -307,6 +307,7 @@ Bridge deliverable:
 - P0.393 final demo launch prefers provider handoff child actions
 - P0.394 final local refresh promotes final demo launch live child actions
 - P0.395 final external action ledger prefers live provider child actions
+- P0.396 final launch closure packet prefers ledger child operator actions
 
 ## P1: Mobile Vertical Slice
 

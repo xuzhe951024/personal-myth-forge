@@ -144,6 +144,61 @@ def test_final_launch_closure_packet_exposes_next_action_from_first_blocker(
     assert "meshy-secret" not in json.dumps(action)
 
 
+def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_json(
+        repo_root / "services/backend/.local/provider-handoff.json",
+        {
+            "kind": "provider_handoff_report",
+            "status": "blocked",
+            "classification": "core_real_providers_not_ready",
+            "core_real_ready": False,
+            "missing_env": [],
+            "next_action": {
+                "id": "three_d_provider",
+                "label": "3D provider",
+                "status": "blocked",
+                "classification": "local_stub",
+                "command": "make final-resource-apply-preview",
+                "detail": "Core 3D provider is demo-ready but not configured.",
+                "validation_command": "make provider-handoff",
+                "source": "first_blocker",
+            },
+        },
+    )
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    operator_actions = result.report["operator_actions"]
+
+    assert (
+        "make final-resource-apply-preview; rerun make live-provider-evidence"
+        in operator_actions
+    )
+    assert (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+    ) in operator_actions
+    assert (
+        "approve live provider cost before make live-provider-evidence"
+        not in operator_actions
+    )
+    assert (
+        "make provider-handoff; rerun make live-provider-evidence"
+        not in operator_actions
+    )
+    assert (
+        "approve live provider cost before make print-fulfillment-readiness"
+        not in operator_actions
+    )
+
+
 def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     tmp_path: Path,
 ) -> None:
