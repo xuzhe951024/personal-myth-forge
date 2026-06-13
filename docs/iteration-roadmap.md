@@ -374,6 +374,7 @@ Bridge deliverable:
 - P0.460 Local iOS deploy runbook prefers device blockers before provider keys
 - P0.461 Functional regression fixtures align with current readiness gates
 - P0.462 Local report refresh prioritizes iPhone device blocker before provider keys
+- P0.463 Final launch closure packet prioritizes iPhone device blocker before provider keys
 
 ## P1: Mobile Vertical Slice
 

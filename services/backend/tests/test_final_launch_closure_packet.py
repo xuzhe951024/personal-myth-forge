@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from myth_forge_api import final_launch_closure_packet
 from myth_forge_api.config import Settings
 from myth_forge_api.final_launch_closure_packet import (
     build_final_launch_closure_packet_report,
@@ -39,15 +40,14 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert report["summary"]["secret_actions"] >= 2
     assert report["summary"]["requires_cost_consent"] >= 1
     assert report["first_blocker"] == {
-        "id": "resource_inputs",
-        "label": "Resource inputs",
+        "id": "final_showcase_readiness",
+        "label": "Final showcase readiness",
         "status": "blocked",
-        "classification": "missing_required_value",
-        "command": "provide MESHY_API_KEY in final-resources.env",
-        "validation_command": "make final-resources-preflight",
-        "detail": "Backend-only secret for live Meshy 3D generation.",
-        "section_id": "resource_inputs",
-        "action_id": "provide_MESHY_API_KEY",
+        "classification": "ios_rehearsal_missing",
+        "command": "make ios-device-launch-rehearsal",
+        "detail": "iOS deploy runbook and device launch rehearsal must both be ready.",
+        "section_id": "final_acceptance",
+        "action_id": "final_showcase_readiness",
     }
     assert [section["id"] for section in report["sections"]] == [
         "resource_inputs",
@@ -353,20 +353,78 @@ def test_final_launch_closure_packet_exposes_next_action_from_first_blocker(
     blocker = result.report["first_blocker"]
     action = result.report["next_action"]
 
-    assert blocker["id"] == "resource_inputs"
+    assert blocker["id"] == "final_showcase_readiness"
     assert action == {
+        "id": "final_showcase_readiness",
+        "label": "Final showcase readiness",
+        "status": "blocked",
+        "classification": "ios_rehearsal_missing",
+        "command": "make ios-device-launch-rehearsal",
+        "detail": "iOS deploy runbook and device launch rehearsal must both be ready.",
+        "source": "first_blocker",
+        "section_id": "final_acceptance",
+        "action_id": "final_showcase_readiness",
+    }
+    assert "meshy-secret" not in json.dumps(action)
+
+
+def test_final_launch_closure_packet_keeps_section_order_for_non_device_showcase_blocker() -> None:
+    blocker = final_launch_closure_packet._first_blocker(
+        [
+            {
+                "id": "resource_inputs",
+                "label": "Resource inputs",
+                "status": "blocked",
+                "required": True,
+                "first_action": {
+                    "id": "provide_MESHY_API_KEY",
+                    "status": "missing",
+                    "classification": "missing_required_value",
+                    "command": "provide MESHY_API_KEY in final-resources.env",
+                    "detail": "Backend-only secret for live Meshy 3D generation.",
+                    "validation_command": "make final-resources-preflight",
+                },
+            },
+            {
+                "id": "final_acceptance",
+                "label": "Final acceptance",
+                "status": "blocked",
+                "required": True,
+                "first_action": {
+                    "id": "final_showcase_readiness",
+                    "status": "blocked",
+                    "classification": "provider_handoff_incomplete",
+                    "command": "make final-resource-apply-preview",
+                    "detail": "Provider handoff incomplete.",
+                    "validation_command": "make live-provider-evidence",
+                },
+            },
+        ],
+        showcase_readiness={
+            "kind": "final_showcase_readiness_report",
+            "status": "blocked",
+            "first_blocker": {
+                "id": "provider_key_handoff",
+                "label": "Provider and key handoff",
+                "status": "blocked",
+                "classification": "provider_handoff_incomplete",
+                "command": "make final-resource-apply-preview",
+                "detail": "Provider handoff incomplete.",
+                "validation_command": "make live-provider-evidence",
+            },
+        },
+    )
+
+    assert blocker == {
         "id": "resource_inputs",
         "label": "Resource inputs",
         "status": "blocked",
         "classification": "missing_required_value",
         "command": "provide MESHY_API_KEY in final-resources.env",
-        "validation_command": "make final-resources-preflight",
         "detail": "Backend-only secret for live Meshy 3D generation.",
-        "source": "first_blocker",
         "section_id": "resource_inputs",
         "action_id": "provide_MESHY_API_KEY",
     }
-    assert "meshy-secret" not in json.dumps(action)
 
 
 def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
@@ -568,7 +626,7 @@ def test_final_launch_closure_packet_redacts_unsafe_source_details(
 
     assert result.exit_code == 2
     assert result.report["first_blocker"] is not None
-    assert "[redacted]" in json.dumps(result.report["first_blocker"])
+    assert result.report["first_blocker"]["id"] == "final_showcase_readiness"
     assert "[redacted]" in text
     assert "sk-secret" not in text
     assert "sk-configured" not in text

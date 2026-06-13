@@ -90,7 +90,10 @@ def build_final_launch_closure_packet_report(
         final_acceptance=final_acceptance,
     )
     status = _overall_status(sections)
-    first_blocker = _first_blocker(sections)
+    first_blocker = _first_blocker(
+        sections,
+        showcase_readiness=showcase_readiness,
+    )
     report = {
         "kind": "final_launch_closure_packet_report",
         "status": status,
@@ -803,7 +806,14 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     return next_action
 
 
-def _first_blocker(sections: list[dict[str, Any]]) -> dict[str, Any] | None:
+def _first_blocker(
+    sections: list[dict[str, Any]],
+    *,
+    showcase_readiness: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    promoted = _promoted_showcase_device_blocker(showcase_readiness)
+    if promoted is not None:
+        return promoted
     for section in sections:
         if not section.get("required"):
             continue
@@ -829,6 +839,43 @@ def _first_blocker(sections: list[dict[str, Any]]) -> dict[str, Any] | None:
             blocker.pop("classification")
         return blocker
     return None
+
+
+def _promoted_showcase_device_blocker(
+    showcase_readiness: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if not isinstance(showcase_readiness, dict):
+        return None
+    first_blocker = showcase_readiness.get("first_blocker")
+    blocker = first_blocker if isinstance(first_blocker, dict) else {}
+    command = str(blocker.get("command") or "")
+    if (
+        "mobile-write-deploy-config-auto" not in command
+        and "mobile-deploy-preflight" not in command
+        and "ios-device-launch-rehearsal" not in command
+        and "backend-device-demo" not in command
+        and "mobile-xcode-build" not in command
+    ):
+        return None
+    promoted = {
+        "id": "final_showcase_readiness",
+        "label": "Final showcase readiness",
+        "status": str(showcase_readiness.get("status", "blocked")),
+        "classification": _optional_string(blocker.get("classification")),
+        "command": command,
+        "detail": str(
+            blocker.get("detail")
+            or "Run final showcase readiness after iPhone deploy evidence is refreshed."
+        ),
+        "section_id": "final_acceptance",
+        "action_id": "final_showcase_readiness",
+    }
+    validation_command = str(blocker.get("validation_command") or "").strip()
+    if validation_command:
+        promoted["validation_command"] = validation_command
+    if promoted["classification"] is None:
+        promoted.pop("classification")
+    return promoted
 
 
 def _summary(sections: list[dict[str, Any]]) -> dict[str, int]:
