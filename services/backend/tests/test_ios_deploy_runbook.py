@@ -35,13 +35,15 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert slots["local_final_acceptance"]["status"] == "missing"
     assert slots["three_d_evaluation"]["status"] == "missing"
     assert slots["npc_agent_evaluation"]["status"] == "missing"
-    assert "run make final-resource-init" in " ".join(report["operator_actions"])
-    assert "run make final-resource-apply-preview before applying resources" in " ".join(
-        report["operator_actions"]
+    actions_text = " ".join(report["operator_actions"])
+    assert "run make final-resource-init" in actions_text
+    assert "make final-resource-apply-preview" in actions_text
+    assert "run make final-resource-apply-preview before applying resources" not in (
+        actions_text
     )
-    assert "run make final-acceptance-local" in " ".join(report["operator_actions"])
-    assert "run make backend-evaluate-3d" in " ".join(report["operator_actions"])
-    assert "run make backend-evaluate-npc" in " ".join(report["operator_actions"])
+    assert "run make final-acceptance-local" in actions_text
+    assert "run make backend-evaluate-3d" in actions_text
+    assert "run make backend-evaluate-npc" in actions_text
     commands = [step["command"] for step in report["command_sequence"]]
     assert commands[:3] == [
         "make final-resources-preflight",
@@ -104,6 +106,31 @@ def test_ios_deploy_runbook_resource_actions_include_validation_commands(
         or action.endswith("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
         for action in actions
     )
+
+
+def test_ios_deploy_runbook_operator_actions_drop_stale_unblock_fallbacks(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+
+    report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
+    actions = report["operator_actions"]
+    action_text = " ".join(actions)
+
+    assert (
+        "unblock final_resources_preflight: make final-resources-preflight"
+        not in actions
+    )
+    assert (
+        "unblock preview_final_resource_apply: make final-resource-apply-preview"
+        not in actions
+    )
+    assert "unblock apply_final_resources: make final-apply-resources" not in actions
+    assert "unblock mobile_deploy_preflight: make mobile-deploy-preflight" not in (
+        actions
+    )
+    assert not any("make final-apply-resources" in action for action in actions)
+    assert "make final-resource-apply-preview" in action_text
 
 
 def test_ios_deploy_runbook_uses_concrete_final_resource_blocker_when_file_exists(

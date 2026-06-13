@@ -126,7 +126,7 @@ def _input_slots(
             status=str(final_resource_apply_preview.get("status", "missing")),
             required=True,
             source="services/backend/.local/final-resource-apply-preview.json",
-            action="run make final-resource-apply-preview before applying resources",
+            action="make final-resource-apply-preview",
         ),
         _slot(
             slot_id="backend_provider_env",
@@ -482,8 +482,6 @@ def _operator_actions(
     if mode == "configured":
         actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
     for step in command_sequence:
-        if step["status"] in {"missing", "blocked"}:
-            actions.append(f"unblock {step['id']}: {step['command']}")
         if step["status"] == "manual" and step["id"] == "xcode_build_gate":
             actions.append("run Xcode build gate manually on the Mac: make mobile-xcode-build")
     return _dedupe(
