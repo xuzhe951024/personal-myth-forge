@@ -108,6 +108,26 @@ def test_write_final_local_report_refresh_accepts_blocked_report_exit_code(
     assert "--output .local/final-local-report-refresh.json" in fake_uv_args
 
 
+def test_write_final_local_report_refresh_syncs_final_demo_launch(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_final_local_report_refresh.sh")
+    fake_uv_args = (
+        script_repo / "services/backend/.local/fake-uv-args.txt"
+    ).read_text(encoding="utf-8")
+
+    assert result.returncode == 0
+    assert "wrote services/backend/.local/final-local-report-refresh.json" in result.stdout
+    assert "wrote services/backend/.local/final-demo-launch-local.json" in result.stdout
+    refresh_index = fake_uv_args.index("final-local-report-refresh")
+    launch_index = fake_uv_args.index("final-demo-launch --mode local")
+    assert refresh_index < launch_index
+    assert "--output .local/final-local-report-refresh.json" in fake_uv_args
+    assert "--output .local/final-demo-launch-local.json" in fake_uv_args
+
+
 def test_write_final_local_report_refresh_fails_unusable_exit_code(
     script_repo: Path,
 ) -> None:
