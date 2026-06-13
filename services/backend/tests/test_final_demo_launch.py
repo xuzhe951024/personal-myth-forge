@@ -4,6 +4,7 @@ from pathlib import Path
 import myth_forge_api.final_demo_launch as final_demo_launch
 from myth_forge_api.config import Settings
 from myth_forge_api.final_demo_launch import build_final_demo_launch_report
+from myth_forge_api.visual_regression import DEFAULT_VISUAL_ARTIFACTS
 
 
 def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -> None:
@@ -32,7 +33,7 @@ def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -
         "live_provider_evidence_report"
     )
     assert result.report["live_provider_evidence"]["status"] == "missing"
-    assert "run make live-provider-evidence" in " ".join(
+    assert "make live-provider-evidence" in " ".join(
         result.report["operator_checklist"]
     )
     assert result.report["final_resources_preflight"]["status"] == "missing"
@@ -1101,8 +1102,12 @@ def test_final_demo_launch_embeds_visual_regression_readiness(
 
     assert readiness["kind"] == "visual_regression_readiness_report"
     assert readiness["status"] == "ready"
-    assert readiness["summary"] == {"passed": 1, "failed": 0}
-    assert readiness["artifacts"][0]["id"] == "p0.118_scene_load_proof"
+    assert readiness["summary"] == {
+        "passed": len(DEFAULT_VISUAL_ARTIFACTS),
+        "failed": 0,
+    }
+    artifact_ids = {artifact["id"] for artifact in readiness["artifacts"]}
+    assert "p0.118_scene_load_proof" in artifact_ids
     assert readiness["safety"]["commands_run"] is False
 
 
@@ -1829,17 +1834,15 @@ def _write_visual_regression(repo_root: Path) -> None:
     report = {
         "kind": "visual_regression_report",
         "status": "passed",
-        "summary": {"passed": 1, "failed": 0},
+        "summary": {"passed": len(DEFAULT_VISUAL_ARTIFACTS), "failed": 0},
         "artifacts": [
             {
-                "id": "p0.118_scene_load_proof",
+                "id": artifact.id,
                 "status": "passed",
-                "html_path": "docs/superpowers/verification/p0.118-scene-load-proof.html",
-                "png_path": (
-                    "docs/superpowers/verification/assets/"
-                    "p0.118-scene-load-proof-390x844.png"
-                ),
+                "html_path": artifact.html_path,
+                "png_path": artifact.png_path,
             }
+            for artifact in DEFAULT_VISUAL_ARTIFACTS
         ],
     }
     visual = repo_root / "services/backend/.local/visual-regression-local.json"

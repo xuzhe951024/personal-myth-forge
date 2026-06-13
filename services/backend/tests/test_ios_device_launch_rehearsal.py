@@ -763,9 +763,13 @@ def test_ios_device_launch_rehearsal_routes_handoff_and_certificate_actions(
 
     assert result.exit_code == 2
     assert sequence["final_handoff_index"]["detail"] == (
-        "final_handoff_index: make final-configured-preflight"
+        "final_handoff_index: make final-configured-preflight; "
+        "rerun make configured-live-evidence-bundle"
     )
-    assert "make final-configured-preflight" in result.report["operator_actions"]
+    assert (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+        in result.report["operator_actions"]
+    )
     assert "make final-handoff-index" in result.report["operator_actions"]
     assert not any(
         action.startswith("final_handoff_index:")
@@ -1216,7 +1220,8 @@ def test_ios_device_launch_rehearsal_readiness_preserves_bounded_operator_action
     assert result.exit_code == 2
     assert len(result.report["operator_actions"]) == 20
     assert (
-        "final_handoff_index: make final-configured-preflight"
+        "final_handoff_index: make final-configured-preflight; "
+        "rerun make configured-live-evidence-bundle"
         in result.report["operator_actions"]
     )
     assert (
@@ -1254,7 +1259,8 @@ def test_ios_device_launch_rehearsal_readiness_normalizes_legacy_copy_actions(
     assert "run make final-resource-init" in result.report["operator_actions"]
     assert "services/backend/final-resources.env.example" not in report_text
     assert (
-        "final_handoff_index: make final-configured-preflight"
+        "final_handoff_index: make final-configured-preflight; "
+        "rerun make configured-live-evidence-bundle"
         in result.report["operator_actions"]
     )
 
