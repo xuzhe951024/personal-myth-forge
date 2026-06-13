@@ -1898,13 +1898,18 @@ def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
         return actions[:FINAL_SHOWCASE_REPORT_ACTION_LIMIT]
     selected = actions[:FINAL_SHOWCASE_REPORT_ACTION_LIMIT]
     selected.extend(
-        action
-        for action in actions
-        if action.startswith(FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES)
-        or action in FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_MAKE_TARGETS
-        or _is_ios_deploy_config_action_root(action)
+        action for action in actions if _is_ios_rehearsal_priority_action(action)
     )
     return _dedupe(selected)[:FINAL_SHOWCASE_IOS_REHEARSAL_ACTION_LIMIT]
+
+
+def _is_ios_rehearsal_priority_action(action: str) -> bool:
+    command_root = action.partition("; rerun ")[0].strip()
+    return (
+        action.startswith(FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES)
+        or command_root in FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_MAKE_TARGETS
+        or _is_ios_deploy_config_action_root(command_root)
+    )
 
 
 def _commands() -> list[str]:

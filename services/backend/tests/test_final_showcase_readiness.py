@@ -1717,7 +1717,10 @@ def test_final_showcase_readiness_normalizes_legacy_final_resource_copy_action(
     assert result.exit_code == 2
     assert "run make final-resource-init" in actions
     assert "services/backend/final-resources.env.example" not in report_text
-    assert "make final-configured-preflight" in actions
+    assert (
+        "make final-configured-preflight; "
+        "rerun make configured-live-evidence-bundle"
+    ) in actions
     assert "make final-handoff-index" in actions
 
 
