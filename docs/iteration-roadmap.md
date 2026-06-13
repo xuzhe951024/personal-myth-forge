@@ -313,6 +313,7 @@ Bridge deliverable:
 - P0.399 iOS device launch certificate prefers final handoff child actions
 - P0.400 final local refresh normalizes apply preview action
 - P0.401 final demo launch drops targeted unblock fallback actions
+- P0.402 final local refresh step apply preview action normalizes to make target
 
 ## P1: Mobile Vertical Slice
 

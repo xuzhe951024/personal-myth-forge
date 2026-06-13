@@ -182,6 +182,31 @@ def test_apply_preview_ios_actions_include_mobile_preflight_validation(
     )
 
 
+def test_apply_preview_operator_actions_use_canonical_preview_command(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    resources = write_resources(
+        repo_root,
+        VALID_LOCAL_RESOURCES.replace(
+            "MESHY_API_KEY=meshy-secret-test",
+            "MESHY_API_KEY=",
+        ),
+    )
+
+    result = build_final_resource_apply_preview_report(
+        repo_root=repo_root,
+        resources_file=resources,
+    )
+
+    assert result.exit_code == 2
+    assert "make final-resource-apply-preview" in result.report["operator_actions"]
+    assert (
+        "rerun make final-resource-apply-preview before applying resources"
+        not in result.report["operator_actions"]
+    )
+
+
 def test_apply_preview_blocks_example_backend_url_placeholder_without_writes(
     tmp_path: Path,
 ) -> None:

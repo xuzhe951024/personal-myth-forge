@@ -359,7 +359,7 @@ def _operator_actions(
             else:
                 actions.append(f"provide {slot_id} in final-resources.env")
     actions.extend(str(action) for action in preflight_report.get("operator_actions", []))
-    actions.append("rerun make final-resource-apply-preview before applying resources")
+    actions.append(FINAL_RESOURCE_APPLY_PREVIEW_COMMAND)
     return _dedupe(
         [
             add_final_resource_validation_command(

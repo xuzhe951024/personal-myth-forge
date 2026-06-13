@@ -430,7 +430,7 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
         blocker_hint = _blocker_hint(report)
         blocker_fields = _promoted_blocker_fields(blocker_hint)
         if step.id == "final_resource_apply_preview" and status == "blocked":
-            blocker_fields["command"] = FINAL_RESOURCE_APPLY_PREVIEW_BEFORE_APPLY_ACTION
+            blocker_fields["command"] = FINAL_RESOURCE_APPLY_PREVIEW_ACTION
             blocker_fields.pop("validation_command", None)
         if next_command and not blocker_fields["command"]:
             blocker_fields["command"] = next_command

@@ -237,7 +237,7 @@ def test_final_local_report_refresh_operator_actions_gate_apply_behind_preview(
         "label": "Final resource apply preview",
         "status": "blocked",
         "classification": "missing_required_value",
-        "command": "rerun make final-resource-apply-preview before applying resources",
+        "command": "make final-resource-apply-preview",
         "detail": preview["detail"],
         "source": "step",
         "output": "services/backend/.local/final-resource-apply-preview.json",
