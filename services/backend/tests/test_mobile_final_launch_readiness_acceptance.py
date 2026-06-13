@@ -215,6 +215,13 @@ def test_mobile_final_launch_readiness_acceptance_checks_endpoint_source_and_saf
     assert "mobile_summary_final_resource_requirements_first_blocker_row" in requirement_ids
     assert "contract_final_resource_requirements_first_blocker_fixture" in requirement_ids
     assert "contract_final_demo_launch_first_blocker_receipt" in requirement_ids
+    assert "demo_script_external_actions_step" in requirement_ids
+    assert "demo_script_external_actions_builder" in requirement_ids
+    assert "demo_script_external_actions_blocked_contract" in requirement_ids
+    assert "demo_script_external_actions_ready_contract" in requirement_ids
+    assert "showcase_autopilot_external_actions_step" in requirement_ids
+    assert "showcase_autopilot_check_actions_title" in requirement_ids
+    assert "showcase_autopilot_external_actions_contract" in requirement_ids
     assert result.report["safety"] == {
         "global_mutation": False,
         "live_provider_calls_by_default": False,
@@ -478,6 +485,18 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "\"final_resource_fill_guide\"",
             ]
         ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift": "\n".join(
+            [
+                '"external_actions"',
+                "externalActionsStep",
+            ]
+        ),
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ShowcaseAutopilot.swift": "\n".join(
+            [
+                'script.step(id: "external_actions")',
+                '"Check Actions"',
+            ]
+        ),
         "services/backend/src/myth_forge_api/final_demo_launch.py": "\n".join(
             [
                 '"ios_device_launch_certificate"',
@@ -563,6 +582,9 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket",
                 "sk-configured",
                 "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt",
+                "testDemoScriptShowsBlockedExternalActionsBeforeFinalLaunch",
+                "testDemoScriptCompletesReadyExternalActionsBeforeFinalLaunch",
+                "testShowcaseAutopilotBlocksOnExternalActions",
                 "testDecodesIOSDeviceLaunchRehearsalReadinessFromFinalLaunchPayload",
                 "testDecodesIOSDeviceLaunchRehearsalFreshnessFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsBlockedIOSDeviceLaunchRehearsal",
