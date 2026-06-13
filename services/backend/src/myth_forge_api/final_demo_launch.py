@@ -83,6 +83,10 @@ IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
 FINAL_RESOURCES_ENV_LABEL = "final-resources.env"
 FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
+FINAL_DEMO_TARGETED_UNBLOCK_ACTION_ROOTS = {
+    "unblock apply_final_resources: make final-resource-apply-preview",
+    "unblock mobile_deploy_preflight: make mobile-deploy-preflight",
+}
 FINAL_DEMO_OPERATOR_ACTION_LIMIT = 12
 FINAL_SHOWCASE_HANDOFF_ACTION_LIMIT = 4
 FINAL_SHOWCASE_LIVE_HANDOFF_ACTION_MARKERS = (
@@ -932,9 +936,38 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     deduped = _prefer_apply_preview_before_apply(
         [value for value in deduped if value not in validation_aware_roots]
     )
-    return prefer_project_local_ios_deploy_handoff_actions(
-        deduped
+    filtered = _drop_targeted_unblock_fallbacks(
+        prefer_project_local_ios_deploy_handoff_actions(deduped)
     )
+    return _preserve_requested_apply_preview_action(
+        filtered,
+        original_values=values,
+    )
+
+
+def _drop_targeted_unblock_fallbacks(actions: list[str]) -> list[str]:
+    return [
+        action
+        for action in actions
+        if _command_root(action)
+        not in FINAL_DEMO_TARGETED_UNBLOCK_ACTION_ROOTS
+    ]
+
+
+def _preserve_requested_apply_preview_action(
+    actions: list[str],
+    *,
+    original_values: list[str],
+) -> list[str]:
+    original_commands = {_operator_action_command(action) for action in original_values}
+    action_commands = {_operator_action_command(action) for action in actions}
+    if FINAL_RESOURCE_APPLY_PREVIEW_COMMAND not in original_commands:
+        return actions
+    if FINAL_RESOURCE_APPLY_PREVIEW_COMMAND in action_commands:
+        return actions
+    if not actions:
+        return [FINAL_RESOURCE_APPLY_PREVIEW_COMMAND]
+    return [actions[0], FINAL_RESOURCE_APPLY_PREVIEW_COMMAND, *actions[1:]]
 
 
 def _destination_aware_resource_actions(

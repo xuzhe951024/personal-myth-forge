@@ -605,6 +605,14 @@ def test_local_final_demo_launch_operator_actions_do_not_skip_apply_preview(
         _operator_action_command_root(action) == "make final-apply-resources"
         for action in operator_actions
     )
+    assert (
+        "unblock apply_final_resources: make final-resource-apply-preview"
+        not in operator_actions
+    )
+    assert (
+        "unblock mobile_deploy_preflight: make mobile-deploy-preflight"
+        not in operator_actions
+    )
 
 
 def test_configured_final_demo_launch_drops_superseded_resource_team_action(
@@ -650,6 +658,30 @@ def test_final_demo_launch_dedupe_prefers_writer_over_old_team_action() -> None:
             "make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         )
+    ]
+
+
+def test_final_demo_launch_dedupe_drops_targeted_unblock_fallbacks() -> None:
+    actions = final_demo_launch._dedupe_operator_actions(
+        [
+            "make final-resource-apply-preview",
+            "unblock apply_final_resources: make final-resource-apply-preview",
+            (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            "unblock mobile_deploy_preflight: make mobile-deploy-preflight",
+        ]
+    )
+
+    assert actions == [
+        "make final-resource-apply-preview",
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
     ]
 
 
