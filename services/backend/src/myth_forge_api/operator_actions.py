@@ -54,7 +54,12 @@ MAKE_TARGET_ACTION_REPLACEMENTS = {
     "run make final-resource-requirements after filling resources": (
         "make final-resource-requirements"
     ),
-    "run make final-configured-preflight": "make final-configured-preflight",
+    "make final-configured-preflight": (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    ),
+    "run make final-configured-preflight": (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    ),
     "run make final-demo-launch-configured": "make final-demo-launch-configured",
     "run make final-demo-launch-local": "make final-demo-launch-local",
     "run make final-handoff-index": "make final-handoff-index",

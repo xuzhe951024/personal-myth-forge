@@ -55,6 +55,7 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
 )
 from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
+    normalize_operator_action,
     prefer_project_local_ios_deploy_handoff_actions,
 )
 from myth_forge_api.print_fulfillment_readiness import (
@@ -1089,7 +1090,12 @@ def _dedupe(values: list[str]) -> list[str]:
 
 
 def _dedupe_operator_actions(values: list[str]) -> list[str]:
-    deduped = _dedupe([add_final_resource_validation_command(value) for value in values])
+    deduped = _dedupe(
+        [
+            add_final_resource_validation_command(normalize_operator_action(value))
+            for value in values
+        ]
+    )
     validation_aware_roots = {
         value.split("; rerun ", 1)[0].strip()
         for value in deduped

@@ -873,6 +873,21 @@ def test_local_final_demo_launch_normalizes_final_resource_requirement_action(
     )
 
 
+def test_local_final_demo_launch_validates_configured_preflight_action() -> None:
+    actions = final_demo_launch._dedupe_operator_actions(
+        [
+            "make final-configured-preflight",
+            "run make final-configured-preflight",
+        ]
+    )
+
+    assert (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+        in actions
+    )
+    assert "make final-configured-preflight" not in actions
+
+
 def test_local_final_demo_launch_marks_unified_apply_missing_with_ios_only(
     tmp_path: Path,
 ) -> None:

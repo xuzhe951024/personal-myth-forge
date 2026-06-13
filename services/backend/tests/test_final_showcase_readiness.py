@@ -1000,7 +1000,8 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert result.exit_code == 2
     assert actions[0] == "make ios-device-launch-rehearsal"
     assert "final_rehearsal_local: final_acceptance_local: action 1" in actions
-    assert "make final-configured-preflight" in actions
+    assert "make final-configured-preflight" not in actions
+    assert any("configured-live-evidence-bundle" in action for action in actions)
     assert "make final-demo-launch-configured" in actions
     assert not any("final-demo-launch --mode configured" in action for action in actions)
     assert "make final-handoff-index" in actions
@@ -1311,7 +1312,10 @@ def test_final_showcase_readiness_normalizes_prefixed_make_target_actions() -> N
     )
 
     assert actions == [
-        "make final-configured-preflight",
+        (
+            "make final-configured-preflight; "
+            "rerun make configured-live-evidence-bundle"
+        ),
         "make final-demo-launch-configured",
         "make final-handoff-index",
         "make ios-deploy-runbook-local",
