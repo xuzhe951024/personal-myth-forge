@@ -116,6 +116,59 @@ def test_live_provider_evidence_blocks_saved_non_real_provider_handoff(
     )
 
 
+def test_live_provider_evidence_projects_provider_handoff_child_next_action(
+    tmp_path: Path,
+) -> None:
+    _write_json(
+        tmp_path / "services/backend/.local/provider-handoff.json",
+        {
+            "kind": "provider_handoff_report",
+            "status": "blocked",
+            "classification": "core_real_providers_not_ready",
+            "core_real_ready": False,
+            "missing_env": [],
+            "next_action": {
+                "id": "three_d_provider",
+                "label": "3D provider",
+                "status": "blocked",
+                "classification": "local_stub",
+                "command": "make final-resource-apply-preview",
+                "detail": "Core 3D provider is demo-ready but not configured.",
+                "validation_command": "make provider-handoff",
+                "source": "first_blocker",
+            },
+        },
+    )
+
+    result = build_live_provider_evidence_report(repo_root=tmp_path)
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert result.report["first_blocker"]["id"] == "provider_handoff"
+    assert result.report["first_blocker"]["command"] == (
+        "make final-resource-apply-preview"
+    )
+    assert result.report["first_blocker"]["source_blocker_id"] == "three_d_provider"
+    assert result.report["first_blocker"]["source_blocker_command"] == (
+        "make final-resource-apply-preview"
+    )
+    assert result.report["first_blocker"]["source_blocker_validation_command"] == (
+        "make provider-handoff"
+    )
+    assert result.report["first_blocker"]["detail"] == (
+        "Core 3D provider is demo-ready but not configured."
+    )
+    assert result.report["next_action"]["id"] == "provider_handoff"
+    assert result.report["next_action"]["command"] == (
+        "make final-resource-apply-preview"
+    )
+    assert result.report["next_action"]["validation_command"] == (
+        "make live-provider-evidence"
+    )
+    evidence = {slot["id"]: slot for slot in result.report["evidence"]}
+    assert evidence["provider_handoff"]["source_blocker_id"] == "three_d_provider"
+
+
 def test_live_provider_evidence_blocks_failed_report_and_redacts(
     tmp_path: Path,
 ) -> None:

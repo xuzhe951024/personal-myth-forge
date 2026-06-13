@@ -694,14 +694,17 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
                     "label": "Provider handoff",
                     "status": "blocked",
                     "classification": "report_not_ready",
-                    "command": "make provider-handoff",
-                    "detail": "Core real providers are not ready for live evidence.",
+                    "command": "make final-resource-apply-preview",
+                    "detail": "Core 3D provider is demo-ready but not configured.",
                     "requires_live_provider_consent": False,
                     "validation_command": "make live-provider-evidence",
                     "source": "first_blocker",
+                    "source_blocker_id": "three_d_provider",
+                    "source_blocker_command": "make final-resource-apply-preview",
+                    "source_blocker_validation_command": "make provider-handoff",
                 },
                 "evidence": [],
-                "operator_actions": ["make provider-handoff"],
+                "operator_actions": ["make final-resource-apply-preview"],
                 "commands": ["make live-provider-evidence", "make provider-handoff"],
                 "safety": {"live_provider_calls": False},
             },
@@ -727,7 +730,7 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
     for row_id in ("game_asset_3d_generation", "ai_agent_npc"):
         row = rows[row_id]
         assert row["status"] == "partial"
-        assert row["command"] == "make provider-handoff"
+        assert row["command"] == "make final-resource-apply-preview"
         assert row["validation_command"] == "make live-provider-evidence"
         assert row["requires_live_provider_consent"] is False
         assert row["completion_requires_live_provider_consent"] is True
@@ -736,7 +739,7 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
             "label": row["label"],
             "status": "partial",
             "classification": row["classification"],
-            "command": "make provider-handoff",
+            "command": "make final-resource-apply-preview",
             "detail": row["detail"],
             "source": "capability",
             "validation_command": "make live-provider-evidence",
@@ -744,9 +747,11 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
             "completion_requires_live_provider_consent": True,
         }
     actions = result.report["operator_actions"]
-    combined_action = "make provider-handoff; rerun make live-provider-evidence"
+    combined_action = (
+        "make final-resource-apply-preview; rerun make live-provider-evidence"
+    )
     assert combined_action in actions
-    assert "make provider-handoff" not in actions
+    assert "make final-resource-apply-preview" not in actions
     assert "make live-provider-evidence" not in actions
 
 
