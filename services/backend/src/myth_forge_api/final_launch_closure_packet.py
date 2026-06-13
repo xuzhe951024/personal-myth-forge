@@ -92,6 +92,7 @@ def build_final_launch_closure_packet_report(
         "next_action": _next_action(first_blocker),
         "sections": sections,
         "sections_by_id": {section["id"]: section for section in sections},
+        "device_action_bundle": _device_action_bundle(device_evidence),
         "operator_actions": _operator_actions(sections),
         "commands": COMMANDS,
         "source_reports": {
@@ -274,6 +275,147 @@ def _device_action(slot: dict[str, Any]) -> dict[str, Any]:
         xcode_or_signing=bool(slot.get("xcode_or_signing")),
         classification=_optional_string(slot.get("classification")),
     )
+
+
+def _device_action_bundle(device_evidence: dict[str, Any]) -> dict[str, Any]:
+    source_bundle = device_evidence.get("device_action_bundle")
+    if isinstance(source_bundle, dict):
+        actions = [
+            _closure_device_action(action)
+            for action in source_bundle.get("actions", [])
+            if isinstance(action, dict)
+        ]
+        first_action = _closure_device_first_action(
+            source_bundle.get("first_action"),
+            actions,
+        )
+        status = str(
+            source_bundle.get("status", device_evidence.get("status", "missing"))
+        )
+    else:
+        actions = [
+            _closure_device_action_from_slot(slot)
+            for slot in device_evidence.get("evidence_slots", [])
+            if isinstance(slot, dict)
+        ]
+        first_action = _first_closure_device_action(actions)
+        status = str(device_evidence.get("status", "missing"))
+    return {
+        "id": "final_launch_closure_device_actions",
+        "label": "Final Launch Closure Device Actions",
+        "source_report": "ios_device_evidence_bundle",
+        "status": _normalized_status(status),
+        "actions": actions,
+        "first_action": first_action,
+        "summary": _device_action_bundle_summary(actions),
+        "safety": {
+            "commands_run": False,
+            "global_mutation": False,
+            "keychain_writes": False,
+            "live_provider_calls": False,
+            "provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "xcode_or_signing": False,
+        },
+    }
+
+
+def _closure_device_action(action: dict[str, Any]) -> dict[str, Any]:
+    copied = {
+        "id": str(action.get("id", "device_action")),
+        "label": str(action.get("label", action.get("id", "Device action"))),
+        "status": _normalized_status(str(action.get("status", "blocked"))),
+        "classification": str(action.get("classification", "")),
+        "command": str(action.get("command", "")),
+        "detail": str(action.get("detail", "")),
+        "evidence_source": str(action.get("evidence_source", "")),
+        "manual": bool(action.get("manual")),
+        "provider_calls": bool(action.get("provider_calls")),
+        "global_action": bool(action.get("global_action")),
+        "xcode_or_signing": bool(action.get("xcode_or_signing")),
+    }
+    next_action = action.get("next_action")
+    if isinstance(next_action, dict):
+        copied["next_action"] = _closure_device_next_action(next_action)
+    return copied
+
+
+def _closure_device_next_action(next_action: dict[str, Any]) -> dict[str, str]:
+    copied = {
+        "id": str(next_action.get("id", "")),
+        "label": str(next_action.get("label", "")),
+        "status": str(next_action.get("status", "")),
+        "command": str(next_action.get("command", "")),
+        "detail": str(next_action.get("detail", "")),
+        "source": str(next_action.get("source", "")),
+    }
+    validation_command = str(next_action.get("validation_command", "")).strip()
+    if validation_command:
+        copied["validation_command"] = validation_command
+    return copied
+
+
+def _closure_device_action_from_slot(slot: dict[str, Any]) -> dict[str, Any]:
+    status = _normalized_status(str(slot.get("status", "blocked")))
+    action = {
+        "id": str(slot.get("id", "device_slot")),
+        "label": str(slot.get("label", slot.get("id", "Device slot"))),
+        "status": status,
+        "classification": str(slot.get("classification", "")),
+        "command": str(slot.get("command", "")),
+        "detail": str(slot.get("detail", "")),
+        "evidence_source": str(slot.get("evidence_source", "")),
+        "manual": status != "ready",
+        "provider_calls": False,
+        "global_action": bool(slot.get("global_action")),
+        "xcode_or_signing": bool(slot.get("xcode_or_signing")),
+    }
+    if status != "ready":
+        action["next_action"] = {
+            "id": action["id"],
+            "label": action["label"],
+            "status": action["status"],
+            "command": action["command"],
+            "detail": action["detail"],
+            "source": "final_launch_closure_device_actions",
+        }
+    return action
+
+
+def _closure_device_first_action(
+    source_first_action: Any,
+    actions: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if isinstance(source_first_action, dict):
+        return _closure_device_action(source_first_action)
+    return _first_closure_device_action(actions)
+
+
+def _first_closure_device_action(
+    actions: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    for action in actions:
+        if action["status"] != "ready":
+            return action
+    return None
+
+
+def _device_action_bundle_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action["status"] == "ready"),
+        "missing": sum(1 for action in actions if action["status"] == "missing"),
+        "blocked": sum(1 for action in actions if action["status"] == "blocked"),
+        "manual": sum(1 for action in actions if action.get("manual") is True),
+        "provider_calls": sum(
+            1 for action in actions if action["provider_calls"] is True
+        ),
+        "global_actions": sum(1 for action in actions if action["global_action"] is True),
+        "xcode_or_signing": sum(
+            1 for action in actions if action["xcode_or_signing"] is True
+        ),
+    }
 
 
 def _configured_evidence_bundle_section(

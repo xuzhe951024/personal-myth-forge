@@ -115,6 +115,44 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert report["safety"]["describes_global_actions"] is True
 
 
+def test_final_launch_closure_packet_exposes_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    bundle = result.report["device_action_bundle"]
+    report_text = json.dumps(bundle)
+
+    assert bundle["id"] == "final_launch_closure_device_actions"
+    assert bundle["label"] == "Final Launch Closure Device Actions"
+    assert bundle["source_report"] == "ios_device_evidence_bundle"
+    assert bundle["status"] == "blocked"
+    assert bundle["first_action"]["id"] == "backend_device_server"
+    assert bundle["first_action"]["command"] == "make backend-device-demo"
+    assert bundle["first_action"]["next_action"]["command"] == "make backend-device-demo"
+    assert bundle["summary"]["actions"] == 4
+    assert bundle["summary"]["missing"] >= 1
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["summary"]["global_actions"] == 1
+    assert bundle["summary"]["xcode_or_signing"] == 1
+    assert bundle["safety"] == {
+        "commands_run": False,
+        "global_mutation": False,
+        "keychain_writes": False,
+        "live_provider_calls": False,
+        "provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "xcode_or_signing": False,
+    }
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+
+
 def test_final_launch_closure_packet_exposes_next_action_from_first_blocker(
     tmp_path: Path,
 ) -> None:
@@ -240,6 +278,13 @@ def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     )
     assert sections["resource_inputs"]["first_action"]["status"] == "ready"
     assert sections["device_evidence"]["first_action"]["id"] == "backend_device_server"
+    bundle = report["device_action_bundle"]
+    assert bundle["status"] == "ready"
+    assert bundle["first_action"] is None
+    assert bundle["summary"]["actions"] == 4
+    assert bundle["summary"]["ready"] == 4
+    assert bundle["summary"]["provider_calls"] == 0
+    assert all(action["status"] == "ready" for action in bundle["actions"])
     assert report["summary"]["ready"] >= 3
     assert "meshy-secret-test" not in text
     assert "sk-openai-test" not in text
