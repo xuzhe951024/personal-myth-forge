@@ -568,6 +568,34 @@ def test_final_local_report_refresh_operator_actions_drop_detail_duplicate_roots
     ]
 
 
+def test_final_local_report_refresh_operator_actions_drop_bare_backend_demo_when_validated() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_acceptance_local",
+                "status": "blocked",
+                "command": (
+                    "start backend-device-demo before device checks: "
+                    "make backend-device-demo"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+            },
+            {
+                "id": "backend_device_demo",
+                "status": "blocked",
+                "command": "make backend-device-demo",
+            },
+        ],
+    )
+
+    assert actions == [
+        (
+            "start backend-device-demo before device checks: "
+            "make backend-device-demo; rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
 def test_final_local_report_refresh_operator_actions_normalize_fill_guide_actions() -> None:
     actions = final_local_report_refresh._operator_actions(
         [

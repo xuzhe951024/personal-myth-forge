@@ -105,6 +105,8 @@ FINAL_LOCAL_REPORT_PRINT_HANDOFF_ACTION_MARKERS = (
     "print_quote",
     "/v1/print-quotes",
 )
+BACKEND_DEVICE_DEMO_BARE_ACTION = "make backend-device-demo"
+BACKEND_DEVICE_DEMO_VALIDATION = "make mobile-deploy-preflight"
 LOCAL_SETTINGS = Settings(
     three_d_provider="local",
     npc_provider="local",
@@ -1078,6 +1080,9 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
         emitted_roots.add(root)
         validation_deduped.append(replacement)
     validation_deduped = _prefer_complete_provider_handoff_chain(validation_deduped)
+    validation_deduped = _prefer_validated_backend_device_demo_action(
+        validation_deduped
+    )
     return _prefer_apply_preview_before_apply(
         _dedupe_operator_action_roots(validation_deduped)
     )
@@ -1119,6 +1124,17 @@ def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
         if action == FINAL_LOCAL_REPORT_PROVIDER_CHAIN_ACTION
         or action not in FINAL_LOCAL_REPORT_WEAK_PROVIDER_ACTION_ROOTS
     ]
+
+
+def _prefer_validated_backend_device_demo_action(actions: list[str]) -> list[str]:
+    has_validated_backend_demo = any(
+        BACKEND_DEVICE_DEMO_BARE_ACTION in action
+        and f"rerun {BACKEND_DEVICE_DEMO_VALIDATION}" in action
+        for action in actions
+    )
+    if not has_validated_backend_demo:
+        return actions
+    return [action for action in actions if action != BACKEND_DEVICE_DEMO_BARE_ACTION]
 
 
 def _prioritize_final_local_report_operator_actions(actions: list[str]) -> list[str]:
