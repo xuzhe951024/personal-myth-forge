@@ -35,17 +35,29 @@ def test_ios_device_launch_certificate_blocks_missing_inputs_without_leaks(
         "final-demo-launch --mode local" in command
         for command in result.report["commands"]
     )
-    assert result.report["operator_actions"][:3] == [
-        "run make final-handoff-index",
-        "provide iOS deploy config and rerun mobile deploy preflight",
-        "run make ios-deploy-runbook-local",
-    ]
+    deploy_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert result.report["operator_actions"][0] == deploy_action
+    assert result.report["first_blocker"]["command"] == deploy_action
+    assert "run make final-handoff-index" not in result.report["operator_actions"][:3]
+    assert not any(
+        action.startswith(
+            (
+                "provide DEVELOPMENT_TEAM in final-resources.env",
+                "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env",
+                "provide PMF_BACKEND_BASE_URL in final-resources.env",
+            )
+        )
+        for action in result.report["operator_actions"]
+    )
     assert result.report["first_blocker"] == {
         "id": "final_handoff_index",
         "label": "Final handoff index",
         "status": "blocked",
         "classification": "device_gate_blocked",
-        "command": "run make final-handoff-index",
+        "command": deploy_action,
         "detail": "Refreshes the unified local/configured handoff index.",
         "validation_command": "make final-handoff-index",
     }
@@ -182,6 +194,51 @@ def test_ios_device_launch_certificate_uses_injected_final_demo_launch_report(
     )
 
 
+def test_ios_device_launch_certificate_uses_final_demo_child_action_when_handoff_has_none(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    deploy_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    class StubFinalHandoffResult:
+        report = {
+            "kind": "final_handoff_index_report",
+            "status": "blocked",
+            "summary": {"blocked": 1},
+            "lanes_by_id": {},
+            "operator_actions": [
+                (
+                    "start backend-device-demo before device checks: "
+                    "make backend-device-demo; rerun make mobile-deploy-preflight"
+                )
+            ],
+        }
+
+    monkeypatch.setattr(
+        "myth_forge_api.ios_device_launch_certificate.build_final_handoff_index_report",
+        lambda **kwargs: StubFinalHandoffResult(),
+    )
+
+    result = build_ios_device_launch_certificate_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        final_demo_launch_report={
+            "kind": "final_demo_launch_report",
+            "mode": "local",
+            "overall_status": "partial",
+            "operator_actions": [deploy_action],
+        },
+    )
+
+    assert result.report["first_blocker"]["command"] == deploy_action
+    assert result.report["operator_actions"][0] == deploy_action
+
+
 def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print_actions(
     tmp_path: Path,
 ) -> None:
@@ -198,6 +255,11 @@ def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print
         },
     )
     _write_ios_deploy_runbook(repo_root)
+    deploy_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
     _write_json(
         repo_root / "services/backend/.local/final-demo-launch-local.json",
         {
@@ -212,11 +274,7 @@ def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print
                 "validation_command": "make mobile-deploy-preflight",
             },
             "operator_actions": [
-                (
-                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
-                    "make mobile-write-deploy-config-auto; "
-                    "rerun make mobile-deploy-preflight"
-                ),
+                deploy_action,
                 "make provider-handoff; rerun make live-provider-evidence",
                 (
                     "after explicit Treatstock cost consent, save a sanitized "
@@ -239,12 +297,17 @@ def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print
         "/v1/print-quotes; rerun make print-fulfillment-readiness"
     )
 
-    assert actions[0] == "run make final-handoff-index"
+    assert result.report["first_blocker"]["command"] == deploy_action
+    assert actions[0] == deploy_action
+    assert "run make final-handoff-index" not in actions[:3]
     assert provider_action in actions
     assert print_action in actions
     assert actions.index(provider_action) < actions.index(print_action)
     assert actions.index(print_action) < actions.index(
-        "provide iOS deploy config and rerun mobile deploy preflight"
+        (
+            "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        )
     )
 
 

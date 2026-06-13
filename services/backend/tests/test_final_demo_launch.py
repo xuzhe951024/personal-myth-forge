@@ -195,9 +195,11 @@ def test_final_demo_launch_embeds_ios_device_launch_certificate(
     assert certificate["mode"] == "local"
     assert certificate["summary"]["blocked"] >= 1
     assert certificate["device_gates"][0]["id"] == "final_handoff_index"
-    assert "run make final-handoff-index" in " ".join(
-        certificate["operator_actions"]
+    assert certificate["operator_actions"][0] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
     )
+    assert "run make final-handoff-index" not in certificate["operator_actions"][:3]
     assert certificate["safety"]["commands_run"] is False
     assert certificate["safety"]["xcode_or_signing"] is False
     assert "sk-" not in report_text

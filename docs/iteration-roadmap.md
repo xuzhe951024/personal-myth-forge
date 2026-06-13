@@ -310,6 +310,7 @@ Bridge deliverable:
 - P0.396 final launch closure packet prefers ledger child operator actions
 - P0.397 final demo launch uses iOS destination-aware resource actions
 - P0.398 final showcase readiness uses iOS destination-aware resource actions
+- P0.399 iOS device launch certificate prefers final handoff child actions
 
 ## P1: Mobile Vertical Slice
 

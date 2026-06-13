@@ -18,7 +18,11 @@ from myth_forge_api.final_handoff_commands import (
 )
 from myth_forge_api.final_handoff_index import build_final_handoff_index_report
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
-from myth_forge_api.operator_actions import BACKEND_DEVICE_DEMO_VALIDATED_ACTION
+from myth_forge_api.operator_actions import (
+    BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+    normalize_operator_action,
+    prefer_project_local_ios_deploy_handoff_actions,
+)
 
 LaunchMode = Literal["local", "configured"]
 
@@ -36,6 +40,11 @@ CERTIFICATE_PRINT_ACTION_MARKERS = (
     "print-quote",
     "print_quote",
     "/v1/print-quotes",
+)
+CERTIFICATE_IOS_HANDOFF_ACTION_MARKERS = (
+    "mobile-write-deploy-config-auto",
+    "mobile-deploy-preflight",
+    "deployment.local.xcconfig",
 )
 
 
@@ -190,7 +199,10 @@ def _device_gates(
             "make final-handoff-index",
             required=True,
             notes=["Refreshes the unified local/configured handoff index."],
-            operator_actions=_final_handoff_priority_actions(final_handoff_index),
+            operator_actions=_final_handoff_priority_actions(
+                final_handoff_index,
+                final_demo_launch,
+            ),
         ),
         _gate(
             "ios_deploy_config",
@@ -277,18 +289,52 @@ def _gate(
     return gate
 
 
-def _final_handoff_priority_actions(report: dict[str, Any]) -> list[str]:
-    actions = report.get("operator_actions")
-    if not isinstance(actions, list):
-        return []
+def _final_handoff_priority_actions(*reports: dict[str, Any]) -> list[str]:
     selected: list[str] = []
-    for action in actions:
-        if not isinstance(action, str):
+    for report in reports:
+        actions = report.get("operator_actions")
+        if not isinstance(actions, list):
             continue
-        stripped = action.strip()
-        if _is_provider_handoff_action(stripped) or _is_print_handoff_action(stripped):
-            selected.append(stripped)
-    return selected
+        for action in actions:
+            if not isinstance(action, str):
+                continue
+            stripped = normalize_operator_action(action.strip())
+            if (
+                _is_ios_handoff_action(stripped)
+                or _is_provider_handoff_action(stripped)
+                or _is_print_handoff_action(stripped)
+            ):
+                selected.append(stripped)
+    preferred = prefer_project_local_ios_deploy_handoff_actions(_dedupe(selected))
+    return _prioritize_final_handoff_child_actions(preferred)
+
+
+def _prioritize_final_handoff_child_actions(actions: list[str]) -> list[str]:
+    ios_actions = [action for action in actions if _is_ios_handoff_action(action)]
+    provider_actions = [
+        action
+        for action in actions
+        if action not in ios_actions and _is_provider_handoff_action(action)
+    ]
+    print_actions = [
+        action
+        for action in actions
+        if action not in ios_actions
+        and action not in provider_actions
+        and _is_print_handoff_action(action)
+    ]
+    priority_actions = set(ios_actions + provider_actions + print_actions)
+    remaining = [action for action in actions if action not in priority_actions]
+    return ios_actions + provider_actions + print_actions + remaining
+
+
+def _is_ios_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    if "backend-device-demo" in lowered:
+        return False
+    if lowered in {"make mobile-deploy-preflight", "run make mobile-deploy-preflight"}:
+        return False
+    return any(marker in lowered for marker in CERTIFICATE_IOS_HANDOFF_ACTION_MARKERS)
 
 
 def _is_provider_handoff_action(action: str) -> bool:
@@ -532,6 +578,11 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
 def _operator_action_for_gate(gate: dict[str, Any]) -> str:
     gate_id = str(gate.get("id", "gate"))
     command = str(gate.get("command", ""))
+    nested_actions = gate.get("operator_actions")
+    if gate_id == "final_handoff_index" and isinstance(nested_actions, list):
+        for nested_action in nested_actions:
+            if isinstance(nested_action, str) and nested_action.strip():
+                return nested_action.strip()
     if gate_id == "final_handoff_index":
         return "run make final-handoff-index"
     if gate_id == "ios_deploy_config":
