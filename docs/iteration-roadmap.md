@@ -297,6 +297,7 @@ Bridge deliverable:
 - P0.383 final local refresh step rows expose next actions
 - P0.384 final local refresh step next action commands stay copy-pasteable
 - P0.385 iOS device rehearsal next action command stays copy-pasteable
+- P0.386 iOS rehearsal readiness next action command stays copy-pasteable
 
 ## P1: Mobile Vertical Slice
 
