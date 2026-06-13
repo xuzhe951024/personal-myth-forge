@@ -256,6 +256,10 @@ def build_final_demo_launch_report(
         "status": overall_status,
         "first_blocker": first_blocker,
         "next_action": next_action,
+        "device_action_bundle": _device_action_bundle(
+            final_showcase_readiness=final_showcase_readiness,
+            ios_device_evidence_bundle=ios_device_evidence_bundle,
+        ),
         "operator_actions": _operator_actions(
             next_action=next_action,
             operator_checklist=operator_checklist,
@@ -807,6 +811,151 @@ def _mobile_preflight_action_evidence_detail(
             continue
         return str(action.get("evidence_detail", ""))
     return ""
+
+
+def _device_action_bundle(
+    *,
+    final_showcase_readiness: dict[str, Any],
+    ios_device_evidence_bundle: dict[str, Any],
+) -> dict[str, Any]:
+    source_report = "final_showcase_readiness"
+    source_bundle = final_showcase_readiness.get("device_action_bundle")
+    if not isinstance(source_bundle, dict):
+        source_report = "ios_device_evidence_bundle"
+        source_bundle = ios_device_evidence_bundle.get("device_action_bundle")
+    if not isinstance(source_bundle, dict):
+        return _missing_device_action_bundle()
+    actions = [
+        _device_action(action)
+        for action in source_bundle.get("actions", [])
+        if isinstance(action, dict)
+    ]
+    return {
+        "id": "final_demo_launch_device_actions",
+        "label": "Final Demo Launch Device Actions",
+        "source_report": source_report,
+        "status": _device_action_status(str(source_bundle.get("status", "blocked"))),
+        "actions": actions,
+        "first_action": _device_first_action(source_bundle.get("first_action"), actions),
+        "summary": _device_action_summary(actions),
+        "safety": _device_action_safety(),
+    }
+
+
+def _missing_device_action_bundle() -> dict[str, Any]:
+    return {
+        "id": "final_demo_launch_device_actions",
+        "label": "Final Demo Launch Device Actions",
+        "source_report": "missing",
+        "status": "blocked",
+        "actions": [],
+        "first_action": None,
+        "summary": {
+            "actions": 0,
+            "ready": 0,
+            "missing": 1,
+            "blocked": 0,
+            "manual": 0,
+            "provider_calls": 0,
+            "global_actions": 0,
+            "xcode_or_signing": 0,
+        },
+        "safety": _device_action_safety(),
+    }
+
+
+def _device_action(action: dict[str, Any]) -> dict[str, Any]:
+    copied = {
+        "id": str(action.get("id", "device_action")),
+        "label": str(action.get("label", action.get("id", "Device action"))),
+        "status": _device_action_status(str(action.get("status", "blocked"))),
+        "classification": str(action.get("classification", "")),
+        "command": str(action.get("command", "")),
+        "detail": str(action.get("detail", "")),
+        "manual": bool(action.get("manual")),
+        "provider_calls": bool(action.get("provider_calls")),
+        "global_action": bool(action.get("global_action")),
+        "xcode_or_signing": bool(action.get("xcode_or_signing")),
+    }
+    for optional_field in (
+        "blocks",
+        "evidence_status",
+        "evidence_source",
+        "evidence_detail",
+        "validation_command",
+        "operator_actions",
+    ):
+        if optional_field in action:
+            copied[optional_field] = action[optional_field]
+    next_action = action.get("next_action")
+    if isinstance(next_action, dict):
+        copied["next_action"] = _device_next_action(next_action)
+    return copied
+
+
+def _device_next_action(next_action: dict[str, Any]) -> dict[str, Any]:
+    copied = {
+        "id": str(next_action.get("id", "")),
+        "label": str(next_action.get("label", "")),
+        "status": str(next_action.get("status", "")),
+        "command": str(next_action.get("command", "")),
+        "detail": str(next_action.get("detail", "")),
+        "source": str(next_action.get("source", "")),
+    }
+    for optional_field in ("classification", "validation_command"):
+        if optional_field in next_action:
+            copied[optional_field] = str(next_action.get(optional_field, ""))
+    return copied
+
+
+def _device_first_action(
+    source_first_action: Any,
+    actions: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if isinstance(source_first_action, dict):
+        return _device_action(source_first_action)
+    for action in actions:
+        if action.get("status") != "ready":
+            return action
+    return None
+
+
+def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action["status"] == "ready"),
+        "missing": sum(1 for action in actions if action["status"] == "missing"),
+        "blocked": sum(1 for action in actions if action["status"] == "blocked"),
+        "manual": sum(1 for action in actions if action.get("manual") is True),
+        "provider_calls": sum(
+            1 for action in actions if action["provider_calls"] is True
+        ),
+        "global_actions": sum(1 for action in actions if action["global_action"] is True),
+        "xcode_or_signing": sum(
+            1 for action in actions if action["xcode_or_signing"] is True
+        ),
+    }
+
+
+def _device_action_safety() -> dict[str, bool]:
+    return {
+        "commands_run": False,
+        "global_mutation": False,
+        "keychain_writes": False,
+        "live_provider_calls": False,
+        "provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "xcode_or_signing": False,
+    }
+
+
+def _device_action_status(status: str) -> str:
+    if status in {"ready", "missing", "blocked", "manual", "partial", "live"}:
+        return status
+    if status in {"passed", "succeeded"}:
+        return "ready"
+    return "blocked"
 
 
 def _phase_blocker_with_nested_hint(

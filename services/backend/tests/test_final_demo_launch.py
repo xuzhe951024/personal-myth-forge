@@ -475,6 +475,57 @@ def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidenc
     ][:8]
 
 
+def test_final_demo_launch_device_bundle_first_action_uses_showcase_child_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    child_action = {
+        "id": "development_team",
+        "label": "Apple Team ID",
+        "status": "blocked",
+        "classification": "ios_deploy_config",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "detail": "Missing DEVELOPMENT_TEAM",
+        "source": "first_blocker",
+        "validation_command": "make mobile-deploy-preflight",
+    }
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action=child_action,
+    )
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    bundle = result.report["device_action_bundle"]
+    first_action = bundle["first_action"]
+
+    assert bundle["source_report"] == "final_showcase_readiness"
+    assert first_action["id"] == "run_mobile_deploy_preflight"
+    assert first_action["command"] == child_action["command"]
+    assert first_action["validation_command"] == "make mobile-deploy-preflight"
+    assert first_action["next_action"] == child_action
+    assert result.report["first_blocker"]["command"] == child_action["command"]
+    assert result.report["next_action"]["command"] == child_action["command"]
+
+
 def test_local_final_demo_launch_prefers_writer_over_old_team_action(
     tmp_path: Path,
 ) -> None:
@@ -1329,6 +1380,44 @@ def test_final_demo_launch_includes_ios_device_evidence_bundle(
     assert bundle["evidence_slots"][1]["command"] == "make mobile-deploy-preflight"
     assert bundle["safety"]["commands_run"] is False
     assert bundle["safety"]["describes_global_actions"] is True
+
+
+def test_final_demo_launch_exposes_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    bundle = result.report["device_action_bundle"]
+    report_text = json.dumps(bundle)
+
+    assert bundle["id"] == "final_demo_launch_device_actions"
+    assert bundle["label"] == "Final Demo Launch Device Actions"
+    assert bundle["source_report"] == "final_showcase_readiness"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"]["actions"] >= 4
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["summary"]["xcode_or_signing"] == 1
+    assert bundle["first_action"]["id"] in {
+        "start_backend_device_demo",
+        "run_mobile_deploy_preflight",
+    }
+    assert bundle["safety"] == {
+        "commands_run": False,
+        "global_mutation": False,
+        "keychain_writes": False,
+        "live_provider_calls": False,
+        "provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "xcode_or_signing": False,
+    }
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
 
 
 def test_ios_device_launch_rehearsal_readiness_missing_without_leaks(
