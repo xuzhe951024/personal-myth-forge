@@ -90,6 +90,7 @@ public enum DemoScriptBuilder {
         if let finalLaunchSummary {
             steps.append(threeDEvaluationStep(finalLaunchSummary))
             steps.append(npcEvaluationStep(finalLaunchSummary))
+            steps.append(externalActionsStep(finalLaunchSummary))
             steps.append(finalLaunchStep(finalLaunchSummary))
         }
 
@@ -104,6 +105,7 @@ public enum DemoScriptBuilder {
                 resourcesStatus: resources.status,
                 threeDEvaluationStatus: steps.first { $0.id == "three_d_evaluation" }?.status,
                 npcEvaluationStatus: steps.first { $0.id == "npc_evaluation" }?.status,
+                externalActionsStatus: steps.first { $0.id == "external_actions" }?.status,
                 finalLaunchStatus: steps.first { $0.id == "final_launch" }?.status
             ),
             steps: steps
@@ -233,6 +235,15 @@ public enum DemoScriptBuilder {
         )
     }
 
+    private static func externalActionsStep(_ summary: FinalLaunchMobileSummary) -> DemoScriptStep {
+        step(
+            "external_actions",
+            "External Actions",
+            externalActionsStatus(summary.externalActionLedgerRows),
+            externalActionsDetail(summary.externalActionLedgerRows)
+        )
+    }
+
     private static func threeDEvaluationStatus(_ rows: [String]) -> DemoScriptStepStatus {
         let text = rows.joined(separator: " ").lowercased()
         if rows.first?.hasPrefix("3D evaluation ready:") == true {
@@ -267,6 +278,54 @@ public enum DemoScriptBuilder {
 
     private static func npcEvaluationDetail(_ rows: [String]) -> String {
         rows.first ?? "NPC evaluation readiness has not loaded."
+    }
+
+    private static func externalActionsStatus(_ rows: [String]) -> DemoScriptStepStatus {
+        guard let first = rows.first else {
+            return .waiting
+        }
+        if first.hasPrefix("External actions ready:") {
+            return .complete
+        }
+        let text = rows.joined(separator: " ").lowercased()
+        if text.contains("has not loaded") || text.contains("waiting") {
+            return .waiting
+        }
+        if text.contains("blocked")
+            || text.contains("missing")
+            || text.contains("manual")
+            || text.contains("live")
+            || text.contains("partial")
+            || text.contains("failed")
+            || text.contains("cost consent")
+            || text.contains("global confirmation")
+            || text.contains("backend-device-demo")
+        {
+            return .blocked
+        }
+        return .waiting
+    }
+
+    private static func externalActionsDetail(_ rows: [String]) -> String {
+        let first = rows.first ?? "External action ledger has not loaded."
+        guard let action = firstExternalActionDetail(rows), action != first else {
+            return first
+        }
+        return "\(first) \(action)"
+    }
+
+    private static func firstExternalActionDetail(_ rows: [String]) -> String? {
+        let candidates = rows.dropFirst().map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        }.filter { !$0.isEmpty }
+        if let backend = candidates.first(where: {
+            $0.localizedCaseInsensitiveContains("backend-device-demo")
+        }) {
+            return backend
+        }
+        return candidates.first(where: { row in
+            row.contains("|") || row.hasPrefix("First command:")
+        })
     }
 
     private static func finalLaunchStatus(_ status: FinalLaunchMobileStatus) -> DemoScriptStepStatus {
@@ -304,6 +363,7 @@ public enum DemoScriptBuilder {
         resourcesStatus: DemoScriptStepStatus,
         threeDEvaluationStatus: DemoScriptStepStatus?,
         npcEvaluationStatus: DemoScriptStepStatus?,
+        externalActionsStatus: DemoScriptStepStatus?,
         finalLaunchStatus: DemoScriptStepStatus?
     ) -> String {
         if !captureReady {
@@ -349,6 +409,18 @@ public enum DemoScriptBuilder {
                 return "Load NPC evaluation readiness."
             case .current, .optional:
                 return "Review NPC evaluation readiness."
+            }
+        }
+        if let externalActionsStatus {
+            switch externalActionsStatus {
+            case .complete:
+                break
+            case .blocked:
+                return "Review external action blockers."
+            case .waiting:
+                return "Load external action readiness."
+            case .current, .optional:
+                return "Review external action readiness."
             }
         }
         if let finalLaunchStatus {
