@@ -30,9 +30,11 @@ def build_resource_handoff_report(
     ios_items = _ios_items(selected_repo_root)
     all_items = backend_items + ios_items
     summary = _summary(all_items)
+    overall_status = _overall_status(summary)
     report = {
         "kind": "resource_handoff_report",
-        "overall_status": _overall_status(summary),
+        "overall_status": overall_status,
+        "status": overall_status,
         "summary": summary,
         "backend": {
             "destination": BACKEND_ENV_DESTINATION,
