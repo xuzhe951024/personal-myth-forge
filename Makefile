@@ -165,6 +165,11 @@ ios-device-launch-certificate:
 ios-device-launch-rehearsal:
 	@services/backend/scripts/write_ios_device_launch_rehearsal.sh
 
+.PHONY: ios-device-launch-rehearsal-readiness
+
+ios-device-launch-rehearsal-readiness:
+	cd services/backend && uv run python -m myth_forge_api.cli ios-device-launch-rehearsal-readiness --repo-root ../.. --output .local/ios-device-launch-rehearsal-readiness.json
+
 .PHONY: final-acceptance-local final-acceptance-configured final-demo-launch final-demo-launch-local final-demo-launch-configured final-rehearsal-local
 
 final-acceptance-local:

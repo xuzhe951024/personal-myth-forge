@@ -812,6 +812,38 @@ def test_ios_device_launch_rehearsal_cli_writes_report_and_makefile_target(
     assert "services/backend/scripts/write_ios_device_launch_rehearsal.sh" in makefile
 
 
+def test_ios_device_launch_rehearsal_readiness_cli_writes_report_and_makefile_target(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    output_path = tmp_path / "ios-device-launch-rehearsal-readiness.json"
+
+    from myth_forge_api.cli import main
+
+    exit_code = main(
+        [
+            "ios-device-launch-rehearsal-readiness",
+            "--repo-root",
+            str(repo_root),
+            "--output",
+            str(output_path),
+        ]
+    )
+
+    assert exit_code == 2
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["kind"] == "ios_device_launch_rehearsal_readiness_report"
+    assert payload["status"] == "missing"
+
+    makefile = (Path(__file__).resolve().parents[3] / "Makefile").read_text(
+        encoding="utf-8"
+    )
+    assert "ios-device-launch-rehearsal-readiness:" in makefile
+    assert "ios-device-launch-rehearsal-readiness --repo-root ../.." in makefile
+    assert "--output .local/ios-device-launch-rehearsal-readiness.json" in makefile
+
+
 def test_ios_device_launch_rehearsal_readiness_missing_file_has_unknown_freshness(
     tmp_path: Path,
 ) -> None:

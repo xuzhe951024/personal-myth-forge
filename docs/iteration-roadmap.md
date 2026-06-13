@@ -300,6 +300,7 @@ Bridge deliverable:
 - P0.386 iOS rehearsal readiness next action command stays copy-pasteable
 - P0.387 resource handoff exposes top-level status
 - P0.388 evaluation reports expose top-level status
+- P0.389 iOS rehearsal readiness writes a first-class local report
 
 ## P1: Mobile Vertical Slice
 

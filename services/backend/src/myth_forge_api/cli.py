@@ -79,6 +79,9 @@ from myth_forge_api.ios_device_evidence_bundle import (
 from myth_forge_api.ios_device_launch_rehearsal import (
     build_ios_device_launch_rehearsal_report,
 )
+from myth_forge_api.ios_device_launch_rehearsal_readiness import (
+    build_ios_device_launch_rehearsal_readiness_report,
+)
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.providers.factory import (
     build_npc_director,
@@ -258,6 +261,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if args.command == "ios-device-launch-rehearsal":
             return _ios_device_launch_rehearsal(
+                repo_root=args.repo_root,
+                output_path=args.output,
+            )
+        if args.command == "ios-device-launch-rehearsal-readiness":
+            return _ios_device_launch_rehearsal_readiness(
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
@@ -475,6 +483,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     ios_device_launch_rehearsal_parser.add_argument("--repo-root", default=None)
     ios_device_launch_rehearsal_parser.add_argument("--output", default=None)
+
+    ios_device_launch_rehearsal_readiness_parser = subcommands.add_parser(
+        "ios-device-launch-rehearsal-readiness"
+    )
+    ios_device_launch_rehearsal_readiness_parser.add_argument("--repo-root", default=None)
+    ios_device_launch_rehearsal_readiness_parser.add_argument("--output", default=None)
 
     final_demo_launch_parser = subcommands.add_parser("final-demo-launch")
     final_demo_launch_parser.add_argument(
@@ -893,6 +907,18 @@ def _ios_device_launch_rehearsal(
     output_path: str | None,
 ) -> int:
     result = build_ios_device_launch_rehearsal_report(
+        repo_root=Path(repo_root) if repo_root else None,
+    )
+    _write_json_payload(result.report, output_path)
+    return result.exit_code
+
+
+def _ios_device_launch_rehearsal_readiness(
+    *,
+    repo_root: str | None,
+    output_path: str | None,
+) -> int:
+    result = build_ios_device_launch_rehearsal_readiness_report(
         repo_root=Path(repo_root) if repo_root else None,
     )
     _write_json_payload(result.report, output_path)
