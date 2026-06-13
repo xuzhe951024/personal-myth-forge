@@ -28,16 +28,21 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert result.report["kind"] == "final_local_report_refresh_report"
     assert result.report["status"] == "blocked"
     assert result.report["first_blocker"] == {
-        "id": "final_resource_requirements",
-            "label": "Final resource requirements",
-            "status": "blocked",
-            "classification": "missing_required_value",
-            "command": "provide MESHY_API_KEY in final-resources.env",
-            "detail": "Backend-only secret for live Meshy 3D generation.",
-            "output": "services/backend/.local/final-resource-requirements.json",
-            "step_id": "final_resource_requirements",
-            "validation_command": "make final-resources-preflight",
-        }
+        "id": "final_showcase_readiness",
+        "label": "Final showcase readiness",
+        "status": "blocked",
+        "classification": "ios_deploy_evidence",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "detail": (
+            "iOS deploy runbook and device launch rehearsal must both be ready. | "
+            "Next device action: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto | Missing DEVELOPMENT_TEAM; "
+            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        ),
+        "output": "services/backend/.local/final-showcase-readiness.json",
+        "step_id": "final_showcase_readiness",
+        "validation_command": "make mobile-deploy-preflight",
+    }
     assert result.report["summary"]["failed"] == 0
     assert result.report["summary"]["blocked"] >= 1
     assert steps["final_resource_requirements"]["classification"] == (
@@ -154,18 +159,23 @@ def test_final_local_report_refresh_exposes_next_action_from_first_blocker(
     blocker = result.report["first_blocker"]
     action = result.report["next_action"]
 
-    assert blocker["id"] == "final_resource_requirements"
+    assert blocker["id"] == "final_showcase_readiness"
     assert action == {
-        "id": "final_resource_requirements",
-        "label": "Final resource requirements",
+        "id": "final_showcase_readiness",
+        "label": "Final showcase readiness",
         "status": "blocked",
-        "classification": "missing_required_value",
-        "command": "provide MESHY_API_KEY in final-resources.env",
-        "detail": "Backend-only secret for live Meshy 3D generation.",
+        "classification": "ios_deploy_evidence",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "detail": (
+            "iOS deploy runbook and device launch rehearsal must both be ready. | "
+            "Next device action: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto | Missing DEVELOPMENT_TEAM; "
+            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        ),
         "source": "first_blocker",
-        "output": "services/backend/.local/final-resource-requirements.json",
-        "step_id": "final_resource_requirements",
-        "validation_command": "make final-resources-preflight",
+        "output": "services/backend/.local/final-showcase-readiness.json",
+        "step_id": "final_showcase_readiness",
+        "validation_command": "make mobile-deploy-preflight",
     }
     assert "meshy-secret" not in json.dumps(action)
 
@@ -180,8 +190,8 @@ def test_final_local_report_refresh_exposes_showcase_next_action(
     action = result.report["showcase_next_action"]
 
     assert result.exit_code == 2
-    assert result.report["first_blocker"]["id"] == "final_resource_requirements"
-    assert result.report["next_action"]["id"] == "final_resource_requirements"
+    assert result.report["first_blocker"]["id"] == "final_showcase_readiness"
+    assert result.report["next_action"]["id"] == "final_showcase_readiness"
     assert action == {
         "id": "final_showcase_readiness",
         "label": "Final showcase readiness",
@@ -275,13 +285,16 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     result = run_final_local_report_refresh(repo_root=repo_root)
 
     assert result.exit_code == 2
-    assert result.report["operator_actions"][:2] == [
-        "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
-        (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
-            "rerun make mobile-deploy-preflight"
-        ),
-    ]
+    device_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    assert result.report["operator_actions"][0] == device_action
+    assert provider_action in result.report["operator_actions"]
     assert "review refreshed final_resource_requirements report" not in (
         result.report["operator_actions"][:2]
     )
@@ -1126,6 +1139,54 @@ def test_final_local_report_refresh_has_no_first_blocker_when_all_steps_ready() 
             }
         ]
     ) is None
+
+
+def test_final_local_report_refresh_failed_step_stays_first_blocker_before_device_action() -> None:
+    blocker = final_local_report_refresh._first_blocker(
+        [
+            {
+                "id": "failed_step",
+                "label": "Failed Step",
+                "status": "failed",
+                "output": "services/backend/.local/failed-step.json",
+                "blocker_hint": {
+                    "classification": "step_failed",
+                    "command": "inspect failed step",
+                    "detail": "Step crashed.",
+                },
+            },
+            {
+                "id": "final_showcase_readiness",
+                "label": "Final showcase readiness",
+                "status": "blocked",
+                "output": "services/backend/.local/final-showcase-readiness.json",
+            },
+        ],
+        showcase_next_action={
+            "id": "final_showcase_readiness",
+            "label": "Final showcase readiness",
+            "status": "blocked",
+            "classification": "ios_deploy_evidence",
+            "command": (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+            ),
+            "detail": "Write deploy config.",
+            "output": "services/backend/.local/final-showcase-readiness.json",
+            "step_id": "final_showcase_readiness",
+            "validation_command": "make mobile-deploy-preflight",
+        },
+    )
+
+    assert blocker == {
+        "id": "failed_step",
+        "label": "Failed Step",
+        "status": "failed",
+        "classification": "step_failed",
+        "command": "inspect failed step",
+        "detail": "Step crashed.",
+        "output": "services/backend/.local/failed-step.json",
+        "step_id": "failed_step",
+    }
 
 
 def test_final_local_report_refresh_step_next_action_omits_ready_step() -> None:
