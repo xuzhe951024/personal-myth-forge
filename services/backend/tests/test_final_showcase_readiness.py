@@ -1404,6 +1404,32 @@ def test_final_showcase_readiness_hides_apply_when_preview_gate_is_present() -> 
     ]
 
 
+def test_final_showcase_readiness_prefers_complete_provider_chain() -> None:
+    complete_provider_chain = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    weak_provider_chain = (
+        "make final-resource-apply-preview; rerun make live-provider-evidence"
+    )
+    print_action = (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_showcase_readiness._dedupe_operator_actions(
+        [
+            weak_provider_chain,
+            complete_provider_chain,
+            "make provider-handoff",
+            print_action,
+        ]
+    )
+
+    assert actions == [complete_provider_chain, print_action]
+
+
 def test_final_showcase_readiness_dedupes_duplicate_deploy_writer_roots() -> None:
     bare_writer = (
         "DEVELOPMENT_TEAM=YOUR_TEAM_ID "

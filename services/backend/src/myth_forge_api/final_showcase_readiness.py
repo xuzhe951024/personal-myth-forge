@@ -87,6 +87,14 @@ FINAL_SHOWCASE_PROVIDER_HANDOFF_ACTION_MARKERS = (
     "live_provider",
     "live-provider-evidence",
 )
+FINAL_SHOWCASE_PROVIDER_CHAIN_ACTION = (
+    "make final-resource-apply-preview; rerun make provider-handoff; "
+    "rerun make live-provider-evidence"
+)
+FINAL_SHOWCASE_WEAK_PROVIDER_ACTION_ROOTS = {
+    "make final-resource-apply-preview; rerun make live-provider-evidence",
+    "make provider-handoff",
+}
 FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "treatstock",
     "print-quote",
@@ -1991,9 +1999,22 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
     deduped = _prefer_validation_aware_operator_actions(deduped)
     return _prefer_apply_preview_before_apply(
         prefer_project_local_ios_deploy_handoff_actions(
-            _prefer_bare_ios_deploy_writer_action(deduped)
+            _prefer_bare_ios_deploy_writer_action(
+                _prefer_complete_provider_handoff_chain(deduped)
+            )
         )
     )
+
+
+def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
+    if FINAL_SHOWCASE_PROVIDER_CHAIN_ACTION not in actions:
+        return actions
+    return [
+        action
+        for action in actions
+        if action == FINAL_SHOWCASE_PROVIDER_CHAIN_ACTION
+        or action not in FINAL_SHOWCASE_WEAK_PROVIDER_ACTION_ROOTS
+    ]
 
 
 def _prefer_validation_aware_operator_actions(actions: list[str]) -> list[str]:
