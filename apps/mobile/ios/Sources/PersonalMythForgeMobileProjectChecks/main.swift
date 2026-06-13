@@ -490,6 +490,11 @@ do {
         "mobile final showcase next action row"
     )
     try requireContains(
+        contractTests,
+        "testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceSavedNextAction",
+        "final launch showcase device saved next action contract test"
+    )
+    try requireContains(
         visualRegression,
         "p0.186_configured_acceptance_command_visual",
         "configured acceptance command visual artifact"

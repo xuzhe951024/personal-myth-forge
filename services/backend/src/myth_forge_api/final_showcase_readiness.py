@@ -235,6 +235,27 @@ def build_final_showcase_readiness_report(
         capabilities,
         device_action_bundle=device_action_bundle,
     )
+    operator_actions = _operator_actions(
+        capabilities,
+        next_action=next_action,
+        action_reports=[
+            ios_device_launch_rehearsal,
+            mobile_deploy_preflight_evidence,
+            mobile_xcode_build_evidence,
+            live_provider_evidence,
+            configured_live_evidence_bundle,
+            print_fulfillment_readiness,
+            final_resource_apply_preview,
+            final_resources,
+            resource_handoff,
+            final_acceptance,
+            visual_regression,
+        ],
+    )
+    device_action_bundle = _device_action_bundle_with_saved_next_action(
+        device_action_bundle,
+        operator_actions,
+    )
     report = {
         "kind": "final_showcase_readiness_report",
         "status": status,
@@ -244,23 +265,7 @@ def build_final_showcase_readiness_report(
         "first_blocker": first_blocker,
         "next_action": next_action,
         "device_action_bundle": device_action_bundle,
-        "operator_actions": _operator_actions(
-            capabilities,
-            next_action=next_action,
-            action_reports=[
-                ios_device_launch_rehearsal,
-                mobile_deploy_preflight_evidence,
-                mobile_xcode_build_evidence,
-                live_provider_evidence,
-                configured_live_evidence_bundle,
-                print_fulfillment_readiness,
-                final_resource_apply_preview,
-                final_resources,
-                resource_handoff,
-                final_acceptance,
-                visual_regression,
-            ],
-        ),
+        "operator_actions": operator_actions,
         "commands": _commands(),
         "evidence": {
             "ios_showcase_acceptance": _evidence_summary(source_acceptance),
@@ -1491,6 +1496,53 @@ def _device_action_bundle(
             "keychain_writes": False,
         },
     }
+
+
+def _device_action_bundle_with_saved_next_action(
+    bundle: dict[str, Any],
+    operator_actions: list[str],
+) -> dict[str, Any]:
+    first_action = bundle.get("first_action")
+    if not isinstance(first_action, dict) or not operator_actions:
+        return bundle
+    first_operator_action = str(operator_actions[0]).strip()
+    if not first_operator_action:
+        return bundle
+    command = str(first_action.get("command", "")).strip()
+    if first_operator_action == command:
+        return bundle
+
+    saved_next_action = {
+        "id": str(first_action.get("id", "device_action")),
+        "label": str(first_action.get("label", "Device action")),
+        "status": str(first_action.get("status", "blocked")),
+        "command": first_operator_action,
+        "detail": str(
+            first_action.get("evidence_detail") or first_action.get("detail") or "",
+        ).strip(),
+        "source": "operator_actions",
+    }
+    validation_command = str(first_action.get("validation_command", "")).strip()
+    child_next_action = _device_action_child_next_action(first_action)
+    child_validation_command = str(
+        child_next_action.get("validation_command", ""),
+    ).strip()
+    if child_validation_command:
+        validation_command = child_validation_command
+    if validation_command:
+        saved_next_action["validation_command"] = validation_command
+
+    first_action["saved_next_action"] = saved_next_action
+    actions = bundle.get("actions")
+    if isinstance(actions, list):
+        first_action_id = str(first_action.get("id", ""))
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            if str(action.get("id", "")) == first_action_id:
+                action["saved_next_action"] = saved_next_action
+                break
+    return bundle
 
 
 def _device_action(

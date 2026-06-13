@@ -225,6 +225,7 @@ do {
     try testFinalLaunchMobileSummaryShowsFinalShowcaseReadiness()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseCompletionProviderConsent()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction()
+    try testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceSavedNextAction()
     try testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions()
     try testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle()
     try testFinalLaunchMobileSummaryRedactsUnsafeFinalShowcaseReadiness()
@@ -5894,6 +5895,35 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseNextAction() throws {
     try expectContains(text, "PMF_BACKEND_BASE_URL must be iPhone-reachable")
 }
 
+private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceSavedNextAction() throws {
+    let savedNextActionJSON = """
+                  "saved_next_action": {
+                    "id": "run_mobile_deploy_preflight",
+                    "label": "Run mobile deploy preflight",
+                    "status": "blocked",
+                    "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+                    "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                    "source": "operator_actions",
+                    "validation_command": "make mobile-deploy-preflight"
+                  },
+    """
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            finalShowcaseReadinessStatus: "blocked",
+            finalShowcaseDeviceSavedNextActionJSON: savedNextActionJSON
+        ),
+        error: nil
+    )
+    let text = summary.showcaseReadinessRows.joined(separator: " ")
+
+    try expectContains(text, "saved next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto")
+    try expectContains(text, "rerun make mobile-deploy-preflight")
+    try expectContains(
+        text,
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+}
+
 private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -7889,6 +7919,7 @@ private func finalDemoLaunchPayload(
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
     finalShowcaseReadinessActions: [String]? = nil,
+    finalShowcaseDeviceSavedNextActionJSON: String = "",
     finalShowcaseReadinessUsesCompletionConsentBlocker: Bool = false,
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
@@ -10107,6 +10138,7 @@ private func finalDemoLaunchPayload(
                     "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
                     "source": "first_blocker"
                   },
+                  \(finalShowcaseDeviceSavedNextActionJSON)
                   "blocks": ["ios_deployable", "functional_regression"],
                   "manual": true,
                   "global_action": false,
@@ -13870,6 +13902,7 @@ private func finalDemoLaunchReport(
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
     finalShowcaseReadinessAction: String = "make ios-device-launch-rehearsal",
     finalShowcaseReadinessActions: [String]? = nil,
+    finalShowcaseDeviceSavedNextActionJSON: String = "",
     finalShowcaseReadinessUsesCompletionConsentBlocker: Bool = false,
     npcEvaluationStatus: String = "missing",
     npcEvaluationBlockerClassification: String = "npc_agent_evaluation_failed",
@@ -13969,6 +14002,7 @@ private func finalDemoLaunchReport(
             finalShowcaseReadinessFirstBlockerDetail: finalShowcaseReadinessFirstBlockerDetail,
             finalShowcaseReadinessAction: finalShowcaseReadinessAction,
             finalShowcaseReadinessActions: finalShowcaseReadinessActions,
+            finalShowcaseDeviceSavedNextActionJSON: finalShowcaseDeviceSavedNextActionJSON,
             finalShowcaseReadinessUsesCompletionConsentBlocker: finalShowcaseReadinessUsesCompletionConsentBlocker,
             npcEvaluationStatus: npcEvaluationStatus,
             npcEvaluationBlockerClassification: npcEvaluationBlockerClassification,
