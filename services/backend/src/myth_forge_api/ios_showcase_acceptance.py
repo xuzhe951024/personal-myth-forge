@@ -750,6 +750,19 @@ FEATURES = (
             ),
             SourceRequirement("services/backend/src/myth_forge_api/cli.py", "print-fulfillment-readiness"),
             SourceRequirement("Makefile", "print-fulfillment-readiness:"),
+            SourceRequirement("Makefile", "write_print_fulfillment_readiness.sh"),
+            SourceRequirement(
+                "services/backend/scripts/write_print_fulfillment_readiness.sh",
+                "accepted print fulfillment readiness exit code $status",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_print_fulfillment_readiness.sh",
+                "myth_forge_api.cli print-fulfillment-readiness",
+                all_contains=(
+                    "services/backend/.local/print-fulfillment-readiness.json",
+                    '"$status" -eq 2',
+                ),
+            ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "PrintFulfillmentReadinessReport",

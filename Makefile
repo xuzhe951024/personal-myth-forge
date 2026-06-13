@@ -148,7 +148,7 @@ final-showcase-readiness:
 .PHONY: print-fulfillment-readiness
 
 print-fulfillment-readiness:
-	cd services/backend && uv run python -m myth_forge_api.cli print-fulfillment-readiness --repo-root ../.. --output .local/print-fulfillment-readiness.json
+	@services/backend/scripts/write_print_fulfillment_readiness.sh
 
 .PHONY: live-provider-evidence
 

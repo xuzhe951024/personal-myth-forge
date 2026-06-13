@@ -984,6 +984,32 @@ def test_ios_showcase_acceptance_fails_missing_print_fulfillment_readiness_witho
     assert "data:image" not in report_text
 
 
+def test_ios_showcase_acceptance_print_fulfillment_readiness_requires_safe_wrapper(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    (
+        tmp_path / "services/backend/scripts/write_print_fulfillment_readiness.sh"
+    ).unlink()
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 50, "failed": 1}
+    assert features["final_print_fulfillment_readiness"]["status"] == "failed"
+    assert {
+        "file": "services/backend/scripts/write_print_fulfillment_readiness.sh",
+        "contains": "accepted print fulfillment readiness exit code $status",
+    } in features["final_print_fulfillment_readiness"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+    assert "data:image" not in report_text
+
+
 def test_ios_showcase_acceptance_fails_missing_final_resource_requirements_without_absolute_paths(
     tmp_path,
 ) -> None:
@@ -1608,6 +1634,12 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_print_fulfillment_readiness_report print_fulfillment_readiness_report "
             "configured_treatstock_quote make print-fulfillment-readiness"
         ),
+        "services/backend/scripts/write_print_fulfillment_readiness.sh": (
+            "accepted print fulfillment readiness exit code $status "
+            "services/backend/.local/print-fulfillment-readiness.json "
+            "myth_forge_api.cli print-fulfillment-readiness "
+            '"$status" -eq 2'
+        ),
         "services/backend/src/myth_forge_api/final_resource_requirements.py": (
             "build_final_resource_requirements_report final_resource_requirements_report "
             "first_blocker next_action FinalResourceRequirementsResult validation_commands"
@@ -1682,7 +1714,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "backend-evaluate-local: final-acceptance-local: ios-deploy-runbook-local: "
             "visual-regression-local: --output .local/visual-regression-local.json "
             "live-provider-evidence: .local/live-provider-evidence.json "
-            "print-fulfillment-readiness: .local/print-fulfillment-readiness.json "
+            "print-fulfillment-readiness: write_print_fulfillment_readiness.sh "
             "final-resource-requirements: .local/final-resource-requirements.json "
             "final-resource-apply-preview: .local/final-resource-apply-preview.json "
             "write_provider_handoff.sh write_resource_handoff.sh "
@@ -1693,6 +1725,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "write_final_configured_evidence_plan.sh "
             "write_configured_live_evidence_bundle.sh "
             "write_live_provider_evidence.sh "
+            "write_print_fulfillment_readiness.sh "
             "final-external-action-ledger: write_final_external_action_ledger.sh "
             "final-launch-closure-packet: write_final_launch_closure_packet.sh "
             "local-showcase-smoke: "

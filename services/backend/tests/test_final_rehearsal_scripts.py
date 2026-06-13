@@ -63,6 +63,12 @@ PROVIDER_HANDOFF_SAFE_WRAPPERS = [
         "accepted live provider evidence exit code 2",
         "services/backend/.local/live-provider-evidence.json",
     ),
+    (
+        "print-fulfillment-readiness",
+        "write_print_fulfillment_readiness.sh",
+        "accepted print fulfillment readiness exit code 2",
+        "services/backend/.local/print-fulfillment-readiness.json",
+    ),
 ]
 
 
