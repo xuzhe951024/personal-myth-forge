@@ -142,6 +142,58 @@ def test_write_final_local_report_refresh_fails_unusable_exit_code(
     )
 
 
+def test_write_final_external_action_ledger_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_final_external_action_ledger.sh")
+
+    assert result.returncode == 0
+    assert "accepted final external action ledger exit code 2" in result.stdout
+    assert "services/backend/.local/final-external-action-ledger.json" in result.stdout
+
+
+def test_write_final_external_action_ledger_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_final_external_action_ledger.sh")
+
+    assert result.returncode == 1
+    assert (
+        "final external action ledger failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
+def test_write_final_launch_closure_packet_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_final_launch_closure_packet.sh")
+
+    assert result.returncode == 0
+    assert "accepted final launch closure packet exit code 2" in result.stdout
+    assert "services/backend/.local/final-launch-closure-packet.json" in result.stdout
+
+
+def test_write_final_launch_closure_packet_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_final_launch_closure_packet.sh")
+
+    assert result.returncode == 1
+    assert (
+        "final launch closure packet failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
 def test_write_ios_device_launch_rehearsal_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:
@@ -407,7 +459,33 @@ def test_final_resource_fill_guide_make_target_dry_run_uses_cli() -> None:
     assert "--markdown-output .local/final-resource-fill-guide.md" in result.stdout
 
 
-def test_final_launch_closure_packet_make_target_dry_run_uses_cli() -> None:
+def test_final_external_action_ledger_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "final-external-action-ledger"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    assert ".PHONY: final-external-action-ledger" in makefile
+    assert "final-external-action-ledger:" in makefile
+    assert "write_final_external_action_ledger.sh" in result.stdout
+
+
+def test_final_external_action_ledger_wrapper_is_executable() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    wrapper = repo_root / "services/backend/scripts/write_final_external_action_ledger.sh"
+
+    assert os.access(wrapper, os.X_OK)
+
+
+def test_final_launch_closure_packet_make_target_dry_run_uses_wrapper() -> None:
     repo_root = Path(__file__).resolve().parents[3]
 
     result = subprocess.run(
@@ -422,9 +500,15 @@ def test_final_launch_closure_packet_make_target_dry_run_uses_cli() -> None:
     makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
     assert ".PHONY: final-launch-closure-packet" in makefile
     assert "final-launch-closure-packet:" in makefile
-    assert "myth_forge_api.cli final-launch-closure-packet" in result.stdout
-    assert "--repo-root ../.." in result.stdout
-    assert "--output .local/final-launch-closure-packet.json" in result.stdout
+    assert "write_final_launch_closure_packet.sh" in result.stdout
+
+
+def test_final_launch_closure_packet_wrapper_is_executable() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    wrapper = repo_root / "services/backend/scripts/write_final_launch_closure_packet.sh"
+
+    assert os.access(wrapper, os.X_OK)
 
 
 def test_local_showcase_smoke_make_target_dry_run_uses_cli() -> None:

@@ -1495,8 +1495,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "print-fulfillment-readiness: .local/print-fulfillment-readiness.json "
             "final-resource-requirements: .local/final-resource-requirements.json "
             "final-resource-apply-preview: .local/final-resource-apply-preview.json "
-            "final-external-action-ledger: .local/final-external-action-ledger.json "
-            "final-launch-closure-packet: .local/final-launch-closure-packet.json "
+            "final-external-action-ledger: write_final_external_action_ledger.sh "
+            "final-launch-closure-packet: write_final_launch_closure_packet.sh "
             "local-showcase-smoke: "
             "final-resource-init: services/backend/scripts/init_final_resources.sh "
             "final-local-report-refresh-local: "
@@ -1522,6 +1522,14 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/scripts/write_ios_deploy_runbook_local.sh": (
             "accepted iOS deploy runbook exit code $status "
             "services/backend/.local/ios-deploy-runbook-local.json"
+        ),
+        "services/backend/scripts/write_final_external_action_ledger.sh": (
+            "accepted final external action ledger exit code $status "
+            "services/backend/.local/final-external-action-ledger.json"
+        ),
+        "services/backend/scripts/write_final_launch_closure_packet.sh": (
+            "accepted final launch closure packet exit code $status "
+            "services/backend/.local/final-launch-closure-packet.json"
         ),
         "services/backend/src/myth_forge_api/final_operator_handoff.py": (
             "three_d_evaluation LOCAL_THREE_D_EVALUATION_COMMAND "
