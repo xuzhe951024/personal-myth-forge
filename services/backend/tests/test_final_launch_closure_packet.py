@@ -482,6 +482,28 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
     )
 
 
+def test_final_launch_closure_packet_operator_actions_start_with_promoted_device_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+    device_action = "make ios-device-launch-rehearsal"
+    provider_action = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+
+    assert result.report["next_action"]["command"] == device_action
+    assert actions[0] == device_action
+    assert provider_action in actions
+    assert actions.index(device_action) < actions.index(provider_action)
+
+
 def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     tmp_path: Path,
 ) -> None:
