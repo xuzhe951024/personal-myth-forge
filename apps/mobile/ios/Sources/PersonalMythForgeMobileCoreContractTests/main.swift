@@ -176,6 +176,7 @@ do {
     try testFinalLaunchMobileSummaryShowsResourceApplyPreview()
     try testDecodesFinalExternalActionLedgerFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsExternalActionLedger()
+    try testFinalLaunchMobileSummaryShowsExternalActionLedgerBackendHandoff()
     try testFinalLaunchMobileSummaryRedactsUnsafeExternalActionLedger()
     try testDecodesFinalLaunchClosurePacketFromFinalLaunchPayload()
     try testDecodesFinalLaunchClosurePacketResourceRequirementsSource()
@@ -4804,6 +4805,26 @@ private func testFinalLaunchMobileSummaryShowsExternalActionLedger() throws {
     try expectContains(text, "make final-resource-requirements")
 }
 
+private func testFinalLaunchMobileSummaryShowsExternalActionLedgerBackendHandoff() throws {
+    let backendAction = (
+        "start backend-device-demo before device checks: "
+            + "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    let report = finalDemoLaunchReport(
+        externalActionLedgerActions: [
+            "make final-resource-apply-preview",
+            backendAction,
+            "approve live provider cost before make live-provider-evidence",
+        ]
+    )
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = summary.externalActionLedgerRows.joined(separator: " ")
+
+    try expectContains(text, "make final-resource-apply-preview")
+    try expectContains(text, backendAction)
+}
+
 private func testFinalLaunchMobileSummaryRedactsUnsafeExternalActionLedger() throws {
     let report = finalDemoLaunchReport(
         externalActionLedgerCommand: (
@@ -8036,6 +8057,7 @@ private func finalDemoLaunchPayload(
     resourceHandoffDestination: String = "services/backend/.env",
     externalActionLedgerCommand: String = "make final-external-action-ledger",
     externalActionLedgerDetail: String = "Inspect external action blockers.",
+    externalActionLedgerActions: [String]? = nil,
     closurePacketActionCommand: String = "make final-resource-fill-guide",
     closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation.",
     closurePacketFirstBlockerCommand: String = "make final-resources-preflight",
@@ -8077,6 +8099,13 @@ private func finalDemoLaunchPayload(
     ]
     let finalShowcaseActionsJSON = String(
         decoding: try! PMFJSON.encoder.encode(finalShowcaseActions),
+        as: UTF8.self
+    )
+    let effectiveExternalActionLedgerActions = externalActionLedgerActions ?? [
+        externalActionLedgerDetail
+    ]
+    let externalActionLedgerActionsJSON = String(
+        decoding: try! PMFJSON.encoder.encode(effectiveExternalActionLedgerActions),
         as: UTF8.self
     )
     let finalShowcaseCapabilityID = finalShowcaseReadinessUsesCompletionConsentBlocker
@@ -9039,9 +9068,7 @@ private func finalDemoLaunchPayload(
               "make final-resource-requirements",
               "\(externalActionLedgerCommand)"
             ],
-            "operator_actions": [
-              "\(externalActionLedgerDetail)"
-            ],
+            "operator_actions": \(externalActionLedgerActionsJSON),
             "safety": {
               "commands_run": false,
               "writes_backend_env": false,
@@ -14092,6 +14119,7 @@ private func finalDemoLaunchReport(
     resourceHandoffDestination: String = "services/backend/.env",
     externalActionLedgerCommand: String = "make final-external-action-ledger",
     externalActionLedgerDetail: String = "Inspect external action blockers.",
+    externalActionLedgerActions: [String]? = nil,
     closurePacketActionCommand: String = "make final-resource-fill-guide",
     closurePacketActionDetail: String = "Backend-only secret for live Meshy 3D generation.",
     closurePacketFirstBlockerCommand: String = "make final-resources-preflight",
@@ -14193,6 +14221,7 @@ private func finalDemoLaunchReport(
             resourceHandoffDestination: resourceHandoffDestination,
             externalActionLedgerCommand: externalActionLedgerCommand,
             externalActionLedgerDetail: externalActionLedgerDetail,
+            externalActionLedgerActions: externalActionLedgerActions,
             closurePacketActionCommand: closurePacketActionCommand,
             closurePacketActionDetail: closurePacketActionDetail,
             closurePacketFirstBlockerCommand: closurePacketFirstBlockerCommand,

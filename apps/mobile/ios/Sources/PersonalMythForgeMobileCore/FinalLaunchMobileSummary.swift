@@ -794,12 +794,41 @@ public enum FinalLaunchMobileSummaryBuilder {
         if let command = report.operatorSequence.first, !command.isEmpty {
             rows.append("First command: \(sanitize(command))")
         }
-        if report.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready",
-           let action = report.operatorActions.first,
-           !action.isEmpty {
-            rows.append(sanitize(action))
-        }
+        rows.append(
+            contentsOf: externalActionLedgerOperatorActionRows(
+                status: report.status,
+                operatorActions: report.operatorActions
+            )
+        )
         return rows.map(sanitize)
+    }
+
+    private static func externalActionLedgerOperatorActionRows(
+        status: String,
+        operatorActions: [String]
+    ) -> [String] {
+        guard status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != "ready" else {
+            return []
+        }
+
+        var rows: [String] = []
+        if let first = operatorActions.first(where: {
+            !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }) {
+            rows.append(first)
+        }
+        if let backend = operatorActions.first(where: { action in
+            let trimmed = action.trimmingCharacters(in: .whitespacesAndNewlines)
+            return !trimmed.isEmpty
+                && trimmed.localizedCaseInsensitiveContains("backend-device-demo")
+        }) {
+            rows.append(backend)
+        }
+
+        var seen = Set<String>()
+        return rows.filter { row in
+            seen.insert(row).inserted
+        }
     }
 
     private static func externalActionLedgerNextActionRow(
