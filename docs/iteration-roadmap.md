@@ -302,6 +302,7 @@ Bridge deliverable:
 - P0.388 evaluation reports expose top-level status
 - P0.389 iOS rehearsal readiness writes a first-class local report
 - P0.390 provider handoff actions align with ignored final resources
+- P0.391 iOS deploy runbook surfaces concrete final resource blockers
 
 ## P1: Mobile Vertical Slice
 

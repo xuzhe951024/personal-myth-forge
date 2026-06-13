@@ -119,19 +119,7 @@ def _input_slots(
     npc_evaluation: dict[str, Any],
 ) -> list[dict[str, Any]]:
     return [
-        _slot(
-            slot_id="final_resources_env",
-            label="Final resources env",
-            status=str(final_resources.get("status", "missing")),
-            required=True,
-            source=str(
-                final_resources.get("resources_file", {}).get(
-                    "path",
-                    DEFAULT_RESOURCES_PATH.as_posix(),
-                )
-            ),
-            action="run make final-resource-init",
-        ),
+        _final_resources_slot(final_resources),
         _slot(
             slot_id="final_resource_apply_preview",
             label="Final resource apply preview",
@@ -198,6 +186,59 @@ def _input_slots(
             ),
         ),
     ]
+
+
+def _final_resources_slot(final_resources: dict[str, Any]) -> dict[str, Any]:
+    resources_file = final_resources.get("resources_file", {})
+    resources_path = str(
+        resources_file.get(
+            "path",
+            DEFAULT_RESOURCES_PATH.as_posix(),
+        )
+    )
+    child_blocker = _final_resources_child_blocker(final_resources)
+    action = "run make final-resource-init"
+    classification = None
+    if child_blocker is not None:
+        action = str(child_blocker.get("command") or action)
+        classification = str(child_blocker.get("classification") or "") or None
+    slot = _slot(
+        slot_id="final_resources_env",
+        label="Final resources env",
+        status=str(final_resources.get("status", "missing")),
+        required=True,
+        source=resources_path,
+        action=action,
+        classification=classification,
+    )
+    if child_blocker is None:
+        return slot
+    child_id = str(child_blocker.get("id", ""))
+    child_label = str(child_blocker.get("label", child_id))
+    detail = str(child_blocker.get("detail", "")).strip()
+    validation_command = str(child_blocker.get("validation_command", "")).strip()
+    slot["source_blocker_id"] = child_id
+    slot["source_blocker_label"] = child_label
+    if detail:
+        slot["blocker_detail"] = detail
+    if validation_command:
+        slot["validation_command"] = validation_command
+    return slot
+
+
+def _final_resources_child_blocker(
+    final_resources: dict[str, Any],
+) -> dict[str, Any] | None:
+    if final_resources.get("status") == "ready":
+        return None
+    resources_file = final_resources.get("resources_file", {})
+    if not bool(resources_file.get("exists")):
+        return None
+    for key in ("next_action", "first_blocker"):
+        candidate = final_resources.get(key)
+        if isinstance(candidate, dict) and candidate.get("command"):
+            return candidate
+    return None
 
 
 def _deploy_value_slot(
@@ -490,19 +531,27 @@ def _first_blocker(
 
 
 def _slot_blocker(slot: dict[str, Any]) -> dict[str, Any]:
-    command = add_final_resource_validation_command(
-        add_mobile_deploy_validation_command(str(slot["operator_action"]))
-    )
+    if slot.get("validation_command"):
+        command = str(slot["operator_action"])
+    else:
+        command = add_final_resource_validation_command(
+            add_mobile_deploy_validation_command(str(slot["operator_action"]))
+        )
     blocker = {
         "id": str(slot["id"]),
         "label": str(slot["label"]),
         "status": str(slot["status"]),
         "classification": str(slot.get("classification", "")),
         "command": command,
-        "detail": f"{slot['label']} is {slot['status']}.",
+        "detail": str(
+            slot.get("blocker_detail") or f"{slot['label']} is {slot['status']}."
+        ),
         "input_source": str(slot["source"]),
         "required": bool(slot["required"]),
     }
+    for key in ("source_blocker_id", "source_blocker_label", "validation_command"):
+        if slot.get(key):
+            blocker[key] = slot[key]
     return blocker
 
 

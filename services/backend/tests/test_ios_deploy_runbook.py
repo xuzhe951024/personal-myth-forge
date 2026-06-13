@@ -106,6 +106,31 @@ def test_ios_deploy_runbook_resource_actions_include_validation_commands(
     )
 
 
+def test_ios_deploy_runbook_uses_concrete_final_resource_blocker_when_file_exists(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "PRINT_PROVIDER=local\nPMF_FINAL_LAUNCH_MODE=local\n",
+        encoding="utf-8",
+    )
+
+    report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
+    blocker = report["first_blocker"]
+    slots = {slot["id"]: slot for slot in report["input_slots"]}
+
+    assert report["status"] == "blocked"
+    assert slots["final_resources_env"]["status"] == "blocked"
+    assert slots["final_resources_env"]["source_blocker_id"] == "MESHY_API_KEY"
+    assert blocker["id"] == "final_resources_env"
+    assert blocker["source_blocker_id"] == "MESHY_API_KEY"
+    assert blocker["command"] == "provide MESHY_API_KEY in final-resources.env"
+    assert blocker["validation_command"] == "make final-resources-preflight"
+    assert "MESHY_API_KEY" in blocker["detail"]
+
+
 def test_ios_deploy_runbook_ready_local_inputs_preserve_command_order(
     tmp_path: Path,
 ) -> None:
