@@ -46,6 +46,10 @@ DEVICE_PREFLIGHT_PATH = (
 FINAL_LAUNCH_MOBILE_SUMMARY_PATH = (
     "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/FinalLaunchMobileSummary.swift"
 )
+DEMO_SCRIPT_PATH = "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/DemoScript.swift"
+SHOWCASE_AUTOPILOT_PATH = (
+    "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/ShowcaseAutopilot.swift"
+)
 FINAL_LAUNCH_STATUS_VIEW_PATH = "apps/mobile/ios/App/FinalLaunchStatusView.swift"
 CORE_CONTRACT_TESTS_PATH = (
     "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift"
@@ -1480,6 +1484,48 @@ SOURCE_REQUIREMENTS = (
         "Contract test final demo launch first blocker receipt",
         CORE_CONTRACT_TESTS_PATH,
         "testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt",
+    ),
+    SourceRequirement(
+        "demo_script_external_actions_step",
+        "Demo script external actions step",
+        DEMO_SCRIPT_PATH,
+        '"external_actions"',
+    ),
+    SourceRequirement(
+        "demo_script_external_actions_builder",
+        "Demo script external actions builder",
+        DEMO_SCRIPT_PATH,
+        "externalActionsStep",
+    ),
+    SourceRequirement(
+        "showcase_autopilot_external_actions_step",
+        "Showcase autopilot external actions step",
+        SHOWCASE_AUTOPILOT_PATH,
+        'script.step(id: "external_actions")',
+    ),
+    SourceRequirement(
+        "showcase_autopilot_check_actions_title",
+        "Showcase autopilot Check Actions button",
+        SHOWCASE_AUTOPILOT_PATH,
+        '"Check Actions"',
+    ),
+    SourceRequirement(
+        "demo_script_external_actions_blocked_contract",
+        "Demo script external actions blocked contract",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDemoScriptShowsBlockedExternalActionsBeforeFinalLaunch",
+    ),
+    SourceRequirement(
+        "demo_script_external_actions_ready_contract",
+        "Demo script external actions ready contract",
+        CORE_CONTRACT_TESTS_PATH,
+        "testDemoScriptCompletesReadyExternalActionsBeforeFinalLaunch",
+    ),
+    SourceRequirement(
+        "showcase_autopilot_external_actions_contract",
+        "Showcase autopilot external actions contract",
+        CORE_CONTRACT_TESTS_PATH,
+        "testShowcaseAutopilotBlocksOnExternalActions",
     ),
     SourceRequirement(
         "contract_ios_device_launch_rehearsal_decode",
