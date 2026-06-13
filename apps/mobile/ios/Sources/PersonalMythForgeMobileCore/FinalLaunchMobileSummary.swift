@@ -1651,6 +1651,8 @@ public enum FinalLaunchMobileSummaryBuilder {
             "ios_device_launch_certificate:",
             "live-provider",
             "live_provider",
+            "provider-handoff",
+            "provider_handoff",
             "final-resource",
             "final_resource",
             "final-showcase",
@@ -1668,7 +1670,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             return priorityFragments.contains { lowered.contains($0) }
                 || printHandoffFragments.contains { lowered.contains($0) }
         })
-        return deduped(selected).prefix(7).map(sanitize)
+        return deduped(selected).prefix(8).map(sanitize)
     }
 
     private static func showcaseReadinessNextActionRow(

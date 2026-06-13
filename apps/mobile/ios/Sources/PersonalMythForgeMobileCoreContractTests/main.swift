@@ -6006,6 +6006,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
                 "final_handoff_index: make final-configured-preflight",
                 "ios_device_launch_certificate: make final-handoff-index",
                 "run make live-provider-evidence after configured provider evidence files are refreshed",
+                "make provider-handoff",
                 "run make final-resource-init",
                 "make final-showcase-readiness",
                 "make visual-regression-local; rerun make print-fulfillment-readiness",
@@ -6025,6 +6026,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
     try expectContains(text, "final_handoff_index: make final-configured-preflight")
     try expectContains(text, "ios_device_launch_certificate: make final-handoff-index")
     try expectContains(text, "run make live-provider-evidence")
+    try expectContains(text, "make provider-handoff")
     try expectContains(text, "run make final-resource-init")
     try expectContains(text, "make final-showcase-readiness")
     try expectContains(text, "after explicit Treatstock cost consent")
@@ -6034,7 +6036,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
         "make visual-regression-local; rerun make print-fulfillment-readiness"
     )
     try expectNotContains(text, "extra action that should stay hidden")
-    try expectEqual(summary.showcaseReadinessRows.count, 15)
+    try expectEqual(summary.showcaseReadinessRows.count, 16)
 }
 
 private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle() throws {
