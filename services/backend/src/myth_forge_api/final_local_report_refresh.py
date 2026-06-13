@@ -142,9 +142,12 @@ def run_final_local_report_refresh(
     step_results = [_run_step(step, selected_repo_root) for step in steps]
     summary = _summary(step_results)
     status = _overall_status(summary)
-    first_blocker = _first_blocker(step_results)
-    next_action = _next_action(first_blocker)
     showcase_next_action = _showcase_next_action(step_results)
+    first_blocker = _first_blocker(
+        step_results,
+        showcase_next_action=showcase_next_action,
+    )
+    next_action = _next_action(first_blocker)
     device_action_bundle = _device_action_bundle(step_results)
     report = {
         "kind": "final_local_report_refresh_report",
@@ -1437,12 +1440,59 @@ def _device_action_status(status: str) -> str:
     return "blocked"
 
 
-def _first_blocker(steps: list[dict[str, Any]]) -> dict[str, Any] | None:
+def _first_blocker(
+    steps: list[dict[str, Any]],
+    *,
+    showcase_next_action: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
     failed = next((step for step in steps if step.get("status") == "failed"), None)
-    blocked = next((step for step in steps if step.get("status") == "blocked"), None)
-    step = failed or blocked
+    if failed is not None:
+        return _step_blocker(failed)
+    promoted = _promoted_showcase_device_blocker(showcase_next_action)
+    if promoted is not None:
+        return promoted
+    step = next((step for step in steps if step.get("status") == "blocked"), None)
     if step is None:
         return None
+    return _step_blocker(step)
+
+
+def _promoted_showcase_device_blocker(
+    showcase_next_action: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if not isinstance(showcase_next_action, dict):
+        return None
+    if showcase_next_action.get("status") != "blocked":
+        return None
+    command = str(showcase_next_action.get("command") or "")
+    if (
+        "mobile-write-deploy-config-auto" not in command
+        and "mobile-deploy-preflight" not in command
+    ):
+        return None
+    blocker = {
+        "id": str(showcase_next_action.get("id", "final_showcase_readiness")),
+        "label": str(
+            showcase_next_action.get("label", "Final showcase readiness")
+        ),
+        "status": str(showcase_next_action.get("status", "blocked")),
+        "classification": str(showcase_next_action.get("classification", "")),
+        "command": command,
+        "detail": str(showcase_next_action.get("detail", "")),
+        "output": showcase_next_action.get("output"),
+        "step_id": str(
+            showcase_next_action.get("step_id", "final_showcase_readiness")
+        ),
+    }
+    validation_command = str(
+        showcase_next_action.get("validation_command") or ""
+    ).strip()
+    if validation_command:
+        blocker["validation_command"] = validation_command
+    return blocker
+
+
+def _step_blocker(step: dict[str, Any]) -> dict[str, Any]:
     step_id = str(step.get("id", "step"))
     status = str(step.get("status", "blocked"))
     hint = step.get("blocker_hint") if isinstance(step.get("blocker_hint"), dict) else {}
