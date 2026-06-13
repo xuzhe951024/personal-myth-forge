@@ -57,6 +57,43 @@ def test_ios_device_evidence_bundle_blocks_missing_local_device_evidence(
     assert result.report["safety"]["describes_global_actions"] is True
 
 
+def test_ios_device_evidence_bundle_exposes_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = build_ios_device_evidence_bundle_report(repo_root=repo_root)
+    bundle = result.report["device_action_bundle"]
+
+    assert bundle["id"] == "ios_device_evidence_actions"
+    assert bundle["status"] == "blocked"
+    assert bundle["first_action"]["id"] == "backend_device_server"
+    assert bundle["first_action"]["command"] == "make backend-device-demo"
+    assert bundle["first_action"]["next_action"]["command"] == "make backend-device-demo"
+    assert bundle["summary"] == {
+        "actions": 4,
+        "ready": 0,
+        "missing": 4,
+        "blocked": 0,
+        "manual": 4,
+        "provider_calls": 0,
+        "global_actions": 1,
+        "xcode_or_signing": 1,
+    }
+    assert bundle["safety"] == {
+        "commands_run": False,
+        "global_mutation": False,
+        "keychain_writes": False,
+        "live_provider_calls": False,
+        "provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "xcode_or_signing": False,
+    }
+    assert "sk-" not in json.dumps(bundle)
+    assert str(tmp_path) not in json.dumps(bundle)
+
+
 def test_ios_device_evidence_bundle_normalizes_stale_launch_rehearsal_detail(
     tmp_path: Path,
 ) -> None:
@@ -169,6 +206,13 @@ def test_ios_device_evidence_bundle_marks_ready_saved_device_evidence(
     assert result.report["next_action"] is None
     assert result.report["operator_actions"] == ["iOS device evidence is ready"]
     assert all(slot["status"] == "ready" for slot in result.report["evidence_slots"])
+    bundle = result.report["device_action_bundle"]
+
+    assert bundle["status"] == "ready"
+    assert bundle["first_action"] is None
+    assert bundle["summary"]["ready"] == 4
+    assert bundle["summary"]["blocked"] == 0
+    assert all(action["status"] == "ready" for action in bundle["actions"])
 
 
 def test_ios_device_evidence_bundle_redacts_unsafe_saved_details(tmp_path: Path) -> None:

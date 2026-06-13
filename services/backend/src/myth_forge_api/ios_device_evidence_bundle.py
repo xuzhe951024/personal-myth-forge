@@ -94,6 +94,7 @@ def build_ios_device_evidence_bundle_report(
         "evidence_slots": evidence_slots,
         "first_blocker": first_blocker,
         "next_action": _next_action(first_blocker),
+        "device_action_bundle": _device_action_bundle(evidence_slots),
         "source_reports": source_reports,
         "operator_actions": _operator_actions(status, evidence_slots),
         "commands": [
@@ -604,6 +605,74 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     if first_blocker is None:
         return None
     return {**first_blocker, "source": "first_blocker"}
+
+
+def _device_action_bundle(slots: list[dict[str, Any]]) -> dict[str, Any]:
+    actions = [_device_action(slot) for slot in slots]
+    return {
+        "id": "ios_device_evidence_actions",
+        "label": "iOS Device Evidence Actions",
+        "status": _overall_status(slots),
+        "actions": actions,
+        "first_action": _first_device_action(actions),
+        "summary": _device_action_summary(actions),
+        "safety": {
+            "commands_run": False,
+            "global_mutation": False,
+            "keychain_writes": False,
+            "live_provider_calls": False,
+            "provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "xcode_or_signing": False,
+        },
+    }
+
+
+def _device_action(slot: dict[str, Any]) -> dict[str, Any]:
+    status = str(slot["status"])
+    action: dict[str, Any] = {
+        "id": str(slot["id"]),
+        "label": str(slot["label"]),
+        "status": status,
+        "classification": str(slot.get("classification", "")),
+        "command": str(slot["command"]),
+        "detail": str(slot.get("detail", "")),
+        "evidence_source": str(slot.get("evidence_source", "")),
+        "manual": status != "ready",
+        "provider_calls": False,
+        "global_action": bool(slot.get("global_action")),
+        "xcode_or_signing": bool(slot.get("xcode_or_signing")),
+    }
+    if status != "ready":
+        action["next_action"] = {
+            "id": action["id"],
+            "label": action["label"],
+            "status": action["status"],
+            "command": action["command"],
+            "detail": action["detail"],
+            "source": "device_action_bundle",
+        }
+    return action
+
+
+def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
+    return next((action for action in actions if action["status"] != "ready"), None)
+
+
+def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action["status"] == "ready"),
+        "missing": sum(1 for action in actions if action["status"] == "missing"),
+        "blocked": sum(1 for action in actions if action["status"] == "blocked"),
+        "manual": sum(1 for action in actions if action.get("manual") is True),
+        "provider_calls": sum(1 for action in actions if action["provider_calls"] is True),
+        "global_actions": sum(1 for action in actions if action["global_action"] is True),
+        "xcode_or_signing": sum(
+            1 for action in actions if action["xcode_or_signing"] is True
+        ),
+    }
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
