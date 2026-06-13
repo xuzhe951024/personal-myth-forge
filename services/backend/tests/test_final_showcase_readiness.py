@@ -460,6 +460,61 @@ def test_final_showcase_readiness_next_action_uses_preflight_child_action(
     )
 
 
+def test_final_showcase_readiness_device_bundle_first_action_uses_preflight_child_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    child_action = {
+        "id": "development_team",
+        "label": "Apple Team ID",
+        "status": "blocked",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "detail": "Missing DEVELOPMENT_TEAM",
+        "validation_command": "make mobile-deploy-preflight",
+        "source": "first_blocker",
+    }
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action=child_action,
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    bundle = result.report["device_action_bundle"]
+    first_action = bundle["first_action"]
+    actions = {action["id"]: action for action in bundle["actions"]}
+
+    assert first_action["id"] == "run_mobile_deploy_preflight"
+    assert first_action["command"] == child_action["command"]
+    assert first_action["validation_command"] == "make mobile-deploy-preflight"
+    assert first_action["next_action"] == child_action
+    assert first_action["evidence_detail"] == (
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    assert actions["run_mobile_deploy_preflight"]["command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert result.report["first_blocker"]["command"] == child_action["command"]
+    assert result.report["next_action"]["command"] == child_action["command"]
+
+
 def test_final_showcase_readiness_maps_missing_mobile_xcode_build_evidence(
     tmp_path: Path,
 ) -> None:

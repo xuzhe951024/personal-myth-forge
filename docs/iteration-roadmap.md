@@ -320,6 +320,7 @@ Bridge deliverable:
 - P0.406 iOS deploy runbook exposes device action bundle for physical iPhone handoff
 - P0.407 iOS device evidence bundle exposes device action bundle for physical iPhone proof
 - P0.408 iOS device launch certificate exposes device action bundle for final iPhone operator sequence
+- P0.409 final showcase device action bundle first action prefers saved deploy child action
 
 ## P1: Mobile Vertical Slice
 

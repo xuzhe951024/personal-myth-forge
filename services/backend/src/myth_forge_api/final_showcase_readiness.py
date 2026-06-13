@@ -1629,9 +1629,34 @@ def _device_action_bundle_summary(actions: list[dict[str, Any]]) -> dict[str, in
 
 def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
     for action in actions:
+        if action.get("status") == "ready":
+            continue
+        if action.get("id") != "run_mobile_deploy_preflight":
+            continue
+        promoted = _device_action_with_child_next_action(action)
+        if promoted is not None:
+            return promoted
+    for action in actions:
         if action.get("status") != "ready":
             return action
     return actions[0] if actions else None
+
+
+def _device_action_with_child_next_action(
+    action: dict[str, Any],
+) -> dict[str, Any] | None:
+    child_next_action = _device_action_child_next_action(action)
+    command = str(child_next_action.get("command", "")).strip()
+    if not command:
+        return None
+    promoted = dict(action)
+    promoted["command"] = command
+    validation_command = str(
+        child_next_action.get("validation_command", ""),
+    ).strip()
+    if validation_command:
+        promoted["validation_command"] = validation_command
+    return promoted
 
 
 def _operator_actions(
