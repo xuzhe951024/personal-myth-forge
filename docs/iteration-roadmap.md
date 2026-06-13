@@ -337,6 +337,7 @@ Bridge deliverable:
 - P0.423 final launch closure packet preserves nested iOS device source reports
 - P0.424 final local report refresh preserves step source reports
 - P0.425 final resource requirements expose safe action bundle
+- P0.426 final launch closure packet sources resource requirements bundle
 
 ## P1: Mobile Vertical Slice
 

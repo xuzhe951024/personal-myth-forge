@@ -99,7 +99,8 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert "provide DEVELOPMENT_TEAM" not in operator_actions
     assert "make ios-device-launch-rehearsal" in actions
     assert "make configured-live-evidence-bundle" in actions
-    assert report["commands"][:5] == [
+    assert report["commands"][:6] == [
+        "make final-resource-requirements",
         "make final-resource-fill-guide",
         "make final-external-action-ledger",
         "make ios-device-launch-rehearsal",
@@ -195,6 +196,35 @@ def test_final_launch_closure_packet_source_reports_expose_device_action_bundles
     assert configured_bundle["safety"]["commands_run"] is False
     assert str(tmp_path) not in report_text
     assert "sk-" not in report_text
+
+
+def test_final_launch_closure_packet_sources_resource_requirements_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    report = result.report
+    report_text = json.dumps(report)
+    resource_source = report["source_reports"]["final_resource_requirements"]
+    bundle = resource_source["device_action_bundle"]
+
+    assert resource_source["kind"] == "final_resource_requirements_report"
+    assert resource_source["status"] == "blocked"
+    assert bundle["id"] == "final_resource_requirements_actions"
+    assert bundle["source_report"] == "final_resource_requirements"
+    assert bundle["first_action"]["id"] == "MESHY_API_KEY"
+    assert bundle["first_action"]["validation_command"] == (
+        "make final-resources-preflight"
+    )
+    assert bundle["safety"]["live_provider_calls"] is False
+    assert "make final-resource-requirements" in report["commands"]
+    assert str(tmp_path) not in report_text
+    assert "meshy-secret-test" not in report_text
+    assert "sk-openai-test" not in report_text
 
 
 def test_final_launch_closure_packet_preserves_ios_device_nested_source_reports(

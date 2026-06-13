@@ -17,6 +17,9 @@ from myth_forge_api.final_external_action_ledger import (
 from myth_forge_api.final_resource_fill_guide import (
     build_final_resource_fill_guide_report,
 )
+from myth_forge_api.final_resource_requirements import (
+    build_final_resource_requirements_report,
+)
 from myth_forge_api.final_showcase_readiness import (
     build_final_showcase_readiness_report,
 )
@@ -26,6 +29,7 @@ from myth_forge_api.ios_device_evidence_bundle import (
 from myth_forge_api.operator_actions import normalize_operator_action
 
 COMMANDS = [
+    "make final-resource-requirements",
     "make final-resource-fill-guide",
     "make final-external-action-ledger",
     "make ios-device-launch-rehearsal",
@@ -54,6 +58,9 @@ def build_final_launch_closure_packet_report(
 ) -> FinalLaunchClosurePacketResult:
     selected_settings = settings or load_settings()
     selected_repo_root = Path(repo_root) if repo_root is not None else _default_repo_root()
+    resource_requirements = build_final_resource_requirements_report(
+        repo_root=selected_repo_root,
+    ).report
     fill_guide = build_final_resource_fill_guide_report(
         repo_root=selected_repo_root,
     ).report
@@ -96,6 +103,7 @@ def build_final_launch_closure_packet_report(
         "operator_actions": _operator_actions(sections),
         "commands": COMMANDS,
         "source_reports": {
+            "final_resource_requirements": _source_summary(resource_requirements),
             "final_resource_fill_guide": _source_summary(fill_guide),
             "final_external_action_ledger": _source_summary(action_ledger),
             "ios_device_evidence_bundle": _source_summary(device_evidence),
