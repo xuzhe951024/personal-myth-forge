@@ -86,6 +86,8 @@ FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 FINAL_DEMO_TARGETED_UNBLOCK_ACTION_ROOTS = {
     "unblock apply_final_resources: make final-resource-apply-preview",
     "unblock mobile_deploy_preflight: make mobile-deploy-preflight",
+    "unblock provider_readiness: make provider-handoff",
+    "unblock configured_final_acceptance: make final-acceptance-configured",
 }
 FINAL_DEMO_OPERATOR_ACTION_LIMIT = 12
 FINAL_SHOWCASE_HANDOFF_ACTION_LIMIT = 4

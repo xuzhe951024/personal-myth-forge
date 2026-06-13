@@ -637,6 +637,28 @@ def test_configured_final_demo_launch_drops_superseded_resource_team_action(
     ) not in actions
 
 
+def test_configured_final_demo_launch_drops_provider_unblock_fallbacks(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="configured",
+    )
+    actions = result.report["operator_actions"]
+
+    assert "unblock provider_readiness: make provider-handoff" not in actions
+    assert (
+        "unblock configured_final_acceptance: make final-acceptance-configured"
+        not in actions
+    )
+    assert not any(action.startswith("unblock ") for action in actions)
+    assert "make final-resource-apply-preview" in actions
+    assert any("Treatstock cost consent" in action for action in actions)
+
+
 def test_final_demo_launch_dedupe_prefers_writer_over_old_team_action() -> None:
     actions = final_demo_launch._dedupe_operator_actions(
         [
@@ -672,6 +694,8 @@ def test_final_demo_launch_dedupe_drops_targeted_unblock_fallbacks() -> None:
                 "rerun make mobile-deploy-preflight"
             ),
             "unblock mobile_deploy_preflight: make mobile-deploy-preflight",
+            "unblock provider_readiness: make provider-handoff",
+            "unblock configured_final_acceptance: make final-acceptance-configured",
         ]
     )
 
