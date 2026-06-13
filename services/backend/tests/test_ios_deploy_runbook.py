@@ -19,17 +19,19 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
     assert report["kind"] == "ios_deploy_runbook_report"
     assert report["mode"] == "local"
     assert report["status"] == "blocked"
-    assert report["first_blocker"]["id"] == "final_resources_env"
-    assert report["first_blocker"]["command"] == "run make final-resource-init"
-    assert report["first_blocker"]["input_source"] == (
-        "services/backend/.local/final-resources.env"
+    assert report["first_blocker"]["id"] == "development_team"
+    assert report["first_blocker"]["command"] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
     )
     assert report["next_action"] == {
         **report["first_blocker"],
         "source": "first_blocker",
     }
     assert slots["final_resources_env"]["status"] == "missing"
+    assert slots["final_resources_env"]["required"] is False
     assert slots["final_resource_apply_preview"]["status"] == "missing"
+    assert slots["final_resource_apply_preview"]["required"] is False
     assert slots["development_team"]["status"] == "missing"
     assert slots["backend_base_url"]["status"] == "missing"
     assert slots["local_final_acceptance"]["status"] == "missing"
@@ -50,6 +52,10 @@ def test_ios_deploy_runbook_blocks_missing_inputs_without_secret_or_path_leak(
         "make final-resource-apply-preview",
         "make final-apply-resources",
     ]
+    steps = {step["id"]: step for step in report["command_sequence"]}
+    assert steps["final_resources_preflight"]["status"] == "partial"
+    assert steps["preview_final_resource_apply"]["status"] == "partial"
+    assert steps["apply_final_resources"]["status"] == "partial"
     assert "run local 3D evaluation with evaluate-3d" not in report_text
     assert "run local NPC Agent evaluation with evaluate-npc" not in report_text
     assert report["safety"] == {
@@ -184,12 +190,71 @@ def test_ios_deploy_runbook_uses_concrete_final_resource_blocker_when_file_exist
 
     assert report["status"] == "blocked"
     assert slots["final_resources_env"]["status"] == "blocked"
+    assert slots["final_resources_env"]["required"] is False
     assert slots["final_resources_env"]["source_blocker_id"] == "MESHY_API_KEY"
-    assert blocker["id"] == "final_resources_env"
-    assert blocker["source_blocker_id"] == "MESHY_API_KEY"
-    assert blocker["command"] == "provide MESHY_API_KEY in final-resources.env"
-    assert blocker["validation_command"] == "make final-resources-preflight"
-    assert "MESHY_API_KEY" in blocker["detail"]
+    assert blocker["id"] == "development_team"
+    assert blocker["command"] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    actions = report["operator_actions"]
+    assert (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in actions
+
+
+def test_ios_deploy_runbook_local_mode_prefers_device_config_blocker_over_provider_keys(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "PRINT_PROVIDER=local\nPMF_FINAL_LAUNCH_MODE=local\n",
+        encoding="utf-8",
+    )
+
+    report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
+    slots = {slot["id"]: slot for slot in report["input_slots"]}
+    steps = {step["id"]: step for step in report["command_sequence"]}
+
+    assert slots["final_resources_env"]["required"] is False
+    assert slots["final_resources_env"]["source_blocker_id"] == "MESHY_API_KEY"
+    assert steps["final_resources_preflight"]["status"] == "partial"
+    assert steps["preview_final_resource_apply"]["status"] == "partial"
+    assert steps["apply_final_resources"]["status"] == "partial"
+    assert report["first_blocker"]["id"] == "development_team"
+    assert report["first_blocker"]["command"] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+
+def test_ios_deploy_runbook_configured_mode_keeps_provider_resources_required(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "PRINT_PROVIDER=local\nPMF_FINAL_LAUNCH_MODE=configured\n",
+        encoding="utf-8",
+    )
+
+    report = build_ios_deploy_runbook_report(mode="configured", repo_root=repo_root)
+    slots = {slot["id"]: slot for slot in report["input_slots"]}
+    steps = {step["id"]: step for step in report["command_sequence"]}
+
+    assert slots["final_resources_env"]["required"] is True
+    assert slots["backend_provider_env"]["required"] is True
+    assert slots["final_resources_env"]["source_blocker_id"] == "MESHY_API_KEY"
+    assert steps["final_resources_preflight"]["status"] == "blocked"
+    assert report["first_blocker"]["id"] == "final_resources_env"
+    assert report["first_blocker"]["source_blocker_id"] == "MESHY_API_KEY"
+    assert report["first_blocker"]["command"] == (
+        "provide MESHY_API_KEY in final-resources.env"
+    )
 
 
 def test_ios_deploy_runbook_ready_local_inputs_preserve_command_order(

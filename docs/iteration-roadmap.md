@@ -371,6 +371,7 @@ Bridge deliverable:
 - P0.457 Visual regression covers Demo Script external actions handoff
 - P0.458 Visual regression readiness blocks stale artifact inventory reports
 - P0.459 Final showcase preserves configured preflight action after normalization
+- P0.460 Local iOS deploy runbook prefers device blockers before provider keys
 
 ## P1: Mobile Vertical Slice
 
