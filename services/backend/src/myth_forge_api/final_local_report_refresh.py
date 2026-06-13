@@ -441,6 +441,7 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
             "exit_code": _step_exit_code(status),
             "kind": report.get("kind", "unknown"),
             "summary": report.get("summary", {}),
+            "report_operator_actions": _report_operator_actions(report),
             "next_command": next_command,
             "blocker_hint": blocker_hint,
             **blocker_fields,
@@ -903,6 +904,7 @@ def _operator_actions(
     fallback_step_actions: list[str] = []
     for step in steps:
         step_actions = priority_step_actions if step.get("next_command") else fallback_step_actions
+        step_actions.extend(_selected_step_report_actions(step))
         if step["status"] == "failed":
             step_actions.append(f"fix final-local-report-refresh step {step['id']}")
         elif step["status"] == "blocked":
@@ -932,6 +934,23 @@ def _action_command(action: dict[str, Any] | None) -> str:
             return command_root
         return f"{command}; rerun {validation_command}"
     return command
+
+
+def _selected_step_report_actions(step: dict[str, Any]) -> list[str]:
+    if step.get("id") != "final_demo_launch_local":
+        return []
+    raw_actions = step.get("report_operator_actions")
+    if not isinstance(raw_actions, list):
+        return []
+    return [
+        str(action)
+        for action in raw_actions
+        if isinstance(action, str)
+        and (
+            _is_provider_handoff_action(action)
+            or _is_print_handoff_action(action)
+        )
+    ]
 
 
 def _action_command_root(value: str) -> str:
@@ -966,23 +985,21 @@ def _dedupe(values: list[str]) -> list[str]:
 
 def _dedupe_operator_actions(values: list[str]) -> list[str]:
     deduped = _dedupe([normalize_operator_action(value) for value in values])
-    validation_by_root = {
-        value.split("; rerun ", 1)[0].strip(): value
-        for value in deduped
-        if "; rerun " in value
-    }
+    validation_by_root: dict[str, str] = {}
+    for value in deduped:
+        if "; rerun " not in value:
+            continue
+        root = value.split("; rerun ", 1)[0].strip()
+        existing = validation_by_root.get(root)
+        validation_by_root[root] = _preferred_validation_action(
+            existing,
+            value,
+        )
     validation_deduped: list[str] = []
     emitted_roots: set[str] = set()
     for value in deduped:
-        if value in validation_by_root:
-            root = value
-            replacement = validation_by_root[root]
-        elif "; rerun " in value:
-            root = value.split("; rerun ", 1)[0].strip()
-            replacement = value
-        else:
-            root = value
-            replacement = value
+        root = value.split("; rerun ", 1)[0].strip()
+        replacement = validation_by_root.get(root, value)
         if root in emitted_roots:
             continue
         emitted_roots.add(root)
@@ -990,6 +1007,17 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     return _prefer_apply_preview_before_apply(
         _dedupe_operator_action_roots(validation_deduped)
     )
+
+
+def _preferred_validation_action(existing: str | None, candidate: str) -> str:
+    if existing is None:
+        return candidate
+    if (
+        "make live-provider-evidence" in candidate
+        and "make live-provider-evidence" not in existing
+    ):
+        return candidate
+    return existing
 
 
 def _prioritize_final_local_report_operator_actions(actions: list[str]) -> list[str]:
@@ -1055,6 +1083,13 @@ def _dedupe_operator_action_roots(actions: list[str]) -> list[str]:
 
 def _operator_action_root(action: str) -> str:
     return action.split(" | ", 1)[0].strip()
+
+
+def _report_operator_actions(report: dict[str, Any]) -> list[str]:
+    actions = report.get("operator_actions")
+    if not isinstance(actions, list):
+        return []
+    return [str(action) for action in actions if isinstance(action, str) and action]
 
 
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
