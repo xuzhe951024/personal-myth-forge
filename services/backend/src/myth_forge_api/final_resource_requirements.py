@@ -254,6 +254,10 @@ def build_final_resource_requirements_report(
             requirements=requirements,
             preflight_report=preflight_report,
         ),
+        "device_action_bundle": _device_action_bundle(
+            requirements=requirements,
+            status=status,
+        ),
         "validation_commands": VALIDATION_COMMANDS,
         "source_reports": {
             "final_resources_preflight": _source_summary(preflight_report),
@@ -445,6 +449,84 @@ def _operator_actions(
     actions.extend(str(action) for action in preflight_report.get("operator_actions", []))
     actions.append("make final-resource-requirements")
     return _dedupe([add_final_resource_validation_command(action) for action in actions])
+
+
+def _device_action_bundle(
+    *,
+    requirements: list[dict[str, Any]],
+    status: str,
+) -> dict[str, Any]:
+    actions = [
+        _device_action(requirement)
+        for requirement in requirements
+        if _is_blocking_requirement(requirement)
+    ]
+    return {
+        "id": "final_resource_requirements_actions",
+        "label": "Final Resource Requirements Actions",
+        "source_report": "final_resource_requirements",
+        "status": status,
+        "actions": actions,
+        "first_action": actions[0] if actions else None,
+        "summary": _device_action_summary(actions),
+        "safety": {
+            **_safety(),
+            "provider_calls": False,
+            "xcode_or_signing": False,
+        },
+    }
+
+
+def _device_action(requirement: dict[str, Any]) -> dict[str, Any]:
+    action = {
+        "id": str(requirement["id"]),
+        "label": str(requirement["label"]),
+        "status": str(requirement["status"]),
+        "classification": str(requirement["classification"]),
+        "command": _blocker_command(requirement),
+        "detail": str(requirement["notes"]),
+        "domain": str(requirement["domain"]),
+        "destination": str(requirement["destination"]),
+        "input_source": str(requirement["input_source"]),
+        "write_destination": str(requirement["write_destination"]),
+        "validation_command": str(requirement["validation_command"]),
+        "blocks": list(requirement["unblocks"]),
+        "required": bool(requirement["required"]),
+        "secret": bool(requirement["secret"]),
+        "manual": True,
+        "provider_calls": False,
+        "global_action": False,
+        "xcode_or_signing": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+    }
+    action["next_action"] = {
+        "id": action["id"],
+        "label": action["label"],
+        "status": action["status"],
+        "command": action["command"],
+        "detail": action["detail"],
+        "source": "device_action_bundle",
+        "validation_command": action["validation_command"],
+    }
+    return action
+
+
+def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action["status"] == "ready"),
+        "missing": sum(1 for action in actions if action["status"] == "missing"),
+        "blocked": sum(1 for action in actions if action["status"] == "blocked"),
+        "manual": sum(1 for action in actions if action["manual"]),
+        "secret": sum(1 for action in actions if action["secret"]),
+        "backend": sum(1 for action in actions if action["domain"].startswith("backend")),
+        "ios": sum(1 for action in actions if action["domain"] == "ios_deploy"),
+        "print": sum(1 for action in actions if action["domain"] == "print_provider"),
+        "provider_calls": sum(1 for action in actions if action["provider_calls"]),
+        "global_actions": sum(1 for action in actions if action["global_action"]),
+        "xcode_or_signing": sum(1 for action in actions if action["xcode_or_signing"]),
+    }
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:

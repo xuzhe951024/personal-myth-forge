@@ -129,6 +129,64 @@ def test_requirements_report_lists_missing_required_resources_without_leaks(
     )
 
 
+def test_requirements_report_exposes_safe_resource_action_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_resource_requirements_report(repo_root=repo_root)
+    report = result.report
+    report_text = json.dumps(report)
+    bundle = report["device_action_bundle"]
+    actions_by_id = {action["id"]: action for action in bundle["actions"]}
+
+    assert bundle["id"] == "final_resource_requirements_actions"
+    assert bundle["source_report"] == "final_resource_requirements"
+    assert bundle["status"] == "blocked"
+    assert bundle["first_action"]["id"] == "MESHY_API_KEY"
+    assert bundle["summary"]["actions"] == 5
+    assert bundle["summary"]["secret"] >= 2
+    assert bundle["summary"]["provider_calls"] == 0
+    assert bundle["summary"]["global_actions"] == 0
+    assert bundle["summary"]["xcode_or_signing"] == 0
+    assert bundle["safety"]["live_provider_calls"] is False
+    assert bundle["safety"]["writes_backend_env"] is False
+    assert bundle["safety"]["writes_ios_deploy_config"] is False
+    assert bundle["safety"]["global_mutation"] is False
+
+    meshy_action = actions_by_id["MESHY_API_KEY"]
+    assert meshy_action["command"] == "provide MESHY_API_KEY in final-resources.env"
+    assert meshy_action["domain"] == "backend_provider"
+    assert meshy_action["destination"] == (
+        "services/backend/.local/final-resources.env"
+    )
+    assert meshy_action["write_destination"] == "services/backend/.env"
+    assert meshy_action["validation_command"] == "make final-resources-preflight"
+    assert meshy_action["blocks"] == [
+        "game_asset_3d_generation",
+        "provider_key_handoff",
+    ]
+    assert meshy_action["next_action"]["source"] == "device_action_bundle"
+
+    team_action = actions_by_id["DEVELOPMENT_TEAM"]
+    assert team_action["domain"] == "ios_deploy"
+    assert team_action["destination"] == (
+        "apps/mobile/ios/Config/Deployment.local.xcconfig"
+    )
+    assert team_action["validation_command"] == "make ios-device-launch-rehearsal"
+    assert team_action["provider_calls"] is False
+    assert team_action["global_action"] is False
+    assert team_action["xcode_or_signing"] is False
+
+    assert "OPENAI_API_KEY" in actions_by_id
+    assert "PRODUCT_BUNDLE_IDENTIFIER" in actions_by_id
+    assert "PMF_BACKEND_BASE_URL" in actions_by_id
+    assert str(tmp_path) not in report_text
+    assert "meshy-secret-test" not in report_text
+    assert "sk-openai-test" not in report_text
+
+
 def test_requirements_report_is_ready_for_valid_local_resources(tmp_path: Path) -> None:
     repo_root = tmp_path / "repo"
     resources = write_resources(repo_root, VALID_LOCAL_RESOURCES)
