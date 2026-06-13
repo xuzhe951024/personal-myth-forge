@@ -245,7 +245,16 @@ def _structured_next_action_command(action: str) -> str:
 
 def _structured_next_action_parts(action: str) -> tuple[str, str]:
     command, separator, detail = action.partition(" | ")
-    return command.strip(), detail.strip() if separator else ""
+    return _strip_saved_action_prefixes(command), detail.strip() if separator else ""
+
+
+def _strip_saved_action_prefixes(command: str) -> str:
+    stripped = command.strip()
+    while True:
+        next_value = re.sub(r"^[a-z][a-z0-9_]*:\s+", "", stripped, count=1)
+        if next_value == stripped:
+            return stripped
+        stripped = next_value.strip()
 
 
 def _device_action_bundle(

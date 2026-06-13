@@ -944,8 +944,9 @@ def test_ios_device_launch_rehearsal_readiness_preserves_saved_sequence_actions_
     payload["sequence"][0]["status"] = "blocked"
     payload["sequence"][0]["operator_actions"] = [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
-            "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+            "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight | "
+            "Missing DEVELOPMENT_TEAM; "
             "PMF_BACKEND_BASE_URL must be iPhone-reachable"
         )
     ]
@@ -966,8 +967,9 @@ def test_ios_device_launch_rehearsal_readiness_preserves_saved_sequence_actions_
     )
     assert sequence_row["operator_actions"] == [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
-            "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+            "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight | "
+            "Missing DEVELOPMENT_TEAM; "
             "PMF_BACKEND_BASE_URL must be iPhone-reachable"
         )
     ]
