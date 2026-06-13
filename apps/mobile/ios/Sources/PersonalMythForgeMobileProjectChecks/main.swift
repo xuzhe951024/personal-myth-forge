@@ -2720,6 +2720,11 @@ do {
     )
     try requireContains(
         contractTests,
+        "testFinalLaunchMobileSummaryShowsFinalAcceptanceBlockerNextAction",
+        "final acceptance blocker next action contract test"
+    )
+    try requireContains(
+        contractTests,
         "testDecodesFinalResourceRequirementsFromFinalLaunchPayload",
         "final resource requirements decode test"
     )

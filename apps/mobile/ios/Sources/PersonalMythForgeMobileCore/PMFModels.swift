@@ -2299,6 +2299,7 @@ public struct FinalAcceptanceBlocker: Codable, Equatable, Sendable {
     public var classification: String
     public var command: String
     public var detail: String
+    public var nextAction: FinalShowcaseReadinessNextAction?
 
     public init(
         id: String,
@@ -2306,7 +2307,8 @@ public struct FinalAcceptanceBlocker: Codable, Equatable, Sendable {
         status: String,
         classification: String,
         command: String,
-        detail: String
+        detail: String,
+        nextAction: FinalShowcaseReadinessNextAction? = nil
     ) {
         self.id = id
         self.label = label
@@ -2314,6 +2316,7 @@ public struct FinalAcceptanceBlocker: Codable, Equatable, Sendable {
         self.classification = classification
         self.command = command
         self.detail = detail
+        self.nextAction = nextAction
     }
 }
 

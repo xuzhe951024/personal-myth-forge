@@ -193,6 +193,7 @@ do {
     try testFinalLaunchMobileSummaryWaitsForFinalAcceptanceReadiness()
     try testFinalLaunchMobileSummaryShowsStaleFinalAcceptanceFreshness()
     try testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance()
+    try testFinalLaunchMobileSummaryShowsFinalAcceptanceBlockerNextAction()
     try testFinalLaunchMobileSummaryShowsReadyFinalAcceptance()
     try testFinalLaunchMobileSummaryPrioritizesConfiguredAcceptanceCommand()
     try testDecodesThreeDEvaluationReadinessFromFinalLaunchPayload()
@@ -5219,6 +5220,29 @@ private func testFinalLaunchMobileSummaryShowsBlockedFinalAcceptance() throws {
     try expectContains(summary.acceptanceRows[1], "blocked_by_apple_sdk_license")
 }
 
+private func testFinalLaunchMobileSummaryShowsFinalAcceptanceBlockerNextAction() throws {
+    let report = finalDemoLaunchReport(finalAcceptanceStatus: "blocked")
+    let blocker = try require(
+        report.finalAcceptanceReadiness?.blockers.first,
+        "missing final acceptance blocker"
+    )
+    try expectEqual(
+        blocker.nextAction?.command,
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    try expectEqual(
+        blocker.nextAction?.validationCommand,
+        "make mobile-deploy-preflight"
+    )
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    try expectContains(
+        summary.acceptanceRows[0],
+        "next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    try expectContains(summary.acceptanceRows[0], "rerun make mobile-deploy-preflight")
+}
+
 private func testFinalLaunchMobileSummaryShowsReadyFinalAcceptance() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
@@ -9719,7 +9743,16 @@ private func finalDemoLaunchPayload(
                 "status": "blocked",
                 "classification": "blocked_by_local_ios_deploy_config",
                 "command": "make mobile-deploy-preflight",
-                "detail": "\(finalAcceptanceBlockerDetail)"
+                "detail": "\(finalAcceptanceBlockerDetail)",
+                "next_action": {
+                  "id": "development_team",
+                  "label": "Apple Team ID",
+                  "status": "blocked",
+                  "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                  "detail": "Missing DEVELOPMENT_TEAM; rerun make mobile-deploy-preflight",
+                  "source": "first_blocker",
+                  "validation_command": "make mobile-deploy-preflight"
+                }
               },
               {
                 "id": "mobile_xcode_build",

@@ -1092,11 +1092,7 @@ public enum FinalLaunchMobileSummaryBuilder {
             return ["Run local final acceptance to create the latest readiness report."]
         case "blocked", "failed":
             if !readiness.blockers.isEmpty {
-                return readiness.blockers.prefix(3).map { blocker in
-                    sanitize(
-                        "\(blocker.id): \(blocker.status) \(blocker.classification) | \(blocker.command) | \(blocker.detail)"
-                    )
-                }
+                return readiness.blockers.prefix(3).map(finalAcceptanceBlockerRow)
             }
             if !readiness.operatorActions.isEmpty {
                 return readiness.operatorActions.prefix(3).map(sanitize)
@@ -1105,6 +1101,24 @@ public enum FinalLaunchMobileSummaryBuilder {
         default:
             return ["Final acceptance \(sanitize(readiness.status))."]
         }
+    }
+
+    private static func finalAcceptanceBlockerRow(
+        _ blocker: FinalAcceptanceBlocker
+    ) -> String {
+        var parts = [
+            "\(blocker.id): \(blocker.status) \(blocker.classification)",
+            blocker.command,
+            blocker.detail,
+        ]
+        if let action = blocker.nextAction, !action.command.isEmpty {
+            var next = "next \(action.command)"
+            if !action.detail.isEmpty {
+                next += " | \(action.detail)"
+            }
+            parts.append(next)
+        }
+        return sanitize(parts.joined(separator: " | "))
     }
 
     private static func npcEvaluationRows(from readiness: NPCAgentEvaluationReadinessReport?) -> [String] {
