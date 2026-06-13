@@ -93,6 +93,53 @@ def test_preflight_evidence_blocks_missing_config_with_actions(tmp_path: Path) -
     ]
 
 
+def test_preflight_evidence_exposes_device_action_bundle_for_blocked_checks(
+    tmp_path: Path,
+) -> None:
+    result = build_mobile_deploy_preflight_evidence_report(
+        repo_root=tmp_path,
+        returncode=2,
+        stdout="",
+        stderr=(
+            "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.\n"
+            "Missing PRODUCT_BUNDLE_IDENTIFIER.\n"
+            "Missing PMF_BACKEND_BASE_URL.\n"
+        ),
+    )
+    report_text = json.dumps(result.report)
+
+    bundle = result.report["device_action_bundle"]
+
+    assert bundle["id"] == "mobile_deploy_preflight_evidence_actions"
+    assert bundle["label"] == "Mobile Deploy Preflight Evidence Actions"
+    assert bundle["source_report"] == "mobile_deploy_preflight_evidence"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"] == {
+        "actions": 3,
+        "ready": 0,
+        "missing": 0,
+        "blocked": 3,
+        "manual": 3,
+        "provider_calls": 0,
+        "global_actions": 0,
+        "xcode_or_signing": 0,
+    }
+    assert bundle["first_action"]["id"] == "development_team"
+    assert bundle["first_action"]["command"] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    )
+    assert bundle["first_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert bundle["first_action"]["next_action"]["command"] == (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    )
+    assert bundle["safety"]["commands_run"] is True
+    assert bundle["safety"]["xcode_or_signing"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+
+
 def test_preflight_evidence_suggests_auto_writer_for_team_and_backend_url(
     tmp_path: Path,
 ) -> None:

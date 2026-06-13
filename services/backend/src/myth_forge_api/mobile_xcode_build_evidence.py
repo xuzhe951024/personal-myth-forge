@@ -68,6 +68,7 @@ def build_mobile_xcode_build_evidence_report(
         classification=classification,
         checks=checks,
     )
+    next_action = _next_action(first_blocker)
     report = {
         "kind": "mobile_xcode_build_evidence_report",
         "status": status,
@@ -80,7 +81,12 @@ def build_mobile_xcode_build_evidence_report(
         "stderr_lines": _safe_lines(stderr, repo_root=selected_repo_root),
         "operator_actions": actions,
         "first_blocker": first_blocker,
-        "next_action": _next_action(first_blocker),
+        "next_action": next_action,
+        "device_action_bundle": _device_action_bundle(
+            status=status,
+            checks=checks,
+            first_blocker=first_blocker,
+        ),
         "safety": {
             "commands_run": True,
             "provider_calls": False,
@@ -212,6 +218,119 @@ def _operator_action(classification: str) -> str:
     if classification == "xcode_project_build_failed":
         return f"fix the iOS project build error, then rerun {EVIDENCE_COMMAND}"
     return f"review {COMMAND} output, then rerun {EVIDENCE_COMMAND}"
+
+
+def _device_action_bundle(
+    *,
+    status: str,
+    checks: list[dict[str, str]],
+    first_blocker: dict[str, str] | None,
+) -> dict[str, Any]:
+    actions = [
+        _device_action(check=check, first_blocker=first_blocker)
+        for check in checks
+    ]
+    return {
+        "id": "mobile_xcode_build_evidence_actions",
+        "label": "Mobile Xcode Build Evidence Actions",
+        "source_report": "mobile_xcode_build_evidence",
+        "status": status,
+        "actions": actions,
+        "first_action": _first_device_action(actions),
+        "summary": _device_action_summary(actions),
+        "safety": _device_action_safety(),
+    }
+
+
+def _device_action(
+    *,
+    check: dict[str, str],
+    first_blocker: dict[str, str] | None,
+) -> dict[str, Any]:
+    status = check["status"]
+    matching_blocker = (
+        first_blocker if _first_blocker_matches(check, first_blocker) else None
+    )
+    classification = str(matching_blocker.get("classification", "")) if matching_blocker else ""
+    command = (
+        str(matching_blocker["command"])
+        if matching_blocker
+        else _device_action_command(status=status, classification=classification)
+    )
+    is_blocked = status != "ready"
+    action: dict[str, Any] = {
+        "id": check["id"],
+        "label": check["label"],
+        "status": status,
+        "classification": classification,
+        "command": command,
+        "detail": check.get("detail", ""),
+        "manual": is_blocked,
+        "provider_calls": False,
+        "global_action": is_blocked,
+        "xcode_or_signing": is_blocked,
+    }
+    if is_blocked:
+        action["validation_command"] = EVIDENCE_COMMAND
+        action["next_action"] = {
+            "id": action["id"],
+            "label": action["label"],
+            "status": action["status"],
+            "command": action["command"],
+            "detail": action["detail"],
+            "source": "device_action_bundle",
+            "validation_command": EVIDENCE_COMMAND,
+        }
+    return action
+
+
+def _first_blocker_matches(
+    check: dict[str, str],
+    first_blocker: dict[str, str] | None,
+) -> bool:
+    return first_blocker is not None and first_blocker.get("id") == check.get("id")
+
+
+def _device_action_command(*, status: str, classification: str) -> str:
+    if status == "ready":
+        return COMMAND
+    return _operator_action(classification)
+
+
+def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
+    return next((action for action in actions if action["status"] != "ready"), None)
+
+
+def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action["status"] == "ready"),
+        "missing": sum(1 for action in actions if action["status"] == "missing"),
+        "blocked": sum(1 for action in actions if action["status"] == "blocked"),
+        "manual": sum(1 for action in actions if action.get("manual") is True),
+        "provider_calls": sum(1 for action in actions if action["provider_calls"] is True),
+        "global_actions": sum(1 for action in actions if action["global_action"] is True),
+        "xcode_or_signing": sum(
+            1 for action in actions if action["xcode_or_signing"] is True
+        ),
+    }
+
+
+def _device_action_safety() -> dict[str, bool]:
+    return {
+        "commands_run": True,
+        "provider_calls": False,
+        "live_provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "global_mutation": False,
+        "xcode_or_signing": True,
+        "code_signing_allowed": False,
+        "keychain_writes": False,
+        "provider_secrets_in_report": False,
+        "local_paths_in_report": False,
+        "writes_derived_data": True,
+    }
 
 
 def _safe_lines(text: str, *, repo_root: Path) -> list[str]:

@@ -81,6 +81,12 @@ def build_mobile_deploy_preflight_evidence_report(
         "stdout_lines": _safe_lines(stdout, repo_root=selected_repo_root),
         "stderr_lines": _safe_lines(stderr, repo_root=selected_repo_root),
         "operator_actions": actions,
+        "device_action_bundle": _device_action_bundle(
+            status=status,
+            checks=checks,
+            raw_actions=raw_actions,
+            next_action=next_action,
+        ),
         "safety": {
             "commands_run": True,
             "provider_calls": False,
@@ -284,6 +290,127 @@ def _operator_actions(checks: list[dict[str, str]]) -> list[str]:
         else:
             actions.append("review make mobile-deploy-preflight output")
     return _dedupe(actions)
+
+
+def _device_action_bundle(
+    *,
+    status: str,
+    checks: list[dict[str, str]],
+    raw_actions: list[str],
+    next_action: dict[str, str] | None,
+) -> dict[str, Any]:
+    actions = [
+        _device_action(
+            check=check,
+            index=index,
+            raw_actions=raw_actions,
+            report_next_action=next_action,
+        )
+        for index, check in enumerate(checks)
+    ]
+    return {
+        "id": "mobile_deploy_preflight_evidence_actions",
+        "label": "Mobile Deploy Preflight Evidence Actions",
+        "source_report": "mobile_deploy_preflight_evidence",
+        "status": status,
+        "actions": actions,
+        "first_action": _first_device_action(actions),
+        "summary": _device_action_summary(actions),
+        "safety": _device_action_safety(),
+    }
+
+
+def _device_action(
+    *,
+    check: dict[str, str],
+    index: int,
+    raw_actions: list[str],
+    report_next_action: dict[str, str] | None,
+) -> dict[str, Any]:
+    status = check["status"]
+    command = _device_action_command(
+        check=check,
+        index=index,
+        raw_actions=raw_actions,
+        report_next_action=report_next_action,
+    )
+    action: dict[str, Any] = {
+        "id": check["id"],
+        "label": check["label"],
+        "status": status,
+        "classification": "",
+        "command": command,
+        "detail": check.get("detail", ""),
+        "manual": status != "ready",
+        "provider_calls": False,
+        "global_action": False,
+        "xcode_or_signing": False,
+    }
+    if status != "ready":
+        action["validation_command"] = COMMAND
+        action["next_action"] = {
+            "id": action["id"],
+            "label": action["label"],
+            "status": action["status"],
+            "command": action["command"],
+            "detail": action["detail"],
+            "source": "device_action_bundle",
+            "validation_command": COMMAND,
+        }
+    return action
+
+
+def _device_action_command(
+    *,
+    check: dict[str, str],
+    index: int,
+    raw_actions: list[str],
+    report_next_action: dict[str, str] | None,
+) -> str:
+    if (
+        report_next_action is not None
+        and report_next_action.get("id") == check.get("id")
+    ):
+        return report_next_action["command"]
+    if check.get("status") == "ready":
+        return COMMAND
+    if index < len(raw_actions):
+        return _action_command(raw_actions[index])
+    return check.get("detail", "review make mobile-deploy-preflight output")
+
+
+def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
+    return next((action for action in actions if action["status"] != "ready"), None)
+
+
+def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "actions": len(actions),
+        "ready": sum(1 for action in actions if action["status"] == "ready"),
+        "missing": sum(1 for action in actions if action["status"] == "missing"),
+        "blocked": sum(1 for action in actions if action["status"] == "blocked"),
+        "manual": sum(1 for action in actions if action.get("manual") is True),
+        "provider_calls": sum(1 for action in actions if action["provider_calls"] is True),
+        "global_actions": sum(1 for action in actions if action["global_action"] is True),
+        "xcode_or_signing": sum(
+            1 for action in actions if action["xcode_or_signing"] is True
+        ),
+    }
+
+
+def _device_action_safety() -> dict[str, bool]:
+    return {
+        "commands_run": True,
+        "provider_calls": False,
+        "live_provider_calls": False,
+        "writes_backend_env": False,
+        "writes_ios_deploy_config": False,
+        "global_mutation": False,
+        "xcode_or_signing": False,
+        "keychain_writes": False,
+        "provider_secrets_in_report": False,
+        "local_paths_in_report": False,
+    }
 
 
 def _validation_aware_action(action: str) -> str:

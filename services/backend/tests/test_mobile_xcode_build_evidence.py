@@ -82,6 +82,52 @@ def test_xcode_build_evidence_blocks_unaccepted_license_without_leaks(
     assert "Bearer" not in report_text
 
 
+def test_xcode_build_evidence_exposes_device_action_bundle_for_blocked_gate(
+    tmp_path: Path,
+) -> None:
+    result = build_mobile_xcode_build_evidence_report(
+        repo_root=tmp_path,
+        returncode=69,
+        stdout="",
+        stderr="You have not agreed to the Xcode license agreements.\n",
+    )
+    report_text = json.dumps(result.report)
+
+    bundle = result.report["device_action_bundle"]
+
+    assert bundle["id"] == "mobile_xcode_build_evidence_actions"
+    assert bundle["label"] == "Mobile Xcode Build Evidence Actions"
+    assert bundle["source_report"] == "mobile_xcode_build_evidence"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"] == {
+        "actions": 1,
+        "ready": 0,
+        "missing": 0,
+        "blocked": 1,
+        "manual": 1,
+        "provider_calls": 0,
+        "global_actions": 1,
+        "xcode_or_signing": 1,
+    }
+    assert bundle["first_action"]["id"] == "xcode_license"
+    assert bundle["first_action"]["command"] == (
+        "accept the Xcode license outside Codex, then rerun "
+        "make mobile-xcode-build-evidence"
+    )
+    assert bundle["first_action"]["validation_command"] == (
+        "make mobile-xcode-build-evidence"
+    )
+    assert bundle["first_action"]["next_action"]["command"] == (
+        "accept the Xcode license outside Codex, then rerun "
+        "make mobile-xcode-build-evidence"
+    )
+    assert bundle["safety"]["commands_run"] is True
+    assert bundle["safety"]["xcode_or_signing"] is True
+    assert bundle["safety"]["code_signing_allowed"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+
+
 def test_xcode_build_evidence_blocks_missing_xcode_installation(
     tmp_path: Path,
 ) -> None:
