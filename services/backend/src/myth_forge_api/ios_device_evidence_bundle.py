@@ -676,11 +676,15 @@ def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
-    return {
+    summary = {
         "kind": report.get("kind"),
         "status": report.get("status") or report.get("overall_status"),
         "summary": report.get("summary", {}),
     }
+    device_action_bundle = report.get("device_action_bundle")
+    if isinstance(device_action_bundle, dict):
+        summary["device_action_bundle"] = device_action_bundle
+    return summary
 
 
 def _load_optional_report(path: Path) -> dict[str, Any] | None:

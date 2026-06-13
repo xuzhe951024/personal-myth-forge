@@ -387,6 +387,145 @@ def test_ios_device_evidence_bundle_uses_saved_mobile_preflight_evidence_details
     assert "MESHY_API_KEY" not in text
 
 
+def test_ios_device_evidence_bundle_source_reports_preserve_mobile_device_action_bundles(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_mobile_deploy_preflight_evidence(
+        repo_root,
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "blocked",
+            "summary": {"blocked": 2},
+            "device_action_bundle": {
+                "id": "mobile_deploy_preflight_evidence_actions",
+                "label": "Mobile Deploy Preflight Evidence Actions",
+                "source_report": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "actions": [
+                    {
+                        "id": "development_team",
+                        "label": "Apple Team ID",
+                        "status": "blocked",
+                        "classification": "",
+                        "command": (
+                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                            "make mobile-write-deploy-config-auto"
+                        ),
+                        "detail": "Missing DEVELOPMENT_TEAM sk-test",
+                        "manual": True,
+                        "provider_calls": False,
+                        "global_action": False,
+                        "xcode_or_signing": False,
+                    }
+                ],
+                "first_action": {
+                    "id": "development_team",
+                    "label": "Apple Team ID",
+                    "status": "blocked",
+                    "command": (
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "make mobile-write-deploy-config-auto"
+                    ),
+                    "validation_command": "make mobile-deploy-preflight",
+                },
+                "summary": {
+                    "actions": 1,
+                    "ready": 0,
+                    "missing": 0,
+                    "blocked": 1,
+                    "manual": 1,
+                    "provider_calls": 0,
+                    "global_actions": 0,
+                    "xcode_or_signing": 0,
+                },
+                "safety": {
+                    "commands_run": True,
+                    "xcode_or_signing": False,
+                    "provider_calls": False,
+                },
+            },
+        },
+    )
+    _write_mobile_xcode_build_evidence(
+        repo_root,
+        {
+            "kind": "mobile_xcode_build_evidence_report",
+            "status": "blocked",
+            "classification": "blocked_by_apple_sdk_license",
+            "summary": {"blocked": 1},
+            "device_action_bundle": {
+                "id": "mobile_xcode_build_evidence_actions",
+                "label": "Mobile Xcode Build Evidence Actions",
+                "source_report": "mobile_xcode_build_evidence",
+                "status": "blocked",
+                "actions": [
+                    {
+                        "id": "xcode_license",
+                        "label": "Xcode license",
+                        "status": "blocked",
+                        "classification": "blocked_by_apple_sdk_license",
+                        "command": (
+                            "accept the Xcode license outside Codex, then rerun "
+                            "make mobile-xcode-build-evidence"
+                        ),
+                        "detail": f"Apple SDK license at {repo_root}",
+                        "manual": True,
+                        "provider_calls": False,
+                        "global_action": True,
+                        "xcode_or_signing": True,
+                    }
+                ],
+                "first_action": {
+                    "id": "xcode_license",
+                    "label": "Xcode license",
+                    "status": "blocked",
+                    "command": (
+                        "accept the Xcode license outside Codex, then rerun "
+                        "make mobile-xcode-build-evidence"
+                    ),
+                    "validation_command": "make mobile-xcode-build-evidence",
+                },
+                "summary": {
+                    "actions": 1,
+                    "ready": 0,
+                    "missing": 0,
+                    "blocked": 1,
+                    "manual": 1,
+                    "provider_calls": 0,
+                    "global_actions": 1,
+                    "xcode_or_signing": 1,
+                },
+                "safety": {
+                    "commands_run": True,
+                    "xcode_or_signing": True,
+                    "code_signing_allowed": False,
+                },
+            },
+        },
+    )
+
+    result = build_ios_device_evidence_bundle_report(repo_root=repo_root)
+    sources = result.report["source_reports"]
+    report_text = json.dumps(result.report)
+    deploy_bundle = sources["mobile_deploy_preflight_evidence"]["device_action_bundle"]
+    xcode_bundle = sources["mobile_xcode_build_evidence"]["device_action_bundle"]
+
+    assert deploy_bundle["id"] == "mobile_deploy_preflight_evidence_actions"
+    assert deploy_bundle["first_action"]["id"] == "development_team"
+    assert deploy_bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert deploy_bundle["safety"]["commands_run"] is True
+    assert deploy_bundle["safety"]["xcode_or_signing"] is False
+    assert xcode_bundle["id"] == "mobile_xcode_build_evidence_actions"
+    assert xcode_bundle["first_action"]["id"] == "xcode_license"
+    assert xcode_bundle["safety"]["xcode_or_signing"] is True
+    assert xcode_bundle["safety"]["code_signing_allowed"] is False
+    assert "sk-test" not in report_text
+    assert str(repo_root) not in report_text
+
+
 def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
     tmp_path: Path,
 ) -> None:

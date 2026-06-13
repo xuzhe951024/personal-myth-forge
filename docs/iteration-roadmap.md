@@ -333,6 +333,7 @@ Bridge deliverable:
 - P0.419 final launch closure packet source reports expose device action bundles
 - P0.420 configured source reports expose device action bundles
 - P0.421 mobile evidence reports expose device action bundles
+- P0.422 iOS device evidence source reports expose mobile device action bundles
 
 ## P1: Mobile Vertical Slice
 
