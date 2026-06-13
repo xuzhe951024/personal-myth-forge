@@ -98,6 +98,7 @@ public enum DevicePreflightSummaryBuilder {
             backendItem(backendBaseURL, healthProbe: backendHealthProbe),
             providerItem(readiness: providerReadiness, error: providerReadinessError),
             finalLaunchItem(report: finalDemoLaunch, error: finalDemoLaunchError),
+            externalActionLedgerItem(report: finalDemoLaunch),
             finalResourcesItem(report: finalDemoLaunch),
             finalResourceRequirementsItem(report: finalDemoLaunch),
             finalResourceFillGuideItem(report: finalDemoLaunch),
@@ -226,6 +227,122 @@ public enum DevicePreflightSummaryBuilder {
             parts.append(blocker.detail)
         }
         return parts.joined(separator: " | ")
+    }
+
+    private static func externalActionLedgerItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
+        guard let ledger = report?.finalExternalActionLedger else {
+            return item(
+                "external_actions",
+                "External Actions",
+                .waiting,
+                "External action ledger has not loaded."
+            )
+        }
+
+        switch normalizedStatus(ledger.status) {
+        case "ready":
+            return item(
+                "external_actions",
+                "External Actions",
+                .ready,
+                externalActionLedgerDetail(ledger)
+            )
+        case "blocked", "missing", "manual", "live":
+            return item(
+                "external_actions",
+                "External Actions",
+                .blocked,
+                externalActionLedgerDetail(ledger)
+            )
+        default:
+            return item(
+                "external_actions",
+                "External Actions",
+                .waiting,
+                externalActionLedgerDetail(ledger)
+            )
+        }
+    }
+
+    private static func externalActionLedgerDetail(_ ledger: FinalExternalActionLedgerReport) -> String {
+        var parts = [
+            "External actions \(ledger.status): groups \(ledger.summary.groups), blocked \(ledger.summary.blocked), missing \(ledger.summary.missing), live \(ledger.summary.live), manual \(ledger.summary.manual)."
+        ]
+        if let nextAction = ledger.nextAction {
+            parts.append(externalActionLedgerBlockerDetail(prefix: "Next action", nextAction))
+        }
+        if let firstBlocker = ledger.firstBlocker,
+           !externalActionLedgerBlocker(firstBlocker, matches: ledger.nextAction) {
+            parts.append(externalActionLedgerBlockerDetail(prefix: "First blocker", firstBlocker))
+        }
+
+        let attentionGroups = ledger.actionGroups.filter { group in
+            normalizedStatus(group.status) != "ready"
+        }
+        let selectedGroups = attentionGroups.isEmpty ? ledger.actionGroups : attentionGroups
+        parts.append(contentsOf: selectedGroups.prefix(3).map(externalActionLedgerGroupDetail))
+        parts.append(contentsOf: externalActionLedgerOperatorActionRows(ledger.operatorActions))
+        parts.append(
+            "Consent: global confirmation \(boolText(ledger.safety.requiresUserConfirmationForGlobalActions)), live cost consent \(boolText(ledger.safety.requiresCostConsentForLiveActions))."
+        )
+        parts.append(
+            "Safety: commands_run=\(boolText(ledger.safety.commandsRun)) global_mutation=\(boolText(ledger.safety.globalMutation)) live_calls=\(boolText(ledger.safety.liveProviderCalls))"
+        )
+        return parts.joined(separator: " ")
+    }
+
+    private static func externalActionLedgerBlocker(
+        _ blocker: FinalExternalActionLedgerBlocker,
+        matches nextAction: FinalExternalActionLedgerBlocker?
+    ) -> Bool {
+        guard let nextAction else {
+            return false
+        }
+        return blocker.id == nextAction.id && blocker.command == nextAction.command
+    }
+
+    private static func externalActionLedgerBlockerDetail(
+        prefix: String,
+        _ blocker: FinalExternalActionLedgerBlocker
+    ) -> String {
+        var parts = [
+            "\(prefix):",
+            blocker.id,
+            blocker.status,
+            blocker.command,
+            blocker.detail,
+        ]
+        if let validationCommand = blocker.validationCommand, !validationCommand.isEmpty {
+            parts.append("validate \(validationCommand)")
+        }
+        return parts.filter { !normalizedStatus($0).isEmpty }.joined(separator: " ")
+    }
+
+    private static func externalActionLedgerGroupDetail(
+        _ group: FinalExternalActionLedgerActionGroup
+    ) -> String {
+        "\(group.id): \(group.status) actions \(group.summary.actions), missing \(group.summary.missing), blocked \(group.summary.blocked), live \(group.summary.live), manual \(group.summary.manual)."
+    }
+
+    private static func externalActionLedgerOperatorActionRows(
+        _ operatorActions: [String]
+    ) -> [String] {
+        var rows: [String] = []
+        if let first = operatorActions.first(where: { !normalizedStatus($0).isEmpty }) {
+            rows.append(first)
+        }
+        if let backend = operatorActions.first(where: { action in
+            let trimmed = action.trimmingCharacters(in: .whitespacesAndNewlines)
+            return !trimmed.isEmpty
+                && trimmed.localizedCaseInsensitiveContains("backend-device-demo")
+        }) {
+            rows.append(backend)
+        }
+
+        var seen = Set<String>()
+        return rows.filter { row in
+            seen.insert(row).inserted
+        }
     }
 
     private static func finalResourcesItem(report: FinalDemoLaunchReport?) -> DevicePreflightItem {
@@ -1403,6 +1520,7 @@ public enum DevicePreflightSummaryBuilder {
             "backend_url",
             "providers",
             "final_launch",
+            "external_actions",
             "final_resources",
             "final_resource_requirements",
             "final_resource_fill_guide",
@@ -1434,6 +1552,14 @@ public enum DevicePreflightSummaryBuilder {
 
     private static func isLoopback(_ host: String) -> Bool {
         host == "127.0.0.1" || host == "localhost" || host == "::1"
+    }
+
+    private static func boolText(_ value: Bool) -> String {
+        value ? "true" : "false"
+    }
+
+    private static func normalizedStatus(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private static func sanitize(_ value: String) -> String {

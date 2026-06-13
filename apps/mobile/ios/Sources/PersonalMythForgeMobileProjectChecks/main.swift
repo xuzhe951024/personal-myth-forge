@@ -1518,6 +1518,26 @@ do {
     try requireContains(devicePreflight, "DevicePreflightSummaryBuilder", "device preflight core builder")
     try requireContains(devicePreflight, "BackendHealthProbe", "backend health probe core type")
     try requireContains(devicePreflight, "final_launch", "device preflight final launch item")
+    try requireContains(
+        devicePreflight,
+        "externalActionLedgerItem(report: finalDemoLaunch)",
+        "device preflight external action ledger item"
+    )
+    try requireContains(
+        devicePreflight,
+        #""external_actions","#,
+        "device preflight external action ledger required item"
+    )
+    try requireContains(
+        devicePreflight,
+        "FinalExternalActionLedgerReport",
+        "device preflight external action ledger model"
+    )
+    try requireContains(
+        devicePreflight,
+        "backend-device-demo",
+        "device preflight external action backend handoff selection"
+    )
     try requireContains(devicePreflight, "final_resources", "device preflight final resources item")
     try requireContains(devicePreflight, "Final Resources", "device preflight final resources label")
     try requireContains(devicePreflight, "FinalDemoLaunchReport", "device preflight final launch model")
@@ -2952,6 +2972,11 @@ do {
         contractTests,
         "testDevicePreflightUsesFinalLaunchFirstBlockerDetail",
         "device preflight final launch first blocker contract test"
+    )
+    try requireContains(
+        contractTests,
+        "testDevicePreflightShowsExternalActionLedgerBackendHandoff",
+        "device preflight external action ledger backend handoff contract test"
     )
     try requireContains(
         contractTests,

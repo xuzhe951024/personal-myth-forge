@@ -364,6 +364,7 @@ Bridge deliverable:
 - P0.450 iOS launch certificate preserves backend-device-demo handoff
 - P0.451 final external action ledger preserves backend-device-demo handoff
 - P0.452 iPhone Final Launch shows external ledger backend-device-demo handoff
+- P0.453 iPhone Device Preflight shows external action ledger backend-device-demo handoff
 
 ## P1: Mobile Vertical Slice
 

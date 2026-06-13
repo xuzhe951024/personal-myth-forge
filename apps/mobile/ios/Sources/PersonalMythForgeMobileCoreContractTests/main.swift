@@ -93,6 +93,7 @@ do {
     try testDevicePreflightBlocksAndRedactsProviderError()
     try testDevicePreflightWaitsForFinalLaunchReport()
     try testDevicePreflightUsesFinalLaunchFirstBlockerDetail()
+    try testDevicePreflightShowsExternalActionLedgerBackendHandoff()
     try testDevicePreflightMapsFinalLaunchPartialToWaiting()
     try testDevicePreflightMapsMissingFinalResourcesPreflightToWaiting()
     try testDevicePreflightMarksReadyFinalResourcesPreflight()
@@ -2866,6 +2867,42 @@ private func testDevicePreflightUsesFinalLaunchFirstBlockerDetail() throws {
     try expectContains(detail, "apply_final_resources")
     try expectContains(detail, "final_demo_launch_phase")
     try expectContains(detail, "make final-apply-resources")
+}
+
+private func testDevicePreflightShowsExternalActionLedgerBackendHandoff() throws {
+    let backendAction = (
+        "start backend-device-demo before device checks: "
+            + "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    let report = finalDemoLaunchReport(
+        overallStatus: "partial",
+        externalActionLedgerActions: [
+            "make final-resource-apply-preview",
+            backendAction,
+            "after explicit cost consent, run make live-provider-evidence",
+        ]
+    )
+    let summary = devicePreflightSummary(
+        backendBaseURL: URL(string: "http://192.168.1.10:8080")!,
+        backendHealthProbe: BackendHealthProbe(
+            status: .reachable,
+            detail: "Backend /health returned ok."
+        ),
+        finalDemoLaunch: report
+    )
+    let item = try require(
+        summary.item(id: "external_actions"),
+        "missing external actions preflight item"
+    )
+    let detail = item.detail
+
+    try expectEqual(item.status, .blocked)
+    try expectContains(detail, "External actions blocked")
+    try expectContains(detail, "Next action: provide_MESHY_API_KEY missing")
+    try expectContains(detail, "resource_inputs: blocked")
+    try expectContains(detail, "make final-resource-apply-preview")
+    try expectContains(detail, backendAction)
+    try expectContains(detail, "live cost consent true")
 }
 
 private func testDevicePreflightMapsFinalLaunchPartialToWaiting() throws {
@@ -13390,6 +13427,7 @@ private func readyDevicePreflightFinalDemoLaunchReport() -> FinalDemoLaunchRepor
     report.finalResourceRequirements = readyFinalResourceRequirementsReport()
     report.finalResourceFillGuide = readyFinalResourceFillGuideReport()
     report.finalResourceApplyPreview = readyFinalResourceApplyPreviewReport()
+    report.finalExternalActionLedger = readyFinalExternalActionLedgerReport()
     report.finalLaunchClosurePacket = readyFinalLaunchClosurePacket()
     return report
 }
@@ -13398,6 +13436,68 @@ private func readyFinalClosurePacketReport() -> FinalDemoLaunchReport {
     var report = readyDevicePreflightFinalDemoLaunchReport()
     report.finalLaunchClosurePacket = readyFinalLaunchClosurePacket()
     return report
+}
+
+private func readyFinalExternalActionLedgerReport() -> FinalExternalActionLedgerReport {
+    let group = FinalExternalActionLedgerActionGroup(
+        id: "resource_inputs",
+        label: "Resource inputs",
+        status: "ready",
+        summary: FinalExternalActionLedgerGroupSummary(
+            actions: 1,
+            ready: 1,
+            missing: 0,
+            blocked: 0,
+            manual: 0,
+            live: 0,
+            partial: 0,
+            optional: 0,
+            secret: 0,
+            requiresUserConfirmation: 0,
+            requiresCostConsent: 0
+        ),
+        actions: []
+    )
+    return FinalExternalActionLedgerReport(
+        kind: "final_external_action_ledger_report",
+        status: "ready",
+        summary: FinalExternalActionLedgerSummary(
+            groups: 1,
+            actions: 1,
+            ready: 1,
+            missing: 0,
+            blocked: 0,
+            manual: 0,
+            live: 0,
+            partial: 0,
+            optional: 0,
+            secret: 0,
+            requiresUserConfirmation: 0,
+            requiresCostConsent: 0,
+            global: 0,
+            safeLocalWrite: 0,
+            liveProviderCall: 0
+        ),
+        actionGroups: [group],
+        actionsById: [:],
+        operatorSequence: [],
+        operatorActions: [],
+        safety: FinalExternalActionLedgerSafety(
+            commandsRun: false,
+            writesBackendEnv: false,
+            writesIosDeployConfig: false,
+            runsShellWriters: false,
+            providerCalls: false,
+            liveProviderCalls: false,
+            globalMutation: false,
+            xcodeOrSigning: false,
+            keychainWrites: false,
+            providerSecretsInReport: false,
+            localPathsInReport: false,
+            requiresUserConfirmationForGlobalActions: false,
+            requiresCostConsentForLiveActions: false
+        )
+    )
 }
 
 private func readyFinalLaunchClosurePacket() -> FinalLaunchClosurePacketReport {
