@@ -204,7 +204,7 @@ def _configured_preflight_source(
 ) -> dict[str, Any]:
     source = CONFIGURED_PREFLIGHT_SOURCE
     path = repo_root / source["path"]
-    return {
+    report = {
         "id": source["id"],
         "path": source["path"],
         "exists": path.exists(),
@@ -213,6 +213,10 @@ def _configured_preflight_source(
         "kind": computed_report.get("kind", "final_configured_preflight_report"),
         "classification": "computed_report",
     }
+    device_action_bundle = computed_report.get("device_action_bundle")
+    if isinstance(device_action_bundle, dict):
+        report["device_action_bundle"] = device_action_bundle
+    return report
 
 
 def _saved_report_status(payload: dict[str, Any]) -> str:
