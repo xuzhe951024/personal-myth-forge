@@ -136,8 +136,13 @@ def test_write_ios_device_launch_rehearsal_accepts_blocked_report_exit_code(
     assert "accepted final handoff index exit code 2" in result.stdout
     assert "accepted iOS device launch certificate exit code 2" in result.stdout
     assert "accepted iOS device launch rehearsal exit code 2" in result.stdout
+    assert "accepted iOS device launch rehearsal readiness exit code 2" in result.stdout
     assert "accepted final launch rehearsal sync exit code 2" in result.stdout
     assert "services/backend/.local/ios-device-launch-rehearsal.json" in result.stdout
+    assert (
+        "services/backend/.local/ios-device-launch-rehearsal-readiness.json"
+        in result.stdout
+    )
     assert "services/backend/.local/final-demo-launch-local.json" in result.stdout
     fake_make_args = (
         script_repo / "services/backend/.local/fake-make-args.txt"
@@ -150,7 +155,25 @@ def test_write_ios_device_launch_rehearsal_accepts_blocked_report_exit_code(
     assert "final-handoff-index" in fake_uv_args
     assert "ios-device-launch-certificate" in fake_uv_args
     assert "ios-device-launch-rehearsal" in fake_uv_args
+    assert "ios-device-launch-rehearsal-readiness" in fake_uv_args
     assert "final-demo-launch --mode local" in fake_uv_args
+    fake_uv_lines = fake_uv_args.splitlines()
+    rehearsal_line_index = next(
+        index
+        for index, line in enumerate(fake_uv_lines)
+        if "--output .local/ios-device-launch-rehearsal.json" in line
+    )
+    readiness_line_index = next(
+        index
+        for index, line in enumerate(fake_uv_lines)
+        if "--output .local/ios-device-launch-rehearsal-readiness.json" in line
+    )
+    final_launch_line_index = next(
+        index
+        for index, line in enumerate(fake_uv_lines)
+        if "final-demo-launch --mode local" in line
+    )
+    assert rehearsal_line_index < readiness_line_index < final_launch_line_index
     assert fake_uv_args.rfind("ios-device-launch-rehearsal") < fake_uv_args.rfind(
         "final-demo-launch --mode local"
     )
@@ -171,6 +194,10 @@ def test_write_ios_device_launch_rehearsal_syncs_final_launch_after_rehearsal(
     assert fake_uv_args.rfind("ios-device-launch-rehearsal") < fake_uv_args.rfind(
         "final-demo-launch --mode local"
     )
+    assert fake_uv_args.rfind("ios-device-launch-rehearsal-readiness") < (
+        fake_uv_args.rfind("final-demo-launch --mode local")
+    )
+    assert "--output .local/ios-device-launch-rehearsal-readiness.json" in fake_uv_args
     assert "--output .local/final-demo-launch-local.json" in fake_uv_args
 
 
