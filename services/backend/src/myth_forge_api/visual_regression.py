@@ -558,6 +558,29 @@ DEFAULT_VISUAL_ARTIFACTS = (
             "provide MESHY_API_KEY",
         ),
     ),
+    VisualArtifactSpec(
+        id="p0.457_demo_script_external_actions",
+        html_path="docs/superpowers/verification/p0.457-demo-script-external-actions.html",
+        png_path=(
+            "docs/superpowers/verification/assets/"
+            "p0.457-demo-script-external-actions-390x844.png"
+        ),
+        notes_path=(
+            "docs/superpowers/verification/"
+            "2026-06-13-p0.457-demo-script-external-actions-regression.md"
+        ),
+        width=390,
+        height=844,
+        required_text=(
+            "Demo Script",
+            "External Actions",
+            "Check Actions",
+            "backend-device-demo",
+            "Review external action blockers",
+            "Final Launch",
+            "No providers, Xcode, signing, payment, or global mutation.",
+        ),
+    ),
 )
 
 
