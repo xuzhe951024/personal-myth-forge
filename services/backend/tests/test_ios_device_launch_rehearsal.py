@@ -978,7 +978,8 @@ def test_ios_device_launch_rehearsal_readiness_exposes_first_blocker_and_next_ac
     payload["operator_actions"] = [
         (
             "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
-            "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+            "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight "
+            "| Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
         )
     ]
     report_path.write_text(json.dumps(payload), encoding="utf-8")
@@ -992,6 +993,11 @@ def test_ios_device_launch_rehearsal_readiness_exposes_first_blocker_and_next_ac
     assert blocker["source"] == "sequence"
     assert blocker["command"] == "make final-handoff-index"
     assert "DEVELOPMENT_TEAM=YOUR_TEAM_ID" in blocker["detail"]
+    assert result.report["operator_actions"][0] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight "
+        "| Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
     assert result.report["next_action"] == {
         **blocker,
         "source": "first_blocker",

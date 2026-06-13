@@ -228,8 +228,13 @@ def _next_action(
         return None
     next_action = {**first_blocker, "source": "first_blocker"}
     if operator_actions:
-        next_action["command"] = operator_actions[0]
+        next_action["command"] = _structured_next_action_command(operator_actions[0])
     return next_action
+
+
+def _structured_next_action_command(action: str) -> str:
+    command, _separator, _detail = action.partition(" | ")
+    return command.strip()
 
 
 def _summary(raw_summary: Any) -> dict[str, int]:
