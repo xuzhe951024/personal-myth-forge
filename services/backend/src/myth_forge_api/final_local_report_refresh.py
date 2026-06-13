@@ -88,6 +88,15 @@ FINAL_LOCAL_REPORT_PROVIDER_HANDOFF_ACTION_MARKERS = (
     "live-provider-evidence",
     "provider-handoff",
 )
+FINAL_LOCAL_REPORT_PROVIDER_CHAIN_ACTION = (
+    "make final-resource-apply-preview; rerun make provider-handoff; "
+    "rerun make live-provider-evidence"
+)
+FINAL_LOCAL_REPORT_WEAK_PROVIDER_ACTION_ROOTS = {
+    "make final-resource-apply-preview; rerun make live-provider-evidence",
+    "make provider-handoff",
+    "make provider-handoff; rerun make live-provider-evidence",
+}
 FINAL_LOCAL_REPORT_PRINT_HANDOFF_ACTION_MARKERS = (
     "treatstock",
     "print-quote-configured",
@@ -1068,6 +1077,7 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
             continue
         emitted_roots.add(root)
         validation_deduped.append(replacement)
+    validation_deduped = _prefer_complete_provider_handoff_chain(validation_deduped)
     return _prefer_apply_preview_before_apply(
         _dedupe_operator_action_roots(validation_deduped)
     )
@@ -1084,11 +1094,31 @@ def _preferred_validation_action(existing: str | None, candidate: str) -> str:
     if existing is None:
         return candidate
     if (
+        "make provider-handoff" in candidate
+        and "make live-provider-evidence" in candidate
+        and (
+            "make provider-handoff" not in existing
+            or "make live-provider-evidence" not in existing
+        )
+    ):
+        return candidate
+    if (
         "make live-provider-evidence" in candidate
         and "make live-provider-evidence" not in existing
     ):
         return candidate
     return existing
+
+
+def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
+    if FINAL_LOCAL_REPORT_PROVIDER_CHAIN_ACTION not in actions:
+        return actions
+    return [
+        action
+        for action in actions
+        if action == FINAL_LOCAL_REPORT_PROVIDER_CHAIN_ACTION
+        or action not in FINAL_LOCAL_REPORT_WEAK_PROVIDER_ACTION_ROOTS
+    ]
 
 
 def _prioritize_final_local_report_operator_actions(actions: list[str]) -> list[str]:

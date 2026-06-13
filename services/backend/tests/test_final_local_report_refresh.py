@@ -462,6 +462,33 @@ def test_final_local_report_refresh_operator_actions_promote_final_demo_handoff_
     assert actions.index(print_action) < actions.index("make blocked-step-0")
 
 
+def test_final_local_report_refresh_operator_actions_prefer_complete_provider_chain() -> None:
+    complete_provider_chain = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    weak_provider_chain = (
+        "make final-resource-apply-preview; rerun make live-provider-evidence"
+    )
+    print_action = (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_local_report_refresh._dedupe_operator_actions(
+        [
+            weak_provider_chain,
+            complete_provider_chain,
+            "make provider-handoff",
+            "make provider-handoff; rerun make live-provider-evidence",
+            print_action,
+        ]
+    )
+
+    assert actions == [complete_provider_chain, print_action]
+
+
 def test_final_local_report_refresh_operator_actions_drop_bare_action_roots() -> None:
     actions = final_local_report_refresh._operator_actions(
         [

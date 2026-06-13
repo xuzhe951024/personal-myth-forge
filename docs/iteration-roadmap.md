@@ -356,6 +356,7 @@ Bridge deliverable:
 - P0.442 live provider evidence chains provider handoff validation
 - P0.443 print fulfillment readiness chains quote validation action
 - P0.444 final showcase prefers complete provider handoff chain
+- P0.445 final local refresh prefers complete provider handoff chain
 
 ## P1: Mobile Vertical Slice
 
