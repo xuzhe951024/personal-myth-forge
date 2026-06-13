@@ -143,7 +143,7 @@ final-handoff-index:
 .PHONY: final-showcase-readiness
 
 final-showcase-readiness:
-	cd services/backend && uv run python -m myth_forge_api.cli final-showcase-readiness --repo-root ../.. --output .local/final-showcase-readiness.json
+	@services/backend/scripts/write_final_showcase_readiness.sh
 
 .PHONY: print-fulfillment-readiness
 
@@ -219,7 +219,7 @@ mobile-deploy-preflight:
 .PHONY: mobile-deploy-preflight-evidence
 
 mobile-deploy-preflight-evidence:
-	cd services/backend && uv run python -m myth_forge_api.cli mobile-deploy-preflight-evidence --repo-root ../.. --output .local/mobile-deploy-preflight-evidence.json
+	@services/backend/scripts/write_mobile_deploy_preflight_evidence.sh
 
 .PHONY: mobile-write-deploy-config mobile-write-deploy-config-auto
 

@@ -2755,6 +2755,15 @@ FEATURES = (
             ),
             SourceRequirement("services/backend/src/myth_forge_api/cli.py", "final-showcase-readiness"),
             SourceRequirement("Makefile", "final-showcase-readiness:"),
+            SourceRequirement("Makefile", "write_final_showcase_readiness.sh"),
+            SourceRequirement(
+                "services/backend/scripts/write_final_showcase_readiness.sh",
+                ".local/final-showcase-readiness.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_showcase_readiness.sh",
+                "accepted final showcase readiness exit code",
+            ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "FinalShowcaseReadinessReport",
@@ -2916,6 +2925,18 @@ FEATURES = (
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
                 "make mobile-deploy-preflight-evidence",
+            ),
+            SourceRequirement(
+                "Makefile",
+                "write_mobile_deploy_preflight_evidence.sh",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh",
+                ".local/mobile-deploy-preflight-evidence.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_mobile_deploy_preflight_evidence.sh",
+                "accepted mobile deploy preflight evidence exit code",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCoreContractTests/main.swift",
