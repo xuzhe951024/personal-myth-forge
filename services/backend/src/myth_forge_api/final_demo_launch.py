@@ -77,6 +77,10 @@ FINAL_DEMO_MANUAL_TEAM_ACTION = (
     "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
     "rerun make mobile-deploy-preflight"
 )
+IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
+IOS_DEPLOY_DESTINATION_LABEL = "Deployment.local.xcconfig"
+IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
+FINAL_RESOURCES_ENV_LABEL = "final-resources.env"
 FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 FINAL_DEMO_OPERATOR_ACTION_LIMIT = 12
@@ -507,7 +511,12 @@ def _operator_checklist(
         actions.append(
             "run make live-provider-evidence after configured provider evidence files are refreshed"
         )
-    return _dedupe_operator_actions(actions)
+    return _dedupe_operator_actions(
+        _destination_aware_resource_actions(
+            actions,
+            final_resource_requirements=final_resource_requirements,
+        )
+    )
 
 
 def _operator_actions(
@@ -926,6 +935,61 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     return prefer_project_local_ios_deploy_handoff_actions(
         deduped
     )
+
+
+def _destination_aware_resource_actions(
+    actions: list[str],
+    *,
+    final_resource_requirements: dict[str, Any],
+) -> list[str]:
+    requirements_by_id = final_resource_requirements.get("requirements_by_id", {})
+    if not isinstance(requirements_by_id, dict):
+        return actions
+    return [
+        _destination_aware_resource_action(
+            action,
+            requirements_by_id=requirements_by_id,
+        )
+        for action in actions
+    ]
+
+
+def _destination_aware_resource_action(
+    action: str,
+    *,
+    requirements_by_id: dict[str, Any],
+) -> str:
+    command, separator, validation = action.partition("; rerun ")
+    for requirement_id, requirement in requirements_by_id.items():
+        if not isinstance(requirement, dict):
+            continue
+        if requirement.get("destination") != IOS_DEPLOY_DESTINATION:
+            continue
+        replacement = _ios_destination_command(
+            command.strip(),
+            requirement_id=str(requirement_id),
+        )
+        if replacement is None:
+            continue
+        if separator or validation:
+            return f"{replacement}; rerun {IOS_DEPLOY_VALIDATION_COMMAND}"
+        return replacement
+    return action
+
+
+def _ios_destination_command(command: str, *, requirement_id: str) -> str | None:
+    provide_action = f"provide {requirement_id} in {FINAL_RESOURCES_ENV_LABEL}"
+    fix_action = f"fix {requirement_id} in {FINAL_RESOURCES_ENV_LABEL}"
+    if command == provide_action:
+        return f"provide {requirement_id} in {IOS_DEPLOY_DESTINATION_LABEL}"
+    if command == fix_action:
+        return f"fix {requirement_id} in {IOS_DEPLOY_DESTINATION_LABEL}"
+    if (
+        requirement_id == "PMF_BACKEND_BASE_URL"
+        and command == "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    ):
+        return command
+    return None
 
 
 def _operator_checklist_needs_apply_preview(actions: list[str]) -> bool:

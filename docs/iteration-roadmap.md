@@ -308,6 +308,7 @@ Bridge deliverable:
 - P0.394 final local refresh promotes final demo launch live child actions
 - P0.395 final external action ledger prefers live provider child actions
 - P0.396 final launch closure packet prefers ledger child operator actions
+- P0.397 final demo launch uses iOS destination-aware resource actions
 
 ## P1: Mobile Vertical Slice
 

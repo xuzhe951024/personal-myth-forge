@@ -536,18 +536,51 @@ def test_local_final_demo_launch_resource_actions_use_final_resources_preflight(
         mode="local",
     )
     actions = result.report["operator_actions"]
+    checklist = result.report["operator_checklist"]
 
     assert (
-        "provide DEVELOPMENT_TEAM in final-resources.env; "
+        "provide MESHY_API_KEY in final-resources.env; "
         "rerun make final-resources-preflight"
-    ) in actions
+    ) in checklist
     assert (
-        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
+        "provide OPENAI_API_KEY in final-resources.env; "
         "rerun make final-resources-preflight"
+    ) in checklist
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in checklist
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in checklist
+    assert (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in checklist
+    assert not any(
+        action.startswith(
+            (
+                "provide DEVELOPMENT_TEAM in final-resources.env",
+                "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env",
+                "provide PMF_BACKEND_BASE_URL in final-resources.env",
+            )
+        )
+        for action in checklist
+    )
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
     ) in actions
     assert not any(
         " in final-resources.env; rerun " in action
-        and not action.endswith("; rerun make final-resources-preflight")
+        and action.startswith(
+            (
+                "provide DEVELOPMENT_TEAM",
+                "provide PRODUCT_BUNDLE_IDENTIFIER",
+                "provide PMF_BACKEND_BASE_URL",
+            )
+        )
         for action in actions
     )
 
@@ -585,12 +618,12 @@ def test_configured_final_demo_launch_drops_superseded_resource_team_action(
     actions = result.report["operator_actions"]
 
     assert (
-        "provide DEVELOPMENT_TEAM in final-resources.env; "
-        "rerun make final-resources-preflight"
-    ) in actions
-    assert (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert (
+        "provide DEVELOPMENT_TEAM in final-resources.env; "
+        "rerun make final-resources-preflight"
     ) not in actions
 
 
