@@ -38,6 +38,10 @@ OPERATOR_SEQUENCE = [
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 PROVIDER_HANDOFF_OPERATOR_ACTION = "make provider-handoff; rerun make live-provider-evidence"
+BACKEND_DEVICE_DEMO_VALIDATED_ACTION = (
+    "start backend-device-demo before device checks: "
+    "make backend-device-demo; rerun make mobile-deploy-preflight"
+)
 MOBILE_XCODE_BUILD_EVIDENCE_ACTION = "make mobile-xcode-build-evidence"
 XCODE_LICENSE_OPERATOR_ACTION = (
     "accept the Xcode license outside Codex, then rerun "
@@ -457,6 +461,7 @@ def _device_runtime_actions(ios_deploy_runbook: dict[str, Any]) -> list[dict[str
             status="manual",
             command="make backend-device-demo",
             detail="Starts uvicorn on the LAN for iPhone testing.",
+            operator_action=BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
         ),
         _action(
             action_id="run_mobile_deploy_preflight",
@@ -862,6 +867,14 @@ def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
                 actions.append(normalize_operator_action(str(action["command"])))
             elif action["status"] == "blocked":
                 actions.append(normalize_operator_action(str(action["command"])))
+            elif action["status"] == "manual":
+                concrete_action = str(action.get("operator_action", "")).strip()
+                if concrete_action:
+                    actions.append(normalize_operator_action(concrete_action))
+                elif action["requires_user_confirmation"]:
+                    actions.append(
+                        f"confirm global/manual action before {action['command']}"
+                    )
             elif action["requires_cost_consent"] and action["status"] == "live":
                 concrete_action = str(action.get("operator_action", "")).strip()
                 if concrete_action:
@@ -869,14 +882,6 @@ def _operator_actions(action_groups: list[dict[str, Any]]) -> list[str]:
                 else:
                     actions.append(
                         f"approve live provider cost before {action['command']}"
-                    )
-            elif action["requires_user_confirmation"] and action["status"] == "manual":
-                concrete_action = str(action.get("operator_action", "")).strip()
-                if concrete_action:
-                    actions.append(normalize_operator_action(concrete_action))
-                else:
-                    actions.append(
-                        f"confirm global/manual action before {action['command']}"
                     )
     return _prefer_apply_preview_before_apply(_dedupe(actions))
 

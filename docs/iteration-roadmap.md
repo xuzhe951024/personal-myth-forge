@@ -362,6 +362,7 @@ Bridge deliverable:
 - P0.448 local final demo launch shows backend-device-demo handoff
 - P0.449 iOS rehearsal preserves backend-device-demo handoff
 - P0.450 iOS launch certificate preserves backend-device-demo handoff
+- P0.451 final external action ledger preserves backend-device-demo handoff
 
 ## P1: Mobile Vertical Slice
 

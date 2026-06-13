@@ -336,6 +336,28 @@ def test_external_action_ledger_exposes_device_action_bundle(
     assert "meshy-secret" not in report_text
 
 
+def test_external_action_ledger_operator_actions_include_backend_device_demo_handoff(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["actions_by_id"]
+    operator_actions = result.report["operator_actions"]
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+
+    assert actions["start_backend_device_demo"]["operator_action"] == backend_action
+    assert backend_action in operator_actions
+    assert "make backend-device-demo" not in operator_actions
+
+
 def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks(
     tmp_path: Path,
 ) -> None:
