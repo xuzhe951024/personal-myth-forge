@@ -339,6 +339,7 @@ Bridge deliverable:
 - P0.425 final resource requirements expose safe action bundle
 - P0.426 final launch closure packet sources resource requirements bundle
 - P0.427 iPhone Final Launch shows closure resource requirements source
+- P0.428 iPhone Final Launch shows final local refresh source
 
 ## P1: Mobile Vertical Slice
 

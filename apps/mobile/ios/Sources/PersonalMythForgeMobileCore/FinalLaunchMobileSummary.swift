@@ -33,6 +33,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
     public var applyPreviewRows: [String]
     public var externalActionLedgerRows: [String]
     public var closurePacketRows: [String]
+    public var localRefreshRows: [String]
     public var resourceHandoffRows: [String]
     public var resourceHandoffBackendRows: [String]
     public var resourceHandoffIOSRows: [String]
@@ -69,6 +70,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         applyPreviewRows: [String] = [],
         externalActionLedgerRows: [String] = [],
         closurePacketRows: [String] = [],
+        localRefreshRows: [String] = [],
         resourceHandoffRows: [String] = [],
         resourceHandoffBackendRows: [String] = [],
         resourceHandoffIOSRows: [String] = [],
@@ -104,6 +106,7 @@ public struct FinalLaunchMobileSummary: Codable, Equatable, Sendable {
         self.applyPreviewRows = applyPreviewRows
         self.externalActionLedgerRows = externalActionLedgerRows
         self.closurePacketRows = closurePacketRows
+        self.localRefreshRows = localRefreshRows
         self.resourceHandoffRows = resourceHandoffRows
         self.resourceHandoffBackendRows = resourceHandoffBackendRows
         self.resourceHandoffIOSRows = resourceHandoffIOSRows
@@ -193,6 +196,9 @@ public enum FinalLaunchMobileSummaryBuilder {
             ),
             closurePacketRows: closurePacketRows(
                 from: report.finalLaunchClosurePacket
+            ),
+            localRefreshRows: localRefreshRows(
+                from: report.finalLocalReportRefresh
             ),
             resourceHandoffRows: resourceHandoffRows(from: report.resourceReport),
             resourceHandoffBackendRows: resourceHandoffBackendRows(from: report.resourceReport),
@@ -921,6 +927,54 @@ public enum FinalLaunchMobileSummaryBuilder {
             "\(action.id): \(action.status)",
             action.command,
         ]
+        if !action.detail.isEmpty {
+            parts.append(action.detail)
+        }
+        return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func localRefreshRows(
+        from refresh: FinalLocalReportRefreshReport?
+    ) -> [String] {
+        guard let refresh else {
+            return ["Final local refresh has not loaded."]
+        }
+        let steps = refresh.summary.steps ?? 0
+        let blocked = refresh.summary.blocked ?? 0
+        var rows = [
+            "Final local refresh \(sanitize(refresh.status)): steps \(steps), blocked \(blocked)."
+        ]
+        if let action = refresh.showcaseNextAction
+            ?? refresh.nextAction
+            ?? refresh.firstBlocker {
+            rows.append(localRefreshActionRow(action))
+        } else if let action = refresh.deviceActionBundle?.firstAction {
+            rows.append(showcaseDeviceActionRow(action))
+        } else if let action = refresh.operatorActions.first, !action.isEmpty {
+            rows.append(action)
+        }
+        rows.append(
+            "Refresh safety: commands_run=\(flag(refresh.safety.commandsRun)) global=\(flag(refresh.safety.globalMutation)) live_calls=\(flag(refresh.safety.liveProviderCalls))"
+        )
+        return rows.map(sanitize)
+    }
+
+    private static func localRefreshActionRow(
+        _ action: FinalLocalReportRefreshAction
+    ) -> String {
+        var parts = ["\(action.id): \(action.status)"]
+        if let classification = action.classification, !classification.isEmpty {
+            parts.append(classification)
+        }
+        if let source = action.source, !source.isEmpty {
+            parts.append("source \(source)")
+        }
+        if !action.command.isEmpty {
+            parts.append(action.command)
+        }
+        if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
+            parts.append(validationCommand)
+        }
         if !action.detail.isEmpty {
             parts.append(action.detail)
         }

@@ -1137,6 +1137,165 @@ def test_final_demo_launch_embeds_final_launch_closure_packet(
     assert packet["safety"]["live_provider_calls"] is False
 
 
+def test_final_demo_launch_embeds_final_local_report_refresh(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True, exist_ok=True)
+    (local_dir / "final-local-report-refresh.json").write_text(
+        json.dumps(
+            {
+                "kind": "final_local_report_refresh_report",
+                "status": "blocked",
+                "first_blocker": {
+                    "id": "final_resource_requirements",
+                    "label": "Final resource requirements",
+                    "status": "blocked",
+                    "classification": "missing_required_value",
+                    "command": "provide MESHY_API_KEY in final-resources.env",
+                    "detail": "Backend-only secret for live Meshy 3D generation.",
+                    "validation_command": "make final-resources-preflight",
+                },
+                "next_action": {
+                    "id": "final_resource_requirements",
+                    "label": "Final resource requirements",
+                    "status": "blocked",
+                    "classification": "missing_required_value",
+                    "command": "provide MESHY_API_KEY in final-resources.env",
+                    "detail": "Backend-only secret for live Meshy 3D generation.",
+                    "source": "first_blocker",
+                    "validation_command": "make final-resources-preflight",
+                },
+                "showcase_next_action": {
+                    "id": "final_showcase_readiness",
+                    "label": "Final showcase readiness",
+                    "status": "blocked",
+                    "classification": "ios_deploy_evidence",
+                    "command": (
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "make mobile-write-deploy-config-auto"
+                    ),
+                    "detail": (
+                        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be "
+                        "iPhone-reachable"
+                    ),
+                    "source": "final_showcase_readiness",
+                    "validation_command": "make mobile-deploy-preflight",
+                },
+                "device_action_bundle": {
+                    "id": "final_local_report_refresh_device_actions",
+                    "label": "Final Local Report Refresh Device Actions",
+                    "source_report": "final_demo_launch_local",
+                    "status": "blocked",
+                    "actions": [],
+                    "first_action": {
+                        "id": "run_mobile_deploy_preflight",
+                        "label": "Run mobile deploy preflight",
+                        "status": "blocked",
+                        "classification": "manual_preflight_required",
+                        "command": (
+                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                            "make mobile-write-deploy-config-auto"
+                        ),
+                        "detail": "Verify the iPhone can reach the backend.",
+                        "source": "final_local_report_refresh",
+                        "validation_command": "make mobile-deploy-preflight",
+                        "manual": True,
+                        "provider_calls": False,
+                        "global_action": False,
+                        "xcode_or_signing": False,
+                        "blocks": ["ios_deployable"],
+                    },
+                    "summary": {
+                        "actions": 1,
+                        "ready": 0,
+                        "missing": 0,
+                        "blocked": 1,
+                        "manual": 1,
+                        "partial": 0,
+                        "provider_calls": 0,
+                        "global_actions": 0,
+                        "xcode_or_signing": 0,
+                    },
+                    "safety": {
+                        "commands_run": False,
+                        "global_mutation": False,
+                        "provider_calls": False,
+                        "live_provider_calls": False,
+                        "writes_backend_env": False,
+                        "writes_ios_deploy_config": False,
+                        "xcode_or_signing": False,
+                        "keychain_writes": False,
+                    },
+                },
+                "summary": {"steps": 27, "ready": 4, "blocked": 23, "failed": 0},
+                "operator_actions": [
+                    (
+                        "provide MESHY_API_KEY in final-resources.env; "
+                        "rerun make final-resources-preflight"
+                    )
+                ],
+                "safety": {
+                    "commands_run": False,
+                    "global_mutation": False,
+                    "provider_calls": False,
+                    "live_provider_calls": False,
+                    "writes_backend_env": False,
+                    "writes_ios_deploy_config": False,
+                    "xcode_or_signing": False,
+                    "keychain_writes": False,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    refresh = result.report["final_local_report_refresh"]
+
+    assert refresh["kind"] == "final_local_report_refresh_report"
+    assert refresh["status"] == "blocked"
+    assert refresh["source_file"] == {
+        "path": "services/backend/.local/final-local-report-refresh.json",
+        "exists": True,
+    }
+    assert refresh["showcase_next_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert refresh["device_action_bundle"]["first_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert refresh["safety"]["commands_run"] is False
+    assert refresh["safety"]["live_provider_calls"] is False
+
+
+def test_final_demo_launch_embeds_missing_final_local_report_refresh(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+
+    refresh = result.report["final_local_report_refresh"]
+
+    assert refresh["kind"] == "final_local_report_refresh_report"
+    assert refresh["status"] == "missing"
+    assert refresh["source_file"]["exists"] is False
+    assert refresh["next_action"]["command"] == "make final-local-report-refresh-local"
+    assert refresh["operator_actions"] == ["make final-local-report-refresh-local"]
+    assert refresh["safety"]["commands_run"] is False
+
+
 def test_final_demo_launch_embeds_live_provider_evidence(
     tmp_path: Path,
 ) -> None:

@@ -102,6 +102,10 @@ FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "print_quote",
     "/v1/print-quotes",
 )
+FINAL_LOCAL_REPORT_REFRESH_PATH = Path(
+    "services/backend/.local/final-local-report-refresh.json"
+)
+FINAL_LOCAL_REPORT_REFRESH_COMMAND = "make final-local-report-refresh-local"
 
 
 @dataclass(frozen=True)
@@ -202,6 +206,9 @@ def build_final_demo_launch_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
     ).report
+    final_local_report_refresh = _final_local_report_refresh_source(
+        selected_repo_root,
+    )
     phases = _launch_phases(
         mode=mode,
         resource_report=resource_report,
@@ -273,6 +280,7 @@ def build_final_demo_launch_report(
         "final_resource_fill_guide": final_resource_fill_guide,
         "final_external_action_ledger": final_external_action_ledger,
         "final_launch_closure_packet": final_launch_closure_packet,
+        "final_local_report_refresh": final_local_report_refresh,
         "final_acceptance_readiness": final_acceptance_readiness,
         "three_d_evaluation_readiness": three_d_evaluation_readiness,
         "npc_agent_evaluation_readiness": npc_agent_evaluation_readiness,
@@ -1221,6 +1229,85 @@ def _drop_superseded_manual_team_action(
 def _command_root(action: str) -> str:
     command, _separator, _detail = action.partition(" | ")
     return command.strip()
+
+
+def _final_local_report_refresh_source(repo_root: Path) -> dict[str, Any]:
+    source_file = {
+        "path": str(FINAL_LOCAL_REPORT_REFRESH_PATH),
+        "exists": False,
+    }
+    source_path = repo_root / FINAL_LOCAL_REPORT_REFRESH_PATH
+    if not source_path.exists():
+        return _final_local_report_refresh_placeholder(
+            status="missing",
+            source_file=source_file,
+            detail="Final local report refresh has not been written.",
+        )
+    source_file["exists"] = True
+    try:
+        report = json.loads(source_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return _final_local_report_refresh_placeholder(
+            status="blocked",
+            source_file=source_file,
+            detail=f"Final local report refresh could not be read: {exc}",
+        )
+    if not isinstance(report, dict):
+        return _final_local_report_refresh_placeholder(
+            status="blocked",
+            source_file=source_file,
+            detail="Final local report refresh is not a JSON object.",
+        )
+    return {
+        **report,
+        "source_file": source_file,
+    }
+
+
+def _final_local_report_refresh_placeholder(
+    *,
+    status: str,
+    source_file: dict[str, Any],
+    detail: str,
+) -> dict[str, Any]:
+    action = {
+        "id": "final_local_report_refresh",
+        "label": "Final local report refresh",
+        "status": status,
+        "classification": (
+            "missing_report" if status == "missing" else "unreadable_report"
+        ),
+        "command": FINAL_LOCAL_REPORT_REFRESH_COMMAND,
+        "detail": detail,
+        "source": "final_demo_launch",
+        "validation_command": FINAL_LOCAL_REPORT_REFRESH_COMMAND,
+    }
+    return {
+        "kind": "final_local_report_refresh_report",
+        "status": status,
+        "source_file": source_file,
+        "first_blocker": action,
+        "next_action": action,
+        "showcase_next_action": None,
+        "device_action_bundle": None,
+        "summary": {
+            "steps": 0,
+            "ready": 0,
+            "blocked": 1 if status == "blocked" else 0,
+            "failed": 0,
+        },
+        "operator_actions": [FINAL_LOCAL_REPORT_REFRESH_COMMAND],
+        "safety": {
+            "commands_run": False,
+            "global_mutation": False,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+        },
+    }
 
 
 def _default_repo_root() -> Path:

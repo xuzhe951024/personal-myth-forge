@@ -181,6 +181,8 @@ do {
     try testFinalLaunchMobileSummaryShowsFinalLaunchClosurePacket()
     try testFinalLaunchMobileSummaryShowsClosureResourceRequirementsSource()
     try testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket()
+    try testDecodesFinalLocalReportRefreshFromFinalLaunchPayload()
+    try testFinalLaunchMobileSummaryShowsFinalLocalReportRefresh()
     try testDecodesResourceHandoffFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsMissingResourceHandoff()
     try testFinalLaunchMobileSummaryShowsReadyResourceHandoff()
@@ -4948,6 +4950,54 @@ private func testFinalLaunchMobileSummaryRedactsUnsafeFinalLaunchClosurePacket()
     try expectContains(text, "[withheld]")
 }
 
+private func testDecodesFinalLocalReportRefreshFromFinalLaunchPayload() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload()
+    )
+    let refresh = try require(
+        report.finalLocalReportRefresh,
+        "missing final local report refresh"
+    )
+
+    try expectEqual(refresh.kind, "final_local_report_refresh_report")
+    try expectEqual(refresh.status, "blocked")
+    try expectEqual(refresh.sourceFile.path, "services/backend/.local/final-local-report-refresh.json")
+    try expectEqual(refresh.sourceFile.exists, true)
+    try expectEqual(
+        refresh.showcaseNextAction?.command,
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    try expectEqual(
+        refresh.deviceActionBundle?.firstAction.validationCommand,
+        "make mobile-deploy-preflight"
+    )
+    try expectFalse(refresh.safety.commandsRun)
+    try expectFalse(refresh.safety.liveProviderCalls)
+}
+
+private func testFinalLaunchMobileSummaryShowsFinalLocalReportRefresh() throws {
+    let summary = FinalLaunchMobileSummaryBuilder.build(
+        report: finalDemoLaunchReport(
+            finalLocalRefreshShowcaseCommand: (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto "
+                    + "sk-openai-test /Users/zhexu/private file:///tmp/private "
+                    + "local-capture://cap"
+            )
+        ),
+        error: nil
+    )
+    let text = summary.localRefreshRows.joined(separator: " ")
+
+    try expectContains(text, "Final local refresh blocked")
+    try expectContains(text, "final_showcase_readiness")
+    try expectContains(text, "make mobile-deploy-preflight")
+    try expectFalse(text.contains("sk-openai-test"))
+    try expectFalse(text.contains("/Users/"))
+    try expectFalse(text.contains("file:///"))
+    try expectFalse(text.contains("local-capture://"))
+}
+
 private func testDecodesResourceHandoffFromFinalLaunchPayload() throws {
     let report = try PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -7778,7 +7828,8 @@ private func finalDemoLaunchPayload(
     closurePacketConfiguredBundleStatus: String = "blocked",
     closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
     closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready.",
-    closurePacketSourceActionCommand: String = "provide MESHY_API_KEY in final-resources.env"
+    closurePacketSourceActionCommand: String = "provide MESHY_API_KEY in final-resources.env",
+    finalLocalRefreshShowcaseCommand: String = "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
 ) -> Data {
     let liveEvidenceReady = liveProviderEvidenceStatus == "ready"
     let liveEvidenceBlocked = liveProviderEvidenceStatus == "blocked"
@@ -9299,6 +9350,106 @@ private func finalDemoLaunchPayload(
                   }
                 }
               }
+            }
+          },
+          "final_local_report_refresh": {
+            "kind": "final_local_report_refresh_report",
+            "status": "blocked",
+            "source_file": {
+              "path": "services/backend/.local/final-local-report-refresh.json",
+              "exists": true
+            },
+            "first_blocker": {
+              "id": "final_resource_requirements",
+              "label": "Final resource requirements",
+              "status": "blocked",
+              "classification": "missing_required_value",
+              "command": "provide MESHY_API_KEY in final-resources.env",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "source": "first_blocker",
+              "validation_command": "make final-resources-preflight"
+            },
+            "next_action": {
+              "id": "final_resource_requirements",
+              "label": "Final resource requirements",
+              "status": "blocked",
+              "classification": "missing_required_value",
+              "command": "provide MESHY_API_KEY in final-resources.env",
+              "detail": "Backend-only secret for live Meshy 3D generation.",
+              "source": "first_blocker",
+              "validation_command": "make final-resources-preflight"
+            },
+            "showcase_next_action": {
+              "id": "final_showcase_readiness",
+              "label": "Final showcase readiness",
+              "status": "blocked",
+              "classification": "ios_deploy_evidence",
+              "command": "\(finalLocalRefreshShowcaseCommand)",
+              "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+              "source": "final_showcase_readiness",
+              "validation_command": "make mobile-deploy-preflight"
+            },
+            "device_action_bundle": {
+              "id": "final_local_report_refresh_device_actions",
+              "label": "Final Local Report Refresh Device Actions",
+              "source_report": "final_demo_launch_local",
+              "status": "blocked",
+              "actions": [],
+              "first_action": {
+                "id": "run_mobile_deploy_preflight",
+                "label": "Run mobile deploy preflight",
+                "status": "blocked",
+                "classification": "manual_preflight_required",
+                "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                "detail": "Verify the iPhone can reach the backend.",
+                "source": "final_local_report_refresh",
+                "validation_command": "make mobile-deploy-preflight",
+                "manual": true,
+                "provider_calls": false,
+                "global_action": false,
+                "xcode_or_signing": false,
+                "blocks": ["ios_deployable"]
+              },
+              "summary": {
+                "actions": 1,
+                "ready": 0,
+                "missing": 0,
+                "blocked": 1,
+                "manual": 1,
+                "partial": 0,
+                "provider_calls": 0,
+                "global_actions": 0,
+                "xcode_or_signing": 0
+              },
+              "safety": {
+                "commands_run": false,
+                "global_mutation": false,
+                "provider_calls": false,
+                "live_provider_calls": false,
+                "writes_backend_env": false,
+                "writes_ios_deploy_config": false,
+                "xcode_or_signing": false,
+                "keychain_writes": false
+              }
+            },
+            "summary": {
+              "steps": 27,
+              "ready": 4,
+              "blocked": 23,
+              "failed": 0
+            },
+            "operator_actions": [
+              "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight"
+            ],
+            "safety": {
+              "commands_run": false,
+              "global_mutation": false,
+              "provider_calls": false,
+              "live_provider_calls": false,
+              "writes_backend_env": false,
+              "writes_ios_deploy_config": false,
+              "xcode_or_signing": false,
+              "keychain_writes": false
             }
           },
           "final_acceptance_readiness": {
@@ -13595,7 +13746,8 @@ private func finalDemoLaunchReport(
     closurePacketConfiguredBundleStatus: String = "blocked",
     closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
     closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready.",
-    closurePacketSourceActionCommand: String = "provide MESHY_API_KEY in final-resources.env"
+    closurePacketSourceActionCommand: String = "provide MESHY_API_KEY in final-resources.env",
+    finalLocalRefreshShowcaseCommand: String = "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,
@@ -13692,7 +13844,8 @@ private func finalDemoLaunchReport(
             closurePacketConfiguredBundleStatus: closurePacketConfiguredBundleStatus,
             closurePacketConfiguredBundleCommand: closurePacketConfiguredBundleCommand,
             closurePacketConfiguredBundleDetail: closurePacketConfiguredBundleDetail,
-            closurePacketSourceActionCommand: closurePacketSourceActionCommand
+            closurePacketSourceActionCommand: closurePacketSourceActionCommand,
+            finalLocalRefreshShowcaseCommand: finalLocalRefreshShowcaseCommand
         )
     )
 }

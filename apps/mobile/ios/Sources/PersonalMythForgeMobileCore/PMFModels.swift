@@ -5073,6 +5073,243 @@ public struct FinalDemoLaunchNextAction: Codable, Equatable, Sendable {
     }
 }
 
+public struct FinalLocalReportRefreshSummary: Codable, Equatable, Sendable {
+    public var steps: Int?
+    public var ready: Int?
+    public var missing: Int?
+    public var blocked: Int?
+    public var failed: Int?
+    public var written: Int?
+    public var acceptedBlocked: Int?
+
+    public init(
+        steps: Int? = nil,
+        ready: Int? = nil,
+        missing: Int? = nil,
+        blocked: Int? = nil,
+        failed: Int? = nil,
+        written: Int? = nil,
+        acceptedBlocked: Int? = nil
+    ) {
+        self.steps = steps
+        self.ready = ready
+        self.missing = missing
+        self.blocked = blocked
+        self.failed = failed
+        self.written = written
+        self.acceptedBlocked = acceptedBlocked
+    }
+}
+
+public struct FinalLocalReportRefreshAction: Codable, Equatable, Sendable {
+    public var id: String
+    public var label: String
+    public var status: String
+    public var classification: String?
+    public var command: String
+    public var detail: String
+    public var source: String?
+    public var output: String?
+    public var stepId: String?
+    public var validationCommand: String?
+
+    public init(
+        id: String,
+        label: String,
+        status: String,
+        classification: String? = nil,
+        command: String,
+        detail: String,
+        source: String? = nil,
+        output: String? = nil,
+        stepId: String? = nil,
+        validationCommand: String? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.classification = classification
+        self.command = command
+        self.detail = detail
+        self.source = source
+        self.output = output
+        self.stepId = stepId
+        self.validationCommand = validationCommand
+    }
+
+    private enum CodingKeys: CodingKey {
+        case id
+        case label
+        case status
+        case classification
+        case command
+        case detail
+        case source
+        case output
+        case stepId
+        case validationCommand
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decode(String.self, forKey: .id),
+            label: try container.decodeIfPresent(String.self, forKey: .label) ?? "",
+            status: try container.decode(String.self, forKey: .status),
+            classification: try container.decodeIfPresent(String.self, forKey: .classification),
+            command: try container.decodeIfPresent(String.self, forKey: .command) ?? "",
+            detail: try container.decodeIfPresent(String.self, forKey: .detail) ?? "",
+            source: try container.decodeIfPresent(String.self, forKey: .source),
+            output: try container.decodeIfPresent(String.self, forKey: .output),
+            stepId: try container.decodeIfPresent(String.self, forKey: .stepId),
+            validationCommand: try container.decodeIfPresent(String.self, forKey: .validationCommand)
+        )
+    }
+}
+
+public struct FinalLocalReportRefreshSafety: Codable, Equatable, Sendable {
+    public var commandsRun: Bool
+    public var globalMutation: Bool
+    public var providerCalls: Bool
+    public var liveProviderCalls: Bool
+    public var writesBackendEnv: Bool
+    public var writesIosDeployConfig: Bool
+    public var xcodeOrSigning: Bool
+    public var keychainWrites: Bool
+
+    public init(
+        commandsRun: Bool = false,
+        globalMutation: Bool = false,
+        providerCalls: Bool = false,
+        liveProviderCalls: Bool = false,
+        writesBackendEnv: Bool = false,
+        writesIosDeployConfig: Bool = false,
+        xcodeOrSigning: Bool = false,
+        keychainWrites: Bool = false
+    ) {
+        self.commandsRun = commandsRun
+        self.globalMutation = globalMutation
+        self.providerCalls = providerCalls
+        self.liveProviderCalls = liveProviderCalls
+        self.writesBackendEnv = writesBackendEnv
+        self.writesIosDeployConfig = writesIosDeployConfig
+        self.xcodeOrSigning = xcodeOrSigning
+        self.keychainWrites = keychainWrites
+    }
+
+    private enum CodingKeys: CodingKey {
+        case commandsRun
+        case globalMutation
+        case providerCalls
+        case liveProviderCalls
+        case writesBackendEnv
+        case writesIosDeployConfig
+        case xcodeOrSigning
+        case keychainWrites
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            commandsRun: try container.decodeIfPresent(Bool.self, forKey: .commandsRun) ?? false,
+            globalMutation: try container.decodeIfPresent(Bool.self, forKey: .globalMutation) ?? false,
+            providerCalls: try container.decodeIfPresent(Bool.self, forKey: .providerCalls) ?? false,
+            liveProviderCalls: try container.decodeIfPresent(Bool.self, forKey: .liveProviderCalls) ?? false,
+            writesBackendEnv: try container.decodeIfPresent(Bool.self, forKey: .writesBackendEnv) ?? false,
+            writesIosDeployConfig: try container.decodeIfPresent(Bool.self, forKey: .writesIosDeployConfig) ?? false,
+            xcodeOrSigning: try container.decodeIfPresent(Bool.self, forKey: .xcodeOrSigning) ?? false,
+            keychainWrites: try container.decodeIfPresent(Bool.self, forKey: .keychainWrites) ?? false
+        )
+    }
+}
+
+public struct FinalLocalReportRefreshReport: Codable, Equatable, Sendable {
+    public var kind: String
+    public var status: String
+    public var sourceFile: FinalAcceptanceSourceFile
+    public var firstBlocker: FinalLocalReportRefreshAction?
+    public var nextAction: FinalLocalReportRefreshAction?
+    public var showcaseNextAction: FinalLocalReportRefreshAction?
+    public var deviceActionBundle: FinalShowcaseDeviceActionBundle?
+    public var summary: FinalLocalReportRefreshSummary
+    public var operatorActions: [String]
+    public var safety: FinalLocalReportRefreshSafety
+
+    public init(
+        kind: String,
+        status: String,
+        sourceFile: FinalAcceptanceSourceFile,
+        firstBlocker: FinalLocalReportRefreshAction? = nil,
+        nextAction: FinalLocalReportRefreshAction? = nil,
+        showcaseNextAction: FinalLocalReportRefreshAction? = nil,
+        deviceActionBundle: FinalShowcaseDeviceActionBundle? = nil,
+        summary: FinalLocalReportRefreshSummary = FinalLocalReportRefreshSummary(),
+        operatorActions: [String] = [],
+        safety: FinalLocalReportRefreshSafety = FinalLocalReportRefreshSafety()
+    ) {
+        self.kind = kind
+        self.status = status
+        self.sourceFile = sourceFile
+        self.firstBlocker = firstBlocker
+        self.nextAction = nextAction
+        self.showcaseNextAction = showcaseNextAction
+        self.deviceActionBundle = deviceActionBundle
+        self.summary = summary
+        self.operatorActions = operatorActions
+        self.safety = safety
+    }
+
+    private enum CodingKeys: CodingKey {
+        case kind
+        case status
+        case sourceFile
+        case firstBlocker
+        case nextAction
+        case showcaseNextAction
+        case deviceActionBundle
+        case summary
+        case operatorActions
+        case safety
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            kind: try container.decode(String.self, forKey: .kind),
+            status: try container.decode(String.self, forKey: .status),
+            sourceFile: try container.decode(FinalAcceptanceSourceFile.self, forKey: .sourceFile),
+            firstBlocker: try container.decodeIfPresent(
+                FinalLocalReportRefreshAction.self,
+                forKey: .firstBlocker
+            ),
+            nextAction: try container.decodeIfPresent(
+                FinalLocalReportRefreshAction.self,
+                forKey: .nextAction
+            ),
+            showcaseNextAction: try container.decodeIfPresent(
+                FinalLocalReportRefreshAction.self,
+                forKey: .showcaseNextAction
+            ),
+            deviceActionBundle: try container.decodeIfPresent(
+                FinalShowcaseDeviceActionBundle.self,
+                forKey: .deviceActionBundle
+            ),
+            summary: try container.decodeIfPresent(
+                FinalLocalReportRefreshSummary.self,
+                forKey: .summary
+            ) ?? FinalLocalReportRefreshSummary(),
+            operatorActions: try container.decodeIfPresent(
+                [String].self,
+                forKey: .operatorActions
+            ) ?? [],
+            safety: try container.decodeIfPresent(
+                FinalLocalReportRefreshSafety.self,
+                forKey: .safety
+            ) ?? FinalLocalReportRefreshSafety()
+        )
+    }
+}
+
 public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var kind: String
     public var mode: String
@@ -5088,6 +5325,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
     public var finalResourceFillGuide: FinalResourceFillGuideReport?
     public var finalExternalActionLedger: FinalExternalActionLedgerReport?
     public var finalLaunchClosurePacket: FinalLaunchClosurePacketReport?
+    public var finalLocalReportRefresh: FinalLocalReportRefreshReport?
     public var finalAcceptanceReadiness: FinalAcceptanceReadinessReport?
     public var threeDEvaluationReadiness: ThreeDEvaluationReadinessReport?
     public var npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport?
@@ -5125,6 +5363,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         finalResourceFillGuide: FinalResourceFillGuideReport? = nil,
         finalExternalActionLedger: FinalExternalActionLedgerReport? = nil,
         finalLaunchClosurePacket: FinalLaunchClosurePacketReport? = nil,
+        finalLocalReportRefresh: FinalLocalReportRefreshReport? = nil,
         finalAcceptanceReadiness: FinalAcceptanceReadinessReport? = nil,
         threeDEvaluationReadiness: ThreeDEvaluationReadinessReport? = nil,
         npcAgentEvaluationReadiness: NPCAgentEvaluationReadinessReport? = nil,
@@ -5161,6 +5400,7 @@ public struct FinalDemoLaunchReport: Codable, Equatable, Sendable {
         self.finalResourceFillGuide = finalResourceFillGuide
         self.finalExternalActionLedger = finalExternalActionLedger
         self.finalLaunchClosurePacket = finalLaunchClosurePacket
+        self.finalLocalReportRefresh = finalLocalReportRefresh
         self.finalAcceptanceReadiness = finalAcceptanceReadiness
         self.threeDEvaluationReadiness = threeDEvaluationReadiness
         self.npcAgentEvaluationReadiness = npcAgentEvaluationReadiness
