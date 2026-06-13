@@ -304,7 +304,9 @@ def _live_provider_cost_actions(
             status=live_status,
             command="make live-provider-evidence",
             detail="Refresh configured Meshy/OpenAI evidence after cost consent.",
-            operator_action=PROVIDER_HANDOFF_OPERATOR_ACTION,
+            operator_action=_live_provider_evidence_operator_action(
+                live_provider_evidence,
+            ),
         ),
         _live_action(
             action_id="run_configured_3d_evaluation",
@@ -336,6 +338,15 @@ def _live_provider_cost_actions(
             operator_action=_report_next_action_operator_action(print_fulfillment),
         ),
     ]
+
+
+def _live_provider_evidence_operator_action(
+    live_provider_evidence: dict[str, Any],
+) -> str:
+    return (
+        _report_next_action_operator_action(live_provider_evidence)
+        or PROVIDER_HANDOFF_OPERATOR_ACTION
+    )
 
 
 def _report_next_action_operator_action(report: dict[str, Any]) -> str:

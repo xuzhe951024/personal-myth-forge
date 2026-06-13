@@ -218,6 +218,48 @@ def test_external_action_ledger_uses_concrete_provider_and_print_handoff_actions
     )
 
 
+def test_external_action_ledger_prefers_live_provider_child_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True)
+    (local_dir / "provider-handoff.json").write_text(
+        json.dumps(
+            {
+                "kind": "provider_handoff_report",
+                "status": "blocked",
+                "core_real_ready": False,
+                "next_action": {
+                    "id": "three_d_provider",
+                    "label": "Three D",
+                    "status": "blocked",
+                    "classification": "local_stub",
+                    "command": "make final-resource-apply-preview",
+                    "detail": "Core provider is demo-ready but not configured.",
+                    "validation_command": "make provider-handoff",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    operator_actions = result.report["operator_actions"]
+    assert (
+        "make final-resource-apply-preview; rerun make live-provider-evidence"
+        in operator_actions
+    )
+    assert (
+        "make provider-handoff; rerun make live-provider-evidence"
+        not in operator_actions
+    )
+
+
 def test_external_action_ledger_uses_concrete_global_xcode_actions(
     tmp_path: Path,
 ) -> None:

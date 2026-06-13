@@ -306,6 +306,7 @@ Bridge deliverable:
 - P0.392 final showcase live provider rows inherit provider handoff child actions
 - P0.393 final demo launch prefers provider handoff child actions
 - P0.394 final local refresh promotes final demo launch live child actions
+- P0.395 final external action ledger prefers live provider child actions
 
 ## P1: Mobile Vertical Slice
 
