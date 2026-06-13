@@ -303,6 +303,7 @@ Bridge deliverable:
 - P0.389 iOS rehearsal readiness writes a first-class local report
 - P0.390 provider handoff actions align with ignored final resources
 - P0.391 iOS deploy runbook surfaces concrete final resource blockers
+- P0.392 final showcase live provider rows inherit provider handoff child actions
 
 ## P1: Mobile Vertical Slice
 

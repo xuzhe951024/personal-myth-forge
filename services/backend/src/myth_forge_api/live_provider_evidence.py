@@ -160,11 +160,21 @@ def _evidence_row(*, slot: EvidenceSlot, repo_root: Path) -> dict[str, Any]:
         }
 
     status = _status_from_payload(slot, payload)
-    return base | {
+    row = base | {
         "status": status,
         "classification": _classification_for_status(status),
         "detail": _detail_from_payload(slot, payload, status=status),
     }
+    source_blocker = _provider_handoff_source_blocker(slot, payload, status=status)
+    if source_blocker is not None:
+        command = str(source_blocker.get("source_blocker_command", "")).strip()
+        detail = str(source_blocker.get("source_blocker_detail", "")).strip()
+        row = row | source_blocker
+        if command:
+            row["command"] = command
+        if detail:
+            row["detail"] = detail
+    return row
 
 
 def _status_from_payload(slot: EvidenceSlot, payload: dict[str, Any]) -> str:
@@ -231,6 +241,39 @@ def _detail_from_payload(
     return "Saved report is not ready."
 
 
+def _provider_handoff_source_blocker(
+    slot: EvidenceSlot,
+    payload: dict[str, Any],
+    *,
+    status: str,
+) -> dict[str, str] | None:
+    if slot.slot_id != "provider_handoff" or status == "ready":
+        return None
+    for key in ("next_action", "first_blocker"):
+        candidate = payload.get(key)
+        if not isinstance(candidate, dict):
+            continue
+        command = str(candidate.get("command", "")).strip()
+        if not command:
+            continue
+        source = {
+            "source_blocker_command": command,
+        }
+        for source_key, target_key in (
+            ("id", "source_blocker_id"),
+            ("label", "source_blocker_label"),
+            ("status", "source_blocker_status"),
+            ("classification", "source_blocker_classification"),
+            ("detail", "source_blocker_detail"),
+            ("validation_command", "source_blocker_validation_command"),
+        ):
+            value = str(candidate.get(source_key, "")).strip()
+            if value:
+                source[target_key] = value
+        return source
+    return None
+
+
 def _summary(evidence: list[dict[str, Any]]) -> dict[str, int]:
     return {
         "ready": sum(1 for row in evidence if row["status"] == "ready"),
@@ -264,7 +307,7 @@ def _first_blocker(evidence: list[dict[str, Any]]) -> dict[str, Any] | None:
                     "classification": row["classification"],
                     "command": row["command"],
                     "detail": row["detail"],
-                }
+                } | _source_blocker_fields(row)
     return None
 
 
@@ -290,7 +333,8 @@ def _operator_actions(
     actions = ["run make live-provider-evidence after configured provider evidence files are refreshed"]
     if first_blocker is not None:
         slot = _slot_by_id(str(first_blocker["id"]))
-        actions.append(f"{slot.rerun_action}: {slot.command}")
+        command = str(first_blocker.get("command", slot.command)).strip()
+        actions.append(f"{slot.rerun_action}: {command or slot.command}")
     return _dedupe([normalize_operator_action(action) for action in actions])
 
 
@@ -299,6 +343,22 @@ def _slot_by_id(slot_id: str) -> EvidenceSlot:
         if slot.slot_id == slot_id:
             return slot
     return EVIDENCE_SLOTS[0]
+
+
+def _source_blocker_fields(row: dict[str, Any]) -> dict[str, str]:
+    return {
+        key: str(row[key])
+        for key in (
+            "source_blocker_id",
+            "source_blocker_label",
+            "source_blocker_status",
+            "source_blocker_classification",
+            "source_blocker_command",
+            "source_blocker_detail",
+            "source_blocker_validation_command",
+        )
+        if key in row and str(row[key]).strip()
+    }
 
 
 def _safety() -> dict[str, bool]:
