@@ -100,12 +100,12 @@ final-resource-fill-guide:
 .PHONY: final-external-action-ledger
 
 final-external-action-ledger:
-	cd services/backend && uv run python -m myth_forge_api.cli final-external-action-ledger --repo-root ../.. --output .local/final-external-action-ledger.json
+	@services/backend/scripts/write_final_external_action_ledger.sh
 
 .PHONY: final-launch-closure-packet
 
 final-launch-closure-packet:
-	cd services/backend && uv run python -m myth_forge_api.cli final-launch-closure-packet --repo-root ../.. --output .local/final-launch-closure-packet.json
+	@services/backend/scripts/write_final_launch_closure_packet.sh
 
 .PHONY: local-showcase-smoke
 

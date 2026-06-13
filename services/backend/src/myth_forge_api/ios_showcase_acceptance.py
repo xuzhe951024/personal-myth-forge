@@ -2984,7 +2984,15 @@ FEATURES = (
             SourceRequirement("Makefile", "final-external-action-ledger:"),
             SourceRequirement(
                 "Makefile",
+                "write_final_external_action_ledger.sh",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_external_action_ledger.sh",
                 ".local/final-external-action-ledger.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_external_action_ledger.sh",
+                "accepted final external action ledger exit code",
             ),
             SourceRequirement(
                 "services/backend/tests/test_final_external_action_ledger.py",
@@ -3075,7 +3083,15 @@ FEATURES = (
             SourceRequirement("Makefile", "final-launch-closure-packet:"),
             SourceRequirement(
                 "Makefile",
+                "write_final_launch_closure_packet.sh",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_launch_closure_packet.sh",
                 ".local/final-launch-closure-packet.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_launch_closure_packet.sh",
+                "accepted final launch closure packet exit code",
             ),
             SourceRequirement(
                 "services/backend/src/myth_forge_api/final_local_report_refresh.py",
