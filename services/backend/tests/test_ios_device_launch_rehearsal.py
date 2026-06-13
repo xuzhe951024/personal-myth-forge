@@ -1533,6 +1533,10 @@ def test_ios_device_launch_rehearsal_local_actions_include_partial_final_demo_ha
                         "make print-fulfillment-readiness"
                     ),
                     (
+                        "start backend-device-demo before device checks: "
+                        "make backend-device-demo; rerun make mobile-deploy-preflight"
+                    ),
+                    (
                         "provide MESHY_API_KEY in final-resources.env; "
                         "rerun make final-resources-preflight"
                     ),
@@ -1557,6 +1561,11 @@ def test_ios_device_launch_rehearsal_local_actions_include_partial_final_demo_ha
             "save a sanitized "
             "services/backend/.local/print-quote-configured.json from POST "
             "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        ),
+        (
+            "final_demo_launch_local: start backend-device-demo before "
+            "device checks: make backend-device-demo; rerun "
+            "make mobile-deploy-preflight"
         ),
     ]
 

@@ -233,6 +233,7 @@ def _partial_source_handoff_actions(source: dict[str, Any]) -> list[str]:
         if not (
             _is_provider_handoff_action(normalized)
             or _is_print_handoff_action(normalized)
+            or _is_backend_device_demo_action(normalized)
         ):
             continue
         actions.append(f"{source_id}: {normalized}")
@@ -528,6 +529,10 @@ def _is_print_handoff_action(action: str) -> bool:
         marker in lowered
         for marker in IOS_REHEARSAL_PRINT_HANDOFF_ACTION_MARKERS
     )
+
+
+def _is_backend_device_demo_action(action: str) -> bool:
+    return "backend-device-demo" in action.lower()
 
 
 def _top_level_operator_action(action: str) -> str:
