@@ -103,7 +103,10 @@ def build_final_launch_closure_packet_report(
         "sections": sections,
         "sections_by_id": {section["id"]: section for section in sections},
         "device_action_bundle": _device_action_bundle(device_evidence),
-        "operator_actions": _operator_actions(sections),
+        "operator_actions": _operator_actions(
+            sections,
+            first_blocker=first_blocker,
+        ),
         "commands": COMMANDS,
         "source_reports": {
             "final_resource_requirements": _source_summary(resource_requirements),
@@ -712,7 +715,11 @@ def _resource_inputs_detail(fill_guide: dict[str, Any]) -> str:
     )
 
 
-def _operator_actions(sections: list[dict[str, Any]]) -> list[str]:
+def _operator_actions(
+    sections: list[dict[str, Any]],
+    *,
+    first_blocker: dict[str, Any] | None = None,
+) -> list[str]:
     actions: list[str] = []
     for section in sections:
         for action in section["actions"]:
@@ -740,7 +747,32 @@ def _operator_actions(sections: list[dict[str, Any]]) -> list[str]:
                 actions.append(_run_action_text(str(action["command"])))
     if not actions:
         return ["Final launch closure packet is ready"]
-    return _prefer_apply_preview_before_apply(_dedupe(actions))
+    normalized_actions = _prefer_apply_preview_before_apply(_dedupe(actions))
+    return _promote_first_blocker_device_action(
+        normalized_actions,
+        first_blocker=first_blocker,
+    )
+
+
+def _promote_first_blocker_device_action(
+    actions: list[str],
+    *,
+    first_blocker: dict[str, Any] | None,
+) -> list[str]:
+    command = str((first_blocker or {}).get("command", "")).strip()
+    if not _is_device_handoff_command(command):
+        return actions
+    return _dedupe([normalize_operator_action(command), *actions])
+
+
+def _is_device_handoff_command(command: str) -> bool:
+    return (
+        "mobile-write-deploy-config-auto" in command
+        or "mobile-deploy-preflight" in command
+        or "ios-device-launch-rehearsal" in command
+        or "backend-device-demo" in command
+        or "mobile-xcode-build" in command
+    )
 
 
 def _run_action_text(command: str) -> str:
