@@ -231,6 +231,33 @@ def test_ios_deploy_runbook_local_mode_prefers_device_config_blocker_over_provid
     )
 
 
+def test_ios_deploy_runbook_local_operator_actions_start_with_device_blocker(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "PRINT_PROVIDER=local\nPMF_FINAL_LAUNCH_MODE=local\n",
+        encoding="utf-8",
+    )
+
+    report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
+    actions = report["operator_actions"]
+    device_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+
+    assert actions[0] == device_action
+    assert provider_action in actions
+    assert actions.index(device_action) < actions.index(provider_action)
+
+
 def test_ios_deploy_runbook_configured_mode_keeps_provider_resources_required(
     tmp_path: Path,
 ) -> None:

@@ -38,6 +38,12 @@ LaunchMode = Literal["local", "configured"]
 IOS_BASE_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.xcconfig")
 IOS_DEPLOY_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.local.xcconfig")
 IOS_DEPLOY_RUNBOOK_COMMAND = "make ios-deploy-runbook-local"
+LOCAL_DEVICE_SLOT_IDS = {
+    "development_team",
+    "product_bundle_identifier",
+    "backend_base_url",
+    "final_launch_mode",
+}
 
 
 def build_ios_deploy_runbook_report(
@@ -482,6 +488,8 @@ def _operator_actions(
     command_sequence: list[dict[str, Any]],
 ) -> list[str]:
     actions: list[str] = []
+    if mode == "local":
+        actions.extend(_local_device_slot_actions(input_slots))
     actions.extend(_string_list(final_resources.get("operator_actions")))
     actions.extend(_selected_apply_preview_actions(final_resource_apply_preview))
     actions.extend(
@@ -501,6 +509,8 @@ def _operator_actions(
     )
     for slot in input_slots:
         if slot["status"] in {"missing", "blocked"}:
+            if mode == "local" and slot["id"] in LOCAL_DEVICE_SLOT_IDS:
+                continue
             actions.append(str(slot["operator_action"]))
     if mode == "configured":
         actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
@@ -515,6 +525,14 @@ def _operator_actions(
             for action in actions
         ]
     )
+
+
+def _local_device_slot_actions(input_slots: list[dict[str, Any]]) -> list[str]:
+    return [
+        str(slot["operator_action"])
+        for slot in input_slots
+        if slot["id"] in LOCAL_DEVICE_SLOT_IDS and slot["status"] in {"missing", "blocked"}
+    ]
 
 
 def _selected_apply_preview_actions(report: dict[str, Any]) -> list[str]:
