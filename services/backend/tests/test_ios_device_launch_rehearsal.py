@@ -932,6 +932,63 @@ def test_ios_device_launch_rehearsal_readiness_blocks_stale_saved_report_against
     )
 
 
+def test_ios_device_launch_rehearsal_readiness_preserves_saved_sequence_actions_when_stale(
+    tmp_path: Path,
+) -> None:
+    repo_root = _init_git_repo(
+        tmp_path,
+        committed_at="2026-06-07T12:10:00+00:00",
+    )
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"][0]["status"] = "blocked"
+    payload["sequence"][0]["operator_actions"] = [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        )
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+    _set_mtime(report_path, "2026-06-07T12:00:00+00:00")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    sequence_row = result.report["sequence"][0]
+    first_action = result.report["device_action_bundle"]["first_action"]
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert result.report["freshness"]["status"] == "stale"
+    assert result.report["next_action"]["command"] == (
+        "rerun make ios-device-launch-rehearsal to regenerate "
+        "services/backend/.local/ios-device-launch-rehearsal.json for the current "
+        "product sources"
+    )
+    assert sequence_row["operator_actions"] == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        )
+    ]
+    assert first_action["command"] == result.report["next_action"]["command"]
+    assert first_action["saved_next_action"] == {
+        "id": "final_handoff_index",
+        "label": "Final handoff index",
+        "status": "blocked",
+        "command": (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        "detail": (
+            "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be "
+            "iPhone-reachable"
+        ),
+        "source": "saved_sequence_operator_actions",
+        "validation_command": "make ios-device-launch-rehearsal",
+    }
+
+
 def test_ios_device_launch_rehearsal_readiness_ignores_newer_docs_only_commit(
     tmp_path: Path,
 ) -> None:

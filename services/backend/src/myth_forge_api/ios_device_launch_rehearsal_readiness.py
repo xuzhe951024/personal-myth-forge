@@ -239,8 +239,13 @@ def _next_action(
 
 
 def _structured_next_action_command(action: str) -> str:
-    command, _separator, _detail = action.partition(" | ")
-    return command.strip()
+    command, _detail = _structured_next_action_parts(action)
+    return command
+
+
+def _structured_next_action_parts(action: str) -> tuple[str, str]:
+    command, separator, detail = action.partition(" | ")
+    return command.strip(), detail.strip() if separator else ""
 
 
 def _device_action_bundle(
@@ -330,7 +335,39 @@ def _device_action(
             "source": "device_action_bundle",
             "validation_command": action["validation_command"],
         }
+    saved_next_action = _saved_next_action(row, action)
+    if saved_next_action is not None:
+        action["saved_next_action"] = saved_next_action
     return action
+
+
+def _saved_next_action(
+    row: dict[str, Any],
+    action: dict[str, Any],
+) -> dict[str, Any] | None:
+    operator_actions = row.get("operator_actions")
+    if not isinstance(operator_actions, list) or not operator_actions:
+        return None
+    first_operator_action = next(
+        (
+            operator_action
+            for operator_action in operator_actions
+            if isinstance(operator_action, str) and operator_action.strip()
+        ),
+        None,
+    )
+    if first_operator_action is None:
+        return None
+    command, detail = _structured_next_action_parts(first_operator_action)
+    return {
+        "id": action["id"],
+        "label": action["label"],
+        "status": action["status"],
+        "command": command,
+        "detail": detail,
+        "source": "saved_sequence_operator_actions",
+        "validation_command": action["validation_command"],
+    }
 
 
 def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -424,6 +461,9 @@ def _sequence(raw_sequence: Any) -> list[dict[str, Any]]:
             row["freshness_classification"] = str(
                 raw_step["freshness_classification"]
             )
+        operator_actions = _bounded_operator_actions(raw_step.get("operator_actions"))
+        if operator_actions:
+            row["operator_actions"] = operator_actions
         rows.append(row)
     return rows[:8]
 
@@ -459,6 +499,17 @@ def _operator_actions(
         deduped[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
         or [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
     )
+
+
+def _bounded_operator_actions(raw_actions: Any) -> list[str]:
+    if not isinstance(raw_actions, list):
+        return []
+    actions = [
+        _validation_aware_operator_action(str(action))
+        for action in raw_actions
+        if isinstance(action, str) and action.strip()
+    ]
+    return _dedupe(actions)[:4]
 
 
 def _commands(raw_commands: Any) -> list[str]:
