@@ -82,6 +82,35 @@ def test_configured_live_evidence_bundle_exposes_device_action_bundle(
     assert "sk-" not in report_text
 
 
+def test_configured_live_evidence_bundle_source_reports_expose_device_action_bundle(
+    tmp_path: Path,
+) -> None:
+    result = build_configured_live_evidence_bundle_report(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+
+    bundle = result.report["source_reports"]["final_configured_evidence_plan"][
+        "device_action_bundle"
+    ]
+
+    assert bundle["id"] == "final_configured_evidence_plan_device_actions"
+    assert bundle["source_report"] == "final_configured_preflight"
+    assert bundle["status"] == "blocked"
+    assert bundle["summary"]["actions"] == 7
+    assert bundle["first_action"]["id"] == "write_development_team"
+    assert bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert bundle["first_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert result.report["device_action_bundle"]["source_report"] == (
+        "final_configured_evidence_plan"
+    )
+    assert bundle["safety"]["commands_run"] is False
+    assert str(tmp_path) not in report_text
+    assert "sk-" not in report_text
+
+
 def test_configured_live_evidence_bundle_requires_consent_with_ready_resources(
     tmp_path: Path,
 ) -> None:

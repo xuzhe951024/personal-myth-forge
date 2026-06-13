@@ -331,6 +331,7 @@ Bridge deliverable:
 - P0.417 configured live evidence bundle exposes device action bundle
 - P0.418 final handoff index configured preflight source exposes device action bundle
 - P0.419 final launch closure packet source reports expose device action bundles
+- P0.420 configured source reports expose device action bundles
 
 ## P1: Mobile Vertical Slice
 

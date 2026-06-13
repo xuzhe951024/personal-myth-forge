@@ -395,11 +395,15 @@ def _summary(steps: list[dict[str, Any]]) -> dict[str, int]:
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
-    return {
+    summary = {
         "kind": report.get("kind", "unknown"),
         "status": report.get("status", report.get("overall_status", "unknown")),
         "summary": report.get("summary", {}),
     }
+    device_action_bundle = report.get("device_action_bundle")
+    if isinstance(device_action_bundle, dict):
+        summary["device_action_bundle"] = device_action_bundle
+    return summary
 
 
 def _operator_actions(steps: list[dict[str, Any]]) -> list[str]:
