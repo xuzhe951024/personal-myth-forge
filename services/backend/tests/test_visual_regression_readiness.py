@@ -7,6 +7,7 @@ from pathlib import Path
 from myth_forge_api.visual_regression_readiness import (
     build_visual_regression_readiness_report,
 )
+from myth_forge_api.visual_regression import DEFAULT_VISUAL_ARTIFACTS
 
 
 def test_visual_regression_readiness_missing_file_without_running_commands(
@@ -35,15 +36,21 @@ def test_visual_regression_readiness_ready_from_saved_report(tmp_path: Path) -> 
         tmp_path,
         committed_at="2026-06-07T12:00:00+00:00",
     )
-    report_path = _write_visual_report(repo_root, status="passed", passed=1, failed=0)
+    report_path = _write_complete_visual_report(repo_root)
     _set_mtime(report_path, "2026-06-07T12:05:00+00:00")
 
     result = build_visual_regression_readiness_report(repo_root=repo_root)
 
     assert result.exit_code == 0
     assert result.report["status"] == "ready"
-    assert result.report["summary"] == {"passed": 1, "failed": 0}
-    assert result.report["artifacts"][0]["id"] == "p0.118_scene_load_proof"
+    assert result.report["summary"] == {
+        "passed": len(DEFAULT_VISUAL_ARTIFACTS),
+        "failed": 0,
+    }
+    assert any(
+        artifact["id"] == "p0.118_scene_load_proof"
+        for artifact in result.report["artifacts"]
+    )
     assert result.report["freshness"]["status"] == "fresh"
     assert result.report["operator_actions"] == []
 
@@ -99,7 +106,7 @@ def test_visual_regression_readiness_blocks_stale_report(tmp_path: Path) -> None
     assert "current product sources" in result.report["operator_actions"][0]
 
 
-def test_visual_regression_readiness_ignores_newer_docs_only_commit(
+def test_visual_regression_readiness_blocks_report_missing_current_artifacts(
     tmp_path: Path,
 ) -> None:
     repo_root = _init_git_repo(
@@ -107,6 +114,32 @@ def test_visual_regression_readiness_ignores_newer_docs_only_commit(
         committed_at="2026-06-07T12:00:00+00:00",
     )
     report_path = _write_visual_report(repo_root, status="passed", passed=1, failed=0)
+    _set_mtime(report_path, "2026-06-07T12:05:00+00:00")
+
+    result = build_visual_regression_readiness_report(repo_root=repo_root)
+
+    assert len(DEFAULT_VISUAL_ARTIFACTS) > 1
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert result.report["blockers"][0]["classification"] == (
+        "visual_regression_inventory_stale"
+    )
+    assert "missing current visual artifact" in result.report["blockers"][0]["detail"]
+    assert "p0.12_ios_device_media_input" in result.report["blockers"][0]["detail"]
+    assert result.report["blockers"][0]["command"] == "make visual-regression-local"
+    assert result.report["operator_actions"][0].startswith(
+        "rerun make visual-regression-local"
+    )
+
+
+def test_visual_regression_readiness_ignores_newer_docs_only_commit(
+    tmp_path: Path,
+) -> None:
+    repo_root = _init_git_repo(
+        tmp_path,
+        committed_at="2026-06-07T12:00:00+00:00",
+    )
+    report_path = _write_complete_visual_report(repo_root)
     _set_mtime(report_path, "2026-06-07T12:05:00+00:00")
     _commit_fixture_file(
         repo_root,
@@ -138,7 +171,7 @@ def test_visual_regression_readiness_blocks_unreadable_json(tmp_path: Path) -> N
 
 
 def test_visual_regression_readiness_cli_writes_report(tmp_path: Path) -> None:
-    _write_visual_report(tmp_path, status="passed", passed=1, failed=0)
+    _write_complete_visual_report(tmp_path)
     output = tmp_path / "visual-readiness.json"
 
     from myth_forge_api.cli import main
@@ -181,31 +214,49 @@ def _write_visual_report(
     failed: int,
     artifact_status: str = "passed",
     detail: str = "",
+    artifact_ids: list[str] | None = None,
 ) -> Path:
-    artifact = {
-        "id": "p0.118_scene_load_proof",
-        "status": artifact_status,
-        "html_path": "docs/superpowers/verification/p0.118-scene-load-proof.html",
-        "png_path": "docs/superpowers/verification/assets/p0.118-scene-load-proof-390x844.png",
-        "checks": {
-            "html_exists": {"status": "passed"},
-            "png_exists": {"status": "passed"},
-            "unsafe_text": {
-                "status": "failed" if detail else "passed",
-                "matches": [detail] if detail else [],
+    selected_artifact_ids = artifact_ids or ["p0.118_scene_load_proof"]
+    artifacts = [
+        {
+            "id": artifact_id,
+            "status": artifact_status,
+            "html_path": f"docs/superpowers/verification/{artifact_id}.html",
+            "png_path": (
+                "docs/superpowers/verification/assets/"
+                f"{artifact_id}-390x844.png"
+            ),
+            "checks": {
+                "html_exists": {"status": "passed"},
+                "png_exists": {"status": "passed"},
+                "unsafe_text": {
+                    "status": "failed" if detail else "passed",
+                    "matches": [detail] if detail else [],
+                },
             },
-        },
-    }
+        }
+        for artifact_id in selected_artifact_ids
+    ]
     report = {
         "kind": "visual_regression_report",
         "status": status,
         "summary": {"passed": passed, "failed": failed},
-        "artifacts": [artifact],
+        "artifacts": artifacts,
     }
     path = _visual_report_path(repo_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report), encoding="utf-8")
     return path
+
+
+def _write_complete_visual_report(repo_root: Path) -> Path:
+    return _write_visual_report(
+        repo_root,
+        status="passed",
+        passed=len(DEFAULT_VISUAL_ARTIFACTS),
+        failed=0,
+        artifact_ids=[artifact.id for artifact in DEFAULT_VISUAL_ARTIFACTS],
+    )
 
 
 def _visual_report_path(repo_root: Path) -> Path:

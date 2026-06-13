@@ -8,6 +8,7 @@ from myth_forge_api.final_showcase_readiness import (
 )
 from myth_forge_api.live_provider_evidence import LiveProviderEvidenceResult
 from myth_forge_api.local_showcase_smoke import LocalShowcaseSmokeResult
+from myth_forge_api.visual_regression import DEFAULT_VISUAL_ARTIFACTS
 
 
 def test_final_showcase_readiness_blocks_missing_objective_evidence(
@@ -773,6 +774,50 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     assert result.report["first_blocker"]["id"] == "ios_deployable"
     assert any(
         "live provider evidence" in action
+        for action in result.report["operator_actions"]
+    )
+
+
+def test_final_showcase_readiness_blocks_stale_visual_regression_inventory(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+        ),
+    )
+    _write_capture_source_acceptance(repo_root)
+    _write_final_resources(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression_stale_inventory(repo_root)
+    _write_final_acceptance_ready(repo_root)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+        ),
+        repo_root=repo_root,
+    )
+
+    row = result.report["capabilities_by_id"]["visual_regression"]
+    evidence = result.report["evidence"]["visual_regression_readiness"]
+
+    assert result.exit_code == 2
+    assert row["status"] == "blocked"
+    assert row["classification"] == "visual_regression_inventory_stale"
+    assert row["command"] == "make visual-regression-local"
+    assert "p0.12_ios_device_media_input" in row["detail"]
+    assert evidence["status"] == "blocked"
+    assert evidence["summary"] == {"passed": 1, "failed": 0}
+    assert any(
+        "make visual-regression-local" in action
         for action in result.report["operator_actions"]
     )
 
@@ -2103,19 +2148,34 @@ def _write_npc_evaluation(repo_root: Path) -> None:
 
 
 def _write_visual_regression(repo_root: Path) -> None:
+    artifacts = [
+        {
+            "id": artifact.id,
+            "status": "passed",
+        }
+        for artifact in DEFAULT_VISUAL_ARTIFACTS
+    ]
     _write_json(
         repo_root / "services/backend/.local/visual-regression-local.json",
         {
             "kind": "visual_regression_report",
             "status": "passed",
-            "summary": {"passed": 10, "failed": 0},
+            "summary": {"passed": len(DEFAULT_VISUAL_ARTIFACTS), "failed": 0},
+            "artifacts": artifacts,
+        },
+    )
+
+
+def _write_visual_regression_stale_inventory(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/visual-regression-local.json",
+        {
+            "kind": "visual_regression_report",
+            "status": "passed",
+            "summary": {"passed": 1, "failed": 0},
             "artifacts": [
                 {
-                    "id": "p0.119_visual_regression_handoff",
-                    "status": "passed",
-                },
-                {
-                    "id": "p0.101_print_fulfillment_receipt",
+                    "id": "p0.118_scene_load_proof",
                     "status": "passed",
                 }
             ],
