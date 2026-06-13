@@ -94,6 +94,14 @@ FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "/v1/print-quotes",
 )
 FINAL_SHOWCASE_PRINT_READINESS_VALIDATION = "make print-fulfillment-readiness"
+IOS_DEPLOY_DESTINATION_LABEL = "Deployment.local.xcconfig"
+IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
+FINAL_RESOURCES_ENV_LABEL = "final-resources.env"
+IOS_DEPLOY_RESOURCE_IDS = {
+    "DEVELOPMENT_TEAM",
+    "PRODUCT_BUNDLE_IDENTIFIER",
+    "PMF_BACKEND_BASE_URL",
+}
 FINAL_SHOWCASE_SOURCE_ACTION_PREFIXES = (
     "final_rehearsal_local:",
     "mobile_deploy_preflight_evidence:",
@@ -1690,8 +1698,12 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
     if not isinstance(raw_actions, list):
         return []
     return [
-        _final_showcase_operator_action(
-            _validation_aware_operator_action(normalize_operator_action(str(action)))
+        _showcase_destination_aware_action(
+            _final_showcase_operator_action(
+                _validation_aware_operator_action(
+                    normalize_operator_action(str(action))
+                )
+            )
         )
         for action in raw_actions
         if isinstance(action, str) and action
@@ -1755,6 +1767,30 @@ def _validation_aware_operator_action(action: str) -> str:
     return add_final_resource_validation_command(
         add_mobile_deploy_validation_command(action)
     )
+
+
+def _showcase_destination_aware_action(action: str) -> str:
+    command, separator, validation = action.partition("; rerun ")
+    bare_command = _strip_final_showcase_source_prefixes(command.strip())
+    replacement = _showcase_ios_destination_command(bare_command)
+    if replacement is None:
+        return action
+    if separator or validation:
+        return f"{replacement}; rerun {IOS_DEPLOY_VALIDATION_COMMAND}"
+    return replacement
+
+
+def _showcase_ios_destination_command(command: str) -> str | None:
+    for resource_id in IOS_DEPLOY_RESOURCE_IDS:
+        provide_action = f"provide {resource_id} in {FINAL_RESOURCES_ENV_LABEL}"
+        fix_action = f"fix {resource_id} in {FINAL_RESOURCES_ENV_LABEL}"
+        if command == provide_action:
+            return f"provide {resource_id} in {IOS_DEPLOY_DESTINATION_LABEL}"
+        if command == fix_action:
+            return f"fix {resource_id} in {IOS_DEPLOY_DESTINATION_LABEL}"
+    if command == "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL":
+        return command
+    return None
 
 
 def _final_showcase_operator_action(action: str) -> str:

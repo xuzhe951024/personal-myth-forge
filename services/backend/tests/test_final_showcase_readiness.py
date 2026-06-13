@@ -1625,11 +1625,16 @@ def test_final_showcase_readiness_adds_validation_to_ios_resource_actions(
     actions = result.report["operator_actions"]
 
     development_team_action = (
-        "provide DEVELOPMENT_TEAM in final-resources.env; "
-        "rerun make final-resources-preflight"
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    bundle_identifier_action = (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
     )
 
     assert actions.count(development_team_action) == 1
+    assert actions.count(bundle_identifier_action) == 1
     assert not any(
         action.startswith(
             "final_rehearsal_local: ios_deploy_runbook_local: "
@@ -1637,13 +1642,13 @@ def test_final_showcase_readiness_adds_validation_to_ios_resource_actions(
         )
         for action in actions
     )
-    assert (
-        "final_rehearsal_local: ios_deploy_runbook_local: "
-        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
-        "rerun make final-resources-preflight"
-    ) in actions
     assert not any(
-        action.endswith("provide DEVELOPMENT_TEAM in final-resources.env")
+        action.startswith("provide DEVELOPMENT_TEAM in final-resources.env")
+        or action.startswith(
+            "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env"
+        )
+        or action.startswith("provide PMF_BACKEND_BASE_URL in final-resources.env")
+        or action.endswith("provide DEVELOPMENT_TEAM in final-resources.env")
         or action.endswith("provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env")
         for action in actions
     )
