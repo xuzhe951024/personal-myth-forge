@@ -96,18 +96,26 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert report["source_reports"]["live_provider_evidence"]["status"] == "missing"
     first_blocker = report["first_blocker"]
     next_action = report["next_action"]
-    assert first_blocker["id"] == "provide_MESHY_API_KEY"
-    assert first_blocker["group_id"] == "resource_inputs"
-    assert first_blocker["group_label"] == "Resource inputs"
-    assert first_blocker["classification"] == "missing_required_value"
-    assert first_blocker["command"] == "provide MESHY_API_KEY in final-resources.env"
-    assert first_blocker["validation_command"] == "make final-resources-preflight"
-    assert next_action["id"] == "provide_MESHY_API_KEY"
+    assert first_blocker["id"] == "write_development_team"
+    assert first_blocker["group_id"] == "device_runtime_actions"
+    assert first_blocker["group_label"] == "Device runtime actions"
+    assert first_blocker["classification"] == "manual_device_config_required"
+    assert first_blocker["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert first_blocker["validation_command"] == "make mobile-deploy-preflight"
+    assert next_action["id"] == "write_development_team"
     assert next_action["source"] == "first_blocker"
-    assert next_action["command"] == "provide MESHY_API_KEY in final-resources.env"
-    assert next_action["validation_command"] == "make final-resources-preflight"
+    assert next_action["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert next_action["validation_command"] == "make mobile-deploy-preflight"
     operator_actions = report["operator_actions"]
-    assert report["operator_actions"][:2] == [
+    assert report["operator_actions"][:3] == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
         "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
         "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight",
     ]
@@ -334,6 +342,37 @@ def test_external_action_ledger_exposes_device_action_bundle(
     assert str(tmp_path) not in report_text
     assert "sk-" not in report_text
     assert "meshy-secret" not in report_text
+
+
+def test_external_action_ledger_top_level_actions_start_with_device_blocker(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    report = result.report
+    operator_actions = report["operator_actions"]
+    device_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+
+    assert report["first_blocker"]["id"] == "write_development_team"
+    assert report["first_blocker"]["group_id"] == "device_runtime_actions"
+    assert report["next_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert operator_actions[0] == device_action
+    assert provider_action in operator_actions
+    assert operator_actions.index(device_action) < operator_actions.index(provider_action)
 
 
 def test_external_action_ledger_operator_actions_include_backend_device_demo_handoff(
