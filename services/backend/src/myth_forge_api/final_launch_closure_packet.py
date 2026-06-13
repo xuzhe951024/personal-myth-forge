@@ -880,6 +880,9 @@ def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
     device_action_bundle = report.get("device_action_bundle")
     if isinstance(device_action_bundle, dict):
         summary["device_action_bundle"] = device_action_bundle
+    source_reports = report.get("source_reports")
+    if isinstance(source_reports, dict):
+        summary["source_reports"] = source_reports
     return summary
 
 

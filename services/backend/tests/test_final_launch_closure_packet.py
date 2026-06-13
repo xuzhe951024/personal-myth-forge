@@ -197,6 +197,119 @@ def test_final_launch_closure_packet_source_reports_expose_device_action_bundles
     assert "sk-" not in report_text
 
 
+def test_final_launch_closure_packet_preserves_ios_device_nested_source_reports(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_mobile_deploy_preflight_evidence(
+        repo_root,
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "blocked",
+            "summary": {"blocked": 2},
+            "device_action_bundle": {
+                "id": "mobile_deploy_preflight_evidence_actions",
+                "status": "blocked",
+                "first_action": {
+                    "id": "development_team",
+                    "command": (
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "make mobile-write-deploy-config-auto"
+                    ),
+                    "validation_command": "make mobile-deploy-preflight",
+                },
+                "actions": [
+                    {
+                        "id": "development_team",
+                        "status": "blocked",
+                        "command": (
+                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                            "make mobile-write-deploy-config-auto"
+                        ),
+                        "detail": "Missing DEVELOPMENT_TEAM sk-test",
+                        "manual": True,
+                        "provider_calls": False,
+                        "global_action": False,
+                        "xcode_or_signing": False,
+                    }
+                ],
+                "summary": {"actions": 1, "blocked": 1},
+                "safety": {"commands_run": True, "xcode_or_signing": False},
+            },
+        },
+    )
+    _write_mobile_xcode_build_evidence(
+        repo_root,
+        {
+            "kind": "mobile_xcode_build_evidence_report",
+            "status": "blocked",
+            "classification": "blocked_by_apple_sdk_license",
+            "summary": {"blocked": 1},
+            "device_action_bundle": {
+                "id": "mobile_xcode_build_evidence_actions",
+                "status": "blocked",
+                "first_action": {
+                    "id": "xcode_license",
+                    "command": (
+                        "accept the Xcode license outside Codex, then rerun "
+                        "make mobile-xcode-build-evidence"
+                    ),
+                    "validation_command": "make mobile-xcode-build-evidence",
+                },
+                "actions": [
+                    {
+                        "id": "xcode_license",
+                        "status": "blocked",
+                        "command": (
+                            "accept the Xcode license outside Codex, then rerun "
+                            "make mobile-xcode-build-evidence"
+                        ),
+                        "detail": f"Apple SDK license at {repo_root}",
+                        "manual": True,
+                        "provider_calls": False,
+                        "global_action": True,
+                        "xcode_or_signing": True,
+                    }
+                ],
+                "summary": {"actions": 1, "blocked": 1},
+                "safety": {
+                    "commands_run": True,
+                    "xcode_or_signing": True,
+                    "code_signing_allowed": False,
+                },
+            },
+        },
+    )
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    report_text = json.dumps(result.report)
+    nested_sources = result.report["source_reports"]["ios_device_evidence_bundle"][
+        "source_reports"
+    ]
+    deploy_bundle = nested_sources["mobile_deploy_preflight_evidence"][
+        "device_action_bundle"
+    ]
+    xcode_bundle = nested_sources["mobile_xcode_build_evidence"][
+        "device_action_bundle"
+    ]
+
+    assert deploy_bundle["id"] == "mobile_deploy_preflight_evidence_actions"
+    assert deploy_bundle["first_action"]["id"] == "development_team"
+    assert deploy_bundle["first_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert deploy_bundle["safety"]["commands_run"] is True
+    assert xcode_bundle["id"] == "mobile_xcode_build_evidence_actions"
+    assert xcode_bundle["first_action"]["id"] == "xcode_license"
+    assert xcode_bundle["safety"]["xcode_or_signing"] is True
+    assert xcode_bundle["safety"]["code_signing_allowed"] is False
+    assert "sk-test" not in report_text
+    assert str(repo_root) not in report_text
+
+
 def test_final_launch_closure_packet_exposes_next_action_from_first_blocker(
     tmp_path: Path,
 ) -> None:
@@ -543,6 +656,24 @@ def _write_ios_device_launch_rehearsal(
     payload: dict[str, object],
 ) -> None:
     path = repo_root / "services/backend/.local/ios-device-launch-rehearsal.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _write_mobile_deploy_preflight_evidence(
+    repo_root: Path,
+    payload: dict[str, object],
+) -> None:
+    path = repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _write_mobile_xcode_build_evidence(
+    repo_root: Path,
+    payload: dict[str, object],
+) -> None:
+    path = repo_root / "services/backend/.local/mobile-xcode-build-evidence.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload), encoding="utf-8")
 
