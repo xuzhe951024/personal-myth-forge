@@ -609,7 +609,7 @@ def _first_blocker(sequence: list[dict[str, Any]]) -> dict[str, Any] | None:
         if status not in {"missing", "blocked"}:
             continue
         step_id = str(step.get("id", "step"))
-        command = str(step.get("command", ""))
+        command = _step_blocker_command(step)
         return {
             "id": step_id,
             "label": str(step.get("label", step_id)),
@@ -637,7 +637,7 @@ def _next_action(
             **first_blocker,
             "command": _structured_next_action_command(action),
             "source": "operator_actions",
-            "validation_command": "make ios-device-launch-rehearsal",
+            "validation_command": _validation_command_for_action(action),
         }
     return {
         **first_blocker,
@@ -649,6 +649,24 @@ def _next_action(
 def _structured_next_action_command(action: str) -> str:
     command, _detail_suffix = _split_detail_suffix(action)
     return command
+
+
+def _validation_command_for_action(action: str) -> str:
+    command = _structured_next_action_command(action)
+    if "; rerun " in command:
+        return command.rsplit("; rerun ", 1)[1].strip()
+    return "make ios-device-launch-rehearsal"
+
+
+def _step_blocker_command(step: dict[str, Any]) -> str:
+    if step.get("status") == "missing":
+        return str(step.get("command", ""))
+    nested_actions = step.get("operator_actions")
+    if isinstance(nested_actions, list) and nested_actions:
+        return _structured_next_action_command(
+            _top_level_operator_action(f"{step['id']}: {nested_actions[0]}")
+        )
+    return str(step.get("command", ""))
 
 
 def _step_blocker_detail(step: dict[str, Any]) -> str:

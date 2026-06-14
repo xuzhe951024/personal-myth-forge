@@ -428,6 +428,7 @@ Bridge deliverable:
 - P0.514 Final external action ledger prioritizes backend URL before provider handoffs
 - P0.515 Final launch closure packet prioritizes backend URL before provider handoffs
 - P0.516 Final handoff index promotes concrete local device next action
+- P0.517 iOS device launch rehearsal promotes concrete local device next action
 
 ## P1: Mobile Vertical Slice
 
