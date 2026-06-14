@@ -1432,7 +1432,23 @@ def _device_action(action: dict[str, Any]) -> dict[str, Any]:
     next_action = action.get("next_action")
     if isinstance(next_action, dict):
         copied["next_action"] = _device_next_action(next_action)
+    saved_next_action = action.get("saved_next_action")
+    if isinstance(saved_next_action, dict):
+        copied["saved_next_action"] = _device_next_action(saved_next_action)
+        _promote_saved_next_action_command(copied)
     return copied
+
+
+def _promote_saved_next_action_command(action: dict[str, Any]) -> None:
+    saved_next_action = action.get("saved_next_action")
+    if not isinstance(saved_next_action, dict):
+        return
+    command = str(saved_next_action.get("command", "")).strip()
+    if command:
+        action["command"] = command
+    validation_command = str(saved_next_action.get("validation_command", "")).strip()
+    if validation_command:
+        action["validation_command"] = validation_command
 
 
 def _device_next_action(next_action: dict[str, Any]) -> dict[str, Any]:
