@@ -393,6 +393,7 @@ Bridge deliverable:
 - P0.479 Final handoff live provider actions include explicit consent operator command
 - P0.480 Configured print quote handoff uses explicit consent guard and sanitized local evidence
 - P0.481 Final handoff aggregators prefer the guarded print quote command over legacy Treatstock prose
+- P0.482 Final launch closure packet prefers guarded print quote handoff over print readiness validation
 
 ## P1: Mobile Vertical Slice
 

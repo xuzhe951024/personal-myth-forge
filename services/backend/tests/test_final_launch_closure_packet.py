@@ -95,7 +95,12 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     operator_actions = report["operator_actions"]
     actions = " ".join(operator_actions)
     assert "make final-resources-preflight" in operator_actions
-    assert "make print-fulfillment-readiness" in operator_actions
+    guarded_print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+    assert guarded_print_action in operator_actions
+    assert "make print-fulfillment-readiness" not in operator_actions
     assert "make ios-device-launch-rehearsal" in operator_actions
     assert "make final-resource-apply-preview" in operator_actions
     assert "make final-apply-resources" not in operator_actions

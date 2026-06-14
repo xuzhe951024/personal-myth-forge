@@ -40,6 +40,13 @@ COMMANDS = [
 ]
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
+CONFIGURED_PRINT_QUOTE_ACTION = (
+    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
+)
+PRINT_FULFILLMENT_READINESS_ACTION = "make print-fulfillment-readiness"
+CONFIGURED_PRINT_QUOTE_VALIDATED_ACTION = (
+    f"{CONFIGURED_PRINT_QUOTE_ACTION}; rerun {PRINT_FULFILLMENT_READINESS_ACTION}"
+)
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
 )
@@ -748,6 +755,7 @@ def _operator_actions(
     if not actions:
         return ["Final launch closure packet is ready"]
     normalized_actions = _prefer_apply_preview_before_apply(_dedupe(actions))
+    normalized_actions = _prefer_guarded_print_quote_action(normalized_actions)
     return _promote_first_blocker_device_action(
         normalized_actions,
         first_blocker=first_blocker,
@@ -1117,6 +1125,17 @@ def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
         action
         for action in actions
         if _operator_action_root(action) != FINAL_RESOURCE_APPLY_ACTION
+    ]
+
+
+def _prefer_guarded_print_quote_action(actions: list[str]) -> list[str]:
+    action_roots = {_operator_action_root(action) for action in actions}
+    if CONFIGURED_PRINT_QUOTE_VALIDATED_ACTION not in action_roots:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_root(action) != PRINT_FULFILLMENT_READINESS_ACTION
     ]
 
 
