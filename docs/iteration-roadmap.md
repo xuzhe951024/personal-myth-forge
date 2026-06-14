@@ -402,6 +402,7 @@ Bridge deliverable:
 - P0.488 Final showcase readiness surfaces saved iOS deploy resource actions
 - P0.489 Final demo launch normalizes stale Xcode license actions
 - P0.490 Final launch closure packet normalizes backend/Xcode device handoff actions
+- P0.491 Final external action ledger normalizes Xcode/preflight handoff actions
 
 ## P1: Mobile Vertical Slice
 

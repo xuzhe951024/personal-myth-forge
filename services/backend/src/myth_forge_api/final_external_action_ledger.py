@@ -988,10 +988,37 @@ def _operator_actions(
     normalized_actions = prefer_project_local_ios_deploy_handoff_actions(
         normalized_actions
     )
-    return _promote_first_blocker_device_action(
+    promoted_actions = _promote_first_blocker_device_action(
         normalized_actions,
         first_blocker=first_blocker,
     )
+    return _drop_bare_mobile_deploy_preflight_when_validated(
+        _prefer_xcode_evidence_action(promoted_actions)
+    )
+
+
+def _prefer_xcode_evidence_action(actions: list[str]) -> list[str]:
+    if XCODE_LICENSE_OPERATOR_ACTION not in actions:
+        return actions
+    return [
+        action
+        for action in actions
+        if not action.startswith("run Xcode build gate manually on the Mac:")
+    ]
+
+
+def _drop_bare_mobile_deploy_preflight_when_validated(actions: list[str]) -> list[str]:
+    has_validated_mobile_action = any(
+        f"rerun {IOS_DEPLOY_VALIDATION_COMMAND}" in _operator_action_root(action)
+        for action in actions
+    )
+    if not has_validated_mobile_action:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_root(action) != IOS_DEPLOY_VALIDATION_COMMAND
+    ]
 
 
 def _promote_first_blocker_device_action(

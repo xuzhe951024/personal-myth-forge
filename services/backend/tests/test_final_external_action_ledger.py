@@ -135,7 +135,7 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert "make final-apply-resources" not in operator_actions
     assert actions["apply_final_resources"]["command"] == "make final-apply-resources"
     assert "make final-apply-resources" in report["operator_sequence"]
-    assert "make mobile-deploy-preflight" in operator_actions
+    assert "make mobile-deploy-preflight" not in operator_actions
     assert (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
@@ -324,14 +324,14 @@ def test_external_action_ledger_uses_concrete_global_xcode_actions(
             "configure Apple Team ID, bundle id, certificates, and device trust "
             "manually; rerun make mobile-xcode-build-evidence"
         ),
-        (
-            "run Xcode build gate manually on the Mac: make mobile-xcode-build; "
-            "rerun make mobile-xcode-build-evidence"
-        ),
     ]
 
     for expected in expected_actions:
         assert expected in operator_actions
+    assert (
+        "run Xcode build gate manually on the Mac: make mobile-xcode-build; "
+        "rerun make mobile-xcode-build-evidence"
+    ) not in operator_actions
 
     assert not any(
         action.startswith("confirm global/manual action before")
