@@ -295,6 +295,26 @@ def test_normalizes_verbose_provider_evidence_actions_to_make_targets() -> None:
     ) == "make live-provider-evidence | configured evidence stale"
 
 
+def test_normalizes_legacy_treatstock_quote_action_to_guarded_target() -> None:
+    legacy_action = (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes"
+    )
+    guarded_action = "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
+
+    assert normalize_operator_action(legacy_action) == guarded_action
+    assert normalize_operator_action(
+        f"{legacy_action}; rerun make print-fulfillment-readiness"
+    ) == f"{guarded_action}; rerun make print-fulfillment-readiness"
+    assert normalize_operator_action(
+        f"final_demo_launch_local: {legacy_action}; rerun make print-fulfillment-readiness"
+    ) == (
+        "final_demo_launch_local: "
+        f"{guarded_action}; rerun make print-fulfillment-readiness"
+    )
+
+
 def test_normalizes_configured_acceptance_cost_review_action() -> None:
     assert normalize_operator_action(
         "run make final-acceptance-configured only after live provider cost review "

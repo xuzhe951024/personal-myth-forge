@@ -391,6 +391,7 @@ Bridge deliverable:
 - P0.477 Configured live provider Make targets require explicit local cost consent
 - P0.478 Live provider evidence operator actions include explicit consent env prefix
 - P0.479 Final handoff live provider actions include explicit consent operator command
+- P0.480 Configured print quote handoff uses explicit consent guard and sanitized local evidence
 
 ## P1: Mobile Vertical Slice
 

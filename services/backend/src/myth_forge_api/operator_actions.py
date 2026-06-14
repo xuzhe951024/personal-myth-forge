@@ -36,7 +36,23 @@ BACKEND_DEVICE_DEMO_ACTION = (
 BACKEND_DEVICE_DEMO_VALIDATED_ACTION = (
     f"{BACKEND_DEVICE_DEMO_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
 )
+CONFIGURED_PRINT_QUOTE_ACTION = (
+    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
+)
+PRINT_FULFILLMENT_READINESS_COMMAND = "make print-fulfillment-readiness"
+CONFIGURED_PRINT_QUOTE_VALIDATED_ACTION = (
+    f"{CONFIGURED_PRINT_QUOTE_ACTION}; rerun {PRINT_FULFILLMENT_READINESS_COMMAND}"
+)
+LEGACY_CONFIGURED_PRINT_QUOTE_ACTION = (
+    "after explicit Treatstock cost consent, save a sanitized "
+    "services/backend/.local/print-quote-configured.json from POST /v1/print-quotes"
+)
 MAKE_TARGET_ACTION_REPLACEMENTS = {
+    LEGACY_CONFIGURED_PRINT_QUOTE_ACTION: CONFIGURED_PRINT_QUOTE_ACTION,
+    (
+        f"{LEGACY_CONFIGURED_PRINT_QUOTE_ACTION}; rerun "
+        f"{PRINT_FULFILLMENT_READINESS_COMMAND}"
+    ): CONFIGURED_PRINT_QUOTE_VALIDATED_ACTION,
     "rerun provider handoff readiness: make provider-handoff": (
         "make provider-handoff"
     ),

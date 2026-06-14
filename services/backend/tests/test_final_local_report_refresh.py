@@ -378,9 +378,7 @@ def test_final_local_report_refresh_operator_actions_prioritize_provider_and_pri
                 "id": "print_fulfillment_readiness",
                 "status": "blocked",
                 "command": (
-                    "after explicit Treatstock cost consent, save a sanitized "
-                    "services/backend/.local/print-quote-configured.json from POST "
-                    "/v1/print-quotes"
+                    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
                 ),
                 "validation_command": "make print-fulfillment-readiness",
             },
@@ -389,9 +387,7 @@ def test_final_local_report_refresh_operator_actions_prioritize_provider_and_pri
 
     provider_action = "make provider-handoff; rerun make live-provider-evidence"
     print_action = (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST "
-        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
 
     assert provider_action in actions
@@ -406,9 +402,7 @@ def test_final_local_report_refresh_operator_actions_promote_final_demo_handoff_
         "make final-resource-apply-preview; rerun make live-provider-evidence"
     )
     print_action = (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST "
-        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
 
     actions = final_local_report_refresh._operator_actions(
@@ -484,9 +478,7 @@ def test_final_local_report_refresh_operator_actions_prefer_complete_provider_ch
         "make final-resource-apply-preview; rerun make live-provider-evidence"
     )
     print_action = (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST "
-        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
 
     actions = final_local_report_refresh._dedupe_operator_actions(

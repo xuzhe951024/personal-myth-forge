@@ -477,9 +477,7 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
         in operator_actions
     )
     assert (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST "
-        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     ) in operator_actions
     assert (
         "approve live provider cost before make live-provider-evidence"

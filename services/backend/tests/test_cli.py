@@ -23,6 +23,7 @@ from myth_forge_api.local_showcase_smoke import LocalShowcaseSmokeResult
 from myth_forge_api.print_fulfillment_readiness import PrintFulfillmentReadinessResult
 from myth_forge_api.resource_template_acceptance import ResourceTemplateAcceptanceResult
 from myth_forge_api.cli import main
+from myth_forge_api.domain.models import PrintCandidate, PrintQuote, PrintQuoteRequest
 from myth_forge_api.providers.three_d import (
     LocalThreeDProvider,
     MeshyProviderError,
@@ -1375,6 +1376,105 @@ def test_cli_print_fulfillment_readiness_writes_report_and_returns_result_code(
     assert report["status"] == "partial"
 
 
+def test_cli_print_quote_configured_requires_explicit_allow(
+    tmp_path,
+    monkeypatch,
+    capsys,
+) -> None:
+    request_file = tmp_path / "request.json"
+    output_file = tmp_path / "print-quote-configured.json"
+    _write_print_quote_request(request_file)
+
+    def fail_provider_call(settings):
+        raise AssertionError("print provider must not be built without explicit allow")
+
+    monkeypatch.setattr("myth_forge_api.cli.build_print_provider", fail_provider_call)
+
+    exit_code = main(
+        [
+            "print-quote-configured",
+            "--request",
+            str(request_file),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "requires --allow-print-provider-calls" in captured.err
+    assert not output_file.exists()
+
+
+def test_cli_print_quote_configured_writes_sanitized_treatstock_evidence(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    request_file = tmp_path / "request.json"
+    output_file = tmp_path / "print-quote-configured.json"
+    request = _write_print_quote_request(request_file)
+    calls = []
+
+    class FakePrintProvider:
+        provider_name = "treatstock"
+
+        def create_print_quote(self, received_request: PrintQuoteRequest) -> PrintQuote:
+            calls.append(received_request)
+            return PrintQuote(
+                kind="print_quote",
+                provider="treatstock",
+                status="draft_quote",
+                source_asset_uri=received_request.print_candidate.source_asset_uri,
+                print_candidate_uri=received_request.print_candidate.uri,
+                currency="USD",
+                estimated_price_cents=2400,
+                estimated_production_days=0,
+                estimated_shipping_days=0,
+                checkout_url="https://checkout.example/order?token=secret-token",
+                requires_user_approval=True,
+                approval_reason=(
+                    "Treatstock quote must be reviewed before checkout or order placement."
+                ),
+                quote_notes=[
+                    "Treatstock printablePackId=12345",
+                    "Bearer secret-token should be removed",
+                    "checkout_url=https://checkout.example/order?token=secret-token",
+                    "material=standard_resin",
+                ],
+            )
+
+    monkeypatch.setattr(
+        "myth_forge_api.cli.build_print_provider",
+        lambda settings: FakePrintProvider(),
+    )
+
+    exit_code = main(
+        [
+            "print-quote-configured",
+            "--allow-print-provider-calls",
+            "--request",
+            str(request_file),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    payload_text = output_file.read_text(encoding="utf-8")
+    payload = json.loads(payload_text)
+    assert exit_code == 0
+    assert calls == [request]
+    assert payload["kind"] == "print_quote"
+    assert payload["provider"] == "treatstock"
+    assert payload["status"] == "draft_quote"
+    assert payload["estimated_price_cents"] == 2400
+    assert payload["requires_user_approval"] is True
+    assert payload["checkout_url"] is None
+    assert "checkout.example" not in payload_text
+    assert "secret-token" not in payload_text
+    assert "Bearer" not in payload_text
+    assert "material=standard_resin" in payload["quote_notes"]
+
+
 def test_cli_demo_acceptance_writes_report(tmp_path, monkeypatch) -> None:
     output_file = tmp_path / "acceptance.json"
     calls = []
@@ -1618,3 +1718,27 @@ def test_cli_final_acceptance_passes_live_provider_consent_flag(
             "allow_live_provider_calls": True,
         }
     ]
+
+
+def _write_print_quote_request(path: Path) -> PrintQuoteRequest:
+    request = PrintQuoteRequest(
+        print_candidate=PrintCandidate(
+            kind="print_asset",
+            source_asset_uri="https://assets.example/game.glb",
+            provider="treatstock",
+            format="3mf",
+            uri="https://assets.example/print.3mf",
+            requires_user_approval=True,
+            approval_reason="Review before quote handoff.",
+            printability_notes=["configured request fixture"],
+        ),
+        quantity=1,
+        material="standard_resin",
+        finish="matte",
+        ship_to_country="US",
+    )
+    path.write_text(
+        json.dumps(request.model_dump(mode="json"), indent=2),
+        encoding="utf-8",
+    )
+    return request

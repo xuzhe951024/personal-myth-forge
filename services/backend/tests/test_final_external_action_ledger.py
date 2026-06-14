@@ -221,9 +221,7 @@ def test_external_action_ledger_uses_concrete_provider_and_print_handoff_actions
     operator_actions = result.report["operator_actions"]
     provider_action = "make provider-handoff; rerun make live-provider-evidence"
     print_action = (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST "
-        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
 
     assert provider_action in operator_actions

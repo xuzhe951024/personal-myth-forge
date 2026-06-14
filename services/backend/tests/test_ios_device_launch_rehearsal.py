@@ -1473,10 +1473,8 @@ def test_ios_device_launch_rehearsal_full_actions_prioritize_provider_and_print_
                     "make final-demo-launch-configured",
                     "make provider-handoff; rerun make live-provider-evidence",
                     (
-                        "after explicit Treatstock cost consent, save a sanitized "
-                        "services/backend/.local/print-quote-configured.json from "
-                        "POST /v1/print-quotes; rerun "
-                        "make print-fulfillment-readiness"
+                        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+                        "rerun make print-fulfillment-readiness"
                     ),
                 ],
             },
@@ -1485,9 +1483,7 @@ def test_ios_device_launch_rehearsal_full_actions_prioritize_provider_and_print_
 
     provider_action = "make provider-handoff; rerun make live-provider-evidence"
     print_action = (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST "
-        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
 
     assert actions[0] == (
@@ -1533,10 +1529,8 @@ def test_ios_device_launch_rehearsal_local_actions_include_partial_final_demo_ha
                     ),
                     "make provider-handoff; rerun make live-provider-evidence",
                     (
-                        "after explicit Treatstock cost consent, save a sanitized "
-                        "services/backend/.local/print-quote-configured.json from "
-                        "POST /v1/print-quotes; rerun "
-                        "make print-fulfillment-readiness"
+                        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+                        "rerun make print-fulfillment-readiness"
                     ),
                     (
                         "start backend-device-demo before device checks: "
@@ -1563,10 +1557,8 @@ def test_ios_device_launch_rehearsal_local_actions_include_partial_final_demo_ha
             "rerun make live-provider-evidence"
         ),
         (
-            "final_demo_launch_local: after explicit Treatstock cost consent, "
-            "save a sanitized "
-            "services/backend/.local/print-quote-configured.json from POST "
-            "/v1/print-quotes; rerun make print-fulfillment-readiness"
+            "final_demo_launch_local: PMF_ALLOW_PRINT_PROVIDER_CALLS=1 "
+            "make print-quote-configured; rerun make print-fulfillment-readiness"
         ),
         (
             "final_demo_launch_local: start backend-device-demo before "

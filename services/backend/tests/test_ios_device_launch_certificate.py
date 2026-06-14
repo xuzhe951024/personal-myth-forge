@@ -324,9 +324,7 @@ def test_ios_device_launch_certificate_preserves_backend_device_demo_handoff(
                     "rerun make live-provider-evidence"
                 ),
                 (
-                    "after explicit Treatstock cost consent, save a sanitized "
-                    "services/backend/.local/print-quote-configured.json from POST "
-                    "/v1/print-quotes; rerun make print-fulfillment-readiness"
+                    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
                 ),
                 "make final-configured-preflight; rerun make configured-live-evidence-bundle",
                 "make final-demo-launch-configured",
@@ -388,9 +386,7 @@ def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print
                 deploy_action,
                 "make provider-handoff; rerun make live-provider-evidence",
                 (
-                    "after explicit Treatstock cost consent, save a sanitized "
-                    "services/backend/.local/print-quote-configured.json from POST "
-                    "/v1/print-quotes; rerun make print-fulfillment-readiness"
+                    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
                 ),
             ],
         },
@@ -403,9 +399,7 @@ def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print
     actions = result.report["operator_actions"]
     provider_action = "make provider-handoff; rerun make live-provider-evidence"
     print_action = (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST "
-        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
 
     assert result.report["first_blocker"]["command"] == deploy_action

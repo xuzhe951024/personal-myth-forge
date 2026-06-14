@@ -211,6 +211,18 @@ with `requires_user_approval: true`. `/v1/final-demo-launch` embeds the report a
 `print_fulfillment` capability, and the iPhone Final Launch panel renders it
 under `Print Fulfillment`.
 
+Configured Treatstock quote evidence now has a guarded local handoff. After
+providing ignored local print resources and explicit cost consent, run:
+
+```bash
+PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured
+```
+
+The target reads `services/backend/.local/print-quote-request-configured.json`
+and writes a sanitized
+`services/backend/.local/print-quote-configured.json`; without the consent
+environment variable it exits before any print provider command runs.
+
 For the final key-backed handoff, fill the one-file resource bundle, apply it,
 then run the configured launch report:
 

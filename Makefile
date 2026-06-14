@@ -152,6 +152,12 @@ final-showcase-readiness:
 print-fulfillment-readiness:
 	@services/backend/scripts/write_print_fulfillment_readiness.sh
 
+.PHONY: print-quote-configured
+
+print-quote-configured:
+	@services/backend/scripts/require_print_provider_consent.sh
+	cd services/backend && uv run python -m myth_forge_api.cli print-quote-configured --allow-print-provider-calls --request .local/print-quote-request-configured.json --output .local/print-quote-configured.json
+
 .PHONY: live-provider-evidence
 
 live-provider-evidence:

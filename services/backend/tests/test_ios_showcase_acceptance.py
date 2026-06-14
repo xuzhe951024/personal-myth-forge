@@ -1796,7 +1796,11 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/print_fulfillment_readiness.py": (
             "build_print_fulfillment_readiness_report print_fulfillment_readiness_report "
-            "configured_treatstock_quote make print-fulfillment-readiness"
+            "configured_treatstock_quote make print-fulfillment-readiness "
+            "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
+        ),
+        "services/backend/scripts/require_print_provider_consent.sh": (
+            "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 No print provider command was run"
         ),
         "services/backend/scripts/write_print_fulfillment_readiness.sh": (
             "accepted print fulfillment readiness exit code $status "
@@ -1879,7 +1883,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "ios-device-launch-certificate ios-device-launch-rehearsal live-provider-evidence "
             "print-fulfillment-readiness final-resource-requirements final-resource-apply-preview "
             "final-external-action-ledger final-launch-closure-packet final-showcase-readiness "
-            "local-showcase-smoke"
+            "local-showcase-smoke print-quote-configured --allow-print-provider-calls"
         ),
             "Makefile": (
                 "ios-deploy-runbook: backend-evaluate-3d: backend-evaluate-npc: "
@@ -1890,6 +1894,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
                 "visual-regression-local: --output .local/visual-regression-local.json "
             "live-provider-evidence: .local/live-provider-evidence.json "
             "print-fulfillment-readiness: write_print_fulfillment_readiness.sh "
+            "print-quote-configured: require_print_provider_consent.sh "
+            ".local/print-quote-request-configured.json "
+            ".local/print-quote-configured.json "
             "final-resource-requirements: .local/final-resource-requirements.json "
             "final-resource-apply-preview: .local/final-resource-apply-preview.json "
             "write_provider_handoff.sh write_resource_handoff.sh "

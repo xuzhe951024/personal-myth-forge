@@ -86,6 +86,14 @@ def test_require_live_provider_consent_blocks_without_flag(script_repo: Path) ->
     assert "No live provider command was run." in result.stderr
 
 
+def test_require_print_provider_consent_blocks_without_flag(script_repo: Path) -> None:
+    result = _run_script(script_repo, "require_print_provider_consent.sh")
+
+    assert result.returncode == 2
+    assert "PMF_ALLOW_PRINT_PROVIDER_CALLS=1" in result.stderr
+    assert "No print provider command was run." in result.stderr
+
+
 def test_write_final_acceptance_local_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:
@@ -1115,6 +1123,31 @@ def test_configured_live_evidence_bundle_make_target_dry_run_uses_wrapper() -> N
 
     assert result.returncode == 0, result.stderr
     assert "write_configured_live_evidence_bundle.sh" in result.stdout
+
+
+def test_print_quote_configured_make_target_dry_run_uses_guarded_cli() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "print-quote-configured"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    output = result.stdout
+    assert "services/backend/scripts/require_print_provider_consent.sh" in output
+    assert "myth_forge_api.cli print-quote-configured" in output
+    assert "--allow-print-provider-calls" in output
+    assert "--request .local/print-quote-request-configured.json" in output
+    assert "--output .local/print-quote-configured.json" in output
+    assert output.index("require_print_provider_consent.sh") < output.index(
+        "myth_forge_api.cli print-quote-configured"
+    )
+    guard = repo_root / "services/backend/scripts/require_print_provider_consent.sh"
+    assert os.access(guard, os.X_OK)
 
 
 @pytest.mark.parametrize(

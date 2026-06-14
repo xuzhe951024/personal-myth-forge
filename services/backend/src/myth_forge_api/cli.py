@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -83,9 +84,11 @@ from myth_forge_api.ios_device_launch_rehearsal_readiness import (
     build_ios_device_launch_rehearsal_readiness_report,
 )
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
+from myth_forge_api.domain.models import PrintQuote, PrintQuoteRequest
 from myth_forge_api.providers.factory import (
     build_npc_director,
     build_npc_tick_runtime,
+    build_print_provider,
     build_three_d_provider,
 )
 from myth_forge_api.providers.npc import OpenAINPCProviderError
@@ -243,6 +246,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _print_fulfillment_readiness(
                 repo_root=args.repo_root,
                 output_path=args.output,
+            )
+        if args.command == "print-quote-configured":
+            return _print_quote_configured(
+                request_path=args.request,
+                output_path=args.output,
+                allow_print_provider_calls=args.allow_print_provider_calls,
             )
         if args.command == "live-provider-evidence":
             return _live_provider_evidence(
@@ -461,6 +470,20 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     print_fulfillment_readiness_parser.add_argument("--repo-root", default=None)
     print_fulfillment_readiness_parser.add_argument("--output", default=None)
+
+    print_quote_configured_parser = subcommands.add_parser("print-quote-configured")
+    print_quote_configured_parser.add_argument(
+        "--request",
+        default=".local/print-quote-request-configured.json",
+    )
+    print_quote_configured_parser.add_argument(
+        "--output",
+        default=".local/print-quote-configured.json",
+    )
+    print_quote_configured_parser.add_argument(
+        "--allow-print-provider-calls",
+        action="store_true",
+    )
 
     live_provider_evidence_parser = subcommands.add_parser("live-provider-evidence")
     live_provider_evidence_parser.add_argument("--repo-root", default=None)
@@ -865,6 +888,30 @@ def _print_fulfillment_readiness(
     return result.exit_code
 
 
+def _print_quote_configured(
+    *,
+    request_path: str,
+    output_path: str | None,
+    allow_print_provider_calls: bool,
+) -> int:
+    if not allow_print_provider_calls:
+        print(
+            "print-quote-configured requires --allow-print-provider-calls.",
+            file=sys.stderr,
+        )
+        print(
+            "Use it only after explicit Treatstock quote cost consent.",
+            file=sys.stderr,
+        )
+        return 2
+
+    request = _read_print_quote_request(request_path)
+    provider = build_print_provider(load_settings())
+    quote = provider.create_print_quote(request)
+    _write_json_payload(_sanitized_print_quote_payload(quote), output_path)
+    return 0
+
+
 def _live_provider_evidence(
     *,
     repo_root: str | None,
@@ -1056,6 +1103,60 @@ def _read_prompts(prompts_file: str) -> list[str]:
     if not prompts:
         raise ValueError(f"No prompts found in {prompts_file}.")
     return prompts
+
+
+def _read_print_quote_request(request_path: str) -> PrintQuoteRequest:
+    path = Path(request_path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return PrintQuoteRequest.model_validate(payload)
+
+
+def _sanitized_print_quote_payload(quote: PrintQuote) -> dict[str, object]:
+    payload = quote.model_dump(mode="json")
+    payload["checkout_url"] = None
+    payload["approval_reason"] = _sanitize_print_quote_text(str(payload["approval_reason"]))
+    payload["quote_notes"] = [
+        sanitized
+        for note in quote.quote_notes
+        if (sanitized := _sanitize_print_quote_note(note))
+    ]
+    if not payload["quote_notes"]:
+        payload["quote_notes"] = [
+            "configured print quote evidence sanitized; checkout link withheld"
+        ]
+    return payload
+
+
+def _sanitize_print_quote_note(note: str) -> str | None:
+    if _contains_unsafe_print_quote_text(note):
+        return None
+    sanitized = _sanitize_print_quote_text(note)
+    return sanitized or None
+
+
+def _sanitize_print_quote_text(text: str) -> str:
+    sanitized = text
+    replacements = [
+        r"Authorization\s*[=:]\s*Bearer\s+\[[^\]]+\]",
+        r"Authorization\s*[=:]\s*Bearer\s+[A-Za-z0-9._~+/\-=:-]+",
+        r"Bearer\s+[A-Za-z0-9._~+/\-=:-]+",
+        r"private-key[=:/\s]+[A-Za-z0-9._~+/\-=:-]+",
+        r"api[_-]?key\s*[=:]\s*[^\s,;\"']+",
+        r"token[=:/\s]+[A-Za-z0-9._~+/\-=:-]+",
+    ]
+    for pattern in replacements:
+        sanitized = re.sub(pattern, "[redacted]", sanitized, flags=re.IGNORECASE)
+    return sanitized.strip()
+
+
+def _contains_unsafe_print_quote_text(text: str) -> bool:
+    return bool(
+        re.search(
+            r"(https?://|file://|checkout|payment|token=|Bearer\s+|private-key|api[_-]?key)",
+            text,
+            flags=re.IGNORECASE,
+        )
+    )
 
 
 def _session_id_for_prompt(prompt: str) -> str:

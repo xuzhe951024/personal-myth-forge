@@ -511,10 +511,7 @@ def _commands() -> list[str]:
 
 
 def _configured_quote_command() -> str:
-    return (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST /v1/print-quotes"
-    )
+    return "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
 
 
 def _evidence_summary(report: dict[str, Any]) -> dict[str, Any]:

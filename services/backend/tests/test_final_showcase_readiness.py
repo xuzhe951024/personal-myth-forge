@@ -757,9 +757,7 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     assert rows["print_fulfillment"]["status"] == "partial"
     assert rows["print_fulfillment"]["classification"] == "missing_configured_treatstock_quote"
     assert rows["print_fulfillment"]["command"] == (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST "
-        "/v1/print-quotes"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
     )
     assert rows["print_fulfillment"]["validation_command"] == (
         "make print-fulfillment-readiness"
@@ -1069,10 +1067,15 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
         not in actions
     )
     assert "make visual-regression-local; rerun make print-fulfillment-readiness" not in actions
-    assert any("Treatstock" in action for action in actions)
+    assert any(
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in action
+        for action in actions
+    )
     provider_action = "make provider-handoff; rerun make live-provider-evidence"
     print_action = next(
-        action for action in actions if "Treatstock" in action
+        action
+        for action in actions
+        if "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in action
     )
     assert actions.index(provider_action) < actions.index(
         "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight"
@@ -1462,9 +1465,7 @@ def test_final_showcase_readiness_prefers_complete_provider_chain() -> None:
         "make final-resource-apply-preview; rerun make live-provider-evidence"
     )
     print_action = (
-        "after explicit Treatstock cost consent, save a sanitized "
-        "services/backend/.local/print-quote-configured.json from POST "
-        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
 
     actions = final_showcase_readiness._dedupe_operator_actions(
