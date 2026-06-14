@@ -95,6 +95,31 @@ def test_print_fulfillment_readiness_blocks_missing_configured_quote_request(
     )
 
 
+def test_print_fulfillment_readiness_suggests_local_served_quote_request_uris(
+    tmp_path: Path,
+) -> None:
+    _write_local_print_readiness_fixture(tmp_path)
+    _write_final_demo_launch_local_session(tmp_path, session_id="myth_showcase123")
+
+    result = build_print_fulfillment_readiness_report(
+        settings=Settings(print_provider="local"),
+        repo_root=tmp_path,
+    )
+
+    assert result.report["first_blocker"]["id"] == "configured_treatstock_quote_request"
+    assert result.report["next_action"]["command"] == (
+        "PRINT_SOURCE_ASSET_URI=http://192.168.1.10:8080/v1/generated-assets/"
+        "myth_showcase123/game.glb "
+        "PRINT_CANDIDATE_URI=http://192.168.1.10:8080/v1/print-candidates/"
+        "myth_showcase123/print.3mf "
+        "make print-quote-request-configured"
+    )
+    assert result.report["operator_actions"][0] == (
+        result.report["next_action"]["command"]
+        + "; rerun make print-fulfillment-readiness"
+    )
+
+
 def test_print_fulfillment_readiness_ready_with_configured_treatstock_quote(
     tmp_path: Path,
 ) -> None:
@@ -263,6 +288,23 @@ def _write_deploy_config(repo_root: Path) -> None:
                 "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080",
             ]
         ),
+    )
+
+
+def _write_final_demo_launch_local_session(repo_root: Path, *, session_id: str) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/final-demo-launch-local.json",
+        {
+            "kind": "final_demo_launch_report",
+            "status": "partial",
+            "source_reports": {
+                "local_showcase_smoke": {
+                    "kind": "local_showcase_smoke_report",
+                    "status": "succeeded",
+                    "session": {"session_id": session_id},
+                }
+            },
+        },
     )
 
 

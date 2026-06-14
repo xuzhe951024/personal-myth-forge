@@ -24,6 +24,8 @@ CONFIGURED_PRINT_QUOTE_PATH = Path("services/backend/.local/print-quote-configur
 CONFIGURED_PRINT_QUOTE_REQUEST_PATH = Path(
     "services/backend/.local/print-quote-request-configured.json"
 )
+FINAL_DEMO_LAUNCH_LOCAL_PATH = Path("services/backend/.local/final-demo-launch-local.json")
+IOS_DEPLOY_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.local.xcconfig")
 PRINT_RECEIPT_ARTIFACT_ID = "p0.101_print_fulfillment_receipt"
 PRINT_SOURCE_FEATURE_ID = "mobile_print_fulfillment_receipt"
 
@@ -67,7 +69,10 @@ def build_print_fulfillment_readiness_report(
             resource_handoff=resource_handoff,
             settings=selected_settings,
         ),
-        _configured_treatstock_quote_request_check(configured_quote_request),
+        _configured_treatstock_quote_request_check(
+            configured_quote_request,
+            repo_root=selected_repo_root,
+        ),
         _configured_treatstock_quote_check(configured_quote),
     ]
     summary = _summary(checks)
@@ -289,6 +294,8 @@ def _configured_treatstock_quote_check(configured_quote: dict[str, Any]) -> dict
 
 def _configured_treatstock_quote_request_check(
     configured_quote_request: dict[str, Any],
+    *,
+    repo_root: Path,
 ) -> dict[str, Any]:
     if configured_quote_request["status"] != "ready":
         return _check(
@@ -296,7 +303,7 @@ def _configured_treatstock_quote_request_check(
             label="Configured Treatstock quote request",
             status="blocked",
             classification=str(configured_quote_request["classification"]),
-            command=_configured_quote_request_command(),
+            command=_configured_quote_request_command(repo_root=repo_root),
             detail=str(configured_quote_request["detail"]),
             evidence=[f"path:{CONFIGURED_PRINT_QUOTE_REQUEST_PATH.as_posix()}"],
         )
@@ -611,11 +618,71 @@ def _commands() -> list[str]:
     ]
 
 
-def _configured_quote_request_command() -> str:
+def _configured_quote_request_command(*, repo_root: Path | None = None) -> str:
+    handoff = _local_print_request_handoff(repo_root) if repo_root is not None else None
+    if handoff is not None:
+        return (
+            f"PRINT_SOURCE_ASSET_URI={handoff['source_asset_uri']} "
+            f"PRINT_CANDIDATE_URI={handoff['print_candidate_uri']} "
+            "make print-quote-request-configured"
+        )
     return (
         "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
         "make print-quote-request-configured"
     )
+
+
+def _local_print_request_handoff(repo_root: Path) -> dict[str, str] | None:
+    session_id = _local_showcase_session_id(repo_root)
+    backend_base_url = _deploy_backend_base_url(repo_root)
+    if not session_id or not _is_http_url(backend_base_url):
+        return None
+    base_url = backend_base_url.rstrip("/")
+    return {
+        "source_asset_uri": f"{base_url}/v1/generated-assets/{session_id}/game.glb",
+        "print_candidate_uri": f"{base_url}/v1/print-candidates/{session_id}/print.3mf",
+    }
+
+
+def _local_showcase_session_id(repo_root: Path) -> str:
+    payload = _read_json_object(repo_root / FINAL_DEMO_LAUNCH_LOCAL_PATH)
+    source_reports = payload.get("source_reports")
+    smoke = (
+        source_reports.get("local_showcase_smoke")
+        if isinstance(source_reports, dict)
+        else None
+    )
+    session = smoke.get("session") if isinstance(smoke, dict) else None
+    session_id = session.get("session_id") if isinstance(session, dict) else None
+    return str(session_id).strip() if session_id else ""
+
+
+def _deploy_backend_base_url(repo_root: Path) -> str:
+    path = repo_root / IOS_DEPLOY_CONFIG_PATH
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        return ""
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() == "PMF_BACKEND_BASE_URL":
+            return value.strip()
+    return ""
+
+
+def _read_json_object(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _is_http_url(value: str) -> bool:
+    return value.startswith("http://") or value.startswith("https://")
 
 
 def _configured_quote_command() -> str:
