@@ -252,6 +252,55 @@ def prefer_project_local_ios_deploy_handoff_actions(actions: list[str]) -> list[
     return filtered
 
 
+def prefer_guarded_print_quote_handoff_actions(actions: list[str]) -> list[str]:
+    candidate_actions = [
+        (action.strip(), normalize_operator_action(action))
+        for action in actions
+        if action and action.strip()
+    ]
+    preferred_print_action = _preferred_configured_print_quote_action(
+        [normalized for _original, normalized in candidate_actions]
+    )
+    if preferred_print_action is None:
+        return [original for original, _normalized in candidate_actions]
+
+    result: list[str] = []
+    emitted_print_action = False
+    for original, normalized in candidate_actions:
+        if _is_configured_print_quote_action(normalized):
+            if not emitted_print_action:
+                result.append(preferred_print_action)
+                emitted_print_action = True
+            continue
+        result.append(original)
+    return result
+
+
+def _preferred_configured_print_quote_action(actions: list[str]) -> str | None:
+    first_prefixed_action: str | None = None
+    for action in actions:
+        if not _is_configured_print_quote_action(action):
+            continue
+        if _is_bare_configured_print_quote_action(action):
+            return action
+        if first_prefixed_action is None:
+            first_prefixed_action = action
+    return first_prefixed_action
+
+
+def _is_configured_print_quote_action(action: str) -> bool:
+    command_root = _action_command_root(action).split("; rerun ", 1)[0].strip()
+    return (
+        command_root == CONFIGURED_PRINT_QUOTE_ACTION
+        or command_root.endswith(f": {CONFIGURED_PRINT_QUOTE_ACTION}")
+    )
+
+
+def _is_bare_configured_print_quote_action(action: str) -> bool:
+    command_root = _action_command_root(action).split("; rerun ", 1)[0].strip()
+    return command_root == CONFIGURED_PRINT_QUOTE_ACTION
+
+
 def _action_command_root(action: str) -> str:
     command, _separator, _detail = action.partition(" | ")
     return command.strip()

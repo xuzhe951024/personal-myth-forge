@@ -4,8 +4,40 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
+import myth_forge_api.final_handoff_index as final_handoff_index
 from myth_forge_api.config import Settings
 from myth_forge_api.final_handoff_index import build_final_handoff_index_report
+
+LEGACY_PRINT_QUOTE_ACTION = (
+    "after explicit Treatstock cost consent, save a sanitized "
+    "services/backend/.local/print-quote-configured.json from POST "
+    "/v1/print-quotes; rerun make print-fulfillment-readiness"
+)
+GUARDED_PRINT_QUOTE_ACTION = (
+    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+    "rerun make print-fulfillment-readiness"
+)
+
+
+def test_final_handoff_index_dedupes_legacy_print_quote_handoff_actions() -> None:
+    actions = final_handoff_index._operator_actions(
+        [
+            {
+                "id": "local_rehearsal",
+                "status": "blocked",
+                "operator_actions": [
+                    LEGACY_PRINT_QUOTE_ACTION,
+                    GUARDED_PRINT_QUOTE_ACTION,
+                    f"final_demo_launch_local: {LEGACY_PRINT_QUOTE_ACTION}",
+                    f"final_demo_launch_local: {GUARDED_PRINT_QUOTE_ACTION}",
+                ],
+            }
+        ]
+    )
+
+    assert GUARDED_PRINT_QUOTE_ACTION in actions
+    assert all("after explicit Treatstock cost consent" not in action for action in actions)
+    assert sum("print-quote-configured" in action for action in actions) == 1
 
 
 def test_final_handoff_index_blocks_missing_reports_without_leaks(

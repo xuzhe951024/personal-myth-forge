@@ -57,6 +57,7 @@ from myth_forge_api.operator_actions import (
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
     add_final_resource_validation_command,
     normalize_operator_action,
+    prefer_guarded_print_quote_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
 )
 from myth_forge_api.print_fulfillment_readiness import (
@@ -1125,6 +1126,7 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     filtered = _drop_targeted_unblock_fallbacks(
         prefer_project_local_ios_deploy_handoff_actions(deduped)
     )
+    filtered = prefer_guarded_print_quote_handoff_actions(filtered)
     return _preserve_requested_apply_preview_action(
         filtered,
         original_values=values,

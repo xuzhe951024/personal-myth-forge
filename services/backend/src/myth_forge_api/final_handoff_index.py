@@ -23,6 +23,7 @@ from myth_forge_api.final_handoff_commands import (
 from myth_forge_api.operator_actions import (
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
     normalize_operator_action,
+    prefer_guarded_print_quote_handoff_actions,
 )
 
 LOCAL_REPORT_SOURCES = [
@@ -454,7 +455,7 @@ def _bounded_operator_actions(raw_actions: Any) -> list[str]:
             actions.append(action.strip()[:240])
         if len(actions) == 4:
             break
-    return actions
+    return prefer_guarded_print_quote_handoff_actions(actions)[:4]
 
 
 def _first_operator_action(report: dict[str, Any]) -> str:
@@ -796,9 +797,9 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
             actions.append(f"run {command}")
         else:
             actions.append(f"unblock {lane_id}")
-    return _prioritize_final_handoff_operator_actions(
-        _dedupe(_final_handoff_operator_action(action) for action in actions)
-    )[:6]
+    deduped = _dedupe(_final_handoff_operator_action(action) for action in actions)
+    deduped = prefer_guarded_print_quote_handoff_actions(deduped)
+    return _prioritize_final_handoff_operator_actions(deduped)[:6]
 
 
 def _prioritize_final_handoff_operator_actions(actions: list[str]) -> list[str]:

@@ -315,6 +315,49 @@ def test_normalizes_legacy_treatstock_quote_action_to_guarded_target() -> None:
     )
 
 
+def test_prefers_guarded_print_quote_action_over_legacy_variants() -> None:
+    legacy_action = (
+        "after explicit Treatstock cost consent, save a sanitized "
+        "services/backend/.local/print-quote-configured.json from POST "
+        "/v1/print-quotes; rerun make print-fulfillment-readiness"
+    )
+    guarded_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = operator_actions.prefer_guarded_print_quote_handoff_actions(
+        [
+            "make provider-handoff; rerun make live-provider-evidence",
+            legacy_action,
+            guarded_action,
+            f"final_demo_launch_local: {legacy_action}",
+            f"final_demo_launch_local: {guarded_action}",
+            "provide MESHY_API_KEY in final-resources.env",
+        ]
+    )
+
+    assert actions == [
+        "make provider-handoff; rerun make live-provider-evidence",
+        guarded_action,
+        "provide MESHY_API_KEY in final-resources.env",
+    ]
+
+
+def test_print_quote_preference_preserves_non_print_actions() -> None:
+    stale_rehearsal_action = (
+        "rerun make ios-device-launch-rehearsal to regenerate "
+        "services/backend/.local/ios-device-launch-rehearsal.json for the current "
+        "product sources"
+    )
+
+    actions = operator_actions.prefer_guarded_print_quote_handoff_actions(
+        [stale_rehearsal_action]
+    )
+
+    assert actions == [stale_rehearsal_action]
+
+
 def test_normalizes_configured_acceptance_cost_review_action() -> None:
     assert normalize_operator_action(
         "run make final-acceptance-configured only after live provider cost review "

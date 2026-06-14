@@ -2,9 +2,41 @@ import json
 from pathlib import Path
 
 from myth_forge_api.config import Settings
+import myth_forge_api.ios_device_launch_certificate as ios_device_launch_certificate
 from myth_forge_api.ios_device_launch_certificate import (
     build_ios_device_launch_certificate_report,
 )
+
+LEGACY_PRINT_QUOTE_ACTION = (
+    "after explicit Treatstock cost consent, save a sanitized "
+    "services/backend/.local/print-quote-configured.json from POST "
+    "/v1/print-quotes; rerun make print-fulfillment-readiness"
+)
+GUARDED_PRINT_QUOTE_ACTION = (
+    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+    "rerun make print-fulfillment-readiness"
+)
+
+
+def test_ios_device_launch_certificate_dedupes_print_quote_handoff_actions() -> None:
+    actions = ios_device_launch_certificate._operator_actions(
+        [
+            {
+                "id": "final_handoff_index",
+                "status": "blocked",
+                "operator_actions": [
+                    LEGACY_PRINT_QUOTE_ACTION,
+                    GUARDED_PRINT_QUOTE_ACTION,
+                    f"final_demo_launch_local: {LEGACY_PRINT_QUOTE_ACTION}",
+                    f"final_demo_launch_local: {GUARDED_PRINT_QUOTE_ACTION}",
+                ],
+            }
+        ]
+    )
+
+    assert GUARDED_PRINT_QUOTE_ACTION in actions
+    assert all("after explicit Treatstock cost consent" not in action for action in actions)
+    assert sum("print-quote-configured" in action for action in actions) == 1
 
 
 def test_ios_device_launch_certificate_blocks_missing_inputs_without_leaks(

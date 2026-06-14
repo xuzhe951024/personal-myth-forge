@@ -21,6 +21,7 @@ from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.operator_actions import (
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
     normalize_operator_action,
+    prefer_guarded_print_quote_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
 )
 
@@ -547,7 +548,8 @@ def _operator_actions(device_gates: list[dict[str, Any]]) -> list[str]:
         nested_actions = gate.get("operator_actions")
         if isinstance(nested_actions, list):
             actions.extend(str(action) for action in nested_actions)
-    return _prioritize_certificate_operator_actions(_dedupe(actions))[:6]
+    deduped = prefer_guarded_print_quote_handoff_actions(_dedupe(actions))
+    return _prioritize_certificate_operator_actions(deduped)[:6]
 
 
 def _device_action_bundle(device_gates: list[dict[str, Any]]) -> dict[str, Any]:

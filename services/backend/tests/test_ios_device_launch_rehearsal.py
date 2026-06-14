@@ -5,12 +5,56 @@ from datetime import datetime
 from pathlib import Path
 
 import myth_forge_api.ios_device_launch_rehearsal as ios_device_launch_rehearsal
+import myth_forge_api.ios_device_launch_rehearsal_readiness as ios_rehearsal_readiness
 from myth_forge_api.ios_device_launch_rehearsal import (
     build_ios_device_launch_rehearsal_report,
 )
 from myth_forge_api.ios_device_launch_rehearsal_readiness import (
     build_ios_device_launch_rehearsal_readiness_report,
 )
+
+LEGACY_PRINT_QUOTE_ACTION = (
+    "after explicit Treatstock cost consent, save a sanitized "
+    "services/backend/.local/print-quote-configured.json from POST "
+    "/v1/print-quotes; rerun make print-fulfillment-readiness"
+)
+GUARDED_PRINT_QUOTE_ACTION = (
+    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+    "rerun make print-fulfillment-readiness"
+)
+
+
+def test_ios_device_launch_rehearsal_dedupes_print_quote_handoff_actions() -> None:
+    actions = ios_device_launch_rehearsal._operator_actions(
+        [
+            {
+                "id": "final_handoff_index",
+                "status": "blocked",
+                "command": "make final-handoff-index",
+                "operator_actions": [
+                    LEGACY_PRINT_QUOTE_ACTION,
+                    GUARDED_PRINT_QUOTE_ACTION,
+                    f"final_demo_launch_local: {LEGACY_PRINT_QUOTE_ACTION}",
+                    f"final_demo_launch_local: {GUARDED_PRINT_QUOTE_ACTION}",
+                ],
+            }
+        ]
+    )
+
+    assert actions == [GUARDED_PRINT_QUOTE_ACTION]
+
+
+def test_ios_device_launch_rehearsal_readiness_dedupes_print_quote_actions() -> None:
+    actions = ios_rehearsal_readiness._operator_actions(
+        [
+            LEGACY_PRINT_QUOTE_ACTION,
+            GUARDED_PRINT_QUOTE_ACTION,
+            f"ios_device_launch_rehearsal: {LEGACY_PRINT_QUOTE_ACTION}",
+            f"ios_device_launch_rehearsal: {GUARDED_PRINT_QUOTE_ACTION}",
+        ]
+    )
+
+    assert actions == [GUARDED_PRINT_QUOTE_ACTION]
 
 
 def test_ios_device_launch_rehearsal_blocks_missing_reports_without_leaks(

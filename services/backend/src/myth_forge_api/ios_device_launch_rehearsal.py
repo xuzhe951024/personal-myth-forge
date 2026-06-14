@@ -18,6 +18,7 @@ from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
+    prefer_guarded_print_quote_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
 )
 
@@ -485,20 +486,18 @@ def _operator_actions(sequence: list[dict[str, Any]]) -> list[str]:
         else:
             actions.append(f"review {step['id']}: {step['command']}")
     if actions:
-        return _prioritize_rehearsal_handoff_actions(
-            prefer_project_local_ios_deploy_handoff_actions(
-                _dedupe(_top_level_operator_action(action) for action in actions)
-            )
-        )
+        deduped = _dedupe(_top_level_operator_action(action) for action in actions)
+        deduped = prefer_project_local_ios_deploy_handoff_actions(deduped)
+        deduped = prefer_guarded_print_quote_handoff_actions(deduped)
+        return _prioritize_rehearsal_handoff_actions(deduped)
 
     if all(step["status"] not in {"missing", "blocked"} for step in sequence):
         actions.append("continue with make backend-device-demo")
         actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
-    return _prioritize_rehearsal_handoff_actions(
-        prefer_project_local_ios_deploy_handoff_actions(
-            _dedupe(_top_level_operator_action(action) for action in actions)
-        )
-    )
+    deduped = _dedupe(_top_level_operator_action(action) for action in actions)
+    deduped = prefer_project_local_ios_deploy_handoff_actions(deduped)
+    deduped = prefer_guarded_print_quote_handoff_actions(deduped)
+    return _prioritize_rehearsal_handoff_actions(deduped)
 
 
 def _prioritize_rehearsal_handoff_actions(actions: list[str]) -> list[str]:
@@ -728,7 +727,9 @@ def _bounded_operator_actions(raw_actions: Any, *, repo_root: Path) -> list[str]
             )
         if len(actions) == 4:
             break
-    return [action for action in actions if action]
+    return prefer_guarded_print_quote_handoff_actions(
+        [action for action in actions if action]
+    )[:4]
 
 
 def _mobile_preflight_evidence_detail(payload: dict[str, Any]) -> str:
