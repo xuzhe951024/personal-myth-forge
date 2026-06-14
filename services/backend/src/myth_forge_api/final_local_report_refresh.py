@@ -87,6 +87,7 @@ FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_PREVIEW_BEFORE_APPLY_ACTION = (
     "rerun make final-resource-apply-preview before applying resources"
 )
+FINAL_LOCAL_REPORT_REHEARSAL_COMMAND = "make final-rehearsal-local"
 FINAL_LOCAL_REPORT_PROVIDER_HANDOFF_ACTION_MARKERS = (
     "make provider-handoff",
     "live-provider-evidence",
@@ -992,9 +993,11 @@ def _operator_actions(
                 step_actions.append(f"review refreshed {step['id']} report")
     actions.extend(priority_step_actions)
     actions.extend(fallback_step_actions)
-    return _prioritize_final_local_report_operator_actions(
-        _dedupe_operator_actions(actions)
-    )[:12]
+    deduped_actions = _dedupe_operator_actions(actions)
+    pruned_actions = _drop_bare_rehearsal_when_specific_actions_exist(
+        deduped_actions
+    )
+    return _prioritize_final_local_report_operator_actions(pruned_actions)[:12]
 
 
 def _action_command(action: dict[str, Any] | None) -> str:
@@ -1097,6 +1100,20 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     return _prefer_apply_preview_before_apply(
         _dedupe_operator_action_roots(validation_deduped)
     )
+
+
+def _drop_bare_rehearsal_when_specific_actions_exist(actions: list[str]) -> list[str]:
+    has_specific_action = any(
+        _action_command_root(action) != FINAL_LOCAL_REPORT_REHEARSAL_COMMAND
+        for action in actions
+    )
+    if not has_specific_action:
+        return actions
+    return [
+        action
+        for action in actions
+        if _action_command_root(action) != FINAL_LOCAL_REPORT_REHEARSAL_COMMAND
+    ]
 
 
 def _normalize_apply_preview_action(action: str) -> str:

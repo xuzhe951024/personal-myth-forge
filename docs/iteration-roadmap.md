@@ -408,6 +408,7 @@ Bridge deliverable:
 - P0.494 Final demo launch drops bare resource requirements action when specific handoff chains exist
 - P0.495 Final external action ledger drops bare iOS rehearsal action when specific handoff chains exist
 - P0.496 Final showcase readiness drops bare local rehearsal action when specific handoff chains exist
+- P0.497 Final local report refresh drops local rehearsal command-root actions when specific handoff chains exist
 
 ## P1: Mobile Vertical Slice
 

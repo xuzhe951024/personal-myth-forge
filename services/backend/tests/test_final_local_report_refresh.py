@@ -790,7 +790,78 @@ def test_final_local_report_refresh_operator_actions_drop_self_rerun_suffix() ->
         ],
     )
 
-    assert actions == ["make final-rehearsal-local", "make final-handoff-index"]
+    assert actions == ["make final-handoff-index"]
+
+
+def test_final_local_report_refresh_operator_actions_drop_bare_rehearsal_when_specific_actions_exist() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_rehearsal_local",
+                "status": "blocked",
+                "command": "make final-rehearsal-local",
+                "validation_command": "make final-rehearsal-local",
+            },
+            {
+                "id": "mobile_deploy_preflight",
+                "status": "blocked",
+                "command": (
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "make mobile-write-deploy-config-auto"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+            },
+        ],
+    )
+
+    assert actions == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
+def test_final_local_report_refresh_operator_actions_drop_validated_rehearsal_when_specific_actions_exist() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_rehearsal_local",
+                "status": "blocked",
+                "command": "make final-rehearsal-local",
+                "validation_command": "make ios-device-launch-rehearsal",
+            },
+            {
+                "id": "final_resource_requirements",
+                "status": "blocked",
+                "command": "provide MESHY_API_KEY in final-resources.env",
+                "validation_command": "make final-resources-preflight",
+            },
+        ],
+    )
+
+    assert actions == [
+        (
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        )
+    ]
+
+
+def test_final_local_report_refresh_operator_actions_preserve_bare_rehearsal_when_only_action() -> None:
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_rehearsal_local",
+                "status": "blocked",
+                "command": "make final-rehearsal-local",
+                "validation_command": "make final-rehearsal-local",
+            },
+        ],
+    )
+
+    assert actions == ["make final-rehearsal-local"]
 
 
 def test_final_local_report_refresh_operator_actions_hide_apply_when_preview_is_blocked() -> None:
