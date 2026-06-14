@@ -1713,6 +1713,49 @@ def test_final_showcase_readiness_preserves_backend_device_demo_handoff_when_dev
     )
 
 
+def test_final_showcase_readiness_prioritizes_backend_url_after_backend_demo() -> None:
+    deploy_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+    xcode_action = (
+        "accept the Xcode license outside Codex, then rerun "
+        "make mobile-xcode-build-evidence"
+    )
+
+    actions = final_showcase_readiness._prioritize_showcase_operator_actions(
+        [
+            deploy_action,
+            provider_action,
+            print_action,
+            xcode_action,
+            backend_action,
+            backend_url_action,
+        ]
+    )
+
+    assert actions[:3] == [deploy_action, backend_action, backend_url_action]
+    assert actions.index(backend_url_action) < actions.index(provider_action)
+    assert actions.index(backend_url_action) < actions.index(print_action)
+    assert actions.index(backend_url_action) < actions.index(xcode_action)
+
+
 def test_final_showcase_readiness_validates_promoted_ios_deploy_actions(
     tmp_path: Path,
 ) -> None:

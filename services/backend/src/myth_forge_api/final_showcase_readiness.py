@@ -1857,17 +1857,36 @@ def _prioritize_showcase_operator_actions(actions: list[str]) -> list[str]:
     device_demo_actions = [
         action for action in rest if _is_backend_device_demo_action(action)
     ]
+    backend_url_actions = [
+        action
+        for action in rest
+        if action not in device_demo_actions
+        and _is_backend_url_handoff_action(action)
+    ]
     provider_actions = [
         action for action in rest if _is_provider_handoff_action(action)
     ]
     print_actions = [
         action for action in rest if _is_print_handoff_action(action)
     ]
-    priority_actions = set(device_demo_actions + provider_actions + print_actions)
-    remaining = [
-        action for action in rest if action not in priority_actions
+    priority_actions = set(
+        device_demo_actions + backend_url_actions + provider_actions + print_actions
+    )
+    remaining = [action for action in rest if action not in priority_actions]
+    fallback_priority_actions = set(device_demo_actions + provider_actions + print_actions)
+    fallback_remaining = [
+        action for action in rest if action not in fallback_priority_actions
     ]
-    return first + device_demo_actions + provider_actions + print_actions + remaining
+    if _is_mobile_deploy_handoff_action(first[0]):
+        return (
+            first
+            + device_demo_actions
+            + backend_url_actions
+            + provider_actions
+            + print_actions
+            + remaining
+        )
+    return first + device_demo_actions + provider_actions + print_actions + fallback_remaining
 
 
 def _is_provider_handoff_action(action: str) -> bool:
@@ -1891,6 +1910,23 @@ def _is_backend_device_demo_action(action: str) -> bool:
     return any(
         marker in lowered
         for marker in FINAL_SHOWCASE_BACKEND_DEVICE_DEMO_ACTION_MARKERS
+    )
+
+
+def _is_backend_url_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return (
+        "pmf_backend_base_url" in lowered
+        or "iphone-reachable lan url" in lowered
+    )
+
+
+def _is_mobile_deploy_handoff_action(action: str) -> bool:
+    root = _operator_action_bare_root(action)
+    return (
+        "mobile-write-deploy-config-auto" in root
+        and "mobile-deploy-preflight" in root
+        and not _is_backend_device_demo_action(action)
     )
 
 
