@@ -102,6 +102,7 @@ FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "/v1/print-quotes",
 )
 FINAL_SHOWCASE_PRINT_READINESS_VALIDATION = "make print-fulfillment-readiness"
+FINAL_SHOWCASE_SELF_OPERATOR_ACTIONS = {"make final-showcase-readiness"}
 IOS_DEPLOY_DESTINATION_LABEL = "Deployment.local.xcconfig"
 IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
 FINAL_RESOURCES_ENV_LABEL = "final-resources.env"
@@ -1799,7 +1800,8 @@ def _filter_showcase_operator_actions(actions: list[str]) -> list[str]:
     return [
         action
         for action in actions
-        if not _is_validation_only_print_action(action)
+        if action not in FINAL_SHOWCASE_SELF_OPERATOR_ACTIONS
+        and not _is_validation_only_print_action(action)
     ]
 
 

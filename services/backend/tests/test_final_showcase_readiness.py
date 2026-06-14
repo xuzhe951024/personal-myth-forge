@@ -79,6 +79,7 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
         "detail": "iOS deploy runbook and device launch rehearsal must both be ready.",
         "source": "first_blocker",
     }
+    assert "make final-showcase-readiness" not in result.report["operator_actions"]
     assert "make final-rehearsal-local" in result.report["commands"]
     assert "make final-showcase-readiness" in result.report["commands"]
     assert result.report["safety"]["commands_run"] is False
@@ -1094,7 +1095,7 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
         for action in actions
     )
     assert "rerun make visual-regression-local and review failed artifacts" in actions
-    assert "make final-showcase-readiness" in actions
+    assert "make final-showcase-readiness" not in actions
     assert len(actions) <= 32
     assert actions.count("make provider-handoff; rerun make live-provider-evidence") == 1
     assert (
@@ -1478,6 +1479,21 @@ def test_final_showcase_readiness_prefers_complete_provider_chain() -> None:
     )
 
     assert actions == [complete_provider_chain, print_action]
+
+
+def test_final_showcase_readiness_filters_self_referential_operator_action() -> None:
+    actions = final_showcase_readiness._filter_showcase_operator_actions(
+        [
+            "make final-resource-apply-preview",
+            "make final-showcase-readiness",
+            "make final-rehearsal-local",
+        ]
+    )
+
+    assert actions == [
+        "make final-resource-apply-preview",
+        "make final-rehearsal-local",
+    ]
 
 
 def test_final_showcase_readiness_dedupes_duplicate_deploy_writer_roots() -> None:
