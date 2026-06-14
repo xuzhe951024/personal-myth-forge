@@ -231,7 +231,7 @@ def _next_action(
 ) -> dict[str, str] | None:
     if first_blocker is None:
         return None
-    command = _action_command(actions[0]) if actions else first_blocker["detail"]
+    command = _validation_aware_action(actions[0]) if actions else first_blocker["detail"]
     detail = _blocked_check_detail_summary(checks) or first_blocker["detail"]
     return {
         "id": first_blocker["id"],
