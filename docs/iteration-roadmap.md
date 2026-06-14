@@ -411,6 +411,7 @@ Bridge deliverable:
 - P0.497 Final local report refresh drops local rehearsal command-root actions when specific handoff chains exist
 - P0.498 Final demo launch prefers iPhone-reachable backend URL action over generic deploy config handoff
 - P0.499 Final external ledger and closure packet use iPhone-reachable backend URL handoff
+- P0.500 Final handoff index preserves iPhone-reachable backend URL action
 
 ## P1: Mobile Vertical Slice
 

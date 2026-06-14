@@ -297,6 +297,18 @@ def test_final_handoff_index_promotes_provider_and_print_handoff_from_final_demo
                 "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
             ),
             (
+                "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "start backend-device-demo before device checks: "
+                "make backend-device-demo; rerun make mobile-deploy-preflight"
+            ),
+            (
                 "provide MESHY_API_KEY in final-resources.env; "
                 "rerun make final-resources-preflight"
             ),
@@ -312,13 +324,26 @@ def test_final_handoff_index_promotes_provider_and_print_handoff_from_final_demo
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
+    lan_backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_device_demo_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
 
     assert actions[0] == (
         "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
+    assert len(actions) <= 6
+    assert lan_backend_url_action in actions
+    assert backend_device_demo_action in actions
     assert provider_action in actions
     assert print_action in actions
+    assert actions.index(lan_backend_url_action) < actions.index(provider_action)
+    assert actions.index(backend_device_demo_action) < actions.index(provider_action)
     assert actions.index(provider_action) < actions.index(print_action)
     assert actions.index(print_action) < actions.index(
         "make final-configured-preflight; rerun make configured-live-evidence-bundle"

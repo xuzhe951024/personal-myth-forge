@@ -79,6 +79,9 @@ FINAL_HANDOFF_PRINT_ACTION_MARKERS = (
     "print_quote",
     "/v1/print-quotes",
 )
+FINAL_HANDOFF_LAN_BACKEND_URL_MARKER = "iphone-reachable lan url"
+FINAL_HANDOFF_BACKEND_DEVICE_DEMO_MARKER = "backend-device-demo"
+FINAL_HANDOFF_SOURCE_OPERATOR_ACTION_LIMIT = 6
 
 
 @dataclass(frozen=True)
@@ -257,7 +260,7 @@ def _saved_report_operator_actions(payload: dict[str, Any]) -> list[str]:
     next_action = _saved_report_operator_action(payload)
     actions = [next_action] if next_action else []
     actions.extend(_bounded_operator_actions(payload.get("operator_actions")))
-    return _dedupe(actions)[:4]
+    return _dedupe(actions)[:FINAL_HANDOFF_SOURCE_OPERATOR_ACTION_LIMIT]
 
 
 def _saved_report_operator_action(payload: dict[str, Any]) -> str:
@@ -453,9 +456,10 @@ def _bounded_operator_actions(raw_actions: Any) -> list[str]:
     for action in raw_actions:
         if isinstance(action, str) and action.strip():
             actions.append(action.strip()[:240])
-        if len(actions) == 4:
-            break
-    return prefer_guarded_print_quote_handoff_actions(actions)[:4]
+    actions = prefer_guarded_print_quote_handoff_actions(actions)
+    return _prioritize_final_handoff_operator_actions(
+        _dedupe(actions)
+    )[:FINAL_HANDOFF_SOURCE_OPERATOR_ACTION_LIMIT]
 
 
 def _first_operator_action(report: dict[str, Any]) -> str:
@@ -623,6 +627,7 @@ def _local_lane_handoff_actions(local_sources: list[dict[str, Any]]) -> list[str
         if not (
             _is_provider_handoff_action(stripped)
             or _is_print_handoff_action(stripped)
+            or _is_device_handoff_action(stripped)
         ):
             continue
         selected.append(f"final_demo_launch_local: {stripped}")
@@ -647,6 +652,18 @@ def _is_provider_handoff_action(action: str) -> bool:
 def _is_print_handoff_action(action: str) -> bool:
     lowered = action.lower()
     return any(marker in lowered for marker in FINAL_HANDOFF_PRINT_ACTION_MARKERS)
+
+
+def _is_device_handoff_action(action: str) -> bool:
+    return _is_lan_backend_url_action(action) or _is_backend_device_demo_action(action)
+
+
+def _is_lan_backend_url_action(action: str) -> bool:
+    return FINAL_HANDOFF_LAN_BACKEND_URL_MARKER in action.lower()
+
+
+def _is_backend_device_demo_action(action: str) -> bool:
+    return FINAL_HANDOFF_BACKEND_DEVICE_DEMO_MARKER in action.lower()
 
 
 def _source_detail(source: dict[str, Any]) -> str:
@@ -807,13 +824,23 @@ def _prioritize_final_handoff_operator_actions(actions: list[str]) -> list[str]:
         return []
     first_actions = actions[:1]
     rest = actions[1:]
+    lan_backend_url_actions = [
+        action for action in rest if _is_lan_backend_url_action(action)
+    ]
+    backend_device_demo_actions = [
+        action for action in rest if _is_backend_device_demo_action(action)
+    ]
+    device_actions = [
+        *lan_backend_url_actions,
+        *(backend_device_demo_actions if lan_backend_url_actions else []),
+    ]
     provider_actions = [
         action for action in rest if _is_provider_handoff_action(action)
     ]
     print_actions = [action for action in rest if _is_print_handoff_action(action)]
-    priority_actions = set(provider_actions + print_actions)
+    priority_actions = set(device_actions + provider_actions + print_actions)
     remaining = [action for action in rest if action not in priority_actions]
-    return first_actions + provider_actions + print_actions + remaining
+    return first_actions + device_actions + provider_actions + print_actions + remaining
 
 
 def _final_handoff_operator_action(action: str) -> str:
