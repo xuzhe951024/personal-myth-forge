@@ -481,6 +481,15 @@ def add_mobile_deploy_validation_command(action: str) -> str:
 
 def _add_mobile_deploy_validation_to_command(action: str) -> str:
     command_part = action.strip()
+    duplicate_validation = (
+        f"; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}; "
+        f"rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+    )
+    while duplicate_validation in command_part:
+        command_part = command_part.replace(
+            duplicate_validation,
+            f"; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}",
+        )
     if "; rerun " in command_part:
         return command_part
     if command_part.endswith(MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS):
