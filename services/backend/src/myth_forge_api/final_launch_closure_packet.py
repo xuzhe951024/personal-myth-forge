@@ -28,6 +28,7 @@ from myth_forge_api.ios_device_evidence_bundle import (
 )
 from myth_forge_api.operator_actions import (
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+    FINAL_RESOURCES_PREFLIGHT_COMMAND,
     MOBILE_DEPLOY_PREFLIGHT_COMMAND,
     XCODE_BUILD_GATE_ACTION,
     normalize_operator_action,
@@ -783,7 +784,16 @@ def _operator_actions(
         normalized_actions,
         first_blocker=first_blocker,
     )
-    return _drop_bare_mobile_deploy_preflight_when_validated(promoted_actions)
+    device_pruned_actions = _drop_bare_mobile_deploy_preflight_when_validated(
+        promoted_actions
+    )
+    specific_actions = _drop_bare_validation_targets_when_specific_actions_exist(
+        device_pruned_actions
+    )
+    return _promote_specific_device_action_for_first_blocker(
+        specific_actions,
+        first_blocker=first_blocker,
+    )
 
 
 def _drop_bare_mobile_deploy_preflight_when_validated(actions: list[str]) -> list[str]:
@@ -798,6 +808,60 @@ def _drop_bare_mobile_deploy_preflight_when_validated(actions: list[str]) -> lis
         for action in actions
         if _operator_action_root(action) != MOBILE_DEPLOY_PREFLIGHT_COMMAND
     ]
+
+
+def _drop_bare_validation_targets_when_specific_actions_exist(
+    actions: list[str],
+) -> list[str]:
+    has_specific_resource_action = any(
+        _operator_action_root(action) != FINAL_RESOURCES_PREFLIGHT_COMMAND
+        and f"rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}" in _operator_action_root(action)
+        for action in actions
+    )
+    has_specific_device_action = any(
+        _operator_action_root(action) != "make ios-device-launch-rehearsal"
+        and _is_specific_ios_device_action(action)
+        for action in actions
+    )
+    return [
+        action
+        for action in actions
+        if not (
+            _operator_action_root(action) == FINAL_RESOURCES_PREFLIGHT_COMMAND
+            and has_specific_resource_action
+        )
+        and not (
+            _operator_action_root(action) == "make ios-device-launch-rehearsal"
+            and has_specific_device_action
+        )
+    ]
+
+
+def _is_specific_ios_device_action(action: str) -> bool:
+    root = _operator_action_root(action)
+    return (
+        "rerun make mobile-deploy-preflight" in root
+        or "make backend-device-demo" in root
+        or "make mobile-xcode-build-evidence" in root
+        or "mobile-write-deploy-config-auto" in root
+    )
+
+
+def _promote_specific_device_action_for_first_blocker(
+    actions: list[str],
+    *,
+    first_blocker: dict[str, Any] | None,
+) -> list[str]:
+    command = str((first_blocker or {}).get("command", "")).strip()
+    if not _is_device_handoff_command(command):
+        return actions
+    for index, action in enumerate(actions):
+        if not _is_specific_ios_device_action(action):
+            continue
+        if index == 0:
+            return actions
+        return [action, *actions[:index], *actions[index + 1 :]]
+    return actions
 
 
 def _promote_first_blocker_device_action(

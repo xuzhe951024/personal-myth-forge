@@ -94,14 +94,14 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     )
     operator_actions = report["operator_actions"]
     actions = " ".join(operator_actions)
-    assert "make final-resources-preflight" in operator_actions
+    assert "make final-resources-preflight" not in operator_actions
     guarded_print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
         "rerun make print-fulfillment-readiness"
     )
     assert guarded_print_action in operator_actions
     assert "make print-fulfillment-readiness" not in operator_actions
-    assert "make ios-device-launch-rehearsal" in operator_actions
+    assert "make ios-device-launch-rehearsal" not in operator_actions
     assert "make final-resource-apply-preview" in operator_actions
     assert "make final-apply-resources" not in operator_actions
     assert not any(action.startswith("run make ") for action in operator_actions)
@@ -129,7 +129,7 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     )
     assert "provide MESHY_API_KEY" not in operator_actions
     assert "provide DEVELOPMENT_TEAM" not in operator_actions
-    assert "make ios-device-launch-rehearsal" in actions
+    assert "make ios-device-launch-rehearsal" not in actions
     assert "make configured-live-evidence-bundle" in actions
     assert report["commands"][:6] == [
         "make final-resource-requirements",
@@ -644,15 +644,20 @@ def test_final_launch_closure_packet_operator_actions_start_with_promoted_device
     )
     actions = result.report["operator_actions"]
     device_action = "make ios-device-launch-rehearsal"
+    specific_device_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
     provider_action = (
         "provide MESHY_API_KEY in final-resources.env; "
         "rerun make final-resources-preflight"
     )
 
     assert result.report["next_action"]["command"] == device_action
-    assert actions[0] == device_action
+    assert device_action not in actions
+    assert actions[0] == specific_device_action
     assert provider_action in actions
-    assert actions.index(device_action) < actions.index(provider_action)
+    assert actions.index(specific_device_action) < actions.index(provider_action)
 
 
 def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
