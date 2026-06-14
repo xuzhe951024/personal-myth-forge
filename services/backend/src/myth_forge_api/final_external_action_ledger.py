@@ -880,6 +880,7 @@ def _promoted_device_blocker(
     command = str(first_action.get("command", "")).strip()
     if not _is_device_handoff_command(command):
         return None
+    validation_command = str(first_action.get("validation_command", "")).strip()
     blocker = {
         "id": str(first_action.get("id", "device_action")),
         "label": str(first_action.get("label", "Device action")),
@@ -887,12 +888,11 @@ def _promoted_device_blocker(
         "classification": str(
             first_action.get("classification") or "device_runtime_blocked"
         ),
-        "command": command,
+        "command": _command_with_validation(command, validation_command),
         "detail": str(first_action.get("detail", "")),
         "group_id": "device_runtime_actions",
         "group_label": "Device runtime actions",
     }
-    validation_command = str(first_action.get("validation_command", "")).strip()
     if validation_command:
         blocker["validation_command"] = validation_command
     return blocker
@@ -954,6 +954,15 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     if first_blocker is None:
         return None
     return {**first_blocker, "source": "first_blocker"}
+
+
+def _command_with_validation(command: str, validation_command: str) -> str:
+    if not command or not validation_command:
+        return command
+    validation_suffix = f"; rerun {validation_command}"
+    if validation_suffix in command:
+        return command
+    return f"{command}{validation_suffix}"
 
 
 def _operator_actions(
