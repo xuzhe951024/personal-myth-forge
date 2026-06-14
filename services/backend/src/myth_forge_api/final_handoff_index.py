@@ -830,10 +830,16 @@ def _prioritize_final_handoff_operator_actions(actions: list[str]) -> list[str]:
     backend_device_demo_actions = [
         action for action in rest if _is_backend_device_demo_action(action)
     ]
-    device_actions = [
-        *lan_backend_url_actions,
-        *(backend_device_demo_actions if lan_backend_url_actions else []),
-    ]
+    if _is_mobile_deploy_handoff_action(first_actions[0]):
+        device_actions = [
+            *backend_device_demo_actions,
+            *lan_backend_url_actions,
+        ]
+    else:
+        device_actions = [
+            *lan_backend_url_actions,
+            *(backend_device_demo_actions if lan_backend_url_actions else []),
+        ]
     provider_actions = [
         action for action in rest if _is_provider_handoff_action(action)
     ]
@@ -841,6 +847,15 @@ def _prioritize_final_handoff_operator_actions(actions: list[str]) -> list[str]:
     priority_actions = set(device_actions + provider_actions + print_actions)
     remaining = [action for action in rest if action not in priority_actions]
     return first_actions + device_actions + provider_actions + print_actions + remaining
+
+
+def _is_mobile_deploy_handoff_action(action: str) -> bool:
+    root, _detail_suffix = _split_detail_suffix(action)
+    return (
+        "rerun make mobile-deploy-preflight" in root
+        and not _is_backend_device_demo_action(root)
+        and "mobile-xcode-build" not in root
+    )
 
 
 def _final_handoff_operator_action(action: str) -> str:
