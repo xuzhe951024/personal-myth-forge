@@ -587,7 +587,10 @@ def _generated_3d_capability(
         child_command, child_validation_command, child_requires_consent = (
             _report_next_action_metadata(live_provider_evidence)
         )
-        command = child_command or command
+        command = (
+            _operator_action_with_validation(child_command, child_validation_command)
+            or command
+        )
         validation_command = child_validation_command or None
         requires_live_provider_consent = child_requires_consent
     return _capability(
@@ -638,7 +641,10 @@ def _ai_agent_npc_capability(
         child_command, child_validation_command, child_requires_consent = (
             _report_next_action_metadata(live_provider_evidence)
         )
-        command = child_command or command
+        command = (
+            _operator_action_with_validation(child_command, child_validation_command)
+            or command
+        )
         validation_command = child_validation_command or None
         requires_live_provider_consent = child_requires_consent
     return _capability(
@@ -682,7 +688,10 @@ def _print_fulfillment_capability(report: dict[str, Any]) -> dict[str, Any]:
             first_blocker.get("detail", "Print fulfillment readiness is not ready.")
         )
         child_command, child_validation_command = _report_next_action_command(report)
-        command = child_command or command
+        command = (
+            _operator_action_with_validation(child_command, child_validation_command)
+            or command
+        )
         validation_command = child_validation_command
         next_action = report.get("next_action")
         if isinstance(next_action, dict):
