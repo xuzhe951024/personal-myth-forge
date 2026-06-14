@@ -537,6 +537,62 @@ def test_final_local_report_refresh_operator_actions_prioritize_backend_device_d
     assert actions.index(backend_device_demo) < actions.index(key_action)
 
 
+def test_final_local_report_refresh_operator_actions_prioritize_backend_url_after_backend_demo() -> None:
+    deploy_writer = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_device_demo = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "command": deploy_writer,
+            },
+            {
+                "id": "provider_handoff",
+                "status": "blocked",
+                "command": provider_action,
+            },
+            {
+                "id": "print_fulfillment_readiness",
+                "status": "blocked",
+                "command": print_action,
+            },
+            {
+                "id": "final_demo_launch_local",
+                "status": "blocked",
+                "command": deploy_writer,
+                "report_operator_actions": [
+                    backend_device_demo,
+                    backend_url_action,
+                ],
+            },
+        ]
+    )
+
+    assert actions[:3] == [deploy_writer, backend_device_demo, backend_url_action]
+    assert actions.index(backend_url_action) < actions.index(provider_action)
+    assert actions.index(backend_url_action) < actions.index(print_action)
+
+
 def test_final_local_report_refresh_operator_actions_promote_final_demo_handoff_actions() -> None:
     live_child_action = (
         "make final-resource-apply-preview; rerun make live-provider-evidence"
