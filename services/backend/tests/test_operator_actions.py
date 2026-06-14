@@ -406,7 +406,8 @@ def test_prefers_guarded_print_quote_action_over_legacy_variants() -> None:
 
 def test_print_quote_preference_uses_request_preflight_before_provider_call() -> None:
     request_action = (
-        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
     guarded_action = (

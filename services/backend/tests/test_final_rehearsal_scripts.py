@@ -1150,6 +1150,25 @@ def test_print_quote_configured_make_target_dry_run_uses_guarded_cli() -> None:
     assert os.access(guard, os.X_OK)
 
 
+def test_print_quote_request_configured_make_target_dry_run_uses_safe_writer() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "print-quote-request-configured"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    output = result.stdout
+    assert "write_print_quote_request_configured.sh" in output
+    assert "require_print_provider_consent.sh" not in output
+    writer = repo_root / "services/backend/scripts/write_print_quote_request_configured.sh"
+    assert writer.exists()
+
+
 @pytest.mark.parametrize(
     ("target", "script_name", "accepted_message", "output_path"),
     PROVIDER_HANDOFF_SAFE_WRAPPERS,

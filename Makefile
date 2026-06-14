@@ -152,6 +152,11 @@ final-showcase-readiness:
 print-fulfillment-readiness:
 	@services/backend/scripts/write_print_fulfillment_readiness.sh
 
+.PHONY: print-quote-request-configured
+
+print-quote-request-configured:
+	@services/backend/scripts/write_print_quote_request_configured.sh
+
 .PHONY: print-quote-configured
 
 print-quote-configured:

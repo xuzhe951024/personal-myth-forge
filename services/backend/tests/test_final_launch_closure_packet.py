@@ -263,7 +263,8 @@ def test_final_launch_closure_packet_prefers_validated_device_child_actions() ->
 
 def test_final_launch_closure_packet_prefers_print_request_before_provider_quote() -> None:
     request_action = (
-        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
     print_action = (

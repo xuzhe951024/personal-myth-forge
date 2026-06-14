@@ -916,7 +916,8 @@ def test_final_showcase_readiness_blocks_missing_configured_print_quote_request(
     assert row["status"] == "blocked"
     assert row["classification"] == "missing_configured_treatstock_quote_request"
     assert row["command"] == (
-        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
     assert row["validation_command"] == "make print-fulfillment-readiness"
@@ -1651,7 +1652,8 @@ def test_final_showcase_readiness_prefers_complete_provider_chain() -> None:
 
 def test_final_showcase_readiness_prefers_print_request_before_provider_quote() -> None:
     request_action = (
-        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
     print_action = (

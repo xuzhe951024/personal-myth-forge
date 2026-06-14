@@ -1376,6 +1376,67 @@ def test_cli_print_fulfillment_readiness_writes_report_and_returns_result_code(
     assert report["status"] == "partial"
 
 
+def test_cli_print_quote_request_configured_writes_valid_request(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "print-quote-request-configured.json"
+
+    def fail_provider_call(settings):
+        raise AssertionError("request writer must not build a print provider")
+
+    monkeypatch.setattr("myth_forge_api.cli.build_print_provider", fail_provider_call)
+
+    exit_code = main(
+        [
+            "print-quote-request-configured",
+            "--source-asset-uri",
+            "https://assets.example/relic.glb",
+            "--print-candidate-uri",
+            "https://assets.example/relic.3mf",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    request = PrintQuoteRequest.model_validate(payload)
+    assert exit_code == 0
+    assert request.print_candidate.provider == "treatstock"
+    assert request.print_candidate.source_asset_uri == "https://assets.example/relic.glb"
+    assert request.print_candidate.uri == "https://assets.example/relic.3mf"
+    assert request.print_candidate.format == "3mf"
+    assert request.print_candidate.requires_user_approval is True
+    assert request.quantity == 1
+    assert request.material == "standard_resin"
+    assert request.finish == "matte"
+    assert request.ship_to_country == "US"
+
+
+def test_cli_print_quote_request_configured_rejects_non_http_candidate(
+    tmp_path,
+    capsys,
+) -> None:
+    output_file = tmp_path / "print-quote-request-configured.json"
+
+    exit_code = main(
+        [
+            "print-quote-request-configured",
+            "--source-asset-uri",
+            "https://assets.example/relic.glb",
+            "--print-candidate-uri",
+            "local://print-candidates/relic.3mf",
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "requires an http or https print candidate URI" in captured.err
+    assert not output_file.exists()
+
+
 def test_cli_print_quote_configured_requires_explicit_allow(
     tmp_path,
     monkeypatch,

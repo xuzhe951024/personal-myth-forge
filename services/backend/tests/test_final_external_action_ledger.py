@@ -288,7 +288,8 @@ def test_external_action_ledger_uses_concrete_provider_and_print_handoff_actions
 
 def test_external_action_ledger_prefers_print_request_before_provider_quote() -> None:
     request_action = (
-        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
     print_action = (

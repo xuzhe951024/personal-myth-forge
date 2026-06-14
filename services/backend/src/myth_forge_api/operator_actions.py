@@ -49,8 +49,10 @@ CONFIGURED_PRINT_QUOTE_ACTION = (
     "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
 )
 PRINT_FULFILLMENT_READINESS_COMMAND = "make print-fulfillment-readiness"
+CONFIGURED_PRINT_QUOTE_REQUEST_MAKE_TARGET = "make print-quote-request-configured"
 CONFIGURED_PRINT_QUOTE_REQUEST_ACTION = (
-    "prepare services/backend/.local/print-quote-request-configured.json"
+    "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+    f"{CONFIGURED_PRINT_QUOTE_REQUEST_MAKE_TARGET}"
 )
 CONFIGURED_PRINT_QUOTE_REQUEST_VALIDATED_ACTION = (
     f"{CONFIGURED_PRINT_QUOTE_REQUEST_ACTION}; rerun "
@@ -366,6 +368,7 @@ def _is_configured_print_quote_request_action(action: str) -> bool:
     return (
         command_root == CONFIGURED_PRINT_QUOTE_REQUEST_ACTION
         or command_root.endswith(f": {CONFIGURED_PRINT_QUOTE_REQUEST_ACTION}")
+        or command_root.endswith(CONFIGURED_PRINT_QUOTE_REQUEST_MAKE_TARGET)
     )
 
 

@@ -5827,7 +5827,7 @@ private func testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload() throws
     try expectEqual(readiness.nextAction?.source, "first_blocker")
     try expectEqual(
         readiness.nextAction?.command,
-        "prepare services/backend/.local/print-quote-request-configured.json; rerun make print-fulfillment-readiness"
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... make print-quote-request-configured; rerun make print-fulfillment-readiness"
     )
     try expectEqual(readiness.nextAction?.requiresCostConsent, true)
     try expectEqual(
@@ -5850,7 +5850,7 @@ private func testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness() throws
     try expectContains(text, "configured_treatstock_quote: partial")
     try expectContains(
         text,
-        "Next action: prepare services/backend/.local/print-quote-request-configured.json; rerun make print-fulfillment-readiness"
+        "Next action: PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... make print-quote-request-configured; rerun make print-fulfillment-readiness"
     )
     try expectNotContains(text, "Next action: PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured")
     try expectContains(text, "cost consent required")
@@ -6138,7 +6138,8 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
                 "make final-showcase-readiness",
                 "make visual-regression-local; rerun make print-fulfillment-readiness",
                 (
-                    "prepare services/backend/.local/print-quote-request-configured.json; "
+                    "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+                    + "make print-quote-request-configured; "
                     + "rerun make print-fulfillment-readiness"
                 ),
                 "extra action that should stay hidden",
@@ -6155,7 +6156,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
     try expectContains(text, "make provider-handoff")
     try expectContains(text, "run make final-resource-init")
     try expectContains(text, "make final-showcase-readiness")
-    try expectContains(text, "prepare services/backend/.local/print-quote-request-configured.json")
+    try expectContains(text, "make print-quote-request-configured")
     try expectContains(text, "make print-fulfillment-readiness")
     try expectNotContains(
         text,
@@ -8216,7 +8217,8 @@ private func finalDemoLaunchPayload(
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
     printFulfillmentReadinessAction: String = (
-        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        + "make print-quote-request-configured; "
         + "rerun make print-fulfillment-readiness"
     ),
     finalResourceApplyPreviewStatus: String = "missing",
@@ -14324,7 +14326,8 @@ private func finalDemoLaunchReport(
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
     printFulfillmentReadinessAction: String = (
-        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        + "make print-quote-request-configured; "
         + "rerun make print-fulfillment-readiness"
     ),
     finalResourceApplyPreviewStatus: String = "missing",

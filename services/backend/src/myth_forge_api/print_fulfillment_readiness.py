@@ -612,7 +612,10 @@ def _commands() -> list[str]:
 
 
 def _configured_quote_request_command() -> str:
-    return "prepare services/backend/.local/print-quote-request-configured.json"
+    return (
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "make print-quote-request-configured"
+    )
 
 
 def _configured_quote_command() -> str:

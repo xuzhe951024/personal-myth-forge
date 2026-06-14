@@ -70,7 +70,8 @@ CONFIGURED_PRINT_QUOTE_VALIDATED_ACTION = (
     f"{CONFIGURED_PRINT_QUOTE_ACTION}; rerun {PRINT_FULFILLMENT_READINESS_ACTION}"
 )
 CONFIGURED_PRINT_QUOTE_REQUEST_VALIDATED_ACTION = (
-    "prepare services/backend/.local/print-quote-request-configured.json; "
+    "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+    "make print-quote-request-configured; "
     f"rerun {PRINT_FULFILLMENT_READINESS_ACTION}"
 )
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(

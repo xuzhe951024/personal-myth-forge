@@ -247,6 +247,17 @@ def main(argv: Sequence[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 output_path=args.output,
             )
+        if args.command == "print-quote-request-configured":
+            return _print_quote_request_configured(
+                source_asset_uri=args.source_asset_uri,
+                print_candidate_uri=args.print_candidate_uri,
+                candidate_format=args.format,
+                quantity=args.quantity,
+                material=args.material,
+                finish=args.finish,
+                ship_to_country=args.ship_to_country,
+                output_path=args.output,
+            )
         if args.command == "print-quote-configured":
             return _print_quote_configured(
                 request_path=args.request,
@@ -470,6 +481,24 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     print_fulfillment_readiness_parser.add_argument("--repo-root", default=None)
     print_fulfillment_readiness_parser.add_argument("--output", default=None)
+
+    print_quote_request_configured_parser = subcommands.add_parser(
+        "print-quote-request-configured"
+    )
+    print_quote_request_configured_parser.add_argument("--source-asset-uri", required=True)
+    print_quote_request_configured_parser.add_argument("--print-candidate-uri", required=True)
+    print_quote_request_configured_parser.add_argument("--format", default="3mf")
+    print_quote_request_configured_parser.add_argument("--quantity", type=int, default=1)
+    print_quote_request_configured_parser.add_argument(
+        "--material",
+        default="standard_resin",
+    )
+    print_quote_request_configured_parser.add_argument("--finish", default="matte")
+    print_quote_request_configured_parser.add_argument("--ship-to-country", default="US")
+    print_quote_request_configured_parser.add_argument(
+        "--output",
+        default=".local/print-quote-request-configured.json",
+    )
 
     print_quote_configured_parser = subcommands.add_parser("print-quote-configured")
     print_quote_configured_parser.add_argument(
@@ -886,6 +915,85 @@ def _print_fulfillment_readiness(
     )
     _write_json_payload(result.report, output_path)
     return result.exit_code
+
+
+def _print_quote_request_configured(
+    *,
+    source_asset_uri: str,
+    print_candidate_uri: str,
+    candidate_format: str,
+    quantity: int,
+    material: str,
+    finish: str,
+    ship_to_country: str,
+    output_path: str | None,
+) -> int:
+    try:
+        request = _configured_print_quote_request(
+            source_asset_uri=source_asset_uri,
+            print_candidate_uri=print_candidate_uri,
+            candidate_format=candidate_format,
+            quantity=quantity,
+            material=material,
+            finish=finish,
+            ship_to_country=ship_to_country,
+        )
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    _write_json_payload(request.model_dump(mode="json"), output_path)
+    return 0
+
+
+def _configured_print_quote_request(
+    *,
+    source_asset_uri: str,
+    print_candidate_uri: str,
+    candidate_format: str,
+    quantity: int,
+    material: str,
+    finish: str,
+    ship_to_country: str,
+) -> PrintQuoteRequest:
+    normalized_format = candidate_format.lower()
+    if not _is_http_uri(source_asset_uri):
+        raise ValueError(
+            "print-quote-request-configured requires an http or https source asset URI."
+        )
+    if not _is_http_uri(print_candidate_uri):
+        raise ValueError(
+            "print-quote-request-configured requires an http or https print candidate URI."
+        )
+    if normalized_format not in {"stl", "ply", "3mf"}:
+        raise ValueError("print-quote-request-configured requires format stl, ply, or 3mf.")
+    return PrintQuoteRequest(
+        print_candidate={
+            "kind": "print_asset",
+            "source_asset_uri": source_asset_uri,
+            "provider": "treatstock",
+            "format": normalized_format,
+            "uri": print_candidate_uri,
+            "requires_user_approval": True,
+            "approval_reason": (
+                "Configured Treatstock quote request generated locally; "
+                "review before provider call."
+            ),
+            "printability_notes": [
+                "request writer made no live provider call",
+                "quote adapter uploads only STL, PLY, or 3MF URLs",
+                "manual review remains required before fulfillment",
+            ],
+        },
+        quantity=quantity,
+        material=material,
+        finish=finish,
+        ship_to_country=ship_to_country,
+    )
+
+
+def _is_http_uri(value: str) -> bool:
+    lowered = value.lower()
+    return lowered.startswith("http://") or lowered.startswith("https://")
 
 
 def _print_quote_configured(
