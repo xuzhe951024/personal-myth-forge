@@ -374,9 +374,30 @@ def _device_action_command(
         return report_next_action["command"]
     if check.get("status") == "ready":
         return COMMAND
-    if index < len(raw_actions):
-        return _action_command(raw_actions[index])
+    raw_action = _raw_action_for_check(
+        check=check,
+        index=index,
+        raw_actions=raw_actions,
+    )
+    if raw_action is not None:
+        return _action_command(raw_action)
     return check.get("detail", "review make mobile-deploy-preflight output")
+
+
+def _raw_action_for_check(
+    *,
+    check: dict[str, str],
+    index: int,
+    raw_actions: list[str],
+) -> str | None:
+    if (
+        check.get("id") == "backend_base_url"
+        and MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION in raw_actions
+    ):
+        return MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION
+    if index < len(raw_actions):
+        return raw_actions[index]
+    return None
 
 
 def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None:

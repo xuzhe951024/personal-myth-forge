@@ -171,6 +171,16 @@ def test_preflight_evidence_suggests_auto_writer_for_team_and_backend_url(
         "source": "first_blocker",
     }
     assert result.report["operator_actions"] == [expected_command]
+    bundle_actions = {
+        action["id"]: action
+        for action in result.report["device_action_bundle"]["actions"]
+    }
+    assert bundle_actions["backend_base_url"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    assert bundle_actions["backend_base_url"]["next_action"]["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
 
 
 def test_preflight_evidence_next_action_promotes_validation_aware_writer_command(
