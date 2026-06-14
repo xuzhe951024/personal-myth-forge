@@ -383,6 +383,7 @@ Bridge deliverable:
 - P0.469 Safe Make wrappers accept blocked device handoff reports while writing local evidence
 - P0.470 Safe Make wrappers accept blocked provider and resource handoff reports while writing local evidence
 - P0.471 Safe Make wrapper accepts blocked print fulfillment readiness while writing local evidence
+- P0.472 Safe Make wrapper accepts blocked final resource fill guide while writing JSON and Markdown evidence
 
 ## P1: Mobile Vertical Slice
 

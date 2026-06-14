@@ -40,6 +40,12 @@ PROVIDER_HANDOFF_SAFE_WRAPPERS = [
         "services/backend/.local/final-resource-apply-preview.json",
     ),
     (
+        "final-resource-fill-guide",
+        "write_final_resource_fill_guide.sh",
+        "accepted final resource fill guide exit code 2",
+        "services/backend/.local/final-resource-fill-guide.json",
+    ),
+    (
         "final-configured-preflight",
         "write_final_configured_preflight.sh",
         "accepted final configured preflight exit code 2",
@@ -702,7 +708,7 @@ def test_final_local_report_refresh_local_make_target_dry_run_uses_wrapper() -> 
     assert "write_final_local_report_refresh.sh" in result.stdout
 
 
-def test_final_resource_fill_guide_make_target_dry_run_uses_cli() -> None:
+def test_final_resource_fill_guide_make_target_dry_run_uses_wrapper() -> None:
     repo_root = Path(__file__).resolve().parents[3]
 
     result = subprocess.run(
@@ -717,10 +723,14 @@ def test_final_resource_fill_guide_make_target_dry_run_uses_cli() -> None:
     makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
     assert ".PHONY: final-resource-fill-guide" in makefile
     assert "final-resource-fill-guide:" in makefile
-    assert "myth_forge_api.cli final-resource-fill-guide" in result.stdout
-    assert "--repo-root ../.." in result.stdout
-    assert "--output .local/final-resource-fill-guide.json" in result.stdout
-    assert "--markdown-output .local/final-resource-fill-guide.md" in result.stdout
+    assert "write_final_resource_fill_guide.sh" in result.stdout
+    wrapper = repo_root / "services/backend/scripts/write_final_resource_fill_guide.sh"
+    assert os.access(wrapper, os.X_OK)
+    wrapper_text = wrapper.read_text(encoding="utf-8")
+    assert "myth_forge_api.cli final-resource-fill-guide" in wrapper_text
+    assert "--repo-root ../.." in wrapper_text
+    assert "--output .local/final-resource-fill-guide.json" in wrapper_text
+    assert "--markdown-output .local/final-resource-fill-guide.md" in wrapper_text
 
 
 def test_final_external_action_ledger_make_target_dry_run_uses_wrapper() -> None:

@@ -870,6 +870,19 @@ FEATURES = (
                 "services/backend/src/myth_forge_api/final_resource_fill_guide.py",
                 "first_blocker",
             ),
+            SourceRequirement("Makefile", "write_final_resource_fill_guide.sh"),
+            SourceRequirement(
+                "services/backend/scripts/write_final_resource_fill_guide.sh",
+                "accepted final resource fill guide exit code",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_resource_fill_guide.sh",
+                ".local/final-resource-fill-guide.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_resource_fill_guide.sh",
+                ".local/final-resource-fill-guide.md",
+            ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
                 "FinalResourceRequirementsReport",

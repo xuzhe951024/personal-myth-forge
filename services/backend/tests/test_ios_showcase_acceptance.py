@@ -340,6 +340,7 @@ def test_provider_handoff_make_source_gates_require_safe_wrappers() -> None:
     assert ("Makefile", "write_resource_handoff.sh") in resource_requirements
     assert ("Makefile", "write_final_resources_preflight.sh") in resource_requirements
     assert ("Makefile", "write_final_resource_requirements.sh") in resource_requirements
+    assert ("Makefile", "write_final_resource_fill_guide.sh") in resource_requirements
     assert (
         "services/backend/scripts/write_resource_handoff.sh",
         ".local/resource-handoff.json",
@@ -351,6 +352,14 @@ def test_provider_handoff_make_source_gates_require_safe_wrappers() -> None:
     assert (
         "services/backend/scripts/write_final_resource_requirements.sh",
         ".local/final-resource-requirements.json",
+    ) in resource_requirements
+    assert (
+        "services/backend/scripts/write_final_resource_fill_guide.sh",
+        ".local/final-resource-fill-guide.json",
+    ) in resource_requirements
+    assert (
+        "services/backend/scripts/write_final_resource_fill_guide.sh",
+        ".local/final-resource-fill-guide.md",
     ) in resource_requirements
     assert ("Makefile", "write_final_resource_apply_preview.sh") in apply_requirements
     assert (
@@ -1037,6 +1046,32 @@ def test_ios_showcase_acceptance_fails_missing_final_resource_requirements_witho
     assert "data:image" not in report_text
 
 
+def test_ios_showcase_acceptance_fails_missing_final_resource_fill_guide_wrapper_without_absolute_paths(
+    tmp_path,
+) -> None:
+    write_complete_ios_showcase_fixture(tmp_path)
+    (
+        tmp_path / "services/backend/scripts/write_final_resource_fill_guide.sh"
+    ).unlink()
+
+    result = run_ios_showcase_acceptance(repo_root=tmp_path)
+    report_text = json.dumps(result.report)
+    features = {item["id"]: item for item in result.report["required_features"]}
+
+    assert result.exit_code == 1
+    assert result.report["status"] == "failed"
+    assert result.report["summary"] == {"passed": 50, "failed": 1}
+    assert features["final_resource_requirements_manifest"]["status"] == "failed"
+    assert {
+        "file": "services/backend/scripts/write_final_resource_fill_guide.sh",
+        "contains": "accepted final resource fill guide exit code",
+    } in features["final_resource_requirements_manifest"]["missing"]
+    assert str(tmp_path) not in report_text
+    assert "/Users/" not in report_text
+    assert "sk-" not in report_text
+    assert "data:image" not in report_text
+
+
 def test_ios_showcase_acceptance_fails_missing_final_resource_init_script_without_absolute_paths(
     tmp_path,
 ) -> None:
@@ -1655,6 +1690,13 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "build_final_resource_fill_guide_report final_resource_fill_guide_report "
             "first_blocker"
         ),
+        "services/backend/scripts/write_final_resource_fill_guide.sh": (
+            "accepted final resource fill guide exit code $status "
+            "services/backend/.local/final-resource-fill-guide.json "
+            "services/backend/.local/final-resource-fill-guide.md "
+            "myth_forge_api.cli final-resource-fill-guide "
+            '"$status" -eq 2'
+        ),
         "services/backend/src/myth_forge_api/final_showcase_readiness.py": (
             "build_final_showcase_readiness_report final_showcase_readiness_report "
             "next_action device_action_bundle _device_action_bundle "
@@ -1720,6 +1762,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "write_provider_handoff.sh write_resource_handoff.sh "
             "write_final_resources_preflight.sh "
             "write_final_resource_requirements.sh "
+            "write_final_resource_fill_guide.sh "
             "write_final_resource_apply_preview.sh "
             "write_final_configured_preflight.sh "
             "write_final_configured_evidence_plan.sh "
