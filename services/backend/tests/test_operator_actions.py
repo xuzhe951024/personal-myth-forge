@@ -152,6 +152,43 @@ def test_prefers_writer_over_generic_ios_deploy_config_action() -> None:
     ]
 
 
+def test_prefers_iphone_reachable_backend_url_over_generic_backend_config() -> None:
+    actions = operator_actions.prefer_iphone_reachable_backend_url_handoff_actions(
+        [
+            (
+                "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            )
+        ]
+    )
+
+    assert actions == [
+        (
+            "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+            "rerun make mobile-deploy-preflight"
+        )
+    ]
+
+
+def test_prefers_iphone_reachable_backend_url_collapses_duplicate_backend_actions() -> None:
+    lan_backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    actions = operator_actions.prefer_iphone_reachable_backend_url_handoff_actions(
+        [
+            (
+                "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            lan_backend_url_action,
+        ]
+    )
+
+    assert actions == [lan_backend_url_action]
+
+
 def test_prefers_detail_writer_over_duplicate_bare_writer_action() -> None:
     bare_writer = (
         "DEVELOPMENT_TEAM=YOUR_TEAM_ID "

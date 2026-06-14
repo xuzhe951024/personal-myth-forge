@@ -32,6 +32,7 @@ from myth_forge_api.operator_actions import (
     MOBILE_DEPLOY_PREFLIGHT_COMMAND,
     XCODE_BUILD_GATE_ACTION,
     normalize_operator_action,
+    prefer_iphone_reachable_backend_url_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
 )
 
@@ -783,6 +784,9 @@ def _operator_actions(
     promoted_actions = _promote_first_blocker_device_action(
         normalized_actions,
         first_blocker=first_blocker,
+    )
+    promoted_actions = prefer_iphone_reachable_backend_url_handoff_actions(
+        promoted_actions
     )
     device_pruned_actions = _drop_bare_mobile_deploy_preflight_when_validated(
         promoted_actions

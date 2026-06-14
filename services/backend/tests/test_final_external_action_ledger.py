@@ -148,9 +148,13 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
         "rerun make mobile-deploy-preflight"
     ) in operator_actions
     assert (
-        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
         "rerun make mobile-deploy-preflight"
     ) in operator_actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) not in operator_actions
     assert not any(action.startswith("unblock ") for action in operator_actions)
     assert report["safety"] == {
         "commands_run": False,
@@ -217,9 +221,13 @@ def test_external_action_ledger_ios_deploy_actions_use_mobile_preflight(
         "rerun make mobile-deploy-preflight"
     ) in operator_actions
     assert (
-        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
         "rerun make mobile-deploy-preflight"
     ) in operator_actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) not in operator_actions
     assert (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
         "rerun make ios-device-launch-rehearsal"

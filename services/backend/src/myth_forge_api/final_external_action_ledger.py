@@ -18,6 +18,7 @@ from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
 from myth_forge_api.operator_actions import (
     normalize_operator_action,
+    prefer_iphone_reachable_backend_url_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
 )
 from myth_forge_api.print_fulfillment_readiness import (
@@ -992,6 +993,9 @@ def _operator_actions(
     promoted_actions = _promote_first_blocker_device_action(
         normalized_actions,
         first_blocker=first_blocker,
+    )
+    promoted_actions = prefer_iphone_reachable_backend_url_handoff_actions(
+        promoted_actions
     )
     mobile_pruned_actions = _drop_bare_mobile_deploy_preflight_when_validated(
         _prefer_xcode_evidence_action(promoted_actions)

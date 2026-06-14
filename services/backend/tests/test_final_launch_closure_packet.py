@@ -118,9 +118,13 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
         "make mobile-deploy-preflight"
     ) in operator_actions
     assert (
-        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; rerun "
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; rerun "
         "make mobile-deploy-preflight"
     ) in operator_actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; rerun "
+        "make mobile-deploy-preflight"
+    ) not in operator_actions
     assert not any(
         action.startswith(
             "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"

@@ -20,6 +20,9 @@ PRODUCT_BUNDLE_IDENTIFIER_ACTION = (
     "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig"
 )
 BACKEND_BASE_URL_ACTION = "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+GENERIC_BACKEND_BASE_URL_ACTION = (
+    "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig"
+)
 MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION = (
     "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
 )
@@ -29,6 +32,12 @@ MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION = (
 )
 DEPLOYMENT_TEAM_VALIDATED_ACTION = (
     f"{DEPLOYMENT_TEAM_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+)
+GENERIC_BACKEND_BASE_URL_VALIDATED_ACTION = (
+    f"{GENERIC_BACKEND_BASE_URL_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
+)
+BACKEND_BASE_URL_VALIDATED_ACTION = (
+    f"{BACKEND_BASE_URL_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
 )
 BACKEND_DEVICE_DEMO_ACTION = (
     "start backend-device-demo before device checks: make backend-device-demo"
@@ -257,6 +266,27 @@ def prefer_project_local_ios_deploy_handoff_actions(actions: list[str]) -> list[
         if " | " in action and " | " not in filtered[writer_index]:
             filtered[writer_index] = action
     return filtered
+
+
+def prefer_iphone_reachable_backend_url_handoff_actions(
+    actions: list[str],
+) -> list[str]:
+    result: list[str] = []
+    emitted_backend_url_action = False
+    for action in actions:
+        root = _action_command_root(action)
+        if root == GENERIC_BACKEND_BASE_URL_VALIDATED_ACTION:
+            if not emitted_backend_url_action:
+                result.append(BACKEND_BASE_URL_VALIDATED_ACTION)
+                emitted_backend_url_action = True
+            continue
+        if root == BACKEND_BASE_URL_VALIDATED_ACTION:
+            if not emitted_backend_url_action:
+                result.append(action)
+                emitted_backend_url_action = True
+            continue
+        result.append(action)
+    return result
 
 
 def prefer_guarded_print_quote_handoff_actions(actions: list[str]) -> list[str]:
