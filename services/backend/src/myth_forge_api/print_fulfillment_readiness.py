@@ -627,7 +627,7 @@ def _configured_quote_request_command(*, repo_root: Path | None = None) -> str:
             "make print-quote-request-configured"
         )
     return (
-        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
         "make print-quote-request-configured"
     )
 

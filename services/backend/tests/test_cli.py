@@ -1413,6 +1413,76 @@ def test_cli_print_quote_request_configured_writes_valid_request(
     assert request.ship_to_country == "US"
 
 
+def test_cli_print_quote_request_configured_resolves_auto_local_served_uris(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    output_file = tmp_path / "print-quote-request-configured.json"
+    _write_final_demo_launch_local_session(
+        tmp_path,
+        session_id="myth_auto123",
+    )
+    _write_ios_deploy_config(
+        tmp_path,
+        backend_base_url="http://192.168.1.10:8080",
+    )
+
+    def fail_provider_call(settings):
+        raise AssertionError("request writer must not build a print provider")
+
+    monkeypatch.setattr("myth_forge_api.cli.build_print_provider", fail_provider_call)
+
+    exit_code = main(
+        [
+            "print-quote-request-configured",
+            "--source-asset-uri",
+            "auto",
+            "--print-candidate-uri",
+            "auto",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    payload = json.loads(output_file.read_text(encoding="utf-8"))
+    request = PrintQuoteRequest.model_validate(payload)
+    assert exit_code == 0
+    assert request.print_candidate.source_asset_uri == (
+        "http://192.168.1.10:8080/v1/generated-assets/myth_auto123/game.glb"
+    )
+    assert request.print_candidate.uri == (
+        "http://192.168.1.10:8080/v1/print-candidates/myth_auto123/print.3mf"
+    )
+
+
+def test_cli_print_quote_request_configured_auto_requires_local_handoff_evidence(
+    tmp_path,
+    capsys,
+) -> None:
+    output_file = tmp_path / "print-quote-request-configured.json"
+
+    exit_code = main(
+        [
+            "print-quote-request-configured",
+            "--source-asset-uri",
+            "auto",
+            "--print-candidate-uri",
+            "auto",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "auto requires local final demo session evidence" in captured.err
+    assert not output_file.exists()
+
+
 def test_cli_print_quote_request_configured_rejects_non_http_candidate(
     tmp_path,
     capsys,
@@ -1803,3 +1873,39 @@ def _write_print_quote_request(path: Path) -> PrintQuoteRequest:
         encoding="utf-8",
     )
     return request
+
+
+def _write_final_demo_launch_local_session(repo_root: Path, *, session_id: str) -> None:
+    path = repo_root / "services/backend/.local/final-demo-launch-local.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "kind": "final_demo_launch_report",
+                "status": "partial",
+                "source_reports": {
+                    "local_showcase_smoke": {
+                        "kind": "local_showcase_smoke_report",
+                        "status": "succeeded",
+                        "session": {"session_id": session_id},
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_ios_deploy_config(repo_root: Path, *, backend_base_url: str) -> None:
+    path = repo_root / "apps/mobile/ios/Config/Deployment.local.xcconfig"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "\n".join(
+            [
+                "DEVELOPMENT_TEAM = TEAM12345",
+                "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge",
+                f"PMF_BACKEND_BASE_URL = {backend_base_url}",
+            ]
+        ),
+        encoding="utf-8",
+    )

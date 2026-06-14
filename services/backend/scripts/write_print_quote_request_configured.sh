@@ -16,6 +16,7 @@ cd services/backend
 uv run python -m myth_forge_api.cli print-quote-request-configured \
   --source-asset-uri "$PRINT_SOURCE_ASSET_URI" \
   --print-candidate-uri "$PRINT_CANDIDATE_URI" \
+  --repo-root ../.. \
   --format "${PRINT_CANDIDATE_FORMAT:-3mf}" \
   --quantity "${PRINT_QUANTITY:-1}" \
   --material "${PRINT_MATERIAL:-standard_resin}" \

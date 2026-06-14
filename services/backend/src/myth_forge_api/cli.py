@@ -256,6 +256,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 material=args.material,
                 finish=args.finish,
                 ship_to_country=args.ship_to_country,
+                repo_root=args.repo_root,
                 output_path=args.output,
             )
         if args.command == "print-quote-configured":
@@ -487,6 +488,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     print_quote_request_configured_parser.add_argument("--source-asset-uri", required=True)
     print_quote_request_configured_parser.add_argument("--print-candidate-uri", required=True)
+    print_quote_request_configured_parser.add_argument("--repo-root", default=None)
     print_quote_request_configured_parser.add_argument("--format", default="3mf")
     print_quote_request_configured_parser.add_argument("--quantity", type=int, default=1)
     print_quote_request_configured_parser.add_argument(
@@ -926,9 +928,15 @@ def _print_quote_request_configured(
     material: str,
     finish: str,
     ship_to_country: str,
+    repo_root: str | None,
     output_path: str | None,
 ) -> int:
     try:
+        source_asset_uri, print_candidate_uri = _resolve_print_quote_request_uris(
+            source_asset_uri=source_asset_uri,
+            print_candidate_uri=print_candidate_uri,
+            repo_root=repo_root,
+        )
         request = _configured_print_quote_request(
             source_asset_uri=source_asset_uri,
             print_candidate_uri=print_candidate_uri,
@@ -943,6 +951,85 @@ def _print_quote_request_configured(
         return 2
     _write_json_payload(request.model_dump(mode="json"), output_path)
     return 0
+
+
+def _resolve_print_quote_request_uris(
+    *,
+    source_asset_uri: str,
+    print_candidate_uri: str,
+    repo_root: str | None,
+) -> tuple[str, str]:
+    source_is_auto = source_asset_uri.strip().lower() == "auto"
+    candidate_is_auto = print_candidate_uri.strip().lower() == "auto"
+    if not source_is_auto and not candidate_is_auto:
+        return source_asset_uri, print_candidate_uri
+    if source_is_auto != candidate_is_auto:
+        raise ValueError(
+            "print-quote-request-configured auto requires both source and print "
+            "candidate URIs to be auto."
+        )
+
+    handoff = _local_print_request_handoff(
+        Path(repo_root) if repo_root else Path.cwd()
+    )
+    if handoff is None:
+        raise ValueError(
+            "print-quote-request-configured auto requires local final demo "
+            "session evidence and an iPhone-reachable PMF_BACKEND_BASE_URL."
+        )
+    return handoff
+
+
+def _local_print_request_handoff(repo_root: Path) -> tuple[str, str] | None:
+    session_id = _local_showcase_session_id(repo_root)
+    backend_base_url = _deploy_backend_base_url(repo_root)
+    if not session_id or not _is_http_uri(backend_base_url):
+        return None
+
+    base_url = backend_base_url.rstrip("/")
+    return (
+        f"{base_url}/v1/generated-assets/{session_id}/game.glb",
+        f"{base_url}/v1/print-candidates/{session_id}/print.3mf",
+    )
+
+
+def _local_showcase_session_id(repo_root: Path) -> str:
+    payload = _read_json_object(
+        repo_root / "services/backend/.local/final-demo-launch-local.json"
+    )
+    source_reports = payload.get("source_reports")
+    smoke = (
+        source_reports.get("local_showcase_smoke")
+        if isinstance(source_reports, dict)
+        else None
+    )
+    session = smoke.get("session") if isinstance(smoke, dict) else None
+    session_id = session.get("session_id") if isinstance(session, dict) else None
+    return str(session_id).strip() if session_id else ""
+
+
+def _deploy_backend_base_url(repo_root: Path) -> str:
+    path = repo_root / "apps/mobile/ios/Config/Deployment.local.xcconfig"
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        return ""
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key.strip() == "PMF_BACKEND_BASE_URL":
+            return value.strip()
+    return ""
+
+
+def _read_json_object(path: Path) -> dict[str, object]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 def _configured_print_quote_request(

@@ -89,7 +89,7 @@ def test_print_fulfillment_readiness_blocks_missing_configured_quote_request(
         "requires_cost_consent": False,
     }
     assert result.report["operator_actions"][0] == (
-        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
         "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
