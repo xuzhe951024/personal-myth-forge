@@ -876,7 +876,7 @@ def test_configured_final_demo_launch_drops_provider_unblock_fallbacks(
     assert not any(action.startswith("unblock ") for action in actions)
     assert "make final-resource-apply-preview" in actions
     assert (
-        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
         "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     ) in actions

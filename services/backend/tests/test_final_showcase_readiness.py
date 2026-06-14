@@ -916,7 +916,7 @@ def test_final_showcase_readiness_blocks_missing_configured_print_quote_request(
     assert row["status"] == "blocked"
     assert row["classification"] == "missing_configured_treatstock_quote_request"
     assert row["command"] == (
-        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
         "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
@@ -1652,7 +1652,7 @@ def test_final_showcase_readiness_prefers_complete_provider_chain() -> None:
 
 def test_final_showcase_readiness_prefers_print_request_before_provider_quote() -> None:
     request_action = (
-        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
         "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )

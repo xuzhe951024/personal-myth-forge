@@ -23,8 +23,11 @@ def test_provider_handoff_blocks_default_local_core_provider_with_next_action() 
         **report["first_blocker"],
         "source": "first_blocker",
     }
+    assert report["operator_actions"][0] == (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview"
+    )
     assert report["operator_actions"] == [
-        "make final-resource-apply-preview",
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview",
         (
             "provide MESHY_API_KEY in final-resources.env; "
             "rerun make final-resources-preflight"
@@ -60,7 +63,7 @@ def test_provider_handoff_prefers_missing_env_for_selected_real_provider() -> No
     )
     assert report["next_action"]["source"] == "first_blocker"
     assert report["operator_actions"] == [
-        "make final-resource-apply-preview",
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview",
         (
             "provide MESHY_API_KEY in final-resources.env; "
             "rerun make final-resources-preflight"

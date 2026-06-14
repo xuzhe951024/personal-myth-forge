@@ -408,7 +408,7 @@ def test_cli_provider_handoff_writes_local_report(tmp_path, monkeypatch) -> None
     assert report["first_blocker"]["handoff_command"] == "make provider-handoff"
     assert report["next_action"]["source"] == "first_blocker"
     assert report["operator_actions"] == [
-        "make final-resource-apply-preview",
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview",
         (
             "provide MESHY_API_KEY in final-resources.env; "
             "rerun make final-resources-preflight"
@@ -443,7 +443,7 @@ def test_cli_provider_handoff_require_core_real_returns_two_when_keys_missing(
         "services/backend/.local/final-resources.env"
     )
     assert report["operator_actions"] == [
-        "make final-resource-apply-preview",
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview",
         (
             "provide MESHY_API_KEY in final-resources.env; "
             "rerun make final-resources-preflight"

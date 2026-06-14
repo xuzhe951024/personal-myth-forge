@@ -14,6 +14,10 @@ BACKEND_ONLY_ENV = [
     "SCULPTEO_API_KEY",
 ]
 FINAL_RESOURCES_FILE = "services/backend/.local/final-resources.env"
+FINAL_RESOURCE_FILL_GUIDE_COMMAND = "make final-resource-fill-guide"
+FINAL_RESOURCE_FILL_GUIDE_PREVIEW_COMMAND = (
+    "make final-resource-fill-guide; rerun make final-resource-apply-preview"
+)
 FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 PROVIDER_HANDOFF_COMMAND = "make provider-handoff"
@@ -175,7 +179,7 @@ def _operator_actions(
 ) -> list[str]:
     if first_blocker is None:
         return []
-    actions = [FINAL_RESOURCE_APPLY_PREVIEW_COMMAND]
+    actions = [FINAL_RESOURCE_FILL_GUIDE_PREVIEW_COMMAND]
     resource_env = _resource_env_actions(
         core_items=core_items,
         missing_env=missing_env,
