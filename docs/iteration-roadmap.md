@@ -452,6 +452,7 @@ Bridge deliverable:
 - P0.538 Shared operator actions prefer auto print quote request handoff
 - P0.539 Legacy print quote request placeholders normalize to auto handoff
 - P0.540 Provider handoff starts with final resource fill guide
+- P0.541 Final aggregators use provider fill-guide live handoff
 
 ## P1: Mobile Vertical Slice
 

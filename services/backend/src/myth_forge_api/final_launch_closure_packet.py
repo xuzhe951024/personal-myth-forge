@@ -31,6 +31,7 @@ from myth_forge_api.operator_actions import (
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
     FINAL_RESOURCES_PREFLIGHT_COMMAND,
     MOBILE_DEPLOY_PREFLIGHT_COMMAND,
+    PROVIDER_LIVE_HANDOFF_ACTION,
     XCODE_BUILD_GATE_ACTION,
     normalize_operator_action,
     prefer_guarded_print_quote_handoff_actions,
@@ -51,12 +52,13 @@ COMMANDS = [
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 PROVIDER_HANDOFF_OPERATOR_ACTION = "make provider-handoff; rerun make live-provider-evidence"
-COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION = (
-    "make final-resource-apply-preview; rerun make provider-handoff; "
-    "rerun make live-provider-evidence"
-)
+COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION = PROVIDER_LIVE_HANDOFF_ACTION
 WEAK_PROVIDER_HANDOFF_OPERATOR_ACTIONS = {
     FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
+    (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    ),
     "make final-resource-apply-preview; rerun make live-provider-evidence",
     "make provider-handoff",
     PROVIDER_HANDOFF_OPERATOR_ACTION,

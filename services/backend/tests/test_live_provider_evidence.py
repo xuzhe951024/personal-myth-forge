@@ -165,7 +165,8 @@ def test_live_provider_evidence_projects_provider_handoff_child_next_action(
         "make live-provider-evidence"
     )
     assert result.report["operator_actions"][0] == (
-        "make final-resource-apply-preview; "
+        "make final-resource-fill-guide; "
+        "rerun make final-resource-apply-preview; "
         "rerun make provider-handoff; "
         "rerun make live-provider-evidence"
     )

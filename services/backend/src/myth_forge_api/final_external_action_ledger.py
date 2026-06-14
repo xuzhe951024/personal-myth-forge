@@ -19,6 +19,7 @@ from myth_forge_api.live_provider_evidence import build_live_provider_evidence_r
 from myth_forge_api.operator_actions import (
     BACKEND_BASE_URL_VALIDATED_ACTION,
     MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION,
+    PROVIDER_LIVE_HANDOFF_ACTION,
     normalize_operator_action,
     prefer_guarded_print_quote_handoff_actions,
     prefer_iphone_reachable_backend_url_handoff_actions,
@@ -45,12 +46,13 @@ OPERATOR_SEQUENCE = [
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 PROVIDER_HANDOFF_OPERATOR_ACTION = "make provider-handoff; rerun make live-provider-evidence"
-COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION = (
-    "make final-resource-apply-preview; rerun make provider-handoff; "
-    "rerun make live-provider-evidence"
-)
+COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION = PROVIDER_LIVE_HANDOFF_ACTION
 WEAK_PROVIDER_HANDOFF_OPERATOR_ACTIONS = {
     FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
+    (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    ),
     "make final-resource-apply-preview; rerun make live-provider-evidence",
     "make provider-handoff",
     PROVIDER_HANDOFF_OPERATOR_ACTION,

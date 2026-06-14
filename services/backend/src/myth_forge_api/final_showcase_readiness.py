@@ -29,6 +29,7 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
 from myth_forge_api.operator_actions import (
     FINAL_RESOURCE_VALIDATION_ACTION_ROOTS,
     IOS_DEPLOY_CONFIG_ACTION,
+    PROVIDER_LIVE_HANDOFF_ACTION,
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
@@ -88,11 +89,13 @@ FINAL_SHOWCASE_PROVIDER_HANDOFF_ACTION_MARKERS = (
     "live_provider",
     "live-provider-evidence",
 )
-FINAL_SHOWCASE_PROVIDER_CHAIN_ACTION = (
-    "make final-resource-apply-preview; rerun make provider-handoff; "
-    "rerun make live-provider-evidence"
-)
+FINAL_SHOWCASE_PROVIDER_CHAIN_ACTION = PROVIDER_LIVE_HANDOFF_ACTION
 FINAL_SHOWCASE_WEAK_PROVIDER_ACTION_ROOTS = {
+    FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
+    (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    ),
     "make final-resource-apply-preview; rerun make live-provider-evidence",
     "make provider-handoff",
     "make live-provider-evidence",
@@ -1811,12 +1814,13 @@ def _capability_operator_action(row: dict[str, Any]) -> str:
 def _operator_action_with_validation(command: str, validation_command: str) -> str:
     if not command:
         return ""
+    action = command
     if not validation_command:
-        return command
+        return normalize_operator_action(action)
     validation_suffix = f"; rerun {validation_command}"
-    if validation_suffix in command:
-        return command
-    return f"{command}{validation_suffix}"
+    if validation_suffix not in action:
+        action = f"{action}{validation_suffix}"
+    return normalize_operator_action(action)
 
 
 def _normalized_report_status(report: dict[str, Any]) -> str:

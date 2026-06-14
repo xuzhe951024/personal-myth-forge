@@ -65,6 +65,7 @@ from myth_forge_api.mobile_deploy_preflight_evidence import (
     run_mobile_deploy_preflight_evidence,
 )
 from myth_forge_api.operator_actions import (
+    PROVIDER_LIVE_HANDOFF_ACTION,
     normalize_operator_action,
     prefer_guarded_print_quote_handoff_actions,
     prefer_iphone_reachable_backend_url_handoff_actions,
@@ -94,11 +95,12 @@ FINAL_LOCAL_REPORT_PROVIDER_HANDOFF_ACTION_MARKERS = (
     "live-provider-evidence",
     "provider-handoff",
 )
-FINAL_LOCAL_REPORT_PROVIDER_CHAIN_ACTION = (
-    "make final-resource-apply-preview; rerun make provider-handoff; "
-    "rerun make live-provider-evidence"
-)
+FINAL_LOCAL_REPORT_PROVIDER_CHAIN_ACTION = PROVIDER_LIVE_HANDOFF_ACTION
 FINAL_LOCAL_REPORT_WEAK_PROVIDER_ACTION_ROOTS = {
+    (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    ),
     "make final-resource-apply-preview; rerun make live-provider-evidence",
     "make provider-handoff",
     "make provider-handoff; rerun make live-provider-evidence",

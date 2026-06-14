@@ -398,6 +398,22 @@ def test_normalizes_legacy_print_quote_request_placeholder_to_auto() -> None:
     )
 
 
+def test_normalizes_provider_live_chain_to_fill_guide_first() -> None:
+    old_chain = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    canonical_chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+
+    assert normalize_operator_action(old_chain) == canonical_chain
+    assert normalize_operator_action(
+        f"final_demo_launch_local: {old_chain} | source report"
+    ) == f"final_demo_launch_local: {canonical_chain} | source report"
+
+
 def test_prefers_guarded_print_quote_action_over_legacy_variants() -> None:
     legacy_action = (
         "after explicit Treatstock cost consent, save a sanitized "

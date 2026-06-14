@@ -749,8 +749,8 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
 
     operator_actions = result.report["operator_actions"]
     complete_provider_chain = (
-        "make final-resource-apply-preview; rerun make provider-handoff; "
-        "rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
 
     assert (

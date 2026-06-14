@@ -1638,7 +1638,8 @@ def test_ios_device_launch_rehearsal_prioritizes_backend_demo_after_deploy_hando
         "rerun make mobile-deploy-preflight"
     )
     provider_action = (
-        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; "
         "rerun make live-provider-evidence"
     )
     print_action = (

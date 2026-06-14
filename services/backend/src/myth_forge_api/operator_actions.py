@@ -5,10 +5,21 @@ LEGACY_FINAL_RESOURCE_COPY_MARKERS = (
     "services/backend/.local/final-resources.env",
 )
 NORMALIZED_FINAL_RESOURCE_INIT_ACTION = "run make final-resource-init"
+FINAL_RESOURCE_FILL_GUIDE_PREVIEW_ACTION = (
+    "make final-resource-fill-guide; rerun make final-resource-apply-preview"
+)
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 FINAL_RESOURCE_APPLY_ACTION_ROOTS = (
     "make final-apply-resources",
     "run make final-apply-resources",
+)
+LEGACY_PROVIDER_LIVE_HANDOFF_ACTION = (
+    "make final-resource-apply-preview; rerun make provider-handoff; "
+    "rerun make live-provider-evidence"
+)
+PROVIDER_LIVE_HANDOFF_ACTION = (
+    "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+    "rerun make provider-handoff; rerun make live-provider-evidence"
 )
 PROVIDER_SELECTION_ACTION_ROOTS = (
     "set THREE_D_PROVIDER=meshy",
@@ -215,6 +226,9 @@ def normalize_operator_action(action: str) -> str:
     legacy_request_action = _normalize_legacy_print_quote_request_action(command_part)
     if legacy_request_action is not None:
         return f"{legacy_request_action}{detail_suffix}"
+    provider_live_action = _normalize_provider_live_handoff_action(command_part)
+    if provider_live_action is not None:
+        return f"{provider_live_action}{detail_suffix}"
     mobile_preflight_detail_action = _normalize_mobile_preflight_detail_action(
         command_part,
         detail_suffix=detail_suffix,
@@ -433,6 +447,24 @@ def _normalize_legacy_print_quote_request_action(action: str) -> str | None:
         return action.replace(
             LEGACY_CONFIGURED_PRINT_QUOTE_REQUEST_ACTION,
             CONFIGURED_PRINT_QUOTE_REQUEST_ACTION,
+            1,
+        )
+    return None
+
+
+def _normalize_provider_live_handoff_action(action: str) -> str | None:
+    command_root = _action_command_root(action)
+    if command_root == LEGACY_PROVIDER_LIVE_HANDOFF_ACTION:
+        return action.replace(
+            LEGACY_PROVIDER_LIVE_HANDOFF_ACTION,
+            PROVIDER_LIVE_HANDOFF_ACTION,
+            1,
+        )
+    prefixed_suffix = f": {LEGACY_PROVIDER_LIVE_HANDOFF_ACTION}"
+    if command_root.endswith(prefixed_suffix):
+        return action.replace(
+            LEGACY_PROVIDER_LIVE_HANDOFF_ACTION,
+            PROVIDER_LIVE_HANDOFF_ACTION,
             1,
         )
     return None

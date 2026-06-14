@@ -1700,8 +1700,8 @@ def test_local_final_demo_launch_prioritizes_backend_device_demo_before_provider
         "rerun make mobile-deploy-preflight"
     )
     provider_action = (
-        "make final-resource-apply-preview; rerun make provider-handoff; "
-        "rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
@@ -1752,8 +1752,8 @@ def test_final_demo_launch_prioritizes_backend_url_after_backend_demo() -> None:
         "rerun make mobile-deploy-preflight"
     )
     provider_action = (
-        "make final-resource-apply-preview; rerun make provider-handoff; "
-        "rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "

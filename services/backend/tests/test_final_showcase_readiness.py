@@ -1033,8 +1033,8 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
     )
     rows = result.report["capabilities_by_id"]
     provider_handoff_command = (
-        "make final-resource-apply-preview; rerun make provider-handoff"
-        "; rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
 
     for row_id in ("game_asset_3d_generation", "ai_agent_npc"):
@@ -1058,10 +1058,13 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
         }
     actions = result.report["operator_actions"]
     complete_chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+    weak_chain = (
         "make final-resource-apply-preview; rerun make provider-handoff; "
         "rerun make live-provider-evidence"
     )
-    weak_chain = "make final-resource-apply-preview; rerun make live-provider-evidence"
     assert complete_chain in actions
     assert weak_chain not in actions
     assert "make final-resource-apply-preview" not in actions
@@ -1628,11 +1631,12 @@ def test_final_showcase_readiness_hides_apply_when_preview_gate_is_present() -> 
 
 def test_final_showcase_readiness_prefers_complete_provider_chain() -> None:
     complete_provider_chain = (
-        "make final-resource-apply-preview; rerun make provider-handoff; "
-        "rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
     weak_provider_chain = (
-        "make final-resource-apply-preview; rerun make live-provider-evidence"
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
     )
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"

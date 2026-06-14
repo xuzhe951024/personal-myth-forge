@@ -457,7 +457,12 @@ def test_final_local_report_refresh_operator_actions_gate_apply_behind_preview(
         final_local_report_refresh._action_command_root(action)
         for action in result.report["operator_actions"]
     }
-    assert "make final-resource-apply-preview" in action_roots
+    assert "make final-resource-fill-guide" in action_roots
+    assert any(
+        action.startswith("make final-resource-fill-guide; ")
+        and "rerun make final-resource-apply-preview" in action
+        for action in result.report["operator_actions"]
+    )
     assert (
         "rerun make final-resource-apply-preview before applying resources"
         not in result.report["operator_actions"]
@@ -538,8 +543,8 @@ def test_final_local_report_refresh_operator_actions_prioritize_backend_device_d
         "rerun make mobile-deploy-preflight"
     )
     provider_action = (
-        "make final-resource-apply-preview; rerun make provider-handoff; "
-        "rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
@@ -605,8 +610,8 @@ def test_final_local_report_refresh_operator_actions_prioritize_backend_url_afte
         "rerun make mobile-deploy-preflight"
     )
     provider_action = (
-        "make final-resource-apply-preview; rerun make provider-handoff; "
-        "rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
@@ -783,11 +788,12 @@ def test_final_local_report_refresh_operator_actions_promote_final_demo_device_h
 
 def test_final_local_report_refresh_operator_actions_prefer_complete_provider_chain() -> None:
     complete_provider_chain = (
-        "make final-resource-apply-preview; rerun make provider-handoff; "
-        "rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
     weak_provider_chain = (
-        "make final-resource-apply-preview; rerun make live-provider-evidence"
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
     )
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"

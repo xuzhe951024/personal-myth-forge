@@ -359,8 +359,8 @@ def test_external_action_ledger_prefers_live_provider_child_action(
 
     operator_actions = result.report["operator_actions"]
     complete_provider_chain = (
-        "make final-resource-apply-preview; rerun make provider-handoff; "
-        "rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
     assert (
         complete_provider_chain
