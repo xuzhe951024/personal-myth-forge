@@ -139,11 +139,23 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
             "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
             "rerun make mobile-deploy-preflight"
         ),
-        "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
+        (
+            "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+            "rerun make mobile-deploy-preflight"
+        ),
     ]
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in operator_actions
+    )
     assert (
-        "provide OPENAI_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     ) in operator_actions
     assert "make final-resource-apply-preview" in operator_actions
     assert "make final-apply-resources" not in operator_actions
@@ -267,7 +279,10 @@ def test_external_action_ledger_uses_concrete_provider_and_print_handoff_actions
         repo_root=repo_root,
     )
     operator_actions = result.report["operator_actions"]
-    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
     print_readiness_action = (
         "cd services/backend && uv run pytest tests/test_ios_showcase_acceptance.py; "
         "rerun make print-fulfillment-readiness"
@@ -471,8 +486,8 @@ def test_external_action_ledger_top_level_actions_start_with_device_blocker(
         "rerun make mobile-deploy-preflight"
     )
     provider_action = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
 
     assert report["first_blocker"]["id"] == "write_development_team"
@@ -480,6 +495,15 @@ def test_external_action_ledger_top_level_actions_start_with_device_blocker(
     assert report["next_action"]["command"] == device_action
     assert operator_actions[0] == device_action
     assert provider_action in operator_actions
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in operator_actions
+    )
     assert operator_actions.index(device_action) < operator_actions.index(provider_action)
     assert (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
@@ -555,15 +579,10 @@ def test_external_action_ledger_prioritizes_backend_device_demo_before_provider_
         "start backend-device-demo before device checks: "
         "make backend-device-demo; rerun make mobile-deploy-preflight"
     )
-    meshy_key_action = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
-    openai_key_action = (
-        "provide OPENAI_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
-    )
-    provider_action = "make provider-handoff; rerun make live-provider-evidence"
     print_readiness_action = (
         "cd services/backend && uv run pytest tests/test_ios_showcase_acceptance.py; "
         "rerun make print-fulfillment-readiness"
@@ -574,11 +593,14 @@ def test_external_action_ledger_prioritizes_backend_device_demo_before_provider_
     )
 
     assert operator_actions[:2] == [deploy_writer_action, backend_action]
-    assert operator_actions.index(backend_action) < operator_actions.index(
-        meshy_key_action
-    )
-    assert operator_actions.index(backend_action) < operator_actions.index(
-        openai_key_action
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in operator_actions
     )
     assert operator_actions.index(backend_action) < operator_actions.index(
         provider_action
@@ -612,26 +634,24 @@ def test_external_action_ledger_prioritizes_backend_url_after_backend_device_dem
         "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
         "rerun make mobile-deploy-preflight"
     )
-    meshy_key_action = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
-    openai_key_action = (
-        "provide OPENAI_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
-    )
-    provider_action = "make provider-handoff; rerun make live-provider-evidence"
 
     assert operator_actions[:3] == [
         deploy_writer_action,
         backend_action,
         backend_url_action,
     ]
-    assert operator_actions.index(backend_url_action) < operator_actions.index(
-        meshy_key_action
-    )
-    assert operator_actions.index(backend_url_action) < operator_actions.index(
-        openai_key_action
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in operator_actions
     )
     assert operator_actions.index(backend_url_action) < operator_actions.index(
         provider_action

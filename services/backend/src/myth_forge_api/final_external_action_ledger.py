@@ -24,6 +24,7 @@ from myth_forge_api.operator_actions import (
     prefer_guarded_print_quote_handoff_actions,
     prefer_iphone_reachable_backend_url_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
+    prefer_provider_fill_guide_handoff_actions,
 )
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
@@ -1026,6 +1027,7 @@ def _operator_actions(
         _prefer_apply_preview_before_apply(_dedupe(actions))
     )
     normalized_actions = prefer_guarded_print_quote_handoff_actions(normalized_actions)
+    normalized_actions = prefer_provider_fill_guide_handoff_actions(normalized_actions)
     normalized_actions = prefer_project_local_ios_deploy_handoff_actions(
         normalized_actions
     )

@@ -414,6 +414,42 @@ def test_normalizes_provider_live_chain_to_fill_guide_first() -> None:
     ) == f"final_demo_launch_local: {canonical_chain} | source report"
 
 
+def test_prefers_provider_fill_guide_chain_over_backend_key_actions() -> None:
+    chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+
+    actions = operator_actions.prefer_provider_fill_guide_handoff_actions(
+        [
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight",
+            chain,
+            "provide OPENAI_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight",
+        ]
+    )
+
+    assert actions == [chain]
+
+
+def test_provider_fill_guide_preference_preserves_ios_resource_actions() -> None:
+    chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+    ios_action = (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+
+    actions = operator_actions.prefer_provider_fill_guide_handoff_actions(
+        [chain, ios_action]
+    )
+
+    assert actions == [chain, ios_action]
+
+
 def test_prefers_guarded_print_quote_action_over_legacy_variants() -> None:
     legacy_action = (
         "after explicit Treatstock cost consent, save a sanitized "

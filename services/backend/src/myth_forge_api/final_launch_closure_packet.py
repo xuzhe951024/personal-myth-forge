@@ -37,6 +37,7 @@ from myth_forge_api.operator_actions import (
     prefer_guarded_print_quote_handoff_actions,
     prefer_iphone_reachable_backend_url_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
+    prefer_provider_fill_guide_handoff_actions,
 )
 
 COMMANDS = [
@@ -810,6 +811,7 @@ def _operator_actions(
     )
     normalized_actions = prefer_guarded_print_quote_handoff_actions(normalized_actions)
     normalized_actions = _prefer_guarded_print_quote_action(normalized_actions)
+    normalized_actions = prefer_provider_fill_guide_handoff_actions(normalized_actions)
     normalized_actions = prefer_project_local_ios_deploy_handoff_actions(
         normalized_actions
     )

@@ -60,6 +60,7 @@ from myth_forge_api.operator_actions import (
     normalize_operator_action,
     prefer_guarded_print_quote_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
+    prefer_provider_fill_guide_handoff_actions,
 )
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
@@ -1230,6 +1231,7 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
         prefer_project_local_ios_deploy_handoff_actions(deduped)
     )
     filtered = prefer_guarded_print_quote_handoff_actions(filtered)
+    filtered = prefer_provider_fill_guide_handoff_actions(filtered)
     filtered = _drop_bare_resource_requirements_when_specific_handoff_exists(
         filtered
     )

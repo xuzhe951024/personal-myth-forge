@@ -367,8 +367,8 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
         "rerun make mobile-deploy-preflight"
     )
     provider_action = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
     assert result.report["operator_actions"][0] == device_action
     assert provider_action in result.report["operator_actions"]
@@ -491,8 +491,12 @@ def test_final_local_report_refresh_operator_actions_prioritize_provider_and_pri
             {
                 "id": "provider_handoff",
                 "status": "blocked",
-                "command": "make provider-handoff",
-                "validation_command": "make live-provider-evidence",
+                "command": (
+                    "make final-resource-fill-guide; "
+                    "rerun make final-resource-apply-preview; "
+                    "rerun make provider-handoff; "
+                    "rerun make live-provider-evidence"
+                ),
             },
             {
                 "id": "final_resource_apply_preview",
@@ -521,12 +525,19 @@ def test_final_local_report_refresh_operator_actions_prioritize_provider_and_pri
         ],
     )
 
-    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
 
     assert provider_action in actions
+    assert not any(
+        action.startswith("provide MESHY_API_KEY in final-resources.env")
+        for action in actions
+    )
     assert print_action in actions
     assert actions.index(provider_action) < actions.index(print_action)
     assert actions.index(print_action) < actions.index("make blocked-step-0")
@@ -590,10 +601,9 @@ def test_final_local_report_refresh_operator_actions_prioritize_backend_device_d
     assert backend_device_demo in actions
     assert provider_action in actions
     assert print_action in actions
-    assert key_action in actions
+    assert key_action not in actions
     assert actions.index(backend_device_demo) < actions.index(provider_action)
     assert actions.index(backend_device_demo) < actions.index(print_action)
-    assert actions.index(backend_device_demo) < actions.index(key_action)
 
 
 def test_final_local_report_refresh_operator_actions_prioritize_backend_url_after_backend_demo() -> None:
@@ -1450,7 +1460,8 @@ def test_final_local_report_refresh_step_hint_uses_child_next_commands(
     assert step["next_command"] == "make provider-handoff"
     assert step["command"] == "make provider-handoff"
     assert (
-        "make provider-handoff; rerun make live-provider-evidence"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
         in result.report["operator_actions"]
     )
     assert "review refreshed provider_handoff report" not in (

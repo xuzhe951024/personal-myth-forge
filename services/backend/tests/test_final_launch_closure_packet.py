@@ -102,9 +102,18 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert "make final-apply-resources" not in operator_actions
     assert not any(action.startswith("run make ") for action in operator_actions)
     assert (
-        "provide MESHY_API_KEY in final-resources.env; rerun "
-        "make final-resources-preflight"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     ) in operator_actions
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in operator_actions
+    )
     assert (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
         "make mobile-deploy-preflight"
@@ -793,14 +802,23 @@ def test_final_launch_closure_packet_operator_actions_start_with_promoted_device
         "rerun make mobile-deploy-preflight"
     )
     provider_action = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
 
     assert result.report["next_action"]["command"] == device_action
     assert device_action not in actions
     assert actions[0] == specific_device_action
     assert provider_action in actions
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in actions
+    )
     assert actions.index(specific_device_action) < actions.index(provider_action)
 
 
@@ -822,15 +840,10 @@ def test_final_launch_closure_packet_prioritizes_backend_demo_after_device_hando
         "start backend-device-demo before device checks: "
         "make backend-device-demo; rerun make mobile-deploy-preflight"
     )
-    meshy_key_action = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
-    openai_key_action = (
-        "provide OPENAI_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
-    )
-    provider_action = "make provider-handoff; rerun make live-provider-evidence"
     print_readiness_action = "make print-fulfillment-readiness"
     xcode_action = (
         "accept the Xcode license outside Codex, then rerun "
@@ -838,8 +851,15 @@ def test_final_launch_closure_packet_prioritizes_backend_demo_after_device_hando
     )
 
     assert actions[:2] == [device_action, backend_action]
-    assert actions.index(backend_action) < actions.index(meshy_key_action)
-    assert actions.index(backend_action) < actions.index(openai_key_action)
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in actions
+    )
     assert actions.index(backend_action) < actions.index(provider_action)
     assert actions.index(backend_action) < actions.index(print_readiness_action)
     assert actions.index(backend_action) < actions.index(xcode_action)
@@ -867,19 +887,21 @@ def test_final_launch_closure_packet_prioritizes_backend_url_after_backend_demo(
         "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
         "rerun make mobile-deploy-preflight"
     )
-    meshy_key_action = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
-    openai_key_action = (
-        "provide OPENAI_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
-    )
-    provider_action = "make provider-handoff; rerun make live-provider-evidence"
 
     assert actions[:3] == [deploy_action, backend_action, backend_url_action]
-    assert actions.index(backend_url_action) < actions.index(meshy_key_action)
-    assert actions.index(backend_url_action) < actions.index(openai_key_action)
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in actions
+    )
     assert actions.index(backend_url_action) < actions.index(provider_action)
 
 

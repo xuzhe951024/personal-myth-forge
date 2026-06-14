@@ -21,6 +21,11 @@ PROVIDER_LIVE_HANDOFF_ACTION = (
     "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
     "rerun make provider-handoff; rerun make live-provider-evidence"
 )
+PROVIDER_LIVE_HANDOFF_ACTION_ROOTS = (
+    PROVIDER_LIVE_HANDOFF_ACTION,
+    LEGACY_PROVIDER_LIVE_HANDOFF_ACTION,
+    "make provider-handoff; rerun make live-provider-evidence",
+)
 PROVIDER_SELECTION_ACTION_ROOTS = (
     "set THREE_D_PROVIDER=meshy",
     "set NPC_PROVIDER=openai",
@@ -152,6 +157,12 @@ FINAL_RESOURCE_VALIDATION_ACTION_ROOTS = (
     "provide DEVELOPMENT_TEAM in final-resources.env",
     "provide PRODUCT_BUNDLE_IDENTIFIER in final-resources.env",
     "provide PMF_BACKEND_BASE_URL in final-resources.env",
+)
+PROVIDER_RESOURCE_ACTION_ROOTS = (
+    "provide MESHY_API_KEY in final-resources.env",
+    "provide OPENAI_API_KEY in final-resources.env",
+    "provide TREATSTOCK_API_KEY in final-resources.env",
+    "provide SCULPTEO_API_KEY in final-resources.env",
 )
 FINAL_RESOURCE_FILL_TARGET = "services/backend/.local/final-resources.env"
 FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
@@ -360,6 +371,34 @@ def prefer_guarded_print_quote_handoff_actions(actions: list[str]) -> list[str]:
     return result
 
 
+def prefer_provider_fill_guide_handoff_actions(actions: list[str]) -> list[str]:
+    candidate_actions = [
+        (action.strip(), normalize_operator_action(action))
+        for action in actions
+        if action and action.strip()
+    ]
+    preferred_provider_action = _preferred_provider_live_handoff_action(
+        [normalized for _original, normalized in candidate_actions]
+    )
+    if preferred_provider_action is None:
+        return [original for original, _normalized in candidate_actions]
+
+    result: list[str] = []
+    emitted_provider_action = False
+    for original, normalized in candidate_actions:
+        if _action_command_root(normalized) == FINAL_RESOURCES_PREFLIGHT_COMMAND:
+            continue
+        if _is_provider_resource_action(normalized):
+            continue
+        if _is_provider_live_handoff_action(normalized):
+            if not emitted_provider_action:
+                result.append(preferred_provider_action)
+                emitted_provider_action = True
+            continue
+        result.append(original)
+    return result
+
+
 def _preferred_configured_print_quote_request_action(actions: list[str]) -> str | None:
     first_prefixed_action: str | None = None
     for action in actions:
@@ -382,6 +421,39 @@ def _preferred_configured_print_quote_action(actions: list[str]) -> str | None:
         if first_prefixed_action is None:
             first_prefixed_action = action
     return first_prefixed_action
+
+
+def _preferred_provider_live_handoff_action(actions: list[str]) -> str | None:
+    first_prefixed_action: str | None = None
+    for action in actions:
+        if not _is_provider_live_handoff_action(action):
+            continue
+        command_root = _action_command_root(action)
+        if command_root in PROVIDER_LIVE_HANDOFF_ACTION_ROOTS:
+            return PROVIDER_LIVE_HANDOFF_ACTION
+        if first_prefixed_action is None:
+            first_prefixed_action = action.replace(
+                command_root,
+                PROVIDER_LIVE_HANDOFF_ACTION,
+                1,
+            )
+    return first_prefixed_action
+
+
+def _is_provider_live_handoff_action(action: str) -> bool:
+    command_root = _action_command_root(action)
+    return (
+        command_root in PROVIDER_LIVE_HANDOFF_ACTION_ROOTS
+        or any(
+            command_root.endswith(f": {root}")
+            for root in PROVIDER_LIVE_HANDOFF_ACTION_ROOTS
+        )
+    )
+
+
+def _is_provider_resource_action(action: str) -> bool:
+    command_root = _action_command_root(action).split("; rerun ", 1)[0].strip()
+    return command_root.endswith(PROVIDER_RESOURCE_ACTION_ROOTS)
 
 
 def _is_configured_print_quote_request_action(action: str) -> bool:

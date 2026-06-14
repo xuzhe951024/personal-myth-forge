@@ -63,9 +63,10 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
     )
     assert result.report["evidence"]["final_resource_apply_preview"]["status"] == "missing"
     assert provider_handoff["command"] == (
-        "make final-resource-init; rerun make final-resources-preflight"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
-    assert provider_handoff["validation_command"] == "make final-resources-preflight"
+    assert provider_handoff["validation_command"] == "make live-provider-evidence"
     assert "final_resource_apply_preview:missing" in provider_handoff["evidence"]
     assert any(
         action == "run make final-resource-init"
@@ -100,7 +101,11 @@ def test_final_showcase_readiness_operator_actions_gate_apply_behind_preview(
     )
     actions = result.report["operator_actions"]
 
-    assert "make final-resource-apply-preview" in actions
+    assert (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+        in actions
+    )
     assert "make final-apply-resources" not in actions
 
 
@@ -1083,14 +1088,14 @@ def test_final_showcase_readiness_provider_handoff_uses_final_resource_next_acti
     )
     provider_handoff = result.report["capabilities_by_id"]["provider_key_handoff"]
     expected_command = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
 
     assert provider_handoff["status"] == "blocked"
     assert provider_handoff["classification"] == "provider_handoff_incomplete"
     assert provider_handoff["command"] == expected_command
-    assert provider_handoff["validation_command"] == "make final-resources-preflight"
+    assert provider_handoff["validation_command"] == "make live-provider-evidence"
     assert provider_handoff["next_action"] == {
         "id": "provider_key_handoff",
         "label": "Provider and key handoff",
@@ -1099,7 +1104,7 @@ def test_final_showcase_readiness_provider_handoff_uses_final_resource_next_acti
         "command": expected_command,
         "detail": provider_handoff["detail"],
         "source": "capability",
-        "validation_command": "make final-resources-preflight",
+        "validation_command": "make live-provider-evidence",
     }
     assert "final_resources:blocked" in provider_handoff["evidence"]
 
@@ -1232,7 +1237,11 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
         )
         for action in actions
     )
-    assert "make provider-handoff; rerun make live-provider-evidence" in actions
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+    assert provider_action in actions
     assert "make live-provider-evidence" not in actions
     assert "make provider-handoff" not in actions
     assert (
@@ -1244,18 +1253,21 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in action
         for action in actions
     )
-    provider_action = "make provider-handoff; rerun make live-provider-evidence"
     print_action = next(
         action
         for action in actions
         if "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in action
     )
-    assert actions.index(provider_action) < actions.index(
-        "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight"
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in actions
     )
-    assert actions.index(print_action) < actions.index(
-        "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight"
-    )
+    assert actions.index(provider_action) < actions.index(print_action)
     assert "run make final-resource-init" in actions
     assert (
         "provide iOS deploy config in Deployment.local.xcconfig; "
@@ -1269,7 +1281,7 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     assert "rerun make visual-regression-local and review failed artifacts" in actions
     assert "make final-showcase-readiness" not in actions
     assert len(actions) <= 32
-    assert actions.count("make provider-handoff; rerun make live-provider-evidence") == 1
+    assert actions.count(provider_action) == 1
     assert (
         actions.count("make visual-regression-local; rerun make print-fulfillment-readiness")
         == 0
@@ -1350,18 +1362,22 @@ def test_final_showcase_readiness_dedupes_prefixed_resource_actions(
     )
     actions = result.report["operator_actions"]
 
-    meshy_action = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
-    )
-    openai_action = (
-        "provide OPENAI_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
 
     assert result.exit_code == 2
-    assert actions.count(meshy_action) == 1
-    assert actions.count(openai_action) == 1
+    assert actions.count(provider_action) == 1
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in actions
+    )
     assert not any(
         action.startswith(
             "final_rehearsal_local: ios_deploy_runbook_local: "
@@ -1675,7 +1691,10 @@ def test_final_showcase_readiness_prefers_print_request_before_provider_quote() 
     )
 
     assert actions == [
-        "make provider-handoff; rerun make live-provider-evidence",
+        (
+            "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+            "rerun make provider-handoff; rerun make live-provider-evidence"
+        ),
         request_action,
     ]
 
@@ -1899,9 +1918,12 @@ def test_final_showcase_readiness_preserves_backend_device_demo_handoff_when_dev
         "rerun make mobile-deploy-preflight"
     )
     assert actions.count(backend_action) == 1
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
     assert actions.index(backend_action) < actions.index(
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+        provider_action
     )
 
 
@@ -2206,17 +2228,21 @@ def test_final_showcase_readiness_adds_validation_to_nested_resource_actions(
     )
     actions = result.report["operator_actions"]
 
-    meshy_action = (
-        "provide MESHY_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
-    )
-    openai_action = (
-        "provide OPENAI_API_KEY in final-resources.env; "
-        "rerun make final-resources-preflight"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
     )
 
-    assert actions.count(meshy_action) == 1
-    assert actions.count(openai_action) == 1
+    assert actions.count(provider_action) == 1
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in actions
+    )
     assert not any(
         action.startswith(
             "final_rehearsal_local: ios_deploy_runbook_local: "

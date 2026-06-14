@@ -535,7 +535,8 @@ def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidenc
     assert result.report["operator_actions"][0] == expected_command
     assert "MESHY_API_KEY" not in result.report["operator_actions"][0]
     assert (
-        "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight"
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
         in result.report["operator_actions"]
     )
     assert "provide MESHY_API_KEY in final-resources.env" not in result.report[
@@ -793,6 +794,19 @@ def test_local_final_demo_launch_resource_actions_use_final_resources_preflight(
         "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
     ) in actions
+    assert (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    ) in actions
+    assert not any(
+        action.startswith(
+            (
+                "provide MESHY_API_KEY in final-resources.env",
+                "provide OPENAI_API_KEY in final-resources.env",
+            )
+        )
+        for action in actions
+    )
     assert not any(
         " in final-resources.env; rerun " in action
         and action.startswith(
@@ -1684,7 +1698,12 @@ def test_final_demo_launch_promotes_final_showcase_handoff_actions(
 
     actions = result.report["operator_actions"]
 
-    assert provider_handoff_action in actions
+    provider_fill_guide_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+    assert provider_fill_guide_action in actions
+    assert provider_handoff_action not in actions
     assert print_handoff_action in actions
     assert print_validation_only_action not in actions
     assert "refresh unrelated visual proof" not in actions

@@ -514,7 +514,10 @@ def test_ios_device_launch_certificate_promotes_print_request_before_provider_qu
         repo_root=repo_root,
     )
     actions = result.report["operator_actions"]
-    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
@@ -522,10 +525,6 @@ def test_ios_device_launch_certificate_promotes_print_request_before_provider_qu
         "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
         "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
-    )
-    product_action = (
-        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
-        "rerun make mobile-deploy-preflight"
     )
 
     assert result.report["first_blocker"]["command"] == deploy_action
@@ -535,7 +534,6 @@ def test_ios_device_launch_certificate_promotes_print_request_before_provider_qu
     assert request_action in actions
     assert print_action not in actions
     assert actions.index(provider_action) < actions.index(request_action)
-    assert actions.index(request_action) < actions.index(product_action)
 
 
 def test_ios_device_launch_certificate_promotes_guarded_print_after_request_ready(
@@ -588,7 +586,10 @@ def test_ios_device_launch_certificate_promotes_guarded_print_after_request_read
         repo_root=repo_root,
     )
     actions = result.report["operator_actions"]
-    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
@@ -597,10 +598,6 @@ def test_ios_device_launch_certificate_promotes_guarded_print_after_request_read
         "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
-    product_action = (
-        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
-        "rerun make mobile-deploy-preflight"
-    )
 
     assert result.report["first_blocker"]["command"] == deploy_action
     assert actions[0] == deploy_action
@@ -608,7 +605,6 @@ def test_ios_device_launch_certificate_promotes_guarded_print_after_request_read
     assert print_action in actions
     assert request_action not in actions
     assert actions.index(provider_action) < actions.index(print_action)
-    assert actions.index(print_action) < actions.index(product_action)
 
 
 def test_ios_device_launch_certificate_cli_writes_report_and_makefile_target(

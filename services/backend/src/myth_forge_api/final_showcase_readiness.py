@@ -35,6 +35,7 @@ from myth_forge_api.operator_actions import (
     normalize_operator_action,
     prefer_guarded_print_quote_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
+    prefer_provider_fill_guide_handoff_actions,
 )
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
@@ -744,16 +745,8 @@ def _provider_key_handoff_capability(
     if "blocked" in local_resource_statuses:
         status = "blocked"
         classification = "provider_handoff_incomplete"
-        command = "make final-resource-apply-preview"
-        if final_resource_status != "ready":
-            child_command, child_validation_command = _report_next_action_command(
-                final_resources,
-            )
-            command = (
-                _operator_action_with_validation(child_command, child_validation_command)
-                or command
-            )
-            validation_command = child_validation_command
+        command = PROVIDER_LIVE_HANDOFF_ACTION
+        validation_command = "make live-provider-evidence"
     elif live_status != "ready":
         status = "partial"
         classification = "live_provider_evidence_unproven"
@@ -2165,9 +2158,11 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
     deduped = _prefer_validation_aware_operator_actions(deduped)
     return _prefer_apply_preview_before_apply(
         prefer_project_local_ios_deploy_handoff_actions(
-            prefer_guarded_print_quote_handoff_actions(
-                _prefer_bare_ios_deploy_writer_action(
-                    _prefer_complete_provider_handoff_chain(deduped)
+            prefer_provider_fill_guide_handoff_actions(
+                prefer_guarded_print_quote_handoff_actions(
+                    _prefer_bare_ios_deploy_writer_action(
+                        _prefer_complete_provider_handoff_chain(deduped)
+                    )
                 )
             )
         )
