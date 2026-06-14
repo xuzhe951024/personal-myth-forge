@@ -2,6 +2,7 @@
 set -eu
 
 mkdir -p services/backend/.local
+services/backend/scripts/require_live_provider_consent.sh
 set +e
 (
   cd services/backend

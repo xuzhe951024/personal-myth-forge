@@ -37,9 +37,11 @@ backend-evaluate-npc:
 backend-evaluate-local: backend-evaluate-3d backend-evaluate-npc
 
 backend-evaluate-3d-configured:
+	@services/backend/scripts/require_live_provider_consent.sh
 	cd services/backend && uv run python -m myth_forge_api.cli evaluate-3d --provider meshy --suite default-v0 --output .local/3d-evaluation-configured.json
 
 backend-evaluate-npc-configured:
+	@services/backend/scripts/require_live_provider_consent.sh
 	cd services/backend && uv run python -m myth_forge_api.cli evaluate-npc --provider openai --suite default-v0 --tick-steps 2 --output .local/npc-evaluation-configured.json
 
 backend-evaluate-configured: backend-evaluate-3d-configured backend-evaluate-npc-configured

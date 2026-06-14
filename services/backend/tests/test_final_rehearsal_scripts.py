@@ -78,6 +78,14 @@ PROVIDER_HANDOFF_SAFE_WRAPPERS = [
 ]
 
 
+def test_require_live_provider_consent_blocks_without_flag(script_repo: Path) -> None:
+    result = _run_script(script_repo, "require_live_provider_consent.sh")
+
+    assert result.returncode == 2
+    assert "PMF_ALLOW_LIVE_PROVIDER_CALLS=1" in result.stderr
+    assert "No live provider command was run." in result.stderr
+
+
 def test_write_final_acceptance_local_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:
@@ -106,7 +114,11 @@ def test_write_final_acceptance_configured_accepts_blocked_report_exit_code(
 ) -> None:
     _write_fake_uv(script_repo, exit_code=2)
 
-    result = _run_script(script_repo, "write_final_acceptance_configured.sh")
+    result = _run_script(
+        script_repo,
+        "write_final_acceptance_configured.sh",
+        extra_env={"PMF_ALLOW_LIVE_PROVIDER_CALLS": "1"},
+    )
 
     assert result.returncode == 0
     assert "accepted configured final acceptance exit code 2" in result.stdout
@@ -128,13 +140,44 @@ def test_write_final_acceptance_configured_fails_unusable_exit_code(
 ) -> None:
     _write_fake_uv(script_repo, exit_code=1)
 
-    result = _run_script(script_repo, "write_final_acceptance_configured.sh")
+    result = _run_script(
+        script_repo,
+        "write_final_acceptance_configured.sh",
+        extra_env={"PMF_ALLOW_LIVE_PROVIDER_CALLS": "1"},
+    )
 
     assert result.returncode == 1
     assert (
         "configured final acceptance failed before writing a usable report: exit 1"
         in result.stderr
     )
+
+
+def test_write_final_acceptance_configured_requires_live_provider_consent(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=0)
+
+    result = _run_script(script_repo, "write_final_acceptance_configured.sh")
+
+    assert result.returncode == 2
+    assert "PMF_ALLOW_LIVE_PROVIDER_CALLS=1" in result.stderr
+    assert not (script_repo / "services/backend/.local/fake-uv-args.txt").exists()
+
+
+def test_write_final_acceptance_configured_runs_with_live_provider_consent(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(
+        script_repo,
+        "write_final_acceptance_configured.sh",
+        extra_env={"PMF_ALLOW_LIVE_PROVIDER_CALLS": "1"},
+    )
+
+    assert result.returncode == 0
+    assert "accepted configured final acceptance exit code 2" in result.stdout
 
 
 def test_write_final_demo_launch_configured_accepts_blocked_report_exit_code(
@@ -1103,17 +1146,25 @@ def test_provider_handoff_safe_wrapper_make_targets(
     assert output_path in wrapper_text
 
 
-def _run_script(root: Path, script_name: str) -> subprocess.CompletedProcess[str]:
+def _run_script(
+    root: Path,
+    script_name: str,
+    *,
+    extra_env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    env = {
+        "PATH": f"{root / 'bin'}:{os.environ.get('PATH', '')}",
+        "HOME": os.environ.get("HOME", ""),
+    }
+    if extra_env:
+        env.update(extra_env)
     return subprocess.run(
         ["sh", f"services/backend/scripts/{script_name}"],
         cwd=root,
         check=False,
         capture_output=True,
         text=True,
-        env={
-            "PATH": f"{root / 'bin'}:{os.environ.get('PATH', '')}",
-            "HOME": os.environ.get("HOME", ""),
-        },
+        env=env,
     )
 
 

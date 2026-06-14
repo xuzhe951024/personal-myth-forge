@@ -388,6 +388,7 @@ Bridge deliverable:
 - P0.474 Swift ProjectChecks accepts configured preflight safe wrapper target
 - P0.475 Canonical iOS deploy runbook uses safe wrapper while writing blocked evidence
 - P0.476 Safe Make wrapper accepts blocked configured final demo launch while writing local evidence
+- P0.477 Configured live provider Make targets require explicit local cost consent
 
 ## P1: Mobile Vertical Slice
 

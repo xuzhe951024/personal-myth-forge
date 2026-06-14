@@ -1726,7 +1726,22 @@ FEATURES = (
                 "live-provider-evidence",
             ),
             SourceRequirement("Makefile", "live-provider-evidence:"),
+            SourceRequirement("Makefile", "backend-evaluate-3d-configured:"),
+            SourceRequirement("Makefile", "backend-evaluate-npc-configured:"),
+            SourceRequirement("Makefile", "require_live_provider_consent.sh"),
             SourceRequirement("Makefile", "write_live_provider_evidence.sh"),
+            SourceRequirement(
+                "services/backend/scripts/require_live_provider_consent.sh",
+                "PMF_ALLOW_LIVE_PROVIDER_CALLS=1",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/require_live_provider_consent.sh",
+                "No live provider command was run.",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_acceptance_configured.sh",
+                "require_live_provider_consent.sh",
+            ),
             SourceRequirement(
                 "services/backend/scripts/write_live_provider_evidence.sh",
                 ".local/live-provider-evidence.json",

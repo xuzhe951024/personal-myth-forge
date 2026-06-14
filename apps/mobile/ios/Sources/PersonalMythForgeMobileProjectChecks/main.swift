@@ -23,8 +23,14 @@ do {
     let finalAcceptanceLocalScriptFile = repositoryRoot.appendingPathComponent(
         "services/backend/scripts/write_final_acceptance_local.sh"
     )
+    let finalAcceptanceConfiguredScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_final_acceptance_configured.sh"
+    )
     let finalDemoLaunchConfiguredScriptFile = repositoryRoot.appendingPathComponent(
         "services/backend/scripts/write_final_demo_launch_configured.sh"
+    )
+    let liveProviderConsentGuardScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/require_live_provider_consent.sh"
     )
     let iosDeployRunbookLocalScriptFile = repositoryRoot.appendingPathComponent(
         "services/backend/scripts/write_ios_deploy_runbook_local.sh"
@@ -81,7 +87,9 @@ do {
     let resourceHandoffScript = try readText(resourceHandoffScriptFile)
     let finalResourcesPreflightScript = try readText(finalResourcesPreflightScriptFile)
     let finalAcceptanceLocalScript = try readText(finalAcceptanceLocalScriptFile)
+    let finalAcceptanceConfiguredScript = try readText(finalAcceptanceConfiguredScriptFile)
     let finalDemoLaunchConfiguredScript = try readText(finalDemoLaunchConfiguredScriptFile)
+    let liveProviderConsentGuardScript = try readText(liveProviderConsentGuardScriptFile)
     let iosDeployRunbookLocalScript = try readText(iosDeployRunbookLocalScriptFile)
     let deployConfig = try readText(deployConfigFile)
     let deployLocalExample = try readText(deployLocalExampleFile)
@@ -560,6 +568,26 @@ do {
     try requireContains(makefile, "backend-evaluate-3d-configured:", "configured backend 3D evaluation Make target")
     try requireContains(makefile, "backend-evaluate-npc-configured:", "configured backend NPC evaluation Make target")
     try requireContains(makefile, "backend-evaluate-configured:", "combined configured backend evaluation Make target")
+    try requireContains(
+        makefile,
+        "require_live_provider_consent.sh",
+        "configured backend evaluation consent guard"
+    )
+    try requireContains(
+        liveProviderConsentGuardScript,
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1",
+        "live provider consent guard flag"
+    )
+    try requireContains(
+        liveProviderConsentGuardScript,
+        "No live provider command was run.",
+        "live provider consent guard no-call proof"
+    )
+    try requireContains(
+        finalAcceptanceConfiguredScript,
+        "require_live_provider_consent.sh",
+        "configured final acceptance consent guard"
+    )
     try requireContains(makefile, "--output .local/3d-evaluation-local.json", "3D evaluation local report output")
     try requireContains(makefile, "--output .local/npc-evaluation-local.json", "NPC evaluation local report output")
     try requireContains(makefile, "--output .local/3d-evaluation-configured.json", "3D evaluation configured report output")

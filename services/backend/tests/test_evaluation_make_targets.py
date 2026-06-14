@@ -41,6 +41,13 @@ def test_evaluation_make_targets_dry_run_expected_local_commands() -> None:
     assert "backend-evaluate-3d-configured:" in makefile
     assert "backend-evaluate-npc-configured:" in makefile
     assert "backend-evaluate-configured:" in makefile
+    assert "services/backend/scripts/require_live_provider_consent.sh" in output
+    assert output.index("require_live_provider_consent.sh") < output.index(
+        "--provider meshy"
+    )
+    assert output.rindex("require_live_provider_consent.sh") < output.index(
+        "--provider openai"
+    )
     assert "--provider meshy" in output
     assert "--output .local/3d-evaluation-configured.json" in output
     assert "--provider openai" in output

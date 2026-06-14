@@ -220,6 +220,30 @@ def test_configured_handoff_source_gates_require_final_demo_launch_wrapper() -> 
     ) in requirements
 
 
+def test_live_provider_source_gates_require_execution_consent_guard() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["mobile_live_provider_evidence"].requirements
+    }
+
+    assert ("Makefile", "backend-evaluate-3d-configured:") in requirements
+    assert ("Makefile", "backend-evaluate-npc-configured:") in requirements
+    assert ("Makefile", "require_live_provider_consent.sh") in requirements
+    assert (
+        "services/backend/scripts/require_live_provider_consent.sh",
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1",
+    ) in requirements
+    assert (
+        "services/backend/scripts/require_live_provider_consent.sh",
+        "No live provider command was run.",
+    ) in requirements
+    assert (
+        "services/backend/scripts/write_final_acceptance_configured.sh",
+        "require_live_provider_consent.sh",
+    ) in requirements
+
+
 def test_mobile_preflight_evidence_source_gates_require_top_level_action() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1839,11 +1863,13 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final-external-action-ledger final-launch-closure-packet final-showcase-readiness "
             "local-showcase-smoke"
         ),
-        "Makefile": (
-            "ios-deploy-runbook: backend-evaluate-3d: backend-evaluate-npc: "
-            "backend-evaluate-local: final-acceptance-local: ios-deploy-runbook-local: "
-            "write_ios_deploy_runbook_local.sh "
-            "visual-regression-local: --output .local/visual-regression-local.json "
+            "Makefile": (
+                "ios-deploy-runbook: backend-evaluate-3d: backend-evaluate-npc: "
+                "backend-evaluate-local: backend-evaluate-3d-configured: "
+                "backend-evaluate-npc-configured: final-acceptance-local: "
+                "ios-deploy-runbook-local: "
+                "write_ios_deploy_runbook_local.sh "
+                "visual-regression-local: --output .local/visual-regression-local.json "
             "live-provider-evidence: .local/live-provider-evidence.json "
             "print-fulfillment-readiness: write_print_fulfillment_readiness.sh "
             "final-resource-requirements: .local/final-resource-requirements.json "
@@ -1853,6 +1879,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "write_final_resource_requirements.sh "
             "write_final_resource_fill_guide.sh "
             "write_final_resource_apply_preview.sh "
+            "require_live_provider_consent.sh "
             "write_final_configured_preflight.sh "
             "write_final_configured_evidence_plan.sh "
             "write_configured_live_evidence_bundle.sh "
@@ -1890,6 +1917,15 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/scripts/write_final_acceptance_local.sh": (
             "accepted final acceptance exit code $status "
             "services/backend/.local/final-acceptance-local.json"
+        ),
+        "services/backend/scripts/write_final_acceptance_configured.sh": (
+            "require_live_provider_consent.sh "
+            "accepted configured final acceptance exit code $status "
+            "services/backend/.local/final-acceptance-configured.json"
+        ),
+        "services/backend/scripts/require_live_provider_consent.sh": (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+            "No live provider command was run."
         ),
         "services/backend/scripts/write_ios_deploy_runbook_local.sh": (
             "accepted iOS deploy runbook exit code $status "
