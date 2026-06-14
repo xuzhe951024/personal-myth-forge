@@ -65,11 +65,15 @@ def test_preflight_evidence_blocks_missing_config_with_actions(tmp_path: Path) -
         "status": "blocked",
         "detail": "Missing DEVELOPMENT_TEAM",
     }
+    expected_command = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
     assert result.report["next_action"] == {
         "id": "development_team",
         "label": "Apple Team ID",
         "status": "blocked",
-        "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+        "command": expected_command,
         "detail": (
             "Missing DEVELOPMENT_TEAM; Missing PRODUCT_BUNDLE_IDENTIFIER; "
             "Missing PMF_BACKEND_BASE_URL"
@@ -125,15 +129,15 @@ def test_preflight_evidence_exposes_device_action_bundle_for_blocked_checks(
         "xcode_or_signing": 0,
     }
     assert bundle["first_action"]["id"] == "development_team"
-    assert bundle["first_action"]["command"] == (
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    expected_command = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
     )
+    assert bundle["first_action"]["command"] == expected_command
     assert bundle["first_action"]["validation_command"] == (
         "make mobile-deploy-preflight"
     )
-    assert bundle["first_action"]["next_action"]["command"] == (
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
-    )
+    assert bundle["first_action"]["next_action"]["command"] == expected_command
     assert bundle["safety"]["commands_run"] is True
     assert bundle["safety"]["xcode_or_signing"] is False
     assert str(tmp_path) not in report_text
@@ -153,21 +157,45 @@ def test_preflight_evidence_suggests_auto_writer_for_team_and_backend_url(
         ),
     )
 
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
     assert result.report["next_action"] == {
         "id": "development_team",
         "label": "Apple Team ID",
         "status": "blocked",
-        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "command": expected_command,
         "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
         "validation_command": "make mobile-deploy-preflight",
         "source": "first_blocker",
     }
-    assert result.report["operator_actions"] == [
-        (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
-            "rerun make mobile-deploy-preflight"
-        )
-    ]
+    assert result.report["operator_actions"] == [expected_command]
+
+
+def test_preflight_evidence_next_action_promotes_validation_aware_writer_command(
+    tmp_path: Path,
+) -> None:
+    result = build_mobile_deploy_preflight_evidence_report(
+        repo_root=tmp_path,
+        returncode=2,
+        stdout="",
+        stderr=(
+            "Missing DEVELOPMENT_TEAM in Deployment.local.xcconfig.\n"
+            "PMF_BACKEND_BASE_URL must be reachable from iPhone, not loopback.\n"
+        ),
+    )
+
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    assert result.report["next_action"]["command"] == expected_command
+    assert result.report["next_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
+    assert result.report["operator_actions"][0] == expected_command
 
 
 def test_preflight_evidence_blocks_backend_health_without_leaks(tmp_path: Path) -> None:
@@ -198,7 +226,7 @@ def test_preflight_evidence_blocks_backend_health_without_leaks(tmp_path: Path) 
         "id": "backend_health",
         "label": "Backend health",
         "status": "blocked",
-        "command": expected_command,
+        "command": expected_action,
         "detail": "Backend health check failed",
         "validation_command": "make mobile-deploy-preflight",
         "source": "first_blocker",

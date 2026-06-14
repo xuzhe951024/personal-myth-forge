@@ -109,7 +109,8 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert steps["mobile_deploy_preflight_evidence"]["status"] == "blocked"
     assert steps["mobile_deploy_preflight_evidence"]["classification"] == ""
     assert steps["mobile_deploy_preflight_evidence"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
     )
     assert steps["mobile_deploy_preflight_evidence"]["detail"] == (
         "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
@@ -269,7 +270,8 @@ def test_final_local_report_refresh_exposes_device_action_bundle(
     assert bundle["summary"]["xcode_or_signing"] == 1
     assert bundle["first_action"]["id"] == "run_mobile_deploy_preflight"
     assert bundle["first_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
     )
     assert bundle["first_action"]["validation_command"] == (
         "make mobile-deploy-preflight"
@@ -303,7 +305,8 @@ def test_final_local_report_refresh_preserves_step_source_reports(
     assert deploy_bundle["id"] == "mobile_deploy_preflight_evidence_actions"
     assert deploy_bundle["first_action"]["id"] == "development_team"
     assert deploy_bundle["first_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
     )
     assert xcode_bundle["id"] == "mobile_xcode_build_evidence_actions"
     assert xcode_bundle["first_action"]["id"] == "xcode_build_gate"

@@ -431,6 +431,7 @@ Bridge deliverable:
 - P0.517 iOS device launch rehearsal promotes concrete local device next action
 - P0.518 Final showcase readiness promotes concrete local device next action
 - P0.519 Final external action ledger promotes concrete local device next action
+- P0.520 Mobile deploy preflight evidence promotes concrete next action
 
 ## P1: Mobile Vertical Slice
 
