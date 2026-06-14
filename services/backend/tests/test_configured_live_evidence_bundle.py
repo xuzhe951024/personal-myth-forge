@@ -69,9 +69,11 @@ def test_configured_live_evidence_bundle_exposes_device_action_bundle(
     assert bundle["summary"]["global_actions"] == 0
     assert bundle["summary"]["xcode_or_signing"] == 1
     assert bundle["first_action"]["id"] == "write_development_team"
-    assert bundle["first_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
     )
+    assert bundle["first_action"]["command"] == expected_command
     assert bundle["first_action"]["validation_command"] == (
         "make mobile-deploy-preflight"
     )
@@ -97,9 +99,11 @@ def test_configured_live_evidence_bundle_source_reports_expose_device_action_bun
     assert bundle["status"] == "blocked"
     assert bundle["summary"]["actions"] == 7
     assert bundle["first_action"]["id"] == "write_development_team"
-    assert bundle["first_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
     )
+    assert bundle["first_action"]["command"] == expected_command
     assert bundle["first_action"]["validation_command"] == (
         "make mobile-deploy-preflight"
     )

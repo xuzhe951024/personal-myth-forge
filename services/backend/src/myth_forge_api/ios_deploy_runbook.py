@@ -699,13 +699,20 @@ def _device_slot_action(
     detail: str,
 ) -> dict[str, Any]:
     status = str(slot["status"])
-    action = _device_step_action(action_id, label, status, command, detail)
+    validation_aware_command = add_mobile_deploy_validation_command(command)
+    action = _device_step_action(
+        action_id,
+        label,
+        status,
+        validation_aware_command,
+        detail,
+    )
     action["input_source"] = str(slot["source"])
     action["next_action"] = {
         "id": str(slot["id"]),
         "label": str(slot["label"]),
         "status": str(action["status"]),
-        "command": command,
+        "command": validation_aware_command,
         "detail": str(slot.get("blocker_detail") or detail),
         "source": "device_action_bundle",
         "validation_command": "make mobile-deploy-preflight",
