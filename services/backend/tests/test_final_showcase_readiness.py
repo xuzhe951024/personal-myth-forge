@@ -1595,6 +1595,124 @@ def test_final_showcase_readiness_normalizes_prefixed_ios_device_actions(
     assert "ios_device_launch_certificate: start backend-device-demo" not in actions
 
 
+def test_final_showcase_readiness_preserves_backend_device_demo_handoff_when_device_and_provider_actions_compete(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_capture_source_acceptance(repo_root)
+    _write_incomplete_final_resources(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance_ready(repo_root)
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action={
+            "id": "development_team",
+            "label": "Apple Team ID",
+            "status": "blocked",
+            "command": (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto"
+            ),
+            "detail": (
+                "Missing DEVELOPMENT_TEAM; "
+                "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            ),
+            "validation_command": "make mobile-deploy-preflight",
+            "source": "first_blocker",
+        },
+    )
+    _write_json(
+        repo_root / "services/backend/.local/ios-device-launch-rehearsal.json",
+        {
+            "kind": "ios_device_launch_rehearsal_report",
+            "status": "blocked",
+            "summary": {
+                "ready": 0,
+                "missing": 0,
+                "blocked": 1,
+                "partial": 0,
+                "manual": 0,
+                "live": 0,
+            },
+            "sequence": [],
+            "operator_actions": [
+                (
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "make mobile-write-deploy-config-auto; "
+                    "rerun make mobile-deploy-preflight"
+                ),
+                (
+                    "make final-resource-apply-preview; "
+                    "rerun make provider-handoff; "
+                    "rerun make live-provider-evidence"
+                ),
+                (
+                    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 "
+                    "make print-quote-configured; "
+                    "rerun make print-fulfillment-readiness"
+                ),
+                (
+                    "accept the Xcode license outside Codex, then rerun "
+                    "make mobile-xcode-build-evidence"
+                ),
+                (
+                    "start backend-device-demo before device checks: "
+                    "make backend-device-demo; rerun make mobile-deploy-preflight"
+                ),
+            ],
+            "commands": ["make ios-device-launch-rehearsal"],
+            "safety": {
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "local_paths_in_report": False,
+            },
+        },
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+
+    assert result.exit_code == 2
+    assert actions[0] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert actions.count(backend_action) == 1
+    assert actions.index(backend_action) < actions.index(
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+
+
 def test_final_showcase_readiness_validates_promoted_ios_deploy_actions(
     tmp_path: Path,
 ) -> None:

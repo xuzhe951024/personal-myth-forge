@@ -103,6 +103,9 @@ FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "print_quote",
     "/v1/print-quotes",
 )
+FINAL_SHOWCASE_BACKEND_DEVICE_DEMO_ACTION_MARKERS = (
+    "backend-device-demo",
+)
 FINAL_SHOWCASE_PRINT_READINESS_VALIDATION = "make print-fulfillment-readiness"
 FINAL_SHOWCASE_LOCAL_REHEARSAL_COMMAND = "make final-rehearsal-local"
 FINAL_SHOWCASE_SELF_OPERATOR_ACTIONS = {"make final-showcase-readiness"}
@@ -1851,17 +1854,20 @@ def _prioritize_showcase_operator_actions(actions: list[str]) -> list[str]:
         return []
     first = actions[:1]
     rest = actions[1:]
+    device_demo_actions = [
+        action for action in rest if _is_backend_device_demo_action(action)
+    ]
     provider_actions = [
         action for action in rest if _is_provider_handoff_action(action)
     ]
     print_actions = [
         action for action in rest if _is_print_handoff_action(action)
     ]
-    priority_actions = set(provider_actions + print_actions)
+    priority_actions = set(device_demo_actions + provider_actions + print_actions)
     remaining = [
         action for action in rest if action not in priority_actions
     ]
-    return first + provider_actions + print_actions + remaining
+    return first + device_demo_actions + provider_actions + print_actions + remaining
 
 
 def _is_provider_handoff_action(action: str) -> bool:
@@ -1877,6 +1883,14 @@ def _is_print_handoff_action(action: str) -> bool:
     return any(
         marker in lowered
         for marker in FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS
+    )
+
+
+def _is_backend_device_demo_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(
+        marker in lowered
+        for marker in FINAL_SHOWCASE_BACKEND_DEVICE_DEMO_ACTION_MARKERS
     )
 
 
@@ -1991,6 +2005,7 @@ def _is_ios_rehearsal_priority_action(action: str) -> bool:
         action.startswith(FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_PREFIXES)
         or command_root in FINAL_SHOWCASE_IOS_REHEARSAL_PRIORITY_MAKE_TARGETS
         or _is_ios_deploy_config_action_root(command_root)
+        or _is_backend_device_demo_action(action)
     )
 
 
