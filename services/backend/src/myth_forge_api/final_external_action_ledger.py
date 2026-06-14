@@ -69,6 +69,7 @@ XCODE_LICENSE_OPERATOR_ACTION = (
 )
 IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
 IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
+IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND = "make ios-device-launch-rehearsal"
 
 
 @dataclass(frozen=True)
@@ -992,8 +993,11 @@ def _operator_actions(
         normalized_actions,
         first_blocker=first_blocker,
     )
-    return _drop_bare_mobile_deploy_preflight_when_validated(
+    mobile_pruned_actions = _drop_bare_mobile_deploy_preflight_when_validated(
         _prefer_xcode_evidence_action(promoted_actions)
+    )
+    return _drop_bare_ios_rehearsal_when_specific_device_actions_exist(
+        mobile_pruned_actions
     )
 
 
@@ -1019,6 +1023,33 @@ def _drop_bare_mobile_deploy_preflight_when_validated(actions: list[str]) -> lis
         for action in actions
         if _operator_action_root(action) != IOS_DEPLOY_VALIDATION_COMMAND
     ]
+
+
+def _drop_bare_ios_rehearsal_when_specific_device_actions_exist(
+    actions: list[str],
+) -> list[str]:
+    has_specific_device_action = any(
+        _operator_action_root(action) != IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND
+        and _is_specific_device_action(action)
+        for action in actions
+    )
+    if not has_specific_device_action:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_root(action) != IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND
+    ]
+
+
+def _is_specific_device_action(action: str) -> bool:
+    root = _operator_action_root(action)
+    return (
+        "rerun make mobile-deploy-preflight" in root
+        or "make backend-device-demo" in root
+        or "make mobile-xcode-build-evidence" in root
+        or "mobile-write-deploy-config-auto" in root
+    )
 
 
 def _promote_first_blocker_device_action(

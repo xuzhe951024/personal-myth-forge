@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import myth_forge_api.final_external_action_ledger as final_external_action_ledger
 from myth_forge_api.config import Settings
 from myth_forge_api.final_external_action_ledger import (
     build_final_external_action_ledger_report,
@@ -123,6 +124,8 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     )
     assert next_action["validation_command"] == "make mobile-deploy-preflight"
     operator_actions = report["operator_actions"]
+    assert "make ios-device-launch-rehearsal" not in operator_actions
+    assert "make ios-device-launch-rehearsal" in report["operator_sequence"]
     assert report["operator_actions"][:3] == [
         (
             "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
@@ -167,6 +170,16 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert str(tmp_path) not in report_text
     assert "meshy-secret-test" not in report_text
     assert "sk-openai-test" not in report_text
+
+
+def test_external_action_ledger_preserves_bare_rehearsal_without_specific_device_action() -> None:
+    drop_bare_rehearsal = getattr(
+        final_external_action_ledger,
+        "_drop_bare_ios_rehearsal_when_specific_device_actions_exist",
+    )
+    actions = drop_bare_rehearsal(["make ios-device-launch-rehearsal"])
+
+    assert actions == ["make ios-device-launch-rehearsal"]
 
 
 def test_external_action_ledger_ios_deploy_actions_use_mobile_preflight(
