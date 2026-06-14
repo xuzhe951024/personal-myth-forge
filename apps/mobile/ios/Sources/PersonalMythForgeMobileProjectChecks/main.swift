@@ -588,6 +588,11 @@ do {
         "require_live_provider_consent.sh",
         "configured final acceptance consent guard"
     )
+    try requireContains(
+        liveProviderEvidence,
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ",
+        "live provider evidence consent-prefixed operator handoff"
+    )
     try requireContains(makefile, "--output .local/3d-evaluation-local.json", "3D evaluation local report output")
     try requireContains(makefile, "--output .local/npc-evaluation-local.json", "NPC evaluation local report output")
     try requireContains(makefile, "--output .local/3d-evaluation-configured.json", "3D evaluation configured report output")

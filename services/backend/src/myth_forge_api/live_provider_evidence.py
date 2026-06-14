@@ -13,6 +13,8 @@ from myth_forge_api.final_handoff_commands import (
 )
 from myth_forge_api.operator_actions import normalize_operator_action
 
+LIVE_PROVIDER_CONSENT_ENV_PREFIX = "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+
 
 @dataclass(frozen=True)
 class LiveProviderEvidenceResult:
@@ -345,6 +347,8 @@ def _operator_action_for_blocker(
     slot: EvidenceSlot,
 ) -> str:
     command = str(first_blocker.get("command", slot.command)).strip() or slot.command
+    if slot.requires_live_provider_consent:
+        command = _with_live_provider_consent(command)
     source_validation = str(
         first_blocker.get("source_blocker_validation_command", "")
     ).strip()
@@ -362,6 +366,12 @@ def _operator_action_for_blocker(
     for validation in validations:
         action += f"; rerun {validation}"
     return action
+
+
+def _with_live_provider_consent(command: str) -> str:
+    if command.startswith(LIVE_PROVIDER_CONSENT_ENV_PREFIX):
+        return command
+    return f"{LIVE_PROVIDER_CONSENT_ENV_PREFIX}{command}"
 
 
 def _slot_by_id(slot_id: str) -> EvidenceSlot:

@@ -242,6 +242,10 @@ def test_live_provider_source_gates_require_execution_consent_guard() -> None:
         "services/backend/scripts/write_final_acceptance_configured.sh",
         "require_live_provider_consent.sh",
     ) in requirements
+    assert (
+        "services/backend/src/myth_forge_api/live_provider_evidence.py",
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ",
+    ) in requirements
 
 
 def test_mobile_preflight_evidence_source_gates_require_top_level_action() -> None:
@@ -1775,7 +1779,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/live_provider_evidence.py": (
             "build_live_provider_evidence_report live_provider_evidence_report "
-            "make live-provider-evidence"
+            "make live-provider-evidence PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
         ),
         "services/backend/src/myth_forge_api/print_fulfillment_readiness.py": (
             "build_print_fulfillment_readiness_report print_fulfillment_readiness_report "

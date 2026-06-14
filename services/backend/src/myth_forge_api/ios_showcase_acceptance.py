@@ -1722,6 +1722,10 @@ FEATURES = (
                 "make live-provider-evidence",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/live_provider_evidence.py",
+                "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/cli.py",
                 "live-provider-evidence",
             ),

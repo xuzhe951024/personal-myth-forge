@@ -224,6 +224,39 @@ def test_live_provider_evidence_blocks_failed_report_and_redacts(
     assert str(tmp_path) not in report_text
 
 
+def test_live_provider_evidence_operator_action_prefixes_live_consent(
+    tmp_path: Path,
+) -> None:
+    _write_ready_evidence(tmp_path)
+    _write_json(
+        tmp_path / "services/backend/.local/3d-evaluation-configured.json",
+        {
+            "kind": "three_d_evaluation_report",
+            "provider": "meshy",
+            "suite": "default-v0",
+            "total_cases": 20,
+            "succeeded": 0,
+            "failed": 20,
+            "errors": ["Meshy configured evaluation needs an approved live retry."],
+        },
+    )
+
+    result = build_live_provider_evidence_report(repo_root=tmp_path)
+
+    assert result.exit_code == 2
+    assert result.report["first_blocker"]["id"] == "three_d_evaluation_configured"
+    assert result.report["next_action"]["command"] == (
+        "make backend-evaluate-3d-configured"
+    )
+    assert result.report["next_action"]["requires_live_provider_consent"] is True
+    assert result.report["operator_actions"] == [
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+            "rerun make live-provider-evidence"
+        )
+    ]
+
+
 def test_live_provider_evidence_blocks_unreadable_json(tmp_path: Path) -> None:
     path = tmp_path / "services/backend/.local/provider-handoff.json"
     path.parent.mkdir(parents=True)
