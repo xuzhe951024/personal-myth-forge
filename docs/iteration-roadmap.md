@@ -403,6 +403,7 @@ Bridge deliverable:
 - P0.489 Final demo launch normalizes stale Xcode license actions
 - P0.490 Final launch closure packet normalizes backend/Xcode device handoff actions
 - P0.491 Final external action ledger normalizes Xcode/preflight handoff actions
+- P0.492 Final showcase provider capability next actions include provider-handoff
 
 ## P1: Mobile Vertical Slice
 

@@ -94,6 +94,8 @@ FINAL_SHOWCASE_PROVIDER_CHAIN_ACTION = (
 FINAL_SHOWCASE_WEAK_PROVIDER_ACTION_ROOTS = {
     "make final-resource-apply-preview; rerun make live-provider-evidence",
     "make provider-handoff",
+    "make live-provider-evidence",
+    "run make live-provider-evidence to refresh live provider evidence after cost consent",
 }
 FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "treatstock",
@@ -779,6 +781,14 @@ def _report_next_action_metadata(
     if not isinstance(next_action, dict):
         return "", "", None
     command = str(next_action.get("command", "")).strip()
+    source_validation_command = str(
+        next_action.get("source_blocker_validation_command", "")
+    ).strip()
+    if command and source_validation_command:
+        command = _operator_action_with_validation(
+            command,
+            source_validation_command,
+        )
     validation_command = str(next_action.get("validation_command", "")).strip()
     consent = next_action.get("requires_live_provider_consent")
     requires_live_provider_consent = consent if isinstance(consent, bool) else None
@@ -1761,17 +1771,24 @@ def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:
         return ""
     command = str(next_action.get("command", "")).strip()
     validation_command = str(next_action.get("validation_command", "")).strip()
-    if command and validation_command:
-        return f"{command}; rerun {validation_command}"
-    return command
+    return _operator_action_with_validation(command, validation_command)
 
 
 def _capability_operator_action(row: dict[str, Any]) -> str:
     command = str(row.get("command", "")).strip()
     validation_command = str(row.get("validation_command", "")).strip()
-    if command and validation_command:
-        return f"{command}; rerun {validation_command}"
-    return command
+    return _operator_action_with_validation(command, validation_command)
+
+
+def _operator_action_with_validation(command: str, validation_command: str) -> str:
+    if not command:
+        return ""
+    if not validation_command:
+        return command
+    validation_suffix = f"; rerun {validation_command}"
+    if validation_suffix in command:
+        return command
+    return f"{command}{validation_suffix}"
 
 
 def _normalized_report_status(report: dict[str, Any]) -> str:

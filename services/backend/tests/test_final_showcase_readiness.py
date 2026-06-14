@@ -885,11 +885,14 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
         repo_root=repo_root,
     )
     rows = result.report["capabilities_by_id"]
+    provider_handoff_command = (
+        "make final-resource-apply-preview; rerun make provider-handoff"
+    )
 
     for row_id in ("game_asset_3d_generation", "ai_agent_npc"):
         row = rows[row_id]
         assert row["status"] == "partial"
-        assert row["command"] == "make final-resource-apply-preview"
+        assert row["command"] == provider_handoff_command
         assert row["validation_command"] == "make live-provider-evidence"
         assert row["requires_live_provider_consent"] is False
         assert row["completion_requires_live_provider_consent"] is True
@@ -898,7 +901,7 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
             "label": row["label"],
             "status": "partial",
             "classification": row["classification"],
-            "command": "make final-resource-apply-preview",
+            "command": provider_handoff_command,
             "detail": row["detail"],
             "source": "capability",
             "validation_command": "make live-provider-evidence",
@@ -906,10 +909,13 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
             "completion_requires_live_provider_consent": True,
         }
     actions = result.report["operator_actions"]
-    combined_action = (
-        "make final-resource-apply-preview; rerun make live-provider-evidence"
+    complete_chain = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
     )
-    assert combined_action in actions
+    weak_chain = "make final-resource-apply-preview; rerun make live-provider-evidence"
+    assert complete_chain in actions
+    assert weak_chain not in actions
     assert "make final-resource-apply-preview" not in actions
     assert "make live-provider-evidence" not in actions
 
