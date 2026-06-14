@@ -237,9 +237,15 @@ def test_final_handoff_index_local_lane_uses_saved_blocker_detail(
     assert lanes["local_rehearsal"]["detail"] == expected_detail
     assert result.report["first_blocker"]["detail"] == expected_detail
     next_action = result.report["next_action"]
+    expected_command = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert result.report["first_blocker"]["command"] == expected_command
     assert next_action["id"] == "local_rehearsal"
     assert next_action["source"] == "first_blocker"
-    assert next_action["validation_command"] == "make final-rehearsal-local"
+    assert next_action["command"] == expected_command
+    assert next_action["validation_command"] == "make mobile-deploy-preflight"
     assert next_action["detail"] == expected_detail
     assert result.report["operator_actions"][0] == (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
@@ -250,6 +256,86 @@ def test_final_handoff_index_local_lane_uses_saved_blocker_detail(
         for action in result.report["operator_actions"]
     )
     assert "MESHY_API_KEY" not in report_text
+
+
+def test_final_handoff_index_promotes_local_lane_operator_action_to_next_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_json(
+        repo_root / "services/backend/.local/final-acceptance-local.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+        },
+    )
+    _write_ios_deploy_runbook(repo_root)
+    _write_final_demo_launch(
+        repo_root,
+        overall_status="partial",
+        first_blocker={
+            "id": "mobile_deploy_preflight",
+            "label": "Run iOS deploy preflight",
+            "status": "blocked",
+            "classification": "final_demo_launch_phase",
+            "command": "make mobile-deploy-preflight",
+            "detail": (
+                "physical iPhone backend health gate | Missing DEVELOPMENT_TEAM; "
+                "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+            ),
+        },
+        next_action={
+            "id": "mobile_deploy_preflight",
+            "label": "Run iOS deploy preflight",
+            "status": "blocked",
+            "classification": "final_demo_launch_phase",
+            "command": (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto"
+            ),
+            "detail": (
+                "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be "
+                "iPhone-reachable"
+            ),
+            "validation_command": "make mobile-deploy-preflight",
+        },
+        operator_actions=[
+            (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "start backend-device-demo before device checks: "
+                "make backend-device-demo; rerun make mobile-deploy-preflight"
+            ),
+            (
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+                "rerun make mobile-deploy-preflight"
+            ),
+        ],
+    )
+
+    result = build_final_handoff_index_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    assert result.exit_code == 2
+    assert result.report["first_blocker"]["command"] == expected_command
+    assert result.report["next_action"]["command"] == expected_command
+    assert result.report["next_action"]["validation_command"] == (
+        "make mobile-deploy-preflight"
+    )
 
 
 def test_final_handoff_index_promotes_provider_and_print_handoff_from_final_demo(

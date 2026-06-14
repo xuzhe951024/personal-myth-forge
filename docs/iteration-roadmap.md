@@ -427,6 +427,7 @@ Bridge deliverable:
 - P0.513 Final local report refresh prioritizes backend URL before provider handoffs
 - P0.514 Final external action ledger prioritizes backend URL before provider handoffs
 - P0.515 Final launch closure packet prioritizes backend URL before provider handoffs
+- P0.516 Final handoff index promotes concrete local device next action
 
 ## P1: Mobile Vertical Slice
 
