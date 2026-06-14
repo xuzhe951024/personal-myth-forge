@@ -180,6 +180,9 @@ MOBILE_GATE_COMMANDS = [
         command=["make", "mobile-xcode-build"],
     ),
 ]
+MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH = Path(
+    "services/backend/.local/mobile-deploy-preflight-evidence.json"
+)
 
 
 def run_final_acceptance(
@@ -215,6 +218,7 @@ def run_final_acceptance(
 
     started_at = time.perf_counter()
     selected_repo_root = _repo_root(repo_root)
+    mobile_preflight_next_action = _mobile_preflight_next_action(selected_repo_root)
     selected_command_runner = command_runner or _subprocess_command_runner
     selected_provider_handoff_runner = provider_handoff_runner or _run_provider_handoff
     selected_demo_acceptance_runner = demo_acceptance_runner or run_demo_acceptance
@@ -371,6 +375,13 @@ def run_final_acceptance(
             )
         )
 
+    checks = [
+        _enrich_mobile_preflight_check(
+            check,
+            next_action=mobile_preflight_next_action,
+        )
+        for check in checks
+    ]
     summary = _summary(checks)
     overall_status = _overall_status(summary)
     exit_code = _exit_code_for_status(overall_status)
@@ -588,7 +599,10 @@ def _operator_actions(checks: list[dict[str, Any]]) -> list[str]:
         check_id = str(check.get("id", "check"))
         classification = str(check.get("classification", ""))
         label = str(check.get("label", check_id))
-        if (
+        saved_action = _mobile_preflight_operator_action(check)
+        if saved_action:
+            actions.append(saved_action)
+        elif (
             check_id == "mobile_deploy_preflight"
             and classification == "blocked_by_local_ios_backend_health"
         ):
@@ -627,6 +641,21 @@ def _check_blocker(check: dict[str, Any]) -> dict[str, Any]:
         return child_blocker
     check_id = str(check.get("id", "check"))
     classification = str(check.get("classification", ""))
+    saved_next_action = _mobile_preflight_next_action_from_check(check)
+    if saved_next_action:
+        return {
+            "id": check_id,
+            "label": str(check.get("label", check_id)),
+            "status": str(check.get("status", "blocked")),
+            "classification": classification,
+            "command": saved_next_action["command"],
+            "detail": str(saved_next_action.get("detail") or _blocker_detail(check)),
+            "validation_command": str(
+                saved_next_action.get("validation_command")
+                or _validation_command(check_id, check)
+            ),
+            "next_action": saved_next_action,
+        }
     return {
         "id": check_id,
         "label": str(check.get("label", check_id)),
@@ -713,6 +742,78 @@ def _blocker_detail(check: dict[str, Any]) -> str:
 
 def _validation_aware_action(action: str) -> str:
     return add_mobile_deploy_validation_command(normalize_operator_action(action))
+
+
+def _mobile_preflight_next_action(repo_root: Path) -> dict[str, Any]:
+    evidence_path = repo_root / MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH
+    try:
+        payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    if payload.get("kind") != "mobile_deploy_preflight_evidence_report":
+        return {}
+    next_action = payload.get("next_action")
+    return next_action if isinstance(next_action, dict) else {}
+
+
+def _enrich_mobile_preflight_check(
+    check: dict[str, Any],
+    *,
+    next_action: dict[str, Any],
+) -> dict[str, Any]:
+    if check.get("id") != "mobile_deploy_preflight" or not next_action:
+        return check
+    command = str(next_action.get("command", "")).strip()
+    if not command:
+        return check
+    enriched = dict(check)
+    enriched["next_action"] = {
+        "id": str(next_action.get("id", "")),
+        "label": str(next_action.get("label", "")),
+        "status": str(next_action.get("status", "")),
+        "command": command,
+        "detail": str(next_action.get("detail", "")),
+        "validation_command": str(next_action.get("validation_command", "")),
+        "source": str(next_action.get("source", "")),
+    }
+    return enriched
+
+
+def _mobile_preflight_operator_action(check: dict[str, Any]) -> str:
+    if check.get("id") != "mobile_deploy_preflight":
+        return ""
+    next_action = check.get("next_action")
+    if not isinstance(next_action, dict):
+        return ""
+    command = str(next_action.get("command", "")).strip()
+    validation_command = str(next_action.get("validation_command", "")).strip()
+    if not command:
+        return ""
+    if validation_command:
+        return f"{command}; rerun {validation_command}"
+    return command
+
+
+def _mobile_preflight_next_action_from_check(check: dict[str, Any]) -> dict[str, str]:
+    if check.get("id") != "mobile_deploy_preflight":
+        return {}
+    next_action = check.get("next_action")
+    if not isinstance(next_action, dict):
+        return {}
+    command = str(next_action.get("command", "")).strip()
+    if not command:
+        return {}
+    return {
+        "id": str(next_action.get("id", "")),
+        "label": str(next_action.get("label", "")),
+        "status": str(next_action.get("status", "")),
+        "command": command,
+        "detail": str(next_action.get("detail", "")),
+        "validation_command": str(next_action.get("validation_command", "")),
+        "source": str(next_action.get("source", "")),
+    }
 
 
 def _dedupe(values: list[str]) -> list[str]:

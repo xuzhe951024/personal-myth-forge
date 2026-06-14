@@ -248,12 +248,6 @@ def _default_steps() -> list[RefreshStepDefinition]:
             lambda repo_root: check_visual_artifacts(repo_root).report,
         ),
         _step(
-            "final_acceptance_local",
-            "Safe final acceptance",
-            "final-acceptance-local.json",
-            _safe_final_acceptance_report,
-        ),
-        _step(
             "ios_deploy_runbook_local",
             "iOS deploy runbook",
             "ios-deploy-runbook-local.json",
@@ -267,6 +261,12 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "Mobile deploy preflight evidence",
             "mobile-deploy-preflight-evidence.json",
             _mobile_deploy_preflight_evidence_snapshot,
+        ),
+        _step(
+            "final_acceptance_local",
+            "Safe final acceptance",
+            "final-acceptance-local.json",
+            _safe_final_acceptance_report,
         ),
         _step(
             "mobile_xcode_build_evidence",

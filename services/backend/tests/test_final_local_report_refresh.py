@@ -90,10 +90,7 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert steps["final_acceptance_local"]["classification"] == (
         "blocked_by_local_ios_backend_health"
     )
-    assert steps["final_acceptance_local"]["command"] == (
-        "start backend-device-demo before device checks: make backend-device-demo; "
-        "rerun make mobile-deploy-preflight"
-    )
+    assert steps["final_acceptance_local"]["command"] == expected_command
     assert steps["final_acceptance_local"]["detail"] == (
         "blocked_by_local_ios_backend_health; blocked_by_apple_sdk_license"
     )
@@ -1645,6 +1642,7 @@ def test_final_local_report_refresh_writes_final_showcase_after_rehearsal(
 
     assert result.exit_code == 2
     assert steps["ios_deploy_runbook_local"] < steps["mobile_deploy_preflight_evidence"]
+    assert steps["mobile_deploy_preflight_evidence"] < steps["final_acceptance_local"]
     assert steps["mobile_deploy_preflight_evidence"] < steps["mobile_xcode_build_evidence"]
     assert steps["mobile_deploy_preflight_evidence"] < steps["ios_device_launch_rehearsal"]
     assert steps["mobile_xcode_build_evidence"] < steps["ios_device_evidence_bundle"]

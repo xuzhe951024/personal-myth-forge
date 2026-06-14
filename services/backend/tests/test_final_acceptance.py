@@ -375,6 +375,82 @@ def test_final_acceptance_classifies_mobile_backend_health_blocker(tmp_path) -> 
     )
 
 
+def test_final_acceptance_uses_saved_mobile_preflight_next_action(tmp_path) -> None:
+    writer_action = "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    _write_mobile_deploy_preflight_evidence(
+        tmp_path,
+        next_action={
+            "id": "development_team",
+            "label": "Apple Team ID",
+            "status": "blocked",
+            "command": writer_action,
+            "detail": (
+                "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be "
+                "iPhone-reachable"
+            ),
+            "validation_command": "make mobile-deploy-preflight",
+            "source": "first_blocker",
+        },
+    )
+
+    def command_runner(command: list[str], cwd: Path) -> CommandExecutionResult:
+        if command == ["make", "mobile-deploy-preflight"]:
+            return CommandExecutionResult(
+                exit_code=2,
+                stdout="backend health check skipped by final-local-report-refresh",
+                stderr="",
+                elapsed_seconds=0.01,
+            )
+        return CommandExecutionResult(exit_code=0, stdout="ok", stderr="", elapsed_seconds=0.01)
+
+    result = run_final_acceptance(
+        profile="quick",
+        provider_mode="local",
+        require_real_core=False,
+        repo_root=tmp_path,
+        command_runner=command_runner,
+        provider_handoff_runner=lambda require_core_real: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "provider_handoff_report", "core_real_ready": False},
+        ),
+        demo_acceptance_runner=lambda **kwargs: DemoAcceptanceResult(
+            exit_code=0,
+            report={
+                "kind": "demo_acceptance_report",
+                "mode": kwargs["provider_mode"],
+                "status": "succeeded",
+            },
+        ),
+        npc_agent_provider_acceptance_runner=passing_npc_agent_provider_result,
+        capture_3d_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "capture_3d_acceptance_report", "status": "succeeded"},
+        ),
+        arkit_scan_generation_acceptance_runner=passing_arkit_scan_generation_result,
+        print_quote_acceptance_runner=lambda: InlineCheckResult(
+            exit_code=0,
+            report={"kind": "print_quote_acceptance_report", "status": "succeeded"},
+        ),
+        ios_showcase_acceptance_runner=passing_ios_showcase_result,
+        ios_backend_handoff_acceptance_runner=passing_ios_backend_handoff_result,
+        resource_template_acceptance_runner=passing_resource_template_result,
+        mobile_final_launch_readiness_acceptance_runner=(
+            passing_mobile_final_launch_readiness_result
+        ),
+        local_asset_handoff_acceptance_runner=passing_local_asset_handoff_result,
+        capture_scene_handoff_acceptance_runner=passing_capture_scene_handoff_result,
+    )
+
+    first_blocker = result.report["first_blocker"]
+    assert first_blocker["id"] == "mobile_deploy_preflight"
+    assert first_blocker["next_action"]["command"] == writer_action
+    assert first_blocker["command"] == writer_action
+    assert result.report["next_action"]["command"] == writer_action
+    assert result.report["operator_actions"][0] == (
+        f"{writer_action}; rerun make mobile-deploy-preflight"
+    )
+
+
 def test_final_acceptance_strict_provider_mode_blocks_and_sanitizes(tmp_path) -> None:
     command_calls = 0
 
@@ -740,3 +816,34 @@ def test_final_acceptance_full_profile_includes_backend_and_swift_checks(tmp_pat
         ["make", "mobile-deploy-preflight"],
         ["make", "mobile-xcode-build"],
     ]
+
+
+def _write_mobile_deploy_preflight_evidence(
+    repo_root: Path,
+    *,
+    next_action: dict[str, object],
+) -> None:
+    path = repo_root / "services/backend/.local/mobile-deploy-preflight-evidence.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "kind": "mobile_deploy_preflight_evidence_report",
+                "status": "blocked",
+                "next_action": next_action,
+                "safety": {
+                    "commands_run": True,
+                    "provider_calls": False,
+                    "live_provider_calls": False,
+                    "writes_backend_env": False,
+                    "writes_ios_deploy_config": False,
+                    "global_mutation": False,
+                    "xcode_or_signing": False,
+                    "keychain_writes": False,
+                    "provider_secrets_in_report": False,
+                    "local_paths_in_report": False,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
