@@ -424,6 +424,7 @@ Bridge deliverable:
 - P0.510 iOS device launch rehearsal prioritizes backend-device-demo before backend URL and provider handoffs
 - P0.511 Final showcase readiness prioritizes backend URL before provider handoffs
 - P0.512 Final demo launch prioritizes backend URL before provider handoffs while preserving certificate deploy priority
+- P0.513 Final local report refresh prioritizes backend URL before provider handoffs
 
 ## P1: Mobile Vertical Slice
 
