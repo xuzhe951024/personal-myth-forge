@@ -1682,6 +1682,49 @@ def test_local_final_demo_launch_prioritizes_backend_device_demo_before_provider
     assert actions.index(backend_action) < actions.index(print_action)
 
 
+def test_final_demo_launch_prioritizes_backend_url_after_backend_demo() -> None:
+    backend_action = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_demo_launch._operator_actions(
+        next_action={
+            "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+            "validation_command": "make mobile-deploy-preflight",
+        },
+        operator_checklist=[
+            provider_action,
+            print_action,
+            backend_action,
+            backend_url_action,
+        ],
+    )
+
+    assert actions[:3] == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        backend_action,
+        backend_url_action,
+    ]
+    assert actions.index(backend_url_action) < actions.index(provider_action)
+    assert actions.index(backend_url_action) < actions.index(print_action)
+
+
 def test_final_demo_launch_prefers_showcase_provider_child_action(
     tmp_path: Path,
     monkeypatch,

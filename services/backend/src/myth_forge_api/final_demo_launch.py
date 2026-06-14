@@ -591,6 +591,7 @@ def _operator_actions(
     )
     filtered = _prefer_lan_backend_url_action(filtered)
     filtered = _prioritize_backend_device_demo_action(filtered)
+    filtered = _prioritize_backend_url_after_backend_demo(filtered)
     return _preserve_xcode_evidence_action_before_limit(
         filtered,
     )[:FINAL_DEMO_OPERATOR_ACTION_LIMIT]
@@ -608,6 +609,30 @@ def _prioritize_backend_device_demo_action(actions: list[str]) -> list[str]:
         action for action in rest if action != BACKEND_DEVICE_DEMO_VALIDATED_ACTION
     ]
     return first + backend_actions + remaining
+
+
+def _prioritize_backend_url_after_backend_demo(actions: list[str]) -> list[str]:
+    if not actions:
+        return []
+    backend_url_actions = [
+        action
+        for action in actions
+        if _command_root(action) == FINAL_DEMO_LAN_BACKEND_URL_ACTION
+    ]
+    if not backend_url_actions:
+        return actions
+    selected_backend_url = backend_url_actions[:1]
+    remaining = [action for action in actions if action not in selected_backend_url]
+    try:
+        backend_index = remaining.index(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
+    except ValueError:
+        return actions
+    insert_at = backend_index + 1
+    return [
+        *remaining[:insert_at],
+        *selected_backend_url,
+        *remaining[insert_at:],
+    ]
 
 
 def _preserve_xcode_evidence_action_before_limit(actions: list[str]) -> list[str]:

@@ -438,6 +438,26 @@ def test_ios_device_launch_certificate_prioritizes_backend_demo_after_deploy_han
     assert actions.index(backend_action) < actions.index(print_action)
 
 
+def test_ios_device_launch_certificate_prioritizes_deploy_handoff_before_backend_url_child_action() -> None:
+    deploy_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    actions = ios_device_launch_certificate._prioritize_final_handoff_child_actions(
+        [
+            backend_url_action,
+            deploy_action,
+        ]
+    )
+
+    assert actions == [deploy_action, backend_url_action]
+
+
 def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print_actions(
     tmp_path: Path,
 ) -> None:
