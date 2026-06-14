@@ -50,18 +50,23 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert result.exit_code == 2
     assert result.report["kind"] == "final_local_report_refresh_report"
     assert result.report["status"] == "blocked"
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    expected_detail = (
+        "iOS deploy runbook and device launch rehearsal must both be ready. | "
+        "Next device action: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight | "
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
     assert result.report["first_blocker"] == {
         "id": "final_showcase_readiness",
         "label": "Final showcase readiness",
         "status": "blocked",
         "classification": "ios_deploy_evidence",
-        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
-        "detail": (
-            "iOS deploy runbook and device launch rehearsal must both be ready. | "
-            "Next device action: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
-            "make mobile-write-deploy-config-auto | Missing DEVELOPMENT_TEAM; "
-            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
-        ),
+        "command": expected_command,
+        "detail": expected_detail,
         "output": "services/backend/.local/final-showcase-readiness.json",
         "step_id": "final_showcase_readiness",
         "validation_command": "make mobile-deploy-preflight",
@@ -183,18 +188,23 @@ def test_final_local_report_refresh_exposes_next_action_from_first_blocker(
     action = result.report["next_action"]
 
     assert blocker["id"] == "final_showcase_readiness"
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    expected_detail = (
+        "iOS deploy runbook and device launch rehearsal must both be ready. | "
+        "Next device action: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight | "
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
     assert action == {
         "id": "final_showcase_readiness",
         "label": "Final showcase readiness",
         "status": "blocked",
         "classification": "ios_deploy_evidence",
-        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
-        "detail": (
-            "iOS deploy runbook and device launch rehearsal must both be ready. | "
-            "Next device action: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
-            "make mobile-write-deploy-config-auto | Missing DEVELOPMENT_TEAM; "
-            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
-        ),
+        "command": expected_command,
+        "detail": expected_detail,
         "source": "first_blocker",
         "output": "services/backend/.local/final-showcase-readiness.json",
         "step_id": "final_showcase_readiness",
@@ -215,18 +225,23 @@ def test_final_local_report_refresh_exposes_showcase_next_action(
     assert result.exit_code == 2
     assert result.report["first_blocker"]["id"] == "final_showcase_readiness"
     assert result.report["next_action"]["id"] == "final_showcase_readiness"
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    expected_detail = (
+        "iOS deploy runbook and device launch rehearsal must both be ready. | "
+        "Next device action: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight | "
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
     assert action == {
         "id": "final_showcase_readiness",
         "label": "Final showcase readiness",
         "status": "blocked",
         "classification": "ios_deploy_evidence",
-        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
-        "detail": (
-            "iOS deploy runbook and device launch rehearsal must both be ready. | "
-            "Next device action: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
-            "make mobile-write-deploy-config-auto | Missing DEVELOPMENT_TEAM; "
-            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
-        ),
+        "command": expected_command,
+        "detail": expected_detail,
         "source": "final_showcase_readiness",
         "output": "services/backend/.local/final-showcase-readiness.json",
         "step_id": "final_showcase_readiness",

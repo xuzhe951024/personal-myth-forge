@@ -431,36 +431,92 @@ def test_final_showcase_readiness_next_action_uses_preflight_child_action(
     action = result.report["next_action"]
     blocker = result.report["first_blocker"]
     row = result.report["capabilities_by_id"]["ios_deployable"]
+    expected_command = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
 
-    assert row["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    assert row["command"] == expected_command
     assert row["validation_command"] == "make mobile-deploy-preflight"
     assert row["next_action"] == {
         "id": "ios_deployable",
         "label": "iOS deployable",
         "status": "blocked",
         "classification": "ios_rehearsal_missing",
-        "command": "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig",
+        "command": expected_command,
         "detail": row["detail"],
         "source": "capability",
         "validation_command": "make mobile-deploy-preflight",
     }
-    assert blocker["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    assert blocker["command"] == expected_command
     assert blocker["validation_command"] == "make mobile-deploy-preflight"
-    assert (
-        "Next device action: provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
-        in blocker["detail"]
-    )
+    assert f"Next device action: {expected_command}" in blocker["detail"]
     assert "Next device action: make mobile-deploy-preflight" not in blocker["detail"]
     assert action["id"] == "ios_deployable"
-    assert action["command"] == "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
+    assert action["command"] == expected_command
     assert action["validation_command"] == "make mobile-deploy-preflight"
     assert action["detail"] == blocker["detail"]
     assert "Missing DEVELOPMENT_TEAM" in action["detail"]
     assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in action["detail"]
-    assert result.report["operator_actions"][0] == (
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+    assert result.report["operator_actions"][0] == expected_command
+
+
+def test_final_showcase_readiness_top_level_ios_blocker_promotes_validation_aware_command(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    child_action = {
+        "id": "development_team",
+        "label": "Apple Team ID",
+        "status": "blocked",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "detail": (
+            "Missing DEVELOPMENT_TEAM; "
+            "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        ),
+        "validation_command": "make mobile-deploy-preflight",
+        "source": "first_blocker",
+    }
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action=child_action,
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
+
+    blocker = result.report["first_blocker"]
+    action = result.report["next_action"]
+    row = result.report["capabilities_by_id"]["ios_deployable"]
+
+    assert row["command"] == expected_command
+    assert blocker["command"] == expected_command
+    assert action["command"] == expected_command
+    assert row["validation_command"] == "make mobile-deploy-preflight"
+    assert blocker["validation_command"] == "make mobile-deploy-preflight"
+    assert action["validation_command"] == "make mobile-deploy-preflight"
+    assert result.report["operator_actions"][0] == expected_command
 
 
 def test_final_showcase_readiness_device_bundle_first_action_uses_preflight_child_action(
@@ -514,8 +570,11 @@ def test_final_showcase_readiness_device_bundle_first_action_uses_preflight_chil
     assert actions["run_mobile_deploy_preflight"]["command"] == (
         "make mobile-deploy-preflight"
     )
-    assert result.report["first_blocker"]["command"] == child_action["command"]
-    assert result.report["next_action"]["command"] == child_action["command"]
+    expected_command = (
+        f"{child_action['command']}; rerun make mobile-deploy-preflight"
+    )
+    assert result.report["first_blocker"]["command"] == expected_command
+    assert result.report["next_action"]["command"] == expected_command
 
 
 def test_final_showcase_readiness_device_bundle_first_action_exposes_saved_next_action(
