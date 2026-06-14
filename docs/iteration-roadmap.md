@@ -435,6 +435,7 @@ Bridge deliverable:
 - P0.521 Device action bundles promote concrete saved next action
 - P0.522 iOS deploy runbook device actions include validation rerun
 - P0.523 Mobile deploy validation actions dedupe repeated rerun
+- P0.524 Final showcase readiness detail dedupes validation rerun
 
 ## P1: Mobile Vertical Slice
 

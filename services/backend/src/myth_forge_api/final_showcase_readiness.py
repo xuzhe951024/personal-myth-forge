@@ -869,7 +869,7 @@ def _report_blocker_detail(blocker: dict[str, Any]) -> str:
         parts = []
         if command:
             parts.append(f"Next action: {command}")
-        if validation_command:
+        if validation_command and f"rerun {validation_command}" not in command:
             parts.append(f"rerun {validation_command}")
         if detail:
             parts.append(detail)

@@ -461,6 +461,29 @@ def test_final_showcase_readiness_next_action_uses_preflight_child_action(
     assert result.report["operator_actions"][0] == expected_command
 
 
+def test_final_showcase_readiness_functional_regression_detail_dedupes_validation(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_final_acceptance_blocked_with_child_next_action(repo_root)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    capability = result.report["capabilities_by_id"]["functional_regression"]
+
+    assert capability["command"] == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    assert capability["validation_command"] == "make mobile-deploy-preflight"
+    assert capability["detail"].count("rerun make mobile-deploy-preflight") == 1
+    assert "Missing DEVELOPMENT_TEAM" in capability["detail"]
+    assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in capability["detail"]
+
+
 def test_final_showcase_readiness_top_level_ios_blocker_promotes_validation_aware_command(
     tmp_path: Path,
 ) -> None:
@@ -2554,6 +2577,60 @@ def _write_final_acceptance_blocked_with_actions(repo_root: Path) -> None:
                 }
             ],
         },
+    )
+
+
+def _write_final_acceptance_blocked_with_child_next_action(repo_root: Path) -> None:
+    next_action = {
+        "id": "development_team",
+        "label": "Apple Team ID",
+        "status": "blocked",
+        "command": (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        ),
+        "detail": (
+            "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+        ),
+        "validation_command": "make mobile-deploy-preflight",
+        "source": "first_blocker",
+    }
+    _write_json(
+        repo_root / "services/backend/.local/final-acceptance-local.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": "mobile_deploy_preflight",
+                    "label": "Mobile deploy preflight",
+                    "status": "blocked",
+                    "classification": "blocked_by_local_ios_deploy_config",
+                    "command": ["make", "mobile-deploy-preflight"],
+                    "detail": "iOS deploy config is missing.",
+                }
+            ],
+        },
+    )
+    _write_mobile_deploy_preflight_evidence_blocked(
+        repo_root,
+        checks=[
+            {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            {
+                "id": "backend_base_url",
+                "label": "Backend base URL",
+                "status": "blocked",
+                "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+            },
+        ],
+        next_action=next_action,
     )
 
 
