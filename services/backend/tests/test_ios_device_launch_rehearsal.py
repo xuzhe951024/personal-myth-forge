@@ -1425,6 +1425,77 @@ def test_ios_device_launch_rehearsal_readiness_adds_validation_to_saved_resource
     )
 
 
+def test_ios_device_launch_rehearsal_readiness_prefers_provider_fill_guide_handoff(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["operator_actions"] = [
+        "make provider-handoff; rerun make live-provider-evidence",
+        (
+            "provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        (
+            "final_configured_preflight: "
+            "provide OPENAI_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        (
+            "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+            "rerun make print-fulfillment-readiness"
+        ),
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    actions = result.report["operator_actions"]
+
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+
+    assert provider_action in actions
+    assert not any(
+        "provide MESHY_API_KEY in final-resources.env" in action
+        or "provide OPENAI_API_KEY in final-resources.env" in action
+        for action in actions
+    )
+
+
+def test_ios_device_launch_rehearsal_readiness_sequence_prefers_provider_fill_guide(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"][0]["status"] = "blocked"
+    payload["sequence"][0]["operator_actions"] = [
+        "final_handoff_index: make provider-handoff; rerun make live-provider-evidence",
+        (
+            "final_handoff_index: provide MESHY_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+        (
+            "final_handoff_index: provide OPENAI_API_KEY in final-resources.env; "
+            "rerun make final-resources-preflight"
+        ),
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    actions = result.report["sequence"][0]["operator_actions"]
+
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+
+    assert actions == [provider_action]
+
+
 def test_ios_device_launch_rehearsal_readiness_adds_mobile_validation_to_saved_ios_actions(
     tmp_path: Path,
 ) -> None:
