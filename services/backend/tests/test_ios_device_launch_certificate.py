@@ -380,6 +380,64 @@ def test_ios_device_launch_certificate_preserves_backend_device_demo_handoff(
     assert "start backend-device-demo" not in actions
 
 
+def test_ios_device_launch_certificate_prioritizes_backend_demo_after_deploy_handoff(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    deploy_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    class StubFinalHandoffResult:
+        report = {
+            "kind": "final_handoff_index_report",
+            "status": "blocked",
+            "summary": {"blocked": 1},
+            "lanes_by_id": {},
+            "operator_actions": [
+                deploy_action,
+                provider_action,
+                print_action,
+                backend_action,
+                backend_url_action,
+            ],
+        }
+
+    monkeypatch.setattr(
+        "myth_forge_api.ios_device_launch_certificate.build_final_handoff_index_report",
+        lambda **kwargs: StubFinalHandoffResult(),
+    )
+
+    result = build_ios_device_launch_certificate_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    actions = result.report["operator_actions"]
+    assert actions[:3] == [deploy_action, backend_action, backend_url_action]
+    assert actions.index(backend_action) < actions.index(provider_action)
+    assert actions.index(backend_action) < actions.index(print_action)
+
+
 def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print_actions(
     tmp_path: Path,
 ) -> None:
