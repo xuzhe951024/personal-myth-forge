@@ -190,6 +190,77 @@ def test_final_launch_closure_packet_prefers_promoted_deploy_writer() -> None:
     assert backend_url_action in actions
 
 
+def test_final_launch_closure_packet_prefers_validated_device_child_actions() -> None:
+    backend_validated_action = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+    xcode_validated_action = (
+        "accept the Xcode license outside Codex, then rerun "
+        "make mobile-xcode-build-evidence"
+    )
+
+    actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "backend_device_server",
+                        "status": "blocked",
+                        "command": "make backend-device-demo",
+                        "requires_user_input": False,
+                        "requires_cost_consent": False,
+                        "requires_user_confirmation": False,
+                    },
+                    {
+                        "id": "xcode_build_gate",
+                        "status": "blocked",
+                        "command": "make mobile-xcode-build",
+                        "requires_user_input": False,
+                        "requires_cost_consent": False,
+                        "requires_user_confirmation": False,
+                    },
+                    {
+                        "id": "mobile_deploy_preflight",
+                        "status": "blocked",
+                        "command": "make mobile-deploy-preflight",
+                        "requires_user_input": False,
+                        "requires_cost_consent": False,
+                        "requires_user_confirmation": False,
+                    },
+                ]
+            },
+            {
+                "actions": [
+                    {
+                        "id": "saved_backend_device_server",
+                        "status": "blocked",
+                        "command": backend_validated_action,
+                        "requires_user_input": False,
+                        "requires_cost_consent": False,
+                        "requires_user_confirmation": False,
+                    },
+                    {
+                        "id": "saved_xcode_license",
+                        "status": "blocked",
+                        "command": xcode_validated_action,
+                        "requires_user_input": False,
+                        "requires_cost_consent": False,
+                        "requires_user_confirmation": False,
+                    },
+                ]
+            },
+        ],
+        first_blocker=None,
+    )
+
+    assert backend_validated_action in actions
+    assert xcode_validated_action in actions
+    assert "make backend-device-demo" not in actions
+    assert "make mobile-xcode-build" not in actions
+    assert "make mobile-deploy-preflight" not in actions
+
+
 def test_final_launch_closure_packet_exposes_device_action_bundle(
     tmp_path: Path,
 ) -> None:

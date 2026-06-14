@@ -27,6 +27,9 @@ from myth_forge_api.ios_device_evidence_bundle import (
     build_ios_device_evidence_bundle_report,
 )
 from myth_forge_api.operator_actions import (
+    BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+    MOBILE_DEPLOY_PREFLIGHT_COMMAND,
+    XCODE_BUILD_GATE_ACTION,
     normalize_operator_action,
     prefer_project_local_ios_deploy_handoff_actions,
 )
@@ -776,10 +779,25 @@ def _operator_actions(
     normalized_actions = prefer_project_local_ios_deploy_handoff_actions(
         normalized_actions
     )
-    return _promote_first_blocker_device_action(
+    promoted_actions = _promote_first_blocker_device_action(
         normalized_actions,
         first_blocker=first_blocker,
     )
+    return _drop_bare_mobile_deploy_preflight_when_validated(promoted_actions)
+
+
+def _drop_bare_mobile_deploy_preflight_when_validated(actions: list[str]) -> list[str]:
+    has_validated_mobile_action = any(
+        f"rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}" in _operator_action_root(action)
+        for action in actions
+    )
+    if not has_validated_mobile_action:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_root(action) != MOBILE_DEPLOY_PREFLIGHT_COMMAND
+    ]
 
 
 def _promote_first_blocker_device_action(
@@ -807,6 +825,16 @@ def _is_device_handoff_command(command: str) -> bool:
 
 def _run_action_text(command: str) -> str:
     normalized = command.strip()
+    if normalized == "make backend-device-demo":
+        return BACKEND_DEVICE_DEMO_VALIDATED_ACTION
+    if normalized == "make mobile-xcode-build":
+        return XCODE_BUILD_GATE_ACTION
+    if normalized.startswith("start backend-device-demo before device checks:"):
+        return normalized
+    if normalized.startswith("accept the Xcode license outside Codex"):
+        return normalized
+    if "; rerun " in normalized:
+        return normalized
     if normalized.startswith("make "):
         return normalized
     return f"run {normalized}"
