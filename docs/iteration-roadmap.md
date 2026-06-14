@@ -446,6 +446,7 @@ Bridge deliverable:
 - P0.532 Configured print quote request writer handoff
 - P0.533 Mobile backend URL device action uses auto writer handoff
 - P0.534 Print quote request handoff derives local served asset URIs
+- P0.535 Final acceptance saved report uses mobile preflight evidence handoff
 
 ## P1: Mobile Vertical Slice
 
