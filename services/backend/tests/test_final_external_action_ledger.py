@@ -109,19 +109,19 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert report["source_reports"]["live_provider_evidence"]["status"] == "missing"
     first_blocker = report["first_blocker"]
     next_action = report["next_action"]
+    expected_device_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
     assert first_blocker["id"] == "write_development_team"
     assert first_blocker["group_id"] == "device_runtime_actions"
     assert first_blocker["group_label"] == "Device runtime actions"
     assert first_blocker["classification"] == "manual_device_config_required"
-    assert first_blocker["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
-    )
+    assert first_blocker["command"] == expected_device_command
     assert first_blocker["validation_command"] == "make mobile-deploy-preflight"
     assert next_action["id"] == "write_development_team"
     assert next_action["source"] == "first_blocker"
-    assert next_action["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
-    )
+    assert next_action["command"] == expected_device_command
     assert next_action["validation_command"] == "make mobile-deploy-preflight"
     operator_actions = report["operator_actions"]
     assert "make ios-device-launch-rehearsal" not in operator_actions
@@ -433,9 +433,7 @@ def test_external_action_ledger_top_level_actions_start_with_device_blocker(
 
     assert report["first_blocker"]["id"] == "write_development_team"
     assert report["first_blocker"]["group_id"] == "device_runtime_actions"
-    assert report["next_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
-    )
+    assert report["next_action"]["command"] == device_action
     assert operator_actions[0] == device_action
     assert provider_action in operator_actions
     assert operator_actions.index(device_action) < operator_actions.index(provider_action)
@@ -443,6 +441,33 @@ def test_external_action_ledger_top_level_actions_start_with_device_blocker(
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
     ) not in operator_actions
+
+
+def test_external_action_ledger_top_level_device_blocker_promotes_validation_aware_command(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    first_blocker = result.report["first_blocker"]
+    next_action = result.report["next_action"]
+
+    assert first_blocker["id"] == "write_development_team"
+    assert first_blocker["command"] == expected_command
+    assert first_blocker["validation_command"] == "make mobile-deploy-preflight"
+    assert next_action["command"] == expected_command
+    assert next_action["validation_command"] == "make mobile-deploy-preflight"
+    assert result.report["operator_actions"][0] == expected_command
 
 
 def test_external_action_ledger_operator_actions_include_backend_device_demo_handoff(
