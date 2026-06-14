@@ -203,7 +203,7 @@ ios-device-launch-rehearsal:
 \t@services/backend/scripts/write_ios_device_launch_rehearsal.sh
 .PHONY: ios-deploy-runbook ios-deploy-runbook-local
 ios-deploy-runbook:
-\tcd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
+\t@services/backend/scripts/write_ios_deploy_runbook_local.sh
 ios-deploy-runbook-local:
 \t@services/backend/scripts/write_ios_deploy_runbook_local.sh
 .PHONY: final-local-report-refresh-local

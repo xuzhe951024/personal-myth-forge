@@ -189,7 +189,7 @@ final-demo-launch-configured:
 .PHONY: ios-deploy-runbook ios-deploy-runbook-local
 
 ios-deploy-runbook:
-	cd services/backend && uv run python -m myth_forge_api.cli ios-deploy-runbook --mode local --repo-root ../.. --output .local/ios-deploy-runbook-local.json
+	@services/backend/scripts/write_ios_deploy_runbook_local.sh
 
 ios-deploy-runbook-local:
 	@services/backend/scripts/write_ios_deploy_runbook_local.sh

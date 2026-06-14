@@ -177,6 +177,26 @@ def test_ios_device_handoff_source_gates_require_first_blocker() -> None:
     ) in rehearsal_requirements
 
 
+def test_ios_deploy_runbook_source_gates_require_safe_wrapper() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["ios_deploy_runbook"].requirements
+    }
+
+    assert ("Makefile", "ios-deploy-runbook:") in requirements
+    assert ("Makefile", "ios-deploy-runbook-local:") in requirements
+    assert ("Makefile", "write_ios_deploy_runbook_local.sh") in requirements
+    assert (
+        "services/backend/scripts/write_ios_deploy_runbook_local.sh",
+        "accepted iOS deploy runbook exit code $status",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+        "write_ios_deploy_runbook_local.sh",
+    ) in requirements
+
+
 def test_mobile_preflight_evidence_source_gates_require_top_level_action() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1421,6 +1441,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final-demo-launch-local: "
             "final-demo-launch: final-demo-launch-local "
             "services/backend/scripts/write_final_local_report_refresh.sh "
+            "write_ios_deploy_runbook_local.sh "
             "write_final_configured_preflight.sh "
             "write_final_handoff_index.sh "
             "write_ios_device_launch_certificate.sh "
@@ -1797,6 +1818,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "Makefile": (
             "ios-deploy-runbook: backend-evaluate-3d: backend-evaluate-npc: "
             "backend-evaluate-local: final-acceptance-local: ios-deploy-runbook-local: "
+            "write_ios_deploy_runbook_local.sh "
             "visual-regression-local: --output .local/visual-regression-local.json "
             "live-provider-evidence: .local/live-provider-evidence.json "
             "print-fulfillment-readiness: write_print_fulfillment_readiness.sh "

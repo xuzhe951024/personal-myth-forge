@@ -160,6 +160,34 @@ def test_write_ios_deploy_runbook_local_fails_unusable_exit_code(
     assert "failed before writing a usable report: exit 1" in result.stderr
 
 
+def test_ios_deploy_runbook_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "ios-deploy-runbook"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    script = repo_root / "services/backend/scripts/write_ios_deploy_runbook_local.sh"
+    assert ".PHONY: ios-deploy-runbook ios-deploy-runbook-local" in makefile
+    assert "ios-deploy-runbook:" in makefile
+    assert "services/backend/scripts/write_ios_deploy_runbook_local.sh" in makefile
+    assert "write_ios_deploy_runbook_local.sh" in result.stdout
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    script_text = script.read_text(encoding="utf-8")
+    assert "ios-deploy-runbook" in script_text
+    assert "--mode local" in script_text
+    assert "--repo-root ../.." in script_text
+    assert "--output .local/ios-deploy-runbook-local.json" in script_text
+    assert "accepted iOS deploy runbook exit code $status" in script_text
+
+
 def test_write_final_local_report_refresh_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:

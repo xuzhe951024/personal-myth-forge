@@ -374,7 +374,11 @@ do {
     try requireContains(makefile, ".PHONY: ios-deploy-runbook", "iOS deploy runbook Make phony target")
     try requireContains(makefile, "ios-deploy-runbook:", "iOS deploy runbook Make target")
     try requireContains(makefile, "ios-deploy-runbook-local:", "iOS deploy runbook local wrapper target")
-    try requireContains(makefile, "myth_forge_api.cli ios-deploy-runbook", "iOS deploy runbook CLI target")
+    try requireContains(
+        makefile,
+        "services/backend/scripts/write_ios_deploy_runbook_local.sh",
+        "iOS deploy runbook wrapper script"
+    )
     try requireContains(makefile, ".PHONY: final-configured-preflight", "configured handoff preflight Make phony target")
     try requireContains(makefile, "final-configured-preflight:", "configured handoff preflight Make target")
     try requireContains(

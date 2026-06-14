@@ -1815,6 +1815,11 @@ FEATURES = (
             ),
             SourceRequirement("Makefile", "ios-deploy-runbook:"),
             SourceRequirement("Makefile", "ios-deploy-runbook-local:"),
+            SourceRequirement("Makefile", "write_ios_deploy_runbook_local.sh"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "write_ios_deploy_runbook_local.sh",
+            ),
             SourceRequirement("Makefile", "backend-evaluate-3d:"),
             SourceRequirement("Makefile", "backend-evaluate-npc:"),
             SourceRequirement("Makefile", "backend-evaluate-local:"),
