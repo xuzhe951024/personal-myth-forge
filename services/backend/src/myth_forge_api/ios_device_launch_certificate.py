@@ -665,9 +665,39 @@ def _prioritize_certificate_operator_actions(actions: list[str]) -> list[str]:
         action for action in rest if _is_backend_device_demo_handoff_action(action)
     ]
     backend_actions = _preferred_backend_device_demo_handoff_actions(rest)
-    priority_actions = set(provider_actions + print_actions + raw_backend_actions)
+    backend_url_actions = [
+        action
+        for action in rest
+        if action not in raw_backend_actions and _is_backend_url_handoff_action(action)
+    ]
+    priority_actions = set(
+        provider_actions + print_actions + raw_backend_actions + backend_url_actions
+    )
     remaining = [action for action in rest if action not in priority_actions]
+    if _is_mobile_deploy_handoff_action(first_actions[0]):
+        return (
+            first_actions
+            + backend_actions
+            + backend_url_actions
+            + provider_actions
+            + print_actions
+            + remaining
+        )
     return first_actions + provider_actions + print_actions + backend_actions + remaining
+
+
+def _is_backend_url_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return "pmf_backend_base_url" in lowered or "iphone-reachable lan url" in lowered
+
+
+def _is_mobile_deploy_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return (
+        "mobile-deploy-preflight" in lowered
+        and "mobile-write-deploy-config-auto" in lowered
+        and not _is_backend_device_demo_handoff_action(action)
+    )
 
 
 def _first_blocker(device_gates: list[dict[str, Any]]) -> dict[str, Any] | None:
