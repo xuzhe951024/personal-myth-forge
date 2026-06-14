@@ -869,6 +869,60 @@ def test_final_demo_launch_dedupe_prefers_writer_over_old_team_action() -> None:
     ]
 
 
+def test_final_demo_launch_dedupe_preserves_backend_url_actions_for_checklist() -> None:
+    generic_backend_url_action = (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    lan_backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    actions = final_demo_launch._dedupe_operator_actions(
+        [
+            generic_backend_url_action,
+            lan_backend_url_action,
+        ]
+    )
+
+    assert actions == [generic_backend_url_action, lan_backend_url_action]
+
+
+def test_final_demo_launch_operator_actions_prefers_lan_backend_url_action() -> None:
+    generic_backend_url_action = (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    lan_backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    actions = final_demo_launch._operator_actions(
+        next_action=None,
+        operator_checklist=[
+            generic_backend_url_action,
+            lan_backend_url_action,
+        ],
+    )
+
+    assert actions == [lan_backend_url_action]
+
+
+def test_final_demo_launch_dedupe_preserves_generic_backend_url_when_only_action() -> None:
+    generic_backend_url_action = (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    actions = final_demo_launch._dedupe_operator_actions(
+        [generic_backend_url_action]
+    )
+
+    assert actions == [generic_backend_url_action]
+
+
 def test_final_demo_launch_dedupe_drops_targeted_unblock_fallbacks() -> None:
     actions = final_demo_launch._dedupe_operator_actions(
         [

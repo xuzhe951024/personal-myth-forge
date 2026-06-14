@@ -81,6 +81,14 @@ FINAL_DEMO_MANUAL_TEAM_ACTION = (
     "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
     "rerun make mobile-deploy-preflight"
 )
+FINAL_DEMO_GENERIC_BACKEND_URL_ACTION = (
+    "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+    "rerun make mobile-deploy-preflight"
+)
+FINAL_DEMO_LAN_BACKEND_URL_ACTION = (
+    "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+    "rerun make mobile-deploy-preflight"
+)
 IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
 IOS_DEPLOY_DESTINATION_LABEL = "Deployment.local.xcconfig"
 IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
@@ -581,6 +589,7 @@ def _operator_actions(
         deduped,
         protected_action=concrete,
     )
+    filtered = _prefer_lan_backend_url_action(filtered)
     return _preserve_xcode_evidence_action_before_limit(
         filtered,
     )[:FINAL_DEMO_OPERATOR_ACTION_LIMIT]
@@ -1195,6 +1204,17 @@ def _drop_bare_resource_requirements_when_specific_handoff_exists(
         action
         for action in actions
         if _command_root(action) != FINAL_RESOURCE_REQUIREMENTS_COMMAND
+    ]
+
+
+def _prefer_lan_backend_url_action(actions: list[str]) -> list[str]:
+    action_roots = {_command_root(action) for action in actions}
+    if FINAL_DEMO_LAN_BACKEND_URL_ACTION not in action_roots:
+        return actions
+    return [
+        action
+        for action in actions
+        if _command_root(action) != FINAL_DEMO_GENERIC_BACKEND_URL_ACTION
     ]
 
 
