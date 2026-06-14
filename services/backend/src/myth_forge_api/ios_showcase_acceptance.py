@@ -2190,6 +2190,10 @@ FEATURES = (
                 "build_provider_handoff_report",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "write_final_configured_preflight.sh",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_configured_preflight.py",
                 "build_ios_deploy_runbook_report",
             ),
@@ -2306,6 +2310,10 @@ FEATURES = (
                 "accepted final handoff index exit code",
             ),
             SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "write_final_handoff_index.sh",
+            ),
+            SourceRequirement(
                 "services/backend/tests/test_final_handoff_index.py",
                 "test_final_handoff_index_ready_when_local_and_configured_inputs_are_ready",
             ),
@@ -2376,6 +2384,10 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/scripts/write_ios_device_launch_certificate.sh",
                 "accepted iOS device launch certificate exit code",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "write_ios_device_launch_certificate.sh",
             ),
             SourceRequirement(
                 "services/backend/tests/test_ios_device_launch_certificate.py",

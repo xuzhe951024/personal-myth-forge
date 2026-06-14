@@ -268,6 +268,10 @@ def test_device_handoff_make_source_gates_require_safe_wrappers() -> None:
         "accepted final handoff index exit code",
     ) in final_handoff_requirements
     assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+        "write_final_handoff_index.sh",
+    ) in final_handoff_requirements
+    assert (
         "Makefile",
         "write_ios_device_launch_certificate.sh",
     ) in certificate_requirements
@@ -278,6 +282,10 @@ def test_device_handoff_make_source_gates_require_safe_wrappers() -> None:
     assert (
         "services/backend/scripts/write_ios_device_launch_certificate.sh",
         "accepted iOS device launch certificate exit code",
+    ) in certificate_requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+        "write_ios_device_launch_certificate.sh",
     ) in certificate_requirements
     assert (
         "Makefile",
@@ -416,6 +424,10 @@ def test_provider_handoff_make_source_gates_require_safe_wrappers() -> None:
     assert (
         "services/backend/scripts/write_configured_live_evidence_bundle.sh",
         ".local/configured-live-evidence-bundle.json",
+    ) in configured_requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+        "write_final_configured_preflight.sh",
     ) in configured_requirements
     assert ("Makefile", "write_live_provider_evidence.sh") in live_requirements
     assert (
@@ -1409,6 +1421,9 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final-demo-launch-local: "
             "final-demo-launch: final-demo-launch-local "
             "services/backend/scripts/write_final_local_report_refresh.sh "
+            "write_final_configured_preflight.sh "
+            "write_final_handoff_index.sh "
+            "write_ios_device_launch_certificate.sh "
             "final-rehearsal-local: backend-evaluate-local visual-regression-local "
             "final-acceptance-local final-demo-launch-local ios-deploy-runbook-local "
             "final-local-report-refresh-local "

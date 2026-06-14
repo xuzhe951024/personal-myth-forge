@@ -385,6 +385,7 @@ Bridge deliverable:
 - P0.471 Safe Make wrapper accepts blocked print fulfillment readiness while writing local evidence
 - P0.472 Safe Make wrapper accepts blocked final resource fill guide while writing JSON and Markdown evidence
 - P0.473 Canonical final local report refresh uses safe wrapper while writing blocked evidence
+- P0.474 Swift ProjectChecks accepts configured preflight safe wrapper target
 
 ## P1: Mobile Vertical Slice
 

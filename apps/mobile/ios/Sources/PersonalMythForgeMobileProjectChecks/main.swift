@@ -14,6 +14,12 @@ do {
     let backendEnvWriterScriptFile = repositoryRoot.appendingPathComponent(
         "services/backend/scripts/write_backend_env.sh"
     )
+    let resourceHandoffScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_resource_handoff.sh"
+    )
+    let finalResourcesPreflightScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_final_resources_preflight.sh"
+    )
     let finalAcceptanceLocalScriptFile = repositoryRoot.appendingPathComponent(
         "services/backend/scripts/write_final_acceptance_local.sh"
     )
@@ -48,6 +54,15 @@ do {
     let iosDeviceLaunchRehearsalFile = repositoryRoot.appendingPathComponent(
         "services/backend/src/myth_forge_api/ios_device_launch_rehearsal.py"
     )
+    let finalConfiguredPreflightScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_final_configured_preflight.sh"
+    )
+    let finalHandoffIndexScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_final_handoff_index.sh"
+    )
+    let iosDeviceLaunchCertificateScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_ios_device_launch_certificate.sh"
+    )
     let iosDeviceLaunchRehearsalScriptFile = repositoryRoot.appendingPathComponent(
         "services/backend/scripts/write_ios_device_launch_rehearsal.sh"
     )
@@ -60,6 +75,8 @@ do {
     let deployPreflightScript = try readText(deployPreflightScriptFile)
     let deployConfigWriterScript = try readText(deployConfigWriterScriptFile)
     let backendEnvWriterScript = try readText(backendEnvWriterScriptFile)
+    let resourceHandoffScript = try readText(resourceHandoffScriptFile)
+    let finalResourcesPreflightScript = try readText(finalResourcesPreflightScriptFile)
     let finalAcceptanceLocalScript = try readText(finalAcceptanceLocalScriptFile)
     let iosDeployRunbookLocalScript = try readText(iosDeployRunbookLocalScriptFile)
     let deployConfig = try readText(deployConfigFile)
@@ -74,6 +91,13 @@ do {
     let finalHandoffIndex = try readText(finalHandoffIndexFile)
     let iosDeviceLaunchCertificate = try readText(iosDeviceLaunchCertificateFile)
     let iosDeviceLaunchRehearsal = try readText(iosDeviceLaunchRehearsalFile)
+    let finalConfiguredPreflightScript = try readText(
+        finalConfiguredPreflightScriptFile
+    )
+    let finalHandoffIndexScript = try readText(finalHandoffIndexScriptFile)
+    let iosDeviceLaunchCertificateScript = try readText(
+        iosDeviceLaunchCertificateScriptFile
+    )
     let iosDeviceLaunchRehearsalScript = try readText(
         iosDeviceLaunchRehearsalScriptFile
     )
@@ -353,10 +377,18 @@ do {
     try requireContains(makefile, "myth_forge_api.cli ios-deploy-runbook", "iOS deploy runbook CLI target")
     try requireContains(makefile, ".PHONY: final-configured-preflight", "configured handoff preflight Make phony target")
     try requireContains(makefile, "final-configured-preflight:", "configured handoff preflight Make target")
-    try requireContains(makefile, "myth_forge_api.cli final-configured-preflight", "configured handoff preflight CLI target")
+    try requireContains(
+        makefile,
+        "services/backend/scripts/write_final_configured_preflight.sh",
+        "configured handoff preflight wrapper script"
+    )
     try requireContains(makefile, ".PHONY: final-handoff-index", "final handoff index Make phony target")
     try requireContains(makefile, "final-handoff-index:", "final handoff index Make target")
-    try requireContains(makefile, "myth_forge_api.cli final-handoff-index", "final handoff index CLI target")
+    try requireContains(
+        makefile,
+        "services/backend/scripts/write_final_handoff_index.sh",
+        "final handoff index wrapper script"
+    )
     try requireContains(
         makefile,
         ".PHONY: ios-device-launch-certificate",
@@ -369,21 +401,21 @@ do {
     )
     try requireContains(
         makefile,
-        "myth_forge_api.cli ios-device-launch-certificate",
-        "iOS device launch certificate CLI target"
+        "services/backend/scripts/write_ios_device_launch_certificate.sh",
+        "iOS device launch certificate wrapper script"
     )
     try requireContains(
-        makefile,
+        finalConfiguredPreflightScript,
         "--output .local/final-configured-preflight.json",
         "configured handoff preflight report output"
     )
     try requireContains(
-        makefile,
+        finalHandoffIndexScript,
         "--output .local/final-handoff-index.json",
         "final handoff index report output"
     )
     try requireContains(
-        makefile,
+        iosDeviceLaunchCertificateScript,
         "--output .local/ios-device-launch-certificate.json",
         "iOS device launch certificate report output"
     )
@@ -524,9 +556,13 @@ do {
     try requireContains(makefile, "--output .local/npc-evaluation-local.json", "NPC evaluation local report output")
     try requireContains(makefile, "--output .local/3d-evaluation-configured.json", "3D evaluation configured report output")
     try requireContains(makefile, "--output .local/npc-evaluation-configured.json", "NPC evaluation configured report output")
-    try requireContains(makefile, "--output .local/final-resources-preflight.json", "final resources preflight report output")
+    try requireContains(
+        finalResourcesPreflightScript,
+        "--output .local/final-resources-preflight.json",
+        "final resources preflight report output"
+    )
     try requireContains(makefile, "resource-handoff:", "resource handoff Make target")
-    try requireContains(makefile, "--output .local/resource-handoff.json", "resource handoff report output")
+    try requireContains(resourceHandoffScript, "--output .local/resource-handoff.json", "resource handoff report output")
     try requireContains(makefile, "--output .local/final-demo-launch-local.json", "final demo launch local report output")
     try requireContains(makefile, "final-demo-launch-configured:", "final demo launch configured Make target")
     try requireContains(makefile, "--output .local/final-demo-launch-configured.json", "final demo launch configured report output")
