@@ -80,6 +80,7 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
         "source": "first_blocker",
     }
     assert "make final-showcase-readiness" not in result.report["operator_actions"]
+    assert "make final-rehearsal-local" not in result.report["operator_actions"]
     assert "make final-rehearsal-local" in result.report["commands"]
     assert "make final-showcase-readiness" in result.report["commands"]
     assert result.report["safety"]["commands_run"] is False
@@ -1498,8 +1499,15 @@ def test_final_showcase_readiness_filters_self_referential_operator_action() -> 
 
     assert actions == [
         "make final-resource-apply-preview",
-        "make final-rehearsal-local",
     ]
+
+
+def test_final_showcase_readiness_preserves_bare_rehearsal_when_only_action() -> None:
+    actions = final_showcase_readiness._filter_showcase_operator_actions(
+        ["make final-rehearsal-local"]
+    )
+
+    assert actions == ["make final-rehearsal-local"]
 
 
 def test_final_showcase_readiness_dedupes_duplicate_deploy_writer_roots() -> None:

@@ -407,6 +407,7 @@ Bridge deliverable:
 - P0.493 Final launch closure packet drops bare validation actions when specific handoff chains exist
 - P0.494 Final demo launch drops bare resource requirements action when specific handoff chains exist
 - P0.495 Final external action ledger drops bare iOS rehearsal action when specific handoff chains exist
+- P0.496 Final showcase readiness drops bare local rehearsal action when specific handoff chains exist
 
 ## P1: Mobile Vertical Slice
 

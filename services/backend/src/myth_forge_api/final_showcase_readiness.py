@@ -104,6 +104,7 @@ FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "/v1/print-quotes",
 )
 FINAL_SHOWCASE_PRINT_READINESS_VALIDATION = "make print-fulfillment-readiness"
+FINAL_SHOWCASE_LOCAL_REHEARSAL_COMMAND = "make final-rehearsal-local"
 FINAL_SHOWCASE_SELF_OPERATOR_ACTIONS = {"make final-showcase-readiness"}
 IOS_DEPLOY_DESTINATION_LABEL = "Deployment.local.xcconfig"
 IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
@@ -1815,12 +1816,34 @@ def _report_operator_actions(report: dict[str, Any]) -> list[str]:
 
 
 def _filter_showcase_operator_actions(actions: list[str]) -> list[str]:
-    return [
+    filtered = [
         action
         for action in actions
         if action not in FINAL_SHOWCASE_SELF_OPERATOR_ACTIONS
         and not _is_validation_only_print_action(action)
     ]
+    return _drop_bare_local_rehearsal_when_specific_actions_exist(filtered)
+
+
+def _drop_bare_local_rehearsal_when_specific_actions_exist(
+    actions: list[str],
+) -> list[str]:
+    has_specific_action = any(
+        _operator_action_bare_root(action) != FINAL_SHOWCASE_LOCAL_REHEARSAL_COMMAND
+        and _is_specific_final_showcase_action(action)
+        for action in actions
+    )
+    if not has_specific_action:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_bare_root(action) != FINAL_SHOWCASE_LOCAL_REHEARSAL_COMMAND
+    ]
+
+
+def _is_specific_final_showcase_action(action: str) -> bool:
+    return _operator_action_bare_root(action) != FINAL_SHOWCASE_LOCAL_REHEARSAL_COMMAND
 
 
 def _prioritize_showcase_operator_actions(actions: list[str]) -> list[str]:
