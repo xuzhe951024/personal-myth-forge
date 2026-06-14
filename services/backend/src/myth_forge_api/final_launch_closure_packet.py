@@ -794,9 +794,49 @@ def _operator_actions(
     specific_actions = _drop_bare_validation_targets_when_specific_actions_exist(
         device_pruned_actions
     )
-    return _promote_specific_device_action_for_first_blocker(
+    promoted_specific_actions = _promote_specific_device_action_for_first_blocker(
         specific_actions,
         first_blocker=first_blocker,
+    )
+    return _prioritize_backend_device_demo_after_mobile_deploy_handoff(
+        promoted_specific_actions
+    )
+
+
+def _prioritize_backend_device_demo_after_mobile_deploy_handoff(
+    actions: list[str],
+) -> list[str]:
+    if BACKEND_DEVICE_DEMO_VALIDATED_ACTION not in actions:
+        return actions
+    anchor_index = next(
+        (
+            index
+            for index, action in enumerate(actions)
+            if _is_backend_demo_priority_anchor(action)
+        ),
+        None,
+    )
+    if anchor_index is None:
+        return actions
+    backend_index = actions.index(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
+    if backend_index == anchor_index + 1:
+        return actions
+
+    reordered = list(actions)
+    backend_action = reordered.pop(backend_index)
+    if backend_index < anchor_index:
+        anchor_index -= 1
+    reordered.insert(anchor_index + 1, backend_action)
+    return reordered
+
+
+def _is_backend_demo_priority_anchor(action: str) -> bool:
+    root = _operator_action_root(action)
+    return (
+        root != BACKEND_DEVICE_DEMO_VALIDATED_ACTION
+        and f"rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}" in root
+        and "make backend-device-demo" not in root
+        and "mobile-xcode-build" not in root
     )
 
 

@@ -418,6 +418,7 @@ Bridge deliverable:
 - P0.504 Local final demo launch prioritizes backend-device-demo before provider handoffs
 - P0.505 Final local report refresh prioritizes backend-device-demo before provider handoffs
 - P0.506 Final external action ledger prioritizes backend-device-demo before provider handoffs
+- P0.507 Final launch closure packet prioritizes backend-device-demo before provider handoffs
 
 ## P1: Mobile Vertical Slice
 

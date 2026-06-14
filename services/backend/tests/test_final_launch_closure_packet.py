@@ -664,6 +664,50 @@ def test_final_launch_closure_packet_operator_actions_start_with_promoted_device
     assert actions.index(specific_device_action) < actions.index(provider_action)
 
 
+def test_final_launch_closure_packet_prioritizes_backend_demo_after_device_handoff(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+    device_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    meshy_key_action = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    openai_key_action = (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+    xcode_action = (
+        "accept the Xcode license outside Codex, then rerun "
+        "make mobile-xcode-build-evidence"
+    )
+
+    assert actions[:2] == [device_action, backend_action]
+    assert actions.index(backend_action) < actions.index(meshy_key_action)
+    assert actions.index(backend_action) < actions.index(openai_key_action)
+    assert actions.index(backend_action) < actions.index(provider_action)
+    assert actions.index(backend_action) < actions.index(print_action)
+    assert actions.index(backend_action) < actions.index(xcode_action)
+
+
 def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     tmp_path: Path,
 ) -> None:
