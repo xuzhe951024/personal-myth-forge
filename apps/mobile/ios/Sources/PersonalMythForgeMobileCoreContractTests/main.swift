@@ -5827,7 +5827,7 @@ private func testDecodesPrintFulfillmentReadinessFromFinalLaunchPayload() throws
     try expectEqual(readiness.nextAction?.source, "first_blocker")
     try expectEqual(
         readiness.nextAction?.command,
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
+        "prepare services/backend/.local/print-quote-request-configured.json; rerun make print-fulfillment-readiness"
     )
     try expectEqual(readiness.nextAction?.requiresCostConsent, true)
     try expectEqual(
@@ -5848,7 +5848,11 @@ private func testFinalLaunchMobileSummaryShowsPrintFulfillmentReadiness() throws
 
     try expectContains(text, "Print fulfillment partial: ready 4, partial 1, blocked 0.")
     try expectContains(text, "configured_treatstock_quote: partial")
-    try expectContains(text, "Next action: PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured")
+    try expectContains(
+        text,
+        "Next action: prepare services/backend/.local/print-quote-request-configured.json; rerun make print-fulfillment-readiness"
+    )
+    try expectNotContains(text, "Next action: PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured")
     try expectContains(text, "cost consent required")
     try expectContains(text, "rerun make print-fulfillment-readiness")
     try expectContains(text, "make print-fulfillment-readiness")
@@ -6134,7 +6138,8 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
                 "make final-showcase-readiness",
                 "make visual-regression-local; rerun make print-fulfillment-readiness",
                 (
-                    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
+                    "prepare services/backend/.local/print-quote-request-configured.json; "
+                    + "rerun make print-fulfillment-readiness"
                 ),
                 "extra action that should stay hidden",
             ]
@@ -6150,7 +6155,7 @@ private func testFinalLaunchMobileSummaryShowsPriorityFinalShowcaseActions() thr
     try expectContains(text, "make provider-handoff")
     try expectContains(text, "run make final-resource-init")
     try expectContains(text, "make final-showcase-readiness")
-    try expectContains(text, "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured")
+    try expectContains(text, "prepare services/backend/.local/print-quote-request-configured.json")
     try expectContains(text, "make print-fulfillment-readiness")
     try expectNotContains(
         text,
@@ -8210,7 +8215,10 @@ private func finalDemoLaunchPayload(
     configuredEvidenceBundleBlockerDetail: String = "Final resource fill guide is blocked before configured evidence bundle.",
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
-    printFulfillmentReadinessAction: String = "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured",
+    printFulfillmentReadinessAction: String = (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        + "rerun make print-fulfillment-readiness"
+    ),
     finalResourceApplyPreviewStatus: String = "missing",
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
@@ -14315,7 +14323,10 @@ private func finalDemoLaunchReport(
     configuredEvidenceBundleBlockerDetail: String = "Final resource fill guide is blocked before configured evidence bundle.",
     printFulfillmentReadinessStatus: String = "partial",
     printFulfillmentReadinessBlockerDetail: String = "Local print proof is ready; configured Treatstock quote evidence is not present.",
-    printFulfillmentReadinessAction: String = "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured",
+    printFulfillmentReadinessAction: String = (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        + "rerun make print-fulfillment-readiness"
+    ),
     finalResourceApplyPreviewStatus: String = "missing",
     finalShowcaseReadinessStatus: String = "partial",
     finalShowcaseReadinessFirstBlockerDetail: String = "iOS deploy runbook and device launch rehearsal must both be ready.",
