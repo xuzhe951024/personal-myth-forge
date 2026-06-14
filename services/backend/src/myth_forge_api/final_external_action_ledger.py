@@ -17,6 +17,7 @@ from myth_forge_api.final_resource_requirements import (
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
 from myth_forge_api.operator_actions import (
+    MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION,
     normalize_operator_action,
     prefer_iphone_reachable_backend_url_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
@@ -997,12 +998,34 @@ def _operator_actions(
     promoted_actions = prefer_iphone_reachable_backend_url_handoff_actions(
         promoted_actions
     )
+    prioritized_actions = _prioritize_backend_device_demo_after_deploy_writer(
+        promoted_actions
+    )
     mobile_pruned_actions = _drop_bare_mobile_deploy_preflight_when_validated(
-        _prefer_xcode_evidence_action(promoted_actions)
+        _prefer_xcode_evidence_action(prioritized_actions)
     )
     return _drop_bare_ios_rehearsal_when_specific_device_actions_exist(
         mobile_pruned_actions
     )
+
+
+def _prioritize_backend_device_demo_after_deploy_writer(actions: list[str]) -> list[str]:
+    if BACKEND_DEVICE_DEMO_VALIDATED_ACTION not in actions:
+        return actions
+    try:
+        deploy_index = actions.index(MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION)
+        backend_index = actions.index(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
+    except ValueError:
+        return actions
+    if backend_index == deploy_index + 1:
+        return actions
+
+    reordered = list(actions)
+    backend_action = reordered.pop(backend_index)
+    if backend_index < deploy_index:
+        deploy_index -= 1
+    reordered.insert(deploy_index + 1, backend_action)
+    return reordered
 
 
 def _prefer_xcode_evidence_action(actions: list[str]) -> list[str]:

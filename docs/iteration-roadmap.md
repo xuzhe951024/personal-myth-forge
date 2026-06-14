@@ -417,6 +417,7 @@ Bridge deliverable:
 - P0.503 Final showcase readiness preserves backend-device-demo handoff action
 - P0.504 Local final demo launch prioritizes backend-device-demo before provider handoffs
 - P0.505 Final local report refresh prioritizes backend-device-demo before provider handoffs
+- P0.506 Final external action ledger prioritizes backend-device-demo before provider handoffs
 
 ## P1: Mobile Vertical Slice
 
