@@ -406,6 +406,10 @@ def test_ios_device_launch_certificate_prioritizes_backend_demo_after_deploy_han
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
         "rerun make print-fulfillment-readiness"
     )
+    request_action = (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    )
 
     class StubFinalHandoffResult:
         report = {
@@ -435,7 +439,8 @@ def test_ios_device_launch_certificate_prioritizes_backend_demo_after_deploy_han
     actions = result.report["operator_actions"]
     assert actions[:3] == [deploy_action, backend_action, backend_url_action]
     assert actions.index(backend_action) < actions.index(provider_action)
-    assert actions.index(backend_action) < actions.index(print_action)
+    assert print_action not in actions
+    assert actions.index(backend_action) < actions.index(request_action)
 
 
 def test_ios_device_launch_certificate_prioritizes_deploy_handoff_before_backend_url_child_action() -> None:
@@ -458,7 +463,7 @@ def test_ios_device_launch_certificate_prioritizes_deploy_handoff_before_backend
     assert actions == [deploy_action, backend_url_action]
 
 
-def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print_actions(
+def test_ios_device_launch_certificate_promotes_print_request_before_provider_quote(
     tmp_path: Path,
 ) -> None:
     repo_root = _write_deploy_config(tmp_path)
@@ -511,19 +516,95 @@ def test_ios_device_launch_certificate_promotes_final_handoff_provider_and_print
     print_action = (
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
+    request_action = (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    )
+    product_action = (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
 
     assert result.report["first_blocker"]["command"] == deploy_action
     assert actions[0] == deploy_action
     assert "run make final-handoff-index" not in actions[:3]
     assert provider_action in actions
-    assert print_action in actions
-    assert actions.index(provider_action) < actions.index(print_action)
-    assert actions.index(print_action) < actions.index(
-        (
-            "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
-            "rerun make mobile-deploy-preflight"
-        )
+    assert request_action in actions
+    assert print_action not in actions
+    assert actions.index(provider_action) < actions.index(request_action)
+    assert actions.index(request_action) < actions.index(product_action)
+
+
+def test_ios_device_launch_certificate_promotes_guarded_print_after_request_ready(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_json(
+        repo_root / "services/backend/.local/final-acceptance-local.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+        },
     )
+    _write_ios_deploy_runbook(repo_root)
+    _write_configured_print_quote_request(repo_root)
+    deploy_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    _write_json(
+        repo_root / "services/backend/.local/final-demo-launch-local.json",
+        {
+            "kind": "final_demo_launch_report",
+            "mode": "local",
+            "overall_status": "partial",
+            "next_action": {
+                "command": (
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "make mobile-write-deploy-config-auto"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+            },
+            "operator_actions": [
+                deploy_action,
+                "make provider-handoff; rerun make live-provider-evidence",
+                (
+                    "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
+                ),
+            ],
+        },
+    )
+
+    result = build_ios_device_launch_certificate_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
+    )
+    request_action = (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    )
+    product_action = (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    assert result.report["first_blocker"]["command"] == deploy_action
+    assert actions[0] == deploy_action
+    assert provider_action in actions
+    assert print_action in actions
+    assert request_action not in actions
+    assert actions.index(provider_action) < actions.index(print_action)
+    assert actions.index(print_action) < actions.index(product_action)
 
 
 def test_ios_device_launch_certificate_cli_writes_report_and_makefile_target(
@@ -601,6 +682,28 @@ def _write_final_resources(repo_root: Path) -> None:
             ]
         ),
         encoding="utf-8",
+    )
+
+
+def _write_configured_print_quote_request(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/print-quote-request-configured.json",
+        {
+            "print_candidate": {
+                "kind": "print_asset",
+                "source_asset_uri": "https://assets.example/relic.glb",
+                "provider": "local_stub",
+                "format": "3mf",
+                "uri": "https://assets.example/relic.3mf",
+                "requires_user_approval": True,
+                "approval_reason": "Review before configured quote.",
+                "printability_notes": ["Watertight local handoff candidate."],
+            },
+            "quantity": 1,
+            "material": "standard_resin",
+            "finish": "matte",
+            "ship_to_country": "US",
+        },
     )
 
 

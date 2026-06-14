@@ -875,6 +875,29 @@ def test_configured_final_demo_launch_drops_provider_unblock_fallbacks(
     )
     assert not any(action.startswith("unblock ") for action in actions)
     assert "make final-resource-apply-preview" in actions
+    assert (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    ) in actions
+    assert not any(
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in action
+        for action in actions
+    )
+
+
+def test_configured_final_demo_launch_promotes_guarded_quote_after_request_ready(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_configured_print_quote_request(repo_root)
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="configured",
+    )
+    actions = result.report["operator_actions"]
+
     assert any(
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in action
         for action in actions
@@ -2268,4 +2291,26 @@ def _write_final_resources(repo_root: Path) -> None:
             ]
         ),
         encoding="utf-8",
+    )
+
+
+def _write_configured_print_quote_request(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/print-quote-request-configured.json",
+        {
+            "print_candidate": {
+                "kind": "print_asset",
+                "source_asset_uri": "https://assets.example/relic.glb",
+                "provider": "local_stub",
+                "format": "3mf",
+                "uri": "https://assets.example/relic.3mf",
+                "requires_user_approval": True,
+                "approval_reason": "Review before configured quote.",
+                "printability_notes": ["Watertight local handoff candidate."],
+            },
+            "quantity": 1,
+            "material": "standard_resin",
+            "finish": "matte",
+            "ship_to_country": "US",
+        },
     )

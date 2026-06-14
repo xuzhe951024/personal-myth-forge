@@ -33,6 +33,7 @@ from myth_forge_api.operator_actions import (
     MOBILE_DEPLOY_PREFLIGHT_COMMAND,
     XCODE_BUILD_GATE_ACTION,
     normalize_operator_action,
+    prefer_guarded_print_quote_handoff_actions,
     prefer_iphone_reachable_backend_url_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
 )
@@ -67,6 +68,10 @@ CONFIGURED_PRINT_QUOTE_ACTION = (
 PRINT_FULFILLMENT_READINESS_ACTION = "make print-fulfillment-readiness"
 CONFIGURED_PRINT_QUOTE_VALIDATED_ACTION = (
     f"{CONFIGURED_PRINT_QUOTE_ACTION}; rerun {PRINT_FULFILLMENT_READINESS_ACTION}"
+)
+CONFIGURED_PRINT_QUOTE_REQUEST_VALIDATED_ACTION = (
+    "prepare services/backend/.local/print-quote-request-configured.json; "
+    f"rerun {PRINT_FULFILLMENT_READINESS_ACTION}"
 )
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
@@ -793,12 +798,14 @@ def _operator_actions(
                         f"confirm global/manual action before {action['command']}"
                     )
             else:
-                actions.append(_run_action_text(str(action["command"])))
+                concrete_action = str(action.get("operator_action", "")).strip()
+                actions.append(concrete_action or _run_action_text(str(action["command"])))
     if not actions:
         return ["Final launch closure packet is ready"]
     normalized_actions = _prefer_complete_provider_handoff_chain(
         _prefer_apply_preview_before_apply(_dedupe(actions))
     )
+    normalized_actions = prefer_guarded_print_quote_handoff_actions(normalized_actions)
     normalized_actions = _prefer_guarded_print_quote_action(normalized_actions)
     normalized_actions = prefer_project_local_ios_deploy_handoff_actions(
         normalized_actions
@@ -1329,7 +1336,11 @@ def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
 
 def _prefer_guarded_print_quote_action(actions: list[str]) -> list[str]:
     action_roots = {_operator_action_root(action) for action in actions}
-    if CONFIGURED_PRINT_QUOTE_VALIDATED_ACTION not in action_roots:
+    specific_print_actions = {
+        CONFIGURED_PRINT_QUOTE_VALIDATED_ACTION,
+        CONFIGURED_PRINT_QUOTE_REQUEST_VALIDATED_ACTION,
+    }
+    if not action_roots.intersection(specific_print_actions):
         return actions
     return [
         action

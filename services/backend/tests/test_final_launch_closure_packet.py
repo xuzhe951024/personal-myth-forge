@@ -95,12 +95,8 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     operator_actions = report["operator_actions"]
     actions = " ".join(operator_actions)
     assert "make final-resources-preflight" not in operator_actions
-    guarded_print_action = (
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
-        "rerun make print-fulfillment-readiness"
-    )
-    assert guarded_print_action in operator_actions
-    assert "make print-fulfillment-readiness" not in operator_actions
+    assert "make print-fulfillment-readiness" in operator_actions
+    assert not any("print-quote-configured" in action for action in operator_actions)
     assert "make ios-device-launch-rehearsal" not in operator_actions
     assert "make final-resource-apply-preview" in operator_actions
     assert "make final-apply-resources" not in operator_actions
@@ -263,6 +259,45 @@ def test_final_launch_closure_packet_prefers_validated_device_child_actions() ->
     assert "make backend-device-demo" not in actions
     assert "make mobile-xcode-build" not in actions
     assert "make mobile-deploy-preflight" not in actions
+
+
+def test_final_launch_closure_packet_prefers_print_request_before_provider_quote() -> None:
+    request_action = (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "configured_treatstock_quote",
+                        "status": "live",
+                        "command": "make print-fulfillment-readiness",
+                        "operator_action": print_action,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": True,
+                    },
+                    {
+                        "id": "configured_treatstock_quote_request",
+                        "status": "blocked",
+                        "command": request_action,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": False,
+                    },
+                ]
+            }
+        ]
+    )
+
+    assert actions == [request_action]
 
 
 def test_final_launch_closure_packet_exposes_device_action_bundle(
@@ -686,9 +721,8 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
         complete_provider_chain
         in operator_actions
     )
-    assert (
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
-    ) in operator_actions
+    assert "make print-fulfillment-readiness" in operator_actions
+    assert not any("print-quote-configured" in action for action in operator_actions)
     assert (
         "approve live provider cost before make live-provider-evidence"
         not in operator_actions
@@ -761,10 +795,7 @@ def test_final_launch_closure_packet_prioritizes_backend_demo_after_device_hando
         "rerun make final-resources-preflight"
     )
     provider_action = "make provider-handoff; rerun make live-provider-evidence"
-    print_action = (
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
-        "rerun make print-fulfillment-readiness"
-    )
+    print_readiness_action = "make print-fulfillment-readiness"
     xcode_action = (
         "accept the Xcode license outside Codex, then rerun "
         "make mobile-xcode-build-evidence"
@@ -774,7 +805,7 @@ def test_final_launch_closure_packet_prioritizes_backend_demo_after_device_hando
     assert actions.index(backend_action) < actions.index(meshy_key_action)
     assert actions.index(backend_action) < actions.index(openai_key_action)
     assert actions.index(backend_action) < actions.index(provider_action)
-    assert actions.index(backend_action) < actions.index(print_action)
+    assert actions.index(backend_action) < actions.index(print_readiness_action)
     assert actions.index(backend_action) < actions.index(xcode_action)
 
 
@@ -846,7 +877,7 @@ def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     )
     assert sections["safe_local_writes"]["status"] == "ready"
     assert sections["device_evidence"]["status"] == "ready"
-    assert sections["live_provider_consent"]["status"] in {"ready", "live"}
+    assert sections["live_provider_consent"]["status"] == "blocked"
     assert sections["configured_evidence_bundle"]["status"] == "ready"
     assert sections["configured_evidence_bundle"]["first_action"]["id"] == (
         "configured_live_evidence_bundle"

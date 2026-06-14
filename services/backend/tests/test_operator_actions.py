@@ -404,6 +404,31 @@ def test_prefers_guarded_print_quote_action_over_legacy_variants() -> None:
     ]
 
 
+def test_print_quote_preference_uses_request_preflight_before_provider_call() -> None:
+    request_action = (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    )
+    guarded_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = operator_actions.prefer_guarded_print_quote_handoff_actions(
+        [
+            "make provider-handoff; rerun make live-provider-evidence",
+            guarded_action,
+            "final_demo_launch_local: " + guarded_action,
+            request_action,
+        ]
+    )
+
+    assert actions == [
+        "make provider-handoff; rerun make live-provider-evidence",
+        request_action,
+    ]
+
+
 def test_print_quote_preference_preserves_non_print_actions() -> None:
     stale_rehearsal_action = (
         "rerun make ios-device-launch-rehearsal to regenerate "

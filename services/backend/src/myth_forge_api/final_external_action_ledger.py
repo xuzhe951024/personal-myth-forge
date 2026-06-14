@@ -20,6 +20,7 @@ from myth_forge_api.operator_actions import (
     BACKEND_BASE_URL_VALIDATED_ACTION,
     MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION,
     normalize_operator_action,
+    prefer_guarded_print_quote_handoff_actions,
     prefer_iphone_reachable_backend_url_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
 )
@@ -332,7 +333,20 @@ def _live_provider_cost_actions(
     print_fulfillment: dict[str, Any],
 ) -> list[dict[str, Any]]:
     live_status = "ready" if live_provider_evidence.get("status") == "ready" else "live"
-    print_status = "ready" if print_fulfillment.get("status") == "ready" else "live"
+    print_operator_action = (
+        _report_first_operator_action(print_fulfillment)
+        or _report_next_action_operator_action(print_fulfillment)
+    )
+    print_requires_cost_consent = _print_operator_action_requires_cost_consent(
+        print_operator_action
+    )
+    print_status = (
+        "ready"
+        if print_fulfillment.get("status") == "ready"
+        else "live"
+        if print_requires_cost_consent
+        else "blocked"
+    )
     return [
         _live_action(
             action_id="run_live_provider_evidence",
@@ -371,7 +385,9 @@ def _live_provider_cost_actions(
             status=print_status,
             command="make print-fulfillment-readiness",
             detail="Configured print quote evidence may call a print provider.",
-            operator_action=_report_next_action_operator_action(print_fulfillment),
+            operator_action=print_operator_action,
+            requires_cost_consent=print_requires_cost_consent,
+            live_provider_call=print_requires_cost_consent,
         ),
     ]
 
@@ -400,13 +416,6 @@ def _report_first_operator_action(report: dict[str, Any]) -> str:
 
 
 def _report_next_action_operator_action(report: dict[str, Any]) -> str:
-    checks_by_id = report.get("checks_by_id")
-    if isinstance(checks_by_id, dict):
-        configured_quote = checks_by_id.get("configured_treatstock_quote")
-        if isinstance(configured_quote, dict):
-            command = str(configured_quote.get("command", "")).strip()
-            if command:
-                return f"{command}; rerun make print-fulfillment-readiness"
     next_action = report.get("next_action")
     if isinstance(next_action, dict):
         command = str(next_action.get("command", "")).strip()
@@ -415,7 +424,18 @@ def _report_next_action_operator_action(report: dict[str, Any]) -> str:
             return f"{command}; rerun {validation_command}"
         if command:
             return command
+    checks_by_id = report.get("checks_by_id")
+    if isinstance(checks_by_id, dict):
+        configured_quote = checks_by_id.get("configured_treatstock_quote")
+        if isinstance(configured_quote, dict):
+            command = str(configured_quote.get("command", "")).strip()
+            if command:
+                return f"{command}; rerun make print-fulfillment-readiness"
     return ""
+
+
+def _print_operator_action_requires_cost_consent(action: str) -> bool:
+    return "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in action
 
 
 def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
@@ -437,6 +457,8 @@ def _live_action(
     command: str,
     detail: str,
     operator_action: str = "",
+    requires_cost_consent: bool = True,
+    live_provider_call: bool = True,
 ) -> dict[str, Any]:
     return _action(
         action_id=action_id,
@@ -445,8 +467,8 @@ def _live_action(
         status=status,
         command=command,
         detail=detail,
-        live_provider_call=True,
-        requires_cost_consent=True,
+        live_provider_call=live_provider_call,
+        requires_cost_consent=requires_cost_consent,
         operator_action=operator_action or _live_provider_operator_action(command),
     )
 
@@ -978,7 +1000,10 @@ def _operator_actions(
             elif _is_blocked_apply_preview_action(action):
                 actions.append(normalize_operator_action(str(action["command"])))
             elif action["status"] == "blocked":
-                actions.append(normalize_operator_action(str(action["command"])))
+                concrete_action = str(action.get("operator_action", "")).strip()
+                actions.append(
+                    normalize_operator_action(concrete_action or str(action["command"]))
+                )
             elif action["status"] == "manual":
                 concrete_action = str(action.get("operator_action", "")).strip()
                 if concrete_action:
@@ -998,6 +1023,7 @@ def _operator_actions(
     normalized_actions = _prefer_complete_provider_handoff_chain(
         _prefer_apply_preview_before_apply(_dedupe(actions))
     )
+    normalized_actions = prefer_guarded_print_quote_handoff_actions(normalized_actions)
     normalized_actions = prefer_project_local_ios_deploy_handoff_actions(
         normalized_actions
     )

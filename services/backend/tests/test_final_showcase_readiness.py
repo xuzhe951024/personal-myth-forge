@@ -840,6 +840,7 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     _write_npc_evaluation(repo_root)
     _write_visual_regression(repo_root)
     _write_final_acceptance_ready(repo_root)
+    _write_configured_print_quote_request(repo_root)
 
     result = build_final_showcase_readiness_report(
         settings=Settings(
@@ -879,6 +880,47 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
         "live provider evidence" in action
         for action in result.report["operator_actions"]
     )
+
+
+def test_final_showcase_readiness_blocks_missing_configured_print_quote_request(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+        ),
+    )
+    _write_capture_source_acceptance(repo_root)
+    _write_final_resources(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance_ready(repo_root)
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+        ),
+        repo_root=repo_root,
+    )
+    row = result.report["capabilities_by_id"]["print_fulfillment"]
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert row["status"] == "blocked"
+    assert row["classification"] == "missing_configured_treatstock_quote_request"
+    assert row["command"] == (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    )
+    assert row["validation_command"] == "make print-fulfillment-readiness"
+    assert row.get("requires_cost_consent") is None
 
 
 def test_final_showcase_readiness_blocks_stale_visual_regression_inventory(
@@ -1148,6 +1190,7 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     _write_npc_evaluation(repo_root)
     _write_visual_regression_blocked(repo_root)
     _write_final_acceptance_blocked_with_actions(repo_root)
+    _write_configured_print_quote_request(repo_root)
     _write_ios_device_launch_rehearsal_with_actions(
         repo_root,
         extra_actions=[
@@ -1604,6 +1647,31 @@ def test_final_showcase_readiness_prefers_complete_provider_chain() -> None:
     )
 
     assert actions == [complete_provider_chain, print_action]
+
+
+def test_final_showcase_readiness_prefers_print_request_before_provider_quote() -> None:
+    request_action = (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_showcase_readiness._dedupe_operator_actions(
+        [
+            "make provider-handoff; rerun make live-provider-evidence",
+            print_action,
+            f"final_demo_launch_local: {print_action}",
+            request_action,
+        ]
+    )
+
+    assert actions == [
+        "make provider-handoff; rerun make live-provider-evidence",
+        request_action,
+    ]
 
 
 def test_final_showcase_readiness_filters_self_referential_operator_action() -> None:
@@ -2462,6 +2530,28 @@ def _write_final_resources(
                 "PMF_FINAL_LAUNCH_MODE=local",
             ]
         ),
+    )
+
+
+def _write_configured_print_quote_request(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/print-quote-request-configured.json",
+        {
+            "print_candidate": {
+                "kind": "print_asset",
+                "source_asset_uri": "https://assets.example/relic.glb",
+                "provider": "local_stub",
+                "format": "3mf",
+                "uri": "https://assets.example/relic.3mf",
+                "requires_user_approval": True,
+                "approval_reason": "Review before configured quote.",
+                "printability_notes": ["Watertight local handoff candidate."],
+            },
+            "quantity": 1,
+            "material": "standard_resin",
+            "finish": "matte",
+            "ship_to_country": "US",
+        },
     )
 
 

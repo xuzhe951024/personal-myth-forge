@@ -268,12 +268,14 @@ def test_external_action_ledger_uses_concrete_provider_and_print_handoff_actions
     )
     operator_actions = result.report["operator_actions"]
     provider_action = "make provider-handoff; rerun make live-provider-evidence"
-    print_action = (
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
+    print_readiness_action = (
+        "cd services/backend && uv run pytest tests/test_ios_showcase_acceptance.py; "
+        "rerun make print-fulfillment-readiness"
     )
 
     assert provider_action in operator_actions
-    assert print_action in operator_actions
+    assert print_readiness_action in operator_actions
+    assert not any("print-quote-configured" in action for action in operator_actions)
     assert (
         "approve live provider cost before make live-provider-evidence"
         not in operator_actions
@@ -282,6 +284,45 @@ def test_external_action_ledger_uses_concrete_provider_and_print_handoff_actions
         "approve live provider cost before make print-fulfillment-readiness"
         not in operator_actions
     )
+
+
+def test_external_action_ledger_prefers_print_request_before_provider_quote() -> None:
+    request_action = (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_external_action_ledger._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "configured_treatstock_quote",
+                        "status": "live",
+                        "command": "make print-fulfillment-readiness",
+                        "operator_action": print_action,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": True,
+                    },
+                    {
+                        "id": "configured_treatstock_quote_request",
+                        "status": "blocked",
+                        "command": request_action,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": False,
+                    },
+                ]
+            }
+        ]
+    )
+
+    assert actions == [request_action]
 
 
 def test_external_action_ledger_prefers_live_provider_child_action(
@@ -522,8 +563,8 @@ def test_external_action_ledger_prioritizes_backend_device_demo_before_provider_
         "rerun make final-resources-preflight"
     )
     provider_action = "make provider-handoff; rerun make live-provider-evidence"
-    print_action = (
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+    print_readiness_action = (
+        "cd services/backend && uv run pytest tests/test_ios_showcase_acceptance.py; "
         "rerun make print-fulfillment-readiness"
     )
     xcode_action = (
@@ -541,7 +582,9 @@ def test_external_action_ledger_prioritizes_backend_device_demo_before_provider_
     assert operator_actions.index(backend_action) < operator_actions.index(
         provider_action
     )
-    assert operator_actions.index(backend_action) < operator_actions.index(print_action)
+    assert operator_actions.index(backend_action) < operator_actions.index(
+        print_readiness_action
+    )
     assert operator_actions.index(backend_action) < operator_actions.index(xcode_action)
 
 
