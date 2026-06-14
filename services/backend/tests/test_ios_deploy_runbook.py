@@ -256,6 +256,11 @@ def test_ios_deploy_runbook_local_operator_actions_start_with_device_blocker(
     assert actions[0] == device_action
     assert provider_action in actions
     assert actions.index(device_action) < actions.index(provider_action)
+    assert not any(
+        "rerun make mobile-deploy-preflight; rerun make mobile-deploy-preflight"
+        in action
+        for action in actions
+    )
 
 
 def test_ios_deploy_runbook_configured_mode_keeps_provider_resources_required(

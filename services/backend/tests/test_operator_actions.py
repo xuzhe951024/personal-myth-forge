@@ -44,6 +44,19 @@ def test_adds_mobile_deploy_validation_to_writer_command() -> None:
     )
 
 
+def test_add_mobile_deploy_validation_command_dedupes_repeated_mobile_preflight() -> None:
+    action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight; rerun make mobile-deploy-preflight"
+    )
+    expected = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    assert operator_actions.add_mobile_deploy_validation_command(action) == expected
+
+
 def test_normalizes_run_prefixed_mobile_deploy_writer_command() -> None:
     assert normalize_operator_action(
         "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
