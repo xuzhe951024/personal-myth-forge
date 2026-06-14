@@ -736,7 +736,10 @@ def _provider_key_handoff_capability(
             child_command, child_validation_command = _report_next_action_command(
                 final_resources,
             )
-            command = child_command or command
+            command = (
+                _operator_action_with_validation(child_command, child_validation_command)
+                or command
+            )
             validation_command = child_validation_command
     elif live_status != "ready":
         status = "partial"

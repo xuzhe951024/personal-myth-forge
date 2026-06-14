@@ -437,6 +437,7 @@ Bridge deliverable:
 - P0.523 Mobile deploy validation actions dedupe repeated rerun
 - P0.524 Final showcase readiness detail dedupes validation rerun
 - P0.525 Closure packet top-level device bundle follows final showcase readiness
+- P0.526 Final showcase provider key capability uses validation-aware handoff
 
 ## P1: Mobile Vertical Slice
 
