@@ -67,6 +67,7 @@ from myth_forge_api.mobile_deploy_preflight_evidence import (
 from myth_forge_api.operator_actions import (
     normalize_operator_action,
     prefer_guarded_print_quote_handoff_actions,
+    prefer_project_local_ios_deploy_handoff_actions,
 )
 from myth_forge_api.print_fulfillment_readiness import (
     build_print_fulfillment_readiness_report,
@@ -1090,6 +1091,9 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
         validation_deduped
     )
     validation_deduped = prefer_guarded_print_quote_handoff_actions(validation_deduped)
+    validation_deduped = prefer_project_local_ios_deploy_handoff_actions(
+        validation_deduped
+    )
     return _prefer_apply_preview_before_apply(
         _dedupe_operator_action_roots(validation_deduped)
     )

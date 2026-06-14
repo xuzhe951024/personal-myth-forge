@@ -326,6 +326,55 @@ def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     )
 
 
+def test_final_local_report_refresh_operator_actions_prefer_deploy_writer() -> None:
+    writer_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    manual_team_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    bundle_action = (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "command": writer_action,
+            },
+            {
+                "id": "ios_deploy_team",
+                "status": "blocked",
+                "command": manual_team_action,
+            },
+            {
+                "id": "ios_deploy_bundle",
+                "status": "blocked",
+                "command": bundle_action,
+            },
+            {
+                "id": "ios_deploy_backend_url",
+                "status": "blocked",
+                "command": backend_url_action,
+            },
+        ]
+    )
+
+    assert writer_action in actions
+    assert manual_team_action not in actions
+    assert bundle_action in actions
+    assert backend_url_action in actions
+
+
 def test_final_local_report_refresh_operator_actions_gate_apply_behind_preview(
     tmp_path: Path,
 ) -> None:
