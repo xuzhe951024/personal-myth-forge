@@ -305,6 +305,55 @@ def test_final_acceptance_readiness_enriches_mobile_preflight_blocker_with_saved
     ]
 
 
+def test_final_acceptance_readiness_prefers_saved_mobile_next_action_for_backend_health(
+    tmp_path: Path,
+) -> None:
+    writer_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    )
+    _write_final_acceptance_report(
+        tmp_path,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": "mobile_deploy_preflight",
+                    "label": "iOS deploy preflight",
+                    "status": "blocked",
+                    "classification": "blocked_by_local_ios_backend_health",
+                    "command": ["make", "mobile-deploy-preflight"],
+                    "stdout_tail": (
+                        "backend health check skipped by final-local-report-refresh"
+                    ),
+                },
+            ],
+        },
+    )
+    _write_mobile_deploy_preflight_evidence(
+        tmp_path,
+        next_action={
+            "id": "development_team",
+            "label": "Apple Team ID",
+            "status": "blocked",
+            "command": writer_action,
+            "detail": (
+                "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be "
+                "iPhone-reachable"
+            ),
+            "validation_command": "make mobile-deploy-preflight",
+            "source": "first_blocker",
+        },
+    )
+
+    result = build_final_acceptance_readiness_report(repo_root=tmp_path)
+
+    assert result.report["operator_actions"] == [
+        f"{writer_action}; rerun make mobile-deploy-preflight"
+    ]
+
+
 def test_final_acceptance_readiness_ready_from_saved_report(tmp_path: Path) -> None:
     _write_final_acceptance_report(
         tmp_path,

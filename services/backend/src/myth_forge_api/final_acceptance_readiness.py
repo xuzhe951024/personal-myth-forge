@@ -339,21 +339,18 @@ def _operator_actions(*, status: str, blockers: list[dict[str, Any]]) -> list[st
     for blocker in blockers:
         blocker_id = blocker["id"]
         classification = blocker["classification"]
-        if (
-            blocker_id == "mobile_deploy_preflight"
-            and classification == "blocked_by_local_ios_backend_health"
-        ):
-            actions.append("start backend-device-demo and rerun mobile deploy preflight")
+        if blocker_id == "mobile_deploy_preflight":
+            concrete_action = _mobile_preflight_operator_action(blocker)
+            if concrete_action:
+                actions.append(concrete_action)
+            elif classification == "blocked_by_local_ios_backend_health":
+                actions.append("start backend-device-demo and rerun mobile deploy preflight")
+            else:
+                actions.append("provide iOS deploy config and rerun mobile deploy preflight")
         elif blocker_id == "final_acceptance_freshness":
             actions.append(
                 "rerun make final-acceptance-local to regenerate "
                 "services/backend/.local/final-acceptance-local.json for the current product sources"
-            )
-        elif blocker_id == "mobile_deploy_preflight":
-            concrete_action = _mobile_preflight_operator_action(blocker)
-            actions.append(
-                concrete_action
-                or "provide iOS deploy config and rerun mobile deploy preflight"
             )
         elif blocker_id == "mobile_xcode_build":
             actions.append("resolve Xcode build gate outside the app")
