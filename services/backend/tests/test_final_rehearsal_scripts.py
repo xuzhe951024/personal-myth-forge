@@ -137,6 +137,38 @@ def test_write_final_acceptance_configured_fails_unusable_exit_code(
     )
 
 
+def test_write_final_demo_launch_configured_accepts_blocked_report_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=2)
+
+    result = _run_script(script_repo, "write_final_demo_launch_configured.sh")
+
+    assert result.returncode == 0
+    assert "accepted configured final demo launch exit code 2" in result.stdout
+    assert "services/backend/.local/final-demo-launch-configured.json" in result.stdout
+    fake_uv_args = (
+        script_repo / "services/backend/.local/fake-uv-args.txt"
+    ).read_text(encoding="utf-8")
+    assert "final-demo-launch --mode configured" in fake_uv_args
+    assert "--repo-root ../.." in fake_uv_args
+    assert "--output .local/final-demo-launch-configured.json" in fake_uv_args
+
+
+def test_write_final_demo_launch_configured_fails_unusable_exit_code(
+    script_repo: Path,
+) -> None:
+    _write_fake_uv(script_repo, exit_code=1)
+
+    result = _run_script(script_repo, "write_final_demo_launch_configured.sh")
+
+    assert result.returncode == 1
+    assert (
+        "configured final demo launch failed before writing a usable report: exit 1"
+        in result.stderr
+    )
+
+
 def test_write_ios_deploy_runbook_local_accepts_blocked_report_exit_code(
     script_repo: Path,
 ) -> None:
@@ -696,6 +728,33 @@ def test_final_acceptance_configured_make_target_dry_run_uses_wrapper() -> None:
     assert "final-acceptance-configured:" in makefile
     assert "services/backend/scripts/write_final_acceptance_configured.sh" in makefile
     assert "write_final_acceptance_configured.sh" in result.stdout
+
+
+def test_final_demo_launch_configured_make_target_dry_run_uses_wrapper() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        ["make", "-n", "final-demo-launch-configured"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    script = repo_root / "services/backend/scripts/write_final_demo_launch_configured.sh"
+    assert "final-demo-launch-configured:" in makefile
+    assert "services/backend/scripts/write_final_demo_launch_configured.sh" in makefile
+    assert "write_final_demo_launch_configured.sh" in result.stdout
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    script_text = script.read_text(encoding="utf-8")
+    assert "final-demo-launch" in script_text
+    assert "--mode configured" in script_text
+    assert "--repo-root ../.." in script_text
+    assert "--output .local/final-demo-launch-configured.json" in script_text
+    assert "accepted configured final demo launch exit code $status" in script_text
 
 
 def test_final_local_report_refresh_make_target_dry_run_uses_wrapper() -> None:

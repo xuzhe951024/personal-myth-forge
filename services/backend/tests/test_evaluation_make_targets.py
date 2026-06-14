@@ -55,6 +55,11 @@ def test_evaluation_make_targets_dry_run_expected_local_commands() -> None:
         repo_root / "services/backend/scripts/write_resource_handoff.sh"
     ).read_text(encoding="utf-8")
     assert "--output .local/resource-handoff.json" in resource_wrapper
-    assert "final-demo-launch --mode configured" in output
-    assert "--output .local/final-demo-launch-configured.json" in output
+    assert "services/backend/scripts/write_final_demo_launch_configured.sh" in output
+    configured_launch_wrapper = (
+        repo_root / "services/backend/scripts/write_final_demo_launch_configured.sh"
+    ).read_text(encoding="utf-8")
+    assert "final-demo-launch" in configured_launch_wrapper
+    assert "--mode configured" in configured_launch_wrapper
+    assert "--output .local/final-demo-launch-configured.json" in configured_launch_wrapper
     assert output.index("evaluate-3d") < output.rindex("evaluate-npc")

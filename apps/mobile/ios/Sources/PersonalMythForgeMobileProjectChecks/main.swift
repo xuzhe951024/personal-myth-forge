@@ -23,6 +23,9 @@ do {
     let finalAcceptanceLocalScriptFile = repositoryRoot.appendingPathComponent(
         "services/backend/scripts/write_final_acceptance_local.sh"
     )
+    let finalDemoLaunchConfiguredScriptFile = repositoryRoot.appendingPathComponent(
+        "services/backend/scripts/write_final_demo_launch_configured.sh"
+    )
     let iosDeployRunbookLocalScriptFile = repositoryRoot.appendingPathComponent(
         "services/backend/scripts/write_ios_deploy_runbook_local.sh"
     )
@@ -78,6 +81,7 @@ do {
     let resourceHandoffScript = try readText(resourceHandoffScriptFile)
     let finalResourcesPreflightScript = try readText(finalResourcesPreflightScriptFile)
     let finalAcceptanceLocalScript = try readText(finalAcceptanceLocalScriptFile)
+    let finalDemoLaunchConfiguredScript = try readText(finalDemoLaunchConfiguredScriptFile)
     let iosDeployRunbookLocalScript = try readText(iosDeployRunbookLocalScriptFile)
     let deployConfig = try readText(deployConfigFile)
     let deployLocalExample = try readText(deployLocalExampleFile)
@@ -569,7 +573,20 @@ do {
     try requireContains(resourceHandoffScript, "--output .local/resource-handoff.json", "resource handoff report output")
     try requireContains(makefile, "--output .local/final-demo-launch-local.json", "final demo launch local report output")
     try requireContains(makefile, "final-demo-launch-configured:", "final demo launch configured Make target")
-    try requireContains(makefile, "--output .local/final-demo-launch-configured.json", "final demo launch configured report output")
+    try requireContains(
+        makefile,
+        "write_final_demo_launch_configured.sh",
+        "final demo launch configured wrapper Make target"
+    )
+    try requireContains(finalDemoLaunchConfiguredScript, "final-demo-launch", "final demo launch configured wrapper command")
+    try requireContains(finalDemoLaunchConfiguredScript, "--mode configured", "final demo launch configured wrapper mode")
+    try requireContains(finalDemoLaunchConfiguredScript, "--repo-root ../..", "final demo launch configured wrapper repo root")
+    try requireContains(finalDemoLaunchConfiguredScript, "--output .local/final-demo-launch-configured.json", "final demo launch configured report output")
+    try requireContains(
+        finalDemoLaunchConfiguredScript,
+        "accepted configured final demo launch exit code $status",
+        "final demo launch configured blocked report acceptance"
+    )
     try requireContains(makefile, "provider-handoff:", "provider handoff Make target")
     try requireContains(finalHandoffCommands, #"PROVIDER_HANDOFF_COMMAND = "make provider-handoff""#, "provider handoff command constant")
     try requireContains(finalHandoffCommands, #"FINAL_DEMO_LAUNCH_LOCAL_COMMAND = "make final-demo-launch-local""#, "local final demo launch command constant")

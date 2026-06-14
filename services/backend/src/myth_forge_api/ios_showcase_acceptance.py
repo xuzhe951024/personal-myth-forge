@@ -2222,6 +2222,8 @@ FEATURES = (
             SourceRequirement("Makefile", "write_final_configured_preflight.sh"),
             SourceRequirement("Makefile", "write_final_configured_evidence_plan.sh"),
             SourceRequirement("Makefile", "write_configured_live_evidence_bundle.sh"),
+            SourceRequirement("Makefile", "final-demo-launch-configured:"),
+            SourceRequirement("Makefile", "write_final_demo_launch_configured.sh"),
             SourceRequirement(
                 "services/backend/scripts/write_final_configured_preflight.sh",
                 ".local/final-configured-preflight.json",
@@ -2245,6 +2247,18 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/scripts/write_configured_live_evidence_bundle.sh",
                 "accepted configured live evidence bundle exit code",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_demo_launch_configured.sh",
+                ".local/final-demo-launch-configured.json",
+            ),
+            SourceRequirement(
+                "services/backend/scripts/write_final_demo_launch_configured.sh",
+                "accepted configured final demo launch exit code",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "write_final_demo_launch_configured.sh",
             ),
             SourceRequirement(
                 "services/backend/tests/test_final_configured_preflight.py",

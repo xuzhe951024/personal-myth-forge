@@ -70,6 +70,9 @@ FINAL_DEMO_LAUNCH_LOCAL_MAKE_TARGET = "final-demo-launch-local"
 FINAL_DEMO_LAUNCH_LOCAL_OUTPUT = ".local/final-demo-launch-local.json"
 FINAL_DEMO_LAUNCH_CONFIGURED_MAKE_TARGET = "final-demo-launch-configured"
 FINAL_DEMO_LAUNCH_CONFIGURED_OUTPUT = ".local/final-demo-launch-configured.json"
+FINAL_DEMO_LAUNCH_CONFIGURED_SCRIPT_PATH = (
+    "services/backend/scripts/write_final_demo_launch_configured.sh"
+)
 FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH = (
     "services/backend/scripts/write_final_acceptance_local.sh"
 )
@@ -229,6 +232,12 @@ def run_resource_template_acceptance(
     final_demo_launch_text, final_demo_launch_exists = _read_optional_text(
         selected_repo_root / FINAL_DEMO_LAUNCH_PATH
     )
+    (
+        final_demo_launch_configured_script_text,
+        final_demo_launch_configured_script_exists,
+    ) = _read_optional_text(
+        selected_repo_root / FINAL_DEMO_LAUNCH_CONFIGURED_SCRIPT_PATH
+    )
     final_acceptance_local_script_text, final_acceptance_local_script_exists = (
         _read_optional_text(selected_repo_root / FINAL_ACCEPTANCE_LOCAL_SCRIPT_PATH)
     )
@@ -305,6 +314,8 @@ def run_resource_template_acceptance(
         cli_exists=cli_exists,
         module_text=final_demo_launch_text,
         module_exists=final_demo_launch_exists,
+        configured_script_text=final_demo_launch_configured_script_text,
+        configured_script_exists=final_demo_launch_configured_script_exists,
         makefile_text=makefile_text,
         makefile_exists=makefile_exists,
     )
@@ -749,10 +760,12 @@ def _final_demo_launch_checks(
     cli_exists: bool,
     module_text: str,
     module_exists: bool,
+    configured_script_text: str,
+    configured_script_exists: bool,
     makefile_text: str,
     makefile_exists: bool,
 ) -> dict[str, bool]:
-    checked_text = "\n".join([module_text, makefile_text])
+    checked_text = "\n".join([module_text, makefile_text, configured_script_text])
     return {
         "module_exists": module_exists,
         "cli_command": cli_exists
@@ -765,7 +778,8 @@ def _final_demo_launch_checks(
         and "myth_forge_api.cli final-demo-launch" in makefile_text,
         "local_output_path": FINAL_DEMO_LAUNCH_LOCAL_OUTPUT in makefile_text,
         "configured_output_path": FINAL_DEMO_LAUNCH_CONFIGURED_OUTPUT
-        in makefile_text,
+        in "\n".join([makefile_text, configured_script_text])
+        and configured_script_exists,
         "uses_resource_handoff": "build_resource_handoff_report" in module_text,
         "no_banned_commands": not any(
             banned in checked_text for banned in BANNED_WRITER_TEXT

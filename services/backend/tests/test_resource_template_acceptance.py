@@ -140,6 +140,11 @@ FINAL_CONFIGURED_PREFLIGHT_SCRIPT = _safe_report_wrapper(
     "final-configured-preflight.json",
     "final configured preflight",
 )
+FINAL_DEMO_LAUNCH_CONFIGURED_SCRIPT = _safe_report_wrapper(
+    "final-demo-launch --mode configured",
+    "final-demo-launch-configured.json",
+    "configured final demo launch",
+)
 FINAL_HANDOFF_INDEX_SCRIPT = _safe_report_wrapper(
     "final-handoff-index",
     "final-handoff-index.json",
@@ -179,7 +184,7 @@ final-demo-launch: final-demo-launch-local
 final-demo-launch-local:
 \tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../.. --output .local/final-demo-launch-local.json
 final-demo-launch-configured:
-\tcd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../.. --output .local/final-demo-launch-configured.json
+\t@services/backend/scripts/write_final_demo_launch_configured.sh
 .PHONY: resource-handoff
 resource-handoff:
 \t@services/backend/scripts/write_resource_handoff.sh
@@ -669,6 +674,7 @@ def _write_repo(
     resource_handoff_script: str = RESOURCE_HANDOFF_SCRIPT,
     final_resources_preflight_script: str = FINAL_RESOURCES_PREFLIGHT_SCRIPT,
     final_configured_preflight_script: str = FINAL_CONFIGURED_PREFLIGHT_SCRIPT,
+    final_demo_launch_configured_script: str = FINAL_DEMO_LAUNCH_CONFIGURED_SCRIPT,
     final_handoff_index_script: str = FINAL_HANDOFF_INDEX_SCRIPT,
     ios_device_launch_certificate_script: str = IOS_DEVICE_LAUNCH_CERTIFICATE_SCRIPT,
     ios_device_launch_rehearsal_script: str = IOS_DEVICE_LAUNCH_REHEARSAL_SCRIPT,
@@ -730,6 +736,12 @@ def _write_repo(
         repo_root / "services/backend/scripts/write_final_configured_preflight.sh"
     ).write_text(
         final_configured_preflight_script,
+        encoding="utf-8",
+    )
+    (
+        repo_root / "services/backend/scripts/write_final_demo_launch_configured.sh"
+    ).write_text(
+        final_demo_launch_configured_script,
         encoding="utf-8",
     )
     (

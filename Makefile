@@ -184,7 +184,7 @@ final-demo-launch-local:
 	cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode local --repo-root ../.. --output .local/final-demo-launch-local.json
 
 final-demo-launch-configured:
-	cd services/backend && uv run python -m myth_forge_api.cli final-demo-launch --mode configured --repo-root ../.. --output .local/final-demo-launch-configured.json
+	@services/backend/scripts/write_final_demo_launch_configured.sh
 
 .PHONY: ios-deploy-runbook ios-deploy-runbook-local
 

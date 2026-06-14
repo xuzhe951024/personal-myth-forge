@@ -197,6 +197,29 @@ def test_ios_deploy_runbook_source_gates_require_safe_wrapper() -> None:
     ) in requirements
 
 
+def test_configured_handoff_source_gates_require_final_demo_launch_wrapper() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["configured_handoff_preflight"].requirements
+    }
+
+    assert ("Makefile", "final-demo-launch-configured:") in requirements
+    assert ("Makefile", "write_final_demo_launch_configured.sh") in requirements
+    assert (
+        "services/backend/scripts/write_final_demo_launch_configured.sh",
+        ".local/final-demo-launch-configured.json",
+    ) in requirements
+    assert (
+        "services/backend/scripts/write_final_demo_launch_configured.sh",
+        "accepted configured final demo launch exit code",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+        "write_final_demo_launch_configured.sh",
+    ) in requirements
+
+
 def test_mobile_preflight_evidence_source_gates_require_top_level_action() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1441,6 +1464,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final-demo-launch-local: "
             "final-demo-launch: final-demo-launch-local "
             "services/backend/scripts/write_final_local_report_refresh.sh "
+            "write_final_demo_launch_configured.sh "
             "write_ios_deploy_runbook_local.sh "
             "write_final_configured_preflight.sh "
             "write_final_handoff_index.sh "
@@ -1832,6 +1856,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "write_final_configured_preflight.sh "
             "write_final_configured_evidence_plan.sh "
             "write_configured_live_evidence_bundle.sh "
+            "write_final_demo_launch_configured.sh "
             "write_live_provider_evidence.sh "
             "write_print_fulfillment_readiness.sh "
             "final-external-action-ledger: write_final_external_action_ledger.sh "
@@ -1853,6 +1878,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final-acceptance-local final-demo-launch-local ios-deploy-runbook-local "
             "final-local-report-refresh-local "
             "final-configured-preflight: final-handoff-index: "
+            "final-demo-launch-configured: write_final_demo_launch_configured.sh "
             "ios-device-launch-certificate: ios-device-launch-rehearsal: "
             "final-showcase-readiness: "
             "services/backend/scripts/write_ios_device_launch_rehearsal.sh "
@@ -1932,6 +1958,10 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/scripts/write_configured_live_evidence_bundle.sh": (
             "accepted configured live evidence bundle exit code $status "
             "services/backend/.local/configured-live-evidence-bundle.json"
+        ),
+        "services/backend/scripts/write_final_demo_launch_configured.sh": (
+            "accepted configured final demo launch exit code $status "
+            "services/backend/.local/final-demo-launch-configured.json"
         ),
         "services/backend/scripts/write_live_provider_evidence.sh": (
             "accepted live provider evidence exit code $status "
@@ -2086,6 +2116,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         "services/backend/tests/test_final_rehearsal_scripts.py": (
             "test_write_final_acceptance_local_accepts_blocked_report_exit_code "
             "test_write_ios_deploy_runbook_local_accepts_blocked_report_exit_code "
+            "test_write_final_demo_launch_configured_accepts_blocked_report_exit_code "
             "test_final_rehearsal_make_targets_dry_run_expected_order"
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PersonalMythForgeAPIClient.swift": (
