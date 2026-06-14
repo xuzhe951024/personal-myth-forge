@@ -670,7 +670,7 @@ def test_final_acceptance_configured_make_target_dry_run_uses_wrapper() -> None:
     assert "write_final_acceptance_configured.sh" in result.stdout
 
 
-def test_final_local_report_refresh_make_target_dry_run_uses_cli() -> None:
+def test_final_local_report_refresh_make_target_dry_run_uses_wrapper() -> None:
     repo_root = Path(__file__).resolve().parents[3]
 
     result = subprocess.run(
@@ -683,11 +683,18 @@ def test_final_local_report_refresh_make_target_dry_run_uses_cli() -> None:
 
     assert result.returncode == 0, result.stderr
     makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
-    assert ".PHONY: final-local-report-refresh" in makefile
+    script = repo_root / "services/backend/scripts/write_final_local_report_refresh.sh"
+    assert ".PHONY: final-local-report-refresh final-local-report-refresh-local" in makefile
     assert "final-local-report-refresh:" in makefile
-    assert "myth_forge_api.cli final-local-report-refresh" in result.stdout
-    assert "--repo-root ../.." in result.stdout
-    assert "--output .local/final-local-report-refresh.json" in result.stdout
+    assert "services/backend/scripts/write_final_local_report_refresh.sh" in makefile
+    assert "write_final_local_report_refresh.sh" in result.stdout
+    assert script.exists()
+    assert script.stat().st_mode & 0o111
+    script_text = script.read_text(encoding="utf-8")
+    assert "final-local-report-refresh" in script_text
+    assert "--repo-root ../.." in script_text
+    assert "--output .local/final-local-report-refresh.json" in script_text
+    assert "accepted final local report refresh exit code $status" in script_text
 
 
 def test_final_local_report_refresh_local_make_target_dry_run_uses_wrapper() -> None:

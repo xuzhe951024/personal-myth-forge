@@ -415,6 +415,11 @@ do {
     )
     try requireContains(
         makefile,
+        "final-local-report-refresh:",
+        "final local report refresh canonical wrapper target"
+    )
+    try requireContains(
+        makefile,
         "final-local-report-refresh-local:",
         "final local report refresh wrapper target"
     )

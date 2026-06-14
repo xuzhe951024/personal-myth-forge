@@ -1442,6 +1442,10 @@ FEATURES = (
             ),
             SourceRequirement(
                 "Makefile",
+                "final-local-report-refresh:",
+            ),
+            SourceRequirement(
+                "Makefile",
                 "final-local-report-refresh-local:",
             ),
             SourceRequirement(
@@ -1481,6 +1485,18 @@ FEATURES = (
             SourceRequirement(
                 "services/backend/tests/test_final_demo_launch.py",
                 "test_final_demo_launch_embeds_visual_regression_readiness",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "final-local-report-refresh:",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "final-local-report-refresh-local:",
+            ),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "services/backend/scripts/write_final_local_report_refresh.sh",
             ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileCore/PMFModels.swift",
@@ -2082,6 +2098,10 @@ FEATURES = (
             ),
             SourceRequirement("Makefile", "final-acceptance-local:"),
             SourceRequirement("Makefile", "final-rehearsal-local:"),
+            SourceRequirement(
+                "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+                "final-local-report-refresh:",
+            ),
             SourceRequirement(
                 "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
                 "final-local-report-refresh-local:",

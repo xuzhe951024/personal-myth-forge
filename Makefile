@@ -115,7 +115,7 @@ local-showcase-smoke:
 .PHONY: final-local-report-refresh final-local-report-refresh-local
 
 final-local-report-refresh:
-	cd services/backend && uv run python -m myth_forge_api.cli final-local-report-refresh --repo-root ../.. --output .local/final-local-report-refresh.json
+	@services/backend/scripts/write_final_local_report_refresh.sh
 
 final-local-report-refresh-local:
 	@services/backend/scripts/write_final_local_report_refresh.sh

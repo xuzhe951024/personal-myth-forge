@@ -305,6 +305,33 @@ def test_device_handoff_make_source_gates_require_safe_wrappers() -> None:
     ) in showcase_device_requirements
 
 
+def test_final_local_report_refresh_make_source_gates_require_canonical_wrapper() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["mobile_visual_regression_readiness"].requirements
+    }
+
+    assert ("Makefile", "final-local-report-refresh:") in requirements
+    assert ("Makefile", "final-local-report-refresh-local:") in requirements
+    assert (
+        "Makefile",
+        "services/backend/scripts/write_final_local_report_refresh.sh",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+        "final-local-report-refresh:",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+        "final-local-report-refresh-local:",
+    ) in requirements
+    assert (
+        "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift",
+        "services/backend/scripts/write_final_local_report_refresh.sh",
+    ) in requirements
+
+
 def test_provider_handoff_make_source_gates_require_safe_wrappers() -> None:
     features = {feature.id: feature for feature in FEATURES}
     provider_requirements = {
@@ -1377,6 +1404,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             '"npc_evaluation" "operator_handoff" "final_launch"'
         ),
         "apps/mobile/ios/Sources/PersonalMythForgeMobileProjectChecks/main.swift": (
+            "final-local-report-refresh: "
             "final-local-report-refresh-local: "
             "final-demo-launch-local: "
             "final-demo-launch: final-demo-launch-local "
@@ -1773,6 +1801,7 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
             "final-launch-closure-packet: write_final_launch_closure_packet.sh "
             "local-showcase-smoke: "
             "final-resource-init: services/backend/scripts/init_final_resources.sh "
+            "final-local-report-refresh: "
             "final-local-report-refresh-local: "
             "final-demo-launch-local: "
             "final-demo-launch: final-demo-launch-local "
