@@ -390,6 +390,7 @@ Bridge deliverable:
 - P0.476 Safe Make wrapper accepts blocked configured final demo launch while writing local evidence
 - P0.477 Configured live provider Make targets require explicit local cost consent
 - P0.478 Live provider evidence operator actions include explicit consent env prefix
+- P0.479 Final handoff live provider actions include explicit consent operator command
 
 ## P1: Mobile Vertical Slice
 

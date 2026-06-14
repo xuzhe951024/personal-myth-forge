@@ -72,8 +72,20 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert actions["run_configured_3d_evaluation"]["command"] == (
         "make backend-evaluate-3d-configured"
     )
+    assert actions["run_configured_3d_evaluation"]["operator_action"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
+    )
     assert actions["run_configured_npc_evaluation"]["command"] == (
         "make backend-evaluate-npc-configured"
+    )
+    assert actions["run_configured_npc_evaluation"]["operator_action"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured"
+    )
+    assert actions["run_configured_final_acceptance"]["operator_action"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured"
+    )
+    assert "PMF_ALLOW_LIVE_PROVIDER_CALLS=1" not in (
+        actions["refresh_configured_treatstock_quote"].get("operator_action", "")
     )
     assert actions["run_xcode_build_gate"]["status"] == "manual"
     assert actions["run_xcode_build_gate"]["global"] is True

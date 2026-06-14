@@ -51,6 +51,9 @@ do {
     let liveProviderEvidenceFile = repositoryRoot.appendingPathComponent(
         "services/backend/src/myth_forge_api/live_provider_evidence.py"
     )
+    let finalExternalActionLedgerFile = repositoryRoot.appendingPathComponent(
+        "services/backend/src/myth_forge_api/final_external_action_ledger.py"
+    )
     let finalHandoffCommandsFile = repositoryRoot.appendingPathComponent(
         "services/backend/src/myth_forge_api/final_handoff_commands.py"
     )
@@ -99,6 +102,7 @@ do {
     let finalConfiguredPreflight = try readText(finalConfiguredPreflightFile)
     let finalConfiguredEvidencePlan = try readText(finalConfiguredEvidencePlanFile)
     let liveProviderEvidence = try readText(liveProviderEvidenceFile)
+    let finalExternalActionLedger = try readText(finalExternalActionLedgerFile)
     let finalHandoffCommands = try readText(finalHandoffCommandsFile)
     let finalHandoffIndex = try readText(finalHandoffIndexFile)
     let iosDeviceLaunchCertificate = try readText(iosDeviceLaunchCertificateFile)
@@ -592,6 +596,11 @@ do {
         liveProviderEvidence,
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ",
         "live provider evidence consent-prefixed operator handoff"
+    )
+    try requireContains(
+        finalExternalActionLedger,
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ",
+        "final external action ledger consent-prefixed operator handoff"
     )
     try requireContains(makefile, "--output .local/3d-evaluation-local.json", "3D evaluation local report output")
     try requireContains(makefile, "--output .local/npc-evaluation-local.json", "NPC evaluation local report output")

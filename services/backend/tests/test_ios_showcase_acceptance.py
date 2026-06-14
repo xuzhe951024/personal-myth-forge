@@ -248,6 +248,19 @@ def test_live_provider_source_gates_require_execution_consent_guard() -> None:
     ) in requirements
 
 
+def test_final_external_action_ledger_source_gates_require_live_provider_operator_consent() -> None:
+    features = {feature.id: feature for feature in FEATURES}
+    requirements = {
+        (requirement.file, requirement.contains)
+        for requirement in features["final_external_action_ledger"].requirements
+    }
+
+    assert (
+        "services/backend/src/myth_forge_api/final_external_action_ledger.py",
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ",
+    ) in requirements
+
+
 def test_mobile_preflight_evidence_source_gates_require_top_level_action() -> None:
     features = {feature.id: feature for feature in FEATURES}
     requirements = {
@@ -1834,7 +1847,8 @@ def write_complete_ios_showcase_fixture(root: Path) -> None:
         ),
         "services/backend/src/myth_forge_api/final_external_action_ledger.py": (
             "build_final_external_action_ledger_report final_external_action_ledger_report "
-            "global_machine_actions requires_cost_consent_for_live_actions"
+            "global_machine_actions requires_cost_consent_for_live_actions "
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
         ),
         "services/backend/src/myth_forge_api/final_launch_closure_packet.py": (
             "build_final_launch_closure_packet_report final_launch_closure_packet_report "

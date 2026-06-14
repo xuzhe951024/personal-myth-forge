@@ -38,6 +38,12 @@ OPERATOR_SEQUENCE = [
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 PROVIDER_HANDOFF_OPERATOR_ACTION = "make provider-handoff; rerun make live-provider-evidence"
+LIVE_PROVIDER_CONSENT_ENV_PREFIX = "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+LIVE_PROVIDER_CONSENT_COMMANDS = {
+    "make backend-evaluate-3d-configured",
+    "make backend-evaluate-npc-configured",
+    CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
+}
 BACKEND_DEVICE_DEMO_VALIDATED_ACTION = (
     "start backend-device-demo before device checks: "
     "make backend-device-demo; rerun make mobile-deploy-preflight"
@@ -398,8 +404,14 @@ def _live_action(
         detail=detail,
         live_provider_call=True,
         requires_cost_consent=True,
-        operator_action=operator_action,
+        operator_action=operator_action or _live_provider_operator_action(command),
     )
+
+
+def _live_provider_operator_action(command: str) -> str:
+    if command not in LIVE_PROVIDER_CONSENT_COMMANDS:
+        return ""
+    return f"{LIVE_PROVIDER_CONSENT_ENV_PREFIX}{command}"
 
 
 def _global_machine_actions() -> list[dict[str, Any]]:

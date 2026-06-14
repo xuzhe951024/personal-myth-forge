@@ -3195,6 +3195,10 @@ FEATURES = (
                 "requires_cost_consent_for_live_actions",
             ),
             SourceRequirement(
+                "services/backend/src/myth_forge_api/final_external_action_ledger.py",
+                "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ",
+            ),
+            SourceRequirement(
                 "services/backend/src/myth_forge_api/final_demo_launch.py",
                 "final_external_action_ledger",
             ),

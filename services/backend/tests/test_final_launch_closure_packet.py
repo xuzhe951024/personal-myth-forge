@@ -62,6 +62,19 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert sections["safe_local_writes"]["command"] == "make final-resource-apply-preview"
     assert sections["device_evidence"]["command"] == "make ios-device-launch-rehearsal"
     assert sections["live_provider_consent"]["requires_cost_consent"] is True
+    live_actions = {
+        action["id"]: action
+        for action in sections["live_provider_consent"]["actions"]
+    }
+    assert live_actions["run_configured_3d_evaluation"]["operator_action"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
+    )
+    assert live_actions["run_configured_npc_evaluation"]["operator_action"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured"
+    )
+    assert live_actions["run_configured_final_acceptance"]["operator_action"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured"
+    )
     assert sections["configured_evidence_bundle"]["status"] == "blocked"
     assert sections["configured_evidence_bundle"]["command"] == (
         "make configured-live-evidence-bundle"
