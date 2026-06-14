@@ -199,6 +199,27 @@ def test_configured_preflight_ios_deploy_actions_include_validation_commands(
     )
 
 
+def test_configured_preflight_prefers_iphone_reachable_backend_url_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+
+    result = build_final_configured_preflight_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    ) in actions
+    assert not any(
+        action.startswith("provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig")
+        for action in actions
+    )
+
+
 def test_configured_preflight_exposes_device_action_bundle(
     tmp_path: Path,
 ) -> None:

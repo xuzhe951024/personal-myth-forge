@@ -20,6 +20,7 @@ from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
+    prefer_iphone_reachable_backend_url_handoff_actions,
 )
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.provider_handoff import build_provider_handoff_report
@@ -325,17 +326,18 @@ def _operator_actions(
     ):
         actions.append(FINAL_RESOURCE_APPLY_PREVIEW_ACTION)
     actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
+    normalized_actions = _dedupe(
+        [
+            add_final_resource_validation_command(
+                add_mobile_deploy_validation_command(normalize_operator_action(action))
+            )
+            for action in actions
+        ]
+    )
     return _drop_unblock_fallback_actions(
         _prefer_apply_preview_before_apply(
-            _dedupe(
-                [
-                    add_final_resource_validation_command(
-                        add_mobile_deploy_validation_command(
-                            normalize_operator_action(action)
-                        )
-                    )
-                    for action in actions
-                ]
+            prefer_iphone_reachable_backend_url_handoff_actions(
+                normalized_actions
             )
         )
     )
