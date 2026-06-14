@@ -450,6 +450,7 @@ Bridge deliverable:
 - P0.536 Print quote request writer supports auto local served asset URI handoff
 - P0.537 Final launch closure packet prefers auto print quote request handoff
 - P0.538 Shared operator actions prefer auto print quote request handoff
+- P0.539 Legacy print quote request placeholders normalize to auto handoff
 
 ## P1: Mobile Vertical Slice
 

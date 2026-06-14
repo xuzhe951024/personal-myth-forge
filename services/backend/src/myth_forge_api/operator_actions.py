@@ -212,6 +212,9 @@ MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
 def normalize_operator_action(action: str) -> str:
     normalized = action.strip()
     command_part, detail_suffix = _split_detail_suffix(normalized)
+    legacy_request_action = _normalize_legacy_print_quote_request_action(command_part)
+    if legacy_request_action is not None:
+        return f"{legacy_request_action}{detail_suffix}"
     mobile_preflight_detail_action = _normalize_mobile_preflight_detail_action(
         command_part,
         detail_suffix=detail_suffix,
@@ -414,6 +417,24 @@ def _normalize_make_target_action(action: str) -> str | None:
         if action.endswith(suffix):
             prefix = action[: -len(suffix)]
             return f"{prefix}: {replacement}"
+    return None
+
+
+def _normalize_legacy_print_quote_request_action(action: str) -> str | None:
+    command_root = _action_command_root(action).split("; rerun ", 1)[0].strip()
+    if command_root == LEGACY_CONFIGURED_PRINT_QUOTE_REQUEST_ACTION:
+        return action.replace(
+            LEGACY_CONFIGURED_PRINT_QUOTE_REQUEST_ACTION,
+            CONFIGURED_PRINT_QUOTE_REQUEST_ACTION,
+            1,
+        )
+    prefixed_suffix = f": {LEGACY_CONFIGURED_PRINT_QUOTE_REQUEST_ACTION}"
+    if command_root.endswith(prefixed_suffix):
+        return action.replace(
+            LEGACY_CONFIGURED_PRINT_QUOTE_REQUEST_ACTION,
+            CONFIGURED_PRINT_QUOTE_REQUEST_ACTION,
+            1,
+        )
     return None
 
 

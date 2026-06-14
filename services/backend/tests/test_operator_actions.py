@@ -375,6 +375,29 @@ def test_normalizes_legacy_treatstock_quote_action_to_guarded_target() -> None:
     )
 
 
+def test_normalizes_legacy_print_quote_request_placeholder_to_auto() -> None:
+    legacy_request_action = (
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "make print-quote-request-configured"
+    )
+    auto_request_action = (
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
+        "make print-quote-request-configured"
+    )
+
+    assert normalize_operator_action(legacy_request_action) == auto_request_action
+    assert normalize_operator_action(
+        f"{legacy_request_action}; rerun make print-fulfillment-readiness"
+    ) == f"{auto_request_action}; rerun make print-fulfillment-readiness"
+    assert normalize_operator_action(
+        f"final_demo_launch_local: {legacy_request_action}; "
+        "rerun make print-fulfillment-readiness"
+    ) == (
+        "final_demo_launch_local: "
+        f"{auto_request_action}; rerun make print-fulfillment-readiness"
+    )
+
+
 def test_prefers_guarded_print_quote_action_over_legacy_variants() -> None:
     legacy_action = (
         "after explicit Treatstock cost consent, save a sanitized "
