@@ -279,15 +279,14 @@ def test_final_launch_closure_packet_exposes_device_action_bundle(
 
     assert bundle["id"] == "final_launch_closure_device_actions"
     assert bundle["label"] == "Final Launch Closure Device Actions"
-    assert bundle["source_report"] == "ios_device_evidence_bundle"
+    assert bundle["source_report"] == "final_showcase_readiness"
     assert bundle["status"] == "blocked"
-    assert bundle["first_action"]["id"] == "backend_device_server"
+    assert bundle["first_action"]["id"] == "start_backend_device_demo"
     assert bundle["first_action"]["command"] == "make backend-device-demo"
-    assert bundle["first_action"]["next_action"]["command"] == "make backend-device-demo"
     assert bundle["summary"]["actions"] == 4
-    assert bundle["summary"]["missing"] >= 1
+    assert bundle["summary"]["blocked"] >= 1
     assert bundle["summary"]["provider_calls"] == 0
-    assert bundle["summary"]["global_actions"] == 1
+    assert bundle["summary"]["global_actions"] == 0
     assert bundle["summary"]["xcode_or_signing"] == 1
     assert bundle["safety"] == {
         "commands_run": False,
@@ -301,6 +300,75 @@ def test_final_launch_closure_packet_exposes_device_action_bundle(
     }
     assert str(tmp_path) not in report_text
     assert "sk-" not in report_text
+
+
+def test_final_launch_closure_packet_device_bundle_prefers_showcase_bundle(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    writer_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    _write_mobile_deploy_preflight_evidence(
+        repo_root,
+        {
+            "kind": "mobile_deploy_preflight_evidence_report",
+            "status": "blocked",
+            "first_blocker": {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "detail": "Missing DEVELOPMENT_TEAM",
+            },
+            "next_action": {
+                "id": "development_team",
+                "label": "Apple Team ID",
+                "status": "blocked",
+                "command": writer_action,
+                "detail": (
+                    "Missing DEVELOPMENT_TEAM; "
+                    "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+                "source": "first_blocker",
+            },
+            "checks": [
+                {
+                    "id": "development_team",
+                    "label": "Apple Team ID",
+                    "status": "blocked",
+                    "detail": "Missing DEVELOPMENT_TEAM",
+                },
+                {
+                    "id": "backend_base_url",
+                    "label": "Backend base URL",
+                    "status": "blocked",
+                    "detail": "PMF_BACKEND_BASE_URL must be iPhone-reachable",
+                },
+            ],
+        },
+    )
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    bundle = result.report["device_action_bundle"]
+    showcase_source_bundle = result.report["source_reports"][
+        "final_showcase_readiness"
+    ]["device_action_bundle"]
+    ios_source_bundle = result.report["source_reports"]["ios_device_evidence_bundle"][
+        "device_action_bundle"
+    ]
+
+    assert bundle["source_report"] == "final_showcase_readiness"
+    assert bundle["first_action"]["command"] == writer_action
+    assert bundle["first_action"]["command"] == showcase_source_bundle["first_action"][
+        "command"
+    ]
+    assert ios_source_bundle["id"] == "ios_device_evidence_actions"
 
 
 def test_final_launch_closure_packet_source_reports_expose_device_action_bundles(
@@ -339,7 +407,7 @@ def test_final_launch_closure_packet_source_reports_expose_device_action_bundles
         "make mobile-deploy-preflight"
     )
     assert result.report["device_action_bundle"]["source_report"] == (
-        "ios_device_evidence_bundle"
+        "final_showcase_readiness"
     )
     assert ios_bundle["safety"]["commands_run"] is False
     assert configured_bundle["safety"]["commands_run"] is False

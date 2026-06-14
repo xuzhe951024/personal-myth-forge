@@ -130,7 +130,10 @@ def build_final_launch_closure_packet_report(
         "next_action": _next_action(first_blocker),
         "sections": sections,
         "sections_by_id": {section["id"]: section for section in sections},
-        "device_action_bundle": _device_action_bundle(device_evidence),
+        "device_action_bundle": _device_action_bundle(
+            device_evidence=device_evidence,
+            showcase_readiness=showcase_readiness,
+        ),
         "operator_actions": _operator_actions(
             sections,
             first_blocker=first_blocker,
@@ -319,8 +322,26 @@ def _device_action(slot: dict[str, Any]) -> dict[str, Any]:
     )
 
 
-def _device_action_bundle(device_evidence: dict[str, Any]) -> dict[str, Any]:
-    source_bundle = device_evidence.get("device_action_bundle")
+def _device_action_bundle(
+    *,
+    device_evidence: dict[str, Any],
+    showcase_readiness: dict[str, Any],
+) -> dict[str, Any]:
+    if _normalized_status(str(device_evidence.get("status", "missing"))) == "ready":
+        source_bundle = device_evidence.get("device_action_bundle")
+        source_report = "ios_device_evidence_bundle"
+        fallback_status = str(device_evidence.get("status", "missing"))
+        fallback_slots = device_evidence.get("evidence_slots", [])
+    else:
+        source_bundle = showcase_readiness.get("device_action_bundle")
+        source_report = "final_showcase_readiness"
+        fallback_status = str(showcase_readiness.get("status", "missing"))
+        fallback_slots: Any = []
+        if not isinstance(source_bundle, dict):
+            source_bundle = device_evidence.get("device_action_bundle")
+            source_report = "ios_device_evidence_bundle"
+            fallback_status = str(device_evidence.get("status", "missing"))
+            fallback_slots = device_evidence.get("evidence_slots", [])
     if isinstance(source_bundle, dict):
         actions = [
             _closure_device_action(action)
@@ -332,20 +353,20 @@ def _device_action_bundle(device_evidence: dict[str, Any]) -> dict[str, Any]:
             actions,
         )
         status = str(
-            source_bundle.get("status", device_evidence.get("status", "missing"))
+            source_bundle.get("status", fallback_status)
         )
     else:
         actions = [
             _closure_device_action_from_slot(slot)
-            for slot in device_evidence.get("evidence_slots", [])
+            for slot in fallback_slots
             if isinstance(slot, dict)
         ]
         first_action = _first_closure_device_action(actions)
-        status = str(device_evidence.get("status", "missing"))
+        status = fallback_status
     return {
         "id": "final_launch_closure_device_actions",
         "label": "Final Launch Closure Device Actions",
-        "source_report": "ios_device_evidence_bundle",
+        "source_report": source_report,
         "status": _normalized_status(status),
         "actions": actions,
         "first_action": first_action,
