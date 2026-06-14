@@ -30,6 +30,7 @@ def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_
     tmp_path: Path,
 ) -> None:
     _write_local_print_readiness_fixture(tmp_path)
+    _write_configured_print_quote_request(tmp_path)
 
     result = build_print_fulfillment_readiness_report(
         settings=Settings(print_provider="local"),
@@ -61,6 +62,36 @@ def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_
     )
     assert "print-fulfillment-readiness" in " ".join(result.report["commands"])
     assert "print-quote-configured" in " ".join(result.report["commands"])
+
+
+def test_print_fulfillment_readiness_blocks_missing_configured_quote_request(
+    tmp_path: Path,
+) -> None:
+    _write_local_print_readiness_fixture(tmp_path)
+
+    result = build_print_fulfillment_readiness_report(
+        settings=Settings(print_provider="local"),
+        repo_root=tmp_path,
+    )
+    rows = result.report["checks_by_id"]
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert rows["configured_treatstock_quote_request"]["status"] == "blocked"
+    assert rows["configured_treatstock_quote_request"]["classification"] == (
+        "missing_configured_treatstock_quote_request"
+    )
+    assert result.report["first_blocker"]["id"] == "configured_treatstock_quote_request"
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "source": "first_blocker",
+        "validation_command": "make print-fulfillment-readiness",
+        "requires_cost_consent": False,
+    }
+    assert result.report["operator_actions"][0] == (
+        "prepare services/backend/.local/print-quote-request-configured.json; "
+        "rerun make print-fulfillment-readiness"
+    )
 
 
 def test_print_fulfillment_readiness_ready_with_configured_treatstock_quote(
@@ -248,6 +279,28 @@ def _write_configured_treatstock_quote(repo_root: Path) -> None:
             "checkout_url": "https://checkout.example/order?token=secret",
             "requires_user_approval": True,
             "approval_reason": "Treatstock quote requires review before checkout.",
+        },
+    )
+
+
+def _write_configured_print_quote_request(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/print-quote-request-configured.json",
+        {
+            "print_candidate": {
+                "kind": "print_asset",
+                "source_asset_uri": "https://assets.example/relic.glb",
+                "provider": "local_stub",
+                "format": "3mf",
+                "uri": "https://assets.example/relic.3mf",
+                "requires_user_approval": True,
+                "approval_reason": "Review before configured quote.",
+                "printability_notes": ["Watertight local handoff candidate."],
+            },
+            "quantity": 1,
+            "material": "standard_resin",
+            "finish": "matte",
+            "ship_to_country": "US",
         },
     )
 

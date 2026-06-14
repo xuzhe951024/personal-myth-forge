@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from myth_forge_api.config import Settings, load_settings
+from myth_forge_api.domain.models import PrintQuoteRequest
 from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
@@ -18,6 +21,9 @@ from myth_forge_api.visual_regression_readiness import (
 )
 
 CONFIGURED_PRINT_QUOTE_PATH = Path("services/backend/.local/print-quote-configured.json")
+CONFIGURED_PRINT_QUOTE_REQUEST_PATH = Path(
+    "services/backend/.local/print-quote-request-configured.json"
+)
 PRINT_RECEIPT_ARTIFACT_ID = "p0.101_print_fulfillment_receipt"
 PRINT_SOURCE_FEATURE_ID = "mobile_print_fulfillment_receipt"
 
@@ -48,6 +54,10 @@ def build_print_fulfillment_readiness_report(
         repo_root=selected_repo_root,
     )
     configured_quote = _read_configured_treatstock_quote(selected_repo_root)
+    configured_quote_request = _read_configured_treatstock_quote_request(
+        repo_root=selected_repo_root,
+        configured_quote=configured_quote,
+    )
     checks = [
         _print_quote_acceptance_check(print_acceptance),
         _source_acceptance_check(source_acceptance),
@@ -57,6 +67,7 @@ def build_print_fulfillment_readiness_report(
             resource_handoff=resource_handoff,
             settings=selected_settings,
         ),
+        _configured_treatstock_quote_request_check(configured_quote_request),
         _configured_treatstock_quote_check(configured_quote),
     ]
     summary = _summary(checks)
@@ -78,6 +89,7 @@ def build_print_fulfillment_readiness_report(
             "visual_regression_readiness": _evidence_summary(visual_regression),
             "final_resources_preflight": _evidence_summary(final_resources),
             "resource_handoff": _evidence_summary(resource_handoff),
+            "configured_treatstock_quote_request": configured_quote_request["summary"],
             "configured_treatstock_quote": configured_quote["summary"],
         },
         "safety": {
@@ -273,6 +285,94 @@ def _configured_treatstock_quote_check(configured_quote: dict[str, Any]) -> dict
             f"estimated_price_cents:{summary.get('estimated_price_cents', 'unknown')}",
         ],
     )
+
+
+def _configured_treatstock_quote_request_check(
+    configured_quote_request: dict[str, Any],
+) -> dict[str, Any]:
+    if configured_quote_request["status"] != "ready":
+        return _check(
+            check_id="configured_treatstock_quote_request",
+            label="Configured Treatstock quote request",
+            status="blocked",
+            classification=str(configured_quote_request["classification"]),
+            command=_configured_quote_request_command(),
+            detail=str(configured_quote_request["detail"]),
+            evidence=[f"path:{CONFIGURED_PRINT_QUOTE_REQUEST_PATH.as_posix()}"],
+        )
+    return _check(
+        check_id="configured_treatstock_quote_request",
+        label="Configured Treatstock quote request",
+        status="ready",
+        classification=str(configured_quote_request["classification"]),
+        command=_configured_quote_command(),
+        detail=str(configured_quote_request["detail"]),
+        evidence=[f"path:{CONFIGURED_PRINT_QUOTE_REQUEST_PATH.as_posix()}"],
+    )
+
+
+def _read_configured_treatstock_quote_request(
+    *,
+    repo_root: Path,
+    configured_quote: dict[str, Any],
+) -> dict[str, Any]:
+    path = repo_root / CONFIGURED_PRINT_QUOTE_REQUEST_PATH
+    base = {
+        "exists": path.exists(),
+        "path": CONFIGURED_PRINT_QUOTE_REQUEST_PATH.as_posix(),
+        "summary": {
+            "path": CONFIGURED_PRINT_QUOTE_REQUEST_PATH.as_posix(),
+            "exists": path.exists(),
+        },
+    }
+    if configured_quote["exists"]:
+        return base | {
+            "status": "ready",
+            "classification": "configured_quote_evidence_present",
+            "detail": "Configured Treatstock quote evidence is present.",
+        }
+    if not path.exists():
+        return base | {
+            "status": "blocked",
+            "classification": "missing_configured_treatstock_quote_request",
+            "detail": "Configured Treatstock quote request file is missing.",
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return base | {
+            "status": "blocked",
+            "classification": "unreadable_quote_request_file",
+            "detail": "Configured Treatstock quote request is not valid JSON.",
+        }
+    if not isinstance(payload, dict):
+        return base | {
+            "status": "blocked",
+            "classification": "invalid_quote_request_shape",
+            "detail": "Configured Treatstock quote request must be a JSON object.",
+        }
+    try:
+        request = PrintQuoteRequest.model_validate(payload)
+    except ValidationError:
+        return base | {
+            "status": "blocked",
+            "classification": "invalid_quote_request_contract",
+            "detail": "Configured Treatstock quote request must satisfy PrintQuoteRequest.",
+        }
+    summary = base["summary"] | {
+        "quantity": request.quantity,
+        "material": request.material,
+        "finish": request.finish,
+        "ship_to_country": request.ship_to_country,
+        "print_candidate_format": request.print_candidate.format,
+        "requires_user_approval": request.print_candidate.requires_user_approval,
+    }
+    return base | {
+        "status": "ready",
+        "classification": "configured_quote_request_ready",
+        "detail": "Configured Treatstock quote request is ready for guarded quote handoff.",
+        "summary": summary,
+    }
 
 
 def _read_configured_treatstock_quote(repo_root: Path) -> dict[str, Any]:
@@ -506,8 +606,13 @@ def _commands() -> list[str]:
             "print-fulfillment-readiness --repo-root ../.. "
             "--output .local/print-fulfillment-readiness.json"
         ),
+        _configured_quote_request_command(),
         _configured_quote_command(),
     ]
+
+
+def _configured_quote_request_command() -> str:
+    return "prepare services/backend/.local/print-quote-request-configured.json"
 
 
 def _configured_quote_command() -> str:

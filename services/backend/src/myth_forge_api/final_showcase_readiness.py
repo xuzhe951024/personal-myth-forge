@@ -32,6 +32,7 @@ from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
     normalize_operator_action,
+    prefer_guarded_print_quote_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
 )
 from myth_forge_api.print_fulfillment_readiness import (
@@ -2160,8 +2161,10 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
     deduped = _prefer_validation_aware_operator_actions(deduped)
     return _prefer_apply_preview_before_apply(
         prefer_project_local_ios_deploy_handoff_actions(
-            _prefer_bare_ios_deploy_writer_action(
-                _prefer_complete_provider_handoff_chain(deduped)
+            prefer_guarded_print_quote_handoff_actions(
+                _prefer_bare_ios_deploy_writer_action(
+                    _prefer_complete_provider_handoff_chain(deduped)
+                )
             )
         )
     )
