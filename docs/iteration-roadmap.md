@@ -444,6 +444,7 @@ Bridge deliverable:
 - P0.530 Final aggregators preserve print quote request preflight
 - P0.531 Mobile final launch uses print quote request preflight handoff
 - P0.532 Configured print quote request writer handoff
+- P0.533 Mobile backend URL device action uses auto writer handoff
 
 ## P1: Mobile Vertical Slice
 
