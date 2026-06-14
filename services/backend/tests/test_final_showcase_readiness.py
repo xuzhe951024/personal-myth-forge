@@ -62,7 +62,9 @@ def test_final_showcase_readiness_blocks_missing_objective_evidence(
         "final_resource_apply_preview_report"
     )
     assert result.report["evidence"]["final_resource_apply_preview"]["status"] == "missing"
-    assert provider_handoff["command"] == "make final-resource-init"
+    assert provider_handoff["command"] == (
+        "make final-resource-init; rerun make final-resources-preflight"
+    )
     assert provider_handoff["validation_command"] == "make final-resources-preflight"
     assert "final_resource_apply_preview:missing" in provider_handoff["evidence"]
     assert any(
@@ -1014,11 +1016,25 @@ def test_final_showcase_readiness_provider_handoff_uses_final_resource_next_acti
         repo_root=repo_root,
     )
     provider_handoff = result.report["capabilities_by_id"]["provider_key_handoff"]
+    expected_command = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
 
     assert provider_handoff["status"] == "blocked"
     assert provider_handoff["classification"] == "provider_handoff_incomplete"
-    assert provider_handoff["command"] == "provide MESHY_API_KEY in final-resources.env"
+    assert provider_handoff["command"] == expected_command
     assert provider_handoff["validation_command"] == "make final-resources-preflight"
+    assert provider_handoff["next_action"] == {
+        "id": "provider_key_handoff",
+        "label": "Provider and key handoff",
+        "status": "blocked",
+        "classification": "provider_handoff_incomplete",
+        "command": expected_command,
+        "detail": provider_handoff["detail"],
+        "source": "capability",
+        "validation_command": "make final-resources-preflight",
+    }
     assert "final_resources:blocked" in provider_handoff["evidence"]
 
 
