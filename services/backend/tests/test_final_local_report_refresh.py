@@ -318,6 +318,45 @@ def test_final_local_report_refresh_preserves_step_source_reports(
     assert "sk-" not in report_text
 
 
+def test_final_local_report_refresh_device_first_action_promotes_saved_next_action_command() -> None:
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    saved_next_action = {
+        "id": "run_mobile_deploy_preflight",
+        "label": "Run mobile deploy preflight",
+        "status": "blocked",
+        "command": expected_command,
+        "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+        "source": "operator_actions",
+        "validation_command": "make mobile-deploy-preflight",
+    }
+    source_first_action = {
+        "id": "run_mobile_deploy_preflight",
+        "label": "Run mobile deploy preflight",
+        "status": "blocked",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "detail": "Verify the iPhone can reach the backend and read launch config.",
+        "manual": True,
+        "provider_calls": False,
+        "global_action": False,
+        "xcode_or_signing": False,
+        "validation_command": "make mobile-deploy-preflight",
+        "saved_next_action": saved_next_action,
+    }
+
+    first_action = final_local_report_refresh._device_first_action(
+        source_first_action,
+        [],
+    )
+
+    assert first_action is not None
+    assert first_action["command"] == expected_command
+    assert first_action["saved_next_action"] == saved_next_action
+    assert first_action["validation_command"] == "make mobile-deploy-preflight"
+
+
 def test_final_local_report_refresh_operator_actions_use_concrete_next_actions(
     tmp_path: Path,
 ) -> None:

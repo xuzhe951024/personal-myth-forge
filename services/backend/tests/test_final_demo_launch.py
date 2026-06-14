@@ -587,12 +587,12 @@ def test_final_demo_launch_device_bundle_first_action_uses_showcase_child_action
 
     assert bundle["source_report"] == "final_showcase_readiness"
     assert first_action["id"] == "run_mobile_deploy_preflight"
-    assert first_action["command"] == child_action["command"]
-    assert first_action["validation_command"] == "make mobile-deploy-preflight"
-    assert first_action["next_action"] == child_action
     expected_command = (
         f"{child_action['command']}; rerun make mobile-deploy-preflight"
     )
+    assert first_action["command"] == expected_command
+    assert first_action["validation_command"] == "make mobile-deploy-preflight"
+    assert first_action["next_action"] == child_action
     assert result.report["first_blocker"]["command"] == expected_command
     assert result.report["next_action"]["command"] == expected_command
 
@@ -656,6 +656,42 @@ def test_final_demo_launch_device_bundle_preserves_showcase_saved_next_action(
     assert saved_next_action["command"] == expected_command
     assert saved_next_action["validation_command"] == "make mobile-deploy-preflight"
     assert preflight_row["saved_next_action"] == saved_next_action
+
+
+def test_final_demo_launch_device_first_action_promotes_saved_next_action_command() -> None:
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    saved_next_action = {
+        "id": "run_mobile_deploy_preflight",
+        "label": "Run mobile deploy preflight",
+        "status": "blocked",
+        "command": expected_command,
+        "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
+        "source": "operator_actions",
+        "validation_command": "make mobile-deploy-preflight",
+    }
+    source_first_action = {
+        "id": "run_mobile_deploy_preflight",
+        "label": "Run mobile deploy preflight",
+        "status": "blocked",
+        "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+        "detail": "Verify the iPhone can reach the backend and read launch config.",
+        "manual": True,
+        "provider_calls": False,
+        "global_action": False,
+        "xcode_or_signing": False,
+        "validation_command": "make mobile-deploy-preflight",
+        "saved_next_action": saved_next_action,
+    }
+
+    first_action = final_demo_launch._device_first_action(source_first_action, [])
+
+    assert first_action is not None
+    assert first_action["command"] == expected_command
+    assert first_action["saved_next_action"] == saved_next_action
+    assert first_action["validation_command"] == "make mobile-deploy-preflight"
 
 
 def test_local_final_demo_launch_prefers_writer_over_old_team_action(
