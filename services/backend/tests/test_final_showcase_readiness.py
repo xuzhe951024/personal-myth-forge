@@ -125,13 +125,28 @@ def test_final_showcase_readiness_includes_ios_device_action_bundle(
     assert bundle["summary"]["global_actions"] == 0
     assert bundle["summary"]["provider_calls"] == 0
     assert bundle["first_action"]["id"] == "start_backend_device_demo"
-    assert bundle["first_action"]["command"] == "make backend-device-demo"
+    assert bundle["first_action"]["command"] == (
+        "make backend-device-demo; rerun make mobile-deploy-preflight-evidence"
+    )
     assert [action["id"] for action in bundle["actions"][:4]] == [
         "start_backend_device_demo",
         "run_mobile_deploy_preflight",
         "resolve_xcode_build_gate",
         "run_ios_device_launch_rehearsal",
     ]
+    actions = {action["id"]: action for action in bundle["actions"]}
+    assert actions["start_backend_device_demo"]["command"] == (
+        "make backend-device-demo; rerun make mobile-deploy-preflight-evidence"
+    )
+    assert actions["run_mobile_deploy_preflight"]["command"] == (
+        "make mobile-deploy-preflight; rerun make mobile-deploy-preflight-evidence"
+    )
+    assert actions["resolve_xcode_build_gate"]["command"] == (
+        "open Xcode and resolve signing/build gate"
+    )
+    assert actions["resolve_xcode_build_gate"]["validation_command"] == (
+        "make mobile-xcode-build-evidence"
+    )
     assert bundle["actions"][0]["blocks"] == [
         "ios_deployable",
         "functional_regression",
@@ -380,12 +395,15 @@ def test_final_showcase_readiness_next_action_command_uses_preferred_device_acti
 
     blocker = result.report["first_blocker"]
     action = result.report["next_action"]
+    expected_command = (
+        "make mobile-deploy-preflight; rerun make mobile-deploy-preflight-evidence"
+    )
 
     assert blocker["id"] == "ios_deployable"
-    assert blocker["command"] == "make mobile-deploy-preflight"
+    assert blocker["command"] == expected_command
     assert action["id"] == "ios_deployable"
-    assert action["command"] == "make mobile-deploy-preflight"
-    assert "Next device action: make mobile-deploy-preflight" in action["detail"]
+    assert action["command"] == expected_command
+    assert f"Next device action: {expected_command}" in action["detail"]
     assert "Missing DEVELOPMENT_TEAM" in action["detail"]
     assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in action["detail"]
     assert "MESHY_API_KEY" not in action["detail"]
@@ -593,7 +611,7 @@ def test_final_showcase_readiness_device_bundle_first_action_uses_preflight_chil
         "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     assert actions["run_mobile_deploy_preflight"]["command"] == (
-        "make mobile-deploy-preflight"
+        "make mobile-deploy-preflight; rerun make mobile-deploy-preflight-evidence"
     )
     expected_command = (
         f"{child_action['command']}; rerun make mobile-deploy-preflight"

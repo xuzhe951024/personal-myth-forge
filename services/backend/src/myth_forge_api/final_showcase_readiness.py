@@ -1613,6 +1613,12 @@ def _device_action(
     }
     if extra:
         action.update(extra)
+    validation_command = str(action.get("validation_command", "")).strip()
+    if command.startswith("make ") and validation_command:
+        action["command"] = _operator_action_with_validation(
+            command,
+            validation_command,
+        )
     return action
 
 

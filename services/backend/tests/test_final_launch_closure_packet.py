@@ -282,7 +282,9 @@ def test_final_launch_closure_packet_exposes_device_action_bundle(
     assert bundle["source_report"] == "final_showcase_readiness"
     assert bundle["status"] == "blocked"
     assert bundle["first_action"]["id"] == "start_backend_device_demo"
-    assert bundle["first_action"]["command"] == "make backend-device-demo"
+    assert bundle["first_action"]["command"] == (
+        "make backend-device-demo; rerun make mobile-deploy-preflight-evidence"
+    )
     assert bundle["summary"]["actions"] == 4
     assert bundle["summary"]["blocked"] >= 1
     assert bundle["summary"]["provider_calls"] == 0
