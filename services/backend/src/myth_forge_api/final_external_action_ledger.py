@@ -17,6 +17,7 @@ from myth_forge_api.final_resource_requirements import (
 from myth_forge_api.ios_deploy_runbook import build_ios_deploy_runbook_report
 from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
 from myth_forge_api.operator_actions import (
+    BACKEND_BASE_URL_VALIDATED_ACTION,
     MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION,
     normalize_operator_action,
     prefer_iphone_reachable_backend_url_handoff_actions,
@@ -1018,13 +1019,32 @@ def _prioritize_backend_device_demo_after_deploy_writer(actions: list[str]) -> l
     except ValueError:
         return actions
     if backend_index == deploy_index + 1:
-        return actions
+        return _prioritize_backend_url_after_backend_device_demo(actions)
 
     reordered = list(actions)
     backend_action = reordered.pop(backend_index)
     if backend_index < deploy_index:
         deploy_index -= 1
     reordered.insert(deploy_index + 1, backend_action)
+    return _prioritize_backend_url_after_backend_device_demo(reordered)
+
+
+def _prioritize_backend_url_after_backend_device_demo(actions: list[str]) -> list[str]:
+    if BACKEND_BASE_URL_VALIDATED_ACTION not in actions:
+        return actions
+    try:
+        backend_index = actions.index(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
+        backend_url_index = actions.index(BACKEND_BASE_URL_VALIDATED_ACTION)
+    except ValueError:
+        return actions
+    if backend_url_index == backend_index + 1:
+        return actions
+
+    reordered = list(actions)
+    backend_url_action = reordered.pop(backend_url_index)
+    if backend_url_index < backend_index:
+        backend_index -= 1
+    reordered.insert(backend_index + 1, backend_url_action)
     return reordered
 
 
