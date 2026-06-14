@@ -474,6 +474,69 @@ def test_final_local_report_refresh_operator_actions_prioritize_provider_and_pri
     assert len(actions) == 12
 
 
+def test_final_local_report_refresh_operator_actions_prioritize_backend_device_demo_before_provider_handoffs() -> None:
+    deploy_writer = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_device_demo = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+    key_action = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "command": deploy_writer,
+            },
+            {
+                "id": "provider_handoff",
+                "status": "blocked",
+                "command": provider_action,
+            },
+            {
+                "id": "print_fulfillment_readiness",
+                "status": "blocked",
+                "command": print_action,
+            },
+            {
+                "id": "final_resource_requirements",
+                "status": "blocked",
+                "command": key_action,
+            },
+            {
+                "id": "final_demo_launch_local",
+                "status": "blocked",
+                "command": deploy_writer,
+                "report_operator_actions": [backend_device_demo],
+            },
+        ]
+    )
+
+    assert actions[0] == deploy_writer
+    assert backend_device_demo in actions
+    assert provider_action in actions
+    assert print_action in actions
+    assert key_action in actions
+    assert actions.index(backend_device_demo) < actions.index(provider_action)
+    assert actions.index(backend_device_demo) < actions.index(print_action)
+    assert actions.index(backend_device_demo) < actions.index(key_action)
+
+
 def test_final_local_report_refresh_operator_actions_promote_final_demo_handoff_actions() -> None:
     live_child_action = (
         "make final-resource-apply-preview; rerun make live-provider-evidence"

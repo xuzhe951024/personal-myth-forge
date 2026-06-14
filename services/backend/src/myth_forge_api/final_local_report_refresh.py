@@ -1177,13 +1177,22 @@ def _prioritize_final_local_report_operator_actions(actions: list[str]) -> list[
         return []
     first_actions = actions[:2]
     rest = actions[2:]
+    backend_device_actions = [
+        action for action in rest if _is_backend_device_demo_action(action)
+    ]
+    if backend_device_actions:
+        first_actions = actions[:1]
+        rest = actions[1:]
+        backend_device_actions = [
+            action for action in rest if _is_backend_device_demo_action(action)
+        ]
     provider_actions = [
         action for action in rest if _is_provider_handoff_action(action)
     ]
     print_actions = [action for action in rest if _is_print_handoff_action(action)]
-    priority_actions = set(provider_actions + print_actions)
+    priority_actions = set(backend_device_actions + provider_actions + print_actions)
     remaining = [action for action in rest if action not in priority_actions]
-    return first_actions + provider_actions + print_actions + remaining
+    return first_actions + backend_device_actions + provider_actions + print_actions + remaining
 
 
 def _is_provider_handoff_action(action: str) -> bool:
