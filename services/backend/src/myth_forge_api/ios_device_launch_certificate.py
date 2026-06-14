@@ -314,6 +314,12 @@ def _final_handoff_priority_actions(*reports: dict[str, Any]) -> list[str]:
 
 def _prioritize_final_handoff_child_actions(actions: list[str]) -> list[str]:
     ios_actions = [action for action in actions if _is_ios_handoff_action(action)]
+    backend_url_actions = [
+        action for action in ios_actions if _is_backend_url_handoff_action(action)
+    ]
+    deploy_config_actions = [
+        action for action in ios_actions if action not in backend_url_actions
+    ]
     provider_actions = [
         action
         for action in actions
@@ -326,9 +332,17 @@ def _prioritize_final_handoff_child_actions(actions: list[str]) -> list[str]:
         and action not in provider_actions
         and _is_print_handoff_action(action)
     ]
-    priority_actions = set(ios_actions + provider_actions + print_actions)
+    priority_actions = set(
+        deploy_config_actions + backend_url_actions + provider_actions + print_actions
+    )
     remaining = [action for action in actions if action not in priority_actions]
-    return ios_actions + provider_actions + print_actions + remaining
+    return (
+        deploy_config_actions
+        + backend_url_actions
+        + provider_actions
+        + print_actions
+        + remaining
+    )
 
 
 def _is_ios_handoff_action(action: str) -> bool:
