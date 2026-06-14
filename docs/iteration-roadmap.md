@@ -413,6 +413,7 @@ Bridge deliverable:
 - P0.499 Final external ledger and closure packet use iPhone-reachable backend URL handoff
 - P0.500 Final handoff index preserves iPhone-reachable backend URL action
 - P0.501 Final configured preflight prefers iPhone-reachable backend URL action
+- P0.502 Final local report refresh preserves iPhone-reachable backend URL action
 
 ## P1: Mobile Vertical Slice
 

@@ -343,6 +343,10 @@ def test_final_local_report_refresh_operator_actions_prefer_deploy_writer() -> N
         "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
     )
+    lan_backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
 
     actions = final_local_report_refresh._operator_actions(
         [
@@ -372,7 +376,8 @@ def test_final_local_report_refresh_operator_actions_prefer_deploy_writer() -> N
     assert writer_action in actions
     assert manual_team_action not in actions
     assert bundle_action in actions
-    assert backend_url_action in actions
+    assert backend_url_action not in actions
+    assert lan_backend_url_action in actions
 
 
 def test_final_local_report_refresh_operator_actions_gate_apply_behind_preview(
@@ -539,6 +544,68 @@ def test_final_local_report_refresh_operator_actions_promote_final_demo_handoff_
     assert print_action in actions
     assert actions.index(live_child_action) < actions.index("make blocked-step-0")
     assert actions.index(print_action) < actions.index("make blocked-step-0")
+
+
+def test_final_local_report_refresh_operator_actions_promote_final_demo_device_handoff_actions() -> None:
+    lan_backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    generic_backend_url_action = (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_device_demo_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_resource_requirements",
+                "status": "blocked",
+                "command": "provide MESHY_API_KEY in final-resources.env",
+                "validation_command": "make final-resources-preflight",
+            },
+            {
+                "id": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "command": (
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "make mobile-write-deploy-config-auto"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+            },
+            {
+                "id": "final_demo_launch_local",
+                "status": "blocked",
+                "command": (
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "make mobile-write-deploy-config-auto"
+                ),
+                "validation_command": "make mobile-deploy-preflight",
+                "report_operator_actions": [
+                    generic_backend_url_action,
+                    lan_backend_url_action,
+                    backend_device_demo_action,
+                ],
+            },
+            *[
+                {
+                    "id": f"blocked_step_{index}",
+                    "status": "blocked",
+                    "command": f"make blocked-step-{index}",
+                }
+                for index in range(10)
+            ],
+        ],
+    )
+
+    assert lan_backend_url_action in actions
+    assert backend_device_demo_action in actions
+    assert generic_backend_url_action not in actions
+    assert actions.index(lan_backend_url_action) < actions.index("make blocked-step-0")
 
 
 def test_final_local_report_refresh_operator_actions_prefer_complete_provider_chain() -> None:

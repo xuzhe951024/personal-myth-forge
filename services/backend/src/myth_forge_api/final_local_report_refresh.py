@@ -67,6 +67,7 @@ from myth_forge_api.mobile_deploy_preflight_evidence import (
 from myth_forge_api.operator_actions import (
     normalize_operator_action,
     prefer_guarded_print_quote_handoff_actions,
+    prefer_iphone_reachable_backend_url_handoff_actions,
     prefer_project_local_ios_deploy_handoff_actions,
 )
 from myth_forge_api.print_fulfillment_readiness import (
@@ -110,6 +111,8 @@ FINAL_LOCAL_REPORT_PRINT_HANDOFF_ACTION_MARKERS = (
     "print_quote",
     "/v1/print-quotes",
 )
+FINAL_LOCAL_REPORT_LAN_BACKEND_URL_MARKER = "iphone-reachable lan url"
+FINAL_LOCAL_REPORT_BACKEND_DEVICE_DEMO_MARKER = "backend-device-demo"
 BACKEND_DEVICE_DEMO_BARE_ACTION = "make backend-device-demo"
 BACKEND_DEVICE_DEMO_VALIDATION = "make mobile-deploy-preflight"
 LOCAL_SETTINGS = Settings(
@@ -1029,6 +1032,7 @@ def _selected_step_report_actions(step: dict[str, Any]) -> list[str]:
         and (
             _is_provider_handoff_action(action)
             or _is_print_handoff_action(action)
+            or _is_device_handoff_action(action)
         )
     ]
 
@@ -1095,6 +1099,9 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     )
     validation_deduped = prefer_guarded_print_quote_handoff_actions(validation_deduped)
     validation_deduped = prefer_project_local_ios_deploy_handoff_actions(
+        validation_deduped
+    )
+    validation_deduped = prefer_iphone_reachable_backend_url_handoff_actions(
         validation_deduped
     )
     return _prefer_apply_preview_before_apply(
@@ -1193,6 +1200,18 @@ def _is_print_handoff_action(action: str) -> bool:
         marker in lowered
         for marker in FINAL_LOCAL_REPORT_PRINT_HANDOFF_ACTION_MARKERS
     )
+
+
+def _is_device_handoff_action(action: str) -> bool:
+    return _is_lan_backend_url_action(action) or _is_backend_device_demo_action(action)
+
+
+def _is_lan_backend_url_action(action: str) -> bool:
+    return FINAL_LOCAL_REPORT_LAN_BACKEND_URL_MARKER in action.lower()
+
+
+def _is_backend_device_demo_action(action: str) -> bool:
+    return FINAL_LOCAL_REPORT_BACKEND_DEVICE_DEMO_MARKER in action.lower()
 
 
 def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
