@@ -441,6 +441,7 @@ Bridge deliverable:
 - P0.527 Final showcase live and print capabilities use validation-aware handoff
 - P0.528 Final showcase device actions use validation-aware make handoff
 - P0.529 Print fulfillment readiness preflights configured quote request input
+- P0.530 Final aggregators preserve print quote request preflight
 
 ## P1: Mobile Vertical Slice
 
