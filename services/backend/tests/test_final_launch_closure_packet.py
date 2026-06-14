@@ -113,6 +113,20 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; rerun "
         "make mobile-deploy-preflight"
     ) in operator_actions
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; rerun "
+        "make mobile-deploy-preflight"
+    ) in operator_actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; rerun "
+        "make mobile-deploy-preflight"
+    ) in operator_actions
+    assert not any(
+        action.startswith(
+            "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        )
+        for action in operator_actions
+    )
     assert "provide MESHY_API_KEY" not in operator_actions
     assert "provide DEVELOPMENT_TEAM" not in operator_actions
     assert "make ios-device-launch-rehearsal" in actions
@@ -132,6 +146,48 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert report["safety"]["global_mutation"] is False
     assert report["safety"]["live_provider_calls"] is False
     assert report["safety"]["describes_global_actions"] is True
+
+
+def test_final_launch_closure_packet_prefers_promoted_deploy_writer() -> None:
+    writer_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    manual_team_action = (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    product_bundle_action = (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    actions = final_launch_closure_packet._promote_first_blocker_device_action(
+        [
+            manual_team_action,
+            product_bundle_action,
+            backend_url_action,
+            f"run {writer_action}",
+        ],
+        first_blocker={
+            "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        },
+    )
+
+    assert actions[0] == writer_action
+    assert manual_team_action not in actions
+    assert not any(
+        action.startswith(
+            "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        )
+        for action in actions
+    )
+    assert product_bundle_action in actions
+    assert backend_url_action in actions
 
 
 def test_final_launch_closure_packet_exposes_device_action_bundle(

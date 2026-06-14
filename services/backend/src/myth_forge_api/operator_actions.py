@@ -87,6 +87,10 @@ MAKE_TARGET_ACTION_REPLACEMENTS = {
     "run make mobile-deploy-preflight after backend is running": (
         BACKEND_DEVICE_DEMO_VALIDATED_ACTION
     ),
+    "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+    "rerun make mobile-deploy-preflight": (
+        MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION
+    ),
 }
 XCODE_BUILD_GATE_ACTION = (
     "accept the Xcode license outside Codex, then rerun "

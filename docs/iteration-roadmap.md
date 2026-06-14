@@ -394,6 +394,7 @@ Bridge deliverable:
 - P0.480 Configured print quote handoff uses explicit consent guard and sanitized local evidence
 - P0.481 Final handoff aggregators prefer the guarded print quote command over legacy Treatstock prose
 - P0.482 Final launch closure packet prefers guarded print quote handoff over print readiness validation
+- P0.483 Final handoff action lists prefer deploy writer over stale Team ID edit actions
 
 ## P1: Mobile Vertical Slice
 

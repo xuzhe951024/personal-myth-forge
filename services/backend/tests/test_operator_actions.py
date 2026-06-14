@@ -44,6 +44,16 @@ def test_adds_mobile_deploy_validation_to_writer_command() -> None:
     )
 
 
+def test_normalizes_run_prefixed_mobile_deploy_writer_command() -> None:
+    assert normalize_operator_action(
+        "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    ) == (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+
 def test_prefers_project_local_ios_deploy_handoff_over_manual_team_action() -> None:
     actions = operator_actions.prefer_project_local_ios_deploy_handoff_actions(
         [

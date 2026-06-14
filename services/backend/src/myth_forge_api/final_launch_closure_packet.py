@@ -26,7 +26,10 @@ from myth_forge_api.final_showcase_readiness import (
 from myth_forge_api.ios_device_evidence_bundle import (
     build_ios_device_evidence_bundle_report,
 )
-from myth_forge_api.operator_actions import normalize_operator_action
+from myth_forge_api.operator_actions import (
+    normalize_operator_action,
+    prefer_project_local_ios_deploy_handoff_actions,
+)
 
 COMMANDS = [
     "make final-resource-requirements",
@@ -756,6 +759,9 @@ def _operator_actions(
         return ["Final launch closure packet is ready"]
     normalized_actions = _prefer_apply_preview_before_apply(_dedupe(actions))
     normalized_actions = _prefer_guarded_print_quote_action(normalized_actions)
+    normalized_actions = prefer_project_local_ios_deploy_handoff_actions(
+        normalized_actions
+    )
     return _promote_first_blocker_device_action(
         normalized_actions,
         first_blocker=first_blocker,
@@ -770,7 +776,9 @@ def _promote_first_blocker_device_action(
     command = str((first_blocker or {}).get("command", "")).strip()
     if not _is_device_handoff_command(command):
         return actions
-    return _dedupe([normalize_operator_action(command), *actions])
+    return prefer_project_local_ios_deploy_handoff_actions(
+        _dedupe([normalize_operator_action(command), *actions])
+    )
 
 
 def _is_device_handoff_command(command: str) -> bool:

@@ -136,6 +136,18 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert actions["apply_final_resources"]["command"] == "make final-apply-resources"
     assert "make final-apply-resources" in report["operator_sequence"]
     assert "make mobile-deploy-preflight" in operator_actions
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) not in operator_actions
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in operator_actions
+    assert (
+        "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) in operator_actions
     assert not any(action.startswith("unblock ") for action in operator_actions)
     assert report["safety"] == {
         "commands_run": False,
@@ -180,9 +192,13 @@ def test_external_action_ledger_ios_deploy_actions_use_mobile_preflight(
         "make mobile-deploy-preflight"
     )
     assert (
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     ) in operator_actions
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) not in operator_actions
     assert (
         "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
@@ -383,6 +399,10 @@ def test_external_action_ledger_top_level_actions_start_with_device_blocker(
     assert operator_actions[0] == device_action
     assert provider_action in operator_actions
     assert operator_actions.index(device_action) < operator_actions.index(provider_action)
+    assert (
+        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) not in operator_actions
 
 
 def test_external_action_ledger_operator_actions_include_backend_device_demo_handoff(
