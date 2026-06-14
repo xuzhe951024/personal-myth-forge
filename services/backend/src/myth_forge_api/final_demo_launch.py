@@ -55,6 +55,7 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
 )
 from myth_forge_api.operator_actions import (
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+    XCODE_BUILD_GATE_ACTION,
     add_final_resource_validation_command,
     normalize_operator_action,
     prefer_guarded_print_quote_handoff_actions,
@@ -86,6 +87,7 @@ IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
 FINAL_RESOURCES_ENV_LABEL = "final-resources.env"
 FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
+FINAL_RESOURCE_INIT_ACTION = "run make final-resource-init"
 FINAL_DEMO_TARGETED_UNBLOCK_ACTION_ROOTS = {
     "unblock apply_final_resources: make final-resource-apply-preview",
     "unblock mobile_deploy_preflight: make mobile-deploy-preflight",
@@ -573,10 +575,41 @@ def _operator_actions(
         actions.append(FINAL_RESOURCE_APPLY_PREVIEW_COMMAND)
     actions.extend(operator_checklist)
     deduped = _dedupe_operator_actions(actions)
-    return _drop_superseded_manual_team_action(
+    filtered = _drop_superseded_manual_team_action(
         deduped,
         protected_action=concrete,
+    )
+    return _preserve_xcode_evidence_action_before_limit(
+        filtered,
     )[:FINAL_DEMO_OPERATOR_ACTION_LIMIT]
+
+
+def _preserve_xcode_evidence_action_before_limit(actions: list[str]) -> list[str]:
+    try:
+        xcode_index = actions.index(XCODE_BUILD_GATE_ACTION)
+    except ValueError:
+        return actions
+    if xcode_index < FINAL_DEMO_OPERATOR_ACTION_LIMIT:
+        return actions
+    visible = actions[:FINAL_DEMO_OPERATOR_ACTION_LIMIT]
+    overflow = actions[FINAL_DEMO_OPERATOR_ACTION_LIMIT:xcode_index]
+    drop_index = _xcode_evidence_replacement_index(visible)
+    replaced = visible[drop_index]
+    return [
+        *visible[:drop_index],
+        XCODE_BUILD_GATE_ACTION,
+        *visible[drop_index + 1 :],
+        replaced,
+        *overflow,
+        *actions[xcode_index + 1 :],
+    ]
+
+
+def _xcode_evidence_replacement_index(visible_actions: list[str]) -> int:
+    try:
+        return visible_actions.index(FINAL_RESOURCE_INIT_ACTION)
+    except ValueError:
+        return len(visible_actions) - 1
 
 
 def _final_showcase_handoff_actions(report: dict[str, Any]) -> list[str]:

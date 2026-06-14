@@ -30,6 +30,33 @@ def test_final_demo_launch_dedupes_legacy_print_quote_handoff_actions() -> None:
     assert actions == [GUARDED_PRINT_QUOTE_ACTION]
 
 
+def test_final_demo_launch_normalizes_legacy_apple_sdk_license_action() -> None:
+    actions = final_demo_launch._dedupe_operator_actions(
+        ["accept the Apple SDK license outside this repository before Xcode build"]
+    )
+
+    assert actions == [
+        "accept the Xcode license outside Codex, then rerun make mobile-xcode-build-evidence"
+    ]
+
+
+def test_final_demo_launch_preserves_xcode_evidence_action_before_limit() -> None:
+    actions = final_demo_launch._operator_actions(
+        next_action=None,
+        operator_checklist=[
+            *(f"safe local action {index}" for index in range(12)),
+            "accept the Apple SDK license outside this repository before Xcode build",
+        ],
+    )
+
+    assert (
+        "accept the Xcode license outside Codex, then rerun make mobile-xcode-build-evidence"
+        in actions
+    )
+    assert "accept the Apple SDK license outside this repository before Xcode build" not in actions
+    assert len(actions) <= 12
+
+
 def test_configured_final_demo_launch_blocks_missing_resources(tmp_path: Path) -> None:
     repo_root = _write_deploy_config(tmp_path)
 

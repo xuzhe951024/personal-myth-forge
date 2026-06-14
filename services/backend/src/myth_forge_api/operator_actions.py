@@ -98,6 +98,9 @@ XCODE_BUILD_GATE_ACTION = (
 )
 GENERIC_ACTION_REPLACEMENTS = {
     "resolve Xcode build gate outside the app": XCODE_BUILD_GATE_ACTION,
+    "accept the Apple SDK license outside this repository before Xcode build": (
+        XCODE_BUILD_GATE_ACTION
+    ),
 }
 PROVIDER_HANDOFF_CLI_MARKERS = ("myth_forge_api.cli provider-handoff",)
 FINAL_DEMO_LAUNCH_CONFIGURED_CLI_MARKERS = (

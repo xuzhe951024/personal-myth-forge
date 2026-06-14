@@ -400,6 +400,7 @@ Bridge deliverable:
 - P0.486 Final acceptance readiness prefers saved mobile deploy next actions
 - P0.487 Final showcase readiness drops self-referential operator actions
 - P0.488 Final showcase readiness surfaces saved iOS deploy resource actions
+- P0.489 Final demo launch normalizes stale Xcode license actions
 
 ## P1: Mobile Vertical Slice
 
