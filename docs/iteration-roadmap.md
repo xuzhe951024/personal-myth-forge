@@ -395,6 +395,7 @@ Bridge deliverable:
 - P0.481 Final handoff aggregators prefer the guarded print quote command over legacy Treatstock prose
 - P0.482 Final launch closure packet prefers guarded print quote handoff over print readiness validation
 - P0.483 Final handoff action lists prefer deploy writer over stale Team ID edit actions
+- P0.484 Final external and closure action lists prefer complete provider handoff chains
 
 ## P1: Mobile Vertical Slice
 

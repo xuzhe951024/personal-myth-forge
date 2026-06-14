@@ -43,6 +43,18 @@ COMMANDS = [
 ]
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
+PROVIDER_HANDOFF_OPERATOR_ACTION = "make provider-handoff; rerun make live-provider-evidence"
+COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION = (
+    "make final-resource-apply-preview; rerun make provider-handoff; "
+    "rerun make live-provider-evidence"
+)
+WEAK_PROVIDER_HANDOFF_OPERATOR_ACTIONS = {
+    FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
+    "make final-resource-apply-preview; rerun make live-provider-evidence",
+    "make provider-handoff",
+    PROVIDER_HANDOFF_OPERATOR_ACTION,
+    "make live-provider-evidence",
+}
 CONFIGURED_PRINT_QUOTE_ACTION = (
     "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
 )
@@ -757,7 +769,9 @@ def _operator_actions(
                 actions.append(_run_action_text(str(action["command"])))
     if not actions:
         return ["Final launch closure packet is ready"]
-    normalized_actions = _prefer_apply_preview_before_apply(_dedupe(actions))
+    normalized_actions = _prefer_complete_provider_handoff_chain(
+        _prefer_apply_preview_before_apply(_dedupe(actions))
+    )
     normalized_actions = _prefer_guarded_print_quote_action(normalized_actions)
     normalized_actions = prefer_project_local_ios_deploy_handoff_actions(
         normalized_actions
@@ -1144,6 +1158,17 @@ def _prefer_guarded_print_quote_action(actions: list[str]) -> list[str]:
         action
         for action in actions
         if _operator_action_root(action) != PRINT_FULFILLMENT_READINESS_ACTION
+    ]
+
+
+def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
+    if COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION not in actions:
+        return actions
+    return [
+        action
+        for action in actions
+        if action == COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION
+        or action not in WEAK_PROVIDER_HANDOFF_OPERATOR_ACTIONS
     ]
 
 

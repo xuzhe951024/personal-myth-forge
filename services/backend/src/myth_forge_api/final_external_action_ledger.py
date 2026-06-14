@@ -41,6 +41,17 @@ OPERATOR_SEQUENCE = [
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 PROVIDER_HANDOFF_OPERATOR_ACTION = "make provider-handoff; rerun make live-provider-evidence"
+COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION = (
+    "make final-resource-apply-preview; rerun make provider-handoff; "
+    "rerun make live-provider-evidence"
+)
+WEAK_PROVIDER_HANDOFF_OPERATOR_ACTIONS = {
+    FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
+    "make final-resource-apply-preview; rerun make live-provider-evidence",
+    "make provider-handoff",
+    PROVIDER_HANDOFF_OPERATOR_ACTION,
+    "make live-provider-evidence",
+}
 LIVE_PROVIDER_CONSENT_ENV_PREFIX = "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
 LIVE_PROVIDER_CONSENT_COMMANDS = {
     "make backend-evaluate-3d-configured",
@@ -365,9 +376,23 @@ def _live_provider_evidence_operator_action(
     live_provider_evidence: dict[str, Any],
 ) -> str:
     return (
-        _report_next_action_operator_action(live_provider_evidence)
+        _report_first_operator_action(live_provider_evidence)
+        or _report_next_action_operator_action(live_provider_evidence)
         or PROVIDER_HANDOFF_OPERATOR_ACTION
     )
+
+
+def _report_first_operator_action(report: dict[str, Any]) -> str:
+    actions = report.get("operator_actions")
+    if not isinstance(actions, list):
+        return ""
+    for action in actions:
+        if not isinstance(action, str):
+            continue
+        normalized = normalize_operator_action(action)
+        if normalized:
+            return normalized
+    return ""
 
 
 def _report_next_action_operator_action(report: dict[str, Any]) -> str:
@@ -387,6 +412,17 @@ def _report_next_action_operator_action(report: dict[str, Any]) -> str:
         if command:
             return command
     return ""
+
+
+def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
+    if COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION not in actions:
+        return actions
+    return [
+        action
+        for action in actions
+        if action == COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION
+        or action not in WEAK_PROVIDER_HANDOFF_OPERATOR_ACTIONS
+    ]
 
 
 def _live_action(
@@ -946,7 +982,9 @@ def _operator_actions(
                     actions.append(
                         f"approve live provider cost before {action['command']}"
                     )
-    normalized_actions = _prefer_apply_preview_before_apply(_dedupe(actions))
+    normalized_actions = _prefer_complete_provider_handoff_chain(
+        _prefer_apply_preview_before_apply(_dedupe(actions))
+    )
     normalized_actions = prefer_project_local_ios_deploy_handoff_actions(
         normalized_actions
     )

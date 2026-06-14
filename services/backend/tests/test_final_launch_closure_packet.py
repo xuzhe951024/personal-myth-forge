@@ -532,9 +532,13 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
     )
 
     operator_actions = result.report["operator_actions"]
+    complete_provider_chain = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
 
     assert (
-        "make final-resource-apply-preview; rerun make live-provider-evidence"
+        complete_provider_chain
         in operator_actions
     )
     assert (
@@ -542,6 +546,10 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
     ) in operator_actions
     assert (
         "approve live provider cost before make live-provider-evidence"
+        not in operator_actions
+    )
+    assert (
+        "make final-resource-apply-preview; rerun make live-provider-evidence"
         not in operator_actions
     )
     assert (
