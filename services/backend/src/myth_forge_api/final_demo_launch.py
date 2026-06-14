@@ -709,6 +709,12 @@ def _next_action_operator_action(next_action: dict[str, Any] | None) -> str:
     command = str(next_action.get("command", "")).strip()
     validation_command = str(next_action.get("validation_command", "")).strip()
     if command and validation_command:
+        if f"rerun {validation_command}" in command:
+            return command
+        command_root = _operator_action_command(command)
+        validation_root = _operator_action_command(validation_command)
+        if command_root == validation_root:
+            return command_root
         return f"{command}; rerun {validation_command}"
     return command
 

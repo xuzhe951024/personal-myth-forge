@@ -1258,6 +1258,7 @@ def _next_action(
         validation_command = str(
             child_next_action.get("validation_command", ""),
         ).strip()
+        command = _operator_action_with_validation(command, validation_command)
     action = {
         "id": str(blocker.get("id", "")),
         "label": str(blocker.get("label", "")),
@@ -1381,7 +1382,7 @@ def _preferred_device_action_blocker_command(
     validation_command = str(
         child_next_action.get("validation_command", ""),
     ).strip()
-    return command, validation_command
+    return _operator_action_with_validation(command, validation_command), validation_command
 
 
 def _device_action_child_next_action(
@@ -1408,6 +1409,10 @@ def _first_device_action_hint(
         str(child_next_action.get("command", "")).strip()
         or str(action.get("command", "")).strip()
     )
+    validation_command = str(
+        child_next_action.get("validation_command", ""),
+    ).strip()
+    command = _operator_action_with_validation(command, validation_command)
     detail = str(action.get("evidence_detail", ""))
     if not command or not detail:
         return ""

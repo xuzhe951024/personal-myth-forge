@@ -523,19 +523,16 @@ def test_local_final_demo_launch_mobile_preflight_blocker_includes_saved_evidenc
     assert "Missing DEVELOPMENT_TEAM" in blocker["detail"]
     assert "PMF_BACKEND_BASE_URL must be iPhone-reachable" in blocker["detail"]
     assert "MESHY_API_KEY" not in blocker["detail"]
-    assert blocker["command"] == (
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
-    )
-    assert blocker["validation_command"] == "make mobile-deploy-preflight"
-    assert next_action["detail"] == blocker["detail"]
-    assert next_action["command"] == (
-        "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig"
-    )
-    assert next_action["validation_command"] == "make mobile-deploy-preflight"
-    assert result.report["operator_actions"][0] == (
+    expected_command = (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
     )
+    assert blocker["command"] == expected_command
+    assert blocker["validation_command"] == "make mobile-deploy-preflight"
+    assert next_action["detail"] == blocker["detail"]
+    assert next_action["command"] == expected_command
+    assert next_action["validation_command"] == "make mobile-deploy-preflight"
+    assert result.report["operator_actions"][0] == expected_command
     assert "MESHY_API_KEY" not in result.report["operator_actions"][0]
     assert (
         "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight"
@@ -593,8 +590,11 @@ def test_final_demo_launch_device_bundle_first_action_uses_showcase_child_action
     assert first_action["command"] == child_action["command"]
     assert first_action["validation_command"] == "make mobile-deploy-preflight"
     assert first_action["next_action"] == child_action
-    assert result.report["first_blocker"]["command"] == child_action["command"]
-    assert result.report["next_action"]["command"] == child_action["command"]
+    expected_command = (
+        f"{child_action['command']}; rerun make mobile-deploy-preflight"
+    )
+    assert result.report["first_blocker"]["command"] == expected_command
+    assert result.report["next_action"]["command"] == expected_command
 
 
 def test_final_demo_launch_device_bundle_preserves_showcase_saved_next_action(
