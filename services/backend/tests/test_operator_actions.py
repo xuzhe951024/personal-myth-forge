@@ -406,7 +406,7 @@ def test_prefers_guarded_print_quote_action_over_legacy_variants() -> None:
 
 def test_print_quote_preference_uses_request_preflight_before_provider_call() -> None:
     request_action = (
-        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
         "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
@@ -427,6 +427,33 @@ def test_print_quote_preference_uses_request_preflight_before_provider_call() ->
     assert actions == [
         "make provider-handoff; rerun make live-provider-evidence",
         request_action,
+    ]
+
+
+def test_print_quote_preference_prefers_auto_request_over_legacy_placeholder() -> None:
+    auto_request_action = (
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
+        "make print-quote-request-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+    legacy_request_action = (
+        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "make print-quote-request-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = operator_actions.prefer_guarded_print_quote_handoff_actions(
+        [
+            "make provider-handoff; rerun make live-provider-evidence",
+            legacy_request_action,
+            "final_demo_launch_local: " + auto_request_action,
+            auto_request_action,
+        ]
+    )
+
+    assert actions == [
+        "make provider-handoff; rerun make live-provider-evidence",
+        auto_request_action,
     ]
 
 

@@ -449,6 +449,7 @@ Bridge deliverable:
 - P0.535 Final acceptance saved report uses mobile preflight evidence handoff
 - P0.536 Print quote request writer supports auto local served asset URI handoff
 - P0.537 Final launch closure packet prefers auto print quote request handoff
+- P0.538 Shared operator actions prefer auto print quote request handoff
 
 ## P1: Mobile Vertical Slice
 

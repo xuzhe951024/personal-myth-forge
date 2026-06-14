@@ -50,8 +50,12 @@ CONFIGURED_PRINT_QUOTE_ACTION = (
 )
 PRINT_FULFILLMENT_READINESS_COMMAND = "make print-fulfillment-readiness"
 CONFIGURED_PRINT_QUOTE_REQUEST_MAKE_TARGET = "make print-quote-request-configured"
-CONFIGURED_PRINT_QUOTE_REQUEST_ACTION = (
+LEGACY_CONFIGURED_PRINT_QUOTE_REQUEST_ACTION = (
     "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+    f"{CONFIGURED_PRINT_QUOTE_REQUEST_MAKE_TARGET}"
+)
+CONFIGURED_PRINT_QUOTE_REQUEST_ACTION = (
+    "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
     f"{CONFIGURED_PRINT_QUOTE_REQUEST_MAKE_TARGET}"
 )
 CONFIGURED_PRINT_QUOTE_REQUEST_VALIDATED_ACTION = (
@@ -365,9 +369,16 @@ def _preferred_configured_print_quote_action(actions: list[str]) -> str | None:
 
 def _is_configured_print_quote_request_action(action: str) -> bool:
     command_root = _action_command_root(action).split("; rerun ", 1)[0].strip()
+    request_actions = {
+        CONFIGURED_PRINT_QUOTE_REQUEST_ACTION,
+        LEGACY_CONFIGURED_PRINT_QUOTE_REQUEST_ACTION,
+    }
     return (
-        command_root == CONFIGURED_PRINT_QUOTE_REQUEST_ACTION
-        or command_root.endswith(f": {CONFIGURED_PRINT_QUOTE_REQUEST_ACTION}")
+        command_root in request_actions
+        or any(
+            command_root.endswith(f": {request_action}")
+            for request_action in request_actions
+        )
         or command_root.endswith(CONFIGURED_PRINT_QUOTE_REQUEST_MAKE_TARGET)
     )
 
