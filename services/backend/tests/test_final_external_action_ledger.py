@@ -126,10 +126,14 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     operator_actions = report["operator_actions"]
     assert "make ios-device-launch-rehearsal" not in operator_actions
     assert "make ios-device-launch-rehearsal" in report["operator_sequence"]
-    assert report["operator_actions"][:3] == [
+    assert report["operator_actions"][:4] == [
         (
             "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
+        ),
+        (
+            "start backend-device-demo before device checks: "
+            "make backend-device-demo; rerun make mobile-deploy-preflight"
         ),
         "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
         "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight",
@@ -454,6 +458,57 @@ def test_external_action_ledger_operator_actions_include_backend_device_demo_han
     assert actions["start_backend_device_demo"]["operator_action"] == backend_action
     assert backend_action in operator_actions
     assert "make backend-device-demo" not in operator_actions
+
+
+def test_external_action_ledger_prioritizes_backend_device_demo_before_provider_handoffs(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    operator_actions = result.report["operator_actions"]
+    deploy_writer_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    meshy_key_action = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    openai_key_action = (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+    xcode_action = (
+        "accept the Xcode license outside Codex, then rerun "
+        "make mobile-xcode-build-evidence"
+    )
+
+    assert operator_actions[:2] == [deploy_writer_action, backend_action]
+    assert operator_actions.index(backend_action) < operator_actions.index(
+        meshy_key_action
+    )
+    assert operator_actions.index(backend_action) < operator_actions.index(
+        openai_key_action
+    )
+    assert operator_actions.index(backend_action) < operator_actions.index(
+        provider_action
+    )
+    assert operator_actions.index(backend_action) < operator_actions.index(print_action)
+    assert operator_actions.index(backend_action) < operator_actions.index(xcode_action)
 
 
 def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks(
