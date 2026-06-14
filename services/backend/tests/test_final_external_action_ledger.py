@@ -135,9 +135,16 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
             "start backend-device-demo before device checks: "
             "make backend-device-demo; rerun make mobile-deploy-preflight"
         ),
+        (
+            "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+            "rerun make mobile-deploy-preflight"
+        ),
         "provide MESHY_API_KEY in final-resources.env; rerun make final-resources-preflight",
-        "provide OPENAI_API_KEY in final-resources.env; rerun make final-resources-preflight",
     ]
+    assert (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    ) in operator_actions
     assert "make final-resource-apply-preview" in operator_actions
     assert "make final-apply-resources" not in operator_actions
     assert actions["apply_final_resources"]["command"] == "make final-apply-resources"
@@ -509,6 +516,87 @@ def test_external_action_ledger_prioritizes_backend_device_demo_before_provider_
     )
     assert operator_actions.index(backend_action) < operator_actions.index(print_action)
     assert operator_actions.index(backend_action) < operator_actions.index(xcode_action)
+
+
+def test_external_action_ledger_prioritizes_backend_url_after_backend_device_demo(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    operator_actions = result.report["operator_actions"]
+    deploy_writer_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    meshy_key_action = (
+        "provide MESHY_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    openai_key_action = (
+        "provide OPENAI_API_KEY in final-resources.env; "
+        "rerun make final-resources-preflight"
+    )
+    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+
+    assert operator_actions[:3] == [
+        deploy_writer_action,
+        backend_action,
+        backend_url_action,
+    ]
+    assert operator_actions.index(backend_url_action) < operator_actions.index(
+        meshy_key_action
+    )
+    assert operator_actions.index(backend_url_action) < operator_actions.index(
+        openai_key_action
+    )
+    assert operator_actions.index(backend_url_action) < operator_actions.index(
+        provider_action
+    )
+
+
+def test_external_action_ledger_prioritizer_moves_backend_url_when_backend_demo_is_already_second() -> None:
+    deploy_writer_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = "make provider-handoff; rerun make live-provider-evidence"
+
+    actions = final_external_action_ledger._prioritize_backend_device_demo_after_deploy_writer(
+        [
+            deploy_writer_action,
+            backend_action,
+            provider_action,
+            backend_url_action,
+        ]
+    )
+
+    assert actions == [
+        deploy_writer_action,
+        backend_action,
+        backend_url_action,
+        provider_action,
+    ]
 
 
 def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks(
