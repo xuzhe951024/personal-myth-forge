@@ -433,6 +433,7 @@ Bridge deliverable:
 - P0.519 Final external action ledger promotes concrete local device next action
 - P0.520 Mobile deploy preflight evidence promotes concrete next action
 - P0.521 Device action bundles promote concrete saved next action
+- P0.522 iOS deploy runbook device actions include validation rerun
 
 ## P1: Mobile Vertical Slice
 
