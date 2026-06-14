@@ -1544,6 +1544,57 @@ def test_ios_device_launch_rehearsal_full_actions_prioritize_provider_and_print_
     )
 
 
+def test_ios_device_launch_rehearsal_prioritizes_backend_demo_after_deploy_handoff() -> None:
+    deploy_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    backend_url_action = (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = ios_device_launch_rehearsal._operator_actions(
+        [
+            {
+                "id": "final_rehearsal_local",
+                "label": "Local final rehearsal",
+                "status": "blocked",
+                "command": "make final-rehearsal-local",
+                "operator_actions": [
+                    deploy_action,
+                    provider_action,
+                    print_action,
+                    (
+                        "accept the Xcode license outside Codex, then rerun "
+                        "make mobile-xcode-build-evidence"
+                    ),
+                    backend_action,
+                    backend_url_action,
+                ],
+            }
+        ]
+    )
+
+    assert actions[:3] == [deploy_action, backend_action, backend_url_action]
+    assert actions.index(backend_action) < actions.index(provider_action)
+    assert actions.index(backend_action) < actions.index(print_action)
+
+
 def test_ios_device_launch_rehearsal_local_actions_include_partial_final_demo_handoff() -> None:
     actions = ios_device_launch_rehearsal._local_rehearsal_operator_actions(
         [

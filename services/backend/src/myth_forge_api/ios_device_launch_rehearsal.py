@@ -509,9 +509,32 @@ def _prioritize_rehearsal_handoff_actions(actions: list[str]) -> list[str]:
         action for action in rest if _is_provider_handoff_action(action)
     ]
     print_actions = [action for action in rest if _is_print_handoff_action(action)]
-    priority_actions = set(provider_actions + print_actions)
+    provider_print_actions = set(provider_actions + print_actions)
+    fallback_remaining = [
+        action for action in rest if action not in provider_print_actions
+    ]
+    raw_backend_actions = [
+        action for action in rest if _is_backend_device_demo_action(action)
+    ]
+    backend_url_actions = [
+        action
+        for action in rest
+        if action not in raw_backend_actions and _is_backend_url_handoff_action(action)
+    ]
+    priority_actions = set(
+        provider_actions + print_actions + raw_backend_actions + backend_url_actions
+    )
     remaining = [action for action in rest if action not in priority_actions]
-    return first_actions + provider_actions + print_actions + remaining
+    if _is_mobile_deploy_handoff_action(first_actions[0]):
+        return (
+            first_actions
+            + raw_backend_actions
+            + backend_url_actions
+            + provider_actions
+            + print_actions
+            + remaining
+        )
+    return first_actions + provider_actions + print_actions + fallback_remaining
 
 
 def _is_provider_handoff_action(action: str) -> bool:
@@ -532,6 +555,18 @@ def _is_print_handoff_action(action: str) -> bool:
 
 def _is_backend_device_demo_action(action: str) -> bool:
     return "backend-device-demo" in action.lower()
+
+
+def _is_backend_url_handoff_action(action: str) -> bool:
+    lowered = action.lower()
+    return "pmf_backend_base_url" in lowered or "iphone-reachable lan url" in lowered
+
+
+def _is_mobile_deploy_handoff_action(action: str) -> bool:
+    return (
+        _top_level_action_root(action) == MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION
+        and not _is_backend_device_demo_action(action)
+    )
 
 
 def _top_level_operator_action(action: str) -> str:
