@@ -263,7 +263,7 @@ def test_final_launch_closure_packet_prefers_validated_device_child_actions() ->
 
 def test_final_launch_closure_packet_prefers_print_request_before_provider_quote() -> None:
     request_action = (
-        "PRINT_SOURCE_ASSET_URI=https://... PRINT_CANDIDATE_URI=https://... "
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
         "make print-quote-request-configured; "
         "rerun make print-fulfillment-readiness"
     )
@@ -284,6 +284,41 @@ def test_final_launch_closure_packet_prefers_print_request_before_provider_quote
                         "requires_user_input": False,
                         "requires_user_confirmation": False,
                         "requires_cost_consent": True,
+                    },
+                    {
+                        "id": "configured_treatstock_quote_request",
+                        "status": "blocked",
+                        "command": request_action,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": False,
+                    },
+                ]
+            }
+        ]
+    )
+
+    assert actions == [request_action]
+
+
+def test_final_launch_closure_packet_drops_bare_print_readiness_for_auto_request() -> None:
+    request_action = (
+        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
+        "make print-quote-request-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "print_fulfillment_readiness",
+                        "status": "blocked",
+                        "command": "make print-fulfillment-readiness",
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": False,
                     },
                     {
                         "id": "configured_treatstock_quote_request",
