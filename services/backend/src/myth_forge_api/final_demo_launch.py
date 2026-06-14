@@ -85,6 +85,8 @@ IOS_DEPLOY_DESTINATION = "apps/mobile/ios/Config/Deployment.local.xcconfig"
 IOS_DEPLOY_DESTINATION_LABEL = "Deployment.local.xcconfig"
 IOS_DEPLOY_VALIDATION_COMMAND = "make mobile-deploy-preflight"
 FINAL_RESOURCES_ENV_LABEL = "final-resources.env"
+FINAL_RESOURCE_REQUIREMENTS_COMMAND = "make final-resource-requirements"
+FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
 FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 FINAL_RESOURCE_INIT_ACTION = "run make final-resource-init"
@@ -1160,6 +1162,9 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
         prefer_project_local_ios_deploy_handoff_actions(deduped)
     )
     filtered = prefer_guarded_print_quote_handoff_actions(filtered)
+    filtered = _drop_bare_resource_requirements_when_specific_handoff_exists(
+        filtered
+    )
     return _preserve_requested_apply_preview_action(
         filtered,
         original_values=values,
@@ -1172,6 +1177,24 @@ def _drop_targeted_unblock_fallbacks(actions: list[str]) -> list[str]:
         for action in actions
         if _command_root(action)
         not in FINAL_DEMO_TARGETED_UNBLOCK_ACTION_ROOTS
+    ]
+
+
+def _drop_bare_resource_requirements_when_specific_handoff_exists(
+    actions: list[str],
+) -> list[str]:
+    has_specific_resource_handoff = any(
+        _command_root(action) != FINAL_RESOURCE_REQUIREMENTS_COMMAND
+        and f"rerun {FINAL_RESOURCES_PREFLIGHT_COMMAND}" in _command_root(action)
+        and "final-resources.env" in _command_root(action)
+        for action in actions
+    )
+    if not has_specific_resource_handoff:
+        return actions
+    return [
+        action
+        for action in actions
+        if _command_root(action) != FINAL_RESOURCE_REQUIREMENTS_COMMAND
     ]
 
 

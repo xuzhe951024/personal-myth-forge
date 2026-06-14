@@ -940,11 +940,23 @@ def test_local_final_demo_launch_normalizes_final_resource_requirement_action(
         mode="local",
     )
 
-    assert "make final-resource-requirements" in result.report["operator_actions"]
+    assert "make final-resource-requirements" not in result.report["operator_actions"]
+    assert "make final-resource-requirements" in result.report["commands"]
+    assert result.report["final_resource_requirements"]["validation_commands"][0] == (
+        "make final-resource-requirements"
+    )
     assert not any(
         action == "run make final-resource-requirements after filling resources"
         for action in result.report["operator_actions"]
     )
+
+
+def test_final_demo_launch_preserves_resource_requirements_action_without_specific_handoff() -> None:
+    actions = final_demo_launch._dedupe_operator_actions(
+        ["run make final-resource-requirements after filling resources"]
+    )
+
+    assert actions == ["make final-resource-requirements"]
 
 
 def test_local_final_demo_launch_validates_configured_preflight_action() -> None:
