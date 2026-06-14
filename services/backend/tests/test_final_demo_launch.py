@@ -1630,6 +1630,58 @@ def test_final_demo_launch_promotes_final_showcase_handoff_actions(
     assert "refresh unrelated visual proof" not in actions
 
 
+def test_local_final_demo_launch_prioritizes_backend_device_demo_before_provider_handoffs(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    backend_action = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+    provider_action = (
+        "make final-resource-apply-preview; rerun make provider-handoff; "
+        "rerun make live-provider-evidence"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    def build_showcase_readiness(**_: object) -> final_demo_launch.FinalDemoLaunchResult:
+        return final_demo_launch.FinalDemoLaunchResult(
+            exit_code=2,
+            report={
+                "kind": "final_showcase_readiness_report",
+                "status": "blocked",
+                "operator_actions": [provider_action, print_action],
+                "capabilities_by_id": {
+                    "ios_deployable": {"status": "blocked"},
+                },
+                "safety": {"commands_run": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        final_demo_launch,
+        "build_final_showcase_readiness_report",
+        build_showcase_readiness,
+    )
+
+    result = build_final_demo_launch_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        mode="local",
+    )
+    actions = result.report["operator_actions"]
+
+    assert backend_action in actions
+    assert provider_action in actions
+    assert print_action in actions
+    assert actions.index(backend_action) < actions.index(provider_action)
+    assert actions.index(backend_action) < actions.index(print_action)
+
+
 def test_final_demo_launch_prefers_showcase_provider_child_action(
     tmp_path: Path,
     monkeypatch,
