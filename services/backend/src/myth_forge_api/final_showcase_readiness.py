@@ -1734,6 +1734,7 @@ def _operator_actions(
         if _normalized_report_status(report) == "ready":
             continue
         actions.extend(_selected_report_operator_actions(report))
+        actions.extend(_mobile_deploy_resource_operator_actions(report))
     actions.extend(["make final-rehearsal-local", "make final-showcase-readiness"])
     actions.extend(
         action
@@ -1903,6 +1904,45 @@ def _selected_report_operator_actions(report: dict[str, Any]) -> list[str]:
         action for action in actions if _is_ios_rehearsal_priority_action(action)
     )
     return _dedupe(selected)[:FINAL_SHOWCASE_IOS_REHEARSAL_ACTION_LIMIT]
+
+
+def _mobile_deploy_resource_operator_actions(report: dict[str, Any]) -> list[str]:
+    if report.get("kind") != "mobile_deploy_preflight_evidence_report":
+        return []
+    resources = _mobile_deploy_resource_rows(report)
+    if not resources:
+        return []
+    actions: list[str] = []
+    for resource in resources:
+        if _normalized_status(str(resource.get("status", "missing"))) == "ready":
+            continue
+        resource_id = str(resource.get("id", "")).strip()
+        if resource_id == "development_team":
+            actions.append(
+                "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            )
+        elif resource_id == "product_bundle_identifier":
+            actions.append(
+                "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            )
+        elif resource_id == "backend_base_url":
+            actions.append(
+                "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
+                "rerun make mobile-deploy-preflight"
+            )
+    return actions
+
+
+def _mobile_deploy_resource_rows(report: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for key in ("resources", "checks"):
+        raw_rows = report.get(key)
+        if not isinstance(raw_rows, list):
+            continue
+        rows.extend(row for row in raw_rows if isinstance(row, dict))
+    return rows
 
 
 def _is_ios_rehearsal_priority_action(action: str) -> bool:
