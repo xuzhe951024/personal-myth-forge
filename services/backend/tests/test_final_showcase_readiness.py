@@ -843,7 +843,8 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     assert rows["print_fulfillment"]["status"] == "partial"
     assert rows["print_fulfillment"]["classification"] == "missing_configured_treatstock_quote"
     assert rows["print_fulfillment"]["command"] == (
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
     )
     assert rows["print_fulfillment"]["validation_command"] == (
         "make print-fulfillment-readiness"
@@ -972,6 +973,7 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
     rows = result.report["capabilities_by_id"]
     provider_handoff_command = (
         "make final-resource-apply-preview; rerun make provider-handoff"
+        "; rerun make live-provider-evidence"
     )
 
     for row_id in ("game_asset_3d_generation", "ai_agent_npc"):
