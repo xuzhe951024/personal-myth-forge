@@ -896,7 +896,7 @@ def _first_blocker(lanes: list[dict[str, Any]]) -> dict[str, Any] | None:
         if status not in {"missing", "blocked"}:
             continue
         lane_id = str(lane.get("id", "lane"))
-        command = str(lane.get("command", ""))
+        command = _lane_blocker_command(lane)
         return {
             "id": lane_id,
             "label": str(lane.get("label", lane_id)),
@@ -920,9 +920,19 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
 
 def _validation_command_for_blocker(blocker: dict[str, Any]) -> str | None:
     command = str(blocker.get("command", "")).strip()
-    if command.startswith("make "):
-        return command
+    command_root, _detail_suffix = _split_detail_suffix(command)
+    if "; rerun " in command_root:
+        return command_root.rsplit("; rerun ", 1)[1].strip()
+    if command_root.startswith("make "):
+        return command_root
     return None
+
+
+def _lane_blocker_command(lane: dict[str, Any]) -> str:
+    action = str(lane.get("operator_action", "")).strip()
+    if action:
+        return _final_handoff_operator_action(action)
+    return str(lane.get("command", ""))
 
 
 def _lane_blocker_detail(lane: dict[str, Any]) -> str:
