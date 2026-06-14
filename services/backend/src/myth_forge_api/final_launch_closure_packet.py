@@ -27,6 +27,7 @@ from myth_forge_api.ios_device_evidence_bundle import (
     build_ios_device_evidence_bundle_report,
 )
 from myth_forge_api.operator_actions import (
+    BACKEND_BASE_URL_VALIDATED_ACTION,
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
     FINAL_RESOURCES_PREFLIGHT_COMMAND,
     MOBILE_DEPLOY_PREFLIGHT_COMMAND,
@@ -820,13 +821,32 @@ def _prioritize_backend_device_demo_after_mobile_deploy_handoff(
         return actions
     backend_index = actions.index(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
     if backend_index == anchor_index + 1:
-        return actions
+        return _prioritize_backend_url_after_backend_device_demo(actions)
 
     reordered = list(actions)
     backend_action = reordered.pop(backend_index)
     if backend_index < anchor_index:
         anchor_index -= 1
     reordered.insert(anchor_index + 1, backend_action)
+    return _prioritize_backend_url_after_backend_device_demo(reordered)
+
+
+def _prioritize_backend_url_after_backend_device_demo(actions: list[str]) -> list[str]:
+    if BACKEND_BASE_URL_VALIDATED_ACTION not in actions:
+        return actions
+    try:
+        backend_index = actions.index(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
+        backend_url_index = actions.index(BACKEND_BASE_URL_VALIDATED_ACTION)
+    except ValueError:
+        return actions
+    if backend_url_index == backend_index + 1:
+        return actions
+
+    reordered = list(actions)
+    backend_url_action = reordered.pop(backend_url_index)
+    if backend_url_index < backend_index:
+        backend_index -= 1
+    reordered.insert(backend_index + 1, backend_url_action)
     return reordered
 
 
