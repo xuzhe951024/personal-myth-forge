@@ -152,6 +152,7 @@ Bridge deliverable:
 - P0.554 final launch closure packet drops short provider handoff when live evidence chain exists
 - P0.555 shared print quote action preference uses backend-auto prerequisite before live provider call
 - P0.556 final launch closure packet dedupes backend-auto print readiness actions
+- P0.557 final launch closure packet routes live provider actions through configured consent gate
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

@@ -89,6 +89,11 @@ CONFIGURED_PRINT_QUOTE_REQUEST_VALIDATED_ACTION = (
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
 )
+CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION = "make configured-live-evidence-bundle"
+CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION = (
+    f"make final-configured-preflight; rerun {CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION}"
+)
+LIVE_PROVIDER_DIRECT_ACTION_PREFIX = "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
 
 
 @dataclass(frozen=True)
@@ -841,10 +846,13 @@ def _operator_actions(
         specific_actions,
         first_blocker=first_blocker,
     )
-    return _prefer_print_fulfillment_backend_handoff(
+    print_preferred_actions = _prefer_print_fulfillment_backend_handoff(
         _prioritize_backend_device_demo_after_mobile_deploy_handoff(
             promoted_specific_actions
         )
+    )
+    return _prefer_configured_evidence_gate_for_live_provider_actions(
+        print_preferred_actions
     )
 
 
@@ -884,6 +892,25 @@ def _prefer_print_fulfillment_backend_handoff(actions: list[str]) -> list[str]:
         replacement = action
         if action == PRINT_FULFILLMENT_READINESS_ACTION:
             replacement = PRINT_FULFILLMENT_BACKEND_AUTO_VALIDATED_ACTION
+        if replacement in emitted:
+            continue
+        emitted.add(replacement)
+        result.append(replacement)
+    return result
+
+
+def _prefer_configured_evidence_gate_for_live_provider_actions(
+    actions: list[str],
+) -> list[str]:
+    result: list[str] = []
+    emitted: set[str] = set()
+    for action in actions:
+        replacement = action
+        if (
+            LIVE_PROVIDER_DIRECT_ACTION_PREFIX in action
+            or _operator_action_root(action) == CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION
+        ):
+            replacement = CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION
         if replacement in emitted:
             continue
         emitted.add(replacement)

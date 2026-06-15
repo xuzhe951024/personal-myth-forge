@@ -99,6 +99,9 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     )
     operator_actions = report["operator_actions"]
     actions = " ".join(operator_actions)
+    configured_gate_action = (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    )
     assert "make final-resources-preflight" not in operator_actions
     assert "make print-fulfillment-readiness" not in operator_actions
     assert PRINT_READINESS_BACKEND_AUTO_ACTION in operator_actions
@@ -146,6 +149,9 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert "provide DEVELOPMENT_TEAM" not in operator_actions
     assert "make ios-device-launch-rehearsal" not in actions
     assert "make configured-live-evidence-bundle" in actions
+    assert configured_gate_action in operator_actions
+    assert "make configured-live-evidence-bundle" not in operator_actions
+    assert not any("PMF_ALLOW_LIVE_PROVIDER_CALLS" in action for action in operator_actions)
     assert report["commands"][:6] == [
         "make final-resource-requirements",
         "make final-resource-fill-guide",
@@ -835,6 +841,45 @@ def test_final_launch_closure_packet_dedupes_backend_auto_print_handoff() -> Non
 
     assert actions.count(PRINT_READINESS_BACKEND_AUTO_ACTION) == 1
     assert "make print-fulfillment-readiness" not in actions
+
+
+def test_final_launch_closure_packet_routes_live_provider_actions_through_configured_gate() -> None:
+    configured_gate_action = (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    )
+    actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "run_configured_3d_evaluation",
+                        "status": "blocked",
+                        "command": (
+                            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                            "make backend-evaluate-3d-configured"
+                        ),
+                        "requires_user_input": False,
+                        "requires_user_confirmation": True,
+                        "requires_cost_consent": True,
+                    },
+                    {
+                        "id": "run_configured_npc_evaluation",
+                        "status": "blocked",
+                        "command": (
+                            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                            "make backend-evaluate-npc-configured"
+                        ),
+                        "requires_user_input": False,
+                        "requires_user_confirmation": True,
+                        "requires_cost_consent": True,
+                    },
+                ]
+            }
+        ]
+    )
+
+    assert actions == [configured_gate_action]
+    assert not any("PMF_ALLOW_LIVE_PROVIDER_CALLS" in action for action in actions)
 
 
 def test_final_launch_closure_packet_drops_short_provider_handoff_chain() -> None:
