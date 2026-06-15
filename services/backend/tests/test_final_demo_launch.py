@@ -889,11 +889,6 @@ def test_configured_final_demo_launch_drops_provider_unblock_fallbacks(
     )
     assert not any(action.startswith("unblock ") for action in actions)
     assert "make final-resource-apply-preview" in actions
-    assert (
-        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
-        "make print-quote-request-configured; "
-        "rerun make print-fulfillment-readiness"
-    ) in actions
     assert not any(
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in action
         for action in actions
@@ -1705,7 +1700,7 @@ def test_final_demo_launch_promotes_final_showcase_handoff_actions(
     assert provider_fill_guide_action in actions
     assert provider_handoff_action not in actions
     assert print_handoff_action in actions
-    assert print_validation_only_action not in actions
+    assert print_validation_only_action in actions
     assert "refresh unrelated visual proof" not in actions
 
 

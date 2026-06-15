@@ -64,7 +64,7 @@ def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_
     assert "print-quote-configured" in " ".join(result.report["commands"])
 
 
-def test_print_fulfillment_readiness_blocks_missing_configured_quote_request(
+def test_print_fulfillment_readiness_points_to_local_demo_session_before_auto_request(
     tmp_path: Path,
 ) -> None:
     _write_local_print_readiness_fixture(tmp_path)
@@ -79,9 +79,10 @@ def test_print_fulfillment_readiness_blocks_missing_configured_quote_request(
     assert result.report["status"] == "blocked"
     assert rows["configured_treatstock_quote_request"]["status"] == "blocked"
     assert rows["configured_treatstock_quote_request"]["classification"] == (
-        "missing_configured_treatstock_quote_request"
+        "missing_local_demo_session_for_print_quote_request"
     )
     assert result.report["first_blocker"]["id"] == "configured_treatstock_quote_request"
+    assert result.report["first_blocker"]["command"] == "make final-demo-launch-local"
     assert result.report["next_action"] == {
         **result.report["first_blocker"],
         "source": "first_blocker",
@@ -89,8 +90,37 @@ def test_print_fulfillment_readiness_blocks_missing_configured_quote_request(
         "requires_cost_consent": False,
     }
     assert result.report["operator_actions"][0] == (
-        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
-        "make print-quote-request-configured; "
+        "make final-demo-launch-local; rerun make print-fulfillment-readiness"
+    )
+
+
+def test_print_fulfillment_readiness_points_to_backend_url_before_auto_request(
+    tmp_path: Path,
+) -> None:
+    _write_local_print_readiness_fixture(
+        tmp_path,
+        backend_base_url="http://127.0.0.1:8080",
+    )
+    _write_final_demo_launch_local_session(tmp_path, session_id="myth_showcase123")
+
+    result = build_print_fulfillment_readiness_report(
+        settings=Settings(print_provider="local"),
+        repo_root=tmp_path,
+    )
+    rows = result.report["checks_by_id"]
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "blocked"
+    assert rows["configured_treatstock_quote_request"]["status"] == "blocked"
+    assert rows["configured_treatstock_quote_request"]["classification"] == (
+        "missing_iphone_reachable_backend_url_for_print_quote_request"
+    )
+    assert result.report["first_blocker"]["id"] == "configured_treatstock_quote_request"
+    assert result.report["first_blocker"]["command"] == (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    )
+    assert result.report["operator_actions"][0] == (
+        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
         "rerun make print-fulfillment-readiness"
     )
 
@@ -195,11 +225,12 @@ def _write_local_print_readiness_fixture(
     repo_root: Path,
     *,
     print_provider: str = "local",
+    backend_base_url: str = "http://192.168.1.10:8080",
 ) -> None:
     _write_print_source_fixture(repo_root)
     _write_visual_regression_fixture(repo_root)
     _write_final_resources(repo_root, print_provider=print_provider)
-    _write_deploy_config(repo_root)
+    _write_deploy_config(repo_root, backend_base_url=backend_base_url)
 
 
 def _write_print_source_fixture(repo_root: Path) -> None:
@@ -278,14 +309,18 @@ def _write_final_resources(repo_root: Path, *, print_provider: str) -> None:
     )
 
 
-def _write_deploy_config(repo_root: Path) -> None:
+def _write_deploy_config(
+    repo_root: Path,
+    *,
+    backend_base_url: str = "http://192.168.1.10:8080",
+) -> None:
     _write_text(
         repo_root / "apps/mobile/ios/Config/Deployment.local.xcconfig",
         "\n".join(
             [
                 "DEVELOPMENT_TEAM = TEAM12345",
                 "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge",
-                "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080",
+                f"PMF_BACKEND_BASE_URL = {backend_base_url}",
             ]
         ),
     )

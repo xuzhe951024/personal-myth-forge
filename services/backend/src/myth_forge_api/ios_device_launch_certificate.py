@@ -40,6 +40,7 @@ CERTIFICATE_PRINT_ACTION_MARKERS = (
     "print quote",
     "print-quote",
     "print_quote",
+    "print-fulfillment-readiness",
     "/v1/print-quotes",
 )
 CERTIFICATE_IOS_HANDOFF_ACTION_MARKERS = (

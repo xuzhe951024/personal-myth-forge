@@ -74,6 +74,14 @@ CONFIGURED_PRINT_QUOTE_REQUEST_ACTION = (
     "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
     f"{CONFIGURED_PRINT_QUOTE_REQUEST_MAKE_TARGET}"
 )
+CONFIGURED_PRINT_QUOTE_REQUEST_PREREQUISITE_ACTION_ROOTS = (
+    "make final-demo-launch-local",
+    BACKEND_BASE_URL_ACTION,
+)
+CONFIGURED_PRINT_QUOTE_REQUEST_PREREQUISITE_ACTIONS = tuple(
+    f"{action}; rerun {PRINT_FULFILLMENT_READINESS_COMMAND}"
+    for action in CONFIGURED_PRINT_QUOTE_REQUEST_PREREQUISITE_ACTION_ROOTS
+)
 CONFIGURED_PRINT_QUOTE_REQUEST_VALIDATED_ACTION = (
     f"{CONFIGURED_PRINT_QUOTE_REQUEST_ACTION}; rerun "
     f"{PRINT_FULFILLMENT_READINESS_COMMAND}"
@@ -339,13 +347,21 @@ def prefer_guarded_print_quote_handoff_actions(actions: list[str]) -> list[str]:
     preferred_request_action = _preferred_configured_print_quote_request_action(
         [normalized for _original, normalized in candidate_actions]
     )
+    if preferred_request_action is None:
+        preferred_request_action = (
+            _preferred_configured_print_quote_request_prerequisite_action(
+                [normalized for _original, normalized in candidate_actions]
+            )
+        )
     if preferred_request_action is not None:
         result: list[str] = []
         emitted_request_action = False
         for original, normalized in candidate_actions:
             if _is_configured_print_quote_action(normalized):
                 continue
-            if _is_configured_print_quote_request_action(normalized):
+            if _is_configured_print_quote_request_action(
+                normalized
+            ) or _is_configured_print_quote_request_prerequisite_action(normalized):
                 if not emitted_request_action:
                     result.append(preferred_request_action)
                     emitted_request_action = True
@@ -405,6 +421,20 @@ def _preferred_configured_print_quote_request_action(actions: list[str]) -> str 
         if not _is_configured_print_quote_request_action(action):
             continue
         if _is_bare_configured_print_quote_request_action(action):
+            return action
+        if first_prefixed_action is None:
+            first_prefixed_action = action
+    return first_prefixed_action
+
+
+def _preferred_configured_print_quote_request_prerequisite_action(
+    actions: list[str],
+) -> str | None:
+    first_prefixed_action: str | None = None
+    for action in actions:
+        if not _is_configured_print_quote_request_prerequisite_action(action):
+            continue
+        if _is_bare_configured_print_quote_request_prerequisite_action(action):
             return action
         if first_prefixed_action is None:
             first_prefixed_action = action
@@ -472,9 +502,25 @@ def _is_configured_print_quote_request_action(action: str) -> bool:
     )
 
 
+def _is_configured_print_quote_request_prerequisite_action(action: str) -> bool:
+    command_root = _action_command_root(action)
+    return (
+        command_root in CONFIGURED_PRINT_QUOTE_REQUEST_PREREQUISITE_ACTIONS
+        or any(
+            command_root.endswith(f": {request_action}")
+            for request_action in CONFIGURED_PRINT_QUOTE_REQUEST_PREREQUISITE_ACTIONS
+        )
+    )
+
+
 def _is_bare_configured_print_quote_request_action(action: str) -> bool:
     command_root = _action_command_root(action).split("; rerun ", 1)[0].strip()
     return command_root == CONFIGURED_PRINT_QUOTE_REQUEST_ACTION
+
+
+def _is_bare_configured_print_quote_request_prerequisite_action(action: str) -> bool:
+    command_root = _action_command_root(action)
+    return command_root in CONFIGURED_PRINT_QUOTE_REQUEST_PREREQUISITE_ACTIONS
 
 
 def _is_configured_print_quote_action(action: str) -> bool:

@@ -505,6 +505,30 @@ def test_print_quote_preference_uses_request_preflight_before_provider_call() ->
     ]
 
 
+def test_print_quote_preference_uses_request_prerequisite_before_provider_call() -> None:
+    request_prerequisite = (
+        "make final-demo-launch-local; rerun make print-fulfillment-readiness"
+    )
+    guarded_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = operator_actions.prefer_guarded_print_quote_handoff_actions(
+        [
+            "make provider-handoff; rerun make live-provider-evidence",
+            guarded_action,
+            "final_demo_launch_local: " + guarded_action,
+            request_prerequisite,
+        ]
+    )
+
+    assert actions == [
+        "make provider-handoff; rerun make live-provider-evidence",
+        request_prerequisite,
+    ]
+
+
 def test_print_quote_preference_prefers_auto_request_over_legacy_placeholder() -> None:
     auto_request_action = (
         "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "

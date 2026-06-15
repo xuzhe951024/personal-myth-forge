@@ -919,10 +919,9 @@ def test_final_showcase_readiness_blocks_missing_configured_print_quote_request(
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert row["status"] == "blocked"
-    assert row["classification"] == "missing_configured_treatstock_quote_request"
+    assert row["classification"] == "missing_local_demo_session_for_print_quote_request"
     assert row["command"] == (
-        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
-        "make print-quote-request-configured; "
+        "make final-demo-launch-local; "
         "rerun make print-fulfillment-readiness"
     )
     assert row["validation_command"] == "make print-fulfillment-readiness"

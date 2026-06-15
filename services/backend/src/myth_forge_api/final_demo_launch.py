@@ -116,6 +116,7 @@ FINAL_SHOWCASE_PRINT_HANDOFF_ACTION_MARKERS = (
     "treatstock",
     "print-quote",
     "print_quote",
+    "print-fulfillment-readiness",
     "/v1/print-quotes",
 )
 FINAL_LOCAL_REPORT_REFRESH_PATH = Path(

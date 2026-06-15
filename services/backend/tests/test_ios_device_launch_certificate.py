@@ -408,9 +408,7 @@ def test_ios_device_launch_certificate_prioritizes_backend_demo_after_deploy_han
         "rerun make print-fulfillment-readiness"
     )
     request_action = (
-        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
-        "make print-quote-request-configured; "
-        "rerun make print-fulfillment-readiness"
+        "make final-demo-launch-local; rerun make print-fulfillment-readiness"
     )
 
     class StubFinalHandoffResult:
@@ -441,8 +439,8 @@ def test_ios_device_launch_certificate_prioritizes_backend_demo_after_deploy_han
     actions = result.report["operator_actions"]
     assert actions[:3] == [deploy_action, backend_action, backend_url_action]
     assert actions.index(backend_action) < actions.index(provider_action)
-    assert print_action not in actions
-    assert actions.index(backend_action) < actions.index(request_action)
+    assert print_action in actions
+    assert request_action not in actions
 
 
 def test_ios_device_launch_certificate_prioritizes_deploy_handoff_before_backend_url_child_action() -> None:
@@ -502,6 +500,7 @@ def test_ios_device_launch_certificate_promotes_print_request_before_provider_qu
             "operator_actions": [
                 deploy_action,
                 "make provider-handoff; rerun make live-provider-evidence",
+                "make final-demo-launch-local; rerun make print-fulfillment-readiness",
                 (
                     "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
                 ),
@@ -522,9 +521,7 @@ def test_ios_device_launch_certificate_promotes_print_request_before_provider_qu
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; rerun make print-fulfillment-readiness"
     )
     request_action = (
-        "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
-        "make print-quote-request-configured; "
-        "rerun make print-fulfillment-readiness"
+        "make final-demo-launch-local; rerun make print-fulfillment-readiness"
     )
 
     assert result.report["first_blocker"]["command"] == deploy_action

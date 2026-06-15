@@ -1483,6 +1483,34 @@ def test_cli_print_quote_request_configured_auto_requires_local_handoff_evidence
     assert not output_file.exists()
 
 
+def test_cli_print_quote_request_configured_auto_rejects_loopback_backend_url(
+    tmp_path,
+    capsys,
+) -> None:
+    output_file = tmp_path / "print-quote-request-configured.json"
+    _write_final_demo_launch_local_session(tmp_path, session_id="myth_auto123")
+    _write_ios_deploy_config(tmp_path, backend_base_url="http://127.0.0.1:8080")
+
+    exit_code = main(
+        [
+            "print-quote-request-configured",
+            "--source-asset-uri",
+            "auto",
+            "--print-candidate-uri",
+            "auto",
+            "--repo-root",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "iPhone-reachable PMF_BACKEND_BASE_URL" in captured.err
+    assert not output_file.exists()
+
+
 def test_cli_print_quote_request_configured_rejects_non_http_candidate(
     tmp_path,
     capsys,

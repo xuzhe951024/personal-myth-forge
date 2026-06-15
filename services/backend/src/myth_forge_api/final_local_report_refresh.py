@@ -112,6 +112,7 @@ FINAL_LOCAL_REPORT_PRINT_HANDOFF_ACTION_MARKERS = (
     "print quote",
     "print-quote",
     "print_quote",
+    "print-fulfillment-readiness",
     "/v1/print-quotes",
 )
 FINAL_LOCAL_REPORT_LAN_BACKEND_URL_MARKER = "iphone-reachable lan url"

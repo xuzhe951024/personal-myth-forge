@@ -26,6 +26,8 @@ CONFIGURED_PRINT_QUOTE_REQUEST_PATH = Path(
 )
 FINAL_DEMO_LAUNCH_LOCAL_PATH = Path("services/backend/.local/final-demo-launch-local.json")
 IOS_DEPLOY_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.local.xcconfig")
+FINAL_DEMO_LAUNCH_LOCAL_COMMAND = "make final-demo-launch-local"
+IPHONE_BACKEND_URL_ACTION = "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
 PRINT_RECEIPT_ARTIFACT_ID = "p0.101_print_fulfillment_receipt"
 PRINT_SOURCE_FEATURE_ID = "mobile_print_fulfillment_receipt"
 
@@ -339,10 +341,20 @@ def _read_configured_treatstock_quote_request(
             "detail": "Configured Treatstock quote evidence is present.",
         }
     if not path.exists():
+        handoff_state = _local_print_request_handoff_state(repo_root)
+        if handoff_state["status"] != "ready":
+            return base | {
+                "status": "blocked",
+                "classification": handoff_state["classification"],
+                "detail": handoff_state["detail"],
+            }
         return base | {
             "status": "blocked",
             "classification": "missing_configured_treatstock_quote_request",
-            "detail": "Configured Treatstock quote request file is missing.",
+            "detail": (
+                "Configured Treatstock quote request file is missing; local served "
+                "asset URLs are ready for the request writer."
+            ),
         }
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -619,13 +631,19 @@ def _commands() -> list[str]:
 
 
 def _configured_quote_request_command(*, repo_root: Path | None = None) -> str:
-    handoff = _local_print_request_handoff(repo_root) if repo_root is not None else None
-    if handoff is not None:
+    handoff = (
+        _local_print_request_handoff_state(repo_root)
+        if repo_root is not None
+        else {"status": "unknown"}
+    )
+    if handoff["status"] == "ready":
         return (
             f"PRINT_SOURCE_ASSET_URI={handoff['source_asset_uri']} "
             f"PRINT_CANDIDATE_URI={handoff['print_candidate_uri']} "
             "make print-quote-request-configured"
         )
+    if handoff["status"] == "blocked":
+        return str(handoff["command"])
     return (
         "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
         "make print-quote-request-configured"
@@ -633,12 +651,42 @@ def _configured_quote_request_command(*, repo_root: Path | None = None) -> str:
 
 
 def _local_print_request_handoff(repo_root: Path) -> dict[str, str] | None:
+    handoff = _local_print_request_handoff_state(repo_root)
+    if handoff["status"] != "ready":
+        return None
+    return {
+        "source_asset_uri": str(handoff["source_asset_uri"]),
+        "print_candidate_uri": str(handoff["print_candidate_uri"]),
+    }
+
+
+def _local_print_request_handoff_state(repo_root: Path) -> dict[str, Any]:
     session_id = _local_showcase_session_id(repo_root)
     backend_base_url = _deploy_backend_base_url(repo_root)
-    if not session_id or not _is_http_url(backend_base_url):
-        return None
+    if not session_id:
+        return {
+            "status": "blocked",
+            "classification": "missing_local_demo_session_for_print_quote_request",
+            "command": FINAL_DEMO_LAUNCH_LOCAL_COMMAND,
+            "detail": (
+                "Auto print quote request needs local final demo launch session evidence."
+            ),
+        }
+    if not _is_iphone_reachable_http_url(backend_base_url):
+        return {
+            "status": "blocked",
+            "classification": (
+                "missing_iphone_reachable_backend_url_for_print_quote_request"
+            ),
+            "command": IPHONE_BACKEND_URL_ACTION,
+            "detail": (
+                "Auto print quote request needs an iPhone-reachable "
+                "PMF_BACKEND_BASE_URL in Deployment.local.xcconfig."
+            ),
+        }
     base_url = backend_base_url.rstrip("/")
     return {
+        "status": "ready",
         "source_asset_uri": f"{base_url}/v1/generated-assets/{session_id}/game.glb",
         "print_candidate_uri": f"{base_url}/v1/print-candidates/{session_id}/print.3mf",
     }
@@ -681,8 +729,13 @@ def _read_json_object(path: Path) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
-def _is_http_url(value: str) -> bool:
-    return value.startswith("http://") or value.startswith("https://")
+def _is_iphone_reachable_http_url(value: str) -> bool:
+    lowered = value.lower()
+    return (
+        (lowered.startswith("http://") or lowered.startswith("https://"))
+        and "://127.0.0.1" not in lowered
+        and "://localhost" not in lowered
+    )
 
 
 def _configured_quote_command() -> str:

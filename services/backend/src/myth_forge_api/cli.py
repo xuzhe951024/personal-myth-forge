@@ -983,7 +983,7 @@ def _resolve_print_quote_request_uris(
 def _local_print_request_handoff(repo_root: Path) -> tuple[str, str] | None:
     session_id = _local_showcase_session_id(repo_root)
     backend_base_url = _deploy_backend_base_url(repo_root)
-    if not session_id or not _is_http_uri(backend_base_url):
+    if not session_id or not _is_iphone_reachable_http_uri(backend_base_url):
         return None
 
     base_url = backend_base_url.rstrip("/")
@@ -1081,6 +1081,15 @@ def _configured_print_quote_request(
 def _is_http_uri(value: str) -> bool:
     lowered = value.lower()
     return lowered.startswith("http://") or lowered.startswith("https://")
+
+
+def _is_iphone_reachable_http_uri(value: str) -> bool:
+    lowered = value.lower()
+    return (
+        _is_http_uri(value)
+        and "://127.0.0.1" not in lowered
+        and "://localhost" not in lowered
+    )
 
 
 def _print_quote_configured(

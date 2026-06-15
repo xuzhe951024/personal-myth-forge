@@ -93,6 +93,7 @@ IOS_REHEARSAL_PRINT_HANDOFF_ACTION_MARKERS = (
     "print quote",
     "print-quote",
     "print_quote",
+    "print-fulfillment-readiness",
     "/v1/print-quotes",
 )
 
