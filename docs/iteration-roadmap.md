@@ -157,6 +157,7 @@ Bridge deliverable:
 - P0.559 local final demo reports drop weak apply-preview action when provider handoff chain exists
 - P0.560 final showcase readiness strips detail suffixes from deploy writer operator actions
 - P0.561 final showcase readiness retains backend-auto print fulfillment prerequisite actions
+- P0.562 final local report refresh retains final showcase print readiness prerequisite actions
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

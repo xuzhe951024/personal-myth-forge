@@ -116,6 +116,7 @@ FINAL_LOCAL_REPORT_PRINT_HANDOFF_ACTION_MARKERS = (
     "print-fulfillment-readiness",
     "/v1/print-quotes",
 )
+FINAL_LOCAL_REPORT_PRINT_READINESS_VALIDATION = "make print-fulfillment-readiness"
 FINAL_LOCAL_REPORT_LAN_BACKEND_URL_MARKER = "iphone-reachable lan url"
 FINAL_LOCAL_REPORT_BACKEND_DEVICE_DEMO_MARKER = "backend-device-demo"
 BACKEND_DEVICE_DEMO_BARE_ACTION = "make backend-device-demo"
@@ -1025,7 +1026,10 @@ def _action_command(action: dict[str, Any] | None) -> str:
 
 
 def _selected_step_report_actions(step: dict[str, Any]) -> list[str]:
-    if step.get("id") != "final_demo_launch_local":
+    if step.get("id") not in {
+        "final_demo_launch_local",
+        "final_showcase_readiness",
+    }:
         return []
     raw_actions = step.get("report_operator_actions")
     if not isinstance(raw_actions, list):
@@ -1079,24 +1083,32 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
             for value in values
         ]
     )
-    validation_by_root: dict[str, str] = {}
+    validation_by_root: dict[tuple[str, str], str] = {}
     for value in deduped:
-        if "; rerun " not in value:
+        validation_key = _validation_action_key(value)
+        if validation_key is None:
             continue
-        root = value.split("; rerun ", 1)[0].strip()
-        existing = validation_by_root.get(root)
-        validation_by_root[root] = _preferred_validation_action(
+        existing = validation_by_root.get(validation_key)
+        validation_by_root[validation_key] = _preferred_validation_action(
             existing,
             value,
         )
     validation_deduped: list[str] = []
-    emitted_roots: set[str] = set()
+    emitted_roots: set[tuple[str, str]] = set()
+    validation_command_roots = {root for root, _validation_root in validation_by_root}
     for value in deduped:
-        root = value.split("; rerun ", 1)[0].strip()
-        replacement = validation_by_root.get(root, value)
-        if root in emitted_roots:
+        validation_key = _validation_action_key(value)
+        if validation_key is None:
+            root = _action_command_root_without_validation(value)
+            if root in validation_command_roots:
+                continue
+            validation_key = (root, "")
+            replacement = value
+        else:
+            replacement = validation_by_root.get(validation_key, value)
+        if validation_key in emitted_roots:
             continue
-        emitted_roots.add(root)
+        emitted_roots.add(validation_key)
         validation_deduped.append(replacement)
     validation_deduped = _prefer_complete_provider_handoff_chain(validation_deduped)
     validation_deduped = _prefer_validated_backend_device_demo_action(
@@ -1113,6 +1125,23 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     return _prefer_apply_preview_before_apply(
         _dedupe_operator_action_roots(validation_deduped)
     )
+
+
+def _validation_action_key(action: str) -> tuple[str, str] | None:
+    command = _operator_action_root(action)
+    root, separator, validation_root = command.partition("; rerun ")
+    if not separator:
+        return None
+    validation_key = (
+        validation_root.strip()
+        if validation_root.strip() == FINAL_LOCAL_REPORT_PRINT_READINESS_VALIDATION
+        else ""
+    )
+    return root.strip(), validation_key
+
+
+def _action_command_root_without_validation(action: str) -> str:
+    return _operator_action_root(action).split("; rerun ", 1)[0].strip()
 
 
 def _drop_bare_rehearsal_when_specific_actions_exist(actions: list[str]) -> list[str]:

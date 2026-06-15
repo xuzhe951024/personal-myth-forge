@@ -662,6 +662,46 @@ def test_final_local_report_refresh_operator_actions_prioritize_backend_url_afte
     assert actions.index(backend_url_action) < actions.index(print_action)
 
 
+def test_final_local_report_refresh_promotes_showcase_print_readiness_action() -> None:
+    deploy_writer = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    print_prerequisite = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
+        "rerun make print-fulfillment-readiness"
+    )
+    provider_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "mobile_deploy_preflight_evidence",
+                "status": "blocked",
+                "command": deploy_writer,
+            },
+            {
+                "id": "provider_handoff",
+                "status": "blocked",
+                "command": provider_action,
+            },
+            {
+                "id": "final_showcase_readiness",
+                "status": "blocked",
+                "command": deploy_writer,
+                "report_operator_actions": [print_prerequisite],
+            },
+        ]
+    )
+
+    assert print_prerequisite in actions
+    assert actions.count(print_prerequisite) == 1
+    assert actions.index(print_prerequisite) > actions.index(provider_action)
+
+
 def test_final_local_report_refresh_operator_actions_promote_final_demo_handoff_actions() -> None:
     live_child_action = (
         "make final-resource-apply-preview; rerun make live-provider-evidence"
