@@ -145,6 +145,7 @@ Bridge deliverable:
 - P0.127 iOS deploy runbook gate that inserts `make final-resource-apply-preview` before `make final-apply-resources`
 - P0.128 final external action ledger separating missing secrets, safe local writes, live provider cost actions, global Mac/Xcode actions, and device runtime actions
 - P0.129 iPhone Final Launch `External Actions` group for the final external action ledger payload
+- P0.550 print fulfillment backend URL handoff uses the ignored iOS deploy config auto writer
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

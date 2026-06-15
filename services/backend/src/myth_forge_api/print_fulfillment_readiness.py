@@ -14,6 +14,7 @@ from myth_forge_api.final_resources_preflight import (
     build_final_resources_preflight_report,
 )
 from myth_forge_api.ios_showcase_acceptance import run_ios_showcase_acceptance
+from myth_forge_api.operator_actions import MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION
 from myth_forge_api.print_acceptance import run_print_quote_acceptance
 from myth_forge_api.resource_handoff import build_resource_handoff_report
 from myth_forge_api.visual_regression_readiness import (
@@ -27,7 +28,7 @@ CONFIGURED_PRINT_QUOTE_REQUEST_PATH = Path(
 FINAL_DEMO_LAUNCH_LOCAL_PATH = Path("services/backend/.local/final-demo-launch-local.json")
 IOS_DEPLOY_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.local.xcconfig")
 FINAL_DEMO_LAUNCH_LOCAL_COMMAND = "make final-demo-launch-local"
-IPHONE_BACKEND_URL_ACTION = "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+IPHONE_BACKEND_URL_ACTION = MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION
 PRINT_RECEIPT_ARTIFACT_ID = "p0.101_print_fulfillment_receipt"
 PRINT_SOURCE_FEATURE_ID = "mobile_print_fulfillment_receipt"
 

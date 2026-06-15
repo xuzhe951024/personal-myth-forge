@@ -116,12 +116,14 @@ def test_print_fulfillment_readiness_points_to_backend_url_before_auto_request(
         "missing_iphone_reachable_backend_url_for_print_quote_request"
     )
     assert result.report["first_blocker"]["id"] == "configured_treatstock_quote_request"
-    assert result.report["first_blocker"]["command"] == (
-        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL"
+    expected_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto"
     )
+    assert result.report["first_blocker"]["command"] == expected_command
+    assert result.report["next_action"]["command"] == expected_command
     assert result.report["operator_actions"][0] == (
-        "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
-        "rerun make print-fulfillment-readiness"
+        f"{expected_command}; rerun make print-fulfillment-readiness"
     )
 
 
