@@ -209,6 +209,55 @@ def test_external_action_ledger_preserves_bare_rehearsal_without_specific_device
     assert actions == ["make ios-device-launch-rehearsal"]
 
 
+def test_external_action_ledger_routes_live_provider_operator_actions_through_configured_gate() -> None:
+    configured_gate_action = (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    )
+    actions = final_external_action_ledger._operator_actions(
+        [
+            {
+                "id": "live_provider_costs",
+                "label": "Live provider costs",
+                "actions": [
+                    {
+                        "id": "run_configured_3d_evaluation",
+                        "label": "Run configured 3D evaluation",
+                        "group_id": "live_provider_costs",
+                        "status": "live",
+                        "command": "make backend-evaluate-3d-configured",
+                        "detail": "Calls Meshy and may spend Meshy credits.",
+                        "operator_action": (
+                            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                            "make backend-evaluate-3d-configured"
+                        ),
+                        "requires_cost_consent": True,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": True,
+                    },
+                    {
+                        "id": "run_configured_npc_evaluation",
+                        "label": "Run configured NPC evaluation",
+                        "group_id": "live_provider_costs",
+                        "status": "live",
+                        "command": "make backend-evaluate-npc-configured",
+                        "detail": "Calls OpenAI and may spend API credits.",
+                        "operator_action": (
+                            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                            "make backend-evaluate-npc-configured"
+                        ),
+                        "requires_cost_consent": True,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": True,
+                    },
+                ],
+            }
+        ]
+    )
+
+    assert actions == [configured_gate_action]
+    assert not any("PMF_ALLOW_LIVE_PROVIDER_CALLS" in action for action in actions)
+
+
 def test_external_action_ledger_ios_deploy_actions_use_mobile_preflight(
     tmp_path: Path,
 ) -> None:

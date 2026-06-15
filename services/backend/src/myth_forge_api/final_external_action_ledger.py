@@ -65,6 +65,10 @@ LIVE_PROVIDER_CONSENT_COMMANDS = {
     "make backend-evaluate-npc-configured",
     CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
 }
+CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION = "make configured-live-evidence-bundle"
+CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION = (
+    f"make final-configured-preflight; rerun {CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION}"
+)
 BACKEND_DEVICE_DEMO_VALIDATED_ACTION = (
     "start backend-device-demo before device checks: "
     "make backend-device-demo; rerun make mobile-deploy-preflight"
@@ -450,6 +454,22 @@ def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
         if action == COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION
         or action not in WEAK_PROVIDER_HANDOFF_OPERATOR_ACTIONS
     ]
+
+
+def _prefer_configured_evidence_gate_for_live_provider_actions(
+    actions: list[str],
+) -> list[str]:
+    result: list[str] = []
+    emitted: set[str] = set()
+    for action in actions:
+        replacement = action
+        if LIVE_PROVIDER_CONSENT_ENV_PREFIX in action:
+            replacement = CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION
+        if replacement in emitted:
+            continue
+        emitted.add(replacement)
+        result.append(replacement)
+    return result
 
 
 def _live_action(
@@ -1044,8 +1064,11 @@ def _operator_actions(
     mobile_pruned_actions = _drop_bare_mobile_deploy_preflight_when_validated(
         _prefer_xcode_evidence_action(prioritized_actions)
     )
-    return _drop_bare_ios_rehearsal_when_specific_device_actions_exist(
+    device_pruned_actions = _drop_bare_ios_rehearsal_when_specific_device_actions_exist(
         mobile_pruned_actions
+    )
+    return _prefer_configured_evidence_gate_for_live_provider_actions(
+        device_pruned_actions
     )
 
 
