@@ -1545,18 +1545,20 @@ def _device_action_bundle_with_saved_next_action(
     first_operator_action = str(operator_actions[0]).strip()
     if not first_operator_action:
         return bundle
+    operator_command, operator_detail = _split_detail_suffix(first_operator_action)
     command = str(first_action.get("command", "")).strip()
-    if first_operator_action == command:
+    if operator_command == command and not operator_detail:
         return bundle
+    saved_detail = _saved_next_action_detail(operator_detail) or str(
+        first_action.get("evidence_detail") or first_action.get("detail") or "",
+    ).strip()
 
     saved_next_action = {
         "id": str(first_action.get("id", "device_action")),
         "label": str(first_action.get("label", "Device action")),
         "status": str(first_action.get("status", "blocked")),
-        "command": first_operator_action,
-        "detail": str(
-            first_action.get("evidence_detail") or first_action.get("detail") or "",
-        ).strip(),
+        "command": operator_command,
+        "detail": saved_detail,
         "source": "operator_actions",
     }
     validation_command = str(first_action.get("validation_command", "")).strip()
@@ -1580,6 +1582,10 @@ def _device_action_bundle_with_saved_next_action(
                 action["saved_next_action"] = saved_next_action
                 break
     return bundle
+
+
+def _saved_next_action_detail(operator_detail: str) -> str:
+    return operator_detail.removeprefix(" | ").strip()
 
 
 def _device_action(

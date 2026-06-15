@@ -685,6 +685,49 @@ def test_final_showcase_readiness_device_bundle_first_action_exposes_saved_next_
     }
 
 
+def test_final_showcase_readiness_saved_next_action_splits_operator_detail_suffix() -> None:
+    operator_command = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+    )
+    operator_detail = (
+        "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+    bundle = {
+        "first_action": {
+            "id": "run_mobile_deploy_preflight",
+            "label": "Run mobile deploy preflight",
+            "status": "blocked",
+            "command": operator_command,
+            "detail": "Verify the iPhone can reach the backend and read launch config.",
+            "evidence_detail": "fallback detail",
+            "validation_command": "make mobile-deploy-preflight",
+        },
+        "actions": [
+            {
+                "id": "run_mobile_deploy_preflight",
+                "label": "Run mobile deploy preflight",
+                "status": "blocked",
+                "command": operator_command,
+                "detail": "Verify the iPhone can reach the backend and read launch config.",
+                "evidence_detail": "fallback detail",
+                "validation_command": "make mobile-deploy-preflight",
+            }
+        ],
+    }
+
+    result = final_showcase_readiness._device_action_bundle_with_saved_next_action(
+        bundle,
+        [f"{operator_command} | {operator_detail}"],
+    )
+
+    saved_next_action = result["first_action"]["saved_next_action"]
+    assert saved_next_action["command"] == operator_command
+    assert saved_next_action["detail"] == operator_detail
+    assert saved_next_action["validation_command"] == "make mobile-deploy-preflight"
+    assert result["actions"][0]["saved_next_action"] == saved_next_action
+
+
 def test_final_showcase_readiness_maps_missing_mobile_xcode_build_evidence(
     tmp_path: Path,
 ) -> None:

@@ -459,6 +459,7 @@ Bridge deliverable:
 - P0.545 iOS deploy auto writer actions show backend URL auto mode
 - P0.546 Print fulfillment readiness reads final demo smoke session evidence
 - P0.547 Mobile preflight device bundle actions include validation rerun
+- P0.548 Final showcase saved device actions keep executable commands
 
 ## P1: Mobile Vertical Slice
 
