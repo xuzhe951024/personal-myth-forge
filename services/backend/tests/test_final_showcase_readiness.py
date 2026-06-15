@@ -1778,7 +1778,23 @@ def test_final_showcase_readiness_dedupes_duplicate_deploy_writer_roots() -> Non
         [bare_writer, detailed_writer]
     )
 
-    assert actions == [detailed_writer]
+    assert actions == [bare_writer]
+
+
+def test_final_showcase_readiness_strips_detail_suffix_from_deploy_writer_action() -> None:
+    bare_writer = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make mobile-deploy-preflight"
+    )
+    detailed_writer = (
+        f"{bare_writer} | Missing DEVELOPMENT_TEAM; "
+        "PMF_BACKEND_BASE_URL must be iPhone-reachable"
+    )
+
+    actions = final_showcase_readiness._dedupe_operator_actions([detailed_writer])
+
+    assert actions == [bare_writer]
 
 
 def test_final_showcase_readiness_normalizes_xcode_gate_actions() -> None:

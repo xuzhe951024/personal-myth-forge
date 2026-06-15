@@ -2162,12 +2162,14 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
         seen_exact.add(normalized)
         deduped.append(normalized)
     deduped = _prefer_validation_aware_operator_actions(deduped)
-    return _prefer_apply_preview_before_apply(
-        prefer_project_local_ios_deploy_handoff_actions(
-            prefer_provider_fill_guide_handoff_actions(
-                prefer_guarded_print_quote_handoff_actions(
-                    _prefer_bare_ios_deploy_writer_action(
-                        _prefer_complete_provider_handoff_chain(deduped)
+    return _strip_mobile_deploy_writer_detail_suffixes(
+        _prefer_apply_preview_before_apply(
+            prefer_project_local_ios_deploy_handoff_actions(
+                prefer_provider_fill_guide_handoff_actions(
+                    prefer_guarded_print_quote_handoff_actions(
+                        _prefer_bare_ios_deploy_writer_action(
+                            _prefer_complete_provider_handoff_chain(deduped)
+                        )
                     )
                 )
             )
@@ -2245,6 +2247,19 @@ def _prefer_bare_ios_deploy_writer_action(actions: list[str]) -> list[str]:
         seen.add(selected)
         preferred.append(selected)
     return preferred
+
+
+def _strip_mobile_deploy_writer_detail_suffixes(actions: list[str]) -> list[str]:
+    stripped: list[str] = []
+    for action in actions:
+        command, detail_suffix = _split_detail_suffix(action)
+        if detail_suffix and _is_mobile_deploy_writer_action_root(
+            _operator_action_bare_root(command)
+        ):
+            stripped.append(command)
+            continue
+        stripped.append(action)
+    return stripped
 
 
 def _prefer_apply_preview_before_apply(actions: list[str]) -> list[str]:
