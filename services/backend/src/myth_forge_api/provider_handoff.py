@@ -18,6 +18,10 @@ FINAL_RESOURCE_FILL_GUIDE_COMMAND = "make final-resource-fill-guide"
 FINAL_RESOURCE_FILL_GUIDE_PREVIEW_COMMAND = (
     "make final-resource-fill-guide; rerun make final-resource-apply-preview"
 )
+FINAL_RESOURCE_PROVIDER_HANDOFF_COMMAND = (
+    "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+    "rerun make provider-handoff"
+)
 FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 PROVIDER_HANDOFF_COMMAND = "make provider-handoff"
@@ -153,7 +157,7 @@ def _provider_blocker(provider: dict[str, Any]) -> dict[str, Any]:
 
 def _provider_command(kind: str) -> str:
     if kind in {"three_d", "npc"}:
-        return FINAL_RESOURCE_APPLY_PREVIEW_COMMAND
+        return FINAL_RESOURCE_PROVIDER_HANDOFF_COMMAND
     return PROVIDER_HANDOFF_COMMAND
 
 

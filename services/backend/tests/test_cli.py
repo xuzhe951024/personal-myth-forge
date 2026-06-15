@@ -400,13 +400,18 @@ def test_cli_provider_handoff_writes_local_report(tmp_path, monkeypatch) -> None
     assert any("provider-readiness" in command for command in report["next_commands"])
     assert all("/tmp/" not in command for command in report["next_commands"])
     assert report["first_blocker"]["id"] == "three_d_provider"
-    assert report["first_blocker"]["command"] == "make final-resource-apply-preview"
+    expected_command = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff"
+    )
+    assert report["first_blocker"]["command"] == expected_command
     assert report["first_blocker"]["resources_file"] == (
         "services/backend/.local/final-resources.env"
     )
     assert report["first_blocker"]["apply_command"] == "make final-apply-resources"
     assert report["first_blocker"]["handoff_command"] == "make provider-handoff"
     assert report["next_action"]["source"] == "first_blocker"
+    assert report["next_action"]["command"] == expected_command
     assert report["operator_actions"] == [
         "make final-resource-fill-guide; rerun make final-resource-apply-preview",
         (

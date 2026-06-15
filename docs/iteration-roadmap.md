@@ -460,6 +460,7 @@ Bridge deliverable:
 - P0.546 Print fulfillment readiness reads final demo smoke session evidence
 - P0.547 Mobile preflight device bundle actions include validation rerun
 - P0.548 Final showcase saved device actions keep executable commands
+- P0.549 Provider handoff blockers start with resource chain
 
 ## P1: Mobile Vertical Slice
 

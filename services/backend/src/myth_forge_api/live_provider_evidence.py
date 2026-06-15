@@ -364,6 +364,8 @@ def _operator_action_for_blocker(
     )
     action = command
     for validation in validations:
+        if action == validation or f"; rerun {validation}" in action:
+            continue
         action += f"; rerun {validation}"
     return action
 

@@ -8,7 +8,11 @@ def test_provider_handoff_blocks_default_local_core_provider_with_next_action() 
     assert report["status"] == "blocked"
     assert report["first_blocker"]["id"] == "three_d_provider"
     assert report["first_blocker"]["classification"] == "local_stub"
-    assert report["first_blocker"]["command"] == "make final-resource-apply-preview"
+    expected_command = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff"
+    )
+    assert report["first_blocker"]["command"] == expected_command
     assert report["first_blocker"]["resources_file"] == (
         "services/backend/.local/final-resources.env"
     )
@@ -23,6 +27,7 @@ def test_provider_handoff_blocks_default_local_core_provider_with_next_action() 
         **report["first_blocker"],
         "source": "first_blocker",
     }
+    assert report["next_action"]["command"] == expected_command
     assert report["operator_actions"][0] == (
         "make final-resource-fill-guide; rerun make final-resource-apply-preview"
     )

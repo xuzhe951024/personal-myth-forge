@@ -118,6 +118,10 @@ def test_live_provider_evidence_blocks_saved_non_real_provider_handoff(
 def test_live_provider_evidence_projects_provider_handoff_child_next_action(
     tmp_path: Path,
 ) -> None:
+    provider_command = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff"
+    )
     _write_json(
         tmp_path / "services/backend/.local/provider-handoff.json",
         {
@@ -131,7 +135,7 @@ def test_live_provider_evidence_projects_provider_handoff_child_next_action(
                 "label": "3D provider",
                 "status": "blocked",
                 "classification": "local_stub",
-                "command": "make final-resource-apply-preview",
+                "command": provider_command,
                 "detail": "Core 3D provider is demo-ready but not configured.",
                 "validation_command": "make provider-handoff",
                 "source": "first_blocker",
@@ -144,13 +148,9 @@ def test_live_provider_evidence_projects_provider_handoff_child_next_action(
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["first_blocker"]["id"] == "provider_handoff"
-    assert result.report["first_blocker"]["command"] == (
-        "make final-resource-apply-preview"
-    )
+    assert result.report["first_blocker"]["command"] == provider_command
     assert result.report["first_blocker"]["source_blocker_id"] == "three_d_provider"
-    assert result.report["first_blocker"]["source_blocker_command"] == (
-        "make final-resource-apply-preview"
-    )
+    assert result.report["first_blocker"]["source_blocker_command"] == provider_command
     assert result.report["first_blocker"]["source_blocker_validation_command"] == (
         "make provider-handoff"
     )
@@ -158,9 +158,7 @@ def test_live_provider_evidence_projects_provider_handoff_child_next_action(
         "Core 3D provider is demo-ready but not configured."
     )
     assert result.report["next_action"]["id"] == "provider_handoff"
-    assert result.report["next_action"]["command"] == (
-        "make final-resource-apply-preview"
-    )
+    assert result.report["next_action"]["command"] == provider_command
     assert result.report["next_action"]["validation_command"] == (
         "make live-provider-evidence"
     )
@@ -169,6 +167,9 @@ def test_live_provider_evidence_projects_provider_handoff_child_next_action(
         "rerun make final-resource-apply-preview; "
         "rerun make provider-handoff; "
         "rerun make live-provider-evidence"
+    )
+    assert "rerun make provider-handoff; rerun make provider-handoff" not in (
+        result.report["operator_actions"][0]
     )
     assert "rerun provider handoff readiness" not in " ".join(
         result.report["operator_actions"]
