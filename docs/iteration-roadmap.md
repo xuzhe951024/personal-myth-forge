@@ -458,6 +458,7 @@ Bridge deliverable:
 - P0.544 Print quote auto handoff points to missing prerequisites
 - P0.545 iOS deploy auto writer actions show backend URL auto mode
 - P0.546 Print fulfillment readiness reads final demo smoke session evidence
+- P0.547 Mobile preflight device bundle actions include validation rerun
 
 ## P1: Mobile Vertical Slice
 

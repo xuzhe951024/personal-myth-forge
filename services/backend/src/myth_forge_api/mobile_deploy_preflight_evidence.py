@@ -380,7 +380,7 @@ def _device_action_command(
         raw_actions=raw_actions,
     )
     if raw_action is not None:
-        return _action_command(raw_action)
+        return _validation_aware_action(raw_action)
     return check.get("detail", "review make mobile-deploy-preflight output")
 
 
@@ -436,10 +436,6 @@ def _device_action_safety() -> dict[str, bool]:
 
 def _validation_aware_action(action: str) -> str:
     return add_mobile_deploy_validation_command(normalize_operator_action(action))
-
-
-def _action_command(action: str) -> str:
-    return normalize_operator_action(action).split("; rerun ", 1)[0].strip()
 
 
 def _safe_lines(text: str, *, repo_root: Path) -> list[str]:

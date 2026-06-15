@@ -176,14 +176,8 @@ def test_preflight_evidence_suggests_auto_writer_for_team_and_backend_url(
         action["id"]: action
         for action in result.report["device_action_bundle"]["actions"]
     }
-    assert bundle_actions["backend_base_url"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
-        "make mobile-write-deploy-config-auto"
-    )
-    assert bundle_actions["backend_base_url"]["next_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
-        "make mobile-write-deploy-config-auto"
-    )
+    assert bundle_actions["backend_base_url"]["command"] == expected_command
+    assert bundle_actions["backend_base_url"]["next_action"]["command"] == expected_command
 
 
 def test_preflight_evidence_next_action_promotes_validation_aware_writer_command(
