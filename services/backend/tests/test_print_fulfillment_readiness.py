@@ -46,16 +46,18 @@ def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_
     assert rows["print_resource_handoff"]["status"] == "ready"
     assert rows["configured_treatstock_quote"]["status"] == "partial"
     assert result.report["first_blocker"]["id"] == "configured_treatstock_quote"
+    expected_command = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
     assert result.report["next_action"] == {
         **result.report["first_blocker"],
+        "command": expected_command,
         "source": "first_blocker",
         "validation_command": "make print-fulfillment-readiness",
         "requires_cost_consent": True,
     }
-    assert result.report["operator_actions"][0] == (
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
-        "rerun make print-fulfillment-readiness"
-    )
+    assert result.report["operator_actions"][0] == expected_command
     assert "make print-fulfillment-readiness" not in result.report["operator_actions"]
     assert "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in (
         result.report["next_action"]["command"]
@@ -83,15 +85,15 @@ def test_print_fulfillment_readiness_points_to_local_demo_session_before_auto_re
     )
     assert result.report["first_blocker"]["id"] == "configured_treatstock_quote_request"
     assert result.report["first_blocker"]["command"] == "make final-demo-launch-local"
+    expected_command = "make final-demo-launch-local; rerun make print-fulfillment-readiness"
     assert result.report["next_action"] == {
         **result.report["first_blocker"],
+        "command": expected_command,
         "source": "first_blocker",
         "validation_command": "make print-fulfillment-readiness",
         "requires_cost_consent": False,
     }
-    assert result.report["operator_actions"][0] == (
-        "make final-demo-launch-local; rerun make print-fulfillment-readiness"
-    )
+    assert result.report["operator_actions"][0] == expected_command
 
 
 def test_print_fulfillment_readiness_points_to_backend_url_before_auto_request(
@@ -121,10 +123,11 @@ def test_print_fulfillment_readiness_points_to_backend_url_before_auto_request(
         "make mobile-write-deploy-config-auto"
     )
     assert result.report["first_blocker"]["command"] == expected_command
-    assert result.report["next_action"]["command"] == expected_command
-    assert result.report["operator_actions"][0] == (
+    expected_next_command = (
         f"{expected_command}; rerun make print-fulfillment-readiness"
     )
+    assert result.report["next_action"]["command"] == expected_next_command
+    assert result.report["operator_actions"][0] == expected_next_command
 
 
 def test_print_fulfillment_readiness_suggests_local_served_quote_request_uris(
@@ -139,17 +142,18 @@ def test_print_fulfillment_readiness_suggests_local_served_quote_request_uris(
     )
 
     assert result.report["first_blocker"]["id"] == "configured_treatstock_quote_request"
-    assert result.report["next_action"]["command"] == (
+    expected_command = (
         "PRINT_SOURCE_ASSET_URI=http://192.168.1.10:8080/v1/generated-assets/"
         "myth_showcase123/game.glb "
         "PRINT_CANDIDATE_URI=http://192.168.1.10:8080/v1/print-candidates/"
         "myth_showcase123/print.3mf "
         "make print-quote-request-configured"
     )
-    assert result.report["operator_actions"][0] == (
-        result.report["next_action"]["command"]
-        + "; rerun make print-fulfillment-readiness"
+    expected_next_command = (
+        f"{expected_command}; rerun make print-fulfillment-readiness"
     )
+    assert result.report["next_action"]["command"] == expected_next_command
+    assert result.report["operator_actions"][0] == expected_next_command
 
 
 def test_print_fulfillment_readiness_uses_top_level_final_demo_smoke_session(
@@ -178,12 +182,15 @@ def test_print_fulfillment_readiness_uses_top_level_final_demo_smoke_session(
     assert result.report["first_blocker"]["classification"] == (
         "missing_configured_treatstock_quote_request"
     )
-    assert result.report["next_action"]["command"] == (
+    expected_command = (
         "PRINT_SOURCE_ASSET_URI=http://192.168.1.10:8080/v1/generated-assets/"
         "myth_top_level123/game.glb "
         "PRINT_CANDIDATE_URI=http://192.168.1.10:8080/v1/print-candidates/"
         "myth_top_level123/print.3mf "
         "make print-quote-request-configured"
+    )
+    assert result.report["next_action"]["command"] == (
+        f"{expected_command}; rerun make print-fulfillment-readiness"
     )
 
 
@@ -247,8 +254,13 @@ def test_print_fulfillment_readiness_blocks_unsafe_or_unapproved_treatstock_quot
     assert result.report["status"] == "blocked"
     assert result.report["first_blocker"]["id"] == "configured_treatstock_quote"
     assert result.report["first_blocker"]["classification"] == "missing_user_approval_gate"
+    expected_command = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
     assert result.report["next_action"] == {
         **result.report["first_blocker"],
+        "command": expected_command,
         "source": "first_blocker",
         "validation_command": "make print-fulfillment-readiness",
         "requires_cost_consent": False,

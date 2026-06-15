@@ -29,6 +29,7 @@ FINAL_DEMO_LAUNCH_LOCAL_PATH = Path("services/backend/.local/final-demo-launch-l
 IOS_DEPLOY_CONFIG_PATH = Path("apps/mobile/ios/Config/Deployment.local.xcconfig")
 FINAL_DEMO_LAUNCH_LOCAL_COMMAND = "make final-demo-launch-local"
 IPHONE_BACKEND_URL_ACTION = MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION
+PRINT_FULFILLMENT_READINESS_COMMAND = "make print-fulfillment-readiness"
 PRINT_RECEIPT_ARTIFACT_ID = "p0.101_print_fulfillment_receipt"
 PRINT_SOURCE_FEATURE_ID = "mobile_print_fulfillment_receipt"
 
@@ -596,8 +597,9 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
         return None
     return {
         **first_blocker,
+        "command": _command_with_validation(str(first_blocker.get("command", ""))),
         "source": "first_blocker",
-        "validation_command": "make print-fulfillment-readiness",
+        "validation_command": PRINT_FULFILLMENT_READINESS_COMMAND,
         "requires_cost_consent": (
             first_blocker.get("id") == "configured_treatstock_quote"
             and first_blocker.get("classification")
@@ -607,20 +609,29 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def _operator_actions(checks: list[dict[str, Any]]) -> list[str]:
-    validation_command = "make print-fulfillment-readiness"
     actions = [
-        f"{check['command']}; rerun {validation_command}"
+        _command_with_validation(str(check["command"]))
         for check in checks
         if check.get("status") != "ready"
     ]
     if not actions:
-        actions.append(validation_command)
+        actions.append(PRINT_FULFILLMENT_READINESS_COMMAND)
     return _dedupe(actions)[:8]
+
+
+def _command_with_validation(command: str) -> str:
+    command = command.strip()
+    if not command:
+        return PRINT_FULFILLMENT_READINESS_COMMAND
+    validation_suffix = f"; rerun {PRINT_FULFILLMENT_READINESS_COMMAND}"
+    if command == PRINT_FULFILLMENT_READINESS_COMMAND or validation_suffix in command:
+        return command
+    return f"{command}{validation_suffix}"
 
 
 def _commands() -> list[str]:
     return [
-        "make print-fulfillment-readiness",
+        PRINT_FULFILLMENT_READINESS_COMMAND,
         (
             "cd services/backend && uv run python -m myth_forge_api.cli "
             "print-fulfillment-readiness --repo-root ../.. "
