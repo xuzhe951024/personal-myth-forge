@@ -20,6 +20,11 @@ PMF_BACKEND_BASE_URL=http://10.0.0.24:8080
 PMF_FINAL_LAUNCH_MODE=configured
 """
 
+PRINT_READINESS_BACKEND_AUTO_ACTION = (
+    "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+    "make mobile-write-deploy-config-auto; rerun make print-fulfillment-readiness"
+)
+
 
 def test_final_launch_closure_packet_blocks_missing_final_actions(
     tmp_path: Path,
@@ -95,7 +100,8 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     operator_actions = report["operator_actions"]
     actions = " ".join(operator_actions)
     assert "make final-resources-preflight" not in operator_actions
-    assert "make print-fulfillment-readiness" in operator_actions
+    assert "make print-fulfillment-readiness" not in operator_actions
+    assert PRINT_READINESS_BACKEND_AUTO_ACTION in operator_actions
     assert not any("print-quote-configured" in action for action in operator_actions)
     assert "make ios-device-launch-rehearsal" not in operator_actions
     assert "make final-resource-apply-preview" in operator_actions
@@ -766,7 +772,8 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
         complete_provider_chain
         in operator_actions
     )
-    assert "make print-fulfillment-readiness" in operator_actions
+    assert "make print-fulfillment-readiness" not in operator_actions
+    assert PRINT_READINESS_BACKEND_AUTO_ACTION in operator_actions
     assert not any("print-quote-configured" in action for action in operator_actions)
     assert (
         "approve live provider cost before make live-provider-evidence"
@@ -784,6 +791,20 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
         "approve live provider cost before make print-fulfillment-readiness"
         not in operator_actions
     )
+
+
+def test_final_launch_closure_packet_replaces_bare_print_readiness_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    result = build_final_launch_closure_packet_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+    assert "make print-fulfillment-readiness" not in actions
+    assert PRINT_READINESS_BACKEND_AUTO_ACTION in actions
 
 
 def test_final_launch_closure_packet_operator_actions_start_with_promoted_device_action(
@@ -844,7 +865,6 @@ def test_final_launch_closure_packet_prioritizes_backend_demo_after_device_hando
         "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
         "rerun make provider-handoff; rerun make live-provider-evidence"
     )
-    print_readiness_action = "make print-fulfillment-readiness"
     xcode_action = (
         "accept the Xcode license outside Codex, then rerun "
         "make mobile-xcode-build-evidence"
@@ -861,7 +881,9 @@ def test_final_launch_closure_packet_prioritizes_backend_demo_after_device_hando
         for action in actions
     )
     assert actions.index(backend_action) < actions.index(provider_action)
-    assert actions.index(backend_action) < actions.index(print_readiness_action)
+    assert actions.index(backend_action) < actions.index(
+        PRINT_READINESS_BACKEND_AUTO_ACTION
+    )
     assert actions.index(backend_action) < actions.index(xcode_action)
 
 

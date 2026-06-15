@@ -30,6 +30,7 @@ from myth_forge_api.operator_actions import (
     BACKEND_BASE_URL_VALIDATED_ACTION,
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
     FINAL_RESOURCES_PREFLIGHT_COMMAND,
+    MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION,
     MOBILE_DEPLOY_PREFLIGHT_COMMAND,
     PROVIDER_LIVE_HANDOFF_ACTION,
     XCODE_BUILD_GATE_ACTION,
@@ -69,6 +70,10 @@ CONFIGURED_PRINT_QUOTE_ACTION = (
     "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured"
 )
 PRINT_FULFILLMENT_READINESS_ACTION = "make print-fulfillment-readiness"
+PRINT_FULFILLMENT_BACKEND_AUTO_VALIDATED_ACTION = (
+    f"{MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION}; rerun "
+    f"{PRINT_FULFILLMENT_READINESS_ACTION}"
+)
 CONFIGURED_PRINT_QUOTE_VALIDATED_ACTION = (
     f"{CONFIGURED_PRINT_QUOTE_ACTION}; rerun {PRINT_FULFILLMENT_READINESS_ACTION}"
 )
@@ -832,8 +837,10 @@ def _operator_actions(
         specific_actions,
         first_blocker=first_blocker,
     )
-    return _prioritize_backend_device_demo_after_mobile_deploy_handoff(
-        promoted_specific_actions
+    return _prefer_print_fulfillment_backend_handoff(
+        _prioritize_backend_device_demo_after_mobile_deploy_handoff(
+            promoted_specific_actions
+        )
     )
 
 
@@ -862,6 +869,21 @@ def _prioritize_backend_device_demo_after_mobile_deploy_handoff(
         anchor_index -= 1
     reordered.insert(anchor_index + 1, backend_action)
     return _prioritize_backend_url_after_backend_device_demo(reordered)
+
+
+def _prefer_print_fulfillment_backend_handoff(actions: list[str]) -> list[str]:
+    if PRINT_FULFILLMENT_READINESS_ACTION not in actions:
+        return actions
+    result: list[str] = []
+    emitted = False
+    for action in actions:
+        if action == PRINT_FULFILLMENT_READINESS_ACTION:
+            if not emitted:
+                result.append(PRINT_FULFILLMENT_BACKEND_AUTO_VALIDATED_ACTION)
+                emitted = True
+            continue
+        result.append(action)
+    return result
 
 
 def _prioritize_backend_url_after_backend_device_demo(actions: list[str]) -> list[str]:
