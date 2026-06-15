@@ -317,8 +317,12 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     if first_blocker is None:
         return None
     slot = _slot_by_id(str(first_blocker["id"]))
+    action_command = normalize_operator_action(
+        _operator_action_for_blocker(first_blocker, slot=slot)
+    )
     return {
         **first_blocker,
+        "command": action_command,
         "requires_live_provider_consent": slot.requires_live_provider_consent,
         "validation_command": "make live-provider-evidence",
         "source": "first_blocker",

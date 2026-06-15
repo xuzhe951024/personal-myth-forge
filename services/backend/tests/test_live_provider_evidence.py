@@ -23,15 +23,10 @@ def test_live_provider_evidence_missing_reports_without_running_commands(
     }
     assert result.report["first_blocker"]["id"] == "provider_handoff"
     assert result.report["first_blocker"]["status"] == "missing"
-    assert result.report["next_action"] == {
-        **result.report["first_blocker"],
-        "requires_live_provider_consent": False,
-        "validation_command": "make live-provider-evidence",
-        "source": "first_blocker",
-    }
     evidence = {slot["id"]: slot for slot in result.report["evidence"]}
     assert evidence["provider_handoff"]["status"] == "missing"
     assert evidence["provider_handoff"]["command"] == "make provider-handoff"
+    expected_next_command = "make provider-handoff; rerun make live-provider-evidence"
     assert evidence["three_d_evaluation_configured"]["status"] == "missing"
     assert evidence["three_d_evaluation_configured"]["command"] == (
         "make backend-evaluate-3d-configured"
@@ -51,8 +46,15 @@ def test_live_provider_evidence_missing_reports_without_running_commands(
         for command in result.report["commands"]
     )
     assert result.report["operator_actions"] == [
-        "make provider-handoff; rerun make live-provider-evidence",
+        expected_next_command,
     ]
+    assert result.report["next_action"] == {
+        **result.report["first_blocker"],
+        "command": expected_next_command,
+        "requires_live_provider_consent": False,
+        "validation_command": "make live-provider-evidence",
+        "source": "first_blocker",
+    }
     assert not any(
         action.startswith("run make ")
         or action.startswith("rerun provider handoff readiness")
@@ -158,16 +160,17 @@ def test_live_provider_evidence_projects_provider_handoff_child_next_action(
         "Core 3D provider is demo-ready but not configured."
     )
     assert result.report["next_action"]["id"] == "provider_handoff"
-    assert result.report["next_action"]["command"] == provider_command
-    assert result.report["next_action"]["validation_command"] == (
-        "make live-provider-evidence"
-    )
-    assert result.report["operator_actions"][0] == (
+    expected_action = (
         "make final-resource-fill-guide; "
         "rerun make final-resource-apply-preview; "
         "rerun make provider-handoff; "
         "rerun make live-provider-evidence"
     )
+    assert result.report["next_action"]["command"] == expected_action
+    assert result.report["next_action"]["validation_command"] == (
+        "make live-provider-evidence"
+    )
+    assert result.report["operator_actions"][0] == expected_action
     assert "rerun make provider-handoff; rerun make provider-handoff" not in (
         result.report["operator_actions"][0]
     )
@@ -247,16 +250,13 @@ def test_live_provider_evidence_operator_action_prefixes_live_consent(
 
     assert result.exit_code == 2
     assert result.report["first_blocker"]["id"] == "three_d_evaluation_configured"
-    assert result.report["next_action"]["command"] == (
-        "make backend-evaluate-3d-configured"
+    expected_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make live-provider-evidence"
     )
+    assert result.report["next_action"]["command"] == expected_action
     assert result.report["next_action"]["requires_live_provider_consent"] is True
-    assert result.report["operator_actions"] == [
-        (
-            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
-            "rerun make live-provider-evidence"
-        )
-    ]
+    assert result.report["operator_actions"] == [expected_action]
 
 
 def test_live_provider_evidence_blocks_unreadable_json(tmp_path: Path) -> None:
