@@ -55,6 +55,7 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
 )
 from myth_forge_api.operator_actions import (
     BACKEND_DEVICE_DEMO_VALIDATED_ACTION,
+    PROVIDER_LIVE_HANDOFF_ACTION,
     XCODE_BUILD_GATE_ACTION,
     add_final_resource_validation_command,
     normalize_operator_action,
@@ -99,6 +100,7 @@ FINAL_RESOURCES_PREFLIGHT_COMMAND = "make final-resources-preflight"
 FINAL_RESOURCE_APPLY_PREVIEW_COMMAND = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_COMMAND = "make final-apply-resources"
 FINAL_RESOURCE_INIT_ACTION = "run make final-resource-init"
+FINAL_DEMO_PROVIDER_CHAIN_ACTION = PROVIDER_LIVE_HANDOFF_ACTION
 FINAL_DEMO_TARGETED_UNBLOCK_ACTION_ROOTS = {
     "unblock apply_final_resources: make final-resource-apply-preview",
     "unblock mobile_deploy_preflight: make mobile-deploy-preflight",
@@ -1236,10 +1238,11 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     filtered = _drop_bare_resource_requirements_when_specific_handoff_exists(
         filtered
     )
-    return _preserve_requested_apply_preview_action(
+    preserved = _preserve_requested_apply_preview_action(
         filtered,
         original_values=values,
     )
+    return _drop_bare_apply_preview_when_provider_chain_exists(preserved)
 
 
 def _drop_targeted_unblock_fallbacks(actions: list[str]) -> list[str]:
@@ -1266,6 +1269,18 @@ def _drop_bare_resource_requirements_when_specific_handoff_exists(
         action
         for action in actions
         if _command_root(action) != FINAL_RESOURCE_REQUIREMENTS_COMMAND
+    ]
+
+
+def _drop_bare_apply_preview_when_provider_chain_exists(
+    actions: list[str],
+) -> list[str]:
+    if FINAL_DEMO_PROVIDER_CHAIN_ACTION not in actions:
+        return actions
+    return [
+        action
+        for action in actions
+        if _operator_action_command(action) != FINAL_RESOURCE_APPLY_PREVIEW_COMMAND
     ]
 
 

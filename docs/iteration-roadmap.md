@@ -154,6 +154,7 @@ Bridge deliverable:
 - P0.556 final launch closure packet dedupes backend-auto print readiness actions
 - P0.557 final launch closure packet routes live provider actions through configured consent gate
 - P0.558 final external action ledger routes live provider actions through configured consent gate
+- P0.559 local final demo reports drop weak apply-preview action when provider handoff chain exists
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

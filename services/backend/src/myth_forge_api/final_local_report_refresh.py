@@ -98,6 +98,7 @@ FINAL_LOCAL_REPORT_PROVIDER_HANDOFF_ACTION_MARKERS = (
 )
 FINAL_LOCAL_REPORT_PROVIDER_CHAIN_ACTION = PROVIDER_LIVE_HANDOFF_ACTION
 FINAL_LOCAL_REPORT_WEAK_PROVIDER_ACTION_ROOTS = {
+    FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
     (
         "make final-resource-apply-preview; rerun make provider-handoff; "
         "rerun make live-provider-evidence"

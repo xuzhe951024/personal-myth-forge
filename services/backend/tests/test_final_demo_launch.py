@@ -167,7 +167,11 @@ def test_final_demo_launch_exposes_top_level_phase_first_blocker(
     assert action["source_id"] == "apply_final_resources"
     assert "one-file backend and iOS final demo handoff" in action["detail"]
     assert "provide MESHY_API_KEY in final-resources.env" in action["detail"]
-    assert "make final-resource-apply-preview" in result.report["operator_actions"]
+    operator_actions = result.report["operator_actions"]
+    assert any(
+        "make final-resource-apply-preview" in action for action in operator_actions
+    )
+    assert "make final-resource-apply-preview" not in operator_actions
     assert "make final-apply-resources" not in result.report["operator_actions"]
     assert "make final-apply-resources" in result.report["commands"]
     report_text = json.dumps(result.report)
@@ -832,7 +836,10 @@ def test_local_final_demo_launch_operator_actions_do_not_skip_apply_preview(
     )
     operator_actions = result.report["operator_actions"]
 
-    assert "make final-resource-apply-preview" in operator_actions
+    assert any(
+        "make final-resource-apply-preview" in action for action in operator_actions
+    )
+    assert "make final-resource-apply-preview" not in operator_actions
     assert "make final-apply-resources" in result.report["commands"]
     assert not any(
         _operator_action_command_root(action) == "make final-apply-resources"
@@ -888,7 +895,8 @@ def test_configured_final_demo_launch_drops_provider_unblock_fallbacks(
         not in actions
     )
     assert not any(action.startswith("unblock ") for action in actions)
-    assert "make final-resource-apply-preview" in actions
+    assert any("make final-resource-apply-preview" in action for action in actions)
+    assert "make final-resource-apply-preview" not in actions
     assert not any(
         "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in action
         for action in actions
@@ -1016,6 +1024,20 @@ def test_final_demo_launch_dedupe_drops_targeted_unblock_fallbacks() -> None:
             "rerun make mobile-deploy-preflight"
         ),
     ]
+
+
+def test_final_demo_launch_dedupe_drops_bare_apply_preview_when_provider_chain_exists() -> None:
+    complete_provider_chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+
+    actions = final_demo_launch._dedupe_operator_actions(
+        [complete_provider_chain, "make final-resource-apply-preview"]
+    )
+
+    assert complete_provider_chain in actions
+    assert "make final-resource-apply-preview" not in actions
 
 
 def test_final_demo_launch_actions_drop_old_team_when_resource_team_handoff_exists() -> None:

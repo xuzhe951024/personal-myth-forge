@@ -822,6 +822,19 @@ def test_final_local_report_refresh_operator_actions_prefer_complete_provider_ch
     assert actions == [complete_provider_chain, print_action]
 
 
+def test_final_local_report_refresh_operator_actions_drop_bare_apply_preview_when_provider_chain_exists() -> None:
+    complete_provider_chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+
+    actions = final_local_report_refresh._dedupe_operator_actions(
+        [complete_provider_chain, "make final-resource-apply-preview"]
+    )
+
+    assert actions == [complete_provider_chain]
+
+
 def test_final_local_report_refresh_operator_actions_drop_bare_action_roots() -> None:
     actions = final_local_report_refresh._operator_actions(
         [
