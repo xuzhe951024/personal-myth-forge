@@ -879,14 +879,15 @@ def _prefer_print_fulfillment_backend_handoff(actions: list[str]) -> list[str]:
     if PRINT_FULFILLMENT_READINESS_ACTION not in actions:
         return actions
     result: list[str] = []
-    emitted = False
+    emitted: set[str] = set()
     for action in actions:
+        replacement = action
         if action == PRINT_FULFILLMENT_READINESS_ACTION:
-            if not emitted:
-                result.append(PRINT_FULFILLMENT_BACKEND_AUTO_VALIDATED_ACTION)
-                emitted = True
+            replacement = PRINT_FULFILLMENT_BACKEND_AUTO_VALIDATED_ACTION
+        if replacement in emitted:
             continue
-        result.append(action)
+        emitted.add(replacement)
+        result.append(replacement)
     return result
 
 

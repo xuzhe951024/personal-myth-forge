@@ -807,6 +807,36 @@ def test_final_launch_closure_packet_replaces_bare_print_readiness_action(
     assert PRINT_READINESS_BACKEND_AUTO_ACTION in actions
 
 
+def test_final_launch_closure_packet_dedupes_backend_auto_print_handoff() -> None:
+    actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "print_fulfillment_backend_auto",
+                        "status": "blocked",
+                        "command": PRINT_READINESS_BACKEND_AUTO_ACTION,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": False,
+                    },
+                    {
+                        "id": "print_fulfillment_readiness",
+                        "status": "blocked",
+                        "command": "make print-fulfillment-readiness",
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": False,
+                    },
+                ]
+            }
+        ]
+    )
+
+    assert actions.count(PRINT_READINESS_BACKEND_AUTO_ACTION) == 1
+    assert "make print-fulfillment-readiness" not in actions
+
+
 def test_final_launch_closure_packet_drops_short_provider_handoff_chain() -> None:
     complete_provider_chain = (
         "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
