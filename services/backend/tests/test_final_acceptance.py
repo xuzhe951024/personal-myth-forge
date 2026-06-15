@@ -376,7 +376,7 @@ def test_final_acceptance_classifies_mobile_backend_health_blocker(tmp_path) -> 
 
 
 def test_final_acceptance_uses_saved_mobile_preflight_next_action(tmp_path) -> None:
-    writer_action = "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    writer_action = "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     _write_mobile_deploy_preflight_evidence(
         tmp_path,
         next_action={

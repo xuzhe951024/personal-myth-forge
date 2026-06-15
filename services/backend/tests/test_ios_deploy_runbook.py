@@ -83,7 +83,7 @@ def test_ios_deploy_runbook_includes_device_action_bundle_for_missing_config(
     assert bundle["status"] == "blocked"
     assert bundle["first_action"]["id"] == "write_development_team"
     expected_command = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     assert bundle["first_action"]["command"] == expected_command

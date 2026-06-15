@@ -624,7 +624,10 @@ def _device_action_bundle(
             "write_development_team",
             "Write Apple Team ID",
             slots["development_team"],
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+            (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+                "make mobile-write-deploy-config-auto"
+            ),
             "Provide the Apple Team ID in ignored Deployment.local.xcconfig.",
         ),
         _device_slot_action(

@@ -309,7 +309,7 @@ def test_final_acceptance_readiness_prefers_saved_mobile_next_action_for_backend
     tmp_path: Path,
 ) -> None:
     writer_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     )
     _write_final_acceptance_report(
         tmp_path,

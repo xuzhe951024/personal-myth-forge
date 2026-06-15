@@ -383,23 +383,23 @@ def test_ios_device_launch_rehearsal_uses_mobile_preflight_check_details(
 
     expected_detail = (
         "final_rehearsal_local: mobile_deploy_preflight_evidence: "
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     expected_source_action = (
-        "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight | "
         "Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     expected_top_level_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
     expected_next_action_command = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
 
@@ -497,7 +497,7 @@ def test_ios_device_launch_rehearsal_promotes_operator_action_to_first_blocker_c
     result = build_ios_device_launch_rehearsal_report(repo_root=repo_root)
 
     expected_command = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
 
@@ -1052,10 +1052,7 @@ def test_ios_device_launch_rehearsal_readiness_blocks_stale_saved_report_against
     assert result.report["freshness"]["classification"] == "stale_report"
     assert result.report["blockers"][0]["id"] == "ios_device_launch_rehearsal_freshness"
     assert result.report["blockers"][0]["classification"] == "stale_report"
-    assert result.report["operator_actions"][0] == (
-        "rerun make ios-device-launch-rehearsal to regenerate "
-        "services/backend/.local/ios-device-launch-rehearsal.json for the current product sources"
-    )
+    assert result.report["operator_actions"][0] == "make ios-device-launch-rehearsal"
 
 
 def test_ios_device_launch_rehearsal_readiness_preserves_saved_sequence_actions_when_stale(
@@ -1070,7 +1067,7 @@ def test_ios_device_launch_rehearsal_readiness_preserves_saved_sequence_actions_
     payload["sequence"][0]["status"] = "blocked"
     payload["sequence"][0]["operator_actions"] = [
         (
-            "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight | "
             "Missing DEVELOPMENT_TEAM; "
             "PMF_BACKEND_BASE_URL must be iPhone-reachable"
@@ -1086,14 +1083,10 @@ def test_ios_device_launch_rehearsal_readiness_preserves_saved_sequence_actions_
     assert result.exit_code == 2
     assert result.report["status"] == "blocked"
     assert result.report["freshness"]["status"] == "stale"
-    assert result.report["next_action"]["command"] == (
-        "rerun make ios-device-launch-rehearsal to regenerate "
-        "services/backend/.local/ios-device-launch-rehearsal.json for the current "
-        "product sources"
-    )
+    assert result.report["next_action"]["command"] == "make ios-device-launch-rehearsal"
     assert sequence_row["operator_actions"] == [
         (
-            "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight | "
             "Missing DEVELOPMENT_TEAM; "
             "PMF_BACKEND_BASE_URL must be iPhone-reachable"
@@ -1105,7 +1098,7 @@ def test_ios_device_launch_rehearsal_readiness_preserves_saved_sequence_actions_
         "label": "Final handoff index",
         "status": "blocked",
         "command": (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         ),
         "detail": (
@@ -1191,12 +1184,12 @@ def test_ios_device_launch_rehearsal_readiness_exposes_first_blocker_and_next_ac
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     payload["sequence"][0]["status"] = "blocked"
     payload["sequence"][0]["detail"] = (
-        "final_handoff_index: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "final_handoff_index: DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto"
     )
     payload["operator_actions"] = [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight "
             "| Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
         )
@@ -1213,7 +1206,7 @@ def test_ios_device_launch_rehearsal_readiness_exposes_first_blocker_and_next_ac
     assert blocker["command"] == "make final-handoff-index"
     assert "DEVELOPMENT_TEAM=YOUR_TEAM_ID" in blocker["detail"]
     assert result.report["operator_actions"][0] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight "
         "| Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )
@@ -1221,7 +1214,7 @@ def test_ios_device_launch_rehearsal_readiness_exposes_first_blocker_and_next_ac
         **blocker,
         "source": "first_blocker",
         "command": (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
         ),
     }
@@ -1253,7 +1246,7 @@ def test_ios_device_launch_rehearsal_readiness_exposes_device_action_bundle(
     ]
     payload["operator_actions"] = [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
         )
     ]
@@ -1269,7 +1262,7 @@ def test_ios_device_launch_rehearsal_readiness_exposes_device_action_bundle(
     assert bundle["summary"]["blocked"] == 1
     assert bundle["first_action"]["id"] == "final_rehearsal_local"
     assert bundle["first_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
     )
     assert bundle["first_action"]["validation_command"] == (
@@ -1542,7 +1535,7 @@ def test_ios_device_launch_rehearsal_prefers_writer_over_old_team_action(
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     payload["operator_actions"] = [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         ),
@@ -1558,7 +1551,7 @@ def test_ios_device_launch_rehearsal_prefers_writer_over_old_team_action(
 
     assert actions == [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         )
@@ -1573,7 +1566,7 @@ def test_ios_device_launch_rehearsal_prefers_writer_over_generic_ios_config_acti
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     payload["operator_actions"] = [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         ),
@@ -1589,7 +1582,7 @@ def test_ios_device_launch_rehearsal_prefers_writer_over_generic_ios_config_acti
 
     assert actions == [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         )
@@ -1606,7 +1599,7 @@ def test_ios_device_launch_rehearsal_full_actions_prefer_writer_over_generic_ios
                 "command": "make final-rehearsal-local",
                 "operator_actions": [
                     (
-                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                         "make mobile-write-deploy-config-auto; "
                         "rerun make mobile-deploy-preflight"
                     ),
@@ -1621,7 +1614,7 @@ def test_ios_device_launch_rehearsal_full_actions_prefer_writer_over_generic_ios
 
     assert actions == [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         )
@@ -1638,7 +1631,7 @@ def test_ios_device_launch_rehearsal_full_actions_prioritize_provider_and_print_
                 "command": "make final-rehearsal-local",
                 "operator_actions": [
                     (
-                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                         "make mobile-write-deploy-config-auto; "
                         "rerun make mobile-deploy-preflight"
                     ),
@@ -1680,7 +1673,7 @@ def test_ios_device_launch_rehearsal_full_actions_prioritize_provider_and_print_
     )
 
     assert actions[0] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
@@ -1695,7 +1688,7 @@ def test_ios_device_launch_rehearsal_full_actions_prioritize_provider_and_print_
 
 def test_ios_device_launch_rehearsal_prioritizes_backend_demo_after_deploy_handoff() -> None:
     deploy_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
@@ -1757,7 +1750,7 @@ def test_ios_device_launch_rehearsal_local_actions_include_partial_final_demo_ha
                 ),
                 "operator_actions": [
                     (
-                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                         "make mobile-write-deploy-config-auto; "
                         "rerun make mobile-deploy-preflight"
                     )
@@ -1768,7 +1761,7 @@ def test_ios_device_launch_rehearsal_local_actions_include_partial_final_demo_ha
                 "status": "partial",
                 "operator_actions": [
                     (
-                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                         "make mobile-write-deploy-config-auto; "
                         "rerun make mobile-deploy-preflight"
                     ),
@@ -1792,7 +1785,7 @@ def test_ios_device_launch_rehearsal_local_actions_include_partial_final_demo_ha
 
     assert actions == [
         (
-            "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "mobile_deploy_preflight_evidence: DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; rerun "
             "make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
             "PMF_BACKEND_BASE_URL must be iPhone-reachable"
@@ -1819,7 +1812,7 @@ def test_ios_device_launch_rehearsal_dedupes_duplicate_deploy_writer_roots(
     repo_root = tmp_path / "repo"
     report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
     bare_writer = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
@@ -1838,7 +1831,7 @@ def test_ios_device_launch_rehearsal_dedupes_duplicate_deploy_writer_roots(
 
 def test_ios_device_launch_rehearsal_full_actions_dedupes_deploy_writer_roots() -> None:
     bare_writer = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
@@ -1874,7 +1867,7 @@ def test_ios_device_launch_rehearsal_sequence_prefers_writer_over_generic_deploy
         {"kind": "final_configured_preflight_report", "status": "ready"},
     )
     writer = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )

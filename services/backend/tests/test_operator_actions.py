@@ -37,20 +37,23 @@ def test_adds_mobile_deploy_validation_to_known_ios_config_actions() -> None:
 
 def test_adds_mobile_deploy_validation_to_writer_command() -> None:
     assert operator_actions.add_mobile_deploy_validation_command(
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     ) == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
 
 
 def test_add_mobile_deploy_validation_command_dedupes_repeated_mobile_preflight() -> None:
     action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight; rerun make mobile-deploy-preflight"
     )
     expected = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
 
@@ -59,10 +62,11 @@ def test_add_mobile_deploy_validation_command_dedupes_repeated_mobile_preflight(
 
 def test_normalizes_run_prefixed_mobile_deploy_writer_command() -> None:
     assert normalize_operator_action(
-        "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "run DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     ) == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
 
@@ -71,7 +75,7 @@ def test_prefers_project_local_ios_deploy_handoff_over_manual_team_action() -> N
     actions = operator_actions.prefer_project_local_ios_deploy_handoff_actions(
         [
             (
-                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                 "make mobile-write-deploy-config-auto; "
                 "rerun make mobile-deploy-preflight"
             ),
@@ -88,7 +92,7 @@ def test_prefers_project_local_ios_deploy_handoff_over_manual_team_action() -> N
 
     assert actions == [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         ),
@@ -137,12 +141,16 @@ def test_prefers_writer_over_generic_ios_deploy_config_action() -> None:
     actions = operator_actions.prefer_project_local_ios_deploy_handoff_actions(
         [
             (
-                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                 "make mobile-write-deploy-config-auto; "
                 "rerun make mobile-deploy-preflight"
             ),
             (
                 "provide iOS deploy config in Deployment.local.xcconfig; "
+                "rerun make mobile-deploy-preflight"
+            ),
+            (
+                "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
                 "rerun make mobile-deploy-preflight"
             ),
             (
@@ -154,7 +162,7 @@ def test_prefers_writer_over_generic_ios_deploy_config_action() -> None:
 
     assert actions == [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
             "make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         ),
@@ -162,6 +170,26 @@ def test_prefers_writer_over_generic_ios_deploy_config_action() -> None:
             "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
             "rerun make mobile-deploy-preflight"
         ),
+    ]
+
+
+def test_normalizes_legacy_auto_writer_to_explicit_backend_auto() -> None:
+    actions = operator_actions.prefer_project_local_ios_deploy_handoff_actions(
+        [
+            (
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                "make mobile-write-deploy-config-auto; "
+                "rerun make mobile-deploy-preflight"
+            )
+        ]
+    )
+
+    assert actions == [
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+            "make mobile-write-deploy-config-auto; "
+            "rerun make mobile-deploy-preflight"
+        )
     ]
 
 
@@ -204,7 +232,7 @@ def test_prefers_iphone_reachable_backend_url_collapses_duplicate_backend_action
 
 def test_prefers_detail_writer_over_duplicate_bare_writer_action() -> None:
     bare_writer = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
@@ -652,7 +680,7 @@ def test_normalizes_mobile_deploy_after_backend_action_to_device_handoff() -> No
 
 def test_normalizes_mobile_preflight_evidence_details_to_deploy_handoff() -> None:
     writer_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     backend_url_action = (
@@ -687,7 +715,7 @@ def test_mobile_preflight_evidence_detail_normalization_is_idempotent() -> None:
 
     assert normalize_operator_action(action) == (
         "final_rehearsal_local: mobile_deploy_preflight_evidence: "
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )

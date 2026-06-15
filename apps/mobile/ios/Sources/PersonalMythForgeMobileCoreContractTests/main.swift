@@ -3547,7 +3547,7 @@ private func testDevicePreflightShowsIOSLaunchRehearsalSavedNextAction() throws 
       "id": "final_rehearsal_local",
       "label": "Local final rehearsal",
       "status": "blocked",
-      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
       "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
       "source": "saved_sequence_operator_actions",
       "validation_command": "make ios-device-launch-rehearsal"
@@ -3567,7 +3567,7 @@ private func testDevicePreflightShowsIOSLaunchRehearsalSavedNextAction() throws 
     try expectEqual(summary.item(id: "ios_device_launch_rehearsal_readiness")?.status, .blocked)
     try expectContains(
         detail,
-        "Saved next: DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+        "Saved next: DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
     )
     try expectContains(
         detail,
@@ -5129,7 +5129,7 @@ private func testDecodesFinalLocalReportRefreshFromFinalLaunchPayload() throws {
     try expectEqual(refresh.sourceFile.exists, true)
     try expectEqual(
         refresh.showcaseNextAction?.command,
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     )
     try expectEqual(
         refresh.deviceActionBundle?.firstAction.validationCommand,
@@ -5143,7 +5143,7 @@ private func testFinalLaunchMobileSummaryShowsFinalLocalReportRefresh() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(
             finalLocalRefreshShowcaseCommand: (
-                "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto "
+                "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto "
                     + "sk-openai-test /Users/zhexu/private file:///tmp/private "
                     + "local-capture://cap"
             )
@@ -5351,7 +5351,7 @@ private func testFinalLaunchMobileSummaryShowsFinalAcceptanceBlockerNextAction()
     )
     try expectEqual(
         blocker.nextAction?.command,
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     )
     try expectEqual(
         blocker.nextAction?.validationCommand,
@@ -5361,7 +5361,7 @@ private func testFinalLaunchMobileSummaryShowsFinalAcceptanceBlockerNextAction()
     let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
     try expectContains(
         summary.acceptanceRows[0],
-        "next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "next DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     )
     try expectContains(summary.acceptanceRows[0], "rerun make mobile-deploy-preflight")
 }
@@ -5928,7 +5928,7 @@ private func testDecodesFinalShowcaseReadinessFromFinalLaunchPayload() throws {
             bundle.actions[0].nextAction,
             "missing first device child next action"
         ).command,
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     )
     try expectEqual(bundle.actions[1].command, "make mobile-deploy-preflight")
     try expectEqual(try require(bundle.actions[1].evidenceStatus, "missing evidence status"), "blocked")
@@ -6064,7 +6064,7 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceSavedNextAction
                     "id": "run_mobile_deploy_preflight",
                     "label": "Run mobile deploy preflight",
                     "status": "blocked",
-                    "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+                    "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
                     "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
                     "source": "operator_actions",
                     "validation_command": "make mobile-deploy-preflight"
@@ -6079,7 +6079,7 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceSavedNextAction
     )
     let text = summary.showcaseReadinessRows.joined(separator: " ")
 
-    try expectContains(text, "saved next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto")
+    try expectContains(text, "saved next DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto")
     try expectContains(text, "rerun make mobile-deploy-preflight")
     try expectContains(
         text,
@@ -6093,7 +6093,7 @@ private func testFinalLaunchMobileSummaryShowsFinalDemoDeviceSavedNextAction() t
       "id": "run_mobile_deploy_preflight",
       "label": "Run mobile deploy preflight",
       "status": "blocked",
-      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
       "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
       "source": "operator_actions",
       "validation_command": "make mobile-deploy-preflight"
@@ -6108,14 +6108,14 @@ private func testFinalLaunchMobileSummaryShowsFinalDemoDeviceSavedNextAction() t
     )
     try expectEqual(
         action.savedNextAction?.command,
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
     )
 
     let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
     let text = summary.launchReceiptRows.joined(separator: " ")
 
     try expectContains(text, "Final demo device action:")
-    try expectContains(text, "saved next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto")
+    try expectContains(text, "saved next DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto")
     try expectContains(text, "rerun make mobile-deploy-preflight")
     try expectContains(
         text,
@@ -6182,7 +6182,7 @@ private func testFinalLaunchMobileSummaryShowsFinalShowcaseDeviceActionBundle() 
     try expectContains(text, "make mobile-deploy-preflight-evidence")
     try expectContains(
         text,
-        "next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "next DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     )
     try expectContains(text, "evidence blocked")
     try expectContains(text, "make mobile-xcode-build-evidence")
@@ -6540,7 +6540,7 @@ private func testDecodesIOSDeviceLaunchRehearsalSavedNextAction() throws {
       "id": "final_rehearsal_local",
       "label": "Local final rehearsal",
       "status": "blocked",
-      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
       "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
       "source": "saved_sequence_operator_actions",
       "validation_command": "make ios-device-launch-rehearsal"
@@ -6560,7 +6560,7 @@ private func testDecodesIOSDeviceLaunchRehearsalSavedNextAction() throws {
 
     try expectEqual(
         action.savedNextAction?.command,
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
     )
     try expectEqual(
         action.savedNextAction?.detail,
@@ -6662,7 +6662,7 @@ private func testFinalLaunchMobileSummaryShowsIOSDeviceLaunchRehearsalSavedNextA
       "id": "final_rehearsal_local",
       "label": "Local final rehearsal",
       "status": "blocked",
-      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
+      "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight",
       "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
       "source": "saved_sequence_operator_actions",
       "validation_command": "make ios-device-launch-rehearsal"
@@ -6677,7 +6677,7 @@ private func testFinalLaunchMobileSummaryShowsIOSDeviceLaunchRehearsalSavedNextA
     )
     let text = summary.launchRehearsalRows.joined(separator: " ")
 
-    try expectContains(text, "saved next DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto")
+    try expectContains(text, "saved next DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto")
     try expectContains(text, "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable")
 }
 
@@ -8279,7 +8279,7 @@ private func finalDemoLaunchPayload(
     closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
     closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready.",
     closurePacketSourceActionCommand: String = "provide MESHY_API_KEY in final-resources.env",
-    finalLocalRefreshShowcaseCommand: String = "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    finalLocalRefreshShowcaseCommand: String = "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
 ) -> Data {
     let liveEvidenceReady = liveProviderEvidenceStatus == "ready"
     let liveEvidenceBlocked = liveProviderEvidenceStatus == "blocked"
@@ -8578,7 +8578,7 @@ private func finalDemoLaunchPayload(
                 "label": "Run mobile deploy preflight",
                 "status": "blocked",
                 "classification": "manual_preflight_required",
-                "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto",
                 "detail": "Verify the iPhone can reach the backend.",
                 "source": "final_demo_launch",
                 "validation_command": "make mobile-deploy-preflight",
@@ -8595,7 +8595,7 @@ private func finalDemoLaunchPayload(
               "label": "Run mobile deploy preflight",
               "status": "blocked",
               "classification": "manual_preflight_required",
-              "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+              "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto",
               "detail": "Verify the iPhone can reach the backend.",
               "source": "final_demo_launch",
               "validation_command": "make mobile-deploy-preflight",
@@ -9896,7 +9896,7 @@ private func finalDemoLaunchPayload(
                 "label": "Run mobile deploy preflight",
                 "status": "blocked",
                 "classification": "manual_preflight_required",
-                "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto",
                 "detail": "Verify the iPhone can reach the backend.",
                 "source": "final_local_report_refresh",
                 "validation_command": "make mobile-deploy-preflight",
@@ -9982,7 +9982,7 @@ private func finalDemoLaunchPayload(
                   "id": "development_team",
                   "label": "Apple Team ID",
                   "status": "blocked",
-                  "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                  "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto",
                   "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
                   "source": "first_blocker",
                   "validation_command": "make mobile-deploy-preflight"
@@ -10447,7 +10447,7 @@ private func finalDemoLaunchPayload(
                   "id": "development_team",
                   "label": "Apple Team ID",
                   "status": "blocked",
-                  "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                  "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto",
                   "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
                   "source": "first_blocker"
                 },
@@ -10474,7 +10474,7 @@ private func finalDemoLaunchPayload(
                     "id": "development_team",
                     "label": "Apple Team ID",
                     "status": "blocked",
-                    "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                    "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto",
                     "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
                     "source": "first_blocker"
                   },
@@ -10500,7 +10500,7 @@ private func finalDemoLaunchPayload(
                     "id": "development_team",
                     "label": "Apple Team ID",
                     "status": "blocked",
-                    "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto",
+                    "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto",
                     "detail": "Missing DEVELOPMENT_TEAM; PMF_BACKEND_BASE_URL must be iPhone-reachable",
                     "source": "first_blocker"
                   },
@@ -14388,7 +14388,7 @@ private func finalDemoLaunchReport(
     closurePacketConfiguredBundleCommand: String = "make configured-live-evidence-bundle",
     closurePacketConfiguredBundleDetail: String = "Build configured live evidence bundle after resource and provider evidence are ready.",
     closurePacketSourceActionCommand: String = "provide MESHY_API_KEY in final-resources.env",
-    finalLocalRefreshShowcaseCommand: String = "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+    finalLocalRefreshShowcaseCommand: String = "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
 ) -> FinalDemoLaunchReport {
     try! PMFJSON.decoder.decode(
         FinalDemoLaunchReport.self,

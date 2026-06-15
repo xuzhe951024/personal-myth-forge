@@ -2215,20 +2215,25 @@ def _validation_aware_action_roots(action: str) -> tuple[str, str] | None:
 
 
 def _prefer_bare_ios_deploy_writer_action(actions: list[str]) -> list[str]:
-    bare_writer_by_root = {
-        _operator_action_bare_root(action): action
-        for action in actions
-        if _is_mobile_deploy_writer_action_root(_operator_action_bare_root(action))
-        and not _split_detail_suffix(action)[1]
-    }
-    if not bare_writer_by_root:
+    preferred_writer_by_root: dict[str, str] = {}
+    for action in actions:
+        root = _operator_action_bare_root(action)
+        if not _is_mobile_deploy_writer_action_root(root):
+            continue
+        existing = preferred_writer_by_root.get(root)
+        if existing is None:
+            preferred_writer_by_root[root] = action
+            continue
+        if _split_detail_suffix(action)[1] and not _split_detail_suffix(existing)[1]:
+            preferred_writer_by_root[root] = action
+    if not preferred_writer_by_root:
         return actions
 
     preferred: list[str] = []
     seen: set[str] = set()
     for action in actions:
         root = _operator_action_bare_root(action)
-        selected = bare_writer_by_root.get(root, action)
+        selected = preferred_writer_by_root.get(root, action)
         if selected in seen:
             continue
         seen.add(selected)
@@ -2306,6 +2311,11 @@ def _is_ios_deploy_config_action_root(action_root: str) -> bool:
 
 def _is_mobile_deploy_writer_action_root(action_root: str) -> bool:
     return action_root.startswith(
+        (
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+            "make mobile-write-deploy-config-auto"
+        )
+    ) or action_root.startswith(
         "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
     )
 

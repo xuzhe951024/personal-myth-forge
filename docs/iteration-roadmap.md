@@ -456,6 +456,7 @@ Bridge deliverable:
 - P0.542 Final provider key actions prefer fill-guide handoff
 - P0.543 iOS device launch rehearsal readiness prefers provider fill-guide handoff
 - P0.544 Print quote auto handoff points to missing prerequisites
+- P0.545 iOS deploy auto writer actions show backend URL auto mode
 
 ## P1: Mobile Vertical Slice
 

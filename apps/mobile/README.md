@@ -93,6 +93,7 @@ For the common physical-device path, the writer can derive the Mac LAN URL:
 ```bash
 DEVELOPMENT_TEAM=ABCDE12345 \
 PRODUCT_BUNDLE_IDENTIFIER=com.example.personalmythforge \
+PMF_BACKEND_BASE_URL=auto \
 make mobile-write-deploy-config-auto
 ```
 

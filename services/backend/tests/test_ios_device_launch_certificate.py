@@ -108,7 +108,15 @@ def test_ios_device_launch_certificate_blocks_missing_inputs_without_leaks(
 def test_ios_device_launch_certificate_exposes_device_action_bundle(
     tmp_path: Path,
 ) -> None:
-    repo_root = _write_deploy_config(tmp_path)
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = local\n"
+        ),
+    )
 
     result = build_ios_device_launch_certificate_report(
         settings=Settings(),
@@ -247,7 +255,15 @@ def test_ios_device_launch_certificate_uses_injected_final_demo_launch_report(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    repo_root = _write_deploy_config(tmp_path)
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = local\n"
+        ),
+    )
 
     def fail_if_builder_recurses(**kwargs):
         raise AssertionError("final demo launch builder should not be called")
@@ -287,9 +303,17 @@ def test_ios_device_launch_certificate_uses_final_demo_child_action_when_handoff
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    repo_root = _write_deploy_config(tmp_path)
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = local\n"
+        ),
+    )
     deploy_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
@@ -332,9 +356,17 @@ def test_ios_device_launch_certificate_preserves_backend_device_demo_handoff(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    repo_root = _write_deploy_config(tmp_path)
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = local\n"
+        ),
+    )
     deploy_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
@@ -384,9 +416,17 @@ def test_ios_device_launch_certificate_prioritizes_backend_demo_after_deploy_han
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    repo_root = _write_deploy_config(tmp_path)
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = local\n"
+        ),
+    )
     deploy_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
@@ -466,7 +506,15 @@ def test_ios_device_launch_certificate_prioritizes_deploy_handoff_before_backend
 def test_ios_device_launch_certificate_promotes_print_request_before_provider_quote(
     tmp_path: Path,
 ) -> None:
-    repo_root = _write_deploy_config(tmp_path)
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = local\n"
+        ),
+    )
     _write_three_d_evaluation(repo_root)
     _write_npc_evaluation(repo_root)
     _write_visual_regression(repo_root)
@@ -480,7 +528,7 @@ def test_ios_device_launch_certificate_promotes_print_request_before_provider_qu
     )
     _write_ios_deploy_runbook(repo_root)
     deploy_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
@@ -492,7 +540,7 @@ def test_ios_device_launch_certificate_promotes_print_request_before_provider_qu
             "overall_status": "partial",
             "next_action": {
                 "command": (
-                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                     "make mobile-write-deploy-config-auto"
                 ),
                 "validation_command": "make mobile-deploy-preflight",
@@ -536,7 +584,15 @@ def test_ios_device_launch_certificate_promotes_print_request_before_provider_qu
 def test_ios_device_launch_certificate_promotes_guarded_print_after_request_ready(
     tmp_path: Path,
 ) -> None:
-    repo_root = _write_deploy_config(tmp_path)
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = local\n"
+        ),
+    )
     _write_three_d_evaluation(repo_root)
     _write_npc_evaluation(repo_root)
     _write_visual_regression(repo_root)
@@ -551,7 +607,7 @@ def test_ios_device_launch_certificate_promotes_guarded_print_after_request_read
     _write_ios_deploy_runbook(repo_root)
     _write_configured_print_quote_request(repo_root)
     deploy_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
         "make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
@@ -563,7 +619,7 @@ def test_ios_device_launch_certificate_promotes_guarded_print_after_request_read
             "overall_status": "partial",
             "next_action": {
                 "command": (
-                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                    "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                     "make mobile-write-deploy-config-auto"
                 ),
                 "validation_command": "make mobile-deploy-preflight",

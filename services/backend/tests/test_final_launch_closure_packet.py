@@ -132,7 +132,7 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     ) not in operator_actions
     assert not any(
         action.startswith(
-            "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+            "run DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
         )
         for action in operator_actions
     )
@@ -159,7 +159,7 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
 
 def test_final_launch_closure_packet_prefers_promoted_deploy_writer() -> None:
     writer_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     manual_team_action = (
@@ -183,7 +183,7 @@ def test_final_launch_closure_packet_prefers_promoted_deploy_writer() -> None:
             f"run {writer_action}",
         ],
         first_blocker={
-            "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+            "command": "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
         },
     )
 
@@ -191,11 +191,11 @@ def test_final_launch_closure_packet_prefers_promoted_deploy_writer() -> None:
     assert manual_team_action not in actions
     assert not any(
         action.startswith(
-            "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+            "run DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
         )
         for action in actions
     )
-    assert product_bundle_action in actions
+    assert product_bundle_action not in actions
     assert backend_url_action in actions
 
 
@@ -389,7 +389,7 @@ def test_final_launch_closure_packet_device_bundle_prefers_showcase_bundle(
 ) -> None:
     repo_root = _repo_fixture(tmp_path)
     writer_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     _write_mobile_deploy_preflight_evidence(
@@ -483,7 +483,7 @@ def test_final_launch_closure_packet_source_reports_expose_device_action_bundles
     assert configured_bundle["status"] == "blocked"
     assert configured_bundle["first_action"]["id"] == "write_development_team"
     assert configured_bundle["first_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     )
     assert configured_bundle["first_action"]["validation_command"] == (
         "make mobile-deploy-preflight"
@@ -542,7 +542,7 @@ def test_final_launch_closure_packet_preserves_ios_device_nested_source_reports(
                 "first_action": {
                     "id": "development_team",
                     "command": (
-                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                         "make mobile-write-deploy-config-auto"
                     ),
                     "validation_command": "make mobile-deploy-preflight",
@@ -552,7 +552,7 @@ def test_final_launch_closure_packet_preserves_ios_device_nested_source_reports(
                         "id": "development_team",
                         "status": "blocked",
                         "command": (
-                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                             "make mobile-write-deploy-config-auto"
                         ),
                         "detail": "Missing DEVELOPMENT_TEAM sk-test",
@@ -628,7 +628,7 @@ def test_final_launch_closure_packet_preserves_ios_device_nested_source_reports(
     assert deploy_bundle["id"] == "mobile_deploy_preflight_evidence_actions"
     assert deploy_bundle["first_action"]["id"] == "development_team"
     assert deploy_bundle["first_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     )
     assert deploy_bundle["safety"]["commands_run"] is True
     assert xcode_bundle["id"] == "mobile_xcode_build_evidence_actions"
@@ -1311,7 +1311,7 @@ def _write_configured_live_evidence_bundle_blocked(
                         "status": "blocked",
                         "classification": "ios_deploy_config_missing",
                         "command": (
-                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                             "make mobile-write-deploy-config-auto"
                         ),
                         "detail": "Missing DEVELOPMENT_TEAM.",
@@ -1328,7 +1328,7 @@ def _write_configured_live_evidence_bundle_blocked(
                     "status": "blocked",
                     "classification": "ios_deploy_config_missing",
                     "command": (
-                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                         "make mobile-write-deploy-config-auto"
                     ),
                     "detail": "Missing DEVELOPMENT_TEAM.",

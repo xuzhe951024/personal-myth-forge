@@ -110,7 +110,7 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     first_blocker = report["first_blocker"]
     next_action = report["next_action"]
     expected_device_command = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     assert first_blocker["id"] == "write_development_team"
@@ -126,9 +126,9 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     operator_actions = report["operator_actions"]
     assert "make ios-device-launch-rehearsal" not in operator_actions
     assert "make ios-device-launch-rehearsal" in report["operator_sequence"]
-    assert report["operator_actions"][:4] == [
+    assert report["operator_actions"][:3] == [
         (
-            "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
             "rerun make mobile-deploy-preflight"
         ),
         (
@@ -139,11 +139,11 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
             "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
             "rerun make mobile-deploy-preflight"
         ),
-        (
-            "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
-            "rerun make mobile-deploy-preflight"
-        ),
     ]
+    assert (
+        "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
+        "rerun make mobile-deploy-preflight"
+    ) not in report["operator_actions"]
     assert not any(
         action.startswith(
             (
@@ -169,7 +169,7 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert (
         "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
-    ) in operator_actions
+    ) not in operator_actions
     assert (
         "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
         "rerun make mobile-deploy-preflight"
@@ -232,7 +232,7 @@ def test_external_action_ledger_ios_deploy_actions_use_mobile_preflight(
         "make mobile-deploy-preflight"
     )
     assert (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     ) in operator_actions
     assert (
@@ -242,7 +242,7 @@ def test_external_action_ledger_ios_deploy_actions_use_mobile_preflight(
     assert (
         "provide PRODUCT_BUNDLE_IDENTIFIER in Deployment.local.xcconfig; "
         "rerun make mobile-deploy-preflight"
-    ) in operator_actions
+    ) not in operator_actions
     assert (
         "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL; "
         "rerun make mobile-deploy-preflight"
@@ -454,7 +454,7 @@ def test_external_action_ledger_exposes_device_action_bundle(
     assert bundle["summary"]["global_actions"] == 0
     assert bundle["first_action"]["id"] == "write_development_team"
     expected_command = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     assert bundle["first_action"]["command"] == expected_command
@@ -482,7 +482,7 @@ def test_external_action_ledger_top_level_actions_start_with_device_blocker(
     report = result.report
     operator_actions = report["operator_actions"]
     device_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     provider_action = (
@@ -523,7 +523,7 @@ def test_external_action_ledger_top_level_device_blocker_promotes_validation_awa
     )
 
     expected_command = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
 
@@ -572,7 +572,7 @@ def test_external_action_ledger_prioritizes_backend_device_demo_before_provider_
     )
     operator_actions = result.report["operator_actions"]
     deploy_writer_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     backend_action = (
@@ -623,7 +623,7 @@ def test_external_action_ledger_prioritizes_backend_url_after_backend_device_dem
     )
     operator_actions = result.report["operator_actions"]
     deploy_writer_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     backend_action = (
@@ -660,7 +660,7 @@ def test_external_action_ledger_prioritizes_backend_url_after_backend_device_dem
 
 def test_external_action_ledger_prioritizer_moves_backend_url_when_backend_demo_is_already_second() -> None:
     deploy_writer_action = (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight"
     )
     backend_action = (

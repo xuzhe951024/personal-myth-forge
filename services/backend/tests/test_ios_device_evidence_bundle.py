@@ -409,7 +409,7 @@ def test_ios_device_evidence_bundle_source_reports_preserve_mobile_device_action
                         "status": "blocked",
                         "classification": "",
                         "command": (
-                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                            "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                             "make mobile-write-deploy-config-auto"
                         ),
                         "detail": "Missing DEVELOPMENT_TEAM sk-test",
@@ -424,7 +424,7 @@ def test_ios_device_evidence_bundle_source_reports_preserve_mobile_device_action
                     "label": "Apple Team ID",
                     "status": "blocked",
                     "command": (
-                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID "
+                        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
                         "make mobile-write-deploy-config-auto"
                     ),
                     "validation_command": "make mobile-deploy-preflight",
@@ -514,7 +514,7 @@ def test_ios_device_evidence_bundle_source_reports_preserve_mobile_device_action
     assert deploy_bundle["id"] == "mobile_deploy_preflight_evidence_actions"
     assert deploy_bundle["first_action"]["id"] == "development_team"
     assert deploy_bundle["first_action"]["command"] == (
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto"
     )
     assert deploy_bundle["safety"]["commands_run"] is True
     assert deploy_bundle["safety"]["xcode_or_signing"] is False
@@ -644,7 +644,7 @@ def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
     )
     assert actions[3] == (
         "make ios-device-launch-rehearsal | "
-        "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto make mobile-write-deploy-config-auto; "
         "rerun make mobile-deploy-preflight | Missing DEVELOPMENT_TEAM; "
         "PMF_BACKEND_BASE_URL must be iPhone-reachable"
     )

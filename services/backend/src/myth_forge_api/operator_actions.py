@@ -39,8 +39,16 @@ BACKEND_BASE_URL_ACTION = "set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN U
 GENERIC_BACKEND_BASE_URL_ACTION = (
     "provide PMF_BACKEND_BASE_URL in Deployment.local.xcconfig"
 )
-MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION = (
+LEGACY_MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION = (
     "DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto"
+)
+MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION = (
+    "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+    "make mobile-write-deploy-config-auto"
+)
+LEGACY_MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION = (
+    f"{LEGACY_MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION}; rerun "
+    f"{MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
 )
 MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION = (
     f"{MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION}; rerun "
@@ -133,10 +141,20 @@ MAKE_TARGET_ACTION_REPLACEMENTS = {
     "run make mobile-deploy-preflight after backend is running": (
         BACKEND_DEVICE_DEMO_VALIDATED_ACTION
     ),
+    LEGACY_MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION: (
+        MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION
+    ),
+    LEGACY_MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION: (
+        MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION
+    ),
     "run DEVELOPMENT_TEAM=YOUR_TEAM_ID make mobile-write-deploy-config-auto; "
     "rerun make mobile-deploy-preflight": (
         MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION
     ),
+    (
+        "run DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto; rerun make mobile-deploy-preflight"
+    ): MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION,
 }
 XCODE_BUILD_GATE_ACTION = (
     "accept the Xcode license outside Codex, then rerun "
@@ -292,16 +310,20 @@ def normalize_operator_action(action: str) -> str:
 
 
 def prefer_project_local_ios_deploy_handoff_actions(actions: list[str]) -> list[str]:
-    action_roots = {_action_command_root(action) for action in actions}
+    normalized_actions = [
+        normalize_operator_action(action) for action in actions if action.strip()
+    ]
+    action_roots = {_action_command_root(action) for action in normalized_actions}
     if MOBILE_WRITE_DEPLOY_CONFIG_AUTO_VALIDATED_ACTION not in action_roots:
-        return actions
+        return normalized_actions
     filtered: list[str] = []
     writer_index: int | None = None
     old_deploy_action_roots = {
         DEPLOYMENT_TEAM_VALIDATED_ACTION,
         IOS_DEPLOY_CONFIG_VALIDATED_ACTION,
+        f"{PRODUCT_BUNDLE_IDENTIFIER_ACTION}; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}",
     }
-    for action in actions:
+    for action in normalized_actions:
         root = _action_command_root(action)
         if root in old_deploy_action_roots:
             continue
@@ -715,6 +737,12 @@ def add_mobile_deploy_validation_command(action: str) -> str:
 
 def _add_mobile_deploy_validation_to_command(action: str) -> str:
     command_part = action.strip()
+    if command_part.startswith(LEGACY_MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION):
+        command_part = command_part.replace(
+            LEGACY_MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION,
+            MOBILE_WRITE_DEPLOY_CONFIG_AUTO_ACTION,
+            1,
+        )
     duplicate_validation = (
         f"; rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}; "
         f"rerun {MOBILE_DEPLOY_PREFLIGHT_COMMAND}"
