@@ -58,6 +58,10 @@ COMPLETE_PROVIDER_HANDOFF_OPERATOR_ACTION = PROVIDER_LIVE_HANDOFF_ACTION
 WEAK_PROVIDER_HANDOFF_OPERATOR_ACTIONS = {
     FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
     (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff"
+    ),
+    (
         "make final-resource-apply-preview; rerun make provider-handoff; "
         "rerun make live-provider-evidence"
     ),

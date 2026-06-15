@@ -807,6 +807,45 @@ def test_final_launch_closure_packet_replaces_bare_print_readiness_action(
     assert PRINT_READINESS_BACKEND_AUTO_ACTION in actions
 
 
+def test_final_launch_closure_packet_drops_short_provider_handoff_chain() -> None:
+    complete_provider_chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+    short_provider_chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff"
+    )
+
+    actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "live_provider_evidence",
+                        "status": "blocked",
+                        "command": complete_provider_chain,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": False,
+                    },
+                    {
+                        "id": "provider_handoff",
+                        "status": "blocked",
+                        "command": short_provider_chain,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                        "requires_cost_consent": False,
+                    },
+                ]
+            }
+        ]
+    )
+
+    assert complete_provider_chain in actions
+    assert short_provider_chain not in actions
+
+
 def test_final_launch_closure_packet_operator_actions_start_with_promoted_device_action(
     tmp_path: Path,
 ) -> None:

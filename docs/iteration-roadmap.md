@@ -149,6 +149,7 @@ Bridge deliverable:
 - P0.551 live provider evidence next action uses the full validation-aware handoff chain
 - P0.552 print fulfillment next action uses the full validation-aware readiness chain
 - P0.553 final launch closure packet print readiness actions use backend-auto validation handoff
+- P0.554 final launch closure packet drops short provider handoff when live evidence chain exists
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details
