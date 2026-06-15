@@ -557,6 +557,30 @@ def test_print_quote_preference_uses_request_prerequisite_before_provider_call()
     ]
 
 
+def test_print_quote_preference_uses_backend_auto_prerequisite_before_provider_call() -> None:
+    backend_auto_prerequisite = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto; rerun make print-fulfillment-readiness"
+    )
+    guarded_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = operator_actions.prefer_guarded_print_quote_handoff_actions(
+        [
+            "make provider-handoff; rerun make live-provider-evidence",
+            guarded_action,
+            backend_auto_prerequisite,
+        ]
+    )
+
+    assert actions == [
+        "make provider-handoff; rerun make live-provider-evidence",
+        backend_auto_prerequisite,
+    ]
+
+
 def test_print_quote_preference_prefers_auto_request_over_legacy_placeholder() -> None:
     auto_request_action = (
         "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "
