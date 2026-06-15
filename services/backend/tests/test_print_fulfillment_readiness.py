@@ -150,6 +150,41 @@ def test_print_fulfillment_readiness_suggests_local_served_quote_request_uris(
     )
 
 
+def test_print_fulfillment_readiness_uses_top_level_final_demo_smoke_session(
+    tmp_path: Path,
+) -> None:
+    _write_local_print_readiness_fixture(tmp_path)
+    _write_json(
+        tmp_path / "services/backend/.local/final-demo-launch-local.json",
+        {
+            "kind": "final_demo_launch_report",
+            "status": "partial",
+            "local_showcase_smoke": {
+                "kind": "local_showcase_smoke_report",
+                "status": "succeeded",
+                "session": {"session_id": "myth_top_level123"},
+            },
+        },
+    )
+
+    result = build_print_fulfillment_readiness_report(
+        settings=Settings(print_provider="local"),
+        repo_root=tmp_path,
+    )
+
+    assert result.report["first_blocker"]["id"] == "configured_treatstock_quote_request"
+    assert result.report["first_blocker"]["classification"] == (
+        "missing_configured_treatstock_quote_request"
+    )
+    assert result.report["next_action"]["command"] == (
+        "PRINT_SOURCE_ASSET_URI=http://192.168.1.10:8080/v1/generated-assets/"
+        "myth_top_level123/game.glb "
+        "PRINT_CANDIDATE_URI=http://192.168.1.10:8080/v1/print-candidates/"
+        "myth_top_level123/print.3mf "
+        "make print-quote-request-configured"
+    )
+
+
 def test_print_fulfillment_readiness_ready_with_configured_treatstock_quote(
     tmp_path: Path,
 ) -> None:

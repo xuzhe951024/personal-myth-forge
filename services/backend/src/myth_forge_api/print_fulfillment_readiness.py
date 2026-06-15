@@ -694,12 +694,14 @@ def _local_print_request_handoff_state(repo_root: Path) -> dict[str, Any]:
 
 def _local_showcase_session_id(repo_root: Path) -> str:
     payload = _read_json_object(repo_root / FINAL_DEMO_LAUNCH_LOCAL_PATH)
-    source_reports = payload.get("source_reports")
-    smoke = (
-        source_reports.get("local_showcase_smoke")
-        if isinstance(source_reports, dict)
-        else None
-    )
+    smoke = payload.get("local_showcase_smoke")
+    if not isinstance(smoke, dict):
+        source_reports = payload.get("source_reports")
+        smoke = (
+            source_reports.get("local_showcase_smoke")
+            if isinstance(source_reports, dict)
+            else None
+        )
     session = smoke.get("session") if isinstance(smoke, dict) else None
     session_id = session.get("session_id") if isinstance(session, dict) else None
     return str(session_id).strip() if session_id else ""
