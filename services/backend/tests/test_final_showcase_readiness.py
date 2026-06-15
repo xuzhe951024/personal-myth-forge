@@ -1755,6 +1755,24 @@ def test_final_showcase_readiness_filters_self_referential_operator_action() -> 
     ]
 
 
+def test_final_showcase_readiness_filter_keeps_backend_auto_print_prerequisite() -> None:
+    backend_auto_print_action = (
+        "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "
+        "make mobile-write-deploy-config-auto; "
+        "rerun make print-fulfillment-readiness"
+    )
+    generic_validation_action = (
+        "make visual-regression-local; rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_showcase_readiness._filter_showcase_operator_actions(
+        [backend_auto_print_action, generic_validation_action]
+    )
+
+    assert backend_auto_print_action in actions
+    assert generic_validation_action not in actions
+
+
 def test_final_showcase_readiness_preserves_bare_rehearsal_when_only_action() -> None:
     actions = final_showcase_readiness._filter_showcase_operator_actions(
         ["make final-rehearsal-local"]

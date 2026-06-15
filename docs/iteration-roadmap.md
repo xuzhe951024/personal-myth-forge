@@ -156,6 +156,7 @@ Bridge deliverable:
 - P0.558 final external action ledger routes live provider actions through configured consent gate
 - P0.559 local final demo reports drop weak apply-preview action when provider handoff chain exists
 - P0.560 final showcase readiness strips detail suffixes from deploy writer operator actions
+- P0.561 final showcase readiness retains backend-auto print fulfillment prerequisite actions
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

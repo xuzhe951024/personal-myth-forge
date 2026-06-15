@@ -27,6 +27,7 @@ from myth_forge_api.npc_agent_evaluation_readiness import (
     build_npc_agent_evaluation_readiness_report,
 )
 from myth_forge_api.operator_actions import (
+    CONFIGURED_PRINT_QUOTE_REQUEST_PREREQUISITE_ACTION_ROOTS,
     FINAL_RESOURCE_VALIDATION_ACTION_ROOTS,
     IOS_DEPLOY_CONFIG_ACTION,
     PROVIDER_LIVE_HANDOFF_ACTION,
@@ -1958,6 +1959,8 @@ def _is_mobile_deploy_handoff_action(action: str) -> bool:
 
 
 def _is_validation_only_print_action(action: str) -> bool:
+    if _is_print_quote_request_prerequisite_action(action):
+        return False
     lowered = action.lower()
     if any(
         marker in lowered
@@ -1966,6 +1969,15 @@ def _is_validation_only_print_action(action: str) -> bool:
         return False
     _command, separator, validation = action.partition("; rerun ")
     return bool(separator) and validation.strip() == FINAL_SHOWCASE_PRINT_READINESS_VALIDATION
+
+
+def _is_print_quote_request_prerequisite_action(action: str) -> bool:
+    command, separator, validation = action.partition("; rerun ")
+    if not separator:
+        return False
+    if validation.strip() != FINAL_SHOWCASE_PRINT_READINESS_VALIDATION:
+        return False
+    return command.strip() in CONFIGURED_PRINT_QUOTE_REQUEST_PREREQUISITE_ACTION_ROOTS
 
 
 def _validation_aware_operator_action(action: str) -> str:
