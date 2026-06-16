@@ -137,6 +137,37 @@ def test_resource_handoff_marks_core_resources_ready_without_secret_leak(
     assert str(tmp_path) not in report_text
 
 
+def test_resource_handoff_marks_apple_sdk_ready_from_xcode_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.example.personalmythforge\n"
+            "PMF_BACKEND_BASE_URL = http://192.168.1.10:8080\n"
+        ),
+    )
+    _write_mobile_xcode_build_evidence(repo_root, status="ready")
+    settings = Settings(
+        three_d_provider="meshy",
+        meshy_api_key="sk-meshy-secret",
+        npc_provider="openai",
+        openai_api_key="sk-openai-secret",
+        print_provider="local",
+    )
+
+    report = build_resource_handoff_report(settings=settings, repo_root=repo_root)
+
+    ios = {item["id"]: item for item in report["ios"]["items"]}
+    assert ios["APPLE_SDK_LICENSE"]["status"] == "ready"
+    assert report["summary"]["manual"] == 0
+    assert (
+        "accept the Apple SDK license outside this repository before Xcode build"
+        not in report["operator_actions"]
+    )
+
+
 def test_resource_handoff_blocks_treatstock_when_selected_without_key(
     tmp_path: Path,
 ) -> None:
@@ -177,3 +208,46 @@ def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Pat
             encoding="utf-8",
         )
     return repo_root
+
+
+def _write_mobile_xcode_build_evidence(repo_root: Path, *, status: str) -> None:
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True, exist_ok=True)
+    ready = status == "ready"
+    (local_dir / "mobile-xcode-build-evidence.json").write_text(
+        json.dumps(
+            {
+                "kind": "mobile_xcode_build_evidence_report",
+                "status": "ready" if ready else "blocked",
+                "classification": "ready" if ready else "blocked_by_apple_sdk_license",
+                "command": "make mobile-xcode-build",
+                "exit_code": 0 if ready else 2,
+                "checks": [
+                    {
+                        "id": "xcode_build_gate",
+                        "label": "Xcode build gate",
+                        "status": "ready" if ready else "blocked",
+                        "detail": "Xcode build gate passed with code signing disabled."
+                        if ready
+                        else "Apple SDK license agreement is not accepted.",
+                    }
+                ],
+                "operator_actions": []
+                if ready
+                else [
+                    "accept the Xcode license outside Codex, then rerun "
+                    "make mobile-xcode-build-evidence"
+                ],
+                "safety": {
+                    "commands_run": True,
+                    "provider_calls": False,
+                    "live_provider_calls": False,
+                    "global_mutation": False,
+                    "xcode_or_signing": True,
+                    "code_signing_allowed": False,
+                    "keychain_writes": False,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )

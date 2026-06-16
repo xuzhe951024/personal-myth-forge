@@ -328,6 +328,32 @@ def test_ios_deploy_runbook_ready_local_inputs_preserve_command_order(
     }
 
 
+def test_ios_deploy_runbook_uses_ready_xcode_build_evidence(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo(tmp_path)
+    _write_deploy_config(repo_root)
+    _write_final_resources(repo_root)
+    _write_final_acceptance(repo_root, status="passed")
+    _write_three_d_evaluation(repo_root, status="passed")
+    _write_npc_evaluation(repo_root, status="passed")
+    _write_mobile_xcode_build_evidence(repo_root, status="ready")
+
+    report = build_ios_deploy_runbook_report(mode="local", repo_root=repo_root)
+
+    steps = {step["id"]: step for step in report["command_sequence"]}
+    actions = {action["id"]: action for action in report["device_action_bundle"]["actions"]}
+    assert report["status"] == "ready"
+    assert steps["xcode_build_gate"]["status"] == "ready"
+    assert actions["resolve_xcode_build_gate"]["status"] == "ready"
+    assert actions["run_ios_device_launch_rehearsal"]["status"] == "ready"
+    assert report["first_blocker"] is None
+    assert report["next_action"] is None
+    assert "run Xcode build gate manually on the Mac: make mobile-xcode-build" not in (
+        report["operator_actions"]
+    )
+
+
 def test_ios_deploy_runbook_device_bundle_advances_after_deploy_config_ready(
     tmp_path: Path,
 ) -> None:
@@ -603,6 +629,49 @@ def _write_npc_evaluation(repo_root: Path, *, status: str) -> None:
                     "world_resolution_steps": succeeded * 2,
                 },
                 "cases": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_mobile_xcode_build_evidence(repo_root: Path, *, status: str) -> None:
+    local_dir = repo_root / "services/backend/.local"
+    local_dir.mkdir(parents=True, exist_ok=True)
+    ready = status == "ready"
+    (local_dir / "mobile-xcode-build-evidence.json").write_text(
+        json.dumps(
+            {
+                "kind": "mobile_xcode_build_evidence_report",
+                "status": "ready" if ready else "blocked",
+                "classification": "ready" if ready else "blocked_by_apple_sdk_license",
+                "command": "make mobile-xcode-build",
+                "exit_code": 0 if ready else 2,
+                "checks": [
+                    {
+                        "id": "xcode_build_gate",
+                        "label": "Xcode build gate",
+                        "status": "ready" if ready else "blocked",
+                        "detail": "Xcode build gate passed with code signing disabled."
+                        if ready
+                        else "Apple SDK license agreement is not accepted.",
+                    }
+                ],
+                "operator_actions": []
+                if ready
+                else [
+                    "accept the Xcode license outside Codex, then rerun "
+                    "make mobile-xcode-build-evidence"
+                ],
+                "safety": {
+                    "commands_run": True,
+                    "provider_calls": False,
+                    "live_provider_calls": False,
+                    "global_mutation": False,
+                    "xcode_or_signing": True,
+                    "code_signing_allowed": False,
+                    "keychain_writes": False,
+                },
             }
         ),
         encoding="utf-8",

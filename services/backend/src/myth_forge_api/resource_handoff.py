@@ -11,6 +11,9 @@ from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
 )
+from myth_forge_api.saved_mobile_xcode_evidence import (
+    has_ready_mobile_xcode_build_evidence,
+)
 
 Status = str
 
@@ -182,6 +185,7 @@ def _ios_items(repo_root: Path) -> list[dict[str, Any]]:
     team = values.get("DEVELOPMENT_TEAM", "")
     bundle_id = values.get("PRODUCT_BUNDLE_IDENTIFIER", "")
     backend_url = values.get("PMF_BACKEND_BASE_URL", "")
+    xcode_evidence_ready = has_ready_mobile_xcode_build_evidence(repo_root)
     backend_status = "ready"
     if not backend_url:
         backend_status = "missing"
@@ -223,10 +227,14 @@ def _ios_items(repo_root: Path) -> list[dict[str, Any]]:
             "Apple SDK license/build gate",
             "local machine",
             "make mobile-xcode-build",
-            "manual",
-            configured=False,
+            "ready" if xcode_evidence_ready else "manual",
+            configured=xcode_evidence_ready,
             missing=False,
-            notes=["Accept the Xcode/Apple SDK license outside this repo before final build."],
+            notes=[
+                "Saved mobile Xcode build evidence is ready."
+                if xcode_evidence_ready
+                else "Accept the Xcode/Apple SDK license outside this repo before final build."
+            ],
         ),
     ]
 
@@ -375,7 +383,8 @@ def _operator_actions(
         actions.append("provide DEVELOPMENT_TEAM in Deployment.local.xcconfig")
     if ios_by_id["PMF_BACKEND_BASE_URL"]["status"] != "ready":
         actions.append("set PMF_BACKEND_BASE_URL to an iPhone-reachable LAN URL")
-    actions.append("accept the Apple SDK license outside this repository before Xcode build")
+    if ios_by_id["APPLE_SDK_LICENSE"]["status"] != "ready":
+        actions.append("accept the Apple SDK license outside this repository before Xcode build")
     return [
         add_final_resource_validation_command(
             add_mobile_deploy_validation_command(action)

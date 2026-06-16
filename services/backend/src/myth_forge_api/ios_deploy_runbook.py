@@ -28,6 +28,9 @@ from myth_forge_api.operator_actions import (
     add_final_resource_validation_command,
     add_mobile_deploy_validation_command,
 )
+from myth_forge_api.saved_mobile_xcode_evidence import (
+    has_ready_mobile_xcode_build_evidence,
+)
 from myth_forge_api.three_d_evaluation_readiness import (
     LOCAL_THREE_D_EVALUATION_COMMAND,
     build_three_d_evaluation_readiness_report,
@@ -78,7 +81,11 @@ def build_ios_deploy_runbook_report(
         three_d_evaluation=three_d_evaluation,
         npc_evaluation=npc_evaluation,
     )
-    command_sequence = _command_sequence(mode=mode, input_slots=input_slots)
+    command_sequence = _command_sequence(
+        mode=mode,
+        input_slots=input_slots,
+        repo_root=selected_repo_root,
+    )
     first_blocker = _first_blocker(
         input_slots=input_slots,
         command_sequence=command_sequence,
@@ -367,6 +374,7 @@ def _command_sequence(
     *,
     mode: LaunchMode,
     input_slots: list[dict[str, Any]],
+    repo_root: Path,
 ) -> list[dict[str, Any]]:
     slots = {slot["id"]: slot for slot in input_slots}
     deploy_config_status = _combined_status(
@@ -443,7 +451,7 @@ def _command_sequence(
         _command_step(
             "xcode_build_gate",
             "Run Xcode build gate",
-            "manual",
+            "ready" if has_ready_mobile_xcode_build_evidence(repo_root) else "manual",
             "make mobile-xcode-build",
             "Apple license/signing state remains external to this repo.",
         )
