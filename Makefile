@@ -1,7 +1,7 @@
 .PHONY: backend-test backend-lint backend-dev backend-device-demo backend-demo backend-generate-local
 
 backend-test:
-	cd services/backend && uv run pytest
+	cd services/backend && PMF_SKIP_DOTENV=1 uv run pytest
 
 backend-lint:
 	cd services/backend && uv run ruff check .

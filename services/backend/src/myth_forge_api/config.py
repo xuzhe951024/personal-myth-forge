@@ -33,7 +33,8 @@ class Settings:
 
 
 def load_settings(env: Mapping[str, str] | None = None) -> Settings:
-    load_dotenv()
+    if _should_load_dotenv(env):
+        load_dotenv()
     source = env or os.environ
     return Settings(
         three_d_provider=source.get("THREE_D_PROVIDER", "local").strip().lower(),
@@ -56,3 +57,13 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         myth_session_storage_dir=source.get("MYTH_SESSION_STORAGE_DIR")
         or DEFAULT_MYTH_SESSION_STORAGE_DIR,
     )
+
+
+def _should_load_dotenv(env: Mapping[str, str] | None) -> bool:
+    if env is not None:
+        return False
+    return os.environ.get("PMF_SKIP_DOTENV", "").strip().lower() not in {
+        "1",
+        "true",
+        "yes",
+    }

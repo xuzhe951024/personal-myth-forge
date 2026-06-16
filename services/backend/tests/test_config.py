@@ -43,3 +43,32 @@ def test_load_settings_reads_print_provider_configuration() -> None:
     assert settings.treatstock_api_key == "treatstock-secret"
     assert settings.treatstock_api_base_url == "https://treatstock.test"
     assert settings.sculpteo_api_key == "sculpteo-secret"
+
+
+def test_load_settings_explicit_env_ignores_dotenv_file(monkeypatch) -> None:
+    def fail_load_dotenv() -> None:
+        raise AssertionError("load_dotenv should not run for explicit env mappings")
+
+    monkeypatch.setattr("myth_forge_api.config.load_dotenv", fail_load_dotenv)
+
+    settings = load_settings({"THREE_D_PROVIDER": "local"})
+
+    assert settings.three_d_provider == "local"
+    assert settings.meshy_api_key is None
+
+
+def test_load_settings_skip_dotenv_env_flag_ignores_dotenv_file(
+    monkeypatch,
+) -> None:
+    def fail_load_dotenv() -> None:
+        raise AssertionError("load_dotenv should not run when PMF_SKIP_DOTENV=1")
+
+    monkeypatch.setattr("myth_forge_api.config.load_dotenv", fail_load_dotenv)
+    monkeypatch.setenv("PMF_SKIP_DOTENV", "1")
+    monkeypatch.delenv("NPC_PROVIDER", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    settings = load_settings()
+
+    assert settings.npc_provider == "local"
+    assert settings.openai_api_key is None
