@@ -26,11 +26,10 @@ def test_print_fulfillment_readiness_blocks_missing_local_evidence(tmp_path: Pat
     assert result.report["safety"]["payment_links_in_report"] is False
 
 
-def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_quote(
+def test_print_fulfillment_readiness_ready_for_local_print_asset_without_provider_quote(
     tmp_path: Path,
 ) -> None:
     _write_local_print_readiness_fixture(tmp_path)
-    _write_configured_print_quote_request(tmp_path)
 
     result = build_print_fulfillment_readiness_report(
         settings=Settings(print_provider="local"),
@@ -38,30 +37,24 @@ def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_
     )
     rows = result.report["checks_by_id"]
 
-    assert result.exit_code == 2
-    assert result.report["status"] == "partial"
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
     assert rows["print_quote_acceptance"]["status"] == "ready"
     assert rows["ios_print_fulfillment_source"]["status"] == "ready"
     assert rows["visual_print_receipt"]["status"] == "ready"
     assert rows["print_resource_handoff"]["status"] == "ready"
-    assert rows["configured_treatstock_quote"]["status"] == "partial"
-    assert result.report["first_blocker"]["id"] == "configured_treatstock_quote"
-    expected_command = (
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
-        "rerun make print-fulfillment-readiness"
+    assert rows["configured_treatstock_quote_request"]["status"] == "deferred"
+    assert rows["configured_treatstock_quote_request"]["classification"] == (
+        "provider_quote_deferred_for_local_print_asset"
     )
-    assert result.report["next_action"] == {
-        **result.report["first_blocker"],
-        "command": expected_command,
-        "source": "first_blocker",
-        "validation_command": "make print-fulfillment-readiness",
-        "requires_cost_consent": True,
-    }
-    assert result.report["operator_actions"][0] == expected_command
-    assert "make print-fulfillment-readiness" not in result.report["operator_actions"]
-    assert "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured" in (
-        result.report["next_action"]["command"]
+    assert rows["configured_treatstock_quote"]["status"] == "deferred"
+    assert rows["configured_treatstock_quote"]["classification"] == (
+        "provider_quote_deferred_for_local_print_asset"
     )
+    assert result.report["summary"]["deferred"] == 2
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
+    assert result.report["operator_actions"] == []
     assert "print-fulfillment-readiness" in " ".join(result.report["commands"])
     assert "print-quote-configured" in " ".join(result.report["commands"])
 
@@ -69,10 +62,13 @@ def test_print_fulfillment_readiness_marks_local_proof_partial_until_treatstock_
 def test_print_fulfillment_readiness_points_to_local_demo_session_before_auto_request(
     tmp_path: Path,
 ) -> None:
-    _write_local_print_readiness_fixture(tmp_path)
+    _write_local_print_readiness_fixture(tmp_path, print_provider="treatstock")
 
     result = build_print_fulfillment_readiness_report(
-        settings=Settings(print_provider="local"),
+        settings=Settings(
+            print_provider="treatstock",
+            treatstock_api_key="sk-treatstock-secret",
+        ),
         repo_root=tmp_path,
     )
     rows = result.report["checks_by_id"]
@@ -101,12 +97,16 @@ def test_print_fulfillment_readiness_points_to_backend_url_before_auto_request(
 ) -> None:
     _write_local_print_readiness_fixture(
         tmp_path,
+        print_provider="treatstock",
         backend_base_url="http://127.0.0.1:8080",
     )
     _write_final_demo_launch_local_session(tmp_path, session_id="myth_showcase123")
 
     result = build_print_fulfillment_readiness_report(
-        settings=Settings(print_provider="local"),
+        settings=Settings(
+            print_provider="treatstock",
+            treatstock_api_key="sk-treatstock-secret",
+        ),
         repo_root=tmp_path,
     )
     rows = result.report["checks_by_id"]
@@ -133,11 +133,14 @@ def test_print_fulfillment_readiness_points_to_backend_url_before_auto_request(
 def test_print_fulfillment_readiness_suggests_local_served_quote_request_uris(
     tmp_path: Path,
 ) -> None:
-    _write_local_print_readiness_fixture(tmp_path)
+    _write_local_print_readiness_fixture(tmp_path, print_provider="treatstock")
     _write_final_demo_launch_local_session(tmp_path, session_id="myth_showcase123")
 
     result = build_print_fulfillment_readiness_report(
-        settings=Settings(print_provider="local"),
+        settings=Settings(
+            print_provider="treatstock",
+            treatstock_api_key="sk-treatstock-secret",
+        ),
         repo_root=tmp_path,
     )
 
@@ -159,7 +162,7 @@ def test_print_fulfillment_readiness_suggests_local_served_quote_request_uris(
 def test_print_fulfillment_readiness_uses_top_level_final_demo_smoke_session(
     tmp_path: Path,
 ) -> None:
-    _write_local_print_readiness_fixture(tmp_path)
+    _write_local_print_readiness_fixture(tmp_path, print_provider="treatstock")
     _write_json(
         tmp_path / "services/backend/.local/final-demo-launch-local.json",
         {
@@ -174,7 +177,10 @@ def test_print_fulfillment_readiness_uses_top_level_final_demo_smoke_session(
     )
 
     result = build_print_fulfillment_readiness_report(
-        settings=Settings(print_provider="local"),
+        settings=Settings(
+            print_provider="treatstock",
+            treatstock_api_key="sk-treatstock-secret",
+        ),
         repo_root=tmp_path,
     )
 

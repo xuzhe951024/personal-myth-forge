@@ -64,6 +64,20 @@ def build_print_fulfillment_readiness_report(
         repo_root=selected_repo_root,
         configured_quote=configured_quote,
     )
+    provider_quote_checks = (
+        [
+            _deferred_treatstock_quote_request_check(),
+            _deferred_treatstock_quote_check(),
+        ]
+        if selected_settings.print_provider == "local"
+        else [
+            _configured_treatstock_quote_request_check(
+                configured_quote_request,
+                repo_root=selected_repo_root,
+            ),
+            _configured_treatstock_quote_check(configured_quote),
+        ]
+    )
     checks = [
         _print_quote_acceptance_check(print_acceptance),
         _source_acceptance_check(source_acceptance),
@@ -73,11 +87,7 @@ def build_print_fulfillment_readiness_report(
             resource_handoff=resource_handoff,
             settings=selected_settings,
         ),
-        _configured_treatstock_quote_request_check(
-            configured_quote_request,
-            repo_root=selected_repo_root,
-        ),
-        _configured_treatstock_quote_check(configured_quote),
+        *provider_quote_checks,
     ]
     summary = _summary(checks)
     status = _overall_status(checks)
@@ -296,6 +306,24 @@ def _configured_treatstock_quote_check(configured_quote: dict[str, Any]) -> dict
     )
 
 
+def _deferred_treatstock_quote_check() -> dict[str, Any]:
+    return _check(
+        check_id="configured_treatstock_quote",
+        label="Configured Treatstock quote",
+        status="deferred",
+        classification="provider_quote_deferred_for_local_print_asset",
+        command="PRINT_PROVIDER=treatstock make print-fulfillment-readiness",
+        detail=(
+            "Third-party print quote evidence is deferred while PRINT_PROVIDER=local; "
+            "local 3MF print_asset handoff is the v0 requirement."
+        ),
+        evidence=[
+            f"path:{CONFIGURED_PRINT_QUOTE_PATH.as_posix()}",
+            "print_provider:local",
+        ],
+    )
+
+
 def _configured_treatstock_quote_request_check(
     configured_quote_request: dict[str, Any],
     *,
@@ -319,6 +347,24 @@ def _configured_treatstock_quote_request_check(
         command=_configured_quote_command(),
         detail=str(configured_quote_request["detail"]),
         evidence=[f"path:{CONFIGURED_PRINT_QUOTE_REQUEST_PATH.as_posix()}"],
+    )
+
+
+def _deferred_treatstock_quote_request_check() -> dict[str, Any]:
+    return _check(
+        check_id="configured_treatstock_quote_request",
+        label="Configured Treatstock quote request",
+        status="deferred",
+        classification="provider_quote_deferred_for_local_print_asset",
+        command="PRINT_PROVIDER=treatstock make print-fulfillment-readiness",
+        detail=(
+            "Third-party print quote request handoff is deferred while "
+            "PRINT_PROVIDER=local; local 3MF print_asset handoff is the v0 requirement."
+        ),
+        evidence=[
+            f"path:{CONFIGURED_PRINT_QUOTE_REQUEST_PATH.as_posix()}",
+            "print_provider:local",
+        ],
     )
 
 
@@ -564,6 +610,7 @@ def _check(
 def _summary(checks: list[dict[str, Any]]) -> dict[str, int]:
     return {
         "ready": sum(1 for check in checks if check["status"] == "ready"),
+        "deferred": sum(1 for check in checks if check["status"] == "deferred"),
         "partial": sum(1 for check in checks if check["status"] == "partial"),
         "blocked": sum(1 for check in checks if check["status"] == "blocked"),
     }
@@ -612,10 +659,8 @@ def _operator_actions(checks: list[dict[str, Any]]) -> list[str]:
     actions = [
         _command_with_validation(str(check["command"]))
         for check in checks
-        if check.get("status") != "ready"
+        if check.get("status") in {"blocked", "partial"}
     ]
-    if not actions:
-        actions.append(PRINT_FULFILLMENT_READINESS_COMMAND)
     return _dedupe(actions)[:8]
 
 
@@ -773,6 +818,8 @@ def _evidence_summary(report: dict[str, Any]) -> dict[str, Any]:
 
 def _normalized_status(status: str) -> str:
     normalized = status.strip().lower()
+    if normalized == "deferred":
+        return "deferred"
     if normalized in {"ready", "passed", "succeeded", "ok"}:
         return "ready"
     if normalized in {"partial", "manual", "optional", "waiting", "missing"}:

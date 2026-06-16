@@ -871,7 +871,7 @@ def test_final_showcase_readiness_blocks_failed_local_showcase_smoke(
     assert "local_showcase_smoke_report:failed" in local_smoke["evidence"]
 
 
-def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_device(
+def test_final_showcase_readiness_marks_local_print_handoff_ready_without_provider_quote(
     tmp_path: Path,
 ) -> None:
     repo_root = _write_deploy_config(
@@ -888,7 +888,6 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     _write_npc_evaluation(repo_root)
     _write_visual_regression(repo_root)
     _write_final_acceptance_ready(repo_root)
-    _write_configured_print_quote_request(repo_root)
 
     result = build_final_showcase_readiness_report(
         settings=Settings(
@@ -907,16 +906,10 @@ def test_final_showcase_readiness_marks_local_proof_partial_until_live_and_devic
     assert rows["capture_scanning"]["status"] == "ready"
     assert rows["game_asset_3d_generation"]["status"] == "partial"
     assert rows["ai_agent_npc"]["status"] == "partial"
-    assert rows["print_fulfillment"]["status"] == "partial"
-    assert rows["print_fulfillment"]["classification"] == "missing_configured_treatstock_quote"
-    assert rows["print_fulfillment"]["command"] == (
-        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
-        "rerun make print-fulfillment-readiness"
-    )
-    assert rows["print_fulfillment"]["validation_command"] == (
-        "make print-fulfillment-readiness"
-    )
-    assert rows["print_fulfillment"]["requires_cost_consent"] is True
+    assert rows["print_fulfillment"]["status"] == "ready"
+    assert rows["print_fulfillment"]["classification"] == "print_fulfillment_ready"
+    assert "configured" not in rows["print_fulfillment"]["detail"].lower()
+    assert rows["print_fulfillment"].get("requires_cost_consent") is None
     assert rows["provider_key_handoff"]["status"] == "partial"
     assert result.report["evidence"]["final_resource_apply_preview"]["status"] == "ready"
     assert "final_resource_apply_preview:ready" in rows["provider_key_handoff"]["evidence"]
@@ -942,7 +935,7 @@ def test_final_showcase_readiness_blocks_missing_configured_print_quote_request(
         ),
     )
     _write_capture_source_acceptance(repo_root)
-    _write_final_resources(repo_root)
+    _write_final_resources(repo_root, print_provider="treatstock")
     _write_three_d_evaluation(repo_root)
     _write_npc_evaluation(repo_root)
     _write_visual_regression(repo_root)
@@ -954,6 +947,8 @@ def test_final_showcase_readiness_blocks_missing_configured_print_quote_request(
             meshy_api_key="sk-meshy-test",
             npc_provider="openai",
             openai_api_key="sk-openai-test",
+            print_provider="treatstock",
+            treatstock_api_key="sk-treatstock-secret",
         ),
         repo_root=repo_root,
     )
@@ -1255,7 +1250,10 @@ def test_final_showcase_readiness_promotes_nested_operator_actions(
     )
 
     result = build_final_showcase_readiness_report(
-        settings=Settings(),
+        settings=Settings(
+            print_provider="treatstock",
+            treatstock_api_key="sk-treatstock-secret",
+        ),
         repo_root=repo_root,
     )
     actions = result.report["operator_actions"]
@@ -2624,20 +2622,22 @@ def _write_final_resources(
     *,
     bundle_identifier: str = "com.zhexu.personalmythforge.dev",
     backend_base_url: str = "http://10.0.0.24:8080",
+    print_provider: str = "local",
 ) -> None:
+    lines = [
+        "MESHY_API_KEY=sk-meshy-test",
+        "OPENAI_API_KEY=sk-openai-test",
+        f"PRINT_PROVIDER={print_provider}",
+        "DEVELOPMENT_TEAM=TEAM12345",
+        f"PRODUCT_BUNDLE_IDENTIFIER={bundle_identifier}",
+        f"PMF_BACKEND_BASE_URL={backend_base_url}",
+        "PMF_FINAL_LAUNCH_MODE=local",
+    ]
+    if print_provider == "treatstock":
+        lines.append("TREATSTOCK_API_KEY=sk-treatstock-secret")
     _write_text(
         repo_root / "services/backend/.local/final-resources.env",
-        "\n".join(
-            [
-                "MESHY_API_KEY=sk-meshy-test",
-                "OPENAI_API_KEY=sk-openai-test",
-                "PRINT_PROVIDER=local",
-                "DEVELOPMENT_TEAM=TEAM12345",
-                f"PRODUCT_BUNDLE_IDENTIFIER={bundle_identifier}",
-                f"PMF_BACKEND_BASE_URL={backend_base_url}",
-                "PMF_FINAL_LAUNCH_MODE=local",
-            ]
-        ),
+        "\n".join(lines),
     )
 
 

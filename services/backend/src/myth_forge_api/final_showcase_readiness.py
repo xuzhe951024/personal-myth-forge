@@ -685,7 +685,10 @@ def _print_fulfillment_capability(report: dict[str, Any]) -> dict[str, Any]:
     requires_cost_consent = False
     if status == "ready":
         classification = "print_fulfillment_ready"
-        detail = "Local and configured print fulfillment quote handoff evidence are ready."
+        detail = (
+            "Printable asset handoff evidence is ready; third-party quote evidence "
+            "can remain deferred in local mode."
+        )
     elif isinstance(first_blocker, dict):
         classification = str(
             first_blocker.get("classification", "print_fulfillment_not_ready")

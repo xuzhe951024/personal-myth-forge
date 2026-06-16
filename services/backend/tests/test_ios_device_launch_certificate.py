@@ -479,8 +479,8 @@ def test_ios_device_launch_certificate_prioritizes_backend_demo_after_deploy_han
     actions = result.report["operator_actions"]
     assert actions[:3] == [deploy_action, backend_action, backend_url_action]
     assert actions.index(backend_action) < actions.index(provider_action)
-    assert request_action in actions
-    assert print_action not in actions
+    assert request_action not in actions
+    assert print_action in actions
 
 
 def test_ios_device_launch_certificate_prioritizes_deploy_handoff_before_backend_url_child_action() -> None:

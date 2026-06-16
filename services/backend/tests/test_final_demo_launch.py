@@ -910,7 +910,10 @@ def test_configured_final_demo_launch_promotes_guarded_quote_after_request_ready
     _write_configured_print_quote_request(repo_root)
 
     result = build_final_demo_launch_report(
-        settings=Settings(),
+        settings=Settings(
+            print_provider="treatstock",
+            treatstock_api_key="sk-treatstock-secret",
+        ),
         repo_root=repo_root,
         mode="configured",
     )
