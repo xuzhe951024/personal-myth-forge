@@ -28,6 +28,14 @@ IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION = (
     "services/backend/.local/ios-device-launch-rehearsal.json for the current product sources"
 )
 IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT = 20
+IOS_DEVICE_ACTION_MARKERS = (
+    "backend-device-demo",
+    "mobile-deploy-preflight",
+    "mobile-write-deploy-config-auto",
+    "deployment.local.xcconfig",
+    "mobile-xcode-build",
+    "xcode build",
+)
 
 
 @dataclass(frozen=True)
@@ -236,7 +244,9 @@ def _next_action(
         return None
     next_action = {**first_blocker, "source": "first_blocker"}
     if operator_actions:
-        next_action["command"] = _structured_next_action_command(operator_actions[0])
+        next_action["command"] = _structured_next_action_command(
+            _preferred_device_operator_action(operator_actions)
+        )
     return next_action
 
 
@@ -265,7 +275,11 @@ def _device_action_bundle(
     sequence: list[dict[str, Any]],
     operator_actions: list[str],
 ) -> dict[str, Any]:
-    first_operator_action = operator_actions[0] if operator_actions else None
+    first_operator_action = (
+        _preferred_device_operator_action(operator_actions)
+        if operator_actions
+        else None
+    )
     actions = [
         _device_action(
             row,
@@ -369,7 +383,9 @@ def _saved_next_action(
     )
     if first_operator_action is None:
         return None
-    command, detail = _structured_next_action_parts(first_operator_action)
+    command, detail = _structured_next_action_parts(
+        _preferred_device_operator_action(operator_actions)
+    )
     return {
         "id": action["id"],
         "label": action["label"],
@@ -526,6 +542,23 @@ def _bounded_operator_actions(raw_actions: Any) -> list[str]:
     deduped = prefer_guarded_print_quote_handoff_actions(_dedupe(actions))
     deduped = prefer_provider_fill_guide_handoff_actions(deduped)
     return deduped[:4]
+
+
+def _preferred_device_operator_action(actions: list[Any]) -> str:
+    normalized_actions = [
+        str(action).strip()
+        for action in actions
+        if isinstance(action, str) and action.strip()
+    ]
+    for action in normalized_actions:
+        if _is_device_operator_action(action):
+            return action
+    return normalized_actions[0] if normalized_actions else ""
+
+
+def _is_device_operator_action(action: str) -> bool:
+    lowered = action.lower()
+    return any(marker in lowered for marker in IOS_DEVICE_ACTION_MARKERS)
 
 
 def _commands(raw_commands: Any) -> list[str]:

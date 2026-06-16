@@ -1829,6 +1829,35 @@ def test_ios_device_launch_rehearsal_dedupes_duplicate_deploy_writer_roots(
     assert result.report["operator_actions"] == [detailed_writer]
 
 
+def test_ios_device_launch_rehearsal_readiness_prefers_device_action_over_provider_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    provider_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+    backend_action = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"][0]["status"] = "blocked"
+    payload["sequence"][0]["operator_actions"] = [provider_action, backend_action]
+    payload["operator_actions"] = [provider_action, backend_action]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    first_action = result.report["device_action_bundle"]["first_action"]
+
+    assert result.report["first_blocker"]["id"] == "final_handoff_index"
+    assert result.report["next_action"]["command"] == backend_action
+    assert first_action["id"] == "final_handoff_index"
+    assert first_action["command"] == backend_action
+    assert provider_action in result.report["operator_actions"]
+
+
 def test_ios_device_launch_rehearsal_full_actions_dedupes_deploy_writer_roots() -> None:
     bare_writer = (
         "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "

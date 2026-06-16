@@ -747,9 +747,9 @@ def _operator_action_for_gate(gate: dict[str, Any]) -> str:
     command = str(gate.get("command", ""))
     nested_actions = gate.get("operator_actions")
     if gate_id == "final_handoff_index" and isinstance(nested_actions, list):
-        for nested_action in nested_actions:
-            if isinstance(nested_action, str) and nested_action.strip():
-                return nested_action.strip()
+        preferred_action = _preferred_device_operator_action(nested_actions)
+        if preferred_action:
+            return preferred_action
     if gate_id == "final_handoff_index":
         return "run make final-handoff-index"
     if gate_id == "ios_deploy_config":
@@ -769,6 +769,31 @@ def _operator_action_for_gate(gate: dict[str, Any]) -> str:
     if command:
         return f"run {command}"
     return f"unblock {gate_id}"
+
+
+def _preferred_device_operator_action(actions: list[Any]) -> str:
+    normalized_actions = [
+        str(action).strip()
+        for action in actions
+        if isinstance(action, str) and action.strip()
+    ]
+    for action in normalized_actions:
+        if _is_device_operator_action(action):
+            return action
+    return normalized_actions[0] if normalized_actions else ""
+
+
+def _is_device_operator_action(action: str) -> bool:
+    lowered = action.lower()
+    if _is_backend_device_demo_handoff_action(action):
+        return True
+    if _is_ios_handoff_action(action):
+        return True
+    if "mobile-deploy-preflight" in lowered:
+        return True
+    if "mobile-xcode-build" in lowered or "xcode build" in lowered:
+        return True
+    return False
 
 
 def _gate_detail(gate: dict[str, Any]) -> str:
