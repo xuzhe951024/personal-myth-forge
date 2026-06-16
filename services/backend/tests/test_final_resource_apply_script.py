@@ -33,7 +33,11 @@ def script_repo(tmp_path: Path) -> Path:
     source_root = Path(__file__).resolve().parents[3]
     shutil.copytree(source_root / "services/backend/scripts", root / "services/backend/scripts")
     shutil.copytree(source_root / "apps/mobile/ios/scripts", root / "apps/mobile/ios/scripts")
-    shutil.copytree(source_root / "apps/mobile/ios/Config", root / "apps/mobile/ios/Config")
+    shutil.copytree(
+        source_root / "apps/mobile/ios/Config",
+        root / "apps/mobile/ios/Config",
+        ignore=shutil.ignore_patterns("Deployment.local.xcconfig"),
+    )
     (root / "services/backend").mkdir(parents=True, exist_ok=True)
     template = source_root / "services/backend/final-resources.env.example"
     if template.exists():

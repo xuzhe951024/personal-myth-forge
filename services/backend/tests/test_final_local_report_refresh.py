@@ -1782,7 +1782,12 @@ def _repo_fixture(tmp_path: Path) -> Path:
         shutil.copytree(
             source_root / relative_path,
             repo_root / relative_path,
-            ignore=shutil.ignore_patterns(".build", "__pycache__", ".DS_Store"),
+            ignore=shutil.ignore_patterns(
+                ".build",
+                "__pycache__",
+                ".DS_Store",
+                "Deployment.local.xcconfig",
+            ),
         )
     backend_root = repo_root / "services/backend"
     backend_root.mkdir(parents=True, exist_ok=True)

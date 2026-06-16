@@ -18,7 +18,11 @@ def script_repo(tmp_path: Path) -> Path:
     root = tmp_path / "repo"
     ios_root = root / "apps/mobile/ios"
     source_root = Path(__file__).resolve().parents[3]
-    shutil.copytree(source_root / "apps/mobile/ios/Config", ios_root / "Config")
+    shutil.copytree(
+        source_root / "apps/mobile/ios/Config",
+        ios_root / "Config",
+        ignore=shutil.ignore_patterns("Deployment.local.xcconfig"),
+    )
     shutil.copytree(source_root / "apps/mobile/ios/scripts", ios_root / "scripts")
     subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True, text=True)
     return root
