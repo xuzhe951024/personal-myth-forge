@@ -1858,6 +1858,31 @@ def test_ios_device_launch_rehearsal_readiness_prefers_device_action_over_provid
     assert provider_action in result.report["operator_actions"]
 
 
+def test_ios_device_launch_rehearsal_readiness_treats_rehearsal_rerun_as_device_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    provider_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+    rehearsal_action = "make ios-device-launch-rehearsal"
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"][0]["status"] = "blocked"
+    payload["sequence"][0]["operator_actions"] = [provider_action, rehearsal_action]
+    payload["operator_actions"] = [provider_action, rehearsal_action]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+
+    assert result.report["next_action"]["command"] == rehearsal_action
+    assert result.report["device_action_bundle"]["first_action"]["command"] == (
+        rehearsal_action
+    )
+    assert provider_action in result.report["operator_actions"]
+
+
 def test_ios_device_launch_rehearsal_full_actions_dedupes_deploy_writer_roots() -> None:
     bare_writer = (
         "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "

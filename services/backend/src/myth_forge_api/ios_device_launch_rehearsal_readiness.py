@@ -29,6 +29,7 @@ IOS_DEVICE_LAUNCH_REHEARSAL_RERUN_ACTION = (
 )
 IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT = 20
 IOS_DEVICE_ACTION_MARKERS = (
+    "ios-device-launch-rehearsal",
     "backend-device-demo",
     "mobile-deploy-preflight",
     "mobile-write-deploy-config-auto",

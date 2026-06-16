@@ -44,6 +44,7 @@ CERTIFICATE_PRINT_ACTION_MARKERS = (
     "/v1/print-quotes",
 )
 CERTIFICATE_IOS_HANDOFF_ACTION_MARKERS = (
+    "ios-device-launch-rehearsal",
     "mobile-write-deploy-config-auto",
     "mobile-deploy-preflight",
     "deployment.local.xcconfig",

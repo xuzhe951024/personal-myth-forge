@@ -539,6 +539,58 @@ def test_ios_device_launch_certificate_prefers_device_action_over_provider_actio
     assert provider_action in result.report["operator_actions"]
 
 
+def test_ios_device_launch_certificate_treats_rehearsal_rerun_as_device_action(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = local\n"
+        ),
+    )
+    provider_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+    rehearsal_action = "make ios-device-launch-rehearsal"
+
+    class StubFinalHandoffResult:
+        report = {
+            "kind": "final_handoff_index_report",
+            "status": "blocked",
+            "summary": {"blocked": 1},
+            "lanes_by_id": {},
+            "operator_actions": [provider_action, rehearsal_action],
+        }
+
+    monkeypatch.setattr(
+        "myth_forge_api.ios_device_launch_certificate.build_final_handoff_index_report",
+        lambda **kwargs: StubFinalHandoffResult(),
+    )
+
+    result = build_ios_device_launch_certificate_report(
+        settings=Settings(),
+        repo_root=repo_root,
+        final_demo_launch_report={
+            "kind": "final_demo_launch_report",
+            "mode": "local",
+            "overall_status": "partial",
+            "operator_actions": [provider_action],
+        },
+    )
+
+    assert result.report["first_blocker"]["command"] == rehearsal_action
+    assert result.report["next_action"]["command"] == rehearsal_action
+    assert result.report["device_action_bundle"]["first_action"]["command"] == (
+        rehearsal_action
+    )
+    assert provider_action in result.report["operator_actions"]
+
+
 def test_ios_device_launch_certificate_prioritizes_deploy_handoff_before_backend_url_child_action() -> None:
     deploy_action = (
         "provide DEVELOPMENT_TEAM in Deployment.local.xcconfig; "
