@@ -160,6 +160,7 @@ Bridge deliverable:
 - P0.562 final local report refresh retains final showcase print readiness prerequisite actions
 - P0.563 local print_asset handoff readiness defers third-party provider quote evidence
 - P0.564 backend test dotenv isolation prevents real provider keys from leaking into pytest
+- P0.565 local final acceptance app checks force local providers under configured env
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

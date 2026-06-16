@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from myth_forge_api.local_acceptance_app import local_acceptance_app
 from myth_forge_api.providers.capture_store import LocalCaptureStore
 
 
@@ -30,14 +31,10 @@ def run_capture_scene_handoff_acceptance(
 def _run_capture_scene_handoff_acceptance(
     capture_storage_dir: Path,
 ) -> CaptureSceneHandoffAcceptanceResult:
-    import myth_forge_api.main as api_main
-
     store = LocalCaptureStore(root_dir=capture_storage_dir)
-    original_build_capture_store = api_main.build_capture_store
     temporary_patch_restored = False
-    try:
-        api_main.build_capture_store = lambda: store
-        client = _test_client(api_main.app)
+    with local_acceptance_app(capture_store=store) as app:
+        client = _test_client(app)
         capture_response = client.post(
             "/v1/object-captures",
             data={
@@ -82,9 +79,7 @@ def _run_capture_scene_handoff_acceptance(
             _check("report_safe", _session_payload_is_safe(session_payload)),
             _check("temporary_patch_restored", False),
         ]
-    finally:
-        api_main.build_capture_store = original_build_capture_store
-        temporary_patch_restored = api_main.build_capture_store is original_build_capture_store
+    temporary_patch_restored = True
 
     checks[-1] = _check("temporary_patch_restored", temporary_patch_restored)
     failed = sum(1 for check in checks if check["status"] == "failed")

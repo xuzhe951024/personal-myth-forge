@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from myth_forge_api.main import app
+from myth_forge_api.local_acceptance_app import local_acceptance_app
 
 
 @dataclass(frozen=True)
@@ -21,40 +21,50 @@ def run_local_asset_handoff_acceptance(
     repo_root: str | Path | None = None,
 ) -> LocalAssetHandoffAcceptanceResult:
     _ = repo_root
-    client = _test_client()
-    response = client.post(
-        "/v1/myth-sessions",
-        json={
-            "object_observation": {
-                "label": "old brass key",
-                "materials": ["metal", "brass"],
-                "source": "acceptance_harness",
+    with local_acceptance_app() as app:
+        client = _test_client(app)
+        response = client.post(
+            "/v1/myth-sessions",
+            json={
+                "object_observation": {
+                    "label": "old brass key",
+                    "materials": ["metal", "brass"],
+                    "source": "acceptance_harness",
+                },
+                "context_capsule": {
+                    "current_theme": "deadline pressure",
+                    "desired_tone": "tender, strange",
+                },
             },
-            "context_capsule": {
-                "current_theme": "deadline pressure",
-                "desired_tone": "tender, strange",
-            },
-        },
-    )
-    payload = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
-    generated_asset = payload.get("generated_asset", {})
-    game_uri = generated_asset.get("uri", "") if isinstance(generated_asset, dict) else ""
-    game_response = client.get(game_uri) if game_uri else None
-    scene_variant = _scene_variant(payload)
-    scene_uri = scene_variant.get("uri", "") if scene_variant else ""
-    scene_response = client.get(scene_uri) if scene_uri else None
-    scene_text = scene_response.text if scene_response is not None else ""
-    checks = [
-        _check("session_created", response.status_code == 200),
-        _check("game_asset_downloadable", _game_asset_is_downloadable(game_uri, game_response)),
-        _check("scene_variant_present", scene_variant is not None),
-        _check("scene_variant_http_url", _is_backend_scene_url(scene_uri)),
-        _check(
-            "scene_downloaded",
-            scene_response is not None and scene_response.status_code == 200,
-        ),
-        _check("scene_content_safe", _scene_content_is_safe(scene_text, payload)),
-    ]
+        )
+        payload = (
+            response.json()
+            if response.headers.get("content-type", "").startswith("application/json")
+            else {}
+        )
+        generated_asset = payload.get("generated_asset", {})
+        game_uri = (
+            generated_asset.get("uri", "") if isinstance(generated_asset, dict) else ""
+        )
+        game_response = client.get(game_uri) if game_uri else None
+        scene_variant = _scene_variant(payload)
+        scene_uri = scene_variant.get("uri", "") if scene_variant else ""
+        scene_response = client.get(scene_uri) if scene_uri else None
+        scene_text = scene_response.text if scene_response is not None else ""
+        checks = [
+            _check("session_created", response.status_code == 200),
+            _check(
+                "game_asset_downloadable",
+                _game_asset_is_downloadable(game_uri, game_response),
+            ),
+            _check("scene_variant_present", scene_variant is not None),
+            _check("scene_variant_http_url", _is_backend_scene_url(scene_uri)),
+            _check(
+                "scene_downloaded",
+                scene_response is not None and scene_response.status_code == 200,
+            ),
+            _check("scene_content_safe", _scene_content_is_safe(scene_text, payload)),
+        ]
     failed = sum(1 for check in checks if check["status"] == "failed")
     report = {
         "kind": "local_asset_handoff_acceptance_report",
@@ -109,7 +119,7 @@ def _scene_variant(payload: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
-def _test_client():
+def _test_client(app):
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",

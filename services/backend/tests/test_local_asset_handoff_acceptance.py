@@ -34,3 +34,15 @@ def test_local_asset_handoff_acceptance_downloads_safe_scene_asset() -> None:
     assert "local://" not in report_text
     assert "data:image" not in report_text
     assert "/tmp" not in report_text
+
+
+def test_local_asset_handoff_ignores_configured_provider_env(monkeypatch) -> None:
+    monkeypatch.setenv("THREE_D_PROVIDER", "meshy")
+    monkeypatch.setenv("NPC_PROVIDER", "openai")
+    monkeypatch.delenv("MESHY_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    result = run_local_asset_handoff_acceptance()
+
+    assert result.exit_code == 0
+    assert result.report["generated_asset_provider"] == "local_stub"

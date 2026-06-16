@@ -43,3 +43,17 @@ def test_capture_scene_handoff_acceptance_runs_guided_scan_to_scene_asset() -> N
     assert "/Users/" not in report_text
     assert "Authorization" not in report_text
     assert "Bearer " not in report_text
+
+
+def test_capture_scene_handoff_ignores_configured_provider_env(monkeypatch) -> None:
+    monkeypatch.setenv("THREE_D_PROVIDER", "meshy")
+    monkeypatch.setenv("NPC_PROVIDER", "openai")
+    monkeypatch.delenv("MESHY_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    result = run_capture_scene_handoff_acceptance()
+
+    assert result.exit_code == 0
+    assert result.report["game_asset"]["uri"].startswith(
+        "http://testserver/v1/generated-assets/"
+    )
