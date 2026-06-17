@@ -735,13 +735,16 @@ def test_final_launch_closure_packet_routes_configured_evidence_through_live_con
     assert blocker["validation_command"] == "make final-configured-evidence-plan"
     assert blocker["requires_cost_consent"] is True
     assert blocker["live_provider_call"] is True
+    assert blocker["requires_user_confirmation"] is True
     assert action["command"] == expected_command
     assert action["validation_command"] == "make final-configured-evidence-plan"
     assert action["requires_cost_consent"] is True
     assert action["live_provider_call"] is True
+    assert action["requires_user_confirmation"] is True
     assert configured_action["command"] == expected_command
     assert configured_action["requires_cost_consent"] is True
     assert configured_action["live_provider_call"] is True
+    assert configured_action["requires_user_confirmation"] is True
     assert expected_command in operator_actions
     assert "make final-acceptance-configured" not in operator_actions
 

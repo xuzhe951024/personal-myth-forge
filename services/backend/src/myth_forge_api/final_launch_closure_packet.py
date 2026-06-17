@@ -748,6 +748,11 @@ def _closure_action(
     destination: str | None = None,
     operator_action: str | None = None,
 ) -> dict[str, Any]:
+    user_confirmation_required = (
+        requires_user_confirmation
+        or requires_cost_consent
+        or live_provider_call
+    )
     row = {
         "id": action_id,
         "label": label,
@@ -757,7 +762,7 @@ def _closure_action(
         "required": required,
         "secret": secret,
         "requires_user_input": requires_user_input,
-        "requires_user_confirmation": requires_user_confirmation,
+        "requires_user_confirmation": user_confirmation_required,
         "requires_cost_consent": requires_cost_consent,
         "global": global_action,
         "xcode_or_signing": xcode_or_signing,
