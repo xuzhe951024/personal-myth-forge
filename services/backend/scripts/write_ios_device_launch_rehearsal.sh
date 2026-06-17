@@ -27,6 +27,8 @@ run_report_command() {
 
 run_report_command "final rehearsal" make final-rehearsal-local
 
+run_report_command "iOS deploy runbook convergence" make ios-deploy-runbook-local
+
 run_report_command "configured preflight" sh -c '
   cd services/backend &&
   uv run python -m myth_forge_api.cli final-configured-preflight \

@@ -187,6 +187,7 @@ Bridge deliverable:
 - P0.589 final local report refresh prunes device fallbacks when live consent is first
 - P0.590 final external action ledger prunes device fallbacks when live provider is first
 - P0.591 final handoff index uses guarded live consent action
+- P0.592 iOS device rehearsal refreshes runbook before final handoff index to converge local device evidence
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

@@ -544,6 +544,7 @@ def test_write_ios_device_launch_rehearsal_accepts_blocked_report_exit_code(
 
     assert result.returncode == 0
     assert "accepted final rehearsal exit code 2" in result.stdout
+    assert "accepted iOS deploy runbook convergence exit code 2" in result.stdout
     assert "accepted configured preflight exit code 2" in result.stdout
     assert "accepted final handoff index exit code 2" in result.stdout
     assert "accepted iOS device launch certificate exit code 2" in result.stdout
@@ -562,7 +563,12 @@ def test_write_ios_device_launch_rehearsal_accepts_blocked_report_exit_code(
     fake_uv_args = (
         script_repo / "services/backend/.local/fake-uv-args.txt"
     ).read_text(encoding="utf-8")
-    assert "final-rehearsal-local" in fake_make_args
+    fake_make_lines = fake_make_args.splitlines()
+    assert "final-rehearsal-local" in fake_make_lines
+    assert "ios-deploy-runbook-local" in fake_make_lines
+    assert fake_make_lines.index("final-rehearsal-local") < fake_make_lines.index(
+        "ios-deploy-runbook-local"
+    )
     assert "final-configured-preflight" in fake_uv_args
     assert "final-handoff-index" in fake_uv_args
     assert "ios-device-launch-certificate" in fake_uv_args
@@ -601,8 +607,16 @@ def test_write_ios_device_launch_rehearsal_syncs_final_launch_after_rehearsal(
     fake_uv_args = (
         script_repo / "services/backend/.local/fake-uv-args.txt"
     ).read_text(encoding="utf-8")
+    fake_make_args = (
+        script_repo / "services/backend/.local/fake-make-args.txt"
+    ).read_text(encoding="utf-8")
 
     assert result.returncode == 0
+    fake_make_lines = fake_make_args.splitlines()
+    assert fake_make_lines == [
+        "final-rehearsal-local",
+        "ios-deploy-runbook-local",
+    ]
     assert fake_uv_args.rfind("ios-device-launch-rehearsal") < fake_uv_args.rfind(
         "final-demo-launch --mode local"
     )
