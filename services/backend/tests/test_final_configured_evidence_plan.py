@@ -159,11 +159,20 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
     assert steps["three_d_evaluation_configured"]["command"] == (
         "make backend-evaluate-3d-configured"
     )
+    assert steps["three_d_evaluation_configured"]["requires_cost_consent"] is True
+    assert steps["three_d_evaluation_configured"]["live_provider_call"] is True
+    assert steps["three_d_evaluation_configured"]["requires_user_confirmation"] is True
     assert steps["npc_evaluation_configured"]["status"] == "consent_required"
     assert steps["npc_evaluation_configured"]["command"] == (
         "make backend-evaluate-npc-configured"
     )
+    assert steps["npc_evaluation_configured"]["requires_cost_consent"] is True
+    assert steps["npc_evaluation_configured"]["live_provider_call"] is True
+    assert steps["npc_evaluation_configured"]["requires_user_confirmation"] is True
     assert steps["final_acceptance_configured"]["status"] == "consent_required"
+    assert steps["final_acceptance_configured"]["requires_cost_consent"] is True
+    assert steps["final_acceptance_configured"]["live_provider_call"] is True
+    assert steps["final_acceptance_configured"]["requires_user_confirmation"] is True
     assert steps["final_demo_launch_configured"]["command"] == (
         "make final-demo-launch-configured"
     )
@@ -174,6 +183,9 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
     )
     assert report["first_blocker"]["requires_live_provider_consent"] is True
+    assert report["first_blocker"]["requires_cost_consent"] is True
+    assert report["first_blocker"]["live_provider_call"] is True
+    assert report["first_blocker"]["requires_user_confirmation"] is True
     assert report["first_blocker"]["cost_risk"] is True
     assert report["first_blocker"]["would_write_backend_env"] is False
     assert report["first_blocker"]["would_write_ios_deploy_config"] is False
@@ -185,6 +197,9 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
     )
     assert report["next_action"]["source"] == "first_blocker"
+    assert report["next_action"]["requires_cost_consent"] is True
+    assert report["next_action"]["live_provider_call"] is True
+    assert report["next_action"]["requires_user_confirmation"] is True
     assert report["operator_actions"][:3] == [
         (
             "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "

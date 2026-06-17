@@ -254,8 +254,15 @@ def test_live_provider_evidence_operator_action_prefixes_live_consent(
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
         "rerun make live-provider-evidence"
     )
+    assert result.report["first_blocker"]["requires_live_provider_consent"] is True
+    assert result.report["first_blocker"]["requires_cost_consent"] is True
+    assert result.report["first_blocker"]["live_provider_call"] is True
+    assert result.report["first_blocker"]["requires_user_confirmation"] is True
     assert result.report["next_action"]["command"] == expected_action
     assert result.report["next_action"]["requires_live_provider_consent"] is True
+    assert result.report["next_action"]["requires_cost_consent"] is True
+    assert result.report["next_action"]["live_provider_call"] is True
+    assert result.report["next_action"]["requires_user_confirmation"] is True
     assert result.report["operator_actions"] == [expected_action]
 
 

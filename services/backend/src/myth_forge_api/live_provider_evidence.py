@@ -131,6 +131,7 @@ def _evidence_row(*, slot: EvidenceSlot, repo_root: Path) -> dict[str, Any]:
         "proof": slot.proof,
         "requires_live_provider_consent": slot.requires_live_provider_consent,
     }
+    base.update(_slot_live_confirmation_metadata(slot))
     if not path.exists():
         return base | {
             "status": "missing",
@@ -302,14 +303,18 @@ def _first_blocker(evidence: list[dict[str, Any]]) -> dict[str, Any] | None:
     for status in ("blocked", "missing", "partial"):
         for row in evidence:
             if row["status"] == status:
-                return {
-                    "id": row["id"],
-                    "label": row["label"],
-                    "status": row["status"],
-                    "classification": row["classification"],
-                    "command": row["command"],
-                    "detail": row["detail"],
-                } | _source_blocker_fields(row)
+                return (
+                    {
+                        "id": row["id"],
+                        "label": row["label"],
+                        "status": row["status"],
+                        "classification": row["classification"],
+                        "command": row["command"],
+                        "detail": row["detail"],
+                    }
+                    | _source_blocker_fields(row)
+                    | _live_metadata_from_row(row)
+                )
     return None
 
 
@@ -326,7 +331,7 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
         "requires_live_provider_consent": slot.requires_live_provider_consent,
         "validation_command": "make live-provider-evidence",
         "source": "first_blocker",
-    }
+    } | _slot_live_confirmation_metadata(slot)
 
 
 def _operator_actions(
@@ -401,6 +406,29 @@ def _source_blocker_fields(row: dict[str, Any]) -> dict[str, str]:
         )
         if key in row and str(row[key]).strip()
     }
+
+
+def _slot_live_confirmation_metadata(slot: EvidenceSlot) -> dict[str, bool]:
+    if not slot.requires_live_provider_consent:
+        return {}
+    return {
+        "requires_cost_consent": True,
+        "live_provider_call": True,
+        "requires_user_confirmation": True,
+    }
+
+
+def _live_metadata_from_row(row: dict[str, Any]) -> dict[str, bool]:
+    metadata: dict[str, bool] = {}
+    for key in (
+        "requires_live_provider_consent",
+        "requires_cost_consent",
+        "live_provider_call",
+        "requires_user_confirmation",
+    ):
+        if bool(row.get(key)):
+            metadata[key] = True
+    return metadata
 
 
 def _safety() -> dict[str, bool]:

@@ -237,6 +237,7 @@ def _step_row(
         "would_write_ios_deploy_config": definition.would_write_ios_deploy_config,
         "blocked_by": blocked_by,
     }
+    row.update(_live_confirmation_metadata(row))
     if evidence is not None:
         row["evidence_status"] = str(evidence.get("status", "missing"))
         row["evidence_path"] = str(evidence.get("path", ""))
@@ -428,6 +429,7 @@ def _action_from_step(step: dict[str, Any]) -> dict[str, Any]:
         "would_write_ios_deploy_config": step["would_write_ios_deploy_config"],
         "validation_command": validation_command,
     }
+    action.update(_live_confirmation_metadata(action))
     for key in ("source_blocker_id", "source_blocker_label"):
         if step.get(key) is not None:
             action[key] = step[key]
@@ -435,6 +437,21 @@ def _action_from_step(step: dict[str, Any]) -> dict[str, Any]:
         if step.get(key) is not None:
             action[key] = step[key]
     return action
+
+
+def _live_confirmation_metadata(source: dict[str, Any]) -> dict[str, bool]:
+    metadata: dict[str, bool] = {}
+    if bool(source.get("cost_risk")):
+        metadata["requires_cost_consent"] = True
+    if bool(source.get("may_call_live_provider")):
+        metadata["live_provider_call"] = True
+    if (
+        bool(source.get("requires_live_provider_consent"))
+        or bool(source.get("cost_risk"))
+        or bool(source.get("may_call_live_provider"))
+    ):
+        metadata["requires_user_confirmation"] = True
+    return metadata
 
 
 def _summary(steps: list[dict[str, Any]]) -> dict[str, int]:
