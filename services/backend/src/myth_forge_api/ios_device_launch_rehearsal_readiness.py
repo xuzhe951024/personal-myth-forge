@@ -116,23 +116,38 @@ def build_ios_device_launch_rehearsal_readiness_report(
     if freshness["status"] == "stale":
         status = "blocked"
         blockers.append(_freshness_blocker(freshness))
+    unblocked_partial_rehearsal = _is_unblocked_partial_rehearsal_report(
+        saved_report=saved_report,
+        status=status,
+        freshness=freshness,
+    )
+    sequence = _sequence(
+        saved_report.get("sequence"),
+        unblocked_partial_rehearsal=unblocked_partial_rehearsal,
+    )
+    report_status = "ready" if unblocked_partial_rehearsal else status
     report = _base_report(
         repo_root=selected_repo_root,
-        status=status,
+        status=report_status,
         source_file=source_file,
         freshness=freshness,
-        summary=_summary(saved_report.get("summary")),
-        sequence=_sequence(saved_report.get("sequence")),
+        summary=(
+            _summary_from_sequence(sequence)
+            if unblocked_partial_rehearsal
+            else _summary(saved_report.get("summary"))
+        ),
+        sequence=sequence,
         operator_actions=_operator_actions(
             saved_report.get("operator_actions"),
             freshness=freshness,
+            suppress_rehearsal_fallback=unblocked_partial_rehearsal,
         ),
         commands=_commands(saved_report.get("commands")),
         blockers=blockers,
         saved_safety=saved_report.get("safety"),
     )
     return IOSDeviceLaunchRehearsalReadinessResult(
-        exit_code=0 if status in {"ready", "partial"} else 2,
+        exit_code=0 if report_status in {"ready", "partial"} else 2,
         report=report,
     )
 
@@ -536,7 +551,11 @@ def _empty_summary() -> dict[str, int]:
     }
 
 
-def _sequence(raw_sequence: Any) -> list[dict[str, Any]]:
+def _sequence(
+    raw_sequence: Any,
+    *,
+    unblocked_partial_rehearsal: bool = False,
+) -> list[dict[str, Any]]:
     if not isinstance(raw_sequence, list):
         return []
     rows: list[dict[str, Any]] = []
@@ -566,14 +585,59 @@ def _sequence(raw_sequence: Any) -> list[dict[str, Any]]:
         operator_actions = _bounded_operator_actions(raw_step.get("operator_actions"))
         if operator_actions:
             row["operator_actions"] = operator_actions
+        if _should_mark_unblocked_partial_rehearsal_row_ready(
+            row,
+            unblocked_partial_rehearsal=unblocked_partial_rehearsal,
+        ):
+            row["saved_status"] = row["status"]
+            row["status"] = "ready"
+            row.pop("operator_actions", None)
         rows.append(row)
     return rows[:8]
+
+
+def _is_unblocked_partial_rehearsal_report(
+    *,
+    saved_report: dict[str, Any],
+    status: str,
+    freshness: dict[str, Any],
+) -> bool:
+    return (
+        status == "partial"
+        and freshness["status"] != "stale"
+        and saved_report.get("first_blocker") is None
+        and saved_report.get("next_action") is None
+    )
+
+
+def _should_mark_unblocked_partial_rehearsal_row_ready(
+    row: dict[str, Any],
+    *,
+    unblocked_partial_rehearsal: bool,
+) -> bool:
+    if not unblocked_partial_rehearsal:
+        return False
+    if row.get("id") != "final_rehearsal_local":
+        return False
+    return str(row.get("status", "")) in {"partial", "manual", "live"}
+
+
+def _summary_from_sequence(sequence: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "ready": sum(1 for row in sequence if row["status"] == "ready"),
+        "missing": sum(1 for row in sequence if row["status"] == "missing"),
+        "blocked": sum(1 for row in sequence if row["status"] == "blocked"),
+        "partial": sum(1 for row in sequence if row["status"] == "partial"),
+        "manual": sum(1 for row in sequence if row["status"] == "manual"),
+        "live": sum(1 for row in sequence if row["status"] == "live"),
+    }
 
 
 def _operator_actions(
     raw_actions: Any,
     *,
     freshness: dict[str, Any] | None = None,
+    suppress_rehearsal_fallback: bool = False,
 ) -> list[str]:
     if freshness is not None and freshness["status"] == "stale":
         existing_actions = (
@@ -597,9 +661,15 @@ def _operator_actions(
         for action in raw_actions
         if isinstance(action, str) and action
     ]
+    if suppress_rehearsal_fallback:
+        actions = [
+            action for action in actions if not _is_backend_device_demo_action(action)
+        ]
     deduped = prefer_project_local_ios_deploy_handoff_actions(_dedupe(actions))
     deduped = prefer_guarded_print_quote_handoff_actions(deduped)
     deduped = prefer_provider_fill_guide_handoff_actions(deduped)
+    if suppress_rehearsal_fallback:
+        return deduped[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
     return (
         deduped[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
         or [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
@@ -634,6 +704,14 @@ def _preferred_device_operator_action(actions: list[Any]) -> str:
 def _is_device_operator_action(action: str) -> bool:
     lowered = action.lower()
     return any(marker in lowered for marker in IOS_DEVICE_ACTION_MARKERS)
+
+
+def _is_backend_device_demo_action(action: str) -> bool:
+    lowered = action.lower()
+    return (
+        "backend-device-demo" in lowered
+        or "rerun make mobile-deploy-preflight" in lowered
+    )
 
 
 def _commands(raw_commands: Any) -> list[str]:

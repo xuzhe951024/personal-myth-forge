@@ -1274,6 +1274,62 @@ def test_ios_device_launch_rehearsal_readiness_exposes_device_action_bundle(
     assert bundle["safety"]["xcode_or_signing"] is False
 
 
+def test_ios_device_launch_rehearsal_readiness_treats_unblocked_partial_rehearsal_as_ready(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="partial")
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["first_blocker"] = None
+    payload["next_action"] = None
+    payload["operator_actions"] = [
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    ]
+    payload["sequence"] = [
+        {
+            "id": "final_rehearsal_local",
+            "label": "Local final rehearsal",
+            "status": "partial",
+            "command": "make final-rehearsal-local",
+            "classification": "saved_report_set",
+        },
+        {
+            "id": "final_configured_preflight",
+            "label": "Configured preflight",
+            "status": "ready",
+            "command": "make final-configured-preflight",
+            "classification": "saved_report",
+        },
+        {
+            "id": "final_handoff_index",
+            "label": "Final handoff index",
+            "status": "ready",
+            "command": "make final-handoff-index",
+            "classification": "saved_report",
+        },
+        {
+            "id": "ios_device_launch_certificate",
+            "label": "iOS device launch certificate",
+            "status": "ready",
+            "command": "make ios-device-launch-certificate",
+            "classification": "saved_report",
+        },
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    sequence = {row["id"]: row for row in result.report["sequence"]}
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
+    assert result.report["first_blocker"] is None
+    assert result.report["next_action"] is None
+    assert result.report["operator_actions"] == []
+    assert sequence["final_rehearsal_local"]["status"] == "ready"
+    assert sequence["final_rehearsal_local"]["saved_status"] == "partial"
+
+
 def test_ios_device_launch_rehearsal_readiness_sanitizes_sequence_detail(
     tmp_path: Path,
 ) -> None:
