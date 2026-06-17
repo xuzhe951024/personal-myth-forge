@@ -31,6 +31,14 @@ from myth_forge_api.operator_actions import normalize_operator_action
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
 FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND = "make final-configured-evidence-plan"
+CONFIGURED_LIVE_EVALUATION_PREREQUISITE_IDS = {
+    "three_d_evaluation_configured",
+    "npc_evaluation_configured",
+}
+CONFIGURED_LIVE_DOWNSTREAM_STEP_IDS = {
+    "final_acceptance_configured",
+    "final_demo_launch_configured",
+}
 
 
 @dataclass(frozen=True)
@@ -488,6 +496,7 @@ def _source_summary(report: dict[str, Any]) -> dict[str, Any]:
 
 def _operator_actions(steps: list[dict[str, Any]]) -> list[str]:
     actions: list[str] = []
+    missing_live_prerequisites = _missing_configured_live_prerequisite_ids(steps)
     for step in steps:
         status = str(step["status"])
         if status == "blocked":
@@ -498,11 +507,38 @@ def _operator_actions(steps: list[dict[str, Any]]) -> list[str]:
                 blocked_by = step.get("blocked_by", [])
                 suffix = f" after {', '.join(blocked_by)}" if blocked_by else ""
                 actions.append(f"unblock {step['id']}{suffix}")
-        elif status == "consent_required":
+        elif status == "consent_required" and _should_surface_consent_action(
+            step,
+            missing_live_prerequisites=missing_live_prerequisites,
+        ):
             actions.append(_consent_required_action(step))
     if not actions:
         actions.append("run configured evidence commands in order")
     return _prefer_apply_preview_before_apply(_dedupe(actions))[:12]
+
+
+def _missing_configured_live_prerequisite_ids(
+    steps: list[dict[str, Any]],
+) -> set[str]:
+    missing: set[str] = set()
+    for step in steps:
+        step_id = str(step.get("id", ""))
+        if step_id not in CONFIGURED_LIVE_EVALUATION_PREREQUISITE_IDS:
+            continue
+        if str(step.get("status", "")) != "ready":
+            missing.add(step_id)
+    return missing
+
+
+def _should_surface_consent_action(
+    step: dict[str, Any],
+    *,
+    missing_live_prerequisites: set[str],
+) -> bool:
+    step_id = str(step.get("id", ""))
+    if step_id in CONFIGURED_LIVE_DOWNSTREAM_STEP_IDS:
+        return not missing_live_prerequisites
+    return True
 
 
 def _source_blocker_operator_action(step: dict[str, Any]) -> str:

@@ -213,10 +213,6 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
             "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
             "rerun make final-configured-evidence-plan"
         ),
-        (
-            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
-            "rerun make final-configured-evidence-plan"
-        ),
     ]
     monkeypatch.setattr(
         "myth_forge_api.configured_live_evidence_bundle.build_live_provider_evidence_report",
@@ -284,7 +280,7 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
     assert report["next_action"]["requires_cost_consent"] is True
     assert report["next_action"]["live_provider_call"] is True
     assert report["next_action"]["requires_user_confirmation"] is True
-    assert report["operator_actions"][:3] == expected_actions
+    assert report["operator_actions"][:2] == expected_actions
     assert live_evidence_command not in report["operator_actions"]
     assert "make final-acceptance-configured" not in report["operator_actions"]
     assert "make provider-handoff" not in report["operator_actions"]
@@ -341,7 +337,7 @@ def test_configured_live_evidence_bundle_prunes_validated_demo_fallback_with_con
     )
     report = result.report
 
-    assert report["operator_actions"][:3] == [
+    assert report["operator_actions"][:2] == [
         (
             "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
             "rerun make final-configured-evidence-plan"
@@ -350,11 +346,8 @@ def test_configured_live_evidence_bundle_prunes_validated_demo_fallback_with_con
             "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
             "rerun make final-configured-evidence-plan"
         ),
-        (
-            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
-            "rerun make final-configured-evidence-plan"
-        ),
     ]
+    assert "make final-acceptance-configured" not in report["operator_actions"]
     assert validated_demo_fallback not in report["operator_actions"]
     assert "make final-demo-launch-configured" not in report["operator_actions"]
 

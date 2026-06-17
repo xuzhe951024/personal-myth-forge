@@ -200,7 +200,7 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
     assert report["next_action"]["requires_cost_consent"] is True
     assert report["next_action"]["live_provider_call"] is True
     assert report["next_action"]["requires_user_confirmation"] is True
-    assert report["operator_actions"][:3] == [
+    assert report["operator_actions"][:2] == [
         (
             "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
             "rerun make final-configured-evidence-plan"
@@ -209,11 +209,15 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
             "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
             "rerun make final-configured-evidence-plan"
         ),
-        (
-            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
-            "rerun make final-configured-evidence-plan"
-        ),
     ]
+    assert not any(
+        "final-acceptance-configured" in action
+        for action in report["operator_actions"]
+    )
+    assert not any(
+        "final-demo-launch-configured" in action
+        for action in report["operator_actions"]
+    )
     assert not any(
         action.startswith("review live provider cost consent")
         for action in report["operator_actions"]
