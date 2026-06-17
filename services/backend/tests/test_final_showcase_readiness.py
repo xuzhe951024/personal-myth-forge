@@ -997,7 +997,12 @@ def test_final_showcase_readiness_marks_local_print_handoff_ready_without_provid
     assert rows["provider_key_handoff"]["status"] == "partial"
     assert result.report["evidence"]["final_resource_apply_preview"]["status"] == "ready"
     assert "final_resource_apply_preview:ready" in rows["provider_key_handoff"]["evidence"]
-    assert rows["provider_key_handoff"]["command"] == "make live-provider-evidence"
+    assert rows["provider_key_handoff"]["command"] == (
+        "make provider-handoff; rerun make live-provider-evidence"
+    )
+    assert rows["provider_key_handoff"]["validation_command"] == (
+        "make live-provider-evidence"
+    )
     assert rows["functional_regression"]["status"] == "ready"
     assert rows["visual_regression"]["status"] == "ready"
     assert result.report["first_blocker"]["id"] == "ios_deployable"
@@ -1163,7 +1168,11 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
         "rerun make provider-handoff; rerun make live-provider-evidence"
     )
 
-    for row_id in ("game_asset_3d_generation", "ai_agent_npc"):
+    for row_id in (
+        "game_asset_3d_generation",
+        "ai_agent_npc",
+        "provider_key_handoff",
+    ):
         row = rows[row_id]
         assert row["status"] == "partial"
         assert row["command"] == provider_handoff_command

@@ -747,6 +747,8 @@ def _provider_key_handoff_capability(
         resource_handoff_status,
     }
     validation_command = ""
+    requires_live_provider_consent = None
+    completion_requires_live_provider_consent = None
     if "blocked" in local_resource_statuses:
         status = "blocked"
         classification = "provider_handoff_incomplete"
@@ -755,7 +757,16 @@ def _provider_key_handoff_capability(
     elif live_status != "ready":
         status = "partial"
         classification = "live_provider_evidence_unproven"
-        command = "make live-provider-evidence"
+        child_command, child_validation_command, child_requires_consent = (
+            _report_next_action_metadata(live_provider_evidence)
+        )
+        command = (
+            _operator_action_with_validation(child_command, child_validation_command)
+            or "make live-provider-evidence"
+        )
+        validation_command = child_validation_command
+        requires_live_provider_consent = child_requires_consent
+        completion_requires_live_provider_consent = True
     elif configured_bundle_status != "ready":
         status = "partial"
         classification = "configured_evidence_bundle_unproven"
@@ -776,6 +787,10 @@ def _provider_key_handoff_capability(
             else "Final resources, apply preview, resource handoff, live provider evidence, and configured evidence bundle are ready."
         ),
         validation_command=validation_command or None,
+        requires_live_provider_consent=requires_live_provider_consent,
+        completion_requires_live_provider_consent=(
+            completion_requires_live_provider_consent
+        ),
         evidence=[
             f"final_resources:{final_resources.get('status', 'unknown')}",
             (
