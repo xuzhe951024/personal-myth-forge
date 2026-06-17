@@ -1520,6 +1520,80 @@ def test_final_local_report_refresh_step_hint_prefers_child_next_action(
     assert "make ios-device-launch-rehearsal" not in step["detail"]
 
 
+def test_final_local_report_refresh_guards_configured_evidence_consent_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    guarded_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+
+    def consent_required_plan(_repo_root: Path) -> dict[str, object]:
+        return {
+            "kind": "final_configured_evidence_plan_report",
+            "status": "consent_required",
+            "first_blocker": {
+                "id": "three_d_evaluation_configured",
+                "label": "Configured 3D evaluation",
+                "status": "consent_required",
+                "classification": "consent_required",
+                "command": "make backend-evaluate-3d-configured",
+                "detail": (
+                    "Missing "
+                    "services/backend/.local/3d-evaluation-configured.json."
+                ),
+                "requires_live_provider_consent": True,
+                "may_call_live_provider": True,
+                "cost_risk": True,
+                "validation_command": "make final-configured-evidence-plan",
+            },
+            "next_action": {
+                "id": "three_d_evaluation_configured",
+                "label": "Configured 3D evaluation",
+                "status": "consent_required",
+                "classification": "consent_required",
+                "command": "make backend-evaluate-3d-configured",
+                "detail": (
+                    "Missing "
+                    "services/backend/.local/3d-evaluation-configured.json."
+                ),
+                "requires_live_provider_consent": True,
+                "may_call_live_provider": True,
+                "cost_risk": True,
+                "validation_command": "make final-configured-evidence-plan",
+                "source": "first_blocker",
+            },
+            "operator_actions": [
+                "review live provider cost consent before three_d_evaluation_configured"
+            ],
+        }
+
+    result = run_final_local_report_refresh(
+        repo_root=repo_root,
+        extra_steps={"final_configured_evidence_plan": consent_required_plan},
+    )
+
+    step = result.report["steps_by_id"]["final_configured_evidence_plan"]
+    promoted_actions_text = json.dumps(
+        {
+            "step": step,
+            "operator_actions": result.report["operator_actions"],
+        }
+    )
+
+    assert result.exit_code == 2
+    assert step["status"] == "blocked"
+    assert step["raw_status"] == "consent_required"
+    assert step["classification"] == "consent_required"
+    assert step["command"] == guarded_action
+    assert step["validation_command"] == "make live-provider-evidence"
+    assert step["next_action"]["command"] == guarded_action
+    assert step["next_action"]["validation_command"] == "make live-provider-evidence"
+    assert guarded_action in result.report["operator_actions"]
+    assert "make backend-evaluate-3d-configured" not in promoted_actions_text
+
+
 def test_final_local_report_refresh_step_hint_uses_child_next_commands(
     tmp_path: Path,
 ) -> None:

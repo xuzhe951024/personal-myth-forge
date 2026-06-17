@@ -19,6 +19,9 @@ from myth_forge_api.evaluation.three_d import (
     DEFAULT_THREE_D_EVALUATION_SUITE,
     run_three_d_evaluation,
 )
+from myth_forge_api.configured_acceptance_command import (
+    CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
+)
 from myth_forge_api.final_acceptance import (
     CommandExecutionResult,
     run_final_acceptance,
@@ -97,6 +100,10 @@ FINAL_LOCAL_REPORT_PROVIDER_HANDOFF_ACTION_MARKERS = (
     "provider-handoff",
 )
 FINAL_LOCAL_REPORT_PROVIDER_CHAIN_ACTION = PROVIDER_LIVE_HANDOFF_ACTION
+FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION = (
+    f"PMF_ALLOW_LIVE_PROVIDER_CALLS=1 {CONFIGURED_FINAL_ACCEPTANCE_COMMAND}; "
+    "rerun make live-provider-evidence"
+)
 FINAL_LOCAL_REPORT_WEAK_PROVIDER_ACTION_ROOTS = {
     FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
     (
@@ -1762,6 +1769,9 @@ def _hint_from_report_action(
     action: dict[str, Any],
 ) -> dict[str, str]:
     hint = _hint_from_mapping(action)
+    if _is_configured_evidence_live_consent_action(report, action):
+        hint["command"] = FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
+        hint["validation_command"] = "make live-provider-evidence"
     if report.get("kind") == "final_acceptance_report":
         checks = report.get("checks")
         if isinstance(checks, list):
@@ -1769,6 +1779,21 @@ def _hint_from_report_action(
             if detail:
                 hint["detail"] = detail
     return hint
+
+
+def _is_configured_evidence_live_consent_action(
+    report: dict[str, Any],
+    action: dict[str, Any],
+) -> bool:
+    return (
+        report.get("kind") == "final_configured_evidence_plan_report"
+        and str(action.get("status") or "").strip() == "consent_required"
+        and (
+            bool(action.get("requires_live_provider_consent"))
+            or bool(action.get("may_call_live_provider"))
+            or bool(action.get("cost_risk"))
+        )
+    )
 
 
 def _hint_from_mapping(source: dict[str, Any]) -> dict[str, str]:
