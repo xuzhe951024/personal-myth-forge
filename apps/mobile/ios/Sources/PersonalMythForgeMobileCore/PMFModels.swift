@@ -1593,6 +1593,9 @@ public struct FinalExternalActionLedgerBlocker: Codable, Equatable, Sendable {
     public var destination: String?
     public var validationCommand: String?
     public var source: String?
+    public var requiresUserConfirmation: Bool?
+    public var requiresCostConsent: Bool?
+    public var liveProviderCall: Bool?
 
     public init(
         id: String,
@@ -1605,7 +1608,10 @@ public struct FinalExternalActionLedgerBlocker: Codable, Equatable, Sendable {
         groupLabel: String,
         destination: String? = nil,
         validationCommand: String? = nil,
-        source: String? = nil
+        source: String? = nil,
+        requiresUserConfirmation: Bool? = nil,
+        requiresCostConsent: Bool? = nil,
+        liveProviderCall: Bool? = nil
     ) {
         self.id = id
         self.label = label
@@ -1618,6 +1624,9 @@ public struct FinalExternalActionLedgerBlocker: Codable, Equatable, Sendable {
         self.destination = destination
         self.validationCommand = validationCommand
         self.source = source
+        self.requiresUserConfirmation = requiresUserConfirmation
+        self.requiresCostConsent = requiresCostConsent
+        self.liveProviderCall = liveProviderCall
     }
 }
 

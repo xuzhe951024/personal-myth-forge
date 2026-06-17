@@ -814,7 +814,7 @@ public enum FinalLaunchMobileSummaryBuilder {
         let selected = attention.isEmpty ? report.actionGroups : attention
         rows.append(contentsOf: selected.prefix(3).map(externalActionGroupRow))
         rows.append(
-            "Consent: global confirmation \(flag(report.safety.requiresUserConfirmationForGlobalActions)), live cost consent \(flag(report.safety.requiresCostConsentForLiveActions))."
+            "Consent: global confirmation \(flag(report.safety.requiresUserConfirmationForGlobalActions)), live cost consent \(flag(report.safety.requiresCostConsentForLiveActions)), action confirmation \(flag(report.summary.requiresUserConfirmation > 0))."
         )
         rows.append(
             "Safety: commands_run=\(flag(report.safety.commandsRun)) global_mutation=\(flag(report.safety.globalMutation)) live_calls=\(flag(report.safety.liveProviderCalls))"
@@ -870,6 +870,7 @@ public enum FinalLaunchMobileSummaryBuilder {
         if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
             parts.append("validate \(validationCommand)")
         }
+        parts.append(contentsOf: externalActionConsentMarkers(action))
         return sanitize(parts.joined(separator: " | "))
     }
 
@@ -884,7 +885,24 @@ public enum FinalLaunchMobileSummaryBuilder {
         if let classification = blocker.classification, !classification.isEmpty {
             parts.append(classification)
         }
+        parts.append(contentsOf: externalActionConsentMarkers(blocker))
         return sanitize(parts.joined(separator: " | "))
+    }
+
+    private static func externalActionConsentMarkers(
+        _ action: FinalExternalActionLedgerBlocker
+    ) -> [String] {
+        var markers: [String] = []
+        if action.requiresUserConfirmation == true {
+            markers.append("user confirmation required")
+        }
+        if action.requiresCostConsent == true {
+            markers.append("cost consent required")
+        }
+        if action.liveProviderCall == true {
+            markers.append("live provider call")
+        }
+        return markers
     }
 
     private static func externalActionGroupRow(
@@ -893,7 +911,7 @@ public enum FinalLaunchMobileSummaryBuilder {
         let summary = group.summary
         var parts = [
             "\(group.id): \(group.status)",
-            "actions \(summary.actions), missing \(summary.missing), blocked \(summary.blocked), live \(summary.live), manual \(summary.manual)",
+            "actions \(summary.actions), missing \(summary.missing), blocked \(summary.blocked), live \(summary.live), manual \(summary.manual), confirmations \(summary.requiresUserConfirmation)",
         ]
         if let action = group.actions.first {
             parts.append("\(action.id) | \(action.command) | \(action.detail)")

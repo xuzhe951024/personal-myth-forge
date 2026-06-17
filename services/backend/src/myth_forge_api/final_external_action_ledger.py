@@ -510,6 +510,7 @@ def _live_action(
         detail=detail,
         live_provider_call=live_provider_call,
         requires_cost_consent=requires_cost_consent,
+        requires_user_confirmation=requires_cost_consent or live_provider_call,
         operator_action=operator_action or _live_provider_operator_action(command),
     )
 

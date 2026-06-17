@@ -180,6 +180,7 @@ do {
     try testDecodesFinalResourceApplyPreviewFromFinalLaunchPayload()
     try testFinalLaunchMobileSummaryShowsResourceApplyPreview()
     try testDecodesFinalExternalActionLedgerFromFinalLaunchPayload()
+    try testFinalExternalActionLedgerLiveActionsRequireConfirmation()
     try testFinalLaunchMobileSummaryShowsExternalActionLedger()
     try testFinalLaunchMobileSummaryShowsExternalActionLedgerBackendHandoff()
     try testFinalLaunchMobileSummaryRedactsUnsafeExternalActionLedger()
@@ -5041,6 +5042,37 @@ private func testDecodesFinalExternalActionLedgerFromFinalLaunchPayload() throws
     try expectTrue(ledger.safety.requiresCostConsentForLiveActions)
 }
 
+private func testFinalExternalActionLedgerLiveActionsRequireConfirmation() throws {
+    let report = try PMFJSON.decoder.decode(
+        FinalDemoLaunchReport.self,
+        from: finalDemoLaunchPayload()
+    )
+    let ledger = try require(
+        report.finalExternalActionLedger,
+        "missing final external action ledger"
+    )
+    let liveGroup = try require(
+        ledger.actionGroups.first(where: { $0.id == "live_provider_costs" }),
+        "missing live provider costs group"
+    )
+    let liveAction = try require(
+        liveGroup.actions.first(where: { $0.id == "run_live_provider_evidence" }),
+        "missing live provider evidence action"
+    )
+
+    try expectEqual(liveGroup.summary.requiresUserConfirmation, 1)
+    try expectEqual(liveAction.requiresUserConfirmation, true)
+    try expectEqual(liveAction.requiresCostConsent, true)
+    try expectEqual(liveAction.liveProviderCall, true)
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+    let text = summary.externalActionLedgerRows.joined(separator: " ")
+
+    try expectContains(text, "action confirmation true")
+    try expectContains(text, "live_provider_costs: live")
+    try expectContains(text, "confirmations 1")
+}
+
 private func testFinalLaunchMobileSummaryShowsExternalActionLedger() throws {
     let summary = FinalLaunchMobileSummaryBuilder.build(
         report: finalDemoLaunchReport(),
@@ -8477,7 +8509,7 @@ private func finalDemoLaunchPayload(
     )
     let externalActionLedgerSummaryJSON = externalActionLedgerReady
         ? #"{"groups": 5, "actions": 27, "ready": 27, "missing": 0, "blocked": 0, "manual": 0, "live": 0, "partial": 0, "optional": 8, "secret": 4, "requires_user_confirmation": 0, "requires_cost_consent": 0, "global": 0, "safe_local_write": 2, "live_provider_call": 0}"#
-        : #"{"groups": 5, "actions": 27, "ready": 0, "missing": 6, "blocked": 4, "manual": 5, "live": 5, "partial": 0, "optional": 8, "secret": 4, "requires_user_confirmation": 3, "requires_cost_consent": 5, "global": 3, "safe_local_write": 2, "live_provider_call": 5}"#
+        : #"{"groups": 5, "actions": 27, "ready": 0, "missing": 6, "blocked": 4, "manual": 5, "live": 5, "partial": 0, "optional": 8, "secret": 4, "requires_user_confirmation": 4, "requires_cost_consent": 5, "global": 3, "safe_local_write": 2, "live_provider_call": 5}"#
     let externalActionLedgerFirstBlockerJSON = externalActionLedgerReady ? "null" : """
             {
               "id": "provide_MESHY_API_KEY",
@@ -8512,7 +8544,7 @@ private func finalDemoLaunchPayload(
     let externalActionLedgerLiveGroupStatus = externalActionLedgerReady ? "ready" : "live"
     let externalActionLedgerLiveGroupSummaryJSON = externalActionLedgerReady
         ? #"{"actions": 5, "ready": 5, "missing": 0, "blocked": 0, "manual": 0, "live": 0, "partial": 0, "optional": 0, "secret": 0, "requires_user_confirmation": 0, "requires_cost_consent": 0}"#
-        : #"{"actions": 5, "ready": 0, "missing": 0, "blocked": 0, "manual": 0, "live": 5, "partial": 0, "optional": 0, "secret": 0, "requires_user_confirmation": 0, "requires_cost_consent": 5}"#
+        : #"{"actions": 5, "ready": 0, "missing": 0, "blocked": 0, "manual": 0, "live": 5, "partial": 0, "optional": 0, "secret": 0, "requires_user_confirmation": 1, "requires_cost_consent": 5}"#
     let finalShowcaseCapabilityID = finalShowcaseReadinessUsesCompletionConsentBlocker
         ? "game_asset_3d_generation"
         : "ios_deployable"
@@ -9330,7 +9362,7 @@ private func finalDemoLaunchPayload(
                     "required": true,
                     "secret": false,
                     "requires_user_input": false,
-                    "requires_user_confirmation": false,
+                    "requires_user_confirmation": true,
                     "requires_cost_consent": true,
                     "global": false,
                     "xcode_or_signing": false,
