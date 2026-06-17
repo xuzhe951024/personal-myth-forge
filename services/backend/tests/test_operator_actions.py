@@ -71,6 +71,21 @@ def test_normalizes_run_prefixed_mobile_deploy_writer_command() -> None:
     )
 
 
+def test_normalize_operator_action_dedupes_repeated_rerun_targets() -> None:
+    action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence; "
+        "rerun make ios-device-launch-rehearsal; "
+        "rerun make ios-device-launch-rehearsal;"
+    )
+
+    assert normalize_operator_action(action) == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+
+
 def test_prefers_project_local_ios_deploy_handoff_over_manual_team_action() -> None:
     actions = operator_actions.prefer_project_local_ios_deploy_handoff_actions(
         [

@@ -526,6 +526,50 @@ def test_final_showcase_readiness_next_action_uses_saved_rehearsal_child_action(
     assert action["detail"] == blocker["detail"]
 
 
+def test_final_showcase_readiness_dedupes_repeated_rehearsal_rerun_commands(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_ready(repo_root)
+    _write_mobile_xcode_build_evidence_ready(repo_root)
+    duplicated_command = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence; "
+        "rerun make ios-device-launch-rehearsal; "
+        "rerun make ios-device-launch-rehearsal;"
+    )
+    expected_command = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+    duplicate_fragment = (
+        "rerun make ios-device-launch-rehearsal; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+    _write_ios_device_launch_rehearsal_with_next_action(
+        repo_root,
+        command=duplicated_command,
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    report = result.report
+
+    assert result.exit_code == 2
+    assert report["capabilities_by_id"]["ios_deployable"]["command"] == (
+        expected_command
+    )
+    assert report["first_blocker"]["command"] == expected_command
+    assert report["next_action"]["command"] == expected_command
+    assert all(
+        duplicate_fragment not in action
+        for action in report["operator_actions"]
+    )
+
+
 def test_final_showcase_readiness_functional_regression_detail_dedupes_validation(
     tmp_path: Path,
 ) -> None:

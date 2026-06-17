@@ -261,6 +261,7 @@ MOBILE_DEPLOY_VALIDATION_ACTION_ROOTS = (
 def normalize_operator_action(action: str) -> str:
     normalized = action.strip()
     command_part, detail_suffix = _split_detail_suffix(normalized)
+    command_part = _dedupe_rerun_command_part(command_part)
     legacy_request_action = _normalize_legacy_print_quote_request_action(command_part)
     if legacy_request_action is not None:
         return f"{legacy_request_action}{detail_suffix}"
@@ -765,6 +766,25 @@ def _split_detail_suffix(action: str) -> tuple[str, str]:
     if not separator:
         return action, ""
     return command.strip(), f"{separator}{detail}"
+
+
+def _dedupe_rerun_command_part(command_part: str) -> str:
+    parts = command_part.split("; rerun ")
+    if len(parts) == 1:
+        return command_part.rstrip(";").strip()
+
+    root = parts[0].rstrip(";").strip()
+    validations: list[str] = []
+    seen: set[str] = set()
+    for raw_validation in parts[1:]:
+        validation = raw_validation.rstrip(";").strip()
+        if not validation or validation in seen:
+            continue
+        seen.add(validation)
+        validations.append(validation)
+    if not validations:
+        return root
+    return f"{root}; rerun {'; rerun '.join(validations)}"
 
 
 def _normalized_command(action: str) -> str | None:
