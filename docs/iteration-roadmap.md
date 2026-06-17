@@ -172,6 +172,7 @@ Bridge deliverable:
 - P0.574 configured live evidence bundle routes live provider blockers through consent-aware next actions
 - P0.575 final handoff command normalization dedupes repeated iOS rehearsal reruns
 - P0.576 final handoff index keeps live provider actions out of local rehearsal lane
+- P0.577 iOS device rehearsal readiness prunes live acceptance-only actions from device handoff
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

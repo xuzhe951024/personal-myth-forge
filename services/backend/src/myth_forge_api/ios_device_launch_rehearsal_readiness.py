@@ -411,19 +411,10 @@ def _saved_next_action(
     operator_actions = row.get("operator_actions")
     if not isinstance(operator_actions, list) or not operator_actions:
         return None
-    first_operator_action = next(
-        (
-            operator_action
-            for operator_action in operator_actions
-            if isinstance(operator_action, str) and operator_action.strip()
-        ),
-        None,
-    )
-    if first_operator_action is None:
+    preferred_action = _preferred_device_operator_action(operator_actions)
+    if not preferred_action:
         return None
-    command, detail = _structured_next_action_parts(
-        _preferred_device_operator_action(operator_actions)
-    )
+    command, detail = _structured_next_action_parts(preferred_action)
     return {
         "id": action["id"],
         "label": action["label"],
@@ -642,9 +633,13 @@ def _operator_actions(
     if freshness is not None and freshness["status"] == "stale":
         existing_actions = (
             [
-                _validation_aware_operator_action(str(action))
+                normalized_action
                 for action in raw_actions
                 if isinstance(action, str) and action
+                for normalized_action in [
+                    _validation_aware_operator_action(str(action))
+                ]
+                if not _is_live_acceptance_action(normalized_action)
             ]
             if isinstance(raw_actions, list)
             else []
@@ -656,11 +651,14 @@ def _operator_actions(
         return deduped[:IOS_DEVICE_LAUNCH_REHEARSAL_ACTION_LIMIT]
     if not isinstance(raw_actions, list):
         return [f"run {IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND}"]
-    actions = [
-        _validation_aware_operator_action(str(action))
-        for action in raw_actions
-        if isinstance(action, str) and action
-    ]
+    actions = []
+    for action in raw_actions:
+        if not isinstance(action, str) or not action:
+            continue
+        normalized_action = _validation_aware_operator_action(str(action))
+        if _is_live_acceptance_action(normalized_action):
+            continue
+        actions.append(normalized_action)
     if suppress_rehearsal_fallback:
         actions = [
             action for action in actions if not _is_backend_device_demo_action(action)
@@ -679,11 +677,14 @@ def _operator_actions(
 def _bounded_operator_actions(raw_actions: Any) -> list[str]:
     if not isinstance(raw_actions, list):
         return []
-    actions = [
-        _validation_aware_operator_action(str(action))
-        for action in raw_actions
-        if isinstance(action, str) and action.strip()
-    ]
+    actions = []
+    for action in raw_actions:
+        if not isinstance(action, str) or not action.strip():
+            continue
+        normalized_action = _validation_aware_operator_action(str(action))
+        if _is_live_acceptance_action(normalized_action):
+            continue
+        actions.append(normalized_action)
     deduped = prefer_guarded_print_quote_handoff_actions(_dedupe(actions))
     deduped = prefer_provider_fill_guide_handoff_actions(deduped)
     return deduped[:4]
@@ -693,12 +694,27 @@ def _preferred_device_operator_action(actions: list[Any]) -> str:
     normalized_actions = [
         str(action).strip()
         for action in actions
-        if isinstance(action, str) and action.strip()
+        if (
+            isinstance(action, str)
+            and action.strip()
+            and not _is_live_acceptance_action(action)
+        )
     ]
     for action in normalized_actions:
         if _is_device_operator_action(action):
             return action
     return normalized_actions[0] if normalized_actions else ""
+
+
+def _is_live_acceptance_action(action: str) -> bool:
+    lowered = action.lower()
+    command, _separator, _detail = action.partition(" | ")
+    bare_command = _strip_saved_action_prefixes(command).lower()
+    return (
+        "pmf_allow_live_provider_calls=1" in lowered
+        or "final-acceptance-configured" in lowered
+        or bare_command.strip() == "make live-provider-evidence"
+    )
 
 
 def _is_device_operator_action(action: str) -> bool:

@@ -1911,7 +1911,7 @@ def test_ios_device_launch_rehearsal_readiness_prefers_device_action_over_provid
     assert result.report["next_action"]["command"] == backend_action
     assert first_action["id"] == "final_handoff_index"
     assert first_action["command"] == backend_action
-    assert provider_action in result.report["operator_actions"]
+    assert provider_action not in result.report["operator_actions"]
 
 
 def test_ios_device_launch_rehearsal_readiness_treats_rehearsal_rerun_as_device_action(
@@ -1936,7 +1936,60 @@ def test_ios_device_launch_rehearsal_readiness_treats_rehearsal_rerun_as_device_
     assert result.report["device_action_bundle"]["first_action"]["command"] == (
         rehearsal_action
     )
-    assert provider_action in result.report["operator_actions"]
+    assert provider_action not in result.report["operator_actions"]
+
+
+def test_ios_device_launch_rehearsal_readiness_prunes_live_acceptance_only_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    live_acceptance_action = (
+        "final_rehearsal_local: final_demo_launch_local: "
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+    bare_live_evidence_action = "final_rehearsal_local: make live-provider-evidence"
+    local_rehearsal_action = (
+        "make final-acceptance-local to write "
+        "services/backend/.local/final-acceptance-local.json; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+    provider_setup_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"][0]["status"] = "blocked"
+    payload["sequence"][0]["operator_actions"] = [
+        live_acceptance_action,
+        bare_live_evidence_action,
+        local_rehearsal_action,
+        provider_setup_action,
+    ]
+    payload["operator_actions"] = [
+        live_acceptance_action,
+        bare_live_evidence_action,
+        local_rehearsal_action,
+        provider_setup_action,
+    ]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    sequence_actions = result.report["sequence"][0]["operator_actions"]
+    first_action = result.report["device_action_bundle"]["first_action"]
+
+    assert result.exit_code == 2
+    assert live_acceptance_action not in result.report["operator_actions"]
+    assert bare_live_evidence_action not in result.report["operator_actions"]
+    assert live_acceptance_action not in sequence_actions
+    assert bare_live_evidence_action not in sequence_actions
+    assert local_rehearsal_action in result.report["operator_actions"]
+    assert provider_setup_action in result.report["operator_actions"]
+    assert provider_setup_action in sequence_actions
+    assert result.report["next_action"]["command"] == local_rehearsal_action
+    assert first_action["command"] == local_rehearsal_action
 
 
 def test_ios_device_launch_rehearsal_readiness_skips_self_referential_final_demo_row(

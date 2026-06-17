@@ -539,8 +539,7 @@ def test_final_showcase_readiness_dedupes_repeated_rehearsal_rerun_commands(
         "rerun make ios-device-launch-rehearsal;"
     )
     expected_command = (
-        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
-        "rerun make live-provider-evidence; "
+        "run make ios-device-launch-rehearsal; "
         "rerun make ios-device-launch-rehearsal"
     )
     duplicate_fragment = (
@@ -564,6 +563,7 @@ def test_final_showcase_readiness_dedupes_repeated_rehearsal_rerun_commands(
     )
     assert report["first_blocker"]["command"] == expected_command
     assert report["next_action"]["command"] == expected_command
+    assert "final-acceptance-configured" not in expected_command
     assert all(
         duplicate_fragment not in action
         for action in report["operator_actions"]
