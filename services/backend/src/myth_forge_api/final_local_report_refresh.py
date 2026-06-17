@@ -104,6 +104,7 @@ FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION = (
     f"PMF_ALLOW_LIVE_PROVIDER_CALLS=1 {CONFIGURED_FINAL_ACCEPTANCE_COMMAND}; "
     "rerun make live-provider-evidence"
 )
+LIVE_PROVIDER_CONSENT_PREFIX = "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
 FINAL_LOCAL_REPORT_WEAK_PROVIDER_ACTION_ROOTS = {
     FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
     (
@@ -1172,6 +1173,9 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     validation_deduped = prefer_guarded_print_quote_handoff_actions(validation_deduped)
     validation_deduped = prefer_provider_fill_guide_handoff_actions(validation_deduped)
     validation_deduped = _prefer_live_provider_consent_gate(validation_deduped)
+    validation_deduped = _prefer_granular_live_provider_consent_gate(
+        validation_deduped
+    )
     validation_deduped = prefer_project_local_ios_deploy_handoff_actions(
         validation_deduped
     )
@@ -1280,7 +1284,27 @@ def _prefer_live_provider_consent_gate(actions: list[str]) -> list[str]:
     ]
 
 
+def _prefer_granular_live_provider_consent_gate(actions: list[str]) -> list[str]:
+    if not any(_is_granular_live_provider_consent_action(action) for action in actions):
+        return actions
+    return [
+        action
+        for action in actions
+        if not _is_broad_live_provider_consent_action(action)
+    ]
+
+
 def _is_live_provider_consent_action(action: str) -> bool:
+    return _operator_action_root(action).startswith(LIVE_PROVIDER_CONSENT_PREFIX)
+
+
+def _is_granular_live_provider_consent_action(action: str) -> bool:
+    return _is_live_provider_consent_action(
+        action
+    ) and not _is_broad_live_provider_consent_action(action)
+
+
+def _is_broad_live_provider_consent_action(action: str) -> bool:
     return _operator_action_root(action) == FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
 
 

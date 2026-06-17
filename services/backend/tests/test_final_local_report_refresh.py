@@ -1109,6 +1109,54 @@ def test_final_local_report_refresh_operator_actions_prefer_live_consent_gate_ov
     assert actions == [live_consent_action]
 
 
+def test_final_local_report_refresh_operator_actions_prefer_granular_live_consent_gate() -> None:
+    granular_live_consent_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+    broad_live_consent_action = (
+        final_local_report_refresh.FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
+    )
+    provider_chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+    backend_device_demo = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight"
+    )
+
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_showcase_readiness",
+                "status": "blocked",
+                "command": granular_live_consent_action,
+                "report_operator_actions": [
+                    backend_device_demo,
+                    broad_live_consent_action,
+                    provider_chain,
+                ],
+            },
+            {
+                "id": "live_provider_evidence",
+                "status": "blocked",
+                "command": broad_live_consent_action,
+            },
+        ],
+        next_action={
+            "id": "final_configured_evidence_plan",
+            "label": "Final configured evidence plan",
+            "status": "blocked",
+            "classification": "consent_required",
+            "command": granular_live_consent_action,
+            "validation_command": "make final-configured-evidence-plan",
+        },
+    )
+
+    assert actions == [granular_live_consent_action]
+
+
 def test_final_local_report_refresh_operator_actions_drop_bare_apply_preview_when_provider_chain_exists() -> None:
     complete_provider_chain = (
         "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
