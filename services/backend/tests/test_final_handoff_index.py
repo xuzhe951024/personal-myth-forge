@@ -17,6 +17,10 @@ GUARDED_PRINT_QUOTE_ACTION = (
     "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
     "rerun make print-fulfillment-readiness"
 )
+GUARDED_LIVE_ACCEPTANCE_ACTION = (
+    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+    "rerun make live-provider-evidence"
+)
 
 
 def test_final_handoff_index_dedupes_legacy_print_quote_handoff_actions() -> None:
@@ -82,10 +86,11 @@ def test_final_handoff_index_blocks_missing_reports_without_leaks(
     assert "make final-configured-preflight" in result.report["commands"]
     assert "make final-handoff-index" in result.report["commands"]
     assert "make final-acceptance-configured" in result.report["commands"]
-    assert (
-        "approve live provider cost review before make final-acceptance-configured; "
-        "--allow-live-provider-calls consent required"
-    ) in result.report["operator_actions"]
+    assert GUARDED_LIVE_ACCEPTANCE_ACTION in result.report["operator_actions"]
+    assert not any(
+        action.startswith("approve live provider cost review")
+        for action in result.report["operator_actions"]
+    )
     assert result.report["operator_actions"][:2] == [
         "make final-rehearsal-local",
         "make final-configured-preflight; rerun make configured-live-evidence-bundle",

@@ -83,6 +83,10 @@ FINAL_HANDOFF_PRINT_ACTION_MARKERS = (
 FINAL_HANDOFF_LAN_BACKEND_URL_MARKER = "iphone-reachable lan url"
 FINAL_HANDOFF_BACKEND_DEVICE_DEMO_MARKER = "backend-device-demo"
 FINAL_HANDOFF_SOURCE_OPERATOR_ACTION_LIMIT = 6
+FINAL_HANDOFF_LIVE_ACCEPTANCE_ACTION = (
+    f"PMF_ALLOW_LIVE_PROVIDER_CALLS=1 {CONFIGURED_FINAL_ACCEPTANCE_COMMAND}; "
+    "rerun make live-provider-evidence"
+)
 
 
 @dataclass(frozen=True)
@@ -648,6 +652,8 @@ def _source_by_id(
 
 
 def _is_provider_handoff_action(action: str) -> bool:
+    if _is_live_acceptance_action(action):
+        return False
     lowered = action.lower()
     return any(marker in lowered for marker in FINAL_HANDOFF_PROVIDER_ACTION_MARKERS)
 
@@ -823,7 +829,7 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
         elif lane_id == "device_deploy":
             actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
         elif lane_id == "live_acceptance":
-            actions.append(CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION)
+            actions.append(FINAL_HANDOFF_LIVE_ACCEPTANCE_ACTION)
         elif command:
             actions.append(f"run {command}")
         else:
@@ -875,7 +881,7 @@ def _is_mobile_deploy_handoff_action(action: str) -> bool:
 def _final_handoff_operator_action(action: str) -> str:
     normalized = normalize_operator_action(action)
     if normalized == CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION:
-        return normalized
+        return FINAL_HANDOFF_LIVE_ACCEPTANCE_ACTION
     command_part, detail_suffix = _split_detail_suffix(normalized)
     bare_root = _strip_final_handoff_source_prefixes(command_part)
     if bare_root.startswith("run make "):
