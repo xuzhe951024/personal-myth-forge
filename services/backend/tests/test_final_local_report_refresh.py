@@ -900,6 +900,50 @@ def test_final_local_report_refresh_operator_actions_prefer_complete_provider_ch
     assert actions == [complete_provider_chain, print_action]
 
 
+def test_final_local_report_refresh_operator_actions_prefer_live_consent_gate_over_provider_fallbacks() -> None:
+    live_consent_action = (
+        final_local_report_refresh.FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
+    )
+    provider_chain = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make live-provider-evidence"
+    )
+
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "provider_handoff",
+                "status": "blocked",
+                "command": provider_chain,
+            },
+            {
+                "id": "live_provider_evidence",
+                "status": "blocked",
+                "command": "make live-provider-evidence",
+            },
+            {
+                "id": "final_showcase_readiness",
+                "status": "blocked",
+                "command": provider_chain,
+                "report_operator_actions": [
+                    provider_chain,
+                    "make live-provider-evidence",
+                ],
+            },
+        ],
+        next_action={
+            "id": "final_configured_evidence_plan",
+            "label": "Final configured evidence plan",
+            "status": "blocked",
+            "classification": "consent_required",
+            "command": live_consent_action,
+            "validation_command": "make live-provider-evidence",
+        },
+    )
+
+    assert actions == [live_consent_action]
+
+
 def test_final_local_report_refresh_operator_actions_drop_bare_apply_preview_when_provider_chain_exists() -> None:
     complete_provider_chain = (
         "make final-resource-fill-guide; rerun make final-resource-apply-preview; "

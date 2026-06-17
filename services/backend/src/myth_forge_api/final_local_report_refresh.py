@@ -1158,6 +1158,7 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
     )
     validation_deduped = prefer_guarded_print_quote_handoff_actions(validation_deduped)
     validation_deduped = prefer_provider_fill_guide_handoff_actions(validation_deduped)
+    validation_deduped = _prefer_live_provider_consent_gate(validation_deduped)
     validation_deduped = prefer_project_local_ios_deploy_handoff_actions(
         validation_deduped
     )
@@ -1247,6 +1248,28 @@ def _prefer_validated_backend_device_demo_action(actions: list[str]) -> list[str
     if not has_validated_backend_demo:
         return actions
     return [action for action in actions if action != BACKEND_DEVICE_DEMO_BARE_ACTION]
+
+
+def _prefer_live_provider_consent_gate(actions: list[str]) -> list[str]:
+    if not any(_is_live_provider_consent_action(action) for action in actions):
+        return actions
+    return [
+        action
+        for action in actions
+        if _is_live_provider_consent_action(action)
+        or not _is_live_provider_fallback_action(action)
+    ]
+
+
+def _is_live_provider_consent_action(action: str) -> bool:
+    return _operator_action_root(action) == FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
+
+
+def _is_live_provider_fallback_action(action: str) -> bool:
+    root = _operator_action_root(action)
+    if root == "make live-provider-evidence":
+        return True
+    return _is_provider_handoff_action(root)
 
 
 def _prioritize_final_local_report_operator_actions(actions: list[str]) -> list[str]:

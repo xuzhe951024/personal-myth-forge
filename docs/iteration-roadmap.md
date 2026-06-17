@@ -178,6 +178,7 @@ Bridge deliverable:
 - P0.580 final external action ledger first blocker uses guarded live consent action
 - P0.581 final launch closure packet prunes optional resource actions from top-level operator handoff
 - P0.582 final external action ledger promotes live consent first blocker to top-level operator handoff
+- P0.583 final local report refresh prunes legacy provider fallback actions when guarded live consent is present
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details
