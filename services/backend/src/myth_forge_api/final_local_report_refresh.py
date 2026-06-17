@@ -1083,7 +1083,9 @@ def _action_command(action: dict[str, Any] | None) -> str:
 
 def _selected_step_report_actions(step: dict[str, Any]) -> list[str]:
     if step.get("id") not in {
+        "configured_live_evidence_bundle",
         "final_demo_launch_local",
+        "final_configured_evidence_plan",
         "final_showcase_readiness",
     }:
         return []
@@ -1095,7 +1097,8 @@ def _selected_step_report_actions(step: dict[str, Any]) -> list[str]:
         for action in raw_actions
         if isinstance(action, str)
         and (
-            _is_provider_handoff_action(action)
+            _is_live_provider_consent_action(action)
+            or _is_provider_handoff_action(action)
             or _is_print_handoff_action(action)
             or _is_device_handoff_action(action)
         )

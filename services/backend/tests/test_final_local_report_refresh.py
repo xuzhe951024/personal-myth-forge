@@ -1157,6 +1157,54 @@ def test_final_local_report_refresh_operator_actions_prefer_granular_live_consen
     assert actions == [granular_live_consent_action]
 
 
+def test_final_local_report_refresh_operator_actions_preserve_configured_3d_and_npc_live_actions() -> None:
+    three_d_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+    npc_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+    broad_live_consent_action = (
+        final_local_report_refresh.FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
+    )
+
+    actions = final_local_report_refresh._operator_actions(
+        [
+            {
+                "id": "final_configured_evidence_plan",
+                "status": "blocked",
+                "command": three_d_action,
+                "validation_command": "make final-configured-evidence-plan",
+                "report_operator_actions": [
+                    three_d_action,
+                    npc_action,
+                    broad_live_consent_action,
+                ],
+            },
+            {
+                "id": "configured_live_evidence_bundle",
+                "status": "blocked",
+                "command": three_d_action,
+                "validation_command": "make final-configured-evidence-plan",
+                "report_operator_actions": [three_d_action, npc_action],
+            },
+        ],
+        next_action={
+            "id": "final_configured_evidence_plan",
+            "label": "Final configured evidence plan",
+            "status": "blocked",
+            "classification": "consent_required",
+            "command": three_d_action,
+            "validation_command": "make final-configured-evidence-plan",
+        },
+    )
+
+    assert actions[:2] == [three_d_action, npc_action]
+    assert broad_live_consent_action not in actions
+
+
 def test_final_local_report_refresh_operator_actions_drop_bare_apply_preview_when_provider_chain_exists() -> None:
     complete_provider_chain = (
         "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
