@@ -183,6 +183,7 @@ Bridge deliverable:
 - P0.585 final local report refresh preserves configured settings for final showcase readiness
 - P0.586 final showcase prunes configured live-provider fallbacks when guarded consent is present
 - P0.587 configured live evidence bundle prunes live-provider fallbacks when guarded consent is present
+- P0.588 final resource requirements drops self-refresh operator action when ready
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

@@ -203,6 +203,7 @@ def test_requirements_report_is_ready_for_valid_local_resources(tmp_path: Path) 
     assert report["status"] == "ready"
     assert report["first_blocker"] is None
     assert report["next_action"] is None
+    assert report["operator_actions"] == []
     assert report["summary"]["blocked"] == 0
     assert report["summary"]["missing"] == 0
     assert report["summary"]["ready"] >= 8

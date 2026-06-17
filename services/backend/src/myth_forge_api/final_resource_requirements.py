@@ -447,7 +447,8 @@ def _operator_actions(
         if _is_blocking_requirement(requirement):
             actions.append(_blocker_action(requirement))
     actions.extend(str(action) for action in preflight_report.get("operator_actions", []))
-    actions.append("make final-resource-requirements")
+    if actions:
+        actions.append("make final-resource-requirements")
     return _dedupe([add_final_resource_validation_command(action) for action in actions])
 
 
