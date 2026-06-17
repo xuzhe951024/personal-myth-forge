@@ -1981,6 +1981,30 @@ def test_final_showcase_readiness_prefers_live_consent_gate_over_provider_fallba
     assert actions == [live_consent_action, print_action]
 
 
+def test_final_showcase_readiness_prunes_configured_demo_fallback_when_live_consent_exists() -> None:
+    live_consent_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+    configured_demo_fallback = (
+        "make final-demo-launch-configured; rerun make final-configured-evidence-plan"
+    )
+    print_action = (
+        "PMF_ALLOW_PRINT_PROVIDER_CALLS=1 make print-quote-configured; "
+        "rerun make print-fulfillment-readiness"
+    )
+
+    actions = final_showcase_readiness._dedupe_operator_actions(
+        [
+            live_consent_action,
+            configured_demo_fallback,
+            print_action,
+        ]
+    )
+
+    assert actions == [live_consent_action, print_action]
+
+
 def test_final_showcase_readiness_prefers_print_request_before_provider_quote() -> None:
     request_action = (
         "PRINT_SOURCE_ASSET_URI=auto PRINT_CANDIDATE_URI=auto "

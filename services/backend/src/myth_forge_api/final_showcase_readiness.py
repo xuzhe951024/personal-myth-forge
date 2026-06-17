@@ -103,6 +103,7 @@ FINAL_SHOWCASE_LIVE_PROVIDER_FALLBACK_ROOTS = {
     "make backend-evaluate-3d-configured",
     "make backend-evaluate-npc-configured",
     "make final-acceptance-configured",
+    "make final-demo-launch-configured",
     "unblock final_configured_preflight after provider_handoff",
 }
 FINAL_SHOWCASE_WEAK_PROVIDER_ACTION_ROOTS = {
@@ -2511,12 +2512,17 @@ def _is_granular_configured_live_provider_action(action: str) -> bool:
 
 
 def _is_live_provider_fallback_action(action: str) -> bool:
-    root = _operator_action_bare_root(action)
-    if root == "make live-provider-evidence":
+    full_root = _operator_action_bare_root(action)
+    command_root = _operator_action_root_without_validation(action)
+    if command_root == "make live-provider-evidence":
         return True
-    if root in FINAL_SHOWCASE_LIVE_PROVIDER_FALLBACK_ROOTS:
+    if command_root in FINAL_SHOWCASE_LIVE_PROVIDER_FALLBACK_ROOTS:
         return True
-    return _is_provider_handoff_action(root)
+    return _is_provider_handoff_action(full_root)
+
+
+def _operator_action_root_without_validation(action: str) -> str:
+    return _operator_action_bare_root(action).split("; rerun ", 1)[0].strip()
 
 
 def _prefer_validation_aware_operator_actions(actions: list[str]) -> list[str]:
