@@ -219,6 +219,45 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
     assert str(tmp_path) not in report_text
 
 
+def test_configured_evidence_plan_surfaces_configured_preflight_child_blocker(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_ready_resource_bundle(tmp_path)
+    _write_blocked_final_acceptance(
+        repo_root,
+        blocker_id="mobile_deploy_preflight",
+        command="make mobile-deploy-preflight",
+        detail="Backend health failed from the iPhone.",
+    )
+
+    result = build_final_configured_evidence_plan_report(
+        repo_root=repo_root,
+        settings=_configured_settings(),
+    )
+    report = result.report
+    step = report["steps_by_id"]["final_configured_preflight"]
+
+    assert result.exit_code == 2
+    assert report["status"] == "blocked"
+    assert step["status"] == "blocked"
+    assert step["blocked_by"] == ["mobile_deploy_preflight"]
+    assert step["source_blocker_id"] == "mobile_deploy_preflight"
+    assert step["source_blocker_command"] == "make mobile-deploy-preflight"
+    assert step["source_blocker_detail"] == "Backend health failed from the iPhone."
+    assert step["source_validation_command"] == "make final-acceptance-local"
+    assert report["first_blocker"]["id"] == "final_configured_preflight"
+    assert report["first_blocker"]["source_blocker_id"] == "mobile_deploy_preflight"
+    assert report["first_blocker"]["command"] == "make mobile-deploy-preflight"
+    assert report["first_blocker"]["detail"] == "Backend health failed from the iPhone."
+    assert report["first_blocker"]["validation_command"] == (
+        "make final-acceptance-local"
+    )
+    assert report["operator_actions"][0] == (
+        "make mobile-deploy-preflight; rerun make final-acceptance-local; "
+        "rerun make final-configured-evidence-plan"
+    )
+
+
 def test_configured_evidence_plan_marks_live_steps_ready_to_run_with_consent(
     tmp_path: Path,
 ) -> None:
@@ -387,6 +426,33 @@ def _write_ready_configured_evidence(repo_root: Path) -> None:
             "mode": "configured",
             "overall_status": "ready",
             "summary": {"ready": 9, "missing": 0, "blocked": 0, "manual": 0},
+        },
+    )
+
+
+def _write_blocked_final_acceptance(
+    repo_root: Path,
+    *,
+    blocker_id: str,
+    command: str,
+    detail: str,
+) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/final-acceptance-local.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 13, "blocked": 1, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": blocker_id,
+                    "label": "Mobile deploy preflight",
+                    "status": "blocked",
+                    "classification": "blocked_by_local_ios_backend_health",
+                    "command": command,
+                    "error": detail,
+                }
+            ],
         },
     )
 

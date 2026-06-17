@@ -241,6 +241,12 @@ def _step_row(
         row["evidence_status"] = str(evidence.get("status", "missing"))
         row["evidence_path"] = str(evidence.get("path", ""))
         row["evidence_detail"] = str(evidence.get("detail", ""))
+    if (
+        definition.step_id == "final_configured_preflight"
+        and status == "blocked"
+        and "final_apply_resources" not in blocked_by
+    ):
+        _enrich_source_blocker(row, configured_preflight)
     return row
 
 
@@ -326,6 +332,48 @@ def _blocked_by_source(report: dict[str, Any]) -> list[str]:
     return []
 
 
+def _enrich_source_blocker(row: dict[str, Any], report: dict[str, Any]) -> None:
+    blocker = _source_blocker(report)
+    if blocker is None:
+        return
+
+    source_id = str(
+        blocker.get("source_id")
+        or blocker.get("source_blocker_id")
+        or blocker.get("id", "")
+    ).strip()
+    if source_id:
+        row["source_blocker_id"] = source_id
+        row["blocked_by"] = [source_id]
+    source_label = str(
+        blocker.get("source_label")
+        or blocker.get("source_blocker_label")
+        or blocker.get("label", "")
+    ).strip()
+    if source_label:
+        row["source_blocker_label"] = source_label
+    command = str(blocker.get("command", "")).strip()
+    if command:
+        row["source_blocker_command"] = command
+    detail = str(blocker.get("detail", "")).strip()
+    if detail:
+        row["source_blocker_detail"] = detail
+    validation_command = str(blocker.get("validation_command", "")).strip()
+    if validation_command:
+        row["source_validation_command"] = validation_command
+    classification = str(blocker.get("classification", "")).strip()
+    if classification:
+        row["source_blocker_classification"] = classification
+
+
+def _source_blocker(report: dict[str, Any]) -> dict[str, Any] | None:
+    for key in ("next_action", "first_blocker"):
+        candidate = report.get(key)
+        if isinstance(candidate, dict):
+            return candidate
+    return None
+
+
 def _overall_status(steps: list[dict[str, Any]]) -> str:
     statuses = [str(step["status"]) for step in steps]
     if "blocked" in statuses:
@@ -352,20 +400,23 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def _action_from_step(step: dict[str, Any]) -> dict[str, Any]:
-    detail = str(step.get("evidence_detail") or "")
+    detail = str(step.get("source_blocker_detail") or step.get("evidence_detail") or "")
     blocked_by = [str(item) for item in step.get("blocked_by", [])]
     if not detail and blocked_by:
         detail = "blocked by " + ", ".join(blocked_by)
-    command = str(step["command"])
+    command = str(step.get("source_blocker_command") or step["command"])
     if str(step.get("status")) == "consent_required" and bool(
         step.get("may_call_live_provider")
     ):
         command = _with_live_provider_consent(command)
+    validation_command = str(
+        step.get("source_validation_command") or FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND
+    )
     action = {
         "id": step["id"],
         "label": step["label"],
         "status": step["status"],
-        "classification": step["status"],
+        "classification": step.get("source_blocker_classification", step["status"]),
         "command": command,
         "detail": detail,
         "blocked_by": blocked_by,
@@ -375,8 +426,11 @@ def _action_from_step(step: dict[str, Any]) -> dict[str, Any]:
         "repo_local_write": step["repo_local_write"],
         "would_write_backend_env": step["would_write_backend_env"],
         "would_write_ios_deploy_config": step["would_write_ios_deploy_config"],
-        "validation_command": "make final-configured-evidence-plan",
+        "validation_command": validation_command,
     }
+    for key in ("source_blocker_id", "source_blocker_label"):
+        if step.get(key) is not None:
+            action[key] = step[key]
     for key in ("evidence_status", "evidence_path"):
         if step.get(key) is not None:
             action[key] = step[key]
@@ -420,14 +474,31 @@ def _operator_actions(steps: list[dict[str, Any]]) -> list[str]:
     for step in steps:
         status = str(step["status"])
         if status == "blocked":
-            blocked_by = step.get("blocked_by", [])
-            suffix = f" after {', '.join(blocked_by)}" if blocked_by else ""
-            actions.append(f"unblock {step['id']}{suffix}")
+            source_action = _source_blocker_operator_action(step)
+            if source_action:
+                actions.append(source_action)
+            else:
+                blocked_by = step.get("blocked_by", [])
+                suffix = f" after {', '.join(blocked_by)}" if blocked_by else ""
+                actions.append(f"unblock {step['id']}{suffix}")
         elif status == "consent_required":
             actions.append(_consent_required_action(step))
     if not actions:
         actions.append("run configured evidence commands in order")
     return _prefer_apply_preview_before_apply(_dedupe(actions))[:12]
+
+
+def _source_blocker_operator_action(step: dict[str, Any]) -> str:
+    command = str(step.get("source_blocker_command", "")).strip()
+    if not command:
+        return ""
+    parts = [command]
+    validation_command = str(step.get("source_validation_command", "")).strip()
+    if validation_command and validation_command not in command:
+        parts.append(f"rerun {validation_command}")
+    if FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND not in " ".join(parts):
+        parts.append(f"rerun {FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND}")
+    return "; ".join(parts)
 
 
 def _consent_required_action(step: dict[str, Any]) -> str:
