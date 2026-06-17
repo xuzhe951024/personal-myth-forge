@@ -193,7 +193,7 @@ def _action_groups(
         _group(
             group_id="global_machine_actions",
             label="Global machine actions",
-            actions=_global_machine_actions(),
+            actions=_global_machine_actions(ios_deploy_runbook),
         ),
         _group(
             group_id="device_runtime_actions",
@@ -502,36 +502,56 @@ def _live_provider_operator_action(command: str) -> str:
     return f"{LIVE_PROVIDER_CONSENT_ENV_PREFIX}{command}"
 
 
-def _global_machine_actions() -> list[dict[str, Any]]:
+def _global_machine_actions(ios_deploy_runbook: dict[str, Any]) -> list[dict[str, Any]]:
+    actions_satisfied = _ios_global_machine_actions_satisfied(ios_deploy_runbook)
     return [
         _global_action(
             action_id="accept_apple_sdk_license",
             label="Accept Apple SDK license",
             command="accept Apple SDK license manually on this Mac",
-            detail="Requires explicit user confirmation because it changes machine state.",
+            detail=(
+                "Satisfied by ready iOS deploy runbook evidence."
+                if actions_satisfied
+                else "Requires explicit user confirmation because it changes machine state."
+            ),
             operator_action=XCODE_LICENSE_OPERATOR_ACTION,
+            status="ready" if actions_satisfied else "manual",
         ),
         _global_action(
             action_id="configure_apple_signing",
             label="Configure Apple signing",
             command="configure Apple Team ID, bundle id, certificates, and device trust manually",
-            detail="Signing, certificates, device trust, and keychain state are outside repo control.",
+            detail=(
+                "Satisfied by ready iOS deploy runbook evidence."
+                if actions_satisfied
+                else "Signing, certificates, device trust, and keychain state are outside repo control."
+            ),
             operator_action=(
                 "configure Apple Team ID, bundle id, certificates, and device trust "
                 f"manually; rerun {MOBILE_XCODE_BUILD_EVIDENCE_ACTION}"
             ),
+            status="ready" if actions_satisfied else "manual",
         ),
         _global_action(
             action_id="run_xcode_build_gate",
             label="Run Xcode build gate",
             command="make mobile-xcode-build",
-            detail="May invoke Xcode signing and Apple SDK global state.",
+            detail=(
+                "Satisfied by ready iOS deploy runbook evidence."
+                if actions_satisfied
+                else "May invoke Xcode signing and Apple SDK global state."
+            ),
             operator_action=(
                 "run Xcode build gate manually on the Mac: make mobile-xcode-build; "
                 f"rerun {MOBILE_XCODE_BUILD_EVIDENCE_ACTION}"
             ),
+            status="ready" if actions_satisfied else "manual",
         ),
     ]
+
+
+def _ios_global_machine_actions_satisfied(ios_deploy_runbook: dict[str, Any]) -> bool:
+    return _normalized_status(str(ios_deploy_runbook.get("status", "blocked"))) == "ready"
 
 
 def _global_action(
@@ -541,18 +561,20 @@ def _global_action(
     command: str,
     detail: str,
     operator_action: str = "",
+    status: str = "manual",
 ) -> dict[str, Any]:
+    ready = _normalized_status(status) == "ready"
     return _action(
         action_id=action_id,
         group_id="global_machine_actions",
         label=label,
-        status="manual",
+        status="ready" if ready else "manual",
         command=command,
         detail=detail,
-        requires_user_confirmation=True,
+        requires_user_confirmation=not ready,
         global_action=True,
         xcode_or_signing=True,
-        operator_action=operator_action,
+        operator_action="" if ready else operator_action,
     )
 
 

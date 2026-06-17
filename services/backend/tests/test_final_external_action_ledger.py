@@ -781,6 +781,48 @@ def test_external_action_ledger_marks_local_resource_actions_ready_without_leaks
     assert str(tmp_path) not in report_text
 
 
+def test_external_action_ledger_marks_global_machine_actions_ready_from_ios_runbook(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = tmp_path / "repo"
+    write_resources(repo_root, VALID_LOCAL_RESOURCES)
+    monkeypatch.setattr(
+        final_external_action_ledger,
+        "build_ios_deploy_runbook_report",
+        lambda **_kwargs: ready_ios_deploy_runbook(),
+    )
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="meshy-secret-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+            print_provider="local",
+        ),
+        repo_root=repo_root,
+    )
+
+    report = result.report
+    groups = {group["id"]: group for group in report["action_groups"]}
+    actions = report["actions_by_id"]
+    operator_actions = report["operator_actions"]
+
+    assert result.exit_code == 2
+    assert report["status"] == "partial"
+    assert groups["global_machine_actions"]["status"] == "ready"
+    assert groups["global_machine_actions"]["summary"]["manual"] == 0
+    assert groups["global_machine_actions"]["summary"]["ready"] == 3
+    assert actions["accept_apple_sdk_license"]["status"] == "ready"
+    assert actions["accept_apple_sdk_license"]["requires_user_confirmation"] is False
+    assert actions["configure_apple_signing"]["status"] == "ready"
+    assert actions["run_xcode_build_gate"]["status"] == "ready"
+    assert report["first_blocker"]["group_id"] != "global_machine_actions"
+    assert not any("Xcode license" in action for action in operator_actions)
+    assert not any("mobile-xcode-build-evidence" in action for action in operator_actions)
+
+
 def test_external_action_ledger_routes_repairable_final_resources_before_apply(
     tmp_path: Path,
 ) -> None:
@@ -835,3 +877,33 @@ def write_resources(root: Path, text: str) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return path
+
+
+def ready_ios_deploy_runbook() -> dict[str, object]:
+    return {
+        "kind": "ios_deploy_runbook_report",
+        "status": "ready",
+        "device_action_bundle": {
+            "status": "ready",
+            "actions": [
+                {
+                    "id": "resolve_xcode_build_gate",
+                    "label": "Resolve Xcode build gate",
+                    "status": "ready",
+                    "command": "make mobile-xcode-build",
+                    "detail": "Xcode build gate passed with code signing disabled.",
+                    "global_action": True,
+                    "xcode_or_signing": True,
+                }
+            ],
+            "first_action": None,
+            "summary": {
+                "actions": 1,
+                "ready": 1,
+                "blocked": 0,
+                "manual": 0,
+                "global_actions": 1,
+                "xcode_or_signing": 1,
+            },
+        },
+    }
