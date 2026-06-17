@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from myth_forge_api.config import Settings, load_settings
+from myth_forge_api.configured_acceptance_command import (
+    CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
+)
 from myth_forge_api.final_acceptance_readiness import (
     build_final_acceptance_readiness_report,
 )
@@ -92,6 +95,10 @@ FINAL_SHOWCASE_PROVIDER_HANDOFF_ACTION_MARKERS = (
     "live-provider-evidence",
 )
 FINAL_SHOWCASE_PROVIDER_CHAIN_ACTION = PROVIDER_LIVE_HANDOFF_ACTION
+FINAL_SHOWCASE_LIVE_PROVIDER_CONSENT_ACTION = (
+    f"PMF_ALLOW_LIVE_PROVIDER_CALLS=1 {CONFIGURED_FINAL_ACCEPTANCE_COMMAND}; "
+    "rerun make live-provider-evidence"
+)
 FINAL_SHOWCASE_WEAK_PROVIDER_ACTION_ROOTS = {
     FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
     (
@@ -2266,8 +2273,10 @@ def _dedupe_operator_actions(items: list[str]) -> list[str]:
             prefer_project_local_ios_deploy_handoff_actions(
                 prefer_provider_fill_guide_handoff_actions(
                     prefer_guarded_print_quote_handoff_actions(
-                        _prefer_bare_ios_deploy_writer_action(
-                            _prefer_complete_provider_handoff_chain(deduped)
+                        _prefer_live_provider_consent_gate(
+                            _prefer_bare_ios_deploy_writer_action(
+                                _prefer_complete_provider_handoff_chain(deduped)
+                            )
                         )
                     )
                 )
@@ -2285,6 +2294,28 @@ def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
         if action == FINAL_SHOWCASE_PROVIDER_CHAIN_ACTION
         or action not in FINAL_SHOWCASE_WEAK_PROVIDER_ACTION_ROOTS
     ]
+
+
+def _prefer_live_provider_consent_gate(actions: list[str]) -> list[str]:
+    if not any(_is_live_provider_consent_action(action) for action in actions):
+        return actions
+    return [
+        action
+        for action in actions
+        if _is_live_provider_consent_action(action)
+        or not _is_live_provider_fallback_action(action)
+    ]
+
+
+def _is_live_provider_consent_action(action: str) -> bool:
+    return _operator_action_bare_root(action) == FINAL_SHOWCASE_LIVE_PROVIDER_CONSENT_ACTION
+
+
+def _is_live_provider_fallback_action(action: str) -> bool:
+    root = _operator_action_bare_root(action)
+    if root == "make live-provider-evidence":
+        return True
+    return _is_provider_handoff_action(root)
 
 
 def _prefer_validation_aware_operator_actions(actions: list[str]) -> list[str]:
