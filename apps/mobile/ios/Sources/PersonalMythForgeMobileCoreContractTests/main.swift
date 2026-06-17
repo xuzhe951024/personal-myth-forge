@@ -155,6 +155,7 @@ do {
     try testLiveProviderConsentSummaryBlocksMissingConfiguredProviders()
     try testLiveProviderConsentSummaryShowsReadyConfiguredConsent()
     try testLiveProviderConsentSummaryShowsReadyLiveEvidence()
+    try testLiveProviderConsentSummaryShowsConfiguredEvidencePlanAction()
     try testLiveProviderConsentSummaryShowsConfiguredBundleRow()
     try testLiveProviderConsentSummaryBlocksConfiguredAcceptanceWithoutBundle()
     try testLiveProviderConsentSummaryBlocksMissingLiveEvidence()
@@ -4174,6 +4175,7 @@ private func testLiveProviderConsentSummaryShowsReadyConfiguredConsent() throws 
             finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
             finalAcceptanceStatus: "ready",
             liveProviderEvidenceStatus: "ready",
+            configuredEvidencePlanStatus: "ready",
             configuredEvidenceBundleStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
@@ -4209,6 +4211,7 @@ private func testLiveProviderConsentSummaryShowsReadyLiveEvidence() throws {
             finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
             finalAcceptanceStatus: "ready",
             liveProviderEvidenceStatus: "ready",
+            configuredEvidencePlanStatus: "ready",
             configuredEvidenceBundleStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
@@ -4234,6 +4237,52 @@ private func testLiveProviderConsentSummaryShowsReadyLiveEvidence() throws {
     try expectContains(row.detail, "ready 5")
 }
 
+private func testLiveProviderConsentSummaryShowsConfiguredEvidencePlanAction() throws {
+    let action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+            + "rerun make final-configured-evidence-plan"
+    )
+    let summary = LiveProviderConsentSummaryBuilder.build(
+        providerReadiness: readyConfiguredProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchReport: finalDemoLaunchReport(
+            mode: "configured",
+            overallStatus: "partial",
+            finalResourcesStatus: "ready",
+            finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
+            finalAcceptanceStatus: "ready",
+            liveProviderEvidenceStatus: "blocked",
+            liveProviderEvidenceBlockerDetail: "Live Meshy evidence still needs consent.",
+            configuredEvidencePlanStatus: "consent_required",
+            configuredEvidencePlanActions: [
+                action,
+                "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; rerun make final-configured-evidence-plan",
+            ],
+            npcEvaluationStatus: "ready",
+            finalOperatorHandoffStatus: "ready",
+            iosDeployRunbookStatus: "ready",
+            resourceHandoffStatus: "ready",
+            resourceHandoffBackendStatus: "ready",
+            resourceHandoffIOSStatus: "ready",
+            resourceHandoffAction: "final resource handoff ready"
+        ),
+        finalLaunchError: nil
+    )
+
+    let row: LiveProviderConsentRow = try require(
+        summary.rows.first { $0.id == "configured_plan" },
+        "missing configured evidence plan row"
+    )
+
+    try expectEqual(summary.canRunConfiguredAcceptance, false)
+    try expectEqual(row.label, "Configured evidence plan")
+    try expectEqual(row.status, .waiting)
+    try expectContains(row.detail, "Configured evidence plan consent_required")
+    try expectContains(row.detail, "PMF_ALLOW_LIVE_PROVIDER_CALLS")
+    try expectContains(row.detail, "make backend-evaluate-3d-configured")
+    try expectContains(row.detail, "make final-configured-evidence-plan")
+}
+
 private func testLiveProviderConsentSummaryShowsConfiguredBundleRow() throws {
     let summary = LiveProviderConsentSummaryBuilder.build(
         providerReadiness: readyConfiguredProviderReadiness(),
@@ -4245,6 +4294,7 @@ private func testLiveProviderConsentSummaryShowsConfiguredBundleRow() throws {
             finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
             finalAcceptanceStatus: "ready",
             liveProviderEvidenceStatus: "ready",
+            configuredEvidencePlanStatus: "ready",
             configuredEvidenceBundleStatus: "ready",
             npcEvaluationStatus: "ready",
             finalOperatorHandoffStatus: "ready",
@@ -8268,6 +8318,7 @@ private func finalDemoLaunchPayload(
     liveProviderEvidenceCommand: String? = nil,
     configuredEvidencePlanStatus: String = "blocked",
     configuredEvidencePlanBlockerDetail: String = "Configured 3D evidence requires MESHY_API_KEY and live provider consent.",
+    configuredEvidencePlanActions: [String]? = nil,
     configuredEvidenceBundleStatus: String = "blocked",
     configuredEvidenceBundleBlockerDetail: String = "Final resource fill guide is blocked before configured evidence bundle.",
     printFulfillmentReadinessStatus: String = "partial",
@@ -8518,7 +8569,9 @@ private func finalDemoLaunchPayload(
             ? #"{"ready": 4, "missing": 0, "blocked": 1, "partial": 0, "requires_live_provider_consent": 3}"#
             : #"{"ready": 0, "missing": 5, "blocked": 0, "partial": 0, "requires_live_provider_consent": 3}"#
     let configuredEvidencePlanReady = configuredEvidencePlanStatus == "ready"
-    let configuredEvidencePlanStepStatus = configuredEvidencePlanReady ? "ready" : "blocked"
+    let configuredEvidencePlanStepStatus = configuredEvidencePlanReady
+        ? "ready"
+        : configuredEvidencePlanStatus == "consent_required" ? "consent_required" : "blocked"
     let configuredEvidencePlanSummaryJSON = configuredEvidencePlanReady
         ? #"{"steps": 6, "ready": 6, "ready_to_run": 0, "blocked": 0, "consent_required": 2, "planned_consent_steps": 3, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
         : #"{"steps": 6, "ready": 3, "ready_to_run": 1, "blocked": 2, "consent_required": 2, "planned_consent_steps": 3, "live_provider_steps": 2, "cost_steps": 2, "repo_local_write_steps": 2, "commands_run": 0}"#
@@ -8543,9 +8596,16 @@ private func finalDemoLaunchPayload(
       "source": "first_blocker"
     }
     """
+    let effectiveConfiguredEvidencePlanActions = configuredEvidencePlanActions ?? [
+        "provide MESHY_API_KEY in services/backend/.env",
+        "rerun configured 3D evidence after consent",
+    ]
     let configuredEvidencePlanOperatorActionsJSON = configuredEvidencePlanReady
         ? #"[]"#
-        : #"["provide MESHY_API_KEY in services/backend/.env", "rerun configured 3D evidence after consent"]"#
+        : String(
+            decoding: try! PMFJSON.encoder.encode(effectiveConfiguredEvidencePlanActions),
+            as: UTF8.self
+        )
     let configuredEvidenceBundleReady = configuredEvidenceBundleStatus == "ready"
     let configuredEvidenceBundleBlockerJSON = configuredEvidenceBundleReady ? "null" : """
     {
@@ -14377,6 +14437,7 @@ private func finalDemoLaunchReport(
     liveProviderEvidenceCommand: String? = nil,
     configuredEvidencePlanStatus: String = "blocked",
     configuredEvidencePlanBlockerDetail: String = "Configured 3D evidence requires MESHY_API_KEY and live provider consent.",
+    configuredEvidencePlanActions: [String]? = nil,
     configuredEvidenceBundleStatus: String = "blocked",
     configuredEvidenceBundleBlockerDetail: String = "Final resource fill guide is blocked before configured evidence bundle.",
     printFulfillmentReadinessStatus: String = "partial",
@@ -14484,6 +14545,7 @@ private func finalDemoLaunchReport(
             liveProviderEvidenceCommand: liveProviderEvidenceCommand,
             configuredEvidencePlanStatus: configuredEvidencePlanStatus,
             configuredEvidencePlanBlockerDetail: configuredEvidencePlanBlockerDetail,
+            configuredEvidencePlanActions: configuredEvidencePlanActions,
             configuredEvidenceBundleStatus: configuredEvidenceBundleStatus,
             configuredEvidenceBundleBlockerDetail: configuredEvidenceBundleBlockerDetail,
             printFulfillmentReadinessStatus: printFulfillmentReadinessStatus,

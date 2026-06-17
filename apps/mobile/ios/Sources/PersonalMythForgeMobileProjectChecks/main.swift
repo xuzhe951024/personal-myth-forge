@@ -2357,6 +2357,11 @@ do {
     try requireContains(liveProviderConsentSummary, "LiveProviderConsentSummaryBuilder", "live provider consent builder")
     try requireContains(liveProviderConsentSummary, "LiveProviderConsentStatus", "live provider consent status")
     try requireContains(liveProviderConsentSummary, "canRunConfiguredAcceptance", "live provider consent ready gate")
+    try requireContains(
+        liveProviderConsentSummary,
+        "finalConfiguredEvidencePlan",
+        "live provider configured evidence plan row source"
+    )
     try requireContains(liveProviderConsentSummary, "no live calls by default", "live provider no-default-call policy")
     try requireContains(liveProviderConsentSummary, "Provider keys remain backend-only.", "live provider secret boundary")
     try requireContains(liveProviderConsentSummary, "sanitize", "live provider consent redaction")
@@ -3073,6 +3078,11 @@ do {
         contractTests,
         "testLiveProviderConsentSummaryShowsReadyConfiguredConsent",
         "live provider consent ready test"
+    )
+    try requireContains(
+        contractTests,
+        "testLiveProviderConsentSummaryShowsConfiguredEvidencePlanAction",
+        "live provider consent configured evidence plan action test"
     )
     try requireContains(
         contractTests,

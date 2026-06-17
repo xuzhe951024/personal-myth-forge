@@ -72,12 +72,19 @@ public enum LiveProviderConsentSummaryBuilder {
             rows.append(finalResourcesRow(finalLaunchReport.finalResourcesPreflight))
             rows.append(resourceHandoffRow(finalLaunchReport.resourceReport))
             rows.append(liveEvidenceRow(finalLaunchReport.liveProviderEvidence))
+            rows.append(configuredPlanRow(finalLaunchReport.finalConfiguredEvidencePlan))
             rows.append(configuredBundleRow(finalLaunchReport.configuredLiveEvidenceBundle))
         } else {
             rows.append(row("live_policy", "Live-call policy", .waiting, "Waiting for final launch report."))
             rows.append(row("final_resources", "Final resources", .waiting, "Waiting for final resources report."))
             rows.append(row("resource_handoff", "Resource handoff", .waiting, "Waiting for resource handoff report."))
             rows.append(row("live_evidence", "Live evidence", .waiting, "Live provider evidence report has not loaded."))
+            rows.append(row(
+                "configured_plan",
+                "Configured evidence plan",
+                .waiting,
+                "Configured evidence plan report has not loaded."
+            ))
             rows.append(row(
                 "configured_bundle",
                 "Configured bundle",
@@ -95,6 +102,9 @@ public enum LiveProviderConsentSummaryBuilder {
         let liveEvidenceReady = finalLaunchReport?.liveProviderEvidence?.status
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased() == "ready"
+        let configuredPlanReady = finalLaunchReport?.finalConfiguredEvidencePlan?.status
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased() == "ready"
         let configuredBundleReady = finalLaunchReport?.configuredLiveEvidenceBundle?.status
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased() == "ready"
@@ -102,6 +112,7 @@ public enum LiveProviderConsentSummaryBuilder {
             && finalLaunchReport?.finalResourcesPreflight?.status == "ready"
             && finalLaunchReport?.resourceReport?.overallStatus == "ready"
             && liveEvidenceReady
+            && configuredPlanReady
             && configuredBundleReady
             && !hasError
             && !hasBlocked
@@ -238,6 +249,72 @@ public enum LiveProviderConsentSummaryBuilder {
             parts.append(detail)
         }
         return sanitize(parts.joined(separator: ": "))
+    }
+
+    private static func configuredPlanRow(
+        _ plan: FinalConfiguredEvidencePlanReport?
+    ) -> LiveProviderConsentRow {
+        guard let plan else {
+            return row(
+                "configured_plan",
+                "Configured evidence plan",
+                .waiting,
+                "Configured evidence plan report has not loaded."
+            )
+        }
+
+        let prefix = (
+            "Configured evidence plan \(sanitize(plan.status)): steps \(plan.summary.steps), "
+                + "ready \(plan.summary.ready), blocked \(plan.summary.blocked), "
+                + "consent \(plan.summary.consentRequired), live \(plan.summary.liveProviderSteps)."
+        )
+        if plan.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "ready" {
+            return row("configured_plan", "Configured evidence plan", .ready, prefix)
+        }
+
+        let detail = preferredConfiguredPlanAction(plan).map { " \($0)" } ?? ""
+        return row(
+            "configured_plan",
+            "Configured evidence plan",
+            status(from: plan.status),
+            prefix + detail
+        )
+    }
+
+    private static func preferredConfiguredPlanAction(
+        _ plan: FinalConfiguredEvidencePlanReport
+    ) -> String? {
+        if let action = plan.operatorActions.first(where: { action in
+            action.contains("PMF_ALLOW_LIVE_PROVIDER_CALLS") && action.contains("make ")
+        }), !action.isEmpty {
+            return sanitize(action)
+        }
+        if let action = plan.operatorActions.first(where: { action in
+            !action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }) {
+            return sanitize(action)
+        }
+        if let nextAction = plan.nextAction {
+            return configuredPlanStepDetail(nextAction)
+        }
+        if let step = plan.steps.first(where: { status(from: $0.status) != .ready }) {
+            return configuredPlanStepDetail(step)
+        }
+        return nil
+    }
+
+    private static func configuredPlanStepDetail(_ step: FinalConfiguredEvidencePlanStep) -> String {
+        var parts = ["\(step.id) \(step.status)"]
+        if !step.command.isEmpty {
+            parts.append(step.command)
+        }
+        if let validationCommand = step.validationCommand, !validationCommand.isEmpty {
+            parts.append("rerun \(validationCommand)")
+        }
+        if let evidenceDetail = step.evidenceDetail, !evidenceDetail.isEmpty {
+            parts.append(evidenceDetail)
+        }
+        return sanitize(parts.joined(separator: " | "))
     }
 
     private static func configuredBundleRow(
