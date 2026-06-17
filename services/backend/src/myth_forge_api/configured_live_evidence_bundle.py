@@ -13,6 +13,10 @@ from myth_forge_api.final_configured_evidence_plan import (
 from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
 from myth_forge_api.operator_actions import normalize_operator_action
 
+SAVED_FINAL_CONFIGURED_EVIDENCE_PLAN_PATH = Path(
+    "services/backend/.local/final-configured-evidence-plan.json"
+)
+
 
 @dataclass(frozen=True)
 class ConfiguredLiveEvidenceBundleResult:
@@ -28,11 +32,12 @@ def build_configured_live_evidence_bundle_report(
 ) -> ConfiguredLiveEvidenceBundleResult:
     selected_repo_root = Path(repo_root) if repo_root is not None else _default_repo_root()
     selected_settings = settings or load_settings()
-    configured_plan = build_final_configured_evidence_plan_report(
+    configured_plan = _configured_plan_report(
         repo_root=selected_repo_root,
         settings=selected_settings,
+        explicit_settings=settings is not None,
         allow_live_provider_calls=allow_live_provider_calls,
-    ).report
+    )
     live_evidence = build_live_provider_evidence_report(
         repo_root=selected_repo_root,
     ).report
@@ -91,6 +96,39 @@ def build_configured_live_evidence_bundle_report(
         exit_code=0 if sanitized["status"] == "ready" else 2,
         report=sanitized,
     )
+
+
+def _configured_plan_report(
+    *,
+    repo_root: Path,
+    settings: Settings,
+    explicit_settings: bool,
+    allow_live_provider_calls: bool,
+) -> dict[str, Any]:
+    if not explicit_settings and not allow_live_provider_calls:
+        saved = _load_saved_configured_plan(repo_root)
+        if saved is not None:
+            return saved
+    return build_final_configured_evidence_plan_report(
+        repo_root=repo_root,
+        settings=settings,
+        allow_live_provider_calls=allow_live_provider_calls,
+    ).report
+
+
+def _load_saved_configured_plan(repo_root: Path) -> dict[str, Any] | None:
+    path = repo_root / SAVED_FINAL_CONFIGURED_EVIDENCE_PLAN_PATH
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("kind") != "final_configured_evidence_plan_report":
+        return None
+    return payload
 
 
 def _bundle_status(

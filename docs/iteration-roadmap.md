@@ -211,6 +211,7 @@ Bridge deliverable:
 - P0.613 final showcase and demo launch live provider actions preserve confirmation metadata
 - P0.614 final configured and live provider source reports preserve confirmation metadata
 - P0.615 configured live evidence bundle preserves source confirmation metadata
+- P0.616 configured live evidence bundle reuses saved configured evidence plan
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

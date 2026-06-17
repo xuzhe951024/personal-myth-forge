@@ -162,6 +162,39 @@ def test_configured_live_evidence_bundle_requires_consent_with_ready_resources(
     assert report["safety"]["live_provider_calls"] is False
 
 
+def test_configured_live_evidence_bundle_uses_saved_configured_plan(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    _write_saved_configured_plan_consent_required(repo_root)
+
+    result = build_configured_live_evidence_bundle_report(repo_root=repo_root)
+    report = result.report
+
+    assert result.exit_code == 2
+    assert report["status"] == "consent_required"
+    assert report["source_reports"]["final_configured_evidence_plan"]["status"] == (
+        "consent_required"
+    )
+    assert report["current_blocker"]["id"] == "three_d_evaluation_configured"
+    assert report["current_blocker"]["command"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
+    )
+    assert report["current_blocker"]["requires_cost_consent"] is True
+    assert report["current_blocker"]["live_provider_call"] is True
+    assert report["current_blocker"]["requires_user_confirmation"] is True
+    assert report["command_sequence_by_id"]["three_d_evaluation_configured"][
+        "status"
+    ] == "consent_required"
+    assert report["command_sequence_by_id"]["final_configured_preflight"][
+        "status"
+    ] == "ready"
+    assert report["operator_actions"][0] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+
+
 def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
     tmp_path: Path,
     monkeypatch,
@@ -573,6 +606,127 @@ def _write_ready_configured_evidence(repo_root: Path) -> None:
             "mode": "configured",
             "overall_status": "ready",
             "summary": {"ready": 9, "missing": 0, "blocked": 0, "manual": 0},
+        },
+    )
+
+
+def _write_saved_configured_plan_consent_required(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/final-configured-evidence-plan.json",
+        {
+            "kind": "final_configured_evidence_plan_report",
+            "status": "consent_required",
+            "first_blocker": {
+                "id": "three_d_evaluation_configured",
+                "label": "Configured 3D evaluation",
+                "status": "consent_required",
+                "classification": "consent_required",
+                "command": (
+                    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                    "make backend-evaluate-3d-configured"
+                ),
+                "detail": "Missing services/backend/.local/3d-evaluation-configured.json.",
+                "blocked_by": ["live_provider_cost_consent"],
+                "requires_live_provider_consent": True,
+                "may_call_live_provider": True,
+                "cost_risk": True,
+                "requires_cost_consent": True,
+                "live_provider_call": True,
+                "requires_user_confirmation": True,
+                "validation_command": "make final-configured-evidence-plan",
+            },
+            "next_action": {
+                "id": "three_d_evaluation_configured",
+                "label": "Configured 3D evaluation",
+                "status": "consent_required",
+                "classification": "consent_required",
+                "command": (
+                    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                    "make backend-evaluate-3d-configured"
+                ),
+                "detail": "Missing services/backend/.local/3d-evaluation-configured.json.",
+                "blocked_by": ["live_provider_cost_consent"],
+                "requires_live_provider_consent": True,
+                "may_call_live_provider": True,
+                "cost_risk": True,
+                "requires_cost_consent": True,
+                "live_provider_call": True,
+                "requires_user_confirmation": True,
+                "validation_command": "make final-configured-evidence-plan",
+                "source": "first_blocker",
+            },
+            "summary": {
+                "steps": 10,
+                "ready": 4,
+                "ready_to_run": 2,
+                "blocked": 0,
+                "consent_required": 4,
+                "planned_consent_steps": 3,
+                "live_provider_steps": 3,
+                "cost_steps": 3,
+                "repo_local_write_steps": 1,
+                "commands_run": 0,
+            },
+            "steps": [
+                {
+                    "id": "final_configured_preflight",
+                    "label": "Final configured preflight",
+                    "status": "ready",
+                    "command": "make final-configured-preflight",
+                    "requires_live_provider_consent": False,
+                    "may_call_live_provider": False,
+                    "cost_risk": False,
+                    "repo_local_write": False,
+                    "would_write_backend_env": False,
+                    "would_write_ios_deploy_config": False,
+                    "blocked_by": [],
+                },
+                {
+                    "id": "three_d_evaluation_configured",
+                    "label": "Configured 3D evaluation",
+                    "status": "consent_required",
+                    "command": "make backend-evaluate-3d-configured",
+                    "requires_live_provider_consent": True,
+                    "may_call_live_provider": True,
+                    "cost_risk": True,
+                    "repo_local_write": False,
+                    "would_write_backend_env": False,
+                    "would_write_ios_deploy_config": False,
+                    "blocked_by": ["live_provider_cost_consent"],
+                    "requires_cost_consent": True,
+                    "live_provider_call": True,
+                    "requires_user_confirmation": True,
+                },
+            ],
+            "operator_actions": [
+                (
+                    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                    "make backend-evaluate-3d-configured; "
+                    "rerun make final-configured-evidence-plan"
+                )
+            ],
+            "commands": [
+                "make final-configured-preflight",
+                "make backend-evaluate-3d-configured",
+                "make final-configured-evidence-plan",
+            ],
+            "live_call_policy": {
+                "bundle_calls_live_providers": False,
+                "live_calls_by_default": False,
+                "allow_live_provider_calls": False,
+                "consent_flag": "--allow-live-provider-calls",
+                "consent_required_for": ["three_d_evaluation_configured"],
+            },
+            "device_action_bundle": {
+                "id": "final_configured_evidence_plan_device_actions",
+                "label": "Final Configured Evidence Plan Device Actions",
+                "source_report": "final_configured_preflight",
+                "status": "ready",
+                "actions": [],
+                "first_action": None,
+                "summary": {"actions": 0},
+                "safety": {"commands_run": False},
+            },
         },
     )
 
