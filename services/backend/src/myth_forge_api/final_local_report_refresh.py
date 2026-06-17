@@ -1048,6 +1048,9 @@ def _operator_actions(
     pruned_actions = _drop_bare_rehearsal_when_specific_actions_exist(
         deduped_actions
     )
+    pruned_actions = _drop_device_fallbacks_when_live_consent_is_first(
+        pruned_actions
+    )
     return _prioritize_final_local_report_operator_actions(pruned_actions)[:12]
 
 
@@ -1199,6 +1202,12 @@ def _drop_bare_rehearsal_when_specific_actions_exist(actions: list[str]) -> list
         for action in actions
         if _action_command_root(action) != FINAL_LOCAL_REPORT_REHEARSAL_COMMAND
     ]
+
+
+def _drop_device_fallbacks_when_live_consent_is_first(actions: list[str]) -> list[str]:
+    if not actions or not _is_live_provider_consent_action(actions[0]):
+        return actions
+    return [action for action in actions if not _is_device_handoff_action(action)]
 
 
 def _normalize_apply_preview_action(action: str) -> str:
