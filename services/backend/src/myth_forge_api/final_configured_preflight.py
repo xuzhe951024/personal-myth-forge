@@ -247,6 +247,8 @@ def _source_id(
     component: dict[str, Any],
     child_action: dict[str, Any] | None,
 ) -> str:
+    if child_action is not None and child_action.get("source_blocker_id"):
+        return str(child_action["source_blocker_id"])
     if child_action is not None and child_action.get("id"):
         return str(child_action["id"])
     return str(component["id"])

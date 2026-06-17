@@ -169,17 +169,7 @@ def _input_slots(
         ),
         _backend_url_slot(deploy_values.get("PMF_BACKEND_BASE_URL", "")),
         _final_launch_mode_slot(mode, deploy_values.get("PMF_FINAL_LAUNCH_MODE", "")),
-        _slot(
-            slot_id="local_final_acceptance",
-            label="Local final acceptance",
-            status=str(final_acceptance.get("status", "missing")),
-            required=True,
-            source="services/backend/.local/final-acceptance-local.json",
-            action=(
-                f"run {LOCAL_FINAL_ACCEPTANCE_COMMAND} to write "
-                "services/backend/.local/final-acceptance-local.json"
-            ),
-        ),
+        _local_final_acceptance_slot(final_acceptance),
         _slot(
             slot_id="three_d_evaluation",
             label="3D evaluation",
@@ -259,6 +249,68 @@ def _final_resources_child_blocker(
         candidate = final_resources.get(key)
         if isinstance(candidate, dict) and candidate.get("command"):
             return candidate
+    return None
+
+
+def _local_final_acceptance_slot(final_acceptance: dict[str, Any]) -> dict[str, Any]:
+    slot = _slot(
+        slot_id="local_final_acceptance",
+        label="Local final acceptance",
+        status=str(final_acceptance.get("status", "missing")),
+        required=True,
+        source="services/backend/.local/final-acceptance-local.json",
+        action=(
+            f"run {LOCAL_FINAL_ACCEPTANCE_COMMAND} to write "
+            "services/backend/.local/final-acceptance-local.json"
+        ),
+    )
+    return _with_report_child_action(
+        slot,
+        report=final_acceptance,
+        validation_command=LOCAL_FINAL_ACCEPTANCE_COMMAND,
+    )
+
+
+def _with_report_child_action(
+    slot: dict[str, Any],
+    *,
+    report: dict[str, Any],
+    validation_command: str,
+) -> dict[str, Any]:
+    child_action = _report_child_action(report)
+    if child_action is None:
+        return slot
+
+    command = str(child_action.get("command", "")).strip()
+    if command:
+        slot["operator_action"] = command
+    child_id = str(child_action.get("id", "")).strip()
+    if child_id:
+        slot["source_blocker_id"] = child_id
+    child_label = str(child_action.get("label", "")).strip()
+    if child_label:
+        slot["source_blocker_label"] = child_label
+    detail = str(child_action.get("detail", "")).strip()
+    if detail:
+        slot["blocker_detail"] = detail
+    classification = str(child_action.get("classification", "")).strip()
+    if classification:
+        slot["classification"] = classification
+    child_validation = str(child_action.get("validation_command", "")).strip()
+    slot["validation_command"] = child_validation or validation_command
+    return slot
+
+
+def _report_child_action(report: dict[str, Any]) -> dict[str, Any] | None:
+    for key in ("next_action", "first_blocker"):
+        candidate = report.get(key)
+        if isinstance(candidate, dict):
+            return candidate
+    blockers = report.get("blockers")
+    if isinstance(blockers, list):
+        for blocker in blockers:
+            if isinstance(blocker, dict):
+                return blocker
     return None
 
 

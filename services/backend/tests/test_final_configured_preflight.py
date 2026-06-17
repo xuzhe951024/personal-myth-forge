@@ -358,6 +358,54 @@ def test_configured_preflight_cli_writes_report_and_makefile_exposes_target(
     assert ".local/final-configured-preflight.json" in wrapper
 
 
+def test_configured_preflight_surfaces_local_final_acceptance_child_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config="\n".join(
+            [
+                "DEVELOPMENT_TEAM = TEAM12345",
+                "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev",
+                "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080",
+                "PMF_FINAL_LAUNCH_MODE = configured",
+            ]
+        ),
+    )
+    _write_final_resources(repo_root)
+    _write_blocked_final_acceptance(
+        repo_root,
+        blocker_id="mobile_deploy_preflight",
+        command="make mobile-deploy-preflight",
+        detail="Backend health failed from the iPhone.",
+    )
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+
+    result = build_final_configured_preflight_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-secret",
+            npc_provider="openai",
+            openai_api_key="sk-openai-secret",
+            print_provider="treatstock",
+            treatstock_api_key="treatstock-secret",
+        ),
+        repo_root=repo_root,
+    )
+
+    assert result.exit_code == 2
+    assert result.report["first_blocker"]["id"] == "configured_ios_deploy_runbook"
+    assert result.report["first_blocker"]["source_id"] == "mobile_deploy_preflight"
+    assert result.report["first_blocker"]["command"] == "make mobile-deploy-preflight"
+    assert result.report["first_blocker"]["detail"] == (
+        "Backend health failed from the iPhone."
+    )
+    assert result.report["first_blocker"]["validation_command"] == (
+        "make final-acceptance-local"
+    )
+
+
 def _write_deploy_config(tmp_path: Path, local_config: str | None = None) -> Path:
     repo_root = tmp_path / "repo"
     config_dir = repo_root / "apps/mobile/ios/Config"
@@ -424,6 +472,33 @@ def _write_final_acceptance(repo_root: Path) -> None:
         "checks": [
             {"id": "provider_handoff", "label": "Provider handoff", "status": "passed"},
             {"id": "demo_acceptance", "label": "Demo acceptance", "status": "passed"},
+        ],
+    }
+    acceptance = repo_root / "services/backend/.local/final-acceptance-local.json"
+    acceptance.parent.mkdir(parents=True, exist_ok=True)
+    acceptance.write_text(json.dumps(report), encoding="utf-8")
+
+
+def _write_blocked_final_acceptance(
+    repo_root: Path,
+    *,
+    blocker_id: str,
+    command: str,
+    detail: str,
+) -> None:
+    report = {
+        "kind": "final_acceptance_report",
+        "overall_status": "blocked",
+        "summary": {"passed": 13, "blocked": 1, "failed": 0, "skipped": 0},
+        "checks": [
+            {
+                "id": blocker_id,
+                "label": "Mobile deploy preflight",
+                "status": "blocked",
+                "classification": "blocked_by_local_ios_backend_health",
+                "command": command,
+                "error": detail,
+            }
         ],
     }
     acceptance = repo_root / "services/backend/.local/final-acceptance-local.json"
