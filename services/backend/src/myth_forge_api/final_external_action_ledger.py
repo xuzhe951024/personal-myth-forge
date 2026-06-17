@@ -69,6 +69,11 @@ CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION = "make configured-live-evidence-bundle"
 CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION = (
     f"make final-configured-preflight; rerun {CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION}"
 )
+FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND = "make final-configured-evidence-plan"
+CONFIGURED_LIVE_EVALUATION_COMMANDS = {
+    "make backend-evaluate-3d-configured",
+    "make backend-evaluate-npc-configured",
+}
 BACKEND_DEVICE_DEMO_VALIDATED_ACTION = (
     "start backend-device-demo before device checks: "
     "make backend-device-demo; rerun make mobile-deploy-preflight"
@@ -606,6 +611,11 @@ def _live_action(
 def _live_provider_operator_action(command: str) -> str:
     if command not in LIVE_PROVIDER_CONSENT_COMMANDS:
         return ""
+    if command in CONFIGURED_LIVE_EVALUATION_COMMANDS:
+        return (
+            f"{LIVE_PROVIDER_CONSENT_ENV_PREFIX}{command}; "
+            f"rerun {FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND}"
+        )
     return f"{LIVE_PROVIDER_CONSENT_ENV_PREFIX}{command}"
 
 

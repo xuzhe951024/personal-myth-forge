@@ -72,10 +72,12 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
         for action in sections["live_provider_consent"]["actions"]
     }
     assert live_actions["run_configured_3d_evaluation"]["operator_action"] == (
-        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
     )
     assert live_actions["run_configured_npc_evaluation"]["operator_action"] == (
-        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured"
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
     )
     assert live_actions["run_configured_final_acceptance"]["operator_action"] == (
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured"
@@ -99,12 +101,13 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     )
     operator_actions = report["operator_actions"]
     actions = " ".join(operator_actions)
-    configured_gate_action = (
-        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    configured_3d_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
     )
-    configured_live_provider_action = (
-        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
-        "rerun make live-provider-evidence"
+    configured_npc_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
     )
     assert "make final-resources-preflight" not in operator_actions
     assert "make print-fulfillment-readiness" not in operator_actions
@@ -152,11 +155,10 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert "provide MESHY_API_KEY" not in operator_actions
     assert "provide DEVELOPMENT_TEAM" not in operator_actions
     assert "make ios-device-launch-rehearsal" not in actions
-    assert "make configured-live-evidence-bundle" in actions
-    assert configured_gate_action in operator_actions
-    assert "make configured-live-evidence-bundle" not in operator_actions
-    assert configured_live_provider_action in operator_actions
-    assert "make final-acceptance-configured" not in operator_actions
+    assert "make configured-live-evidence-bundle" not in actions
+    assert configured_3d_action in operator_actions
+    assert configured_npc_action in operator_actions
+    assert not any("make final-acceptance-configured" in action for action in operator_actions)
     assert report["commands"][:6] == [
         "make final-resource-requirements",
         "make final-resource-fill-guide",
@@ -1018,6 +1020,62 @@ def test_final_launch_closure_packet_routes_live_provider_actions_through_config
 
     assert actions == [configured_gate_action]
     assert not any("PMF_ALLOW_LIVE_PROVIDER_CALLS" in action for action in actions)
+
+
+def test_final_launch_closure_packet_preserves_validated_3d_and_npc_live_actions() -> None:
+    three_d_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+    npc_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+
+    actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "run_configured_3d_evaluation",
+                        "status": "blocked",
+                        "command": "make backend-evaluate-3d-configured",
+                        "operator_action": three_d_action,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": True,
+                        "requires_cost_consent": True,
+                    },
+                    {
+                        "id": "run_configured_npc_evaluation",
+                        "status": "blocked",
+                        "command": "make backend-evaluate-npc-configured",
+                        "operator_action": npc_action,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": True,
+                        "requires_cost_consent": True,
+                    },
+                    {
+                        "id": "run_configured_final_acceptance",
+                        "status": "blocked",
+                        "command": (
+                            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                            "make final-acceptance-configured"
+                        ),
+                        "requires_user_input": False,
+                        "requires_user_confirmation": True,
+                        "requires_cost_consent": True,
+                    },
+                ]
+            }
+        ],
+    )
+
+    assert actions[:2] == [three_d_action, npc_action]
+    assert "make final-acceptance-configured" not in actions
+    assert (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+        not in actions
+    )
 
 
 def test_final_launch_closure_packet_drops_short_provider_handoff_chain() -> None:

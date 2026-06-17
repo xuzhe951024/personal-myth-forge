@@ -75,13 +75,15 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
         "make backend-evaluate-3d-configured"
     )
     assert actions["run_configured_3d_evaluation"]["operator_action"] == (
-        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
     )
     assert actions["run_configured_npc_evaluation"]["command"] == (
         "make backend-evaluate-npc-configured"
     )
     assert actions["run_configured_npc_evaluation"]["operator_action"] == (
-        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured"
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
     )
     assert actions["run_configured_final_acceptance"]["operator_action"] == (
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured"
@@ -988,6 +990,10 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
         "rerun make final-configured-evidence-plan"
     )
+    configured_npc_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
     monkeypatch.setattr(
         final_external_action_ledger,
         "build_live_provider_evidence_report",
@@ -1018,7 +1024,7 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
                     "detail": "Missing configured 3D evaluation evidence.",
                     "validation_command": "make final-configured-evidence-plan",
                 },
-                "operator_actions": [configured_plan_action],
+                "operator_actions": [configured_plan_action, configured_npc_action],
             }
         ),
         encoding="utf-8",
@@ -1056,8 +1062,9 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
     assert result.report["actions_by_id"]["run_live_provider_evidence"][
         "requires_user_confirmation"
     ] is True
-    assert operator_actions[0] == configured_plan_action
+    assert operator_actions[:2] == [configured_plan_action, configured_npc_action]
     assert legacy_guarded_action not in operator_actions
+    assert "make final-acceptance-configured" not in operator_actions
     assert (
         "make final-configured-preflight; rerun make configured-live-evidence-bundle"
         not in operator_actions

@@ -1052,7 +1052,11 @@ def _drop_configured_evidence_gate_when_granular_live_consent(
     return [
         action
         for action in actions
-        if action != CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION
+        if action
+        not in {
+            CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION,
+            CONFIGURED_EVIDENCE_LIVE_PROVIDER_VALIDATED_ACTION,
+        }
     ]
 
 
