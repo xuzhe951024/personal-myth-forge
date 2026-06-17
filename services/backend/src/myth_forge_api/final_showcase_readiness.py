@@ -162,6 +162,9 @@ FINAL_SHOWCASE_DUPLICATE_DEVICE_ROOTS = {
 CONFIGURED_LIVE_EVIDENCE_BUNDLE_PATH = Path(
     "services/backend/.local/configured-live-evidence-bundle.json"
 )
+FINAL_CONFIGURED_EVIDENCE_PLAN_PATH = Path(
+    "services/backend/.local/final-configured-evidence-plan.json"
+)
 MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH = Path(
     "services/backend/.local/mobile-deploy-preflight-evidence.json"
 )
@@ -205,6 +208,9 @@ def build_final_showcase_readiness_report(
     configured_live_evidence_bundle = _load_configured_live_evidence_bundle_report(
         selected_repo_root,
     )
+    final_configured_evidence_plan = _load_final_configured_evidence_plan_report(
+        selected_repo_root,
+    )
     mobile_deploy_preflight_evidence = _load_mobile_deploy_preflight_evidence_report(
         selected_repo_root,
     )
@@ -241,6 +247,7 @@ def build_final_showcase_readiness_report(
         visual_regression=visual_regression,
         live_provider_evidence=live_provider_evidence,
         configured_live_evidence_bundle=configured_live_evidence_bundle,
+        final_configured_evidence_plan=final_configured_evidence_plan,
         mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
         mobile_xcode_build_evidence=mobile_xcode_build_evidence,
         print_fulfillment_readiness=print_fulfillment_readiness,
@@ -278,6 +285,7 @@ def build_final_showcase_readiness_report(
             mobile_deploy_preflight_evidence,
             mobile_xcode_build_evidence,
             live_provider_evidence,
+            final_configured_evidence_plan,
             configured_live_evidence_bundle,
             print_fulfillment_readiness,
             final_resource_apply_preview,
@@ -312,6 +320,9 @@ def build_final_showcase_readiness_report(
             "live_provider_evidence": _evidence_summary(live_provider_evidence),
             "configured_live_evidence_bundle": _evidence_summary(
                 configured_live_evidence_bundle,
+            ),
+            "final_configured_evidence_plan": _evidence_summary(
+                final_configured_evidence_plan,
             ),
             "mobile_deploy_preflight_evidence": _evidence_summary(
                 mobile_deploy_preflight_evidence,
@@ -365,6 +376,7 @@ def _capabilities(
     visual_regression: dict[str, Any],
     live_provider_evidence: dict[str, Any],
     configured_live_evidence_bundle: dict[str, Any],
+    final_configured_evidence_plan: dict[str, Any],
     mobile_deploy_preflight_evidence: dict[str, Any],
     mobile_xcode_build_evidence: dict[str, Any],
     print_fulfillment_readiness: dict[str, Any],
@@ -384,10 +396,12 @@ def _capabilities(
         _generated_3d_capability(
             three_d_evaluation=three_d_evaluation,
             live_provider_evidence=live_provider_evidence,
+            final_configured_evidence_plan=final_configured_evidence_plan,
         ),
         _ai_agent_npc_capability(
             npc_evaluation=npc_evaluation,
             live_provider_evidence=live_provider_evidence,
+            final_configured_evidence_plan=final_configured_evidence_plan,
         ),
         _print_fulfillment_capability(print_fulfillment_readiness),
         _provider_key_handoff_capability(
@@ -396,6 +410,7 @@ def _capabilities(
             resource_handoff=resource_handoff,
             live_provider_evidence=live_provider_evidence,
             configured_live_evidence_bundle=configured_live_evidence_bundle,
+            final_configured_evidence_plan=final_configured_evidence_plan,
         ),
         _simple_report_capability(
             capability_id="functional_regression",
@@ -424,6 +439,7 @@ def _capabilities(
             visual_regression=visual_regression,
             live_provider_evidence=live_provider_evidence,
             configured_live_evidence_bundle=configured_live_evidence_bundle,
+            final_configured_evidence_plan=final_configured_evidence_plan,
             mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
             mobile_xcode_build_evidence=mobile_xcode_build_evidence,
             print_fulfillment_readiness=print_fulfillment_readiness,
@@ -586,6 +602,7 @@ def _generated_3d_capability(
     *,
     three_d_evaluation: dict[str, Any],
     live_provider_evidence: dict[str, Any],
+    final_configured_evidence_plan: dict[str, Any],
 ) -> dict[str, Any]:
     local_status = _normalized_status(str(three_d_evaluation.get("status", "missing")))
     if local_status != "ready":
@@ -605,7 +622,10 @@ def _generated_3d_capability(
     requires_live_provider_consent = None
     if status == "partial":
         child_command, child_validation_command, child_requires_consent = (
-            _report_next_action_metadata(live_provider_evidence)
+            _live_provider_partial_next_action_metadata(
+                live_provider_evidence=live_provider_evidence,
+                final_configured_evidence_plan=final_configured_evidence_plan,
+            )
         )
         command = (
             _operator_action_with_validation(child_command, child_validation_command)
@@ -640,6 +660,7 @@ def _ai_agent_npc_capability(
     *,
     npc_evaluation: dict[str, Any],
     live_provider_evidence: dict[str, Any],
+    final_configured_evidence_plan: dict[str, Any],
 ) -> dict[str, Any]:
     local_status = _normalized_status(str(npc_evaluation.get("status", "missing")))
     if local_status != "ready":
@@ -659,7 +680,10 @@ def _ai_agent_npc_capability(
     requires_live_provider_consent = None
     if status == "partial":
         child_command, child_validation_command, child_requires_consent = (
-            _report_next_action_metadata(live_provider_evidence)
+            _live_provider_partial_next_action_metadata(
+                live_provider_evidence=live_provider_evidence,
+                final_configured_evidence_plan=final_configured_evidence_plan,
+            )
         )
         command = (
             _operator_action_with_validation(child_command, child_validation_command)
@@ -742,6 +766,7 @@ def _provider_key_handoff_capability(
     resource_handoff: dict[str, Any],
     live_provider_evidence: dict[str, Any],
     configured_live_evidence_bundle: dict[str, Any],
+    final_configured_evidence_plan: dict[str, Any],
 ) -> dict[str, Any]:
     final_resource_status = _normalized_status(str(final_resources.get("status", "missing")))
     apply_preview_status = _normalized_status(
@@ -771,7 +796,10 @@ def _provider_key_handoff_capability(
         status = "partial"
         classification = "live_provider_evidence_unproven"
         child_command, child_validation_command, child_requires_consent = (
-            _report_next_action_metadata(live_provider_evidence)
+            _live_provider_partial_next_action_metadata(
+                live_provider_evidence=live_provider_evidence,
+                final_configured_evidence_plan=final_configured_evidence_plan,
+            )
         )
         command = (
             _operator_action_with_validation(child_command, child_validation_command)
@@ -839,6 +867,31 @@ def _report_next_action_metadata(
     consent = next_action.get("requires_live_provider_consent")
     requires_live_provider_consent = consent if isinstance(consent, bool) else None
     return command, validation_command, requires_live_provider_consent
+
+
+def _live_provider_partial_next_action_metadata(
+    *,
+    live_provider_evidence: dict[str, Any],
+    final_configured_evidence_plan: dict[str, Any],
+) -> tuple[str, str, bool | None]:
+    configured_command, configured_validation, configured_requires_consent = (
+        _report_next_action_metadata(final_configured_evidence_plan)
+    )
+    if _is_guarded_live_provider_command(
+        configured_command,
+        configured_requires_consent,
+    ):
+        return configured_command, configured_validation, configured_requires_consent
+    return _report_next_action_metadata(live_provider_evidence)
+
+
+def _is_guarded_live_provider_command(
+    command: str,
+    requires_live_provider_consent: bool | None,
+) -> bool:
+    return requires_live_provider_consent is True and command.startswith(
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ",
+    )
 
 
 def _report_next_action_command(report: dict[str, Any]) -> tuple[str, str]:
@@ -1132,6 +1185,74 @@ def _load_configured_live_evidence_bundle_report(repo_root: Path) -> dict[str, A
             detail="Expected configured_live_evidence_bundle_report.",
         )
     return payload
+
+
+def _load_final_configured_evidence_plan_report(repo_root: Path) -> dict[str, Any]:
+    relative_path = FINAL_CONFIGURED_EVIDENCE_PLAN_PATH.as_posix()
+    path = repo_root / FINAL_CONFIGURED_EVIDENCE_PLAN_PATH
+    if not path.exists():
+        return _final_configured_evidence_plan_stub(
+            status="missing",
+            classification="missing_report",
+            detail=f"Missing {relative_path}.",
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return _final_configured_evidence_plan_stub(
+            status="blocked",
+            classification="unreadable_report",
+            detail=f"{relative_path} is not valid JSON.",
+        )
+    if not isinstance(payload, dict):
+        return _final_configured_evidence_plan_stub(
+            status="blocked",
+            classification="invalid_report_shape",
+            detail=f"{relative_path} must contain a JSON object.",
+        )
+    if payload.get("kind") != "final_configured_evidence_plan":
+        return _final_configured_evidence_plan_stub(
+            status="blocked",
+            classification="wrong_report_kind",
+            detail="Expected final_configured_evidence_plan.",
+        )
+    return payload
+
+
+def _final_configured_evidence_plan_stub(
+    *,
+    status: str,
+    classification: str,
+    detail: str,
+) -> dict[str, Any]:
+    return {
+        "kind": "final_configured_evidence_plan",
+        "status": status,
+        "first_blocker": {
+            "id": "final_configured_evidence_plan",
+            "label": "Final configured evidence plan",
+            "status": status,
+            "classification": classification,
+            "command": "make final-configured-evidence-plan",
+            "detail": detail,
+        },
+        "operator_actions": [],
+        "safety": {
+            "commands_run": False,
+            "provider_calls": False,
+            "live_provider_calls": False,
+            "writes_backend_env": False,
+            "writes_ios_deploy_config": False,
+            "global_mutation": False,
+            "xcode_or_signing": False,
+            "keychain_writes": False,
+            "provider_secrets_in_report": False,
+            "raw_private_context_in_report": False,
+            "raw_media_in_report": False,
+            "payment_links_in_report": False,
+            "local_paths_in_report": False,
+        },
+    }
 
 
 def _configured_live_evidence_bundle_stub(
@@ -2303,6 +2424,14 @@ def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
 
 
 def _prefer_live_provider_consent_gate(actions: list[str]) -> list[str]:
+    if any(_is_granular_configured_live_provider_action(action) for action in actions):
+        return [
+            action
+            for action in actions
+            if _is_granular_configured_live_provider_action(action)
+            or not _is_coarse_live_provider_consent_action(action)
+            and not _is_live_provider_fallback_action(action)
+        ]
     if not any(_is_live_provider_consent_action(action) for action in actions):
         return actions
     return [
@@ -2314,7 +2443,20 @@ def _prefer_live_provider_consent_gate(actions: list[str]) -> list[str]:
 
 
 def _is_live_provider_consent_action(action: str) -> bool:
+    return _operator_action_bare_root(action).startswith(
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+    )
+
+
+def _is_coarse_live_provider_consent_action(action: str) -> bool:
     return _operator_action_bare_root(action) == FINAL_SHOWCASE_LIVE_PROVIDER_CONSENT_ACTION
+
+
+def _is_granular_configured_live_provider_action(action: str) -> bool:
+    root = _operator_action_bare_root(action)
+    return root.startswith(
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-",
+    ) and "rerun make final-configured-evidence-plan" in root
 
 
 def _is_live_provider_fallback_action(action: str) -> bool:

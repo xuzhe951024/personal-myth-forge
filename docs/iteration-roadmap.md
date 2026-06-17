@@ -189,6 +189,7 @@ Bridge deliverable:
 - P0.591 final handoff index uses guarded live consent action
 - P0.592 iOS device rehearsal refreshes runbook before final handoff index to converge local device evidence
 - P0.593 final configured evidence plan uses guarded live provider commands for consent blockers
+- P0.594 final showcase live provider rows prefer configured evidence plan guarded next action
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

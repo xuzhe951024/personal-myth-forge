@@ -1206,6 +1206,113 @@ def test_final_showcase_readiness_live_provider_rows_promote_child_next_action(
     assert "make live-provider-evidence" not in actions
 
 
+def test_final_showcase_readiness_live_provider_rows_prefer_configured_plan_action(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+        ),
+    )
+    _write_capture_source_acceptance(repo_root)
+    _write_final_resources(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance_ready(repo_root)
+    _write_configured_live_evidence_bundle(
+        repo_root,
+        status="blocked",
+        detail="Configured final acceptance is not ready.",
+    )
+    _write_final_configured_evidence_plan(
+        repo_root,
+        command="PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured",
+        validation_command="make final-configured-evidence-plan",
+    )
+
+    def fake_live_provider_evidence_report(
+        *, repo_root: Path | str | None = None
+    ) -> LiveProviderEvidenceResult:
+        return LiveProviderEvidenceResult(
+            exit_code=2,
+            report={
+                "kind": "live_provider_evidence_report",
+                "status": "blocked",
+                "next_action": {
+                    "id": "final_acceptance_configured",
+                    "label": "Configured final acceptance",
+                    "status": "blocked",
+                    "classification": "report_not_ready",
+                    "command": (
+                        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                        "make final-acceptance-configured"
+                    ),
+                    "detail": "Saved report is not ready.",
+                    "requires_live_provider_consent": True,
+                    "validation_command": "make live-provider-evidence",
+                    "source": "first_blocker",
+                },
+                "evidence": [],
+                "operator_actions": [
+                    (
+                        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                        "make final-acceptance-configured; "
+                        "rerun make live-provider-evidence"
+                    ),
+                ],
+                "commands": ["make live-provider-evidence"],
+                "safety": {"live_provider_calls": False},
+            },
+        )
+
+    monkeypatch.setattr(
+        final_showcase_readiness,
+        "build_live_provider_evidence_report",
+        fake_live_provider_evidence_report,
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+        ),
+        repo_root=repo_root,
+    )
+    rows = result.report["capabilities_by_id"]
+    configured_plan_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+
+    for row_id in (
+        "game_asset_3d_generation",
+        "ai_agent_npc",
+        "provider_key_handoff",
+    ):
+        row = rows[row_id]
+        assert row["status"] == "partial"
+        assert row["command"] == configured_plan_action
+        assert row["validation_command"] == "make final-configured-evidence-plan"
+        assert row["requires_live_provider_consent"] is True
+        assert row["completion_requires_live_provider_consent"] is True
+
+    assert result.report["evidence"]["final_configured_evidence_plan"]["status"] == (
+        "consent_required"
+    )
+    assert configured_plan_action in result.report["operator_actions"]
+    assert (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    ) not in result.report["operator_actions"]
+
+
 def test_final_showcase_readiness_provider_handoff_uses_final_resource_next_action(
     tmp_path: Path,
 ) -> None:
@@ -3163,6 +3270,67 @@ def _write_live_provider_evidence_ready(
             "kind": "final_demo_launch_report",
             "mode": "configured",
             "overall_status": configured_launch_status,
+        },
+    )
+
+
+def _write_final_configured_evidence_plan(
+    repo_root: Path,
+    *,
+    command: str,
+    validation_command: str,
+) -> None:
+    operator_action = f"{command}; rerun {validation_command}"
+    _write_json(
+        repo_root / "services/backend/.local/final-configured-evidence-plan.json",
+        {
+            "kind": "final_configured_evidence_plan",
+            "status": "consent_required",
+            "first_blocker": {
+                "id": "three_d_evaluation_configured",
+                "label": "Configured 3D evaluation",
+                "status": "consent_required",
+                "classification": "consent_required",
+                "command": command,
+                "detail": "Missing services/backend/.local/3d-evaluation-configured.json.",
+                "requires_live_provider_consent": True,
+                "may_call_live_provider": True,
+                "cost_risk": True,
+                "validation_command": validation_command,
+                "evidence_status": "missing",
+                "evidence_path": "services/backend/.local/3d-evaluation-configured.json",
+            },
+            "next_action": {
+                "id": "three_d_evaluation_configured",
+                "label": "Configured 3D evaluation",
+                "status": "consent_required",
+                "classification": "consent_required",
+                "command": command,
+                "detail": "Missing services/backend/.local/3d-evaluation-configured.json.",
+                "requires_live_provider_consent": True,
+                "may_call_live_provider": True,
+                "cost_risk": True,
+                "validation_command": validation_command,
+                "evidence_status": "missing",
+                "evidence_path": "services/backend/.local/3d-evaluation-configured.json",
+                "source": "first_blocker",
+            },
+            "operator_actions": [operator_action],
+            "safety": {
+                "commands_run": False,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "raw_private_context_in_report": False,
+                "raw_media_in_report": False,
+                "payment_links_in_report": False,
+                "local_paths_in_report": False,
+            },
         },
     )
 
