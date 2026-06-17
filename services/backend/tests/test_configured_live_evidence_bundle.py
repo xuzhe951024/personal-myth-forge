@@ -293,6 +293,72 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
     assert "make live-provider-evidence" not in report["operator_actions"]
 
 
+def test_configured_live_evidence_bundle_prunes_validated_demo_fallback_with_configured_consent(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = _write_ready_resource_bundle(tmp_path)
+    validated_demo_fallback = (
+        "make final-demo-launch-configured; rerun make final-configured-evidence-plan"
+    )
+    monkeypatch.setattr(
+        "myth_forge_api.configured_live_evidence_bundle.build_live_provider_evidence_report",
+        lambda **_kwargs: type(
+            "Result",
+            (),
+            {
+                "report": {
+                    "kind": "live_provider_evidence_report",
+                    "status": "blocked",
+                    "first_blocker": {
+                        "id": "final_demo_launch_configured",
+                        "label": "Configured final demo launch",
+                        "status": "blocked",
+                        "classification": "report_not_ready",
+                        "command": "make final-demo-launch-configured",
+                        "detail": "Configured demo launch is not ready.",
+                    },
+                    "next_action": {
+                        "id": "final_demo_launch_configured",
+                        "label": "Configured final demo launch",
+                        "status": "blocked",
+                        "classification": "report_not_ready",
+                        "command": validated_demo_fallback,
+                        "detail": "Configured demo launch is not ready.",
+                        "validation_command": "make final-configured-evidence-plan",
+                    },
+                    "operator_actions": [validated_demo_fallback],
+                    "evidence": [],
+                    "commands": ["make final-demo-launch-configured"],
+                }
+            },
+        )(),
+    )
+
+    result = build_configured_live_evidence_bundle_report(
+        repo_root=repo_root,
+        settings=_configured_settings(),
+    )
+    report = result.report
+
+    assert report["operator_actions"][:3] == [
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+            "rerun make final-configured-evidence-plan"
+        ),
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+            "rerun make final-configured-evidence-plan"
+        ),
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+            "rerun make final-configured-evidence-plan"
+        ),
+    ]
+    assert validated_demo_fallback not in report["operator_actions"]
+    assert "make final-demo-launch-configured" not in report["operator_actions"]
+
+
 def test_configured_live_evidence_bundle_prioritizes_configured_plan_child_blocker(
     tmp_path: Path,
     monkeypatch,

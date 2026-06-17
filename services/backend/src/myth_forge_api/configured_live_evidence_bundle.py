@@ -756,9 +756,14 @@ def _is_configured_plan_consent_action(action: str) -> bool:
 
 def _is_live_provider_fallback_action(action: str) -> bool:
     normalized = normalize_operator_action(action)
-    if normalized in LIVE_PROVIDER_FALLBACK_ACTION_ROOTS:
+    root = _action_command_root(normalized)
+    if root in LIVE_PROVIDER_FALLBACK_ACTION_ROOTS:
         return True
     return normalized.startswith("review live provider cost consent before ")
+
+
+def _action_command_root(action: str) -> str:
+    return action.split("; rerun ", 1)[0].strip()
 
 
 def _sanitize_report(report: dict[str, Any], repo_root: Path) -> dict[str, Any]:
