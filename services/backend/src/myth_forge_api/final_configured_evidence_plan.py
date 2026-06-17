@@ -21,12 +21,16 @@ from myth_forge_api.final_resource_apply_preview import (
 from myth_forge_api.final_resource_fill_guide import (
     build_final_resource_fill_guide_report,
 )
-from myth_forge_api.live_provider_evidence import build_live_provider_evidence_report
+from myth_forge_api.live_provider_evidence import (
+    LIVE_PROVIDER_CONSENT_ENV_PREFIX,
+    build_live_provider_evidence_report,
+)
 from myth_forge_api.operator_actions import normalize_operator_action
 
 
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
 FINAL_RESOURCE_APPLY_ACTION = "make final-apply-resources"
+FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND = "make final-configured-evidence-plan"
 
 
 @dataclass(frozen=True)
@@ -352,12 +356,17 @@ def _action_from_step(step: dict[str, Any]) -> dict[str, Any]:
     blocked_by = [str(item) for item in step.get("blocked_by", [])]
     if not detail and blocked_by:
         detail = "blocked by " + ", ".join(blocked_by)
+    command = str(step["command"])
+    if str(step.get("status")) == "consent_required" and bool(
+        step.get("may_call_live_provider")
+    ):
+        command = _with_live_provider_consent(command)
     action = {
         "id": step["id"],
         "label": step["label"],
         "status": step["status"],
         "classification": step["status"],
-        "command": step["command"],
+        "command": command,
         "detail": detail,
         "blocked_by": blocked_by,
         "requires_live_provider_consent": step["requires_live_provider_consent"],
@@ -415,12 +424,23 @@ def _operator_actions(steps: list[dict[str, Any]]) -> list[str]:
             suffix = f" after {', '.join(blocked_by)}" if blocked_by else ""
             actions.append(f"unblock {step['id']}{suffix}")
         elif status == "consent_required":
-            actions.append(
-                f"review live provider cost consent before {step['id']}"
-            )
+            actions.append(_consent_required_action(step))
     if not actions:
         actions.append("run configured evidence commands in order")
     return _prefer_apply_preview_before_apply(_dedupe(actions))[:12]
+
+
+def _consent_required_action(step: dict[str, Any]) -> str:
+    command = str(step["command"])
+    if bool(step.get("may_call_live_provider")):
+        command = _with_live_provider_consent(command)
+    return f"{command}; rerun {FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND}"
+
+
+def _with_live_provider_consent(command: str) -> str:
+    if command.startswith(LIVE_PROVIDER_CONSENT_ENV_PREFIX):
+        return command
+    return f"{LIVE_PROVIDER_CONSENT_ENV_PREFIX}{command}"
 
 
 def _safety() -> dict[str, bool]:

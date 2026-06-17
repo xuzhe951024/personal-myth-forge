@@ -170,6 +170,9 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
     assert steps["live_provider_evidence"]["status"] == "ready_to_run"
     assert report["first_blocker"]["id"] == "three_d_evaluation_configured"
     assert report["first_blocker"]["status"] == "consent_required"
+    assert report["first_blocker"]["command"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
+    )
     assert report["first_blocker"]["requires_live_provider_consent"] is True
     assert report["first_blocker"]["cost_risk"] is True
     assert report["first_blocker"]["would_write_backend_env"] is False
@@ -178,7 +181,28 @@ def test_configured_evidence_plan_requires_consent_with_ready_resources(
         "make final-configured-evidence-plan"
     )
     assert report["next_action"]["id"] == "three_d_evaluation_configured"
+    assert report["next_action"]["command"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
+    )
     assert report["next_action"]["source"] == "first_blocker"
+    assert report["operator_actions"][:3] == [
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+            "rerun make final-configured-evidence-plan"
+        ),
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+            "rerun make final-configured-evidence-plan"
+        ),
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+            "rerun make final-configured-evidence-plan"
+        ),
+    ]
+    assert not any(
+        action.startswith("review live provider cost consent")
+        for action in report["operator_actions"]
+    )
     assert "make provider-handoff" in report["commands"]
     assert "make final-demo-launch-configured" in report["commands"]
     assert not any(
