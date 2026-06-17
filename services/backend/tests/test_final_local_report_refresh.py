@@ -175,6 +175,44 @@ def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_a
     assert "meshy-secret" not in report_text
 
 
+def test_final_local_report_refresh_treats_nonblocking_resource_handoff_partial_as_ready(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+
+    def nonblocking_resource_handoff(_repo_root: Path) -> dict[str, object]:
+        return {
+            "kind": "resource_handoff_report",
+            "status": "partial",
+            "summary": {
+                "ready": 11,
+                "missing": 0,
+                "blocked": 0,
+                "manual": 0,
+                "optional": 2,
+            },
+            "first_blocker": None,
+            "next_action": None,
+            "operator_actions": [],
+        }
+
+    result = run_final_local_report_refresh(
+        repo_root=repo_root,
+        extra_steps={"resource_handoff": nonblocking_resource_handoff},
+    )
+
+    step = result.report["steps_by_id"]["resource_handoff"]
+
+    assert step["raw_status"] == "partial"
+    assert step["status"] == "ready"
+    assert step["exit_code"] == 0
+    assert step["accepted_blocked"] is False
+    assert "next_action" not in step
+    assert "review refreshed resource_handoff report" not in (
+        result.report["operator_actions"]
+    )
+
+
 def test_final_local_report_refresh_exposes_next_action_from_first_blocker(
     tmp_path: Path,
 ) -> None:

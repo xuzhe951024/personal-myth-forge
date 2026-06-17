@@ -455,7 +455,7 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
         if step.output_path is not None:
             _write_json(repo_root=repo_root, relative_path=step.output_path, report=report)
         raw_status = _raw_status(report)
-        status = _normalized_status(raw_status)
+        status = _effective_step_status(step.id, raw_status, report)
         next_command = _next_command(report)
         blocker_hint = _blocker_hint(report)
         blocker_fields = _promoted_blocker_fields(blocker_hint)
@@ -938,6 +938,41 @@ def _normalized_status(status: str) -> str:
     if status in {"failed", "error"}:
         return "failed"
     return "blocked"
+
+
+def _effective_step_status(
+    step_id: str,
+    raw_status: str,
+    report: dict[str, Any],
+) -> str:
+    if (
+        step_id == "resource_handoff"
+        and raw_status.strip().lower() == "partial"
+        and _is_nonblocking_resource_handoff_partial(report)
+    ):
+        return "ready"
+    return _normalized_status(raw_status)
+
+
+def _is_nonblocking_resource_handoff_partial(report: dict[str, Any]) -> bool:
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        return False
+    return (
+        not isinstance(report.get("first_blocker"), dict)
+        and not isinstance(report.get("next_action"), dict)
+        and not _report_operator_actions(report)
+        and _summary_count(summary, "missing") == 0
+        and _summary_count(summary, "blocked") == 0
+        and _summary_count(summary, "manual") == 0
+    )
+
+
+def _summary_count(summary: dict[str, Any], key: str) -> int:
+    try:
+        return int(summary.get(key, 0) or 0)
+    except (TypeError, ValueError):
+        return 1
 
 
 def _step_exit_code(status: str) -> int:
