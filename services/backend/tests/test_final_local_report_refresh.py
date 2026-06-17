@@ -4,8 +4,10 @@ import json
 import shutil
 import struct
 from pathlib import Path
+from types import SimpleNamespace
 
 from myth_forge_api import final_local_report_refresh
+from myth_forge_api.config import Settings
 from myth_forge_api.final_local_report_refresh import run_final_local_report_refresh
 from myth_forge_api.visual_regression import DEFAULT_VISUAL_ARTIFACTS
 
@@ -31,6 +33,54 @@ def test_final_local_report_dedupes_legacy_print_quote_handoff_actions() -> None
     )
 
     assert actions == [GUARDED_PRINT_QUOTE_ACTION]
+
+
+def test_final_local_report_refresh_final_showcase_uses_loaded_settings(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    configured_settings = Settings(
+        three_d_provider="meshy",
+        meshy_api_key="meshy-key",
+        npc_provider="openai",
+        openai_api_key="openai-key",
+    )
+    captured: dict[str, Settings] = {}
+
+    def fake_final_showcase_report(
+        *,
+        settings: Settings,
+        repo_root: Path,
+    ) -> SimpleNamespace:
+        captured["settings"] = settings
+        return SimpleNamespace(
+            report={
+                "kind": "final_showcase_readiness_report",
+                "status": "partial",
+            }
+        )
+
+    monkeypatch.setattr(
+        final_local_report_refresh,
+        "load_settings",
+        lambda: configured_settings,
+    )
+    monkeypatch.setattr(
+        final_local_report_refresh,
+        "build_final_showcase_readiness_report",
+        fake_final_showcase_report,
+    )
+
+    step = next(
+        step
+        for step in final_local_report_refresh._default_steps()
+        if step.id == "final_showcase_readiness"
+    )
+
+    report = step.runner(tmp_path)
+
+    assert report["status"] == "partial"
+    assert captured["settings"] is configured_settings
 
 
 def test_final_local_report_refresh_writes_safe_reports_without_live_or_global_actions(

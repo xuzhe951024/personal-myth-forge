@@ -375,7 +375,7 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "Final showcase readiness",
             "final-showcase-readiness.json",
             lambda repo_root: build_final_showcase_readiness_report(
-                settings=LOCAL_SETTINGS,
+                settings=load_settings(),
                 repo_root=repo_root,
             ).report,
         ),
