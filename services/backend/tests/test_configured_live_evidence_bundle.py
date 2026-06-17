@@ -154,10 +154,24 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
     monkeypatch,
 ) -> None:
     repo_root = _write_ready_resource_bundle(tmp_path)
-    expected_command = (
+    live_evidence_command = (
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
         "rerun make live-provider-evidence"
     )
+    expected_actions = [
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+            "rerun make final-configured-evidence-plan"
+        ),
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+            "rerun make final-configured-evidence-plan"
+        ),
+        (
+            "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+            "rerun make final-configured-evidence-plan"
+        ),
+    ]
     monkeypatch.setattr(
         "myth_forge_api.configured_live_evidence_bundle.build_live_provider_evidence_report",
         lambda **_kwargs: type(
@@ -180,12 +194,12 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
                         "label": "Configured final acceptance",
                         "status": "blocked",
                         "classification": "report_not_ready",
-                        "command": expected_command,
+                        "command": live_evidence_command,
                         "detail": "Saved report is not ready.",
                         "validation_command": "make live-provider-evidence",
                     },
                     "operator_actions": [
-                        expected_command,
+                        live_evidence_command,
                         "make provider-handoff",
                         "make backend-evaluate-3d-configured",
                         "make backend-evaluate-npc-configured",
@@ -207,13 +221,14 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
     assert result.exit_code == 2
     assert report["status"] == "blocked"
     assert report["current_blocker"]["id"] == "final_acceptance_configured"
-    assert report["current_blocker"]["command"] == expected_command
+    assert report["current_blocker"]["command"] == live_evidence_command
     assert report["current_blocker"]["validation_command"] == (
         "make live-provider-evidence"
     )
-    assert report["first_blocker"]["command"] == expected_command
-    assert report["next_action"]["command"] == expected_command
-    assert expected_command in report["operator_actions"]
+    assert report["first_blocker"]["command"] == live_evidence_command
+    assert report["next_action"]["command"] == live_evidence_command
+    assert report["operator_actions"][:3] == expected_actions
+    assert live_evidence_command not in report["operator_actions"]
     assert "make final-acceptance-configured" not in report["operator_actions"]
     assert "make provider-handoff" not in report["operator_actions"]
     assert "make backend-evaluate-3d-configured" not in report["operator_actions"]

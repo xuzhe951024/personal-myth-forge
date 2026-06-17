@@ -565,6 +565,20 @@ LIVE_PROVIDER_CONSENT_ACTION_MARKER = (
     "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
     "rerun make live-provider-evidence"
 )
+CONFIGURED_PLAN_CONSENT_ACTION_MARKERS = (
+    (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    ),
+    (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
+    ),
+    (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make final-configured-evidence-plan"
+    ),
+)
 LIVE_PROVIDER_FALLBACK_ACTION_ROOTS = {
     "make backend-evaluate-3d-configured",
     "make backend-evaluate-npc-configured",
@@ -577,6 +591,16 @@ LIVE_PROVIDER_FALLBACK_ACTION_ROOTS = {
 
 
 def _prefer_live_provider_consent_action(actions: list[str]) -> list[str]:
+    if any(_is_configured_plan_consent_action(action) for action in actions):
+        return [
+            action
+            for action in actions
+            if _is_configured_plan_consent_action(action)
+            or not (
+                _is_live_provider_consent_action(action)
+                or _is_live_provider_fallback_action(action)
+            )
+        ]
     if not any(_is_live_provider_consent_action(action) for action in actions):
         return actions
     return [
@@ -589,6 +613,10 @@ def _prefer_live_provider_consent_action(actions: list[str]) -> list[str]:
 
 def _is_live_provider_consent_action(action: str) -> bool:
     return normalize_operator_action(action) == LIVE_PROVIDER_CONSENT_ACTION_MARKER
+
+
+def _is_configured_plan_consent_action(action: str) -> bool:
+    return normalize_operator_action(action) in CONFIGURED_PLAN_CONSENT_ACTION_MARKERS
 
 
 def _is_live_provider_fallback_action(action: str) -> bool:
