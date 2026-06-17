@@ -876,6 +876,7 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
 
     first_blocker = result.report["first_blocker"]
     next_action = result.report["next_action"]
+    operator_actions = result.report["operator_actions"]
 
     assert result.exit_code == 2
     assert result.report["status"] == "partial"
@@ -885,6 +886,10 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
     assert first_blocker["validation_command"] == "make live-provider-evidence"
     assert next_action["command"] == guarded_action
     assert next_action["validation_command"] == "make live-provider-evidence"
+    assert operator_actions[0] == guarded_action
+    assert operator_actions.index(guarded_action) < operator_actions.index(
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    )
 
 
 def test_external_action_ledger_routes_repairable_final_resources_before_apply(

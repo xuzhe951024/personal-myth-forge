@@ -1098,8 +1098,37 @@ def _operator_actions(
     device_pruned_actions = _drop_bare_ios_rehearsal_when_specific_device_actions_exist(
         mobile_pruned_actions
     )
-    return _prefer_configured_evidence_gate_for_live_provider_actions(
+    configured_actions = _prefer_configured_evidence_gate_for_live_provider_actions(
         device_pruned_actions
+    )
+    return _promote_live_first_blocker_action(
+        configured_actions,
+        first_blocker=first_blocker,
+    )
+
+
+def _promote_live_first_blocker_action(
+    actions: list[str],
+    *,
+    first_blocker: dict[str, Any] | None,
+) -> list[str]:
+    if not _is_live_provider_first_blocker(first_blocker):
+        return actions
+    command = normalize_operator_action(str((first_blocker or {}).get("command", "")))
+    if not command:
+        return actions
+    return _dedupe([command, *actions])
+
+
+def _is_live_provider_first_blocker(first_blocker: dict[str, Any] | None) -> bool:
+    if not isinstance(first_blocker, dict):
+        return False
+    return (
+        first_blocker.get("group_id") == "live_provider_costs"
+        or str(first_blocker.get("validation_command", "")).strip()
+        == "make live-provider-evidence"
+        or LIVE_PROVIDER_CONSENT_ENV_PREFIX
+        in str(first_blocker.get("command", ""))
     )
 
 
