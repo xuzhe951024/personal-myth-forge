@@ -28,6 +28,15 @@ from myth_forge_api.resource_handoff import build_resource_handoff_report
 
 
 FINAL_RESOURCE_APPLY_PREVIEW_ACTION = "make final-resource-apply-preview"
+FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND = "make final-configured-evidence-plan"
+CONFIGURED_THREE_D_EVALUATION_CONSENT_ACTION = (
+    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+    f"rerun {FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND}"
+)
+CONFIGURED_NPC_EVALUATION_CONSENT_ACTION = (
+    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+    f"rerun {FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND}"
+)
 
 
 @dataclass(frozen=True)
@@ -320,6 +329,12 @@ def _operator_actions(
     actions.extend(_string_list(provider_handoff.get("next_commands")))
     actions.extend(_missing_provider_actions(provider_handoff))
     actions.extend(_string_list(resource_handoff.get("operator_actions")))
+    if (
+        final_resources_preflight.get("status") == "ready"
+        and provider_handoff.get("core_real_ready", False)
+    ):
+        actions.extend(_provider_granular_live_consent_actions(provider_handoff))
+        actions.extend(_configured_live_consent_actions(configured_final_launch))
     actions.extend(_string_list(configured_final_launch.get("operator_checklist")))
     actions.extend(_string_list(configured_ios_deploy_runbook.get("operator_actions")))
     if (
@@ -337,9 +352,11 @@ def _operator_actions(
         ]
     )
     return _drop_unblock_fallback_actions(
-        _prefer_apply_preview_before_apply(
-            prefer_iphone_reachable_backend_url_handoff_actions(
-                normalized_actions
+        _drop_broad_live_actions_when_granular_present(
+            _prefer_apply_preview_before_apply(
+                prefer_iphone_reachable_backend_url_handoff_actions(
+                    normalized_actions
+                )
             )
         )
     )
@@ -350,6 +367,88 @@ def _missing_provider_actions(provider_handoff: dict[str, Any]) -> list[str]:
         f"provide {env_name}"
         for env_name in _string_list(provider_handoff.get("missing_env"))
     ]
+
+
+def _configured_live_consent_actions(report: dict[str, Any]) -> list[str]:
+    return _dedupe(
+        [
+            action
+            for action in (
+                normalize_operator_action(candidate)
+                for candidate in _nested_command_strings(report)
+            )
+            if _is_granular_configured_live_action(action)
+        ]
+    )
+
+
+def _provider_granular_live_consent_actions(provider_handoff: dict[str, Any]) -> list[str]:
+    actions: list[str] = []
+    for provider in provider_handoff.get("providers", []):
+        if not isinstance(provider, dict):
+            continue
+        if provider.get("is_real_provider_ready") is not True:
+            continue
+        kind = str(provider.get("kind", ""))
+        selected_provider = str(provider.get("selected_provider", "")).lower()
+        if kind == "three_d" and selected_provider == "meshy":
+            actions.append(CONFIGURED_THREE_D_EVALUATION_CONSENT_ACTION)
+        if kind == "npc" and selected_provider == "openai":
+            actions.append(CONFIGURED_NPC_EVALUATION_CONSENT_ACTION)
+    return actions
+
+
+def _nested_command_strings(value: Any) -> list[str]:
+    if isinstance(value, dict):
+        commands: list[str] = []
+        command = value.get("command")
+        if isinstance(command, str):
+            commands.append(command)
+        for key in ("operator_actions", "operator_checklist"):
+            commands.extend(_string_list(value.get(key)))
+        for child in value.values():
+            commands.extend(_nested_command_strings(child))
+        return commands
+    if isinstance(value, list):
+        commands = []
+        for item in value:
+            if isinstance(item, str):
+                commands.append(item)
+            else:
+                commands.extend(_nested_command_strings(item))
+        return commands
+    return []
+
+
+def _is_granular_configured_live_action(action: str) -> bool:
+    return (
+        action.startswith("PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ")
+        and FINAL_CONFIGURED_EVIDENCE_PLAN_COMMAND in action
+        and (
+            "make backend-evaluate-3d-configured" in action
+            or "make backend-evaluate-npc-configured" in action
+        )
+    )
+
+
+def _drop_broad_live_actions_when_granular_present(actions: list[str]) -> list[str]:
+    if not any(_is_granular_configured_live_action(action) for action in actions):
+        return actions
+    return [
+        action
+        for action in actions
+        if not _is_broad_live_provider_action(action)
+    ]
+
+
+def _is_broad_live_provider_action(action: str) -> bool:
+    if action == "make live-provider-evidence":
+        return True
+    if action == CONFIGURED_FINAL_ACCEPTANCE_COST_REVIEW_ACTION:
+        return True
+    return "make final-acceptance-configured" in action and (
+        "backend-evaluate-" not in action
+    )
 
 
 def _commands() -> list[str]:

@@ -173,6 +173,49 @@ def test_configured_preflight_operator_actions_gate_apply_behind_preview(
     )
 
 
+def test_configured_preflight_prefers_granular_live_evidence_actions(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(
+        tmp_path,
+        local_config=(
+            "DEVELOPMENT_TEAM = TEAM12345\n"
+            "PRODUCT_BUNDLE_IDENTIFIER = com.zhexu.personalmythforge.dev\n"
+            "PMF_BACKEND_BASE_URL = http://10.0.0.24:8080\n"
+            "PMF_FINAL_LAUNCH_MODE = configured\n"
+        ),
+    )
+    _write_local_print_final_resources(repo_root)
+    _write_final_acceptance(repo_root)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+
+    result = build_final_configured_preflight_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="sk-meshy-secret",
+            npc_provider="openai",
+            openai_api_key="sk-openai-secret",
+            print_provider="local",
+        ),
+        repo_root=repo_root,
+    )
+    actions = result.report["operator_actions"]
+
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
+    assert (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    ) in actions
+    assert (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
+    ) in actions
+    assert "make live-provider-evidence" not in actions
+    assert not any("final-acceptance-configured" in action for action in actions)
+
+
 def test_configured_preflight_ios_deploy_actions_include_validation_commands(
     tmp_path: Path,
 ) -> None:
@@ -312,8 +355,17 @@ def test_configured_preflight_is_ready_with_configured_handoff_inputs(
     assert "make final-configured-preflight" in result.report["commands"]
     assert "make backend-device-demo" in result.report["commands"]
     assert "make mobile-deploy-preflight" in result.report["commands"]
-    assert any(
-        "live provider cost review" in action
+    assert (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    ) in result.report["operator_actions"]
+    assert (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
+    ) in result.report["operator_actions"]
+    assert "make live-provider-evidence" not in result.report["operator_actions"]
+    assert not any(
+        "final-acceptance-configured" in action
         for action in result.report["operator_actions"]
     )
     assert result.report["safety"]["commands_run"] is False
@@ -457,6 +509,25 @@ def _write_incomplete_final_resources(repo_root: Path) -> None:
         "\n".join(
             [
                 "PRINT_PROVIDER=local",
+                "PMF_FINAL_LAUNCH_MODE=configured",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_local_print_final_resources(repo_root: Path) -> None:
+    resources = repo_root / "services/backend/.local/final-resources.env"
+    resources.parent.mkdir(parents=True)
+    resources.write_text(
+        "\n".join(
+            [
+                "MESHY_API_KEY=meshy-secret-test",
+                "OPENAI_API_KEY=sk-openai-test",
+                "PRINT_PROVIDER=local",
+                "DEVELOPMENT_TEAM=TEAM12345",
+                "PRODUCT_BUNDLE_IDENTIFIER=com.zhexu.personalmythforge.dev",
+                "PMF_BACKEND_BASE_URL=http://10.0.0.24:8080",
                 "PMF_FINAL_LAUNCH_MODE=configured",
             ]
         ),
