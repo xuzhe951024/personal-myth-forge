@@ -258,6 +258,64 @@ def test_final_handoff_index_local_lane_uses_saved_blocker_detail(
     assert "MESHY_API_KEY" not in report_text
 
 
+def test_final_handoff_index_does_not_copy_live_provider_actions_into_local_lane(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance(repo_root)
+    _write_ios_deploy_runbook(repo_root)
+    live_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+    _write_final_demo_launch(
+        repo_root,
+        overall_status="partial",
+        first_blocker={
+            "id": "game_asset_3d_generation",
+            "label": "Game asset 3D generation",
+            "status": "partial",
+            "classification": "live_3d_provider_unproven",
+            "command": live_action,
+            "detail": "Live Meshy evidence still needs consent.",
+        },
+        next_action={
+            "id": "game_asset_3d_generation",
+            "label": "Game asset 3D generation",
+            "status": "partial",
+            "classification": "live_3d_provider_unproven",
+            "command": live_action,
+            "detail": "Live Meshy evidence still needs consent.",
+            "validation_command": "make live-provider-evidence",
+        },
+        operator_actions=[live_action, "make live-provider-evidence"],
+    )
+
+    result = build_final_handoff_index_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+    local_lane = result.report["lanes_by_id"]["local_rehearsal"]
+
+    assert result.exit_code == 2
+    assert not any(
+        "live-provider-evidence" in action
+        for action in local_lane.get("operator_actions", [])
+    )
+    assert not any(
+        action.startswith("final_demo_launch_local:")
+        and "live-provider-evidence" in action
+        for action in result.report["operator_actions"]
+    )
+    assert any(
+        "make final-acceptance-configured" in action
+        for action in result.report["operator_actions"]
+    )
+
+
 def test_final_handoff_index_promotes_local_lane_operator_action_to_next_action(
     tmp_path: Path,
 ) -> None:

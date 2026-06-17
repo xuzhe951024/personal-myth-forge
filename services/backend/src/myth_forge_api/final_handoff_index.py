@@ -625,6 +625,8 @@ def _local_lane_handoff_actions(local_sources: list[dict[str, Any]]) -> list[str
         if not isinstance(action, str):
             continue
         stripped = action.strip()
+        if _is_live_acceptance_action(stripped):
+            continue
         if not (
             _is_provider_handoff_action(stripped)
             or _is_print_handoff_action(stripped)
@@ -648,6 +650,15 @@ def _source_by_id(
 def _is_provider_handoff_action(action: str) -> bool:
     lowered = action.lower()
     return any(marker in lowered for marker in FINAL_HANDOFF_PROVIDER_ACTION_MARKERS)
+
+
+def _is_live_acceptance_action(action: str) -> bool:
+    lowered = action.lower()
+    return (
+        "pmf_allow_live_provider_calls=1" in lowered
+        or "final-acceptance-configured" in lowered
+        or lowered.strip() == "make live-provider-evidence"
+    )
 
 
 def _is_print_handoff_action(action: str) -> bool:
