@@ -625,6 +625,7 @@ def _generated_3d_capability(
             _live_provider_partial_next_action_metadata(
                 live_provider_evidence=live_provider_evidence,
                 final_configured_evidence_plan=final_configured_evidence_plan,
+                configured_action_target="make backend-evaluate-3d-configured",
             )
         )
         command = (
@@ -683,6 +684,7 @@ def _ai_agent_npc_capability(
             _live_provider_partial_next_action_metadata(
                 live_provider_evidence=live_provider_evidence,
                 final_configured_evidence_plan=final_configured_evidence_plan,
+                configured_action_target="make backend-evaluate-npc-configured",
             )
         )
         command = (
@@ -873,7 +875,15 @@ def _live_provider_partial_next_action_metadata(
     *,
     live_provider_evidence: dict[str, Any],
     final_configured_evidence_plan: dict[str, Any],
+    configured_action_target: str | None = None,
 ) -> tuple[str, str, bool | None]:
+    if configured_action_target:
+        targeted = _configured_plan_operator_action_metadata(
+            final_configured_evidence_plan,
+            configured_action_target,
+        )
+        if targeted is not None:
+            return targeted
     configured_command, configured_validation, configured_requires_consent = (
         _report_next_action_metadata(final_configured_evidence_plan)
     )
@@ -883,6 +893,32 @@ def _live_provider_partial_next_action_metadata(
     ):
         return configured_command, configured_validation, configured_requires_consent
     return _report_next_action_metadata(live_provider_evidence)
+
+
+def _configured_plan_operator_action_metadata(
+    report: dict[str, Any],
+    target: str,
+) -> tuple[str, str, bool] | None:
+    raw_actions = report.get("operator_actions")
+    if not isinstance(raw_actions, list):
+        return None
+    for raw_action in raw_actions:
+        if not isinstance(raw_action, str):
+            continue
+        action = normalize_operator_action(raw_action)
+        if target not in action:
+            continue
+        if not action.startswith("PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "):
+            continue
+        return action, _validation_command_from_operator_action(action), True
+    return None
+
+
+def _validation_command_from_operator_action(action: str) -> str:
+    marker = "; rerun "
+    if marker not in action:
+        return ""
+    return action.rsplit(marker, 1)[1].strip()
 
 
 def _is_guarded_live_provider_command(

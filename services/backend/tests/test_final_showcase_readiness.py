@@ -1233,6 +1233,18 @@ def test_final_showcase_readiness_live_provider_rows_prefer_configured_plan_acti
         repo_root,
         command="PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured",
         validation_command="make final-configured-evidence-plan",
+        extra_operator_actions=[
+            (
+                "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                "make backend-evaluate-npc-configured; "
+                "rerun make final-configured-evidence-plan"
+            ),
+            (
+                "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                "make final-acceptance-configured; "
+                "rerun make final-configured-evidence-plan"
+            ),
+        ],
     )
 
     def fake_live_provider_evidence_report(
@@ -1290,15 +1302,19 @@ def test_final_showcase_readiness_live_provider_rows_prefer_configured_plan_acti
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
         "rerun make final-configured-evidence-plan"
     )
+    configured_npc_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
 
-    for row_id in (
-        "game_asset_3d_generation",
-        "ai_agent_npc",
-        "provider_key_handoff",
+    for row_id, expected_command in (
+        ("game_asset_3d_generation", configured_plan_action),
+        ("ai_agent_npc", configured_npc_action),
+        ("provider_key_handoff", configured_plan_action),
     ):
         row = rows[row_id]
         assert row["status"] == "partial"
-        assert row["command"] == configured_plan_action
+        assert row["command"] == expected_command
         assert row["validation_command"] == "make final-configured-evidence-plan"
         assert row["requires_live_provider_consent"] is True
         assert row["completion_requires_live_provider_consent"] is True
@@ -1307,6 +1323,7 @@ def test_final_showcase_readiness_live_provider_rows_prefer_configured_plan_acti
         "consent_required"
     )
     assert configured_plan_action in result.report["operator_actions"]
+    assert configured_npc_action in result.report["operator_actions"]
     assert (
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
         "rerun make live-provider-evidence"
@@ -3279,8 +3296,12 @@ def _write_final_configured_evidence_plan(
     *,
     command: str,
     validation_command: str,
+    extra_operator_actions: list[str] | None = None,
 ) -> None:
     operator_action = f"{command}; rerun {validation_command}"
+    operator_actions = [operator_action]
+    if extra_operator_actions:
+        operator_actions.extend(extra_operator_actions)
     _write_json(
         repo_root / "services/backend/.local/final-configured-evidence-plan.json",
         {
@@ -3315,7 +3336,7 @@ def _write_final_configured_evidence_plan(
                 "evidence_path": "services/backend/.local/3d-evaluation-configured.json",
                 "source": "first_blocker",
             },
-            "operator_actions": [operator_action],
+            "operator_actions": operator_actions,
             "safety": {
                 "commands_run": False,
                 "provider_calls": False,
