@@ -846,9 +846,13 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
             }
         ),
     )
-    guarded_action = (
+    legacy_guarded_action = (
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
         "rerun make live-provider-evidence"
+    )
+    configured_plan_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
     )
     monkeypatch.setattr(
         final_external_action_ledger,
@@ -858,9 +862,32 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
                 "kind": "live_provider_evidence_report",
                 "status": "blocked",
                 "summary": {"blocked": 1, "requires_live_provider_consent": 3},
-                "operator_actions": [guarded_action],
+                "operator_actions": [legacy_guarded_action],
             }
         ),
+    )
+    configured_bundle_path = (
+        repo_root / "services/backend/.local/configured-live-evidence-bundle.json"
+    )
+    configured_bundle_path.parent.mkdir(parents=True, exist_ok=True)
+    configured_bundle_path.write_text(
+        json.dumps(
+            {
+                "kind": "configured_live_evidence_bundle_report",
+                "status": "blocked",
+                "current_blocker": {
+                    "id": "three_d_evaluation_configured",
+                    "label": "Configured 3D evaluation",
+                    "status": "consent_required",
+                    "classification": "consent_required",
+                    "command": "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured",
+                    "detail": "Missing configured 3D evaluation evidence.",
+                    "validation_command": "make final-configured-evidence-plan",
+                },
+                "operator_actions": [configured_plan_action],
+            }
+        ),
+        encoding="utf-8",
     )
 
     result = build_final_external_action_ledger_report(
@@ -882,12 +909,13 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
     assert result.report["status"] == "partial"
     assert first_blocker["id"] == "run_live_provider_evidence"
     assert first_blocker["group_id"] == "live_provider_costs"
-    assert first_blocker["command"] == guarded_action
-    assert first_blocker["validation_command"] == "make live-provider-evidence"
-    assert next_action["command"] == guarded_action
-    assert next_action["validation_command"] == "make live-provider-evidence"
-    assert operator_actions[0] == guarded_action
-    assert operator_actions.index(guarded_action) < operator_actions.index(
+    assert first_blocker["command"] == configured_plan_action
+    assert first_blocker["validation_command"] == "make final-configured-evidence-plan"
+    assert next_action["command"] == configured_plan_action
+    assert next_action["validation_command"] == "make final-configured-evidence-plan"
+    assert operator_actions[0] == configured_plan_action
+    assert legacy_guarded_action not in operator_actions
+    assert operator_actions.index(configured_plan_action) < operator_actions.index(
         "make final-configured-preflight; rerun make configured-live-evidence-bundle"
     )
     assert not any("backend-device-demo" in action for action in operator_actions)

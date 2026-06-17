@@ -686,21 +686,23 @@ def test_final_launch_closure_packet_exposes_next_action_from_first_blocker(
 
 def test_final_launch_closure_packet_routes_configured_evidence_through_live_consent() -> None:
     expected_command = (
-        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
-        "rerun make live-provider-evidence"
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
     )
     configured_section = final_launch_closure_packet._configured_evidence_bundle_section(
         {
             "kind": "configured_live_evidence_bundle_report",
             "status": "blocked",
             "current_blocker": {
-                "id": "configured_live_evidence_bundle",
-                "label": "Configured live evidence bundle",
-                "status": "blocked",
-                "classification": "report_not_ready",
-                "command": "make final-acceptance-configured",
-                "detail": "Saved report is not ready.",
+                "id": "three_d_evaluation_configured",
+                "label": "Configured 3D evaluation",
+                "status": "consent_required",
+                "classification": "consent_required",
+                "command": "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured",
+                "detail": "Missing configured 3D evaluation evidence.",
+                "validation_command": "make final-configured-evidence-plan",
             },
+            "operator_actions": [expected_command],
             "summary": {
                 "evidence_ready": 0,
                 "evidence_missing": 1,
@@ -730,9 +732,9 @@ def test_final_launch_closure_packet_routes_configured_evidence_through_live_con
     assert configured_section["status"] == "blocked"
     assert blocker["id"] == "configured_evidence_bundle"
     assert blocker["command"] == expected_command
-    assert blocker["validation_command"] == "make live-provider-evidence"
+    assert blocker["validation_command"] == "make final-configured-evidence-plan"
     assert action["command"] == expected_command
-    assert action["validation_command"] == "make live-provider-evidence"
+    assert action["validation_command"] == "make final-configured-evidence-plan"
     assert configured_action["command"] == expected_command
     assert configured_action["requires_cost_consent"] is True
     assert configured_action["live_provider_call"] is True

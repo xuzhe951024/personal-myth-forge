@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.config import Settings, load_settings
+from myth_forge_api.configured_acceptance_command import CONFIGURED_FINAL_ACCEPTANCE_COMMAND
 from myth_forge_api.final_resource_apply_preview import (
     build_final_resource_apply_preview_report,
 )
@@ -105,6 +105,9 @@ def build_final_external_action_ledger_report(
     live_provider_evidence = build_live_provider_evidence_report(
         repo_root=selected_repo_root,
     ).report
+    configured_live_evidence_bundle = _load_configured_live_evidence_bundle_report(
+        selected_repo_root
+    )
     print_fulfillment = build_print_fulfillment_readiness_report(
         settings=selected_settings,
         repo_root=selected_repo_root,
@@ -117,6 +120,7 @@ def build_final_external_action_ledger_report(
         requirements=requirements,
         apply_preview=apply_preview,
         live_provider_evidence=live_provider_evidence,
+        configured_live_evidence_bundle=configured_live_evidence_bundle,
         print_fulfillment=print_fulfillment,
         ios_deploy_runbook=ios_deploy_runbook,
     )
@@ -143,6 +147,9 @@ def build_final_external_action_ledger_report(
             "final_resource_apply_preview": _source_summary(apply_preview),
             "final_resource_repair": _repair_source_summary(apply_preview),
             "live_provider_evidence": _source_summary(live_provider_evidence),
+            "configured_live_evidence_bundle": _source_summary(
+                configured_live_evidence_bundle
+            ),
             "print_fulfillment_readiness": _source_summary(print_fulfillment),
             "ios_deploy_runbook": _source_summary(ios_deploy_runbook),
         },
@@ -164,6 +171,7 @@ def _action_groups(
     requirements: dict[str, Any],
     apply_preview: dict[str, Any],
     live_provider_evidence: dict[str, Any],
+    configured_live_evidence_bundle: dict[str, Any],
     print_fulfillment: dict[str, Any],
     ios_deploy_runbook: dict[str, Any],
 ) -> list[dict[str, Any]]:
@@ -187,6 +195,7 @@ def _action_groups(
             label="Live provider costs",
             actions=_live_provider_cost_actions(
                 live_provider_evidence=live_provider_evidence,
+                configured_live_evidence_bundle=configured_live_evidence_bundle,
                 print_fulfillment=print_fulfillment,
             ),
         ),
@@ -337,6 +346,7 @@ def _final_resource_repair_action(repair_source: dict[str, Any]) -> dict[str, An
 def _live_provider_cost_actions(
     *,
     live_provider_evidence: dict[str, Any],
+    configured_live_evidence_bundle: dict[str, Any],
     print_fulfillment: dict[str, Any],
 ) -> list[dict[str, Any]]:
     live_status = "ready" if live_provider_evidence.get("status") == "ready" else "live"
@@ -363,6 +373,7 @@ def _live_provider_cost_actions(
             detail="Refresh configured Meshy/OpenAI evidence after cost consent.",
             operator_action=_live_provider_evidence_operator_action(
                 live_provider_evidence,
+                configured_live_evidence_bundle,
             ),
         ),
         _live_action(
@@ -401,9 +412,11 @@ def _live_provider_cost_actions(
 
 def _live_provider_evidence_operator_action(
     live_provider_evidence: dict[str, Any],
+    configured_live_evidence_bundle: dict[str, Any],
 ) -> str:
     return (
-        _report_first_operator_action(live_provider_evidence)
+        _report_first_operator_action(configured_live_evidence_bundle)
+        or _report_first_operator_action(live_provider_evidence)
         or _report_next_action_operator_action(live_provider_evidence)
         or PROVIDER_HANDOFF_OPERATOR_ACTION
     )
@@ -463,7 +476,12 @@ def _prefer_configured_evidence_gate_for_live_provider_actions(
     emitted: set[str] = set()
     for action in actions:
         replacement = action
-        if LIVE_PROVIDER_CONSENT_ENV_PREFIX in action:
+        if (
+            LIVE_PROVIDER_CONSENT_ENV_PREFIX in action
+            and "rerun make final-configured-evidence-plan" in action
+        ):
+            replacement = action
+        elif LIVE_PROVIDER_CONSENT_ENV_PREFIX in action:
             replacement = CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION
         if replacement in emitted:
             continue
@@ -1020,6 +1038,11 @@ def _is_resource_user_input_action(action: dict[str, Any]) -> bool:
 
 
 def _validation_command_for_action(action: dict[str, Any]) -> str | None:
+    operator_action = str(action.get("operator_action", "")).strip()
+    if "rerun make final-configured-evidence-plan" in operator_action:
+        return "make final-configured-evidence-plan"
+    if "rerun make live-provider-evidence" in operator_action:
+        return "make live-provider-evidence"
     command = str(action.get("command", "")).strip()
     if command.startswith("make "):
         return command
@@ -1289,6 +1312,30 @@ def _missing_user_input_action_text(action: dict[str, Any]) -> str:
     if command:
         parts.append(f"rerun {command}")
     return "; ".join(parts)
+
+
+def _load_configured_live_evidence_bundle_report(repo_root: Path) -> dict[str, Any]:
+    path = repo_root / "services/backend/.local/configured-live-evidence-bundle.json"
+    if not path.exists():
+        return _configured_live_evidence_bundle_stub("missing")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return _configured_live_evidence_bundle_stub("blocked")
+    if not isinstance(payload, dict):
+        return _configured_live_evidence_bundle_stub("blocked")
+    if payload.get("kind") != "configured_live_evidence_bundle_report":
+        return _configured_live_evidence_bundle_stub("blocked")
+    return payload
+
+
+def _configured_live_evidence_bundle_stub(status: str) -> dict[str, Any]:
+    return {
+        "kind": "configured_live_evidence_bundle_report",
+        "status": status,
+        "summary": {},
+        "operator_actions": [],
+    }
 
 
 def _source_summary(report: dict[str, Any]) -> dict[str, Any]:

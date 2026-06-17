@@ -547,11 +547,18 @@ def _configured_evidence_bundle_action(
         blocker_dict.get("command") or "make configured-live-evidence-bundle"
     )
     consent_required = _normalized_status(status) != "ready"
-    if consent_required and LIVE_PROVIDER_DIRECT_ACTION_PREFIX not in command:
+    operator_action = _first_operator_action(configured_live_evidence_bundle) or ""
+    if (
+        consent_required
+        and operator_action
+        and LIVE_PROVIDER_DIRECT_ACTION_PREFIX in operator_action
+    ):
+        command = operator_action
+    elif consent_required and LIVE_PROVIDER_DIRECT_ACTION_PREFIX not in command:
         command = CONFIGURED_EVIDENCE_LIVE_PROVIDER_VALIDATED_ACTION
     detail = str(
         blocker_dict.get("detail")
-        or _first_operator_action(configured_live_evidence_bundle)
+        or operator_action
         or "Run configured evidence bundle after live provider evidence is refreshed."
     )
     return _closure_action(
@@ -921,6 +928,11 @@ def _prefer_configured_evidence_gate_for_live_provider_actions(
             replacement = action
         elif (
             LIVE_PROVIDER_DIRECT_ACTION_PREFIX in action
+            and "rerun make final-configured-evidence-plan" in action
+        ):
+            replacement = action
+        elif (
+            LIVE_PROVIDER_DIRECT_ACTION_PREFIX in action
             or _operator_action_root(action) == CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION
         ):
             replacement = CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION
@@ -1091,6 +1103,8 @@ def _blocker_command_for_action(
 
 def _validation_command_for_action(action: dict[str, Any]) -> str | None:
     command = str(action.get("command", "")).strip()
+    if "rerun make final-configured-evidence-plan" in command:
+        return "make final-configured-evidence-plan"
     if (
         command == CONFIGURED_EVIDENCE_LIVE_PROVIDER_VALIDATED_ACTION
         or f"rerun {LIVE_PROVIDER_EVIDENCE_COMMAND}" in command
