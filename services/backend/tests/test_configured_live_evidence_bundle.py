@@ -204,6 +204,14 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
         "rerun make live-provider-evidence"
     )
+    live_evidence_three_d_command = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make live-provider-evidence"
+    )
+    live_evidence_npc_command = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make live-provider-evidence"
+    )
     expected_actions = [
         (
             "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
@@ -241,6 +249,8 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
                         "validation_command": "make live-provider-evidence",
                     },
                     "operator_actions": [
+                        live_evidence_three_d_command,
+                        live_evidence_npc_command,
                         live_evidence_command,
                         "make provider-handoff",
                         "make backend-evaluate-3d-configured",
@@ -281,6 +291,8 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
     assert report["next_action"]["live_provider_call"] is True
     assert report["next_action"]["requires_user_confirmation"] is True
     assert report["operator_actions"][:2] == expected_actions
+    assert live_evidence_three_d_command not in report["operator_actions"]
+    assert live_evidence_npc_command not in report["operator_actions"]
     assert live_evidence_command not in report["operator_actions"]
     assert "make final-acceptance-configured" not in report["operator_actions"]
     assert "make provider-handoff" not in report["operator_actions"]

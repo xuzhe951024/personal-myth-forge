@@ -757,6 +757,8 @@ def _is_configured_plan_consent_action(action: str) -> bool:
 def _is_live_provider_fallback_action(action: str) -> bool:
     normalized = normalize_operator_action(action)
     root = _action_command_root(normalized)
+    if root.startswith("PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "):
+        root = root.removeprefix("PMF_ALLOW_LIVE_PROVIDER_CALLS=1 ").strip()
     if root in LIVE_PROVIDER_FALLBACK_ACTION_ROOTS:
         return True
     return normalized.startswith("review live provider cost consent before ")

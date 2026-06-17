@@ -1166,6 +1166,14 @@ def test_final_local_report_refresh_operator_actions_preserve_configured_3d_and_
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
         "rerun make final-configured-evidence-plan"
     )
+    live_provider_three_d_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make live-provider-evidence"
+    )
+    live_provider_npc_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make live-provider-evidence"
+    )
     broad_live_consent_action = (
         final_local_report_refresh.FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
     )
@@ -1188,7 +1196,12 @@ def test_final_local_report_refresh_operator_actions_preserve_configured_3d_and_
                 "status": "blocked",
                 "command": three_d_action,
                 "validation_command": "make final-configured-evidence-plan",
-                "report_operator_actions": [three_d_action, npc_action],
+                "report_operator_actions": [
+                    three_d_action,
+                    npc_action,
+                    live_provider_three_d_action,
+                    live_provider_npc_action,
+                ],
             },
         ],
         next_action={
@@ -1202,6 +1215,8 @@ def test_final_local_report_refresh_operator_actions_preserve_configured_3d_and_
     )
 
     assert actions[:2] == [three_d_action, npc_action]
+    assert live_provider_three_d_action not in actions
+    assert live_provider_npc_action not in actions
     assert broad_live_consent_action not in actions
 
 

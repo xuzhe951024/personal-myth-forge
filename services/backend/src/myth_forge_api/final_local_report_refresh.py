@@ -1237,6 +1237,14 @@ def _normalize_apply_preview_action(action: str) -> str:
 def _preferred_validation_action(existing: str | None, candidate: str) -> str:
     if existing is None:
         return candidate
+    if _is_granular_configured_live_provider_action(candidate) and (
+        "make final-configured-evidence-plan" in candidate
+    ):
+        return candidate
+    if _is_granular_configured_live_provider_action(existing) and (
+        "make final-configured-evidence-plan" in existing
+    ):
+        return existing
     if (
         "make provider-handoff" in candidate
         and "make live-provider-evidence" in candidate
@@ -1252,6 +1260,16 @@ def _preferred_validation_action(existing: str | None, candidate: str) -> str:
     ):
         return candidate
     return existing
+
+
+def _is_granular_configured_live_provider_action(action: str) -> bool:
+    root = _action_command_root_without_validation(action)
+    if root.startswith(LIVE_PROVIDER_CONSENT_PREFIX):
+        root = root.removeprefix(LIVE_PROVIDER_CONSENT_PREFIX).strip()
+    return root in {
+        "make backend-evaluate-3d-configured",
+        "make backend-evaluate-npc-configured",
+    }
 
 
 def _prefer_complete_provider_handoff_chain(actions: list[str]) -> list[str]:
