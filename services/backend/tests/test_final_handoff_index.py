@@ -350,6 +350,10 @@ def test_final_handoff_index_prefers_granular_saved_live_consent_action(
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
         "rerun make final-configured-evidence-plan"
     )
+    npc_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
     _write_final_demo_launch(
         repo_root,
         overall_status="partial",
@@ -372,10 +376,7 @@ def test_final_handoff_index_prefers_granular_saved_live_consent_action(
         },
         operator_actions=[
             granular_action,
-            (
-                "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
-                "rerun make final-configured-evidence-plan"
-            ),
+            npc_action,
         ],
     )
 
@@ -387,6 +388,10 @@ def test_final_handoff_index_prefers_granular_saved_live_consent_action(
     local_lane = result.report["lanes_by_id"]["local_rehearsal"]
 
     assert granular_action in result.report["operator_actions"]
+    assert npc_action in result.report["operator_actions"]
+    assert result.report["operator_actions"].index(granular_action) < (
+        result.report["operator_actions"].index(npc_action)
+    )
     assert GUARDED_LIVE_ACCEPTANCE_ACTION not in result.report["operator_actions"]
     assert not any(
         "PMF_ALLOW_LIVE_PROVIDER_CALLS" in action

@@ -540,6 +540,7 @@ def _lanes(
             required=False,
             requires_consent=True,
             operator_action=_live_acceptance_operator_action(local_sources),
+            operator_actions=_live_acceptance_operator_actions(local_sources),
             notes=["May call live providers and spend provider credits."],
         ),
     ]
@@ -836,6 +837,9 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
                     FINAL_HANDOFF_LIVE_ACCEPTANCE_ACTION,
                 )
             )
+            nested_actions = lane.get("operator_actions")
+            if isinstance(nested_actions, list):
+                actions.extend(str(action) for action in nested_actions)
         elif command:
             actions.append(f"run {command}")
         else:
@@ -846,19 +850,25 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
 
 
 def _live_acceptance_operator_action(local_sources: list[dict[str, Any]]) -> str:
+    actions = _live_acceptance_operator_actions(local_sources)
+    return actions[0] if actions else ""
+
+
+def _live_acceptance_operator_actions(local_sources: list[dict[str, Any]]) -> list[str]:
     source = _source_by_id(local_sources, "final_demo_launch_local")
     if source is None:
-        return ""
+        return []
     actions = source.get("operator_actions")
     if not isinstance(actions, list):
-        return ""
+        return []
+    selected: list[str] = []
     for action in actions:
         if not isinstance(action, str):
             continue
         stripped = action.strip()
         if _is_granular_configured_live_action(stripped):
-            return stripped
-    return ""
+            selected.append(stripped)
+    return _dedupe(selected)
 
 
 def _is_granular_configured_live_action(action: str) -> bool:
