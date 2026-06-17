@@ -214,6 +214,7 @@ Bridge deliverable:
 - P0.616 configured live evidence bundle reuses saved configured evidence plan
 - P0.617 final launch closure packet keeps configured bundle live consent metadata coherent
 - P0.618 final local report refresh reuses saved configured evidence plan for configured bundle
+- P0.619 iOS device launch rehearsal refreshes final local report after device evidence sync
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

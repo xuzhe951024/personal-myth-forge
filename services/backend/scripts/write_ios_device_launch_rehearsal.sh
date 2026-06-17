@@ -72,6 +72,14 @@ run_report_command "final launch rehearsal sync" sh -c '
     --output .local/final-demo-launch-local.json
 '
 
+run_report_command "post-rehearsal final local report refresh" sh -c '
+  cd services/backend &&
+  uv run python -m myth_forge_api.cli final-local-report-refresh \
+    --repo-root ../.. \
+    --output .local/final-local-report-refresh.json
+'
+
 printf '%s\n' "wrote services/backend/.local/ios-device-launch-rehearsal.json"
 printf '%s\n' "wrote services/backend/.local/ios-device-launch-rehearsal-readiness.json"
 printf '%s\n' "wrote services/backend/.local/final-demo-launch-local.json"
+printf '%s\n' "wrote services/backend/.local/final-local-report-refresh.json"

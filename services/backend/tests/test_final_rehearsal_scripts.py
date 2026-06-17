@@ -627,6 +627,46 @@ def test_write_ios_device_launch_rehearsal_syncs_final_launch_after_rehearsal(
     assert "--output .local/final-demo-launch-local.json" in fake_uv_args
 
 
+def test_write_ios_device_launch_rehearsal_refreshes_final_local_report_after_sync(
+    script_repo: Path,
+) -> None:
+    _write_fake_make(script_repo, exit_code=0)
+    _write_fake_uv(script_repo, exit_code=0)
+
+    result = _run_script(script_repo, "write_ios_device_launch_rehearsal.sh")
+    fake_uv_lines = (
+        script_repo / "services/backend/.local/fake-uv-args.txt"
+    ).read_text(encoding="utf-8").splitlines()
+
+    assert result.returncode == 0
+    final_demo_index = next(
+        index
+        for index, line in enumerate(fake_uv_lines)
+        if "final-demo-launch --mode local" in line
+    )
+    post_refresh_index = next(
+        index
+        for index, line in enumerate(
+            fake_uv_lines[final_demo_index + 1 :],
+            start=final_demo_index + 1,
+        )
+        if "final-local-report-refresh" in line
+    )
+    assert final_demo_index < post_refresh_index
+    assert any(
+        "--output .local/final-local-report-refresh.json" in line
+        for line in fake_uv_lines[post_refresh_index:]
+    )
+    assert (
+        "accepted post-rehearsal final local report refresh exit code 0"
+        in result.stdout
+    )
+    assert (
+        "wrote services/backend/.local/final-local-report-refresh.json"
+        in result.stdout
+    )
+
+
 def test_write_ios_device_launch_rehearsal_readiness_syncs_final_launch(
     script_repo: Path,
 ) -> None:
