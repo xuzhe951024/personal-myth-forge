@@ -211,6 +211,38 @@ def test_final_demo_launch_first_blocker_falls_back_to_nested_report(
     )
 
 
+def test_final_demo_launch_nested_showcase_blocker_preserves_live_consent_metadata() -> None:
+    blocker = final_demo_launch._nested_report_blocker(
+        source="final_showcase_readiness",
+        report={
+            "first_blocker": {
+                "id": "game_asset_3d_generation",
+                "label": "Game asset 3D generation",
+                "status": "partial",
+                "classification": "live_3d_provider_unproven",
+                "command": (
+                    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                    "make backend-evaluate-3d-configured; "
+                    "rerun make final-configured-evidence-plan"
+                ),
+                "detail": "Local 3D proof is ready; live Meshy evidence still needs consent.",
+                "requires_live_provider_consent": True,
+                "completion_requires_live_provider_consent": True,
+                "validation_command": "make final-configured-evidence-plan",
+            },
+        },
+    )
+    action = final_demo_launch._next_action(blocker)
+
+    assert blocker["id"] == "game_asset_3d_generation"
+    assert blocker["requires_live_provider_consent"] is True
+    assert blocker["completion_requires_live_provider_consent"] is True
+    assert blocker["validation_command"] == "make final-configured-evidence-plan"
+    assert action["requires_live_provider_consent"] is True
+    assert action["completion_requires_live_provider_consent"] is True
+    assert action["validation_command"] == "make final-configured-evidence-plan"
+
+
 def test_final_demo_launch_embeds_configured_live_evidence_bundle(
     tmp_path: Path,
 ) -> None:

@@ -1183,6 +1183,17 @@ def _compact_nested_blocker(*, source: str, blocker: dict[str, Any]) -> dict[str
     classification = blocker.get("classification")
     if classification is not None:
         result["classification"] = str(classification)
+    validation_command = blocker.get("validation_command")
+    if validation_command:
+        result["validation_command"] = str(validation_command)
+    for key in (
+        "requires_cost_consent",
+        "requires_live_provider_consent",
+        "completion_requires_live_provider_consent",
+        "live_provider_call",
+    ):
+        if key in blocker:
+            result[key] = bool(blocker.get(key))
     return result
 
 
