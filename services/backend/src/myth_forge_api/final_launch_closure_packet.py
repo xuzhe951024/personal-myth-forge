@@ -99,6 +99,9 @@ CONFIGURED_EVIDENCE_LIVE_PROVIDER_VALIDATED_ACTION = (
     "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
     f"rerun {LIVE_PROVIDER_EVIDENCE_COMMAND}"
 )
+CONFIGURED_EVIDENCE_LIVE_PROVIDER_CONSENT_DETAIL = (
+    "Live provider cost consent is required before configured evidence can be refreshed."
+)
 
 
 @dataclass(frozen=True)
@@ -548,19 +551,58 @@ def _configured_evidence_bundle_action(
     )
     consent_required = _normalized_status(status) != "ready"
     operator_action = _first_operator_action(configured_live_evidence_bundle) or ""
+    metadata_source = blocker_dict
     if (
         consent_required
         and operator_action
         and LIVE_PROVIDER_DIRECT_ACTION_PREFIX in operator_action
     ):
         command = operator_action
+        metadata_source = (
+            _matching_configured_live_action_metadata(
+                configured_live_evidence_bundle,
+                command,
+            )
+            or blocker_dict
+        )
     elif consent_required and LIVE_PROVIDER_DIRECT_ACTION_PREFIX not in command:
         command = CONFIGURED_EVIDENCE_LIVE_PROVIDER_VALIDATED_ACTION
-    detail = str(
-        blocker_dict.get("detail")
-        or operator_action
-        or "Run configured evidence bundle after live provider evidence is refreshed."
+        metadata_source = (
+            _matching_configured_live_action_metadata(
+                configured_live_evidence_bundle,
+                command,
+            )
+            or {}
+        )
+    classification = _optional_string(metadata_source.get("classification"))
+    if (
+        consent_required
+        and LIVE_PROVIDER_DIRECT_ACTION_PREFIX in command
+        and classification in {None, "local_stub"}
+    ):
+        classification = "consent_required"
+    selected_live_command = consent_required and LIVE_PROVIDER_DIRECT_ACTION_PREFIX in command
+    operator_detail = (
+        operator_action
+        if operator_action and (not selected_live_command or LIVE_PROVIDER_DIRECT_ACTION_PREFIX in operator_action)
+        else ""
     )
+    detail = str(
+        metadata_source.get("detail")
+        or operator_detail
+        or (
+            CONFIGURED_EVIDENCE_LIVE_PROVIDER_CONSENT_DETAIL
+            if selected_live_command
+            else "Run configured evidence bundle after live provider evidence is refreshed."
+        )
+    )
+    if (
+        consent_required
+        and LIVE_PROVIDER_DIRECT_ACTION_PREFIX in command
+        and metadata_source is blocker_dict
+        and _optional_string(blocker_dict.get("classification")) == "local_stub"
+    ):
+        detail = CONFIGURED_EVIDENCE_LIVE_PROVIDER_CONSENT_DETAIL
     return _closure_action(
         action_id="configured_live_evidence_bundle",
         label="Configured live evidence bundle",
@@ -568,11 +610,60 @@ def _configured_evidence_bundle_action(
         command=command,
         detail=detail,
         required=True,
-        classification=_optional_string(blocker_dict.get("classification")),
+        classification=classification,
         requires_cost_consent=consent_required,
         live_provider_call=consent_required,
         operator_action=command if consent_required else None,
     )
+
+
+def _matching_configured_live_action_metadata(
+    configured_live_evidence_bundle: dict[str, Any],
+    command: str,
+) -> dict[str, Any] | None:
+    for candidate in _configured_live_metadata_candidates(
+        configured_live_evidence_bundle
+    ):
+        if _configured_live_candidate_matches_command(candidate, command):
+            return candidate
+    return None
+
+
+def _configured_live_metadata_candidates(
+    configured_live_evidence_bundle: dict[str, Any],
+) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    for key in ("next_action", "first_blocker", "current_blocker"):
+        value = configured_live_evidence_bundle.get(key)
+        if isinstance(value, dict):
+            candidates.append(value)
+    source_reports = configured_live_evidence_bundle.get("source_reports")
+    if isinstance(source_reports, dict):
+        for source in source_reports.values():
+            if not isinstance(source, dict):
+                continue
+            for key in ("next_action", "first_blocker"):
+                value = source.get(key)
+                if isinstance(value, dict):
+                    candidates.append(value)
+    for key in ("command_sequence", "commands"):
+        rows = configured_live_evidence_bundle.get(key)
+        if not isinstance(rows, list):
+            continue
+        candidates.extend(row for row in rows if isinstance(row, dict))
+    return candidates
+
+
+def _configured_live_candidate_matches_command(
+    candidate: dict[str, Any],
+    command: str,
+) -> bool:
+    candidate_command = str(candidate.get("command", "")).strip()
+    if not candidate_command:
+        return False
+    if candidate_command in command:
+        return True
+    return _operator_action_root(command) == candidate_command
 
 
 def _final_acceptance_section(

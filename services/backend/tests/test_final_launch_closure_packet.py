@@ -749,6 +749,66 @@ def test_final_launch_closure_packet_routes_configured_evidence_through_live_con
     assert "make final-acceptance-configured" not in operator_actions
 
 
+def test_final_launch_closure_packet_does_not_mix_local_stub_metadata_with_live_consent() -> None:
+    local_stub_action = (
+        "make final-resource-fill-guide; rerun make final-resource-apply-preview; "
+        "rerun make provider-handoff; rerun make final-configured-evidence-plan"
+    )
+    expected_command = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+    configured_section = final_launch_closure_packet._configured_evidence_bundle_section(
+        {
+            "kind": "configured_live_evidence_bundle_report",
+            "status": "blocked",
+            "current_blocker": {
+                "id": "final_configured_preflight",
+                "label": "Final configured preflight",
+                "status": "blocked",
+                "classification": "local_stub",
+                "command": (
+                    "make final-resource-fill-guide; rerun "
+                    "make final-resource-apply-preview; rerun make provider-handoff"
+                ),
+                "detail": (
+                    "Core provider is demo-ready but not configured as a real provider."
+                ),
+                "validation_command": "make provider-handoff",
+            },
+            "operator_actions": [local_stub_action, expected_command],
+            "summary": {
+                "evidence_ready": 0,
+                "evidence_missing": 1,
+                "evidence_blocked": 1,
+            },
+        }
+    )
+    configured_action = configured_section["first_action"]
+    blocker = final_launch_closure_packet._first_blocker([configured_section])
+    action = final_launch_closure_packet._next_action(blocker)
+
+    assert configured_action["command"] == expected_command
+    assert configured_action["classification"] == "consent_required"
+    assert configured_action["detail"] == (
+        "Live provider cost consent is required before configured evidence can be refreshed."
+    )
+    assert configured_action["requires_cost_consent"] is True
+    assert configured_action["live_provider_call"] is True
+    assert configured_action["requires_user_confirmation"] is True
+    assert blocker is not None
+    assert blocker["command"] == expected_command
+    assert blocker["classification"] == "consent_required"
+    assert blocker["detail"] == (
+        "Live provider cost consent is required before configured evidence can be refreshed."
+    )
+    assert blocker["validation_command"] == "make live-provider-evidence"
+    assert action is not None
+    assert action["classification"] == "consent_required"
+    assert action["validation_command"] == "make live-provider-evidence"
+    assert "Core provider is demo-ready" not in configured_action["detail"]
+
+
 def test_final_launch_closure_packet_keeps_section_order_for_non_device_showcase_blocker() -> None:
     blocker = final_launch_closure_packet._first_blocker(
         [
