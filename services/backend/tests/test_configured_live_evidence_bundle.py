@@ -149,6 +149,64 @@ def test_configured_live_evidence_bundle_requires_consent_with_ready_resources(
     assert report["safety"]["live_provider_calls"] is False
 
 
+def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    expected_command = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+    monkeypatch.setattr(
+        "myth_forge_api.configured_live_evidence_bundle.build_live_provider_evidence_report",
+        lambda **_kwargs: type(
+            "Result",
+            (),
+            {
+                "report": {
+                    "kind": "live_provider_evidence_report",
+                    "status": "blocked",
+                    "first_blocker": {
+                        "id": "final_acceptance_configured",
+                        "label": "Configured final acceptance",
+                        "status": "blocked",
+                        "classification": "report_not_ready",
+                        "command": "make final-acceptance-configured",
+                        "detail": "Saved report is not ready.",
+                    },
+                    "next_action": {
+                        "id": "final_acceptance_configured",
+                        "label": "Configured final acceptance",
+                        "status": "blocked",
+                        "classification": "report_not_ready",
+                        "command": expected_command,
+                        "detail": "Saved report is not ready.",
+                        "validation_command": "make live-provider-evidence",
+                    },
+                    "operator_actions": [expected_command],
+                    "evidence": [],
+                    "commands": ["make live-provider-evidence"],
+                }
+            },
+        )(),
+    )
+
+    result = build_configured_live_evidence_bundle_report(repo_root=tmp_path)
+    report = result.report
+
+    assert result.exit_code == 2
+    assert report["status"] == "blocked"
+    assert report["current_blocker"]["id"] == "final_acceptance_configured"
+    assert report["current_blocker"]["command"] == expected_command
+    assert report["current_blocker"]["validation_command"] == (
+        "make live-provider-evidence"
+    )
+    assert report["first_blocker"]["command"] == expected_command
+    assert report["next_action"]["command"] == expected_command
+    assert expected_command in report["operator_actions"]
+    assert "make final-acceptance-configured" not in report["operator_actions"]
+
+
 def test_configured_live_evidence_bundle_is_ready_to_run_with_consent(
     tmp_path: Path,
 ) -> None:

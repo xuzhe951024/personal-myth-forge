@@ -169,6 +169,7 @@ Bridge deliverable:
 - P0.571 iOS device rehearsal readiness treats unblocked partial local rehearsal as device-ready evidence
 - P0.572 final launch closure packet routes configured evidence blockers through live provider consent
 - P0.573 final external action ledger marks Apple/Xcode global actions ready from iOS deploy runbook evidence
+- P0.574 configured live evidence bundle routes live provider blockers through consent-aware next actions
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

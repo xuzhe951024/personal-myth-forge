@@ -175,7 +175,7 @@ def _current_blocker(
     if live_status in {"blocked", "partial"}:
         first_blocker = live_evidence.get("first_blocker")
         if isinstance(first_blocker, dict):
-            return _live_blocker(first_blocker)
+            return _live_blocker(first_blocker, live_evidence.get("next_action"))
 
     for step_status in ("blocked", "consent_required"):
         for row in command_sequence:
@@ -192,8 +192,11 @@ def _current_blocker(
     return None
 
 
-def _live_blocker(first_blocker: dict[str, Any]) -> dict[str, Any]:
-    return {
+def _live_blocker(
+    first_blocker: dict[str, Any],
+    next_action: Any = None,
+) -> dict[str, Any]:
+    blocker = {
         "id": str(first_blocker.get("id", "")),
         "label": str(first_blocker.get("label", "")),
         "status": str(first_blocker.get("status", "blocked")),
@@ -201,6 +204,14 @@ def _live_blocker(first_blocker: dict[str, Any]) -> dict[str, Any]:
         "command": str(first_blocker.get("command", "")),
         "detail": str(first_blocker.get("detail", "")),
     }
+    if isinstance(next_action, dict):
+        command = str(next_action.get("command", "")).strip()
+        if command:
+            blocker["command"] = command
+        validation_command = str(next_action.get("validation_command", "")).strip()
+        if validation_command:
+            blocker["validation_command"] = validation_command
+    return blocker
 
 
 def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -279,15 +290,53 @@ def _operator_actions(
     if current_blocker is not None:
         blocker_status = str(current_blocker.get("status", "blocked"))
         blocker_id = str(current_blocker.get("id", "unknown"))
-        if blocker_status == "consent_required":
+        blocker_command = str(current_blocker.get("command", "")).strip()
+        if blocker_command.startswith("PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "):
+            actions.append(blocker_command)
+        elif blocker_status == "consent_required":
             actions.append(f"review live provider cost consent before {blocker_id}")
         else:
             actions.append(f"unblock {blocker_id} before configured evidence bundle")
     elif status == "ready_to_run":
         actions.append("run configured evidence commands in order")
-    actions.extend(_string_list(configured_plan.get("operator_actions")))
+    actions.extend(
+        _without_shadowed_live_blocker_actions(
+            _string_list(configured_plan.get("operator_actions")),
+            live_evidence=live_evidence,
+        )
+    )
     actions.extend(_string_list(live_evidence.get("operator_actions")))
     return _dedupe_operator_actions(actions)[:12]
+
+
+def _without_shadowed_live_blocker_actions(
+    actions: list[str],
+    *,
+    live_evidence: dict[str, Any],
+) -> list[str]:
+    if str(live_evidence.get("status", "blocked")) not in {"blocked", "partial"}:
+        return actions
+
+    first_blocker = live_evidence.get("first_blocker")
+    next_action = live_evidence.get("next_action")
+    if not isinstance(first_blocker, dict) or not isinstance(next_action, dict):
+        return actions
+
+    source_command = str(first_blocker.get("command", "")).strip()
+    replacement_command = str(next_action.get("command", "")).strip()
+    if (
+        not source_command
+        or not replacement_command
+        or source_command == replacement_command
+    ):
+        return actions
+
+    shadowed_command = normalize_operator_action(source_command)
+    return [
+        action
+        for action in actions
+        if normalize_operator_action(action) != shadowed_command
+    ]
 
 
 def _commands(
