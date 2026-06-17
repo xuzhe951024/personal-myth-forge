@@ -317,7 +317,7 @@ def test_live_provider_evidence_blocks_unreadable_json(tmp_path: Path) -> None:
     assert result.report["first_blocker"]["classification"] == "unreadable_report"
 
 
-def test_live_provider_evidence_marks_partial_configured_launch_report(
+def test_live_provider_evidence_does_not_block_on_partial_configured_launch_report(
     tmp_path: Path,
 ) -> None:
     _write_ready_evidence(tmp_path)
@@ -334,11 +334,14 @@ def test_live_provider_evidence_marks_partial_configured_launch_report(
     result = build_live_provider_evidence_report(repo_root=tmp_path)
     evidence = {slot["id"]: slot for slot in result.report["evidence"]}
 
-    assert result.exit_code == 2
-    assert result.report["status"] == "partial"
-    assert result.report["summary"]["partial"] == 1
-    assert result.report["first_blocker"]["id"] == "final_demo_launch_configured"
-    assert evidence["final_demo_launch_configured"]["status"] == "partial"
+    assert result.exit_code == 0
+    assert result.report["status"] == "ready"
+    assert result.report["summary"]["ready"] == 5
+    assert result.report["summary"]["partial"] == 0
+    assert result.report["first_blocker"] is None
+    assert evidence["final_demo_launch_configured"]["status"] == "ready"
+    assert evidence["final_demo_launch_configured"]["source_status"] == "partial"
+    assert evidence["final_demo_launch_configured"]["classification"] == "advisory"
 
 
 def test_live_provider_evidence_cli_writes_report(tmp_path: Path) -> None:

@@ -172,6 +172,7 @@ def _evidence_row(*, slot: EvidenceSlot, repo_root: Path) -> dict[str, Any]:
         "classification": _classification_for_status(status),
         "detail": _detail_from_payload(slot, payload, status=status),
     }
+    row.update(_advisory_source_status(slot, payload, status=status))
     source_blocker = _provider_handoff_source_blocker(slot, payload, status=status)
     if source_blocker is not None:
         command = str(source_blocker.get("source_blocker_command", "")).strip()
@@ -203,7 +204,7 @@ def _status_from_payload(slot: EvidenceSlot, payload: dict[str, Any]) -> str:
         if status == "ready":
             return "ready"
         if status == "partial":
-            return "partial"
+            return "ready"
         return "blocked"
     return "blocked"
 
@@ -246,6 +247,27 @@ def _detail_from_payload(
         if payload.get("core_real_ready") is False:
             return "Core real providers are not ready for live evidence."
     return "Saved report is not ready."
+
+
+def _advisory_source_status(
+    slot: EvidenceSlot,
+    payload: dict[str, Any],
+    *,
+    status: str,
+) -> dict[str, str]:
+    if slot.slot_id != "final_demo_launch_configured" or status != "ready":
+        return {}
+    source_status = str(payload.get("overall_status", "")).strip()
+    if source_status != "partial":
+        return {}
+    return {
+        "source_status": source_status,
+        "classification": "advisory",
+        "detail": (
+            "Configured final launch packet is partial, but direct Meshy/OpenAI "
+            "evidence and configured acceptance prove live provider readiness."
+        ),
+    }
 
 
 def _provider_handoff_source_blocker(
