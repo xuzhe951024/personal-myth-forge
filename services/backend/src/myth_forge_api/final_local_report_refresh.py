@@ -1815,8 +1815,14 @@ def _hint_from_report_action(
 ) -> dict[str, str]:
     hint = _hint_from_mapping(action)
     if _is_configured_evidence_live_consent_action(report, action):
-        hint["command"] = FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
-        hint["validation_command"] = "make live-provider-evidence"
+        validation_command = str(
+            hint.get("validation_command") or "make final-configured-evidence-plan"
+        )
+        hint["command"] = _operator_action_with_validation(
+            _guarded_live_provider_action(str(hint.get("command") or "")),
+            validation_command,
+        )
+        hint["validation_command"] = validation_command
         hint["requires_live_provider_consent"] = True
         hint["may_call_live_provider"] = True
         hint["cost_risk"] = True
@@ -1861,6 +1867,26 @@ def _is_configured_evidence_live_consent_action(
             or bool(action.get("cost_risk"))
         )
     )
+
+
+def _guarded_live_provider_action(command: str) -> str:
+    normalized = normalize_operator_action(command)
+    if not normalized:
+        return FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
+    if normalized.startswith("PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "):
+        return normalized
+    return f"PMF_ALLOW_LIVE_PROVIDER_CALLS=1 {normalized}"
+
+
+def _operator_action_with_validation(command: str, validation_command: str) -> str:
+    normalized_command = normalize_operator_action(command)
+    normalized_validation = normalize_operator_action(validation_command)
+    if not normalized_command or not normalized_validation:
+        return normalized_command
+    validation_suffix = f"; rerun {normalized_validation}"
+    if validation_suffix in normalized_command:
+        return normalized_command
+    return f"{normalized_command}{validation_suffix}"
 
 
 def _hint_from_mapping(source: dict[str, Any]) -> dict[str, str]:

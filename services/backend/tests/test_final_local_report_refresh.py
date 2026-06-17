@@ -1734,8 +1734,8 @@ def test_final_local_report_refresh_guards_configured_evidence_consent_action(
 ) -> None:
     repo_root = _repo_fixture(tmp_path)
     guarded_action = (
-        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
-        "rerun make live-provider-evidence"
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
     )
 
     def consent_required_plan(_repo_root: Path) -> dict[str, object]:
@@ -1796,7 +1796,7 @@ def test_final_local_report_refresh_guards_configured_evidence_consent_action(
     assert step["raw_status"] == "consent_required"
     assert step["classification"] == "consent_required"
     assert step["command"] == guarded_action
-    assert step["validation_command"] == "make live-provider-evidence"
+    assert step["validation_command"] == "make final-configured-evidence-plan"
     assert step["requires_live_provider_consent"] is True
     assert step["may_call_live_provider"] is True
     assert step["cost_risk"] is True
@@ -1804,7 +1804,9 @@ def test_final_local_report_refresh_guards_configured_evidence_consent_action(
     assert step["live_provider_call"] is True
     assert step["requires_user_confirmation"] is True
     assert step["next_action"]["command"] == guarded_action
-    assert step["next_action"]["validation_command"] == "make live-provider-evidence"
+    assert step["next_action"]["validation_command"] == (
+        "make final-configured-evidence-plan"
+    )
     assert step["next_action"]["requires_live_provider_consent"] is True
     assert step["next_action"]["may_call_live_provider"] is True
     assert step["next_action"]["cost_risk"] is True
@@ -1812,7 +1814,7 @@ def test_final_local_report_refresh_guards_configured_evidence_consent_action(
     assert step["next_action"]["live_provider_call"] is True
     assert step["next_action"]["requires_user_confirmation"] is True
     assert guarded_action in result.report["operator_actions"]
-    assert "make backend-evaluate-3d-configured" not in promoted_actions_text
+    assert "make final-acceptance-configured" not in promoted_actions_text
 
 
 def test_final_local_report_refresh_top_level_consent_blocker_preserves_confirmation_metadata() -> None:
