@@ -99,6 +99,12 @@ FINAL_SHOWCASE_LIVE_PROVIDER_CONSENT_ACTION = (
     f"PMF_ALLOW_LIVE_PROVIDER_CALLS=1 {CONFIGURED_FINAL_ACCEPTANCE_COMMAND}; "
     "rerun make live-provider-evidence"
 )
+FINAL_SHOWCASE_LIVE_PROVIDER_FALLBACK_ROOTS = {
+    "make backend-evaluate-3d-configured",
+    "make backend-evaluate-npc-configured",
+    "make final-acceptance-configured",
+    "unblock final_configured_preflight after provider_handoff",
+}
 FINAL_SHOWCASE_WEAK_PROVIDER_ACTION_ROOTS = {
     FINAL_RESOURCE_APPLY_PREVIEW_ACTION,
     (
@@ -2314,6 +2320,8 @@ def _is_live_provider_consent_action(action: str) -> bool:
 def _is_live_provider_fallback_action(action: str) -> bool:
     root = _operator_action_bare_root(action)
     if root == "make live-provider-evidence":
+        return True
+    if root in FINAL_SHOWCASE_LIVE_PROVIDER_FALLBACK_ROOTS:
         return True
     return _is_provider_handoff_action(root)
 

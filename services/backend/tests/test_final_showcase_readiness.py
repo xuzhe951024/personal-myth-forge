@@ -1823,6 +1823,9 @@ def test_final_showcase_readiness_prefers_live_consent_gate_over_provider_fallba
             provider_chain,
             "make provider-handoff",
             "make live-provider-evidence",
+            "unblock final_configured_preflight after provider_handoff",
+            "make backend-evaluate-3d-configured",
+            "make backend-evaluate-npc-configured",
             print_action,
         ]
     )
