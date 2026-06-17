@@ -1191,6 +1191,7 @@ def _compact_nested_blocker(*, source: str, blocker: dict[str, Any]) -> dict[str
         "requires_live_provider_consent",
         "completion_requires_live_provider_consent",
         "live_provider_call",
+        "requires_user_confirmation",
     ):
         if key in blocker:
             result[key] = bool(blocker.get(key))

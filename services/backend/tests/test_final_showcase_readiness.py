@@ -1321,15 +1321,27 @@ def test_final_showcase_readiness_live_provider_rows_prefer_configured_plan_acti
         assert row["validation_command"] == "make final-configured-evidence-plan"
         assert row["requires_live_provider_consent"] is True
         assert row["completion_requires_live_provider_consent"] is True
+        assert row["requires_cost_consent"] is True
+        assert row["live_provider_call"] is True
+        assert row["requires_user_confirmation"] is True
+        assert row["next_action"]["requires_cost_consent"] is True
+        assert row["next_action"]["live_provider_call"] is True
+        assert row["next_action"]["requires_user_confirmation"] is True
 
     first_blocker = result.report["first_blocker"]
     next_action = result.report["next_action"]
     assert first_blocker["id"] == "game_asset_3d_generation"
     assert first_blocker["requires_live_provider_consent"] is True
     assert first_blocker["completion_requires_live_provider_consent"] is True
+    assert first_blocker["requires_cost_consent"] is True
+    assert first_blocker["live_provider_call"] is True
+    assert first_blocker["requires_user_confirmation"] is True
     assert next_action["id"] == "game_asset_3d_generation"
     assert next_action["requires_live_provider_consent"] is True
     assert next_action["completion_requires_live_provider_consent"] is True
+    assert next_action["requires_cost_consent"] is True
+    assert next_action["live_provider_call"] is True
+    assert next_action["requires_user_confirmation"] is True
 
     assert result.report["evidence"]["final_configured_evidence_plan"]["status"] == (
         "consent_required"

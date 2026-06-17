@@ -228,6 +228,9 @@ def test_final_demo_launch_nested_showcase_blocker_preserves_live_consent_metada
                 "detail": "Local 3D proof is ready; live Meshy evidence still needs consent.",
                 "requires_live_provider_consent": True,
                 "completion_requires_live_provider_consent": True,
+                "requires_cost_consent": True,
+                "live_provider_call": True,
+                "requires_user_confirmation": True,
                 "validation_command": "make final-configured-evidence-plan",
             },
         },
@@ -237,9 +240,15 @@ def test_final_demo_launch_nested_showcase_blocker_preserves_live_consent_metada
     assert blocker["id"] == "game_asset_3d_generation"
     assert blocker["requires_live_provider_consent"] is True
     assert blocker["completion_requires_live_provider_consent"] is True
+    assert blocker["requires_cost_consent"] is True
+    assert blocker["live_provider_call"] is True
+    assert blocker["requires_user_confirmation"] is True
     assert blocker["validation_command"] == "make final-configured-evidence-plan"
     assert action["requires_live_provider_consent"] is True
     assert action["completion_requires_live_provider_consent"] is True
+    assert action["requires_cost_consent"] is True
+    assert action["live_provider_call"] is True
+    assert action["requires_user_confirmation"] is True
     assert action["validation_command"] == "make final-configured-evidence-plan"
 
 

@@ -1368,6 +1368,10 @@ def _capability(
         row["requires_cost_consent"] = requires_cost_consent
     if requires_live_provider_consent is not None:
         row["requires_live_provider_consent"] = requires_live_provider_consent
+    if requires_live_provider_consent is True:
+        row["requires_cost_consent"] = True
+        row["live_provider_call"] = True
+        row["requires_user_confirmation"] = True
     if completion_requires_live_provider_consent is not None:
         row["completion_requires_live_provider_consent"] = (
             completion_requires_live_provider_consent
@@ -1393,6 +1397,8 @@ def _capability_with_next_action(row: dict[str, Any]) -> dict[str, Any]:
         "requires_cost_consent",
         "requires_live_provider_consent",
         "completion_requires_live_provider_consent",
+        "live_provider_call",
+        "requires_user_confirmation",
     ):
         if key in row:
             next_action[key] = row[key]
@@ -1473,6 +1479,8 @@ def _next_action(
         "requires_cost_consent",
         "requires_live_provider_consent",
         "completion_requires_live_provider_consent",
+        "live_provider_call",
+        "requires_user_confirmation",
     ):
         if key in blocker:
             action[key] = bool(blocker.get(key))
