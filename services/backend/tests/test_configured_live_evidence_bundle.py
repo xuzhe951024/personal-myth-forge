@@ -144,6 +144,19 @@ def test_configured_live_evidence_bundle_requires_consent_with_ready_resources(
     assert command_sequence["three_d_evaluation_configured"][
         "requires_live_provider_consent"
     ] is True
+    assert command_sequence["three_d_evaluation_configured"][
+        "requires_cost_consent"
+    ] is True
+    assert command_sequence["three_d_evaluation_configured"]["live_provider_call"] is True
+    assert command_sequence["three_d_evaluation_configured"][
+        "requires_user_confirmation"
+    ] is True
+    assert report["first_blocker"]["requires_cost_consent"] is True
+    assert report["first_blocker"]["live_provider_call"] is True
+    assert report["first_blocker"]["requires_user_confirmation"] is True
+    assert report["next_action"]["requires_cost_consent"] is True
+    assert report["next_action"]["live_provider_call"] is True
+    assert report["next_action"]["requires_user_confirmation"] is True
     assert report["live_call_policy"]["allow_live_provider_calls"] is False
     assert report["safety"]["commands_run"] is False
     assert report["safety"]["live_provider_calls"] is False
@@ -228,10 +241,16 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
         "make final-configured-evidence-plan"
     )
     assert report["current_blocker"]["requires_live_provider_consent"] is True
+    assert report["current_blocker"]["requires_cost_consent"] is True
+    assert report["current_blocker"]["live_provider_call"] is True
+    assert report["current_blocker"]["requires_user_confirmation"] is True
     assert report["first_blocker"]["id"] == "three_d_evaluation_configured"
     assert report["next_action"]["command"] == (
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
     )
+    assert report["next_action"]["requires_cost_consent"] is True
+    assert report["next_action"]["live_provider_call"] is True
+    assert report["next_action"]["requires_user_confirmation"] is True
     assert report["operator_actions"][:3] == expected_actions
     assert live_evidence_command not in report["operator_actions"]
     assert "make final-acceptance-configured" not in report["operator_actions"]
@@ -402,6 +421,15 @@ def test_configured_live_evidence_bundle_redacts_unsafe_saved_report_text(
     assert result.report["status"] == "blocked"
     assert result.report["current_blocker"]["id"] == "three_d_evaluation_configured"
     assert result.report["first_blocker"]["id"] == "three_d_evaluation_configured"
+    assert result.report["evidence_files_by_id"]["three_d_evaluation_configured"][
+        "requires_cost_consent"
+    ] is True
+    assert result.report["evidence_files_by_id"]["three_d_evaluation_configured"][
+        "live_provider_call"
+    ] is True
+    assert result.report["evidence_files_by_id"]["three_d_evaluation_configured"][
+        "requires_user_confirmation"
+    ] is True
     assert result.report["next_action"] == {
         **result.report["first_blocker"],
         "source": "first_blocker",

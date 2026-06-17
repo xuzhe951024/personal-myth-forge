@@ -115,7 +115,7 @@ def _evidence_files(live_evidence: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _evidence_row(row: dict[str, Any]) -> dict[str, Any]:
-    return {
+    result = {
         "id": str(row.get("id", "")),
         "label": str(row.get("label", "")),
         "path": str(row.get("path", "")),
@@ -128,6 +128,8 @@ def _evidence_row(row: dict[str, Any]) -> dict[str, Any]:
         ),
         "detail": str(row.get("detail", "")),
     }
+    result.update(_live_confirmation_fields(row))
+    return result
 
 
 def _command_sequence(configured_plan: dict[str, Any]) -> list[dict[str, Any]]:
@@ -158,6 +160,7 @@ def _command_row(row: dict[str, Any]) -> dict[str, Any]:
     for key in ("evidence_status", "evidence_path", "evidence_detail"):
         if key in row:
             result[key] = str(row[key])
+    result.update(_live_confirmation_fields(row))
     return result
 
 
@@ -240,6 +243,7 @@ def _configured_plan_blocker(
         )
     if "cost_risk" in first_blocker:
         blocker["cost_risk"] = bool(first_blocker.get("cost_risk"))
+    blocker.update(_live_confirmation_fields(first_blocker))
     return blocker
 
 
@@ -262,6 +266,8 @@ def _live_blocker(
         validation_command = str(next_action.get("validation_command", "")).strip()
         if validation_command:
             blocker["validation_command"] = validation_command
+        blocker.update(_live_confirmation_fields(next_action))
+    blocker.update(_live_confirmation_fields(first_blocker))
     return blocker
 
 
@@ -269,6 +275,18 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     if first_blocker is None:
         return None
     return {**first_blocker, "source": "first_blocker"}
+
+
+def _live_confirmation_fields(source: dict[str, Any]) -> dict[str, bool]:
+    copied: dict[str, bool] = {}
+    for key in (
+        "requires_cost_consent",
+        "live_provider_call",
+        "requires_user_confirmation",
+    ):
+        if bool(source.get(key)):
+            copied[key] = True
+    return copied
 
 
 def _step_detail(row: dict[str, Any], configured_plan: dict[str, Any]) -> str:
