@@ -24,6 +24,7 @@ MOBILE_DEPLOY_PREFLIGHT_EVIDENCE_PATH = Path(
 MOBILE_XCODE_BUILD_EVIDENCE_PATH = Path(
     "services/backend/.local/mobile-xcode-build-evidence.json"
 )
+IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND = "make ios-device-launch-rehearsal"
 IOS_DEVICE_EVIDENCE_SOURCE_ACTION_PREFIXES = (
     "final_rehearsal_local: ",
     "final_acceptance_local: ",
@@ -149,6 +150,7 @@ def _evidence_slots(
     preflight_evidence_source = _mobile_preflight_evidence_source(
         mobile_deploy_preflight_evidence
     )
+    launch_action = _launch_rehearsal_preferred_device_action(launch_rehearsal)
 
     return [
         _slot(
@@ -209,10 +211,17 @@ def _evidence_slots(
             slot_id="ios_device_launch_rehearsal",
             label="iOS device launch rehearsal",
             status="ready" if launch_status == "ready" else launch_status,
-            command="make ios-device-launch-rehearsal",
-            detail=_launch_rehearsal_detail(launch_rehearsal),
-            classification=_launch_rehearsal_classification(launch_rehearsal),
+            command=_launch_rehearsal_command(launch_action),
+            detail=_launch_rehearsal_detail(
+                launch_rehearsal,
+                preferred_action=launch_action,
+            ),
+            classification=_launch_rehearsal_classification(
+                launch_rehearsal,
+                preferred_action=launch_action,
+            ),
             evidence_source="services/backend/.local/ios-device-launch-rehearsal.json",
+            validation_command=_launch_rehearsal_validation_command(launch_action),
         ),
     ]
 
@@ -226,11 +235,12 @@ def _slot(
     detail: str,
     classification: str,
     evidence_source: str,
+    validation_command: str = "",
     global_action: bool = False,
     xcode_or_signing: bool = False,
 ) -> dict[str, Any]:
     normalized_status = _normalized_status(status)
-    return {
+    slot: dict[str, Any] = {
         "id": slot_id,
         "label": label,
         "status": normalized_status,
@@ -242,6 +252,9 @@ def _slot(
         "global_action": global_action,
         "xcode_or_signing": xcode_or_signing,
     }
+    if validation_command:
+        slot["validation_command"] = validation_command
+    return slot
 
 
 def _backend_server_status(
@@ -498,7 +511,82 @@ def _xcode_evidence_classification(
     )
 
 
-def _launch_rehearsal_detail(report: dict[str, Any]) -> str:
+def _launch_rehearsal_preferred_device_action(
+    report: dict[str, Any],
+) -> dict[str, Any] | None:
+    action_bundle = report.get("device_action_bundle")
+    if isinstance(action_bundle, dict):
+        first_action = action_bundle.get("first_action")
+        if isinstance(first_action, dict):
+            next_action = first_action.get("next_action")
+            if _is_preferred_launch_rehearsal_child_action(next_action):
+                return dict(next_action)
+            if _is_preferred_launch_rehearsal_child_action(first_action):
+                return dict(first_action)
+    next_action = report.get("next_action")
+    if _is_preferred_launch_rehearsal_child_action(next_action):
+        return dict(next_action)
+    return None
+
+
+def _is_preferred_launch_rehearsal_child_action(action: Any) -> bool:
+    if not isinstance(action, dict):
+        return False
+    command = str(action.get("command", "")).strip()
+    if not command:
+        return False
+    if command == IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND:
+        return False
+    lowered = command.lower()
+    return any(
+        marker in lowered
+        for marker in (
+            "backend-device-demo",
+            "mobile-deploy-preflight",
+            "mobile-write-deploy-config-auto",
+            "mobile-xcode-build",
+            "xcode build",
+        )
+    )
+
+
+def _launch_rehearsal_command(action: dict[str, Any] | None) -> str:
+    if action is None:
+        return IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND
+    command = normalize_operator_action(str(action.get("command", "")).strip())
+    if not command:
+        return IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND
+    return _operator_action_with_validation(
+        command,
+        _launch_rehearsal_validation_command(action),
+    )
+
+
+def _operator_action_with_validation(command: str, validation_command: str) -> str:
+    if not validation_command:
+        return command
+    validation_suffix = f"; rerun {validation_command}"
+    if validation_suffix in command or command == validation_command:
+        return command
+    return f"{command}{validation_suffix}"
+
+
+def _launch_rehearsal_validation_command(action: dict[str, Any] | None) -> str:
+    if action is None:
+        return ""
+    validation_command = str(action.get("validation_command", "")).strip()
+    return validation_command or IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND
+
+
+def _launch_rehearsal_detail(
+    report: dict[str, Any],
+    *,
+    preferred_action: dict[str, Any] | None = None,
+) -> str:
+    if preferred_action is not None:
+        detail = str(preferred_action.get("detail", "")).strip()
+        if detail:
+            return detail
     status = str(report.get("status", "missing"))
     if status == "ready":
         return "Saved iOS device launch rehearsal evidence is ready."
@@ -511,7 +599,15 @@ def _launch_rehearsal_detail(report: dict[str, Any]) -> str:
     return "Run iOS device launch rehearsal to refresh final device evidence."
 
 
-def _launch_rehearsal_classification(report: dict[str, Any]) -> str:
+def _launch_rehearsal_classification(
+    report: dict[str, Any],
+    *,
+    preferred_action: dict[str, Any] | None = None,
+) -> str:
+    if preferred_action is not None:
+        classification = str(preferred_action.get("classification", "")).strip()
+        if classification:
+            return classification
     status = str(report.get("status", "missing"))
     if status == "ready":
         return "ready"
@@ -569,7 +665,7 @@ def _operator_actions(status: str, slots: list[dict[str, Any]]) -> list[str]:
             )
         elif slot["id"] == "ios_device_launch_rehearsal":
             actions.append(
-                _action_with_detail("run make ios-device-launch-rehearsal", slot)
+                _action_with_detail(str(slot["command"]), slot)
             )
     return _dedupe(actions)
 
@@ -644,6 +740,9 @@ def _device_action(slot: dict[str, Any]) -> dict[str, Any]:
         "global_action": bool(slot.get("global_action")),
         "xcode_or_signing": bool(slot.get("xcode_or_signing")),
     }
+    validation_command = str(slot.get("validation_command", "")).strip()
+    if validation_command:
+        action["validation_command"] = validation_command
     if status != "ready":
         action["next_action"] = {
             "id": action["id"],
@@ -653,6 +752,8 @@ def _device_action(slot: dict[str, Any]) -> dict[str, Any]:
             "detail": action["detail"],
             "source": "device_action_bundle",
         }
+        if validation_command:
+            action["next_action"]["validation_command"] = validation_command
     return action
 
 

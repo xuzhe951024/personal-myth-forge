@@ -663,6 +663,120 @@ def test_ios_device_evidence_bundle_operator_actions_include_slot_details(
     assert "MESHY_API_KEY" not in text
 
 
+def test_ios_device_evidence_bundle_prefers_rehearsal_readiness_device_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _repo_fixture(tmp_path)
+    _write_final_acceptance(
+        repo_root,
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "passed",
+            "summary": {"passed": 14, "blocked": 0, "failed": 0, "skipped": 0},
+            "checks": [
+                {
+                    "id": "mobile_deploy_preflight",
+                    "label": "iOS deploy preflight",
+                    "status": "passed",
+                    "classification": "passed",
+                    "command": ["make", "mobile-deploy-preflight"],
+                    "stdout_tail": "iOS deploy preflight passed. Backend health: ok",
+                },
+                {
+                    "id": "mobile_xcode_build",
+                    "label": "Xcode build gate",
+                    "status": "passed",
+                    "classification": "passed",
+                    "command": ["make", "mobile-xcode-build"],
+                    "stdout_tail": "Build succeeded.",
+                },
+            ],
+        },
+    )
+    _write_ios_device_launch_rehearsal(
+        repo_root,
+        {
+            "kind": "ios_device_launch_rehearsal_report",
+            "status": "blocked",
+            "summary": {
+                "ready": 6,
+                "missing": 0,
+                "blocked": 1,
+                "partial": 0,
+                "manual": 1,
+                "live": 0,
+            },
+            "sequence": [
+                {
+                    "id": "final_rehearsal_local",
+                    "label": "Local final rehearsal",
+                    "status": "blocked",
+                    "command": "make final-rehearsal-local",
+                    "classification": "step_blocked",
+                    "detail": (
+                        "backend-device-demo must be running before iPhone "
+                        "device checks"
+                    ),
+                }
+            ],
+            "operator_actions": [
+                (
+                    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make "
+                    "final-acceptance-configured; rerun make "
+                    "live-provider-evidence"
+                ),
+                (
+                    "start backend-device-demo before device checks: make "
+                    "backend-device-demo; rerun make mobile-deploy-preflight"
+                ),
+            ],
+            "commands": ["make ios-device-launch-rehearsal"],
+            "safety": {
+                "commands_run": False,
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "raw_media_in_report": False,
+                "payment_links_in_report": False,
+                "local_paths_in_report": False,
+            },
+        },
+    )
+
+    result = build_ios_device_evidence_bundle_report(repo_root=repo_root)
+    slots = {slot["id"]: slot for slot in result.report["evidence_slots"]}
+    launch_slot = slots["ios_device_launch_rehearsal"]
+    expected_command = (
+        "start backend-device-demo before device checks: make "
+        "backend-device-demo; rerun make mobile-deploy-preflight; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+
+    assert result.exit_code == 2
+    assert result.report["first_blocker"]["id"] == "ios_device_launch_rehearsal"
+    assert result.report["first_blocker"]["command"] == expected_command
+    assert result.report["next_action"]["command"] == expected_command
+    assert launch_slot["command"] == expected_command
+    assert launch_slot["validation_command"] == "make ios-device-launch-rehearsal"
+    assert launch_slot["detail"] == (
+        "backend-device-demo must be running before iPhone device checks"
+    )
+    assert result.report["operator_actions"] == [
+        f"{expected_command} | {launch_slot['detail']}"
+    ]
+    assert (
+        result.report["device_action_bundle"]["first_action"]["next_action"][
+            "command"
+        ]
+        == expected_command
+    )
+
+
 def test_cli_writes_ios_device_evidence_bundle_report(tmp_path: Path) -> None:
     repo_root = _repo_fixture(tmp_path)
     _write_mobile_xcode_build_evidence(
