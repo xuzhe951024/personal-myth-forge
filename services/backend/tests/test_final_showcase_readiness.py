@@ -486,6 +486,46 @@ def test_final_showcase_readiness_next_action_uses_preflight_child_action(
     assert result.report["operator_actions"][0] == expected_command
 
 
+def test_final_showcase_readiness_next_action_uses_saved_rehearsal_child_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_mobile_deploy_preflight_evidence_ready(repo_root)
+    _write_mobile_xcode_build_evidence_ready(repo_root)
+    concrete_command = (
+        "start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight"
+    )
+    _write_ios_device_launch_rehearsal_with_next_action(
+        repo_root,
+        command=concrete_command,
+    )
+
+    result = build_final_showcase_readiness_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    action = result.report["next_action"]
+    blocker = result.report["first_blocker"]
+    row = result.report["capabilities_by_id"]["ios_deployable"]
+    expected_command = (
+        f"{concrete_command}; rerun make ios-device-launch-rehearsal"
+    )
+
+    assert row["command"] == expected_command
+    assert row["validation_command"] == "make ios-device-launch-rehearsal"
+    assert row["next_action"]["command"] == expected_command
+    assert row["next_action"]["validation_command"] == "make ios-device-launch-rehearsal"
+    assert blocker["command"] == expected_command
+    assert blocker["validation_command"] == "make ios-device-launch-rehearsal"
+    assert f"Next device action: {expected_command}" in blocker["detail"]
+    assert action["id"] == "ios_deployable"
+    assert action["command"] == expected_command
+    assert action["validation_command"] == "make ios-device-launch-rehearsal"
+    assert action["detail"] == blocker["detail"]
+
+
 def test_final_showcase_readiness_functional_regression_detail_dedupes_validation(
     tmp_path: Path,
 ) -> None:
@@ -2902,6 +2942,54 @@ def _write_ios_device_launch_rehearsal_with_actions(
             },
             "sequence": [],
             "operator_actions": operator_actions,
+            "commands": ["make ios-device-launch-rehearsal"],
+            "safety": {
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "raw_media_in_report": False,
+                "payment_links_in_report": False,
+                "local_paths_in_report": False,
+            },
+        },
+    )
+
+
+def _write_ios_device_launch_rehearsal_with_next_action(
+    repo_root: Path,
+    *,
+    command: str,
+) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/ios-device-launch-rehearsal.json",
+        {
+            "kind": "ios_device_launch_rehearsal_report",
+            "status": "blocked",
+            "summary": {
+                "ready": 3,
+                "missing": 0,
+                "blocked": 1,
+                "partial": 0,
+                "manual": 0,
+                "live": 0,
+            },
+            "sequence": [
+                {
+                    "id": "final_rehearsal_local",
+                    "label": "Local final rehearsal",
+                    "status": "blocked",
+                    "classification": "saved_report_set",
+                    "command": "make final-rehearsal-local",
+                    "detail": "Final rehearsal needs one more device action.",
+                    "operator_actions": [command],
+                }
+            ],
+            "operator_actions": [command],
             "commands": ["make ios-device-launch-rehearsal"],
             "safety": {
                 "provider_calls": False,

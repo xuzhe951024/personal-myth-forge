@@ -163,6 +163,7 @@ Bridge deliverable:
 - P0.565 local final acceptance app checks force local providers under configured env
 - P0.566 Xcode build evidence feeds resource handoff and iOS deploy runbook gates
 - P0.567 iOS device readiness prefers concrete device actions over live provider handoff actions
+- P0.568 final showcase promotes saved iOS rehearsal child next action
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

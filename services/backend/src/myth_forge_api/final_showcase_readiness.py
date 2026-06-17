@@ -241,6 +241,7 @@ def build_final_showcase_readiness_report(
         capabilities,
         mobile_deploy_preflight_evidence=mobile_deploy_preflight_evidence,
         mobile_xcode_build_evidence=mobile_xcode_build_evidence,
+        ios_device_launch_rehearsal_readiness=ios_device_launch_rehearsal,
     )
     capabilities = _capabilities_with_device_action_commands(
         capabilities,
@@ -1437,6 +1438,7 @@ def _device_action_bundle(
     *,
     mobile_deploy_preflight_evidence: dict[str, Any],
     mobile_xcode_build_evidence: dict[str, Any],
+    ios_device_launch_rehearsal_readiness: dict[str, Any],
 ) -> dict[str, Any]:
     capabilities_by_id = {str(row.get("id", "")): row for row in capabilities}
     ios_status = str(
@@ -1477,6 +1479,9 @@ def _device_action_bundle(
     ]
     if xcode_actions:
         xcode_metadata["operator_actions"] = xcode_actions
+    rehearsal_metadata = _ios_device_launch_rehearsal_metadata(
+        ios_device_launch_rehearsal_readiness
+    )
     actions = [
         _device_action(
             action_id="start_backend_device_demo",
@@ -1517,6 +1522,7 @@ def _device_action_bundle(
             command="make ios-device-launch-rehearsal",
             detail="Refresh the final iOS device rehearsal evidence after preflight passes.",
             blocks=["ios_deployable"],
+            extra=rehearsal_metadata,
         ),
     ]
     return {
@@ -1586,6 +1592,69 @@ def _device_action_bundle_with_saved_next_action(
                 action["saved_next_action"] = saved_next_action
                 break
     return bundle
+
+
+def _ios_device_launch_rehearsal_metadata(
+    report: dict[str, Any],
+) -> dict[str, Any]:
+    metadata = {
+        "evidence_source": "services/backend/.local/ios-device-launch-rehearsal-readiness.json",
+        "evidence_status": str(report.get("status", "missing")),
+        "evidence_detail": _ios_device_launch_rehearsal_detail(report),
+        "validation_command": "make ios-device-launch-rehearsal",
+    }
+    child_next_action = _ios_device_launch_rehearsal_child_next_action(report)
+    if child_next_action:
+        metadata["next_action"] = child_next_action
+    return metadata
+
+
+def _ios_device_launch_rehearsal_child_next_action(
+    report: dict[str, Any],
+) -> dict[str, Any]:
+    bundle = report.get("device_action_bundle")
+    if isinstance(bundle, dict):
+        first_action = bundle.get("first_action")
+        if isinstance(first_action, dict):
+            next_action = first_action.get("next_action")
+            if isinstance(next_action, dict):
+                return _bounded_rehearsal_next_action(next_action)
+    next_action = report.get("next_action")
+    if isinstance(next_action, dict):
+        return _bounded_rehearsal_next_action(next_action)
+    return {}
+
+
+def _bounded_rehearsal_next_action(next_action: dict[str, Any]) -> dict[str, Any]:
+    command = str(next_action.get("command", "")).strip()
+    if not command:
+        return {}
+    bounded = {
+        "id": str(next_action.get("id", "run_ios_device_launch_rehearsal")),
+        "label": str(next_action.get("label", "Run iOS device launch rehearsal")),
+        "status": str(next_action.get("status", "blocked")),
+        "command": command,
+        "detail": str(next_action.get("detail", ""))[:240],
+        "source": str(next_action.get("source", "ios_device_launch_rehearsal_readiness")),
+        "validation_command": str(
+            next_action.get("validation_command", "make ios-device-launch-rehearsal")
+        ),
+    }
+    return bounded
+
+
+def _ios_device_launch_rehearsal_detail(report: dict[str, Any]) -> str:
+    first_blocker = report.get("first_blocker")
+    if isinstance(first_blocker, dict):
+        detail = str(first_blocker.get("detail", "")).strip()
+        if detail:
+            return detail[:240]
+    next_action = report.get("next_action")
+    if isinstance(next_action, dict):
+        detail = str(next_action.get("detail", "")).strip()
+        if detail:
+            return detail[:240]
+    return "iOS device launch rehearsal readiness is not ready."
 
 
 def _saved_next_action_detail(operator_detail: str) -> str:
