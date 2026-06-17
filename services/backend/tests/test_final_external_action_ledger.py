@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import myth_forge_api.final_external_action_ledger as final_external_action_ledger
 from myth_forge_api.config import Settings
@@ -821,6 +822,69 @@ def test_external_action_ledger_marks_global_machine_actions_ready_from_ios_runb
     assert report["first_blocker"]["group_id"] != "global_machine_actions"
     assert not any("Xcode license" in action for action in operator_actions)
     assert not any("mobile-xcode-build-evidence" in action for action in operator_actions)
+
+
+def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = tmp_path / "repo"
+    write_resources(repo_root, VALID_LOCAL_RESOURCES)
+    monkeypatch.setattr(
+        final_external_action_ledger,
+        "build_ios_deploy_runbook_report",
+        lambda **_kwargs: ready_ios_deploy_runbook(),
+    )
+    monkeypatch.setattr(
+        final_external_action_ledger,
+        "build_print_fulfillment_readiness_report",
+        lambda **_kwargs: SimpleNamespace(
+            report={
+                "kind": "print_fulfillment_readiness_report",
+                "status": "ready",
+                "summary": {"ready": 4, "blocked": 0},
+            }
+        ),
+    )
+    guarded_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+    monkeypatch.setattr(
+        final_external_action_ledger,
+        "build_live_provider_evidence_report",
+        lambda **_kwargs: SimpleNamespace(
+            report={
+                "kind": "live_provider_evidence_report",
+                "status": "blocked",
+                "summary": {"blocked": 1, "requires_live_provider_consent": 3},
+                "operator_actions": [guarded_action],
+            }
+        ),
+    )
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="meshy-secret-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+            print_provider="local",
+        ),
+        repo_root=repo_root,
+    )
+
+    first_blocker = result.report["first_blocker"]
+    next_action = result.report["next_action"]
+
+    assert result.exit_code == 2
+    assert result.report["status"] == "partial"
+    assert first_blocker["id"] == "run_live_provider_evidence"
+    assert first_blocker["group_id"] == "live_provider_costs"
+    assert first_blocker["command"] == guarded_action
+    assert first_blocker["validation_command"] == "make live-provider-evidence"
+    assert next_action["command"] == guarded_action
+    assert next_action["validation_command"] == "make live-provider-evidence"
 
 
 def test_external_action_ledger_routes_repairable_final_resources_before_apply(

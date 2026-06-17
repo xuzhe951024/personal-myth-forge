@@ -999,7 +999,16 @@ def _blocker_from_action(
 def _blocker_command_for_action(action: dict[str, Any]) -> str:
     if _is_resource_user_input_action(action):
         return _missing_user_input_action_text(action).split(";", 1)[0].strip()
+    live_cost_action = _live_cost_operator_action(action)
+    if live_cost_action:
+        return live_cost_action
     return str(action["command"])
+
+
+def _live_cost_operator_action(action: dict[str, Any]) -> str:
+    if action.get("status") != "live" or not bool(action.get("requires_cost_consent")):
+        return ""
+    return normalize_operator_action(str(action.get("operator_action") or "").strip())
 
 
 def _is_resource_user_input_action(action: dict[str, Any]) -> bool:
