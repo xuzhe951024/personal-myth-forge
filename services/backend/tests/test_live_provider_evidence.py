@@ -117,6 +117,44 @@ def test_live_provider_evidence_blocks_saved_non_real_provider_handoff(
     )
 
 
+def test_live_provider_evidence_prefers_missing_configured_3d_and_npc_before_acceptance(
+    tmp_path: Path,
+) -> None:
+    _write_provider_handoff_ready(tmp_path)
+    _write_json(
+        tmp_path / "services/backend/.local/final-acceptance-configured.json",
+        {
+            "kind": "final_acceptance_report",
+            "profile": "quick",
+            "provider_mode": "configured",
+            "overall_status": "blocked",
+            "summary": {"passed": 10, "blocked": 1, "failed": 0, "skipped": 0},
+        },
+    )
+
+    result = build_live_provider_evidence_report(repo_root=tmp_path)
+
+    three_d_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make live-provider-evidence"
+    )
+    npc_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make live-provider-evidence"
+    )
+
+    assert result.exit_code == 2
+    assert result.report["summary"]["missing"] >= 2
+    assert result.report["summary"]["blocked"] >= 1
+    assert result.report["first_blocker"]["id"] == "three_d_evaluation_configured"
+    assert result.report["first_blocker"]["status"] == "missing"
+    assert result.report["operator_actions"][:2] == [three_d_action, npc_action]
+    assert not any(
+        "make final-acceptance-configured" in action
+        for action in result.report["operator_actions"]
+    )
+
+
 def test_live_provider_evidence_projects_provider_handoff_child_next_action(
     tmp_path: Path,
 ) -> None:
@@ -338,15 +376,7 @@ def test_live_provider_evidence_makefile_target() -> None:
 
 
 def _write_ready_evidence(repo_root: Path) -> None:
-    _write_json(
-        repo_root / "services/backend/.local/provider-handoff.json",
-        {
-            "kind": "provider_handoff_report",
-            "core_real_ready": True,
-            "overall_real_ready": True,
-            "missing_env": [],
-        },
-    )
+    _write_provider_handoff_ready(repo_root)
     _write_json(
         repo_root / "services/backend/.local/3d-evaluation-configured.json",
         {
@@ -387,6 +417,18 @@ def _write_ready_evidence(repo_root: Path) -> None:
             "mode": "configured",
             "overall_status": "ready",
             "summary": {"ready": 9, "missing": 0, "blocked": 0, "manual": 0},
+        },
+    )
+
+
+def _write_provider_handoff_ready(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/provider-handoff.json",
+        {
+            "kind": "provider_handoff_report",
+            "core_real_ready": True,
+            "overall_real_ready": True,
+            "missing_env": [],
         },
     )
 

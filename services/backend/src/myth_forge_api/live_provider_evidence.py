@@ -100,7 +100,11 @@ def build_live_provider_evidence_report(
     summary = _summary(evidence)
     status = _overall_status(summary)
     first_blocker = _first_blocker(evidence)
-    operator_actions = _operator_actions(status=status, first_blocker=first_blocker)
+    operator_actions = _operator_actions(
+        status=status,
+        evidence=evidence,
+        first_blocker=first_blocker,
+    )
     report = {
         "kind": "live_provider_evidence_report",
         "status": status,
@@ -300,21 +304,21 @@ def _overall_status(summary: dict[str, int]) -> str:
 
 
 def _first_blocker(evidence: list[dict[str, Any]]) -> dict[str, Any] | None:
-    for status in ("blocked", "missing", "partial"):
-        for row in evidence:
-            if row["status"] == status:
-                return (
-                    {
-                        "id": row["id"],
-                        "label": row["label"],
-                        "status": row["status"],
-                        "classification": row["classification"],
-                        "command": row["command"],
-                        "detail": row["detail"],
-                    }
-                    | _source_blocker_fields(row)
-                    | _live_metadata_from_row(row)
-                )
+    for row in evidence:
+        if row["status"] in {"ready"}:
+            continue
+        return (
+            {
+                "id": row["id"],
+                "label": row["label"],
+                "status": row["status"],
+                "classification": row["classification"],
+                "command": row["command"],
+                "detail": row["detail"],
+            }
+            | _source_blocker_fields(row)
+            | _live_metadata_from_row(row)
+        )
     return None
 
 
@@ -337,16 +341,41 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
 def _operator_actions(
     *,
     status: str,
+    evidence: list[dict[str, Any]],
     first_blocker: dict[str, Any] | None,
 ) -> list[str]:
     if status == "ready":
         return []
+    granular_actions = _granular_live_evaluation_actions(evidence)
+    if granular_actions:
+        return granular_actions
     actions: list[str] = []
     if first_blocker is not None:
         slot = _slot_by_id(str(first_blocker["id"]))
         actions.append(_operator_action_for_blocker(first_blocker, slot=slot))
     else:
         actions.append("make live-provider-evidence")
+    return _dedupe([normalize_operator_action(action) for action in actions])
+
+
+def _granular_live_evaluation_actions(evidence: list[dict[str, Any]]) -> list[str]:
+    provider_handoff = next(
+        (row for row in evidence if row["id"] == "provider_handoff"),
+        None,
+    )
+    if provider_handoff is None or provider_handoff.get("status") != "ready":
+        return []
+    actions: list[str] = []
+    for row in evidence:
+        if row["id"] not in {
+            "three_d_evaluation_configured",
+            "npc_evaluation_configured",
+        }:
+            continue
+        if row.get("status") == "ready":
+            continue
+        slot = _slot_by_id(str(row["id"]))
+        actions.append(_operator_action_for_blocker(row, slot=slot))
     return _dedupe([normalize_operator_action(action) for action in actions])
 
 
