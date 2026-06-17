@@ -556,7 +556,24 @@ def _prefer_configured_evidence_gate_for_live_provider_actions(
             continue
         emitted.add(replacement)
         result.append(replacement)
-    return result
+    return _drop_configured_evidence_gate_when_granular_live_consent(result)
+
+
+def _drop_configured_evidence_gate_when_granular_live_consent(
+    actions: list[str],
+) -> list[str]:
+    has_granular_live_consent = any(
+        LIVE_PROVIDER_CONSENT_ENV_PREFIX in action
+        and "rerun make final-configured-evidence-plan" in action
+        for action in actions
+    )
+    if not has_granular_live_consent:
+        return actions
+    return [
+        action
+        for action in actions
+        if action != CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION
+    ]
 
 
 def _live_action(

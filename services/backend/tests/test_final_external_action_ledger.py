@@ -262,6 +262,52 @@ def test_external_action_ledger_routes_live_provider_operator_actions_through_co
     assert not any("PMF_ALLOW_LIVE_PROVIDER_CALLS" in action for action in actions)
 
 
+def test_external_action_ledger_prunes_configured_bundle_gate_after_granular_consent() -> None:
+    expected_live_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+    configured_gate_action = (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    )
+
+    actions = final_external_action_ledger._operator_actions(
+        [
+            {
+                "id": "live_provider_costs",
+                "label": "Live provider costs",
+                "actions": [
+                    {
+                        "id": "run_live_provider_evidence",
+                        "label": "Refresh live provider evidence",
+                        "group_id": "live_provider_costs",
+                        "status": "live",
+                        "command": expected_live_action,
+                        "operator_action": expected_live_action,
+                        "requires_cost_consent": True,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": True,
+                    },
+                    {
+                        "id": "refresh_configured_bundle",
+                        "label": "Refresh configured bundle",
+                        "group_id": "live_provider_costs",
+                        "status": "blocked",
+                        "command": configured_gate_action,
+                        "operator_action": configured_gate_action,
+                        "requires_cost_consent": False,
+                        "requires_user_input": False,
+                        "requires_user_confirmation": False,
+                    },
+                ],
+            }
+        ],
+        first_blocker={"command": expected_live_action},
+    )
+
+    assert actions == [expected_live_action]
+
+
 def test_external_action_ledger_ios_deploy_actions_use_mobile_preflight(
     tmp_path: Path,
 ) -> None:
@@ -1012,8 +1058,9 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
     ] is True
     assert operator_actions[0] == configured_plan_action
     assert legacy_guarded_action not in operator_actions
-    assert operator_actions.index(configured_plan_action) < operator_actions.index(
+    assert (
         "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+        not in operator_actions
     )
     assert not any("backend-device-demo" in action for action in operator_actions)
 

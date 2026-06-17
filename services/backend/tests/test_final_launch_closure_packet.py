@@ -1279,6 +1279,46 @@ def test_final_launch_closure_packet_prunes_optional_actions_before_live_consent
     assert not any("backend-device-demo" in action for action in operator_actions)
 
 
+def test_final_launch_closure_packet_prunes_configured_bundle_gate_after_granular_consent() -> None:
+    expected_live_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+    configured_gate_action = (
+        "make final-configured-preflight; rerun make configured-live-evidence-bundle"
+    )
+
+    operator_actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "configured_live_evidence_bundle",
+                        "status": "blocked",
+                        "command": expected_live_action,
+                        "operator_action": expected_live_action,
+                        "requires_user_input": False,
+                        "requires_cost_consent": True,
+                        "requires_user_confirmation": True,
+                    },
+                    {
+                        "id": "configured_live_evidence_prerequisite",
+                        "status": "blocked",
+                        "command": configured_gate_action,
+                        "operator_action": configured_gate_action,
+                        "requires_user_input": False,
+                        "requires_cost_consent": False,
+                        "requires_user_confirmation": False,
+                    },
+                ]
+            }
+        ],
+        first_blocker={"command": expected_live_action},
+    )
+
+    assert operator_actions == [expected_live_action]
+
+
 def test_final_launch_closure_packet_redacts_unsafe_source_details(
     tmp_path: Path,
 ) -> None:
