@@ -171,6 +171,14 @@ def _current_blocker(
     if status in {"ready", "ready_to_run"}:
         return None
 
+    if str(configured_plan.get("status", "blocked")) == "blocked":
+        plan_blocker = _configured_plan_blocker(
+            configured_plan.get("first_blocker"),
+            configured_plan.get("next_action"),
+        )
+        if plan_blocker is not None:
+            return plan_blocker
+
     live_status = str(live_evidence.get("status", "blocked"))
     if live_status in {"blocked", "partial"}:
         first_blocker = live_evidence.get("first_blocker")
@@ -190,6 +198,39 @@ def _current_blocker(
                 }
 
     return None
+
+
+def _configured_plan_blocker(
+    first_blocker: Any,
+    next_action: Any = None,
+) -> dict[str, Any] | None:
+    if not isinstance(first_blocker, dict):
+        return None
+    blocker = {
+        "id": str(first_blocker.get("id", "")),
+        "label": str(first_blocker.get("label", "")),
+        "status": str(first_blocker.get("status", "blocked")),
+        "classification": str(first_blocker.get("classification", "")),
+        "command": str(first_blocker.get("command", "")),
+        "detail": str(first_blocker.get("detail", "")),
+        "blocked_by": _string_list(first_blocker.get("blocked_by")),
+    }
+    for optional_key in (
+        "validation_command",
+        "source_blocker_id",
+        "source_blocker_label",
+    ):
+        value = str(first_blocker.get(optional_key, "")).strip()
+        if value:
+            blocker[optional_key] = value
+    if isinstance(next_action, dict):
+        command = str(next_action.get("command", "")).strip()
+        if command:
+            blocker["command"] = command
+        validation_command = str(next_action.get("validation_command", "")).strip()
+        if validation_command:
+            blocker["validation_command"] = validation_command
+    return blocker
 
 
 def _live_blocker(
@@ -293,6 +334,8 @@ def _operator_actions(
         blocker_command = str(current_blocker.get("command", "")).strip()
         if blocker_command.startswith("PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "):
             actions.append(blocker_command)
+        elif current_blocker.get("source_blocker_id"):
+            actions.append(_source_current_blocker_action(current_blocker))
         elif blocker_status == "consent_required":
             actions.append(f"review live provider cost consent before {blocker_id}")
         else:
@@ -307,6 +350,22 @@ def _operator_actions(
     )
     actions.extend(_string_list(live_evidence.get("operator_actions")))
     return _prefer_live_provider_consent_action(_dedupe_operator_actions(actions))[:12]
+
+
+def _source_current_blocker_action(current_blocker: dict[str, Any]) -> str:
+    command = str(current_blocker.get("command", "")).strip()
+    if not command:
+        return ""
+    parts = [command]
+    validation_command = str(current_blocker.get("validation_command", "")).strip()
+    joined = " ".join(parts)
+    if validation_command and validation_command not in joined:
+        parts.append(f"rerun {validation_command}")
+    joined = " ".join(parts)
+    configured_plan_command = "make final-configured-evidence-plan"
+    if configured_plan_command not in joined:
+        parts.append(f"rerun {configured_plan_command}")
+    return "; ".join(parts)
 
 
 def _without_shadowed_live_blocker_actions(

@@ -197,6 +197,7 @@ Bridge deliverable:
 - P0.599 configured live evidence bundle prioritizes granular configured plan consent actions
 - P0.600 configured preflight surfaces local final acceptance child blocker actions
 - P0.601 final configured evidence plan preserves configured preflight child blocker actions
+- P0.602 configured live evidence bundle prioritizes configured plan child blockers
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details
