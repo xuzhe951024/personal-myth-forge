@@ -397,17 +397,86 @@ def _live_provider_cost_actions(
             command=CONFIGURED_FINAL_ACCEPTANCE_COMMAND,
             detail="Calls live providers only with explicit consent flag.",
         ),
-        _live_action(
-            action_id="refresh_configured_treatstock_quote",
-            label="Refresh configured Treatstock quote",
-            status=print_status,
-            command="make print-fulfillment-readiness",
-            detail="Configured print quote evidence may call a print provider.",
+        _print_fulfillment_action(
+            print_fulfillment=print_fulfillment,
+            print_status=print_status,
             operator_action=print_operator_action,
             requires_cost_consent=print_requires_cost_consent,
-            live_provider_call=print_requires_cost_consent,
         ),
     ]
+
+
+def _print_fulfillment_action(
+    *,
+    print_fulfillment: dict[str, Any],
+    print_status: str,
+    operator_action: str,
+    requires_cost_consent: bool,
+) -> dict[str, Any]:
+    source_action = _print_source_action(print_fulfillment)
+    source_id = str(source_action.get("id") or "print_fulfillment_readiness")
+    source_label = str(
+        source_action.get("label") or "Print fulfillment readiness"
+    ).strip()
+    return _live_action(
+        action_id=f"refresh_{_action_id_suffix(source_id)}",
+        label=f"Refresh {_lowercase_first(source_label)}",
+        status=_print_action_status(
+            source_status=str(source_action.get("status", print_status)),
+            print_status=print_status,
+            requires_cost_consent=requires_cost_consent,
+        ),
+        command=str(
+            source_action.get("command") or "make print-fulfillment-readiness"
+        ),
+        detail=str(
+            source_action.get("detail")
+            or "Refresh print fulfillment readiness evidence."
+        ),
+        operator_action=operator_action,
+        requires_cost_consent=requires_cost_consent,
+        live_provider_call=requires_cost_consent,
+        classification=str(source_action.get("classification", "")) or None,
+    )
+
+
+def _print_source_action(print_fulfillment: dict[str, Any]) -> dict[str, Any]:
+    for key in ("first_blocker", "next_action"):
+        action = print_fulfillment.get(key)
+        if isinstance(action, dict):
+            return action
+    return {
+        "id": "print_fulfillment_readiness",
+        "label": "Print fulfillment readiness",
+        "status": print_fulfillment.get("status", "blocked"),
+        "command": "make print-fulfillment-readiness",
+        "detail": "Refresh print fulfillment readiness evidence.",
+    }
+
+
+def _print_action_status(
+    *,
+    source_status: str,
+    print_status: str,
+    requires_cost_consent: bool,
+) -> str:
+    if print_status == "ready":
+        return "ready"
+    if requires_cost_consent:
+        return "live"
+    return _normalized_status(source_status)
+
+
+def _action_id_suffix(value: str) -> str:
+    suffix = re.sub(r"[^a-z0-9_]+", "_", value.strip().lower())
+    suffix = re.sub(r"_+", "_", suffix).strip("_")
+    return suffix or "print_fulfillment_readiness"
+
+
+def _lowercase_first(value: str) -> str:
+    if not value:
+        return value
+    return value[:1].lower() + value[1:]
 
 
 def _live_provider_evidence_operator_action(
@@ -500,6 +569,7 @@ def _live_action(
     operator_action: str = "",
     requires_cost_consent: bool = True,
     live_provider_call: bool = True,
+    classification: str | None = None,
 ) -> dict[str, Any]:
     return _action(
         action_id=action_id,
@@ -511,6 +581,7 @@ def _live_action(
         live_provider_call=live_provider_call,
         requires_cost_consent=requires_cost_consent,
         requires_user_confirmation=requires_cost_consent or live_provider_call,
+        classification=classification,
         operator_action=operator_action or _live_provider_operator_action(command),
     )
 

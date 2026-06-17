@@ -205,6 +205,7 @@ Bridge deliverable:
 - P0.607 final demo launch top-level next action preserves live provider consent metadata
 - P0.608 iPhone final demo launch receipt decodes and displays live provider consent metadata
 - P0.609 final external action ledger live provider actions require user confirmation
+- P0.610 final external action ledger uses concrete print readiness blockers instead of deferred Treatstock fallback
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

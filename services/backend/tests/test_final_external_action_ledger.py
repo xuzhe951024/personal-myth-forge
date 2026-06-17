@@ -86,8 +86,11 @@ def test_external_action_ledger_blocks_missing_resources_without_running_actions
     assert actions["run_configured_final_acceptance"]["operator_action"] == (
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured"
     )
+    assert actions["refresh_ios_print_fulfillment_source"]["command"] == (
+        "cd services/backend && uv run pytest tests/test_ios_showcase_acceptance.py"
+    )
     assert "PMF_ALLOW_LIVE_PROVIDER_CALLS=1" not in (
-        actions["refresh_configured_treatstock_quote"].get("operator_action", "")
+        actions["refresh_ios_print_fulfillment_source"].get("operator_action", "")
     )
     assert actions["run_xcode_build_gate"]["status"] == "manual"
     assert actions["run_xcode_build_gate"]["global"] is True
@@ -349,6 +352,91 @@ def test_external_action_ledger_uses_concrete_provider_and_print_handoff_actions
         "approve live provider cost before make print-fulfillment-readiness"
         not in operator_actions
     )
+
+
+def test_external_action_ledger_print_action_uses_print_readiness_blocker(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    repo_root = tmp_path / "repo"
+    write_resources(repo_root, VALID_LOCAL_RESOURCES)
+    monkeypatch.setattr(
+        final_external_action_ledger,
+        "build_ios_deploy_runbook_report",
+        lambda **_kwargs: ready_ios_deploy_runbook(),
+    )
+    monkeypatch.setattr(
+        final_external_action_ledger,
+        "build_print_fulfillment_readiness_report",
+        lambda **_kwargs: SimpleNamespace(
+            report={
+                "kind": "print_fulfillment_readiness_report",
+                "status": "blocked",
+                "summary": {
+                    "ready": 3,
+                    "blocked": 1,
+                    "partial": 0,
+                    "deferred": 2,
+                },
+                "first_blocker": {
+                    "id": "visual_print_receipt",
+                    "label": "Print fulfillment visual regression",
+                    "status": "blocked",
+                    "classification": "missing_visual_artifact",
+                    "command": "make visual-regression-local",
+                    "detail": "Print fulfillment visual artifact is missing or not passed.",
+                },
+                "next_action": {
+                    "id": "visual_print_receipt",
+                    "label": "Print fulfillment visual regression",
+                    "status": "blocked",
+                    "classification": "missing_visual_artifact",
+                    "command": (
+                        "make visual-regression-local; "
+                        "rerun make print-fulfillment-readiness"
+                    ),
+                    "detail": "Print fulfillment visual artifact is missing or not passed.",
+                    "validation_command": "make print-fulfillment-readiness",
+                },
+                "operator_actions": [
+                    (
+                        "make visual-regression-local; "
+                        "rerun make print-fulfillment-readiness"
+                    )
+                ],
+            }
+        ),
+    )
+
+    result = build_final_external_action_ledger_report(
+        settings=Settings(
+            three_d_provider="meshy",
+            meshy_api_key="meshy-secret-test",
+            npc_provider="openai",
+            openai_api_key="sk-openai-test",
+            print_provider="local",
+        ),
+        repo_root=repo_root,
+    )
+
+    actions = result.report["actions_by_id"]
+    print_action = actions["refresh_visual_print_receipt"]
+
+    assert "refresh_configured_treatstock_quote" not in actions
+    assert print_action["status"] == "blocked"
+    assert print_action["label"] == "Refresh print fulfillment visual regression"
+    assert print_action["command"] == "make visual-regression-local"
+    assert (
+        print_action["operator_action"]
+        == "make visual-regression-local; rerun make print-fulfillment-readiness"
+    )
+    assert (
+        print_action["detail"]
+        == "Print fulfillment visual artifact is missing or not passed."
+    )
+    assert print_action["classification"] == "missing_visual_artifact"
+    assert print_action["requires_cost_consent"] is False
+    assert print_action["live_provider_call"] is False
 
 
 def test_external_action_ledger_prefers_print_request_before_provider_quote() -> None:
