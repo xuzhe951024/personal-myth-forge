@@ -337,6 +337,63 @@ def test_final_handoff_index_does_not_copy_live_provider_actions_into_local_lane
     )
 
 
+def test_final_handoff_index_prefers_granular_saved_live_consent_action(
+    tmp_path: Path,
+) -> None:
+    repo_root = _write_deploy_config(tmp_path)
+    _write_three_d_evaluation(repo_root)
+    _write_npc_evaluation(repo_root)
+    _write_visual_regression(repo_root)
+    _write_final_acceptance(repo_root)
+    _write_ios_deploy_runbook(repo_root)
+    granular_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+    _write_final_demo_launch(
+        repo_root,
+        overall_status="partial",
+        first_blocker={
+            "id": "game_asset_3d_generation",
+            "label": "Game asset 3D generation",
+            "status": "partial",
+            "classification": "live_3d_provider_unproven",
+            "command": granular_action,
+            "detail": "Live Meshy evidence still needs consent.",
+        },
+        next_action={
+            "id": "game_asset_3d_generation",
+            "label": "Game asset 3D generation",
+            "status": "partial",
+            "classification": "live_3d_provider_unproven",
+            "command": granular_action,
+            "detail": "Live Meshy evidence still needs consent.",
+            "validation_command": "make final-configured-evidence-plan",
+        },
+        operator_actions=[
+            granular_action,
+            (
+                "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+                "rerun make final-configured-evidence-plan"
+            ),
+        ],
+    )
+
+    result = build_final_handoff_index_report(
+        settings=Settings(),
+        repo_root=repo_root,
+    )
+
+    local_lane = result.report["lanes_by_id"]["local_rehearsal"]
+
+    assert granular_action in result.report["operator_actions"]
+    assert GUARDED_LIVE_ACCEPTANCE_ACTION not in result.report["operator_actions"]
+    assert not any(
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS" in action
+        for action in local_lane.get("operator_actions", [])
+    )
+
+
 def test_final_handoff_index_promotes_local_lane_operator_action_to_next_action(
     tmp_path: Path,
 ) -> None:

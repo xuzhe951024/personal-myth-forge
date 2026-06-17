@@ -539,6 +539,7 @@ def _lanes(
             command=_configured_acceptance_command(),
             required=False,
             requires_consent=True,
+            operator_action=_live_acceptance_operator_action(local_sources),
             notes=["May call live providers and spend provider credits."],
         ),
     ]
@@ -829,7 +830,12 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
         elif lane_id == "device_deploy":
             actions.append(BACKEND_DEVICE_DEMO_VALIDATED_ACTION)
         elif lane_id == "live_acceptance":
-            actions.append(FINAL_HANDOFF_LIVE_ACCEPTANCE_ACTION)
+            actions.append(
+                _lane_operator_action_or_default(
+                    lane,
+                    FINAL_HANDOFF_LIVE_ACCEPTANCE_ACTION,
+                )
+            )
         elif command:
             actions.append(f"run {command}")
         else:
@@ -837,6 +843,30 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
     deduped = _dedupe(_final_handoff_operator_action(action) for action in actions)
     deduped = prefer_guarded_print_quote_handoff_actions(deduped)
     return _prioritize_final_handoff_operator_actions(deduped)[:6]
+
+
+def _live_acceptance_operator_action(local_sources: list[dict[str, Any]]) -> str:
+    source = _source_by_id(local_sources, "final_demo_launch_local")
+    if source is None:
+        return ""
+    actions = source.get("operator_actions")
+    if not isinstance(actions, list):
+        return ""
+    for action in actions:
+        if not isinstance(action, str):
+            continue
+        stripped = action.strip()
+        if _is_granular_configured_live_action(stripped):
+            return stripped
+    return ""
+
+
+def _is_granular_configured_live_action(action: str) -> bool:
+    normalized = normalize_operator_action(action)
+    return (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 " in normalized
+        and "rerun make final-configured-evidence-plan" in normalized
+    )
 
 
 def _prioritize_final_handoff_operator_actions(actions: list[str]) -> list[str]:
