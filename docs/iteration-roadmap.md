@@ -176,6 +176,7 @@ Bridge deliverable:
 - P0.578 final local report refresh treats nonblocking resource handoff partial as nonblocking
 - P0.579 final local report refresh guards configured evidence consent actions
 - P0.580 final external action ledger first blocker uses guarded live consent action
+- P0.581 final launch closure packet prunes optional resource actions from top-level operator handoff
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

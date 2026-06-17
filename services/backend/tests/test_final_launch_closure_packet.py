@@ -108,7 +108,7 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     )
     assert "make final-resources-preflight" not in operator_actions
     assert "make print-fulfillment-readiness" not in operator_actions
-    assert PRINT_READINESS_BACKEND_AUTO_ACTION in operator_actions
+    assert PRINT_READINESS_BACKEND_AUTO_ACTION not in operator_actions
     assert not any("print-quote-configured" in action for action in operator_actions)
     assert "make ios-device-launch-rehearsal" not in operator_actions
     assert "make final-resource-apply-preview" in operator_actions
@@ -840,7 +840,7 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
         in operator_actions
     )
     assert "make print-fulfillment-readiness" not in operator_actions
-    assert PRINT_READINESS_BACKEND_AUTO_ACTION in operator_actions
+    assert PRINT_READINESS_BACKEND_AUTO_ACTION not in operator_actions
     assert not any("print-quote-configured" in action for action in operator_actions)
     assert (
         "approve live provider cost before make live-provider-evidence"
@@ -860,16 +860,24 @@ def test_final_launch_closure_packet_prefers_ledger_child_operator_actions(
     )
 
 
-def test_final_launch_closure_packet_replaces_bare_print_readiness_action(
-    tmp_path: Path,
-) -> None:
-    repo_root = _repo_fixture(tmp_path)
-
-    result = build_final_launch_closure_packet_report(
-        settings=Settings(),
-        repo_root=repo_root,
+def test_final_launch_closure_packet_replaces_blocked_bare_print_readiness_action() -> None:
+    actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "refresh_print_readiness",
+                        "status": "blocked",
+                        "command": "make print-fulfillment-readiness",
+                        "requires_user_input": False,
+                        "requires_cost_consent": False,
+                        "requires_user_confirmation": False,
+                    }
+                ]
+            }
+        ],
+        first_blocker=None,
     )
-    actions = result.report["operator_actions"]
     assert "make print-fulfillment-readiness" not in actions
     assert PRINT_READINESS_BACKEND_AUTO_ACTION in actions
 
@@ -1056,9 +1064,7 @@ def test_final_launch_closure_packet_prioritizes_backend_demo_after_device_hando
         for action in actions
     )
     assert actions.index(backend_action) < actions.index(provider_action)
-    assert actions.index(backend_action) < actions.index(
-        PRINT_READINESS_BACKEND_AUTO_ACTION
-    )
+    assert PRINT_READINESS_BACKEND_AUTO_ACTION not in actions
     assert actions.index(backend_action) < actions.index(xcode_action)
 
 
@@ -1155,6 +1161,53 @@ def test_final_launch_closure_packet_marks_resource_and_device_sections_ready(
     assert "sk-openai-test" not in text
     assert "10.0.0.24" not in text
     assert str(tmp_path) not in text
+
+
+def test_final_launch_closure_packet_prunes_optional_actions_before_live_consent() -> None:
+    expected_live_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+
+    operator_actions = final_launch_closure_packet._operator_actions(
+        [
+            {
+                "actions": [
+                    {
+                        "id": "provide_OPENAI_API_BASE_URL",
+                        "status": "optional",
+                        "command": "make final-resources-preflight",
+                        "requires_user_input": False,
+                        "requires_cost_consent": False,
+                        "requires_user_confirmation": False,
+                    },
+                    {
+                        "id": "provide_TREATSTOCK_API_KEY",
+                        "status": "optional",
+                        "command": "make print-fulfillment-readiness",
+                        "requires_user_input": False,
+                        "requires_cost_consent": False,
+                        "requires_user_confirmation": False,
+                    },
+                    {
+                        "id": "configured_live_evidence_bundle",
+                        "status": "blocked",
+                        "command": expected_live_action,
+                        "operator_action": expected_live_action,
+                        "requires_user_input": False,
+                        "requires_cost_consent": True,
+                        "requires_user_confirmation": False,
+                    },
+                ]
+            }
+        ],
+        first_blocker={"command": expected_live_action},
+    )
+
+    assert operator_actions[0] == expected_live_action
+    assert "make final-resources-preflight" not in operator_actions
+    assert PRINT_READINESS_BACKEND_AUTO_ACTION not in operator_actions
+    assert not any("backend-device-demo" in action for action in operator_actions)
 
 
 def test_final_launch_closure_packet_redacts_unsafe_source_details(

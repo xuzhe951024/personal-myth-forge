@@ -806,7 +806,7 @@ def _operator_actions(
     actions: list[str] = []
     for section in sections:
         for action in section["actions"]:
-            if action["status"] == "ready":
+            if action["status"] in {"ready", "optional"}:
                 continue
             if action["requires_user_input"] and action["id"].startswith("provide_"):
                 actions.append(_provide_action_text(action))
