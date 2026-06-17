@@ -55,6 +55,7 @@ do {
     try testFinalShowcaseSummaryIncludesReadyProviderHandoffDigest()
     try testFinalShowcaseSummaryShowsExternalActionsBackendHandoff()
     try testFinalShowcaseSummaryBlocksProviderHandoffDigest()
+    try testFinalShowcaseSummaryShowsConfiguredEvidencePlanProviderAction()
     try testFinalShowcaseSummaryBlocksProviderHandoffOnConfiguredEvidenceBundle()
     try testFinalShowcaseSummaryRedactsUnsafeConfiguredBundleProviderHandoff()
     try testFinalShowcaseSummaryRedactsUnsafeProviderHandoffDigest()
@@ -1939,6 +1940,61 @@ private func testFinalShowcaseSummaryBlocksProviderHandoffDigest() throws {
     try expectEqual(stage.status, .needsAttention)
     try expectContains(stage.detail, "Live evidence missing")
     try expectContains(stage.detail, "provide MESHY_API_KEY")
+}
+
+private func testFinalShowcaseSummaryShowsConfiguredEvidencePlanProviderAction() throws {
+    let session = try FixtureLoader.decode(MythSession.self, from: "myth-session-response")
+    let liveAction = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+            + "rerun make final-configured-evidence-plan"
+    )
+    let npcAction = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+            + "rerun make final-configured-evidence-plan"
+    )
+    let finalLaunch = FinalLaunchMobileSummary(
+        overallStatus: .blocked,
+        title: "Final launch partial",
+        subtitle: "Live provider evidence needs consent",
+        phaseRows: [],
+        resourceFillGuideRows: ["Fill guide ready: required 2, optional 0, configured 2, secret 1."],
+        applyPreviewRows: ["Apply preview ready: targets 2, missing 0, blocked 0, secret 4."],
+        resourceHandoffRows: ["Resource handoff ready: ready 6, missing 0, blocked 0, manual 0."],
+        resourceActions: [],
+        acceptanceRows: ["Final acceptance ready."],
+        threeDEvaluationRows: ["3D evaluation ready: 20 cases, 20 scene-loadable."],
+        npcEvaluationRows: ["NPC Agent evaluation ready: 6 cases passed."],
+        localShowcaseSmokeRows: ["Local showcase smoke ready: HTTP 6, NPC ticks 2, downloads 3."],
+        liveProviderEvidenceRows: [
+            "Live evidence blocked: ready 4, missing 0, blocked 1, partial 0."
+        ],
+        configuredEvidencePlanRows: [
+            "Configured evidence consent_required: steps 10, ready 4, blocked 0, consent now 4, planned 3.",
+            liveAction,
+            npcAction,
+        ],
+        deployRunbookRows: ["iOS deploy runbook ready."],
+        launchRehearsalRows: ["iOS launch rehearsal ready: ready 4, blocked 0, partial 0."],
+        handoffRows: ["Final operator handoff ready."],
+        commandRows: [],
+        notes: []
+    )
+
+    let summary = FinalShowcaseSummaryBuilder.build(
+        captureSelection: readyGuidedScanSelection(),
+        session: session,
+        npcTickHistoryCount: 3,
+        printQuote: localPrintQuote(),
+        providerReadiness: localDemoProviderReadiness(),
+        providerReadinessError: nil,
+        finalLaunchSummary: finalLaunch
+    )
+    let stage = try require(summary.stage(id: "provider_handoff"), "missing provider handoff stage")
+
+    try expectEqual(stage.status, .needsAttention)
+    try expectContains(stage.detail, "Live evidence blocked")
+    try expectContains(stage.detail, "make backend-evaluate-3d-configured")
+    try expectContains(stage.detail, "PMF_ALLOW_LIVE_PROVIDER_CALLS")
 }
 
 private func testFinalShowcaseSummaryBlocksProviderHandoffOnConfiguredEvidenceBundle() throws {

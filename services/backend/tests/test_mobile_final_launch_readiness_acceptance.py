@@ -602,6 +602,7 @@ def _write_minimal_mobile_source(root: Path) -> None:
                 "testDecodesConfiguredEvidencePlanFromFinalLaunchPayload",
                 "planned_consent_steps",
                 "testFinalLaunchMobileSummaryShowsConfiguredEvidencePlan",
+                "testFinalShowcaseSummaryShowsConfiguredEvidencePlanProviderAction",
                 "testFinalLaunchMobileSummaryRedactsUnsafeConfiguredEvidencePlan",
                 "testDecodesConfiguredEvidenceBundleFromFinalLaunchPayload",
                 "testFinalLaunchMobileSummaryShowsConfiguredEvidenceBundle",

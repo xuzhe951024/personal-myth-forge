@@ -105,9 +105,13 @@ public enum FinalShowcaseSummaryBuilder {
 
     private static func providerHandoffStatusRows(_ summary: FinalLaunchMobileSummary) -> [String] {
         let liveRows = summary.liveProviderEvidenceRows
+        let configuredPlanRows = summary.configuredEvidencePlanRows
         let configuredBundleRows = summary.configuredEvidenceBundleRows
         if !liveRows.isEmpty, providerHandoffStatus(liveRows) != .ready {
             return liveRows
+        }
+        if !configuredPlanRows.isEmpty, providerHandoffStatus(configuredPlanRows) != .ready {
+            return configuredPlanRows
         }
         if !configuredBundleRows.isEmpty, providerHandoffStatus(configuredBundleRows) != .ready {
             return configuredBundleRows
@@ -129,6 +133,9 @@ public enum FinalShowcaseSummaryBuilder {
         if !liveRows.isEmpty {
             return liveRows
         }
+        if !configuredPlanRows.isEmpty {
+            return configuredPlanRows
+        }
         if !configuredBundleRows.isEmpty {
             return configuredBundleRows
         }
@@ -142,6 +149,7 @@ public enum FinalShowcaseSummaryBuilder {
     private static func providerHandoffCandidateRows(_ summary: FinalLaunchMobileSummary) -> [[String]] {
         [
             summary.liveProviderEvidenceRows,
+            summary.configuredEvidencePlanRows,
             summary.applyPreviewRows,
             summary.resourceFillGuideRows,
             summary.resourceHandoffRows,
@@ -154,6 +162,7 @@ public enum FinalShowcaseSummaryBuilder {
             return .waiting
         }
         if first.hasPrefix("Live evidence ready")
+            || first.hasPrefix("Configured evidence ready")
             || first.hasPrefix("Configured bundle ready")
             || first.hasPrefix("Apply preview ready")
             || first.hasPrefix("Fill guide ready")
@@ -181,7 +190,7 @@ public enum FinalShowcaseSummaryBuilder {
         guard let first = statusRows.first else {
             return "Provider handoff evidence has not loaded."
         }
-        if statusRows.count == 1 || providerHandoffStatus(statusRows) == .ready {
+        if providerHandoffStatus(statusRows) == .ready {
             return sanitize(first)
         }
         if first.hasPrefix("Configured bundle") {
@@ -191,6 +200,12 @@ public enum FinalShowcaseSummaryBuilder {
             }
         }
         let candidates = combinedRows.filter { $0 != first }
+        if let inputAction = candidates.first(where: providerHandoffCredentialInputActionRow) {
+            return sanitize([first, providerHandoffActionDetail(inputAction)].joined(separator: " "))
+        }
+        if let guardedAction = candidates.first(where: providerHandoffGuardedLiveCommandRow) {
+            return sanitize([first, guardedAction].joined(separator: " "))
+        }
         if let inputAction = candidates.first(where: providerHandoffInputActionRow) {
             return sanitize([first, providerHandoffActionDetail(inputAction)].joined(separator: " "))
         }
@@ -198,6 +213,23 @@ public enum FinalShowcaseSummaryBuilder {
             return sanitize([first, actionable].joined(separator: " "))
         }
         return sanitize(statusRows.prefix(2).joined(separator: " "))
+    }
+
+    private static func providerHandoffGuardedLiveCommandRow(_ row: String) -> Bool {
+        let text = row.trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.contains("PMF_ALLOW_LIVE_PROVIDER_CALLS")
+            && text.contains("make ")
+    }
+
+    private static func providerHandoffCredentialInputActionRow(_ row: String) -> Bool {
+        let text = row.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if text.hasPrefix("freshness:") || text.hasPrefix("source freshness:") {
+            return false
+        }
+        return text.contains("provide ")
+            || (text.contains("meshy") && text.contains("api") && text.contains("key"))
+            || (text.contains("openai") && text.contains("api") && text.contains("key"))
+            || text.contains("final-resources.env")
     }
 
     private static func providerHandoffInputActionRow(_ row: String) -> Bool {
