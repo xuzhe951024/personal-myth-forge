@@ -1687,10 +1687,63 @@ def test_final_local_report_refresh_guards_configured_evidence_consent_action(
     assert step["classification"] == "consent_required"
     assert step["command"] == guarded_action
     assert step["validation_command"] == "make live-provider-evidence"
+    assert step["requires_live_provider_consent"] is True
+    assert step["may_call_live_provider"] is True
+    assert step["cost_risk"] is True
+    assert step["requires_cost_consent"] is True
+    assert step["live_provider_call"] is True
+    assert step["requires_user_confirmation"] is True
     assert step["next_action"]["command"] == guarded_action
     assert step["next_action"]["validation_command"] == "make live-provider-evidence"
+    assert step["next_action"]["requires_live_provider_consent"] is True
+    assert step["next_action"]["may_call_live_provider"] is True
+    assert step["next_action"]["cost_risk"] is True
+    assert step["next_action"]["requires_cost_consent"] is True
+    assert step["next_action"]["live_provider_call"] is True
+    assert step["next_action"]["requires_user_confirmation"] is True
     assert guarded_action in result.report["operator_actions"]
     assert "make backend-evaluate-3d-configured" not in promoted_actions_text
+
+
+def test_final_local_report_refresh_top_level_consent_blocker_preserves_confirmation_metadata() -> None:
+    blocker = final_local_report_refresh._first_blocker(
+        [
+            {
+                "id": "final_configured_evidence_plan",
+                "label": "Final configured evidence plan",
+                "status": "blocked",
+                "output": "services/backend/.local/final-configured-evidence-plan.json",
+                "classification": "consent_required",
+                "command": (
+                    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+                    "make final-acceptance-configured; "
+                    "rerun make live-provider-evidence"
+                ),
+                "detail": (
+                    "Missing services/backend/.local/"
+                    "3d-evaluation-configured.json."
+                ),
+                "validation_command": "make live-provider-evidence",
+                "requires_live_provider_consent": True,
+                "may_call_live_provider": True,
+                "cost_risk": True,
+                "requires_cost_consent": True,
+                "live_provider_call": True,
+                "requires_user_confirmation": True,
+            }
+        ]
+    )
+    action = final_local_report_refresh._next_action(blocker)
+
+    assert blocker is not None
+    assert action is not None
+    for payload in (blocker, action):
+        assert payload["requires_live_provider_consent"] is True
+        assert payload["may_call_live_provider"] is True
+        assert payload["cost_risk"] is True
+        assert payload["requires_cost_consent"] is True
+        assert payload["live_provider_call"] is True
+        assert payload["requires_user_confirmation"] is True
 
 
 def test_final_local_report_refresh_step_hint_uses_child_next_commands(

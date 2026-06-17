@@ -207,6 +207,7 @@ Bridge deliverable:
 - P0.609 final external action ledger live provider actions require user confirmation
 - P0.610 final external action ledger uses concrete print readiness blockers instead of deferred Treatstock fallback
 - P0.611 final launch closure packet live provider actions require user confirmation
+- P0.612 final local report refresh live provider actions preserve confirmation metadata
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

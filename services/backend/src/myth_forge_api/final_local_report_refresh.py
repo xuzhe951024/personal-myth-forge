@@ -128,6 +128,15 @@ FINAL_LOCAL_REPORT_LAN_BACKEND_URL_MARKER = "iphone-reachable lan url"
 FINAL_LOCAL_REPORT_BACKEND_DEVICE_DEMO_MARKER = "backend-device-demo"
 BACKEND_DEVICE_DEMO_BARE_ACTION = "make backend-device-demo"
 BACKEND_DEVICE_DEMO_VALIDATION = "make mobile-deploy-preflight"
+LIVE_CONFIRMATION_FIELDS = (
+    "requires_live_provider_consent",
+    "completion_requires_live_provider_consent",
+    "may_call_live_provider",
+    "cost_risk",
+    "requires_cost_consent",
+    "live_provider_call",
+    "requires_user_confirmation",
+)
 LOCAL_SETTINGS = Settings(
     three_d_provider="local",
     npc_provider="local",
@@ -516,8 +525,8 @@ def _run_step(step: RefreshStepDefinition, repo_root: Path) -> dict[str, Any]:
         }
 
 
-def _promoted_blocker_fields(hint: dict[str, Any]) -> dict[str, str]:
-    fields = {
+def _promoted_blocker_fields(hint: dict[str, Any]) -> dict[str, Any]:
+    fields: dict[str, Any] = {
         "classification": str(hint.get("classification") or ""),
         "command": str(hint.get("command") or ""),
         "detail": str(hint.get("detail") or ""),
@@ -525,6 +534,7 @@ def _promoted_blocker_fields(hint: dict[str, Any]) -> dict[str, str]:
     validation_command = str(hint.get("validation_command") or "").strip()
     if validation_command:
         fields["validation_command"] = validation_command
+    _copy_live_confirmation_fields(fields, hint)
     return fields
 
 
@@ -551,6 +561,7 @@ def _step_with_next_action(step: dict[str, Any]) -> dict[str, Any]:
     validation_command = str(step.get("validation_command") or "").strip()
     if validation_command:
         action["validation_command"] = validation_command
+    _copy_live_confirmation_fields(action, step)
     step["next_action"] = action
     return step
 
@@ -1405,6 +1416,7 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     validation_command = str(first_blocker.get("validation_command") or "").strip()
     if validation_command:
         action["validation_command"] = validation_command
+    _copy_live_confirmation_fields(action, first_blocker)
     return action
 
 
@@ -1704,6 +1716,8 @@ def _step_blocker(step: dict[str, Any]) -> dict[str, Any]:
     validation_command = str(hint.get("validation_command") or "").strip()
     if validation_command:
         blocker["validation_command"] = validation_command
+    _copy_live_confirmation_fields(blocker, hint)
+    _copy_live_confirmation_fields(blocker, step)
     return blocker
 
 
@@ -1804,6 +1818,12 @@ def _hint_from_report_action(
     if _is_configured_evidence_live_consent_action(report, action):
         hint["command"] = FINAL_LOCAL_REPORT_LIVE_PROVIDER_CONSENT_ACTION
         hint["validation_command"] = "make live-provider-evidence"
+        hint["requires_live_provider_consent"] = True
+        hint["may_call_live_provider"] = True
+        hint["cost_risk"] = True
+        hint["requires_cost_consent"] = True
+        hint["live_provider_call"] = True
+        hint["requires_user_confirmation"] = True
     if report.get("kind") == "final_acceptance_report":
         checks = report.get("checks")
         if isinstance(checks, list):
@@ -1811,6 +1831,22 @@ def _hint_from_report_action(
             if detail:
                 hint["detail"] = detail
     return hint
+
+
+def _copy_live_confirmation_fields(
+    target: dict[str, Any],
+    source: dict[str, Any],
+) -> None:
+    copied_live_or_cost = False
+    for field in LIVE_CONFIRMATION_FIELDS:
+        if field not in source:
+            continue
+        value = bool(source.get(field))
+        target[field] = value
+        if field != "requires_user_confirmation" and value:
+            copied_live_or_cost = True
+    if copied_live_or_cost:
+        target["requires_user_confirmation"] = True
 
 
 def _is_configured_evidence_live_consent_action(
