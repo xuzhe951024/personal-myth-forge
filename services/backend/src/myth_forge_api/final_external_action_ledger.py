@@ -1102,7 +1102,10 @@ def _operator_actions(
         device_pruned_actions
     )
     return _promote_live_first_blocker_action(
-        configured_actions,
+        _drop_device_fallbacks_when_live_provider_is_first(
+            configured_actions,
+            first_blocker=first_blocker,
+        ),
         first_blocker=first_blocker,
     )
 
@@ -1118,6 +1121,16 @@ def _promote_live_first_blocker_action(
     if not command:
         return actions
     return _dedupe([command, *actions])
+
+
+def _drop_device_fallbacks_when_live_provider_is_first(
+    actions: list[str],
+    *,
+    first_blocker: dict[str, Any] | None,
+) -> list[str]:
+    if not _is_live_provider_first_blocker(first_blocker):
+        return actions
+    return [action for action in actions if not _is_specific_device_action(action)]
 
 
 def _is_live_provider_first_blocker(first_blocker: dict[str, Any] | None) -> bool:

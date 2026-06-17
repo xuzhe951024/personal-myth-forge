@@ -890,6 +890,7 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
     assert operator_actions.index(guarded_action) < operator_actions.index(
         "make final-configured-preflight; rerun make configured-live-evidence-bundle"
     )
+    assert not any("backend-device-demo" in action for action in operator_actions)
 
 
 def test_external_action_ledger_routes_repairable_final_resources_before_apply(
