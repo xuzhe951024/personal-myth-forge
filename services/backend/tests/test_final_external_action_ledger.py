@@ -911,8 +911,12 @@ def test_external_action_ledger_live_first_blocker_uses_guarded_operator_action(
     assert first_blocker["group_id"] == "live_provider_costs"
     assert first_blocker["command"] == configured_plan_action
     assert first_blocker["validation_command"] == "make final-configured-evidence-plan"
+    assert first_blocker["requires_cost_consent"] is True
+    assert first_blocker["live_provider_call"] is True
     assert next_action["command"] == configured_plan_action
     assert next_action["validation_command"] == "make final-configured-evidence-plan"
+    assert next_action["requires_cost_consent"] is True
+    assert next_action["live_provider_call"] is True
     assert operator_actions[0] == configured_plan_action
     assert legacy_guarded_action not in operator_actions
     assert operator_actions.index(configured_plan_action) < operator_actions.index(

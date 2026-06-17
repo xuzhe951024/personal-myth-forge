@@ -1140,6 +1140,15 @@ def _next_action(first_blocker: dict[str, Any] | None) -> dict[str, Any] | None:
     validation_command = first_blocker.get("validation_command")
     if validation_command:
         next_action["validation_command"] = str(validation_command)
+    for field in (
+        "requires_cost_consent",
+        "live_provider_call",
+        "requires_user_confirmation",
+        "xcode_or_signing",
+        "global",
+    ):
+        if field in first_blocker:
+            next_action[field] = bool(first_blocker.get(field))
     return next_action
 
 
@@ -1172,6 +1181,15 @@ def _first_blocker(
         validation_command = _validation_command_for_action(action)
         if validation_command:
             blocker["validation_command"] = validation_command
+        for field in (
+            "requires_cost_consent",
+            "live_provider_call",
+            "requires_user_confirmation",
+            "xcode_or_signing",
+            "global",
+        ):
+            if field in action:
+                blocker[field] = bool(action.get(field))
         if blocker["classification"] is None:
             blocker.pop("classification")
         return blocker

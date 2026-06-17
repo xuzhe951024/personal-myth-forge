@@ -1011,6 +1011,15 @@ def _blocker_from_action(
     validation_command = _validation_command_for_action(action)
     if validation_command:
         blocker["validation_command"] = validation_command
+    for field in (
+        "requires_cost_consent",
+        "live_provider_call",
+        "requires_user_confirmation",
+        "xcode_or_signing",
+        "global",
+    ):
+        if field in action:
+            blocker[field] = bool(action.get(field))
     return blocker
 
 
