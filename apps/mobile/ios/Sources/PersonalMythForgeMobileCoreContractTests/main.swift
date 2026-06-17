@@ -149,6 +149,7 @@ do {
     try testFinalLaunchMobileSummaryShowsResourceBlockerReceipt()
     try testFinalLaunchMobileSummaryUsesTopLevelFirstBlockerReceipt()
     try testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction()
+    try testFinalLaunchMobileSummaryShowsFinalDemoLaunchLiveConsent()
     try testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt()
     try testFinalLaunchMobileSummaryRedactsUnsafeLaunchReceipt()
     try testLiveProviderConsentSummaryWaitsForProviderReadiness()
@@ -4072,6 +4073,50 @@ private func testFinalLaunchMobileSummaryShowsFinalDemoLaunchNextAction() throws
     try expectContains(summary.launchReceiptRows[2], "one-file backend and iOS final demo handoff")
     try expectContains(summary.launchReceiptRows[2], "make final-demo-launch-local")
     try expectContains(summary.launchReceiptRows[3], "First blocker: apply_final_resources")
+}
+
+private func testFinalLaunchMobileSummaryShowsFinalDemoLaunchLiveConsent() throws {
+    let liveConsentActionJSON = """
+    {
+      "id": "game_asset_3d_generation",
+      "label": "Game asset 3D generation",
+      "status": "partial",
+      "classification": "live_3d_provider_unproven",
+      "command": "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; rerun make final-configured-evidence-plan",
+      "detail": "Local 3D proof is ready; live Meshy evidence still needs consent.",
+      "source": "first_blocker",
+      "source_id": "game_asset_3d_generation",
+      "validation_command": "make final-configured-evidence-plan",
+      "requires_live_provider_consent": true,
+      "completion_requires_live_provider_consent": true
+    }
+    """
+    let report = finalDemoLaunchReport(
+        overallStatus: "partial",
+        firstBlockerJSON: liveConsentActionJSON,
+        nextActionJSON: liveConsentActionJSON,
+        finalResourcesStatus: "ready",
+        finalResourcesItemsJSON: readyFinalResourceItemsJSON(),
+        finalAcceptanceStatus: "ready",
+        finalOperatorHandoffStatus: "partial"
+    )
+
+    let action = try require(report.nextAction, "missing final demo launch next action")
+    try expectEqual(action.requiresLiveProviderConsent, true)
+    try expectEqual(action.completionRequiresLiveProviderConsent, true)
+
+    let blocker = try require(report.firstBlocker, "missing final demo launch first blocker")
+    try expectEqual(blocker.requiresLiveProviderConsent, true)
+    try expectEqual(blocker.completionRequiresLiveProviderConsent, true)
+
+    let summary = FinalLaunchMobileSummaryBuilder.build(report: report, error: nil)
+
+    try expectContains(summary.launchReceiptRows[2], "Next action: game_asset_3d_generation partial live_3d_provider_unproven")
+    try expectContains(summary.launchReceiptRows[2], "live provider consent required")
+    try expectContains(summary.launchReceiptRows[2], "completion live provider consent required")
+    try expectContains(summary.launchReceiptRows[3], "First blocker: game_asset_3d_generation partial live_3d_provider_unproven")
+    try expectContains(summary.launchReceiptRows[3], "live provider consent required")
+    try expectContains(summary.launchReceiptRows[3], "completion live provider consent required")
 }
 
 private func testFinalLaunchMobileSummaryShowsReadyConfiguredReceipt() throws {

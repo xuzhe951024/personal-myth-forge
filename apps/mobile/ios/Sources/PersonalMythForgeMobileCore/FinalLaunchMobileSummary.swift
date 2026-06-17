@@ -392,6 +392,11 @@ public enum FinalLaunchMobileSummaryBuilder {
         if let validationCommand = action.validationCommand, !validationCommand.isEmpty {
             parts.append(validationCommand)
         }
+        parts.append(contentsOf: consentReceiptMarkers(
+            requiresCostConsent: action.requiresCostConsent,
+            requiresLiveProviderConsent: action.requiresLiveProviderConsent,
+            completionRequiresLiveProviderConsent: action.completionRequiresLiveProviderConsent
+        ))
         return parts.joined(separator: " | ")
     }
 
@@ -416,7 +421,30 @@ public enum FinalLaunchMobileSummaryBuilder {
         if let validationCommand = blocker.validationCommand, !validationCommand.isEmpty {
             parts.append(validationCommand)
         }
+        parts.append(contentsOf: consentReceiptMarkers(
+            requiresCostConsent: blocker.requiresCostConsent,
+            requiresLiveProviderConsent: blocker.requiresLiveProviderConsent,
+            completionRequiresLiveProviderConsent: blocker.completionRequiresLiveProviderConsent
+        ))
         return parts.joined(separator: " | ")
+    }
+
+    private static func consentReceiptMarkers(
+        requiresCostConsent: Bool?,
+        requiresLiveProviderConsent: Bool?,
+        completionRequiresLiveProviderConsent: Bool?
+    ) -> [String] {
+        var markers: [String] = []
+        if requiresCostConsent == true {
+            markers.append("cost consent required")
+        }
+        if requiresLiveProviderConsent == true {
+            markers.append("live provider consent required")
+        }
+        if completionRequiresLiveProviderConsent == true {
+            markers.append("completion live provider consent required")
+        }
+        return markers
     }
 
     private static func finalDemoDeviceActionReceiptRow(

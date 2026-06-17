@@ -5039,6 +5039,9 @@ public struct FinalDemoLaunchFirstBlocker: Codable, Equatable, Sendable {
     public var source: String
     public var sourceId: String
     public var validationCommand: String?
+    public var requiresCostConsent: Bool?
+    public var requiresLiveProviderConsent: Bool?
+    public var completionRequiresLiveProviderConsent: Bool?
 
     public init(
         id: String,
@@ -5049,7 +5052,10 @@ public struct FinalDemoLaunchFirstBlocker: Codable, Equatable, Sendable {
         detail: String,
         source: String,
         sourceId: String,
-        validationCommand: String? = nil
+        validationCommand: String? = nil,
+        requiresCostConsent: Bool? = nil,
+        requiresLiveProviderConsent: Bool? = nil,
+        completionRequiresLiveProviderConsent: Bool? = nil
     ) {
         self.id = id
         self.label = label
@@ -5060,6 +5066,11 @@ public struct FinalDemoLaunchFirstBlocker: Codable, Equatable, Sendable {
         self.source = source
         self.sourceId = sourceId
         self.validationCommand = validationCommand
+        self.requiresCostConsent = requiresCostConsent
+        self.requiresLiveProviderConsent = requiresLiveProviderConsent
+        self.completionRequiresLiveProviderConsent = (
+            completionRequiresLiveProviderConsent
+        )
     }
 }
 
@@ -5073,6 +5084,9 @@ public struct FinalDemoLaunchNextAction: Codable, Equatable, Sendable {
     public var source: String
     public var sourceId: String
     public var validationCommand: String?
+    public var requiresCostConsent: Bool?
+    public var requiresLiveProviderConsent: Bool?
+    public var completionRequiresLiveProviderConsent: Bool?
 
     public init(
         id: String,
@@ -5083,7 +5097,10 @@ public struct FinalDemoLaunchNextAction: Codable, Equatable, Sendable {
         detail: String,
         source: String,
         sourceId: String,
-        validationCommand: String? = nil
+        validationCommand: String? = nil,
+        requiresCostConsent: Bool? = nil,
+        requiresLiveProviderConsent: Bool? = nil,
+        completionRequiresLiveProviderConsent: Bool? = nil
     ) {
         self.id = id
         self.label = label
@@ -5094,6 +5111,11 @@ public struct FinalDemoLaunchNextAction: Codable, Equatable, Sendable {
         self.source = source
         self.sourceId = sourceId
         self.validationCommand = validationCommand
+        self.requiresCostConsent = requiresCostConsent
+        self.requiresLiveProviderConsent = requiresLiveProviderConsent
+        self.completionRequiresLiveProviderConsent = (
+            completionRequiresLiveProviderConsent
+        )
     }
 }
 
