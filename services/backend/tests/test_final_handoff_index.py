@@ -44,6 +44,41 @@ def test_final_handoff_index_dedupes_legacy_print_quote_handoff_actions() -> Non
     assert sum("print-quote-configured" in action for action in actions) == 1
 
 
+def test_final_handoff_index_local_rehearsal_fallback_action_is_command() -> None:
+    detail = "Local 3D proof is ready; live Meshy evidence still needs consent."
+    three_d_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+    npc_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-npc-configured; "
+        "rerun make final-configured-evidence-plan"
+    )
+
+    actions = final_handoff_index._operator_actions(
+        [
+            {
+                "id": "local_rehearsal",
+                "status": "blocked",
+                "command": "make final-rehearsal-local",
+                "detail": detail,
+            },
+            {
+                "id": "live_acceptance",
+                "status": "live",
+                "command": "make final-acceptance-configured",
+                "operator_action": three_d_action,
+                "operator_actions": [three_d_action, npc_action],
+            },
+        ]
+    )
+
+    assert detail not in actions
+    assert actions[0] == "make final-rehearsal-local"
+    assert three_d_action in actions
+    assert npc_action in actions
+
+
 def test_final_handoff_index_blocks_missing_reports_without_leaks(
     tmp_path: Path,
 ) -> None:

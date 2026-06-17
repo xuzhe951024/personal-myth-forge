@@ -820,7 +820,7 @@ def _operator_actions(lanes: list[dict[str, Any]]) -> list[str]:
             actions.append(
                 _lane_operator_action_or_default(
                     lane,
-                    _lane_detail_or_default(lane, "run make final-rehearsal-local"),
+                    str(lane.get("command") or "make final-rehearsal-local"),
                 )
             )
             nested_actions = lane.get("operator_actions")
