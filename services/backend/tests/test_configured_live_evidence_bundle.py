@@ -220,13 +220,18 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
 
     assert result.exit_code == 2
     assert report["status"] == "blocked"
-    assert report["current_blocker"]["id"] == "final_acceptance_configured"
-    assert report["current_blocker"]["command"] == live_evidence_command
-    assert report["current_blocker"]["validation_command"] == (
-        "make live-provider-evidence"
+    assert report["current_blocker"]["id"] == "three_d_evaluation_configured"
+    assert report["current_blocker"]["command"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
     )
-    assert report["first_blocker"]["command"] == live_evidence_command
-    assert report["next_action"]["command"] == live_evidence_command
+    assert report["current_blocker"]["validation_command"] == (
+        "make final-configured-evidence-plan"
+    )
+    assert report["current_blocker"]["requires_live_provider_consent"] is True
+    assert report["first_blocker"]["id"] == "three_d_evaluation_configured"
+    assert report["next_action"]["command"] == (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make backend-evaluate-3d-configured"
+    )
     assert report["operator_actions"][:3] == expected_actions
     assert live_evidence_command not in report["operator_actions"]
     assert "make final-acceptance-configured" not in report["operator_actions"]

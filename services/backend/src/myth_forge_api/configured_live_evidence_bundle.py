@@ -171,7 +171,7 @@ def _current_blocker(
     if status in {"ready", "ready_to_run"}:
         return None
 
-    if str(configured_plan.get("status", "blocked")) == "blocked":
+    if str(configured_plan.get("status", "blocked")) in {"blocked", "consent_required"}:
         plan_blocker = _configured_plan_blocker(
             configured_plan.get("first_blocker"),
             configured_plan.get("next_action"),
@@ -230,6 +230,16 @@ def _configured_plan_blocker(
         validation_command = str(next_action.get("validation_command", "")).strip()
         if validation_command:
             blocker["validation_command"] = validation_command
+    if "requires_live_provider_consent" in first_blocker:
+        blocker["requires_live_provider_consent"] = bool(
+            first_blocker.get("requires_live_provider_consent")
+        )
+    if "may_call_live_provider" in first_blocker:
+        blocker["may_call_live_provider"] = bool(
+            first_blocker.get("may_call_live_provider")
+        )
+    if "cost_risk" in first_blocker:
+        blocker["cost_risk"] = bool(first_blocker.get("cost_risk"))
     return blocker
 
 
@@ -333,7 +343,7 @@ def _operator_actions(
         blocker_id = str(current_blocker.get("id", "unknown"))
         blocker_command = str(current_blocker.get("command", "")).strip()
         if blocker_command.startswith("PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "):
-            actions.append(blocker_command)
+            actions.append(_current_blocker_command_action(current_blocker))
         elif current_blocker.get("source_blocker_id"):
             actions.append(_source_current_blocker_action(current_blocker))
         elif blocker_status == "consent_required":
@@ -350,6 +360,16 @@ def _operator_actions(
     )
     actions.extend(_string_list(live_evidence.get("operator_actions")))
     return _prefer_live_provider_consent_action(_dedupe_operator_actions(actions))[:12]
+
+
+def _current_blocker_command_action(current_blocker: dict[str, Any]) -> str:
+    command = str(current_blocker.get("command", "")).strip()
+    if not command:
+        return ""
+    validation_command = str(current_blocker.get("validation_command", "")).strip()
+    if validation_command and validation_command not in command:
+        return f"{command}; rerun {validation_command}"
+    return command
 
 
 def _source_current_blocker_action(current_blocker: dict[str, Any]) -> str:
