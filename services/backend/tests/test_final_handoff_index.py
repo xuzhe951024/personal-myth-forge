@@ -265,7 +265,14 @@ def test_final_handoff_index_does_not_copy_live_provider_actions_into_local_lane
     _write_three_d_evaluation(repo_root)
     _write_npc_evaluation(repo_root)
     _write_visual_regression(repo_root)
-    _write_final_acceptance(repo_root)
+    _write_json(
+        repo_root / "services/backend/.local/final-acceptance-local.json",
+        {
+            "kind": "final_acceptance_report",
+            "overall_status": "blocked",
+            "summary": {"passed": 12, "blocked": 1, "failed": 0, "skipped": 0},
+        },
+    )
     _write_ios_deploy_runbook(repo_root)
     live_action = (
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
@@ -280,7 +287,7 @@ def test_final_handoff_index_does_not_copy_live_provider_actions_into_local_lane
             "status": "partial",
             "classification": "live_3d_provider_unproven",
             "command": live_action,
-            "detail": "Live Meshy evidence still needs consent.",
+            "detail": f"Live Meshy evidence still needs consent. Next: {live_action}",
         },
         next_action={
             "id": "game_asset_3d_generation",
@@ -288,7 +295,7 @@ def test_final_handoff_index_does_not_copy_live_provider_actions_into_local_lane
             "status": "partial",
             "classification": "live_3d_provider_unproven",
             "command": live_action,
-            "detail": "Live Meshy evidence still needs consent.",
+            "detail": f"Live Meshy evidence still needs consent. Next: {live_action}",
             "validation_command": "make live-provider-evidence",
         },
         operator_actions=[live_action, "make live-provider-evidence"],
@@ -301,10 +308,19 @@ def test_final_handoff_index_does_not_copy_live_provider_actions_into_local_lane
     local_lane = result.report["lanes_by_id"]["local_rehearsal"]
 
     assert result.exit_code == 2
+    assert local_lane["status"] == "blocked"
+    assert "operator_action" not in local_lane
+    assert "PMF_ALLOW_LIVE_PROVIDER_CALLS" not in local_lane.get("detail", "")
+    assert "final-acceptance-configured" not in local_lane.get("detail", "")
     assert not any(
         "live-provider-evidence" in action
         for action in local_lane.get("operator_actions", [])
     )
+    assert result.report["first_blocker"]["id"] == "local_rehearsal"
+    assert result.report["first_blocker"]["command"] == "make final-rehearsal-local"
+    assert result.report["first_blocker"]["detail"] == "run make final-rehearsal-local"
+    assert result.report["next_action"]["command"] == "make final-rehearsal-local"
+    assert "final-acceptance-configured" not in result.report["next_action"]["detail"]
     assert not any(
         action.startswith("final_demo_launch_local:")
         and "live-provider-evidence" in action

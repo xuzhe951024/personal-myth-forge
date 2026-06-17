@@ -573,13 +573,13 @@ def _lane(
 
 def _local_lane_detail(local_sources: list[dict[str, Any]]) -> str:
     preferred = _source_detail_by_id(local_sources, "final_demo_launch_local")
-    if preferred:
+    if preferred and not _is_live_acceptance_action(preferred):
         return preferred
     for source in local_sources:
         if source.get("status") not in {"blocked", "missing"}:
             continue
         detail = _source_detail(source)
-        if detail:
+        if detail and not _is_live_acceptance_action(detail):
             return detail
     return ""
 
@@ -594,13 +594,13 @@ def _source_detail_by_id(local_sources: list[dict[str, Any]], source_id: str) ->
 
 def _local_lane_operator_action(local_sources: list[dict[str, Any]]) -> str:
     preferred = _source_operator_action_by_id(local_sources, "final_demo_launch_local")
-    if preferred:
+    if preferred and not _is_live_acceptance_action(preferred):
         return preferred
     for source in local_sources:
         if source.get("status") not in {"blocked", "missing"}:
             continue
         action = _source_operator_action(source)
-        if action:
+        if action and not _is_live_acceptance_action(action):
             return action
     return ""
 
@@ -654,10 +654,12 @@ def _is_provider_handoff_action(action: str) -> bool:
 
 def _is_live_acceptance_action(action: str) -> bool:
     lowered = action.lower()
+    command_root, _detail_suffix = _split_detail_suffix(action)
+    bare_root = _strip_final_handoff_source_prefixes(command_root).lower()
     return (
         "pmf_allow_live_provider_calls=1" in lowered
         or "final-acceptance-configured" in lowered
-        or lowered.strip() == "make live-provider-evidence"
+        or bare_root.strip() == "make live-provider-evidence"
     )
 
 
