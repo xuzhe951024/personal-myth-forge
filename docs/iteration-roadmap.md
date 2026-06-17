@@ -201,6 +201,7 @@ Bridge deliverable:
 - P0.603 configured live evidence bundle current blocker follows configured plan consent order
 - P0.604 top-level closure and external action ledger preserve configured 3D consent action order
 - P0.605 top-level closure and external action ledger expose live provider cost-consent metadata
+- P0.606 final showcase readiness top-level next action preserves live provider consent metadata
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details

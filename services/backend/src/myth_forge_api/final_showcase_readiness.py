@@ -1469,6 +1469,13 @@ def _next_action(
     }
     if validation_command:
         action["validation_command"] = validation_command
+    for key in (
+        "requires_cost_consent",
+        "requires_live_provider_consent",
+        "completion_requires_live_provider_consent",
+    ):
+        if key in blocker:
+            action[key] = bool(blocker.get(key))
     return action
 
 

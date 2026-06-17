@@ -1220,6 +1220,9 @@ def test_final_showcase_readiness_live_provider_rows_prefer_configured_plan_acti
     )
     _write_capture_source_acceptance(repo_root)
     _write_final_resources(repo_root)
+    _write_mobile_deploy_preflight_evidence_ready(repo_root)
+    _write_mobile_xcode_build_evidence_ready(repo_root)
+    _write_ios_device_launch_rehearsal_ready(repo_root)
     _write_three_d_evaluation(repo_root)
     _write_npc_evaluation(repo_root)
     _write_visual_regression(repo_root)
@@ -1318,6 +1321,15 @@ def test_final_showcase_readiness_live_provider_rows_prefer_configured_plan_acti
         assert row["validation_command"] == "make final-configured-evidence-plan"
         assert row["requires_live_provider_consent"] is True
         assert row["completion_requires_live_provider_consent"] is True
+
+    first_blocker = result.report["first_blocker"]
+    next_action = result.report["next_action"]
+    assert first_blocker["id"] == "game_asset_3d_generation"
+    assert first_blocker["requires_live_provider_consent"] is True
+    assert first_blocker["completion_requires_live_provider_consent"] is True
+    assert next_action["id"] == "game_asset_3d_generation"
+    assert next_action["requires_live_provider_consent"] is True
+    assert next_action["completion_requires_live_provider_consent"] is True
 
     assert result.report["evidence"]["final_configured_evidence_plan"]["status"] == (
         "consent_required"
@@ -3197,6 +3209,57 @@ def _write_ios_device_launch_rehearsal_with_next_action(
                 }
             ],
             "operator_actions": [command],
+            "commands": ["make ios-device-launch-rehearsal"],
+            "safety": {
+                "provider_calls": False,
+                "live_provider_calls": False,
+                "writes_backend_env": False,
+                "writes_ios_deploy_config": False,
+                "global_mutation": False,
+                "xcode_or_signing": False,
+                "keychain_writes": False,
+                "provider_secrets_in_report": False,
+                "raw_media_in_report": False,
+                "payment_links_in_report": False,
+                "local_paths_in_report": False,
+            },
+        },
+    )
+
+
+def _write_ios_device_launch_rehearsal_ready(repo_root: Path) -> None:
+    _write_json(
+        repo_root / "services/backend/.local/ios-device-launch-rehearsal.json",
+        {
+            "kind": "ios_device_launch_rehearsal_report",
+            "status": "ready",
+            "summary": {
+                "ready": 4,
+                "missing": 0,
+                "blocked": 0,
+                "partial": 0,
+                "manual": 0,
+                "live": 0,
+            },
+            "sequence": [
+                {
+                    "id": "final_rehearsal_local",
+                    "label": "Local final rehearsal",
+                    "status": "ready",
+                    "classification": "saved_report_set",
+                    "command": "make final-rehearsal-local",
+                    "detail": "Local final rehearsal is ready.",
+                },
+                {
+                    "id": "ios_device_launch_certificate",
+                    "label": "iOS device launch certificate",
+                    "status": "ready",
+                    "classification": "saved_report_set",
+                    "command": "make ios-device-launch-certificate",
+                    "detail": "iOS device launch handoff evidence is ready.",
+                },
+            ],
+            "operator_actions": [],
             "commands": ["make ios-device-launch-rehearsal"],
             "safety": {
                 "provider_calls": False,
