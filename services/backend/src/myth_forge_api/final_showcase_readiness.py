@@ -1210,11 +1210,11 @@ def _load_final_configured_evidence_plan_report(repo_root: Path) -> dict[str, An
             classification="invalid_report_shape",
             detail=f"{relative_path} must contain a JSON object.",
         )
-    if payload.get("kind") != "final_configured_evidence_plan":
+    if payload.get("kind") != "final_configured_evidence_plan_report":
         return _final_configured_evidence_plan_stub(
             status="blocked",
             classification="wrong_report_kind",
-            detail="Expected final_configured_evidence_plan.",
+            detail="Expected final_configured_evidence_plan_report.",
         )
     return payload
 
@@ -1226,7 +1226,7 @@ def _final_configured_evidence_plan_stub(
     detail: str,
 ) -> dict[str, Any]:
     return {
-        "kind": "final_configured_evidence_plan",
+        "kind": "final_configured_evidence_plan_report",
         "status": status,
         "first_blocker": {
             "id": "final_configured_evidence_plan",

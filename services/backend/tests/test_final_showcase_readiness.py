@@ -3284,7 +3284,7 @@ def _write_final_configured_evidence_plan(
     _write_json(
         repo_root / "services/backend/.local/final-configured-evidence-plan.json",
         {
-            "kind": "final_configured_evidence_plan",
+            "kind": "final_configured_evidence_plan_report",
             "status": "consent_required",
             "first_blocker": {
                 "id": "three_d_evaluation_configured",
