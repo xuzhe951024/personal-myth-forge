@@ -102,6 +102,10 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     configured_gate_action = (
         "make final-configured-preflight; rerun make configured-live-evidence-bundle"
     )
+    configured_live_provider_action = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
     assert "make final-resources-preflight" not in operator_actions
     assert "make print-fulfillment-readiness" not in operator_actions
     assert PRINT_READINESS_BACKEND_AUTO_ACTION in operator_actions
@@ -151,7 +155,8 @@ def test_final_launch_closure_packet_blocks_missing_final_actions(
     assert "make configured-live-evidence-bundle" in actions
     assert configured_gate_action in operator_actions
     assert "make configured-live-evidence-bundle" not in operator_actions
-    assert not any("PMF_ALLOW_LIVE_PROVIDER_CALLS" in action for action in operator_actions)
+    assert configured_live_provider_action in operator_actions
+    assert "make final-acceptance-configured" not in operator_actions
     assert report["commands"][:6] == [
         "make final-resource-requirements",
         "make final-resource-fill-guide",
@@ -677,6 +682,62 @@ def test_final_launch_closure_packet_exposes_next_action_from_first_blocker(
         "action_id": "final_showcase_readiness",
     }
     assert "meshy-secret" not in json.dumps(action)
+
+
+def test_final_launch_closure_packet_routes_configured_evidence_through_live_consent() -> None:
+    expected_command = (
+        "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+        "rerun make live-provider-evidence"
+    )
+    configured_section = final_launch_closure_packet._configured_evidence_bundle_section(
+        {
+            "kind": "configured_live_evidence_bundle_report",
+            "status": "blocked",
+            "current_blocker": {
+                "id": "configured_live_evidence_bundle",
+                "label": "Configured live evidence bundle",
+                "status": "blocked",
+                "classification": "report_not_ready",
+                "command": "make final-acceptance-configured",
+                "detail": "Saved report is not ready.",
+            },
+            "summary": {
+                "evidence_ready": 0,
+                "evidence_missing": 1,
+                "evidence_blocked": 0,
+            },
+        }
+    )
+    configured_action = configured_section["first_action"]
+    blocker = final_launch_closure_packet._first_blocker(
+        [configured_section],
+        showcase_readiness={
+            "kind": "final_showcase_readiness_report",
+            "status": "partial",
+            "first_blocker": {
+                "id": "game_asset_3d_generation",
+                "classification": "live_3d_provider_unproven",
+                "command": expected_command,
+            },
+        },
+    )
+    action = final_launch_closure_packet._next_action(blocker)
+    operator_actions = final_launch_closure_packet._operator_actions(
+        [configured_section],
+        first_blocker=blocker,
+    )
+
+    assert configured_section["status"] == "blocked"
+    assert blocker["id"] == "configured_evidence_bundle"
+    assert blocker["command"] == expected_command
+    assert blocker["validation_command"] == "make live-provider-evidence"
+    assert action["command"] == expected_command
+    assert action["validation_command"] == "make live-provider-evidence"
+    assert configured_action["command"] == expected_command
+    assert configured_action["requires_cost_consent"] is True
+    assert configured_action["live_provider_call"] is True
+    assert expected_command in operator_actions
+    assert "make final-acceptance-configured" not in operator_actions
 
 
 def test_final_launch_closure_packet_keeps_section_order_for_non_device_showcase_blocker() -> None:

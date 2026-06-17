@@ -94,6 +94,11 @@ CONFIGURED_LIVE_EVIDENCE_VALIDATED_ACTION = (
     f"make final-configured-preflight; rerun {CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION}"
 )
 LIVE_PROVIDER_DIRECT_ACTION_PREFIX = "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 "
+LIVE_PROVIDER_EVIDENCE_COMMAND = "make live-provider-evidence"
+CONFIGURED_EVIDENCE_LIVE_PROVIDER_VALIDATED_ACTION = (
+    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+    f"rerun {LIVE_PROVIDER_EVIDENCE_COMMAND}"
+)
 
 
 @dataclass(frozen=True)
@@ -541,6 +546,9 @@ def _configured_evidence_bundle_action(
     command = str(
         blocker_dict.get("command") or "make configured-live-evidence-bundle"
     )
+    consent_required = _normalized_status(status) != "ready"
+    if consent_required and LIVE_PROVIDER_DIRECT_ACTION_PREFIX not in command:
+        command = CONFIGURED_EVIDENCE_LIVE_PROVIDER_VALIDATED_ACTION
     detail = str(
         blocker_dict.get("detail")
         or _first_operator_action(configured_live_evidence_bundle)
@@ -554,6 +562,9 @@ def _configured_evidence_bundle_action(
         detail=detail,
         required=True,
         classification=_optional_string(blocker_dict.get("classification")),
+        requires_cost_consent=consent_required,
+        live_provider_call=consent_required,
+        operator_action=command if consent_required else None,
     )
 
 
@@ -906,7 +917,9 @@ def _prefer_configured_evidence_gate_for_live_provider_actions(
     emitted: set[str] = set()
     for action in actions:
         replacement = action
-        if (
+        if action == CONFIGURED_EVIDENCE_LIVE_PROVIDER_VALIDATED_ACTION:
+            replacement = action
+        elif (
             LIVE_PROVIDER_DIRECT_ACTION_PREFIX in action
             or _operator_action_root(action) == CONFIGURED_LIVE_EVIDENCE_BUNDLE_ACTION
         ):
@@ -1078,6 +1091,11 @@ def _blocker_command_for_action(
 
 def _validation_command_for_action(action: dict[str, Any]) -> str | None:
     command = str(action.get("command", "")).strip()
+    if (
+        command == CONFIGURED_EVIDENCE_LIVE_PROVIDER_VALIDATED_ACTION
+        or f"rerun {LIVE_PROVIDER_EVIDENCE_COMMAND}" in command
+    ):
+        return LIVE_PROVIDER_EVIDENCE_COMMAND
     if command.startswith("make "):
         return command
     return None
