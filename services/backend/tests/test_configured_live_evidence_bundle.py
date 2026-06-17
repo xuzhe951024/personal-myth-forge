@@ -153,6 +153,7 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    repo_root = _write_ready_resource_bundle(tmp_path)
     expected_command = (
         "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
         "rerun make live-provider-evidence"
@@ -183,7 +184,13 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
                         "detail": "Saved report is not ready.",
                         "validation_command": "make live-provider-evidence",
                     },
-                    "operator_actions": [expected_command],
+                    "operator_actions": [
+                        expected_command,
+                        "make provider-handoff",
+                        "make backend-evaluate-3d-configured",
+                        "make backend-evaluate-npc-configured",
+                        "make live-provider-evidence",
+                    ],
                     "evidence": [],
                     "commands": ["make live-provider-evidence"],
                 }
@@ -191,7 +198,10 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
         )(),
     )
 
-    result = build_configured_live_evidence_bundle_report(repo_root=tmp_path)
+    result = build_configured_live_evidence_bundle_report(
+        repo_root=repo_root,
+        settings=_configured_settings(),
+    )
     report = result.report
 
     assert result.exit_code == 2
@@ -205,6 +215,10 @@ def test_configured_live_evidence_bundle_uses_live_provider_consent_next_action(
     assert report["next_action"]["command"] == expected_command
     assert expected_command in report["operator_actions"]
     assert "make final-acceptance-configured" not in report["operator_actions"]
+    assert "make provider-handoff" not in report["operator_actions"]
+    assert "make backend-evaluate-3d-configured" not in report["operator_actions"]
+    assert "make backend-evaluate-npc-configured" not in report["operator_actions"]
+    assert "make live-provider-evidence" not in report["operator_actions"]
 
 
 def test_configured_live_evidence_bundle_is_ready_to_run_with_consent(

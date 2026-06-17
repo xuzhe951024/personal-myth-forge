@@ -306,7 +306,7 @@ def _operator_actions(
         )
     )
     actions.extend(_string_list(live_evidence.get("operator_actions")))
-    return _dedupe_operator_actions(actions)[:12]
+    return _prefer_live_provider_consent_action(_dedupe_operator_actions(actions))[:12]
 
 
 def _without_shadowed_live_blocker_actions(
@@ -559,6 +559,43 @@ def _dedupe_operator_actions(values: list[str]) -> list[str]:
         seen.add(normalized)
         result.append(normalized)
     return result
+
+
+LIVE_PROVIDER_CONSENT_ACTION_MARKER = (
+    "PMF_ALLOW_LIVE_PROVIDER_CALLS=1 make final-acceptance-configured; "
+    "rerun make live-provider-evidence"
+)
+LIVE_PROVIDER_FALLBACK_ACTION_ROOTS = {
+    "make backend-evaluate-3d-configured",
+    "make backend-evaluate-npc-configured",
+    "make final-acceptance-configured",
+    "make final-demo-launch-configured",
+    "make live-provider-evidence",
+    "make provider-handoff",
+    "unblock final_configured_preflight after provider_handoff",
+}
+
+
+def _prefer_live_provider_consent_action(actions: list[str]) -> list[str]:
+    if not any(_is_live_provider_consent_action(action) for action in actions):
+        return actions
+    return [
+        action
+        for action in actions
+        if _is_live_provider_consent_action(action)
+        or not _is_live_provider_fallback_action(action)
+    ]
+
+
+def _is_live_provider_consent_action(action: str) -> bool:
+    return normalize_operator_action(action) == LIVE_PROVIDER_CONSENT_ACTION_MARKER
+
+
+def _is_live_provider_fallback_action(action: str) -> bool:
+    normalized = normalize_operator_action(action)
+    if normalized in LIVE_PROVIDER_FALLBACK_ACTION_ROOTS:
+        return True
+    return normalized.startswith("review live provider cost consent before ")
 
 
 def _sanitize_report(report: dict[str, Any], repo_root: Path) -> dict[str, Any]:
