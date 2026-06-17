@@ -357,7 +357,6 @@ def _default_steps() -> list[RefreshStepDefinition]:
             "Configured live evidence bundle",
             "configured-live-evidence-bundle.json",
             lambda repo_root: build_configured_live_evidence_bundle_report(
-                settings=LOCAL_SETTINGS,
                 repo_root=repo_root,
             ).report,
         ),
