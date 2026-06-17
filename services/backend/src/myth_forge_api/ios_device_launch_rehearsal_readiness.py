@@ -221,9 +221,8 @@ def _first_blocker(
         blocker = dict(blockers[0])
         blocker["source"] = "blockers"
         return blocker
-    for row in sequence:
-        if str(row.get("status", "")).strip().lower() == "ready":
-            continue
+    row = _preferred_non_ready_sequence_row(sequence)
+    if row is not None:
         return {
             "id": str(row.get("id", "unknown")),
             "label": str(row.get("label", row.get("id", "Unknown"))),
@@ -281,12 +280,16 @@ def _device_action_bundle(
         if operator_actions
         else None
     )
+    ordered_sequence = _sequence_with_preferred_row_first(sequence)
     actions = [
         _device_action(
             row,
-            command_override=first_operator_action if index == 0 else None,
+            command_override=_command_override_for_row(
+                row,
+                fallback=first_operator_action if index == 0 else None,
+            ),
         )
-        for index, row in enumerate(sequence)
+        for index, row in enumerate(ordered_sequence)
     ]
     if not actions:
         actions = [
@@ -367,6 +370,25 @@ def _device_action(
     return action
 
 
+def _command_override_for_row(
+    row: dict[str, Any],
+    *,
+    fallback: str | None,
+) -> str | None:
+    if (
+        fallback
+        and _structured_next_action_command(fallback)
+        == IOS_DEVICE_LAUNCH_REHEARSAL_COMMAND
+    ):
+        return fallback
+    row_actions = row.get("operator_actions")
+    if isinstance(row_actions, list):
+        preferred = _preferred_device_operator_action(row_actions)
+        if preferred:
+            return preferred
+    return fallback
+
+
 def _saved_next_action(
     row: dict[str, Any],
     action: dict[str, Any],
@@ -403,6 +425,58 @@ def _first_device_action(actions: list[dict[str, Any]]) -> dict[str, Any] | None
         (action for action in actions if action["status"] != "ready"),
         actions[0] if actions else None,
     )
+
+
+def _sequence_with_preferred_row_first(
+    sequence: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    preferred = _preferred_non_ready_sequence_row(sequence)
+    if preferred is None:
+        return sequence
+    remaining = [row for row in sequence if row is not preferred]
+    return [preferred, *remaining]
+
+
+def _preferred_non_ready_sequence_row(
+    sequence: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    first_non_ready: dict[str, Any] | None = None
+    for row in sequence:
+        if str(row.get("status", "")).strip().lower() == "ready":
+            continue
+        if first_non_ready is None:
+            first_non_ready = row
+        if not _is_self_referential_rehearsal_cycle_row(row):
+            return row
+    return first_non_ready
+
+
+def _is_self_referential_rehearsal_cycle_row(row: dict[str, Any]) -> bool:
+    row_id = str(row.get("id", "")).strip()
+    if row_id not in {"final_demo_launch_local", "final_rehearsal_local"}:
+        return False
+    text = _sequence_row_text(row)
+    if not text:
+        return False
+    points_to_rehearsal = (
+        "ios-device-launch-rehearsal" in text
+        or "ios_device_launch_rehearsal" in text
+        or "final_showcase_readiness" in text
+    )
+    if row_id == "final_rehearsal_local":
+        return "final_demo_launch_local" in text and points_to_rehearsal
+    return points_to_rehearsal
+
+
+def _sequence_row_text(row: dict[str, Any]) -> str:
+    parts = [
+        str(row.get("command", "")),
+        str(row.get("detail", "")),
+    ]
+    actions = row.get("operator_actions")
+    if isinstance(actions, list):
+        parts.extend(str(action) for action in actions if isinstance(action, str))
+    return " ".join(parts).lower()
 
 
 def _device_action_summary(actions: list[dict[str, Any]]) -> dict[str, int]:

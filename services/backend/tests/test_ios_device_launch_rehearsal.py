@@ -1883,6 +1883,112 @@ def test_ios_device_launch_rehearsal_readiness_treats_rehearsal_rerun_as_device_
     assert provider_action in result.report["operator_actions"]
 
 
+def test_ios_device_launch_rehearsal_readiness_skips_self_referential_final_demo_row(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    self_referential_action = (
+        "final_demo_launch_local: start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+    concrete_action = (
+        "final_handoff_index: start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+    expected_command = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight; rerun make ios-device-launch-rehearsal"
+    )
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"] = [
+        {
+            "id": "final_demo_launch_local",
+            "label": "Final demo launch local",
+            "status": "partial",
+            "command": "make final-demo-launch-local",
+            "classification": "saved_report",
+            "detail": self_referential_action,
+            "operator_actions": [self_referential_action],
+        },
+        {
+            "id": "final_handoff_index",
+            "label": "Final handoff index",
+            "status": "blocked",
+            "command": "make final-handoff-index",
+            "classification": "saved_report",
+            "detail": concrete_action,
+            "operator_actions": [concrete_action],
+        },
+    ]
+    payload["operator_actions"] = [self_referential_action, concrete_action]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    first_action = result.report["device_action_bundle"]["first_action"]
+
+    assert result.exit_code == 2
+    assert result.report["first_blocker"]["id"] == "final_handoff_index"
+    assert result.report["next_action"]["command"] == expected_command
+    assert first_action["id"] == "final_handoff_index"
+    assert first_action["next_action"]["command"] == expected_command
+
+
+def test_ios_device_launch_rehearsal_readiness_skips_self_referential_final_rehearsal_row(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repo"
+    report_path = _write_saved_rehearsal_readiness_report(repo_root, status="blocked")
+    self_referential_action = (
+        "final_rehearsal_local: final_demo_launch_local: "
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight; rerun make ios-device-launch-rehearsal"
+    )
+    concrete_action = (
+        "final_handoff_index: start backend-device-demo before device checks: "
+        "make backend-device-demo; rerun make mobile-deploy-preflight; "
+        "rerun make ios-device-launch-rehearsal"
+    )
+    expected_command = (
+        "start backend-device-demo before device checks: make backend-device-demo; "
+        "rerun make mobile-deploy-preflight; rerun make ios-device-launch-rehearsal"
+    )
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["sequence"] = [
+        {
+            "id": "final_rehearsal_local",
+            "label": "Local final rehearsal",
+            "status": "blocked",
+            "command": "make final-rehearsal-local",
+            "classification": "saved_report_set",
+            "detail": self_referential_action,
+            "operator_actions": [self_referential_action],
+        },
+        {
+            "id": "final_handoff_index",
+            "label": "Final handoff index",
+            "status": "blocked",
+            "command": "make final-handoff-index",
+            "classification": "saved_report",
+            "detail": concrete_action,
+            "operator_actions": [concrete_action],
+        },
+    ]
+    payload["operator_actions"] = [self_referential_action, concrete_action]
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = build_ios_device_launch_rehearsal_readiness_report(repo_root=repo_root)
+    first_action = result.report["device_action_bundle"]["first_action"]
+
+    assert result.exit_code == 2
+    assert result.report["first_blocker"]["id"] == "final_handoff_index"
+    assert result.report["next_action"]["command"] == expected_command
+    assert first_action["id"] == "final_handoff_index"
+    assert first_action["next_action"]["command"] == expected_command
+
+
 def test_ios_device_launch_rehearsal_full_actions_dedupes_deploy_writer_roots() -> None:
     bare_writer = (
         "DEVELOPMENT_TEAM=YOUR_TEAM_ID PMF_BACKEND_BASE_URL=auto "

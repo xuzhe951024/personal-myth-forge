@@ -165,6 +165,7 @@ Bridge deliverable:
 - P0.567 iOS device readiness prefers concrete device actions over live provider handoff actions
 - P0.568 final showcase promotes saved iOS rehearsal child next action
 - P0.569 iOS device evidence bundle prefers rehearsal readiness child action
+- P0.570 iOS device rehearsal readiness skips self-referential final demo rows
 - default local provider path that needs no external secrets
 - P0.236 final showcase device action evidence details for backend, preflight, Xcode, and rehearsal handoff rows
 - P0.237 iPhone Final Launch summary rows surface device action evidence details
