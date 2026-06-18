@@ -22,4 +22,7 @@ build/
 storage/
 services/backend/.local/
 apps/mobile/ios/.build/
+apps/mobile/ios/.swiftpm/
+apps/mobile/ios/PersonalMythForge.xcodeproj/project.xcworkspace/
+apps/mobile/ios/PersonalMythForge.xcodeproj/xcuserdata/
 apps/mobile/ios/Config/Deployment.local.xcconfig
